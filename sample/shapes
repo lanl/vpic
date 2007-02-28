@@ -1,0 +1,116 @@
+// Demonstrate material and region selection features
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - original version
+
+// FIXME: Make this input deck do something useful.
+
+begin_globals {
+};
+
+begin_initialization {
+  if( nproc()!=1 ) {
+    sim_log( "This test case requires one processor" );
+    abort(0);
+  }
+
+  num_step = 1;
+  status_interval = 1;
+
+  double lx = 64, ly = 64, lz = 64;
+  double nx = 64, ny = 64, nz = 64;
+
+  grid->cvac = 299792458;
+  grid->eps0 = 8.854187817e-12;
+  grid->damp = 0.01;
+  grid->dt = 0.95*courant_length(lx,ly,lz,nx,ny,nz)/grid->cvac;
+
+  grid->dx = lx/nx;
+  grid->dy = ly/ny;
+  grid->dz = lz/nz;
+  grid->x0 = 0;
+  grid->y0 = 0;
+  grid->z0 = 0;
+
+  size_domain(64,64,64); // Particle reflecting metal box
+
+  set_domain_field_bc( BOUNDARY(-1, 0, 0), symmetric_fields );
+  set_domain_field_bc( BOUNDARY( 0,-1, 0), symmetric_fields );
+  set_domain_field_bc( BOUNDARY( 0, 0,-1), symmetric_fields );
+  set_domain_field_bc( BOUNDARY( 1, 0, 0), absorb_fields );
+  set_domain_field_bc( BOUNDARY( 0, 1, 0), absorb_fields );
+  set_domain_field_bc( BOUNDARY( 0, 0, 1), absorb_fields );
+
+  // Space is by default filled with first material defined
+  define_material("vacuum", 1 ); // mu=1 and sigma=0 by default
+  define_material("calcite",  2.2,2.2,2.7,  1,1,1,  0,0,0);
+  define_material("copper", 1, 1, 5.8e7 );
+
+  finalize_materials();
+  finalize_species();
+
+  // Shapes are defined by logical equations
+# define clip_sphere y<16 && sqrt(x*x+y*y+z*z)<32
+# define cube        x>48 && x<56 && y>48 && y<56 && z>48 && z<56
+# define pipes (z>8   && z<56 && sqrt((x-48)*(x-48)+y*y)<8) ||        \
+               (y>-24 && y<24 && sqrt((x-48)*(x-48)+(z-32)*(z-32))<8)
+
+  // everywhere selects the entire simulation
+  // leave_unchanged can be passed material or a particle boundary condition
+
+  // All points inside a cell are in a normal region if the cell center is
+  // inside the region.
+  // Usage: set_region_material( rgn, interior_material, surface_material )
+  // Usage: set_region_bc( rgn, interior, interior_surface, exterior_surface );
+  // Usage: set_region_fields( rgn,
+  //                           eqn_ex, eqn_ey, eqn_ez,
+  //                           eqn_bx, eqn_by, eqn_bz );
+
+  // A metal coated calcite clipped sphere
+  set_region_material( clip_sphere, "calcite", "copper" ); 
+  set_region_bc( clip_sphere,
+                 absorb_particles, absorb_particles, reflect_particles ); 
+  set_region_field( clip_sphere,
+                    2*sin(x/lx), 0, 0, 
+                    0, 0, 0  ); 
+
+  // An empty thin foil cube
+  set_region_material( cube, leave_unchanged, "copper" );
+  set_region_bc( cube,
+                 leave_unchanged, absorb_particles, reflect_particles ); 
+
+  // A point_region inclusion test is simplier ... if the point is inside
+  // the region, that point is part of the point_region. Because the mesh
+  // is staggered, a point region actually has twice the resolution of a
+  // regular region. However, particles may not play nice with point regions.
+  // Use with caution.
+  // Usage: set_point_region_material( rgn, interior_material );
+  // Usage: set_point_region_bc( rgn, interior_faces, cut_faces );
+  // Usage: set_point_region_field( rgn,
+  //                                eqn_ex, eqn_ey, eqn_ez,
+  //                                eqn_bx, eqn_by, eqn_bz );
+
+  // Some intersecting pipes
+  set_point_region_material( pipes, "calcite" );
+};
+
+begin_diagnostics {
+  if( step==0 ) {
+    dump_materials( "materials" );
+    dump_grid( "grid" );
+    dump_fields( "field" );
+  }
+};
+
+begin_particle_injection {
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+};

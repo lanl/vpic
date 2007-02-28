@@ -1,0 +1,105 @@
+// Test Cyclotron motion in a constant magnetic field
+//
+// Note:
+// wc = q B / m gamma ==> wc dt = q dt B / m gamma ==>
+// wc dt = q dt c B / m c gamma ==> wc dt = 2 ( q dt / 2 m c ) ( c B ) / gamma
+//
+// With c = 1, dt = 1, gamma = 2, q/m = 2
+// wc dt = c B
+// 2 pi dt / tauc = c B
+// 2 pi / Nstep = c B
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+begin_globals {
+};
+
+begin_initialization {
+  double L = 1e10;
+  int npart = 7;
+  int nstep = 32;
+
+  grid->dt = 1;
+  grid->cvac = 1;
+  grid->eps0 = 1;
+  define_periodic_grid( 0, 0, 0,   // Grid low corner
+                        L, L, L,   // Grid high corner
+                        1, 1, 1,   // Grid resolution
+                        1, 1, 1 ); // Processor configuration
+
+  define_material("vacuum",1.0,1.0,0.0);
+  define_species("test_species",2.,npart);
+
+  finalize_materials();
+  finalize_species();
+
+  field(1,1,1).cbz  = 2*M_PI / (double)nstep;
+  field(1,1,2).cbz  = 2*M_PI / (double)nstep;
+
+  species_id test_species = lookup_species("test_species");
+  repeat(npart) {
+    error_code err = inject_particle( test_species,
+                                      uniform_rand(0,L),
+                                      uniform_rand(0,L),
+                                      uniform_rand(0,L),
+                                      1, 1, 1, // Gamma = 2
+                                      uniform_rand(0,1) );
+    if( err!=SUCCESS ) sim_log("Injection error - " << err);
+  }
+
+  // Hack into vpic internals
+
+  int failed = 0;
+  load_interpolator( interpolator, field, grid );
+  species_t *sp = find_species_id(test_species,species_list);
+  for( int n=0; n<nstep; n++ ) {
+    advance_p(sp->p,sp->np,sp->q_m,sp->pm,sp->max_nm,
+              accumulator,interpolator,grid);
+    double ux = cos(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
+                cos(2*M_PI*(0.125*nstep)      /(double)nstep);
+    double uy = sin(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
+                sin(2*M_PI*(0.125*nstep)      /(double)nstep); 
+    for( int m=0; m<npart; m++ ) {
+      if( fabs(sp->p[m].ux-ux)>1e-6 ||
+          fabs(sp->p[m].uy-uy)>1e-6 ||
+          sp->p[m].uz != 1 ) {
+        failed++;
+        sim_log( n << " " << m << " " <<
+                 sp->p[m].i  << " " <<
+                 sp->p[m].dx << " " <<
+                 sp->p[m].dy << " " <<
+                 sp->p[m].dz << " " <<
+                 sp->p[m].ux << " " <<
+                 sp->p[m].uy << " " <<
+                 sp->p[m].uz << " " <<
+                 sp->p[m].q  << " " <<
+                 ux << " " <<
+                 uy << " " << 
+                 sp->p[m].ux-ux << " " <<
+                 sp->p[m].uy-uy );
+      }
+    }
+  }
+  if( failed ) sim_log( "FAIL" );
+  else         sim_log( "pass" );
+  
+  abort(0);
+};
+
+begin_diagnostics {
+};
+
+begin_particle_injection {
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+};
+

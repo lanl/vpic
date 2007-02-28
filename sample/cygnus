@@ -1,0 +1,169 @@
+// This input deck sets up the Cygnus rod-pinch diode
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// April 2004 - original version written
+
+begin_globals {
+  double V_peak;
+  double t_rise;
+  double t_hold;
+  double t_fall;
+  double r_i;
+  double r_o;
+};
+
+begin_initialization {
+  if( nproc()!=1 ) {
+    sim_log( "This run is for one processor only" );
+    abort(0);
+  }
+
+  // System of units (Rationalized MKSA)
+  double cvac = 299792458;       // Speed of light (in m/s)
+  double eps0 = 8.854187817e-12; // Permittivity of free space (in F/m)
+  double ec   = 1.602176462e-19; // Fundamental charge (in C)
+  double me   = 9.10938188e-31;  // Electron (in kg)
+  double mi   = 1.67262158e-27;  // Hydrogen (in kg)
+
+  // Important relative lengths
+  double emitter_to_cap  = 2.5e-2;
+  double cap_to_cathode  = 10e-2;
+  double cathode_width   = 3e-3;
+  double cathode_to_tip  = 1e-2;
+  double tip_to_absorber = 8e-3;
+  double r_a             = 0.375e-3;    // Anode radius
+  double r_c             = 4.5625e-3;   // Cathode radius
+  double r_i             = 7e-2;        // Inner conductor
+  double r_o             = 19e-2;       // Outer conductor
+
+  // Absolute z-coordinates
+  double z_l  = -emitter_to_cap;        // Sim
+  double z_i  = z_l + emitter_to_cap;   // Inner conductor end
+  double z_al = z_i + r_i;              // Anode low
+  double z_cl = z_al + cap_to_cathode;  // Cathode low
+  double z_ch = z_cl + cathode_width;   // Cathode high
+  double z_ah = z_ch + cathode_to_tip;  // Anode high
+  double z_h  = z_ah + tip_to_absorber; // Simulation high
+
+  // Define the regions
+# define inner_conductor ( z< z_i  && (x*x+y*y)<=r_i*r_i )
+# define inner_cap       ( z>=z_i  && (x*x+y*y+(z-z_i)*(z-z_i))<=r_i*r_i )
+# define anode           ( z>=z_al && z<=z_ah && (x*x+y*y)<=r_a*r_a )
+# define cathode         ( z>=z_cl && z<=z_ch && (x*x+y*y)>=r_c*r_c )
+# define outer_conductor (                       (x*x+y*y)>=r_o*r_o )
+
+  // Pulse parameters
+  global->V_peak = 1e6;   // Pulse peak
+  global->t_rise = 1e-9; 
+  global->t_hold = 8e-9;
+  global->t_fall = 1e-9; 
+  global->r_i    = r_i;   // Inner conductor
+  global->r_o    = r_o;   // Outer conductor
+
+  // Define resolution
+  double nx = 1520/2; // ~1/8 mm resolution along x
+  double ny = 1;    // Use 2D simulation for now
+  double nz = 144/2;  // ~1.5 mm resolution along z
+
+  // Create the grid
+  // FIXME: Make this into a domain decomposition
+  size_domain( nx, ny, nz ); // Particle reflecting metal box
+  grid->cvac = cvac;
+  grid->eps0 = eps0;
+  grid->dt = 0.98*courant_length(r_o,r_o,z_h-z_l,nx,ny,nz)/cvac;
+  grid->damp = 0.005;
+  grid->x0 = 0;
+  grid->y0 = (ny==1) ? -0.5e-6 : 0; // Cell centers at y=0 in 2D simulation
+  grid->z0 = z_l;
+  grid->dx = r_o/nx;
+  grid->dy = (ny==1) ? 1e-6 : r_o/ny; 
+  grid->dz = (z_h-z_l)/nz;
+
+  set_domain_field_bc( BOUNDARY(-1,0,0), symmetric_fields );
+  if( ny==1 ) { // If 2D simulation, make periodic along y
+    join_domain( BOUNDARY(0,-1,0), rank() );
+    join_domain( BOUNDARY(0, 1,0), rank() );
+  } else {      // If 3D simulation, create y-symmetry plane
+    set_domain_field_bc( BOUNDARY(0,-1,0), symmetric_fields );
+  }
+  set_domain_field_bc( BOUNDARY(0,0,-1), absorb_fields );
+  set_domain_field_bc( BOUNDARY(0,0, 1), absorb_fields );
+
+  // Setup the simulation 
+  num_step             = int(10e-9/grid->dt);
+  status_interval      = 25;
+  clean_div_e_interval = 25;
+  clean_div_b_interval = 25;
+  sync_shared_interval = 25;
+
+  // Create the materials
+  define_material( "vacuum",   1, 1, 0      );
+  define_material( "copper",   1, 1, 5.98e7 );
+  define_material( "tungsten", 1, 1, 1.85e7 );
+  finalize_materials();
+
+  // Create the species
+  //define_species( "e-", -ec/me, 1 /*(3*nx)*(0.5*nx)*/ );
+  //define_species( "H+",  ec/mi, 1 /*(3*nz)*(0.5*nx)*/ );
+  finalize_species();
+
+  // Load the initial fields and particle boundary conditions
+  set_region_material( inner_conductor, "copper",   "copper"   );
+  set_region_material( inner_cap,       "copper",   "copper"   );
+  set_region_material( anode,           "tungsten", "tungsten" );
+  set_region_material( cathode,         "copper",   "copper"   );
+  set_region_material( outer_conductor, "copper",   "copper"   );
+
+  set_region_bc( inner_conductor, absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( inner_cap,       absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( anode,           absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( cathode,         absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( outer_conductor, absorb_particles, absorb_particles, absorb_particles );
+};
+
+begin_diagnostics {
+  if( (step%100)==0 ) dump_fields("f");
+};
+
+begin_particle_injection {
+  // FIXME: Write particle emission
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+  double t, tr, tf, te, r_i, r_o, V_peak;
+  double V;
+  
+  t = grid->dt * step;
+  tr = global->t_rise;
+  tf = tr + global->t_hold;
+  te = tf + global->t_fall;
+  r_o = global->r_o;
+  r_i = global->r_i;
+  V_peak = global->V_peak;
+  
+  if( t<0 )       V = 0;
+  else if( t<tr ) V = global->V_peak*t/tr;
+  else if( t<tf ) V = global->V_peak;
+  else if( t<te ) V = global->V_peak*(te-t)/(te-tf);
+  else            V = 0;
+
+  if( grid->ny==1 ) {
+    double ex_inj = -V/(r_o-r_i);
+    for( int i=1; i<=grid->nx; i++ ) {
+      double x = grid->x0 + grid->dx*(i-0.5);
+      if( x>=r_i && x<=r_o ) {
+        field(i,1,1).ex += ex_inj;
+        field(i,2,1).ex += ex_inj;
+      }
+    }
+  } else {
+    // FIXME: Write 3D field injection
+  }
+};

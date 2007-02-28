@@ -1,0 +1,151 @@
+// Test in-cell particle movement and current accumulation
+//
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+#include <time.h>
+
+#define NPART 7
+
+begin_globals {
+};
+
+begin_initialization {
+  seed_rand(time(NULL));
+
+  grid->dt = 1;
+  grid->cvac = 1;
+  grid->eps0 = 1;
+
+  define_periodic_grid( 0,   0,   0,   // Grid low corner
+                        0.5, 0.5, 0.5, // Grid high corner
+                        1, 1, 1,       // Grid resolution
+                        1, 1, 1 );     // Processor configuration
+
+  define_material("vacuum",1.0,1.0,0.0);
+  define_species("test_species",1.,NPART);
+
+  finalize_materials();
+  finalize_species();
+
+  float dx0[NPART], dy0[NPART], dz0[NPART], dx1[NPART], dy1[NPART], dz1[NPART];
+  float rho0[8], rho1[8], drho[8], divj[8];
+  memset( rho0, 0, sizeof(float)*8 );
+  memset( rho1, 0, sizeof(float)*8 );
+  memset( drho, 0, sizeof(float)*8 );
+  memset( divj, 0, sizeof(float)*8 );
+  for( int n=0; n<NPART; n++ ) {
+    dx0[n] = uniform_rand(-1,1);
+    dy0[n] = uniform_rand(-1,1);
+    dz0[n] = uniform_rand(-1,1);
+    
+    dx1[n] = uniform_rand(-1,1);
+    dy1[n] = uniform_rand(-1,1);
+    dz1[n] = uniform_rand(-1,1);
+
+    rho0[0] += 0.125 * ( 1 - dx0[n] ) * ( 1 - dy0[n] ) * ( 1 - dz0[n] );
+    rho0[1] += 0.125 * ( 1 + dx0[n] ) * ( 1 - dy0[n] ) * ( 1 - dz0[n] );
+    rho0[2] += 0.125 * ( 1 - dx0[n] ) * ( 1 + dy0[n] ) * ( 1 - dz0[n] );
+    rho0[3] += 0.125 * ( 1 + dx0[n] ) * ( 1 + dy0[n] ) * ( 1 - dz0[n] );
+    rho0[4] += 0.125 * ( 1 - dx0[n] ) * ( 1 - dy0[n] ) * ( 1 + dz0[n] );
+    rho0[5] += 0.125 * ( 1 + dx0[n] ) * ( 1 - dy0[n] ) * ( 1 + dz0[n] );
+    rho0[6] += 0.125 * ( 1 - dx0[n] ) * ( 1 + dy0[n] ) * ( 1 + dz0[n] );
+    rho0[7] += 0.125 * ( 1 + dx0[n] ) * ( 1 + dy0[n] ) * ( 1 + dz0[n] );
+
+    rho1[0] += 0.125 * ( 1 - dx1[n] ) * ( 1 - dy1[n] ) * ( 1 - dz1[n] );
+    rho1[1] += 0.125 * ( 1 + dx1[n] ) * ( 1 - dy1[n] ) * ( 1 - dz1[n] );
+    rho1[2] += 0.125 * ( 1 - dx1[n] ) * ( 1 + dy1[n] ) * ( 1 - dz1[n] );
+    rho1[3] += 0.125 * ( 1 + dx1[n] ) * ( 1 + dy1[n] ) * ( 1 - dz1[n] );
+    rho1[4] += 0.125 * ( 1 - dx1[n] ) * ( 1 - dy1[n] ) * ( 1 + dz1[n] );
+    rho1[5] += 0.125 * ( 1 + dx1[n] ) * ( 1 - dy1[n] ) * ( 1 + dz1[n] );
+    rho1[6] += 0.125 * ( 1 - dx1[n] ) * ( 1 + dy1[n] ) * ( 1 + dz1[n] );
+    rho1[7] += 0.125 * ( 1 + dx1[n] ) * ( 1 + dy1[n] ) * ( 1 + dz1[n] );
+  }
+  for( int n=0; n<8; n++) drho[n] = rho1[n] - rho0[n];
+
+  // Hack into vpic internals
+
+  species_t *sp = find_species_name("test_species",species_list);
+
+  sp->np = NPART;
+  for( int n=0; n<NPART; n++ ) {
+    sp->p[n].i  = LOCAL_CELL_ID(1,1,1);
+    sp->p[n].dx = dx0[n];
+    sp->p[n].dy = dy0[n];
+    sp->p[n].dz = dz0[n];
+    sp->p[n].ux = grid->dx*(dx1[n] - dx0[n])/(2*grid->dt); // Velocity
+    sp->p[n].uy = grid->dy*(dy1[n] - dy0[n])/(2*grid->dt);
+    sp->p[n].uz = grid->dz*(dz1[n] - dz0[n])/(2*grid->dt);
+    float rgamma = sqrt( 1 -
+                         sp->p[n].ux*sp->p[n].ux -
+                         sp->p[n].uy*sp->p[n].uy -
+                         sp->p[n].uz*sp->p[n].uz );
+    sp->p[n].ux /= rgamma;
+    sp->p[n].uy /= rgamma;
+    sp->p[n].uz /= rgamma;
+    sp->p[n].q = 1;
+  }
+
+  clear_interpolator(interpolator,grid);
+  clear_accumulator(accumulator,grid);
+  advance_p(sp->p,sp->np,sp->q_m,sp->pm,sp->max_nm,
+            accumulator,interpolator,grid);
+
+  accumulator_t *a = &accumulator[LOCAL_CELL_ID(1,1,1)];
+  divj[0] = 0.25*(  a->jx[0] + a->jy[0] + a->jz[0] ); // -1,-1,-1
+  divj[1] = 0.25*( -a->jx[0] + a->jy[2] + a->jz[1] ); //  1,-1,-1
+  divj[2] = 0.25*(  a->jx[1] - a->jy[0] + a->jz[2] ); // -1, 1,-1
+  divj[3] = 0.25*( -a->jx[1] - a->jy[2] + a->jz[3] ); //  1, 1,-1
+  divj[4] = 0.25*(  a->jx[2] + a->jy[1] - a->jz[0] ); // -1,-1, 1
+  divj[5] = 0.25*( -a->jx[2] + a->jy[3] - a->jz[1] ); //  1,-1, 1
+  divj[6] = 0.25*(  a->jx[3] - a->jy[1] - a->jz[2] ); // -1, 1, 1
+  divj[7] = 0.25*( -a->jx[3] - a->jy[3] - a->jz[3] ); //  1, 1, 1
+  
+  int failed = 0;
+  for( int n=0; n<NPART; n++ ) {
+    if( fabs(dx1[n]-sp->p[n].dx)>1e-6 ||
+        fabs(dy1[n]-sp->p[n].dy)>1e-6 ||
+        fabs(dz1[n]-sp->p[n].dz)>1e-6 ) {
+      failed++;
+      sim_log( n << " " <<
+               dx1[n]-sp->p[n].dx << " " <<
+               dy1[n]-sp->p[n].dy << " " <<
+               dz1[n]-sp->p[n].dz );
+    }
+  }
+  if( failed ) sim_log( "pos test: FAIL" );
+  else         sim_log( "pos test: pass" );
+
+  failed = 0;
+  for( int n=0; n<NPART; n++ ) {
+    if( fabs(drho[n] + divj[n])>1e-6 ) {
+      failed++;
+      sim_log( n << " " <<
+             drho[n] << " " <<
+             -divj[n] << " " <<
+             drho[n]+divj[n] );
+    }
+  }
+  if( failed ) sim_log( "div test: FAIL" );
+  else         sim_log( "div test: pass" );
+
+  abort(0);
+};
+
+begin_diagnostics {
+};
+
+begin_particle_injection {
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+};
+

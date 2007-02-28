@@ -1,0 +1,618 @@
+// Test the v4 class library extensively
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+begin_globals {
+};
+
+begin_diagnostics {
+};
+
+begin_particle_injection {
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+};
+
+#ifdef V4VERSION
+#include CONCAT3(<,V4VERSION,>)
+using namespace v4;
+
+void test_transpose(void) {
+  v4int a0( 0, 1, 2, 3);
+  v4int a1( 4, 5, 6, 7);
+  v4int a2( 8, 9,10,11);
+  v4int a3(12,13,14,15);
+  transpose(a0,a1,a2,a3);
+  if( any(a0!=v4int( 0, 4, 8,12)) ||
+      any(a1!=v4int( 1, 5, 9,13)) ||
+      any(a2!=v4int( 2, 6,10,14)) ||
+      any(a3!=v4int( 3, 7,11,15)) ) {
+    std::cout << "test_tranpose: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+  } else {
+    std::cout << "test_transpose: pass" << std::endl;
+  }
+}
+
+void test_cmov(void) {
+  v4int a( 0, 1, 2, 3);
+  v4int b( 4, 5, 6, 7);
+  v4int c(-1, 0,-1, 0);
+  cmov(c,b,a);
+  if( any(a!=v4int(4,1,6,3)) ||
+      any(b!=v4int(4,5,6,7)) ||
+      any(c!=v4int(-1,0,-1,0)) ) {
+    std::cout << "test_cmov: FAIL" << std::endl;
+    std::cout << a << std::endl;
+    std::cout << b << std::endl;
+    std::cout << c << std::endl;
+  } else {
+    std::cout << "test_cmov: pass" << std::endl;
+  }
+}
+
+void test_czero(void) {
+  v4int a( 1, 2, 3, 4);
+  v4int c(-1, 0,-1, 0);
+  czero(c,a);
+  if( any(a!=v4int( 0,2, 0,4)) ||
+      any(c!=v4int(-1,0,-1,0)) ) {
+    std::cout << "test_czero: FAIL" << std::endl;
+    std::cout << a << std::endl;
+    std::cout << c << std::endl;
+  } else {
+    std::cout << "test_czero: pass" << std::endl;
+  }
+}
+
+void test_notcmov(void) {
+  v4int a( 0, 1, 2, 3);
+  v4int b( 4, 5, 6, 7);
+  v4int c(-1, 0,-1, 0);
+  notcmov(c,b,a);
+  if( any(a!=v4int(0,5,2,7)) ||
+      any(b!=v4int(4,5,6,7)) ||
+      any(c!=v4int(-1,0,-1,0)) ) {
+    std::cout << "test_notcmov: FAIL" << std::endl;
+    std::cout << a << std::endl;
+    std::cout << b << std::endl;
+    std::cout << c << std::endl;
+  } else {
+    std::cout << "test_notcmov: pass" << std::endl;
+  }
+}
+
+void test_notczero(void) {
+  v4int a( 1, 2, 3, 4);
+  v4int c(-1, 0,-1, 0);
+  notczero(c,a);
+  if( any(a!=v4int( 1,0, 3,0)) ||
+      any(c!=v4int(-1,0,-1,0)) ) {
+    std::cout << "test_notczero: FAIL" << std::endl;
+    std::cout << a << std::endl;
+    std::cout << c << std::endl;
+  } else {
+    std::cout << "test_notczero: pass" << std::endl;
+  }
+}
+
+void test_load(void) {
+  int mem[16]; // Alignment??
+  v4int a0(1,0,0,0);
+  v4int a1(0,0,0,0);
+  v4int a2(0,0,0,0);
+  v4int a3(0,0,0,0);
+  int i;
+  for( i=0; i<16; i++ ) mem[i] = i;
+  load( mem, a0 );
+  load( mem+4, a1 );
+  load( mem+8, a2 );
+  load( mem+12, a3 );
+  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  if( any(a0!=v4int( 0, 1, 2, 3)) ||
+      any(a1!=v4int( 4, 5, 6, 7)) ||
+      any(a2!=v4int( 8, 9,10,11)) ||
+      any(a3!=v4int(12,13,14,15)) || i!=16 ) {
+    std::cout << "test_load: FAIL" << std::endl;
+    std::cout << a0;
+    std::cout << a1;
+    std::cout << a2;
+    std::cout << a3;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_load: pass" << std::endl;
+  } 
+}
+
+void test_half_swizzle(void) {
+  int mem[16]; // Alignment??
+  v4int a0, a1, a2, a3;
+  int i;
+  for(i=0; i<16; i++ ) mem[i] = i;
+  half_swizzle(mem,  mem+4,mem+8, mem+12,a0,a1);
+  half_swizzle(mem+2,mem+6,mem+10,mem+14,a2,a3);
+  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  if( any(a0!=v4int( 0, 4, 8,12)) ||
+      any(a1!=v4int( 1, 5, 9,13)) ||
+      any(a2!=v4int( 2, 6,10,14)) ||
+      any(a3!=v4int( 3, 7,11,15)) || i!=16 ) {
+    std::cout << "test_half_swizzle: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_half_swizzle: pass" << std::endl;
+  }
+}
+
+void test_swizzle(void) {
+  int mem[16]; // Alignment??
+  v4int a0, a1, a2, a3;
+  int i;
+  for(i=0; i<16; i++ ) mem[i] = i;
+  swizzle(mem,mem+4,mem+8,mem+12,a0,a1,a2,a3);
+  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  if( any(a0!=v4int( 0, 4, 8,12)) ||
+      any(a1!=v4int( 1, 5, 9,13)) ||
+      any(a2!=v4int( 2, 6,10,14)) ||
+      any(a3!=v4int( 3, 7,11,15)) || i!=16 ) {
+    std::cout << "test_swizzle: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_swizzle: pass" << std::endl;
+  }
+}
+
+void test_store(void) {
+  int mem[16];
+  v4int a0( 0, 1, 2, 3);
+  v4int a1( 4, 5, 6, 7);
+  v4int a2( 8, 9,10,11);
+  v4int a3(12,13,14,15);
+  int i;
+  for(i=0; i<16; i++) mem[i] = 0;
+  store(a0,mem);
+  store(a1,mem+4);
+  store(a2,mem+8);
+  store(a3,mem+12);
+  for(i=0; i<16; i++) if(mem[i]!=i) break;
+  if( any(a0!=v4int( 0, 1, 2, 3)) ||
+      any(a1!=v4int( 4, 5, 6, 7)) ||
+      any(a2!=v4int( 8, 9,10,11)) ||
+      any(a3!=v4int(12,13,14,15)) || i!=16 ) {
+    std::cout << "test_store: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_store: pass" << std::endl;
+  }
+}
+
+void test_stream(void) {
+  int mem[16];
+  v4int a0( 0, 1, 2, 3);
+  v4int a1( 4, 5, 6, 7);
+  v4int a2( 8, 9,10,11);
+  v4int a3(12,13,14,15);
+  int i;
+  for(i=0; i<16; i++) mem[i] = 0;
+  stream(a0,mem);
+  stream(a1,mem+4);
+  stream(a2,mem+8);
+  stream(a3,mem+12);
+  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  if( any(a0!=v4int( 0, 1, 2, 3)) ||
+      any(a1!=v4int( 4, 5, 6, 7)) ||
+      any(a2!=v4int( 8, 9,10,11)) ||
+      any(a3!=v4int(12,13,14,15)) || i!=16 ) {
+    std::cout << "test_stream: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_stream: pass" << std::endl;
+  }
+}
+
+void test_half_deswizzle(void) {
+  int mem[16];
+  v4int a0( 0, 4, 8,12);
+  v4int a1( 1, 5, 9,13);
+  v4int a2( 2, 6,10,14);
+  v4int a3( 3, 7,11,15);
+  int i;
+  for(i=0; i<16; i++) mem[i] = 0;
+  half_deswizzle(a0,a1,mem,  mem+4,mem+8, mem+12);
+  half_deswizzle(a2,a3,mem+2,mem+6,mem+10,mem+14);
+  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  if( any(a0!=v4int( 0, 4, 8,12)) ||
+      any(a1!=v4int( 1, 5, 9,13)) ||
+      any(a2!=v4int( 2, 6,10,14)) ||
+      any(a3!=v4int( 3, 7,11,15)) || i!=16 ) {
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_half_deswizzle: pass" << std::endl;
+  }
+}
+
+void test_deswizzle(void) {
+  int mem[16];
+  v4int a0( 0, 4, 8,12);
+  v4int a1( 1, 5, 9,13);
+  v4int a2( 2, 6,10,14);
+  v4int a3( 3, 7,11,15);
+  int i;
+  for(i=0; i<16; i++) mem[i] = 0;
+  deswizzle(a0,a1,a2,a3,mem,  mem+4,mem+8, mem+12);
+  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  if( any(a0!=v4int( 0, 4, 8,12)) ||
+      any(a1!=v4int( 1, 5, 9,13)) ||
+      any(a2!=v4int( 2, 6,10,14)) ||
+      any(a3!=v4int( 3, 7,11,15)) || i!=16 ) {
+    std::cout << "test_deswizzle: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_deswizzle: pass" << std::endl;
+  }
+}
+
+void test_int_scalar_constructor(void) {
+  v4int a0(0);
+  v4int a1(1);
+  v4int a2(2);
+  v4int a3(3);
+  if( any(a0!=v4int( 0, 0, 0, 0)) ||
+      any(a1!=v4int( 1, 1, 1, 1)) ||
+      any(a2!=v4int( 2, 2, 2, 2)) ||
+      any(a3!=v4int( 3, 3, 3, 3)) ) {
+    std::cout << "test_int_scalar_constructor: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+  } else {
+    std::cout << "test_int_scalar_constructor: pass" << std::endl;
+  }
+}
+
+void test_float_scalar_constructor(void) {
+  v4float a0(0);
+  v4float a1(1);
+  v4float a2(2);
+  v4float a3(3);
+  if( any(a0!=v4float( 0, 0, 0, 0)) ||
+      any(a1!=v4float( 1, 1, 1, 1)) ||
+      any(a2!=v4float( 2, 2, 2, 2)) ||
+      any(a3!=v4float( 3, 3, 3, 3)) ) {
+    std::cout << "test_float_scalar_constructor: FAIL" << std::endl;
+    std::cout << a0 << std::endl;
+    std::cout << a1 << std::endl;
+    std::cout << a2 << std::endl;
+    std::cout << a3 << std::endl;
+  } else {
+    std::cout << "test_float_scalar_constructor: pass" << std::endl;
+  }
+}
+
+void test_int_access( void ) {
+  v4int a(0,1,2,3);
+  int i;
+  for( i=0; i<4; i++ ) if( a(i)!=i ) break;
+  if( i!=4 ) {
+    std::cout << "test_int_access: FAIL" << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_int_access: pass" << std::endl;
+  }
+}
+
+void test_float_access( void ) {
+  v4float a(0,1,2,3);
+  int i;
+  for( i=0; i<4; i++ ) if( a(i)!=i ) break;
+  if( i!=4 ) {
+    std::cout << "test_float_access: FAIL" << std::endl;
+    std::cout << i << std::endl;
+  } else {
+    std::cout << "test_float_access: pass" << std::endl;
+  }
+}
+
+#define test_prefix_unary(type,name,op,ai,bi,af,bf)                      \
+void test_##type##_prefix_unary_##name( void ) {                         \
+  v4##type a ai, b bi;                                                   \
+  b = op a;                                                              \
+  if( any(a!=v4##type af) ||                                             \
+      any(b!=v4##type bf) ) {                                            \
+    std::cout << "test_"#type"_prefix_unary_"#name": FAIL" << std::endl; \
+    std::cout << a << std::endl;                                         \
+    std::cout << b << std::endl;                                         \
+  } else {                                                               \
+    std::cout << "test_"#type"_prefix_unary_"#name": pass" << std::endl; \
+  }                                                                      \
+}
+test_prefix_unary(int,plus,+,(0,1,2,3),(1,0,0,0),(0,1,2,3),(0,1,2,3));
+test_prefix_unary(int,neg,-,(0,1,2,3),(1,0,0,0),(0,1,2,3),(0,-1,-2,-3));
+test_prefix_unary(int,bnot,~,(0,1,2,3),(0,0,0,0),(0,1,2,3),(-1,-2,-3,-4));
+test_prefix_unary(int,lnot,!,(0,1,2,3),(1,2,3,0),(0,1,2,3),(-1,0,0,0));
+test_prefix_unary(int,inc,++,(0,1,2,3),(1,0,0,0),(1,2,3,4),(1,2,3,4));
+test_prefix_unary(int,dec,--,(1,2,3,4),(0,0,0,0),(0,1,2,3),(0,1,2,3));
+
+test_prefix_unary(float,plus,+,(0,1,2,3),(1,0,0,0),(0,1,2,3),(0,1,2,3));
+test_prefix_unary(float,neg,-,(1,2,3,4),(1,0,0,0),(1,2,3,4),(-1,-2,-3,-4));
+void test_float_prefix_unary_lnot( void ) {
+  v4float a(0,1,2,3);
+  v4int b(1,2,3,0);
+  b = !a;
+  if( any(a!=v4float(0,1,2,3)) ||
+      any(b!=v4int(-1,0,0,0)) ) {
+    std::cout << "test_float_prefix_unary_lnot: FAIL" << std::endl;
+    std::cout << a << std::endl;
+    std::cout << b << std::endl;
+  } else {
+    std::cout << "test_float_prefix_unary_lnot: pass" << std::endl;
+  }
+}
+test_prefix_unary(float,inc,++,(0,1,2,3),(1,0,0,0),(1,2,3,4),(1,2,3,4));
+test_prefix_unary(float,dec,--,(1,2,3,4),(0,0,0,0),(0,1,2,3),(0,1,2,3));
+#undef test_prefix_unary
+
+#define test_postfix_unary(type,name,op,ai,bi,af,bf)                      \
+void test_##type##_postfix_unary_##name( void ) {                         \
+  v4##type a ai, b bi;                                                    \
+  b = a op;                                                               \
+  if( any(a!=v4##type af) ||                                              \
+      any(b!=v4##type bf) ) {                                             \
+    std::cout << "test_"#type"_postfix_unary_"#name": FAIL" << std::endl; \
+    std::cout << a << std::endl;                                          \
+    std::cout << b << std::endl;                                          \
+  } else {                                                                \
+    std::cout << "test_"#type"_postfix_unary_"#name": pass" << std::endl; \
+  }                                                                       \
+}
+test_postfix_unary(int,inc,++,(0,1,2,3),(0,0,0,0),(1,2,3,4),(0,1,2,3));
+test_postfix_unary(int,dec,--,(1,2,3,4),(1,0,0,0),(0,1,2,3),(1,2,3,4));
+
+test_postfix_unary(float,inc,++,(0,1,2,3),(1,0,0,0),(1,2,3,4),(0,1,2,3));
+test_postfix_unary(float,dec,--,(1,2,3,4),(0,0,0,0),(0,1,2,3),(1,2,3,4));
+#undef test_postfix_unary
+
+#define test_binary(type,name,op,ai,bi,ci,cf)                           \
+void test_##type##_binary_##name(void) {                                \
+  v4##type a ai, b bi, c ci;                                            \
+  c = a op b;                                                           \
+  if( any(a!=v4##type ai) ||                                            \
+      any(b!=v4##type bi) ||                                            \
+      any(c!=v4##type cf) ) {                                           \
+    std::cout << "test_"#type"_binary_"#name": FAIL" << std::endl;      \
+    std::cout << a << std::endl;                                        \
+    std::cout << b << std::endl;                                        \
+    std::cout << c << std::endl;                                        \
+  } else {                                                              \
+    std::cout << "test_"#type"_binary_"#name": pass" << std::endl;      \
+  }                                                                     \
+}
+test_binary(int,add,+,(1,2,3,4),(4,3,2,1),(0,0,0,0),(5,5,5,5));
+test_binary(int,sub,-,(1,2,3,4),(4,3,2,1),(0,0,0,0),(-3,-1,1,3));
+test_binary(int,mul,*,(1,2,3,4),(4,3,2,1),(1,1,1,1),(4,6,6,4));
+test_binary(int,div,/,(1,2,3,4),(4,3,2,1),(5,5,5,5),(0,0,1,4));
+test_binary(int,rem,%,(1,2,3,4),(4,3,2,1),(3,3,3,3),(1,2,1,0));
+test_binary(int,bxor,^,(0,0,1,1),(0,1,0,1),(2,2,2,2),(0,1,1,0));
+test_binary(int,band,&,(0,0,1,1),(0,1,0,1),(2,2,2,2),(0,0,0,1));
+test_binary(int,bor, |,(0,0,1,1),(0,1,0,1),(2,2,2,2),(0,1,1,1));
+test_binary(int,lsh,<<,( 1,1,1,1),(4,3,2,1),(0,0,0,0),(16,8,4,2));
+test_binary(int,rsh,>>,(16,8,4,2),(4,3,2,1),(0,0,0,0),(1,1,1,1));
+test_binary(int,lt,<,  (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,0,0,0));
+test_binary(int,gt,>,  (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,0,-1,-1));
+test_binary(int,eq,==, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,-1,0,0));
+test_binary(int,ne,!=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,0,-1,-1));
+test_binary(int,le,<=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,-1,0,0));
+test_binary(int,ge,>=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,-1,-1,-1));
+test_binary(int,land,&&,(0,0,3,4),(0,2,0,1),(3,0,6,-7),(0,0,0,-1));
+test_binary(int,lor,||, (0,0,3,4),(0,2,0,1),(3,0,6,-7),(0,-1,-1,-1));
+
+test_binary(float,add,+,(1,2,3,4),(4,3,2,1),(0,0,0,0),(5,5,5,5));
+test_binary(float,sub,-,(1,2,3,4),(4,3,2,1),(0,0,0,0),(-3,-1,1,3));
+test_binary(float,mul,*,(1,2,3,4),(4,3,2,1),(1,1,1,1),(4,6,6,4));
+test_binary(float,div,/,(1,2,3,4),(4,2,2,1),(5,5,5,5),(0.25,1.,1.5,4));
+test_binary(float,lt,<,  (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,0,0,0));
+test_binary(float,gt,>,  (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,0,-1,-1));
+test_binary(float,eq,==, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,-1,0,0));
+test_binary(float,ne,!=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,0,-1,-1));
+test_binary(float,le,<=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(-1,-1,0,0));
+test_binary(float,ge,>=, (1,2,3,4),(3,2,2,1),(3,0,6,-7),(0,-1,-1,-1));
+test_binary(float,land,&&,(0,0,3,4),(0,2,0,1),(3,0,6,-7),(0,0,0,-1));
+test_binary(float,lor,||, (0,0,3,4),(0,2,0,1),(3,0,6,-7),(0,-1,-1,-1));
+#undef binary
+
+#define test_assign(type,name,op,ai,bi,af,bf)                           \
+void test_##type##_assign_##name(void) {                                \
+  v4##type a ai, b bi;                                                  \
+  a op b;                                                               \
+  if( any(a!=v4##type af) ||                                            \
+      any(b!=v4##type bf) ) {                                           \
+    std::cout << "test_"#type"_assign_"#name": FAIL" << std::endl;      \
+    std::cout << a << std::endl;                                        \
+    std::cout << b << std::endl;                                        \
+  } else {                                                              \
+    std::cout << "test_"#type"_assign_"#name": pass" << std::endl;      \
+  }                                                                     \
+}
+test_assign(int,eq,    =, (0,1,2,3), (4,5,6,7),(4,5,6,7),    (4,5,6,7));
+test_assign(int,addeq,+=, (0,1,2,3), (4,5,6,7),(4,6,8,10),   (4,5,6,7));
+test_assign(int,subeq,-=, (0,1,2,3), (4,5,6,7),(-4,-4,-4,-4),(4,5,6,7));
+test_assign(int,muleq,*=, (0,1,2,3), (4,5,6,7),(0,5,12,21),  (4,5,6,7));
+test_assign(int,diveq,/=, (5,6,7,8), (1,2,3,4),(5,3,2,2),    (1,2,3,4));
+test_assign(int,remeq,%=, (5,6,7,8), (1,2,3,4),(0,0,1,0),    (1,2,3,4));
+test_assign(int,xoreq,^=, (0,0,1,1), (0,1,0,1),(0,1,1,0),    (0,1,0,1));
+test_assign(int,andeq,&=, (0,0,1,1), (0,1,0,1),(0,0,0,1),    (0,1,0,1));
+test_assign(int,oreq, |=, (0,0,1,1), (0,1,0,1),(0,1,1,1),    (0,1,0,1));
+test_assign(int,lsheq,<<=,(1,1,1,1), (1,2,3,4),(2,4,8,16),   (1,2,3,4));
+test_assign(int,rsheq,>>=,(2,4,8,16),(1,2,3,4),(1,1,1,1),    (1,2,3,4));
+
+test_assign(float,eq,    =, (0,1,2,3), (4,5,6,7),(4,5,6,7),    (4,5,6,7));
+test_assign(float,addeq,+=, (0,1,2,3), (4,5,6,7),(4,6,8,10),   (4,5,6,7));
+test_assign(float,subeq,-=, (0,1,2,3), (4,5,6,7),(-4,-4,-4,-4),(4,5,6,7));
+test_assign(float,muleq,*=, (0,1,2,3), (4,5,6,7),(0,5,12,21),  (4,5,6,7));
+test_assign(float,diveq,/=, (5,6,7,8), (1,2,4,4),(5,3,1.75,2), (1,2,4,4));
+#undef test_assign
+
+void test_float_rcp(void) {
+  v4float a(0.1,0.2,0.4,0.8), b, c;
+  b = rcp_approx(a);
+  c = rcp(a);
+  std::cout << "test_float_rcp:" << std::endl;
+  std::cout << "Input:" << a << std::endl;
+  std::cout << "Approx:" << b << std::endl;
+  std::cout << "Precise:" << c << std::endl;
+}
+
+void test_float_rsqrt(void) {
+  v4float a(0.01,0.5,4,10000), b, c;
+  b = rsqrt_approx(a);
+  c = rsqrt(a);
+  std::cout << "test_float_rsqrt:" << std::endl;
+  std::cout << "Input:" << a << std::endl;
+  std::cout << "Approx:" << b << std::endl;
+  std::cout << "Precise:"<< c << std::endl;
+}
+
+begin_initialization {
+
+  test_transpose();
+  test_cmov();
+  test_czero();
+  test_notcmov();
+  test_notczero();
+
+  test_load();
+  test_half_swizzle();
+  test_swizzle();
+  test_store();
+  test_stream();
+  test_half_deswizzle();
+  test_deswizzle();
+
+  test_int_access();
+
+  test_int_scalar_constructor();
+
+  test_int_prefix_unary_plus();
+  test_int_prefix_unary_neg();
+  test_int_prefix_unary_bnot();
+  test_int_prefix_unary_lnot();
+  test_int_prefix_unary_inc();
+  test_int_prefix_unary_dec();
+
+  test_int_postfix_unary_inc();
+  test_int_postfix_unary_dec();
+
+  test_int_binary_add();
+  test_int_binary_sub();
+  test_int_binary_mul();
+  test_int_binary_div();
+  test_int_binary_rem();
+  test_int_binary_bxor();
+  test_int_binary_band();
+  test_int_binary_bor();
+  test_int_binary_lsh();
+  test_int_binary_rsh();
+  test_int_binary_lt();
+  test_int_binary_gt();
+  test_int_binary_eq();
+  test_int_binary_ne();
+  test_int_binary_le();
+  test_int_binary_ge();
+  test_int_binary_land();
+  test_int_binary_lor();
+
+  test_int_assign_eq();
+  test_int_assign_addeq();
+  test_int_assign_subeq();
+  test_int_assign_muleq();
+  test_int_assign_diveq();
+  test_int_assign_remeq();
+  test_int_assign_xoreq();
+  test_int_assign_andeq();
+  test_int_assign_oreq();
+  test_int_assign_lsheq();
+  test_int_assign_rsheq();
+
+  test_float_access();
+
+  test_float_scalar_constructor();
+
+  test_float_prefix_unary_plus();
+  test_float_prefix_unary_neg();
+  test_float_prefix_unary_lnot();
+  test_float_prefix_unary_inc();
+  test_float_prefix_unary_dec();
+
+  test_float_postfix_unary_inc();
+  test_float_postfix_unary_dec();
+
+  test_float_binary_add();
+  test_float_binary_sub();
+  test_float_binary_mul();
+  test_float_binary_div();
+  test_float_binary_lt();
+  test_float_binary_gt();
+  test_float_binary_eq();
+  test_float_binary_ne();
+  test_float_binary_le();
+  test_float_binary_ge();
+  test_float_binary_land();
+  test_float_binary_lor();
+
+  test_float_assign_eq();
+  test_float_assign_addeq();
+  test_float_assign_subeq();
+  test_float_assign_muleq();
+  test_float_assign_diveq();
+
+  test_float_rcp();
+  test_float_rsqrt();
+
+  abort(0);
+};
+
+#else
+
+begin_initialization {
+  std::cout << "V4VERSION was not specified. No V4 support is provided."
+            << std::endl;
+  abort(0);
+};
+
+#endif

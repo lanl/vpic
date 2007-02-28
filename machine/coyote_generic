@@ -1,0 +1,46 @@
+/* 
+ * Written by:
+ *   Kevin J. Bowers, Ph.D.
+ *   Plasma Physics Group (X-1)
+ *   Applied Physics Division
+ *   Los Alamos National Lab
+ * March/April 2004 - Heavily adapted from earlier versions of V4PIC.
+ *
+ */
+
+/* Tested on a patched gcc-3.3.3 and MPICH-1.2.2.2. If a patched gcc-3.x.y
+   (x>=3) is not available, any ANSI-C89 and ANSI-C++98 compiler will work if
+   V4 extensions are disabled (delete the "-DV4VERSION=v4_sse.hpp" option from
+   CPPFLAGS or if you want to use the portable V4 library, replace
+   "v4_sse.hpp" with "v4_portable.hpp"). Likewise, any MPI-1 compilant
+   implementation of MPI should be sufficient to compile this code.
+
+   To set the compilers/linkers used by mpicc/mpiCC, set the environment
+   variables MPICH_CC, MPICH_CLINKER, MPICH_CCC and MPICH_CCLINKER accordingly.
+
+   Note: strict ANSI compile options have been turned off for CPPFLAGS as
+   MPICH-1.2.2.2 mpio.h has errors that trip on a strict compile (no
+   "long long" in ANSI-C++98). */
+
+/* File extension to use for libraries and executables */
+#define EXTENSION cy_gen
+
+/* Machine specific libraries and include directories */
+LIBRARIES +=    $(shell mpiCC --showme:link)
+INCLUDE_DIRS += $(shell mpiCC --showme:compile)
+LIBRARY_DIRS += 
+
+/* Which Programs to use on this machine? */
+CC =  /usr/bin/gcc
+CPP = /usr/bin/g++
+LD =  /usr/bin/g++
+AR = ar clq
+RANLIB = ranlib
+RM = rm -f
+
+/* What compile flags should be used? */
+/* No V4 hardware acceleration or restricted pointer optimizations */
+CCFLAGS  = -Wall -pedantic -ansi -O2 
+CPPFLAGS = -Wall                 -O2
+LDFLAGS  = -Wall -pedantic -ansi -O2
+ARFLAGS  = 

@@ -1,0 +1,187 @@
+// This input deck sets up the Cygnus rod-pinch diode
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// April 2004 - original version written
+
+begin_globals {
+  double V_peak;
+  double t_rise;
+  double t_hold;
+  double t_fall;
+  double r_a;
+  double r_o;
+};
+
+begin_initialization {
+
+  // Processor topology
+  double npx = 1;
+  double npy = 1;
+  double npz = 32;
+
+  // System of units (Rationalized MKSA)
+  double cvac = 299792458;       // Speed of light (in m/s)
+  double eps0 = 8.854187817e-12; // Permittivity of free space (in F/m)
+  double ec   = 1.602176462e-19; // Fundamental charge (in C)
+  double me   = 9.10938188e-31;  // Electron (in kg)
+  double mi   = 1.67262158e-27;  // Hydrogen (in kg)
+
+  // Important relative lengths
+  double emitter_to_cathode = 5e-2;
+  double cathode_width      = 3e-3;
+  double cathode_to_tip     = 1e-2;
+  double tip_to_absorber    = 7e-3;
+  double r_a                = 1.0e-3; // Anode radius
+  double r_c                = 4.5e-3; // Cathode radius
+  double r_o                = 7e-2;   // Simulation radius
+  double r_o_actual         = 19e-2;  // Outer conductor
+  double voltage_rescale    = ( 1/r_a - 1/r_o ) / ( 1/r_a - 1/r_o_actual );
+  // The voltage rescale factor allows the outer conductor to be moved in to
+  // allow smaller simulation volume to be used. This does not take into
+  // account any reflections of the incident pulse off the taper from the
+  // cylinder waveguide to the rod. Thus, v_peak below is the amplitude
+  // of the pulse after it has passed the taper.
+
+  // Absolute z-coordinates
+  double z_l  = -emitter_to_cathode;       // Inside surface of cathode is z=0
+  double z_cl = z_l  + emitter_to_cathode; // Cathode low
+  double z_ch = z_cl + cathode_width;      // Cathode high
+  double z_ah = z_ch + cathode_to_tip;     // Anode high
+  double z_h  = z_ah + tip_to_absorber;    // Simulation high
+
+  // Define the regions
+# define anode           (            z<=z_ah && (x*x+y*y)<=r_a*r_a )
+# define cathode         ( z>=z_cl && z<=z_ch && (x*x+y*y)>=r_c*r_c )
+# define outer_conductor (                       (x*x+y*y)>=r_o*r_o )
+
+  // Pulse parameters
+  global->V_peak = 1e6 * voltage_rescale;
+  global->t_rise = 1e-9; 
+  global->t_hold = 8e-9;
+  global->t_fall = 1e-9; 
+  global->r_a    = r_a;   // Anode radius
+  global->r_o    = r_o;   // Outer conductor radius
+
+  // Define resolution
+  double nx = 140; // 2 cell resolution for anode
+  double ny = 140; // (Roughly 0.5 mm cells)
+  double nz = 140; 
+
+  // Create the grid
+
+  grid->cvac = cvac;
+  grid->eps0 = eps0;
+  grid->dt   = 0.98*courant_length(r_o,r_o,z_h-z_l,nx,ny,nz)/cvac;
+  grid->damp = 0.005;
+
+  define_reflecting_grid( 0,   0,   z_l,
+                          r_o, r_o, z_h,
+                          nx,  ny,  nz,
+                          npx, npy, npz );
+
+  if( grid->bc[BOUNDARY(-1, 0, 0)]==metal_fields )
+    set_domain_field_bc( BOUNDARY(-1, 0, 0), symmetric_fields );
+
+  if( grid->bc[BOUNDARY( 0,-1, 0)]==metal_fields )
+    set_domain_field_bc( BOUNDARY( 0,-1, 0), symmetric_fields );
+
+  if( grid->bc[BOUNDARY( 0, 0,-1)]==metal_fields )
+    set_domain_field_bc( BOUNDARY( 0, 0,-1), absorb_fields );
+
+  if( grid->bc[BOUNDARY( 0, 0,+1)]==metal_fields )
+    set_domain_field_bc( BOUNDARY( 0, 0,+1), absorb_fields );
+
+  // Setup the simulation 
+  num_step             = int(10e-9/grid->dt);
+  status_interval      = 25;
+  clean_div_e_interval = 25;
+  clean_div_b_interval = 25;
+  sync_shared_interval = 25;
+
+  // Create the materials
+  define_material( "vacuum",   1, 1, 0      );
+  define_material( "copper",   1, 1, 5.98e7 );
+  define_material( "tungsten", 1, 1, 1.85e7 );
+  finalize_materials();
+
+  // Create the species
+  //define_species( "e-", -ec/me, 1 /*(3*nx)*(0.5*nx)*/ );
+  //define_species( "H+",  ec/mi, 1 /*(3*nz)*(0.5*nx)*/ );
+  finalize_species();
+
+  // Load the initial fields and particle boundary conditions
+  set_region_material( anode,           "tungsten", "tungsten" );
+  set_region_material( cathode,         "copper",   "copper"   );
+  set_region_material( outer_conductor, "copper",   "copper"   );
+
+  set_region_bc( anode,           absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( cathode,         absorb_particles, absorb_particles, absorb_particles );
+  set_region_bc( outer_conductor, absorb_particles, absorb_particles, absorb_particles );
+};
+
+begin_diagnostics {
+  if( (step%100)==0 ) dump_fields("f");
+};
+
+begin_particle_injection {
+  // FIXME: Write particle emission
+};
+
+begin_current_injection {
+  // No current injection in this simulation
+};
+
+begin_field_injection {
+
+  if( grid->bc[BOUNDARY(0,0,-1)]==absorb_fields ) { /* TEM_0 injection boundary */
+  
+    double t      = grid->dt * step;
+    double tr     = global->t_rise;
+    double tf     = global->t_hold + tr;
+    double te     = global->t_fall + tf;
+    double r_o    = global->r_o;
+    double r_a    = global->r_a;
+    double V_peak = global->V_peak;
+
+    double V, er0;
+  
+    if( t<0 )       V = 0;
+    else if( t<tr ) V = V_peak*t/tr;
+    else if( t<tf ) V = V_peak;
+    else if( t<te ) V = V_peak*(te-t)/(te-tf);
+    else            V = 0;
+
+    er0 = V / ( 1/r_a - 1/r_o );
+
+    /* Loop over all ex fields */
+
+    for( int j=1; j<=grid->ny+1; j++ ) {
+      for( int i=1; i<=grid->nx; i++ ) {
+        double x    = grid->x0 + (i-0.5)*grid->dx;
+        double y    = grid->y0 + (j-1  )*grid->dy;
+        double r    = sqrt( x*x + y*y );
+        double er   = er0 / ( r*r );
+        if( r>r_a && r<r_o ) field(i,j,1).ex += er * x / r;
+      }
+    }
+
+    /* Loop over all ey fields */
+
+    for( int j=1; j<=grid->ny; j++ ) {
+      for( int i=1; i<=grid->nx+1; i++ ) {
+        double x    = grid->x0 + (i-1  )*grid->dx;
+        double y    = grid->y0 + (j-0.5)*grid->dy;
+        double r    = sqrt( x*x + y*y );
+        double er   = er0 / ( r*r );
+        if( r>r_a && r<r_o ) field(i,j,1).ey += er * y / r;
+      }
+    }
+
+  }
+
+};
+

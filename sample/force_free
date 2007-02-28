@@ -1,0 +1,218 @@
+// Force free reconnection configuration simulation
+//
+// This input deck was written by:
+//   Kevin J. Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// August 2003      - original version
+// March/April 2004 - rewritten for domain decomposition V4PIC
+
+begin_globals {
+  double energies_interval;
+  double fields_interval;
+  double ehydro_interval;
+  double ihydro_interval;
+  double eparticle_interval;
+  double iparticle_interval;
+  double restart_interval;
+};
+
+begin_initialization {
+  sim_log("Computing parameters");
+  
+  // System of units
+  double c    = 1;         // Speed of light
+  double eps0 = 0.25/M_PI; // Permittivity of space
+  double wce  = 1;         // Electron cyclotron frequency
+  double ec   = 1;         // Charge unit
+  double me   = 1;         // Electron mass
+
+  // Physics parameters
+  double mi_me     = 100;
+  double tez_texy  = 0.8729;
+  double tiz_tixy  = 1;
+  double tixy_texy = 0.8729;
+  double wpe_wce   = 1.926;
+  double ntwist    = 1;
+  double heli      = 1;
+  double taui      = 20;
+ 
+  // Numerical parameters
+  double nx        = 224;     // x resolution
+  double ny        = 96;      // y resolution
+  double nz        = 64;      // z resolution
+  double damp      = 0.00035; // Radiation damping
+  double cfl_req   = 0.99;    // How close to Courant should we run
+  double wcedt_max = 0.1;     // Max timestep if not Courant limited
+  double nppc      = 320;     // Overall number of macro particles per cell
+
+  // Domain decomposition parameters
+  double nprx = 4; // Processors along x
+  double npry = 2; // Processors along y
+  double nprz = 2; // Processors along z
+
+  // Derived parameters
+  double mi  = mi_me*me;    // Ion mass
+  double wci = wce/mi_me;   // Ion cyclotron frequency
+  double wpe = wce*wpe_wce; // e- plasma frequency
+
+  double b0    = me*wce/ec;        // Magnetic field strength
+  double alpha = (wpe/c)*sqrt( (1/tez_texy-1) +
+                               (1/tiz_tixy-1)/mi_me ); // Magnetic shear
+
+  double lz  = 2*M_PI*ntwist/alpha;     // z-Box size
+  double lx  = nx*lz/nz;                // x-Box size
+  double ly  = ny*lz/nz;                // y-Box size
+  double n0  = eps0*me*wpe*wpe/(ec*ec); // e- (also ion) density
+  double Npe = n0*lx*ly*lz;             // # physical e-
+  double Npi = Npe;                     // # physical ions
+  double Ne  = 0.5*nppc*nx*ny*nz;       // # macro e-
+  Ne = trunc_granular(Ne,nproc());      // Make it divisible by nproc
+  double Ni  = Ne;                      // # macro ions
+  double qe  = -ec*Npe/Ne;              // Charge per macro e-
+  double qi  =  ec*Npi/Ni;              // Charge per macro ion
+
+  double vdre  = heli*(alpha*c/wpe)*(wce/wpe);    // e- drift/c
+  vdre *= tan(0.5*alpha*lz/nz)/(0.5*alpha*lz/nz); // Correct discretization
+  double vtxye = vdre;                            // e- xy thermal speed/c
+  double vtze  = vtxye*sqrt(tez_texy);            // e- z  thermal speed/c
+  double vdri  = 0;                               // Ion drift/c
+  double vtxyi = vtxye*sqrt(tixy_texy/mi_me);     // Ion xy thermal speed/c
+  double vtzi  = vtxyi*sqrt(tiz_tixy);            // Ion z  thermal speed/c
+
+  double dt = cfl_req*courant_length(lx,ly,lz,nx,ny,nz)/c; // Timestep
+  if( wce*dt>wcedt_max ) dt = wcedt_max/wce; // Override if not Courant limited
+
+  sim_log( "Allocating the simulation" );
+
+  num_step             = int(taui/(wci*dt)); // Number of steps to run
+  status_interval      = 1; // How often to print status
+  sync_shared_interval = 128; // How often to check/clean shared faces
+  clean_div_b_interval = 128; // How often to check/clean div B
+  clean_div_e_interval = 128; // How often to check/clean div E
+
+  global->energies_interval  = 16;
+  global->fields_interval    = 128;
+  global->ehydro_interval    = 128;
+  global->ihydro_interval    = 128;
+  global->eparticle_interval = 0;
+  global->iparticle_interval = 0;
+  global->restart_interval   = 8192;
+
+  define_periodic_grid( 0,0,0,            // Low corner
+                        lx,ly,lz,         // High corner
+                        nx,ny,nz,         // Resolution
+                        nprx,npry,nprz ); // Topology
+  grid->dt   = dt;
+  grid->cvac = c;
+  grid->eps0 = eps0;
+  grid->damp = damp;
+
+  // 20% extra space for potential non-uniformities
+  species_id electron = define_species("electron",-ec/me,1.2*Ne/nproc(),16);
+  species_id ion      = define_species("ion",      ec/mi,1.2*Ni/nproc(),32);
+  finalize_species();
+
+  // By default, space is filled with first material defined
+  define_material("vacuum",1);
+  finalize_materials();
+  
+  sim_log("Loading fields");
+
+  set_region_field( everywhere, 0, 0, 0,                        // E
+                    b0*cos(alpha*z), heli*b0*sin(alpha*z), 0 ); // B
+
+  sim_log("Loading particles");
+
+  repeat( Ni/nproc() ) {
+    double x, y, z, vperp1, vperp2, vpara, cs, sn, tmp;
+
+    // Pick a uniform random location in the local domain
+    x = grid->x0 + uniform_rand(0,grid->dx*grid->nx);
+    y = grid->y0 + uniform_rand(0,grid->dy*grid->ny);
+    z = grid->z0 + uniform_rand(0,grid->dz*grid->nz);
+
+    // Compute the magnetic field direction angles
+    // Note: this accounts for Yee-mesh discretization of B
+
+    tmp = alpha*( grid->z0 + grid->dz*( int((z-grid->z0)/grid->dz) + 0.5 ) );
+    cs  =      cos(tmp);
+    sn  = heli*sin(tmp);
+     
+    // For below, note: perp1, perp2, para are right handed
+    // perp1 = -heli sin(alpha z) x_hat +      cos(alpha z) y_hat
+    // perp2 = z_hat
+    // para  =       cos(alpha z) x_hat + heli sin(alpha z) y_hat
+
+    // Pick ion velocity/c from a bi-Maxwellian in the drift frame,
+    // boost / rotate it into the lab frame and inject the ion
+    do {
+      vperp1 = maxwellian_rand(vtxyi);
+      vperp2 = maxwellian_rand(vtzi);
+      vpara  = maxwellian_rand(vtxyi);
+    } while( vperp1*vperp1 + vperp2*vperp2 + vpara*vpara >= 1 );
+    vperp1 *= sqrt( 1 - vdri*vdri ) / ( 1 + vdri*vpara );
+    vperp2 *= sqrt( 1 - vdri*vdri ) / ( 1 + vdri*vpara );
+    vpara = ( vpara + vdri ) / ( 1 + vdri*vpara );
+    tmp = sqrt( 1 - vperp1*vperp1 - vperp2*vperp2 - vpara*vpara );
+    if( inject_particle( ion, x, y, z,
+                         (-vperp1*sn + vpara*cs)/tmp,
+                         ( vperp1*cs + vpara*sn)/tmp,
+                         vperp2/tmp, qi ) != SUCCESS ) sim_log("Ion inj err");
+
+    // Pick electron velocity/c from a bi-Maxwellian in the drift frame,
+    // boost / rotate it into the lab frame and inject the electron
+    do {
+      vperp1 = maxwellian_rand(vtxye);
+      vperp2 = maxwellian_rand(vtze);
+      vpara  = maxwellian_rand(vtxye);
+    } while( vperp1*vperp1 + vperp2*vperp2 + vpara*vpara >= 1 );
+    vperp1 *= sqrt( 1 - vdre*vdre ) / ( 1 + vdre*vpara );
+    vperp2 *= sqrt( 1 - vdre*vdre ) / ( 1 + vdre*vpara );
+    vpara = ( vpara + vdre ) / ( 1 + vdre*vpara );
+    tmp = sqrt( 1 - vperp1*vperp1 - vperp2*vperp2 - vpara*vpara );
+    if( inject_particle( electron, x, y, z,
+                         (-vperp1*sn + vpara*cs)/tmp,
+                         ( vperp1*cs + vpara*sn)/tmp,
+                         vperp2/tmp, qe ) != SUCCESS ) sim_log("e- inj err");
+  }
+};
+
+begin_diagnostics {
+
+  if( step==0 ) {
+    dump_grid("grid");
+    dump_materials("materials");
+    dump_species("species");
+    dump_energies("energies",0);
+    dump_fields("fields");
+    dump_hydro("electron","ehydro");
+    dump_hydro("ion","ihydro");
+  }
+
+# define should_dump(x) ( step>0 &&                                 \
+                          global->x##_interval>0 &&                 \
+                          remainder(step,global->x##_interval)==0 )
+  if( should_dump(energies)  ) dump_energies("energies");
+  if( should_dump(fields)    ) dump_fields("fields");
+  if( should_dump(ehydro)    ) dump_hydro("electron","ehydro");
+  if( should_dump(ihydro)    ) dump_hydro("ion","ihydro");
+  if( should_dump(eparticle) ) dump_particles("electron","eparticle");
+  if( should_dump(iparticle) ) dump_particles("ion","iparticle");
+  if( should_dump(restart)   ) dump_restart("restart",0); 
+# undef should_dump
+
+};
+
+begin_particle_injection {
+  // No particle injection for this simulation
+};
+
+begin_current_injection {
+  // No current injection for this simulation
+};
+
+begin_field_injection {
+  // No field injection for this simulation
+};

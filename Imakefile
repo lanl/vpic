@@ -1,0 +1,43 @@
+/*
+ * Written by:
+ *   Kevin J. Bowers, Ph.D.
+ *   Plasma Physics Group (X-1)
+ *   Applied Physics Division
+ *   Los Alamos National Lab
+ * March/April 2004 - Adapted and extended from earier V4PIC versions
+ *
+ */
+    
+/* Libraries the modules need to be linked against */
+LIBRARIES += -lm
+INCLUDE_DIRS +=
+LIBRARY_DIRS +=
+
+/* Modules for the modules library */
+AddModule(common,src/util/common,c,common)
+AddModule(mtrand,src/util/mtrand,c,mtrand)
+AddModule(mp,src/util/mp,c,mp)
+AddModule(v4,src/util/v4,cpp,)
+AddModule(grid,src/grid,c,ops partition structors add_boundary)
+AddModule(material,src/material,c,coefficient material)
+AddModule(field,src/field,c,accumulator advance_b advance_e div_b div_e energy_f interpolator local remote structors)
+AddModule(particle,src/particle,c,boundary_p hydro_p move_p rho_p sort_p structors)
+AddModule(particle_v4,src/particle,cpp,advance_p center_p energy_p uncenter_p)
+AddModule(species,src/species,c,species)
+AddModule(emitter,src/emitter,c,emitter child-langmuir ccube ivory)
+AddModule(boundary,src/boundary,c,maxwellian_reflux absorb_tally link)
+AddModule(vpic,src/vpic,cpp,advance dump initialize misc vpic)
+
+/* Additional directories to clean */
+CleanDir(.)
+CleanDir(src)
+CleanDir(machine)
+CleanDir(sample)
+CleanDir(sample/test)
+CleanDir(sample/bench)
+CleanDir(interfaces)
+CleanDir(interfaces/c)
+CleanDir(interfaces/fortran)
+CleanDir(interfaces/matlab)
+CleanDir(interfaces/idl)
+

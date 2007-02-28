@@ -1,0 +1,55 @@
+// Benchmark FDTD communications overhead
+//
+// Written by:
+//   Kevin J. Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - Adapted into input deck format and heavily revised from
+//                    earlier V4PIC versions
+
+begin_globals {
+};
+
+begin_initialization {
+  num_step = 64;
+  status_interval = 64;
+
+  if( num_cmdline_arguments != 4 ) {
+    sim_log( "Usage: " << cmdline_argument[0] << " Npx Npy Npz" );
+    exit(0);
+  }
+  int Npx = atoi(cmdline_argument[1]);
+  int Npy = atoi(cmdline_argument[2]);
+  int Npz = atoi(cmdline_argument[3]);
+  if( nproc()!=Npx*Npy*Npz ) {
+    sim_log( "This run needs " << Npx*Npy*Npz << " processors." );
+    abort(0);
+  }
+
+  grid->dt = 0.99/sqrt(3.0);
+  grid->cvac = 1;
+  grid->eps0 = 1;
+  define_periodic_grid( 0, 0, 0,                // Grid low corner
+                        64*Npx, 64*Npy, 64*Npz, // Grid high corner
+                        64*Npx, 64*Npy, 64*Npz, // Grid resolution
+                        Npx, Npy, Npz );        // Processor configuration
+
+  define_material("vacuum",1.0,1.0,0.0);
+
+  finalize_materials();
+  finalize_species();
+};
+
+begin_diagnostics {
+};
+
+begin_particle_injection {
+};
+
+begin_current_injection {
+};
+
+begin_field_injection {
+};
+

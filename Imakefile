@@ -16,7 +16,7 @@ LIBRARY_DIRS +=
 /* Modules for the modules library */
 AddModule(common,src/util/common,c,common)
 AddModule(mtrand,src/util/mtrand,c,mtrand)
-AddModule(mp,src/util/mp,c,mpi_dummy mp)
+AddModule(mp,src/util/mp,c,mpi_stubs mp)
 AddModule(v4,src/util/v4,cpp,)
 AddModule(grid,src/grid,c,ops partition structors add_boundary)
 AddModule(material,src/material,c,coefficient material)

@@ -8,11 +8,11 @@
  *
  */
 
-#if defined DUMMY_MPI
-#include <mpi_dummy.h>
+#if defined USE_MPI_STUBS
+#include <mpi_stubs.h>
 #else
 #include <mpi.h>    /* For MPI_Init and MPI_Finalize */
-#endif // DUMMY_MPI
+#endif // USE_MPI_STUBS
 
 #include <string.h> /* For strcmp */
 #include <vpic.hpp>

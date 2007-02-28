@@ -7,12 +7,17 @@
  * February 2007 - Original Version
  */
 
-#if defined DUMMY_MPI
+#if defined USE_MPI_STUBS
 
-#include <mpi_dummy.h>
+#include <mpi_stubs.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+
+int MPI_Recv( void *buf, int count, MPI_Datatype datatype,
+   int source, int tag, MPI_Comm comm, MPI_Status *request ) {
+   return( MPI_SUCCESS );
+} /* MPI_Send; */
 
 int MPI_Irecv( void *buf, int count, MPI_Datatype datatype,
    int source, int tag, MPI_Comm comm, MPI_Request *request ) {
@@ -47,6 +52,11 @@ int MPI_Comm_size( MPI_Comm comm, int *size ) {
    return( MPI_SUCCESS );
 } /* MPI_Comm_size */
 
+int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) {
+	*count = status->count;
+   return( MPI_SUCCESS );
+} /* MPI_Get_count */
+
 double MPI_Wtime( void ) {
    static int sec = -1;
    struct timeval tv;
@@ -62,6 +72,11 @@ int MPI_Barrier( MPI_Comm comm ) {
 int  MPI_Finalize( void ) {
    return( MPI_SUCCESS );
 } /* MPI_Finalize */
+
+int MPI_Abort( MPI_Comm comm, int errorcode ) {
+   exit( errorcode );
+   return( MPI_SUCCESS );
+} /* MPI_Abort */
 
 int MPI_Allgather( void *sendbuf, int sendcount, MPI_Datatype sendtype,
    void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm ) {
@@ -94,4 +109,4 @@ int  MPI_Allreduce( void *sendbuf, void *recvbuf, int nitems,
    return( MPI_SUCCESS );
 } /* MPI_Allreduce */
   
-#endif /* DUMMY_MPI */
+#endif /* USE_MPI_STUBS */

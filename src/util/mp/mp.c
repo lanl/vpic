@@ -12,7 +12,7 @@
 #include <mpi_stubs.h>
 #else
 #include <mpi.h>
-#endif // USE_MPI_STUBS
+#endif /* USE_MPI_STUBS */
 
 #include <mp.h>
 #include <string.h>  /* For memcpy */ 

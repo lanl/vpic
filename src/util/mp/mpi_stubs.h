@@ -10,6 +10,10 @@
 #ifndef mpi_dummy_h
 #define mpi_dummy_h
 
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
+
 /* constants */
 
 #define MPI_COMM_WORLD 0
@@ -147,6 +151,8 @@ int MPI_Comm_rank( MPI_Comm comm, int *rank );
 
 int MPI_Comm_size( MPI_Comm comm, int *size );
 
+int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
+
 double MPI_Wtime();
 
 int MPI_Send( void *buf, int count, MPI_Datatype datatype, int dest,
@@ -154,6 +160,9 @@ int MPI_Send( void *buf, int count, MPI_Datatype datatype, int dest,
 
 int MPI_Issend( void *buf, int count, MPI_Datatype datatype, int dest,
    int tag, MPI_Comm comm, MPI_Request *request );
+
+int MPI_Recv( void *buf, int count, MPI_Datatype datatype,
+   int source, int tag, MPI_Comm comm, MPI_Status *request );
 
 int MPI_Irecv( void *buf, int count, MPI_Datatype datatype, int source,
    int tag, MPI_Comm comm, MPI_Request *request );
@@ -169,5 +178,9 @@ int MPI_Barrier( MPI_Comm comm );
 int MPI_Wait(MPI_Request *request, MPI_Status *status);
 
 int MPI_Abort( MPI_Comm comm, int errorcode );
+
+#if defined(__cplusplus)
+} /* extern */
+#endif /* __cplusplus */
 
 #endif /* mpi_dummy_h */

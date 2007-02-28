@@ -28,17 +28,17 @@ INCLUDE_DIRS +=
 LIBRARY_DIRS += 
 
 /* Which Programs to use on this machine? */
-CC =  ppu-gcc
-CPP = ppu-g++
-LD =  ppu-g++
-AR = ppu-ar clq
-RANLIB = ppu-ranlib
+CC =  gcc
+CPP = g++
+LD =  g++
+AR = ar clq
+RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DDUMMY_MPI
+CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DUSE_MPI_STUBS
 /* CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp */ 
-CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp -DDUMMY_MPI
+CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp -DUSE_MPI_STUBS
 LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict 
 ARFLAGS  = 
 

@@ -1,0 +1,24 @@
+################################################################################
+# Subversion revision control cheat-sheet
+################################################################################
+
+# A good first resource is simply
+% svn help [command]
+
+# For general subversion information and documentation look at:
+http://subversion.tigris.org
+
+# Subversion Book:
+http://svnbook.red-bean.com
+
+# Check out a project
+
+% svn co svn://server/path-to-repo/{trunk,branches,tags} destination
+
+so for the current vpic setup do:
+
+% svn co svn://taffy.lanl.gov/vpic/trunk vpic
+
+This will create the directory "vpic" in the current working directory and
+populate with the source from the main trunk.  Subsequent subversion
+operations will not require the server, path, or tag to be specified

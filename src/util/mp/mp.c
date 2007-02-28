@@ -8,7 +8,12 @@
  *
  */
 
+#if defined DUMMY_MPI
+#include <mpi_dummy.h>
+#else
 #include <mpi.h>
+#endif // DUMMY_MPI
+
 #include <mp.h>
 #include <string.h>  /* For memcpy */ 
 /* A mp can handle up to 54 simultaneous communications (27 sends and 27

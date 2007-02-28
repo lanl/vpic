@@ -8,8 +8,13 @@
  *
  */
 
-#include <string.h> /* For strcmp */
+#if defined DUMMY_MPI
+#include <mpi_dummy.h>
+#else
 #include <mpi.h>    /* For MPI_Init and MPI_Finalize */
+#endif // DUMMY_MPI
+
+#include <string.h> /* For strcmp */
 #include <vpic.hpp>
 
 int main( int argc, char **argv ) {

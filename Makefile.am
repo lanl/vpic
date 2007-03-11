@@ -2,18 +2,19 @@
 # top-level Makefile.am
 ################################################################################
 
-SUBDIRS = ${CELLDIR} ${HOSTDIR}
+SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
 setup:
-	$(call symlinks, '.*\.h+?p+?')
+	$(call symlinks, "@top_srcdir@/src", '.*\.h+?p+?')
 
 ################################################################################
 # Function to make symbolic links
-# arg1 - search wildcard
+# arg1 - search directory
+# arg2 - search wildcard
 ################################################################################
 define symlinks
-	@(cd src; [ -d include ] && rm -rf include; \
-		found=`find . -type f -regex $1 -print`; \
+	@(cd $1; [ -d include ] && rm -rf include; \
+		found=`find . -type f -regex $2 -print`; \
 		[ -z "$$found" ] || (mkdir include && cd include && \
 		ln -s `echo $$found | sed 's/\.\//\.\.\//g'` .))
 endef

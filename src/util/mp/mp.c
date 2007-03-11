@@ -8,11 +8,11 @@
  *
  */
 
-#if defined USE_MPI_STUBS
-#include <mpi_stubs.h>
-#else
+#if defined ENABLE_DMP
 #include <mpi.h>
-#endif /* USE_MPI_STUBS */
+#else
+#include <mpi_stubs.h>
+#endif /* ENABLE_DMP */
 
 #include <mp.h>
 #include <string.h>  /* For memcpy */ 

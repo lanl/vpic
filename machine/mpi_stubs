@@ -36,9 +36,9 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DUSE_MPI_STUBS
+CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict
 /* CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp */ 
-CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp -DUSE_MPI_STUBS
+CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict -DV4VERSION=v4_portable.hpp
 LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -DRESTRICT=__restrict 
 ARFLAGS  = 
 

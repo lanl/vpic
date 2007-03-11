@@ -36,10 +36,10 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict 
+CCFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict -DENABLE_DMP
 /* CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict -DV4VERSION=v4_sse.hpp */ 
-CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict -DV4VERSION=v4_sse.hpp 
-LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict 
+CPPFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict -DV4VERSION=v4_sse.hpp -DENABLE_DMP
+LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=opteron -DRESTRICT=__restrict -DENABLE_DMP
 ARFLAGS  = 
 
 CCFLAGS  += $(shell mpicc --showme:compile)

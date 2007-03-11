@@ -7,7 +7,7 @@
  * February 2007 - Original Version
  */
 
-#if defined USE_MPI_STUBS
+#if !defined ENABLE_DMP
 
 #include <mpi_stubs.h>
 #include <stdlib.h>
@@ -109,4 +109,4 @@ int  MPI_Allreduce( void *sendbuf, void *recvbuf, int nitems,
    return( MPI_SUCCESS );
 } /* MPI_Allreduce */
   
-#endif /* USE_MPI_STUBS */
+#endif /* ENABLE_DMP */

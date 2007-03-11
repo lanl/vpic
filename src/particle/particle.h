@@ -82,7 +82,7 @@ extern void accumulate_rho_p( field_t * RESTRICT ALIGNED f,
                               int np,
                               const grid_t * RESTRICT g );
 
-/* In structors.c */
+/* In pstructors.c */
 extern particle_t * ALIGNED new_particle_array( int np );
 extern particle_mover_t * ALIGNED new_particle_mover( int nm );
 extern void delete_particle_array( particle_t ** ALIGNED p );

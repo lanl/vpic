@@ -1,0 +1,9 @@
+#! /bin/bash
+
+MPI_CPPFLAGS=`mpicc --showme:compile`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's/\-l.[^ ]*//g'`
+MPI_LIBS=`mpicc --showme:link | sed 's/\-L.[^ ]*//g;s/-pthread//g;s/\-W.[^ ]*//g'`
+
+export MPI_CPPFLAGS
+export MPI_LDFLAGS
+export MPI_LIBS

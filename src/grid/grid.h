@@ -167,7 +167,7 @@ int IUO_add_boundary( grid_t *g,
                       const void * initial_params,
                       int sz );
 
-/* In structors.c */
+/* In gstructors.c */
 extern grid_t *new_grid(void);
 extern void delete_grid( grid_t **g );
 

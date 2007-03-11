@@ -175,7 +175,7 @@ typedef struct _accumulator_t {
 
 BEGIN_C_DECLS
 
-/* In structors.c */
+/* In fstructors.c */
 
 extern field_t * ALIGNED new_field( const grid_t * RESTRICT g );
 extern void delete_field( field_t ** ALIGNED f );

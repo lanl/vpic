@@ -1,6 +1,8 @@
 #ifndef spe_thread_h
 #define spe_thread_h
 
+#if defined __PPU__
+
 #include <libspe2.h>
 
 /* arguments for running an SPE thread */
@@ -12,5 +14,7 @@ typedef struct {
 
 /* function for running an SPE thread using pthreads */
 void * spe_thread(void * vargs);
+
+#endif // __PPU__
 
 #endif // spe_thread_h

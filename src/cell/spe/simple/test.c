@@ -1,3 +1,5 @@
+#if defined __SPU__
+
 #include <spu_mfcio.h>
 #include <stdio.h>
 #include <test_args.h>
@@ -17,3 +19,5 @@ int main(unsigned long long speid, unsigned long long params) {
 	*/
 	return 0;
 } // main
+
+#endif // __SPU__

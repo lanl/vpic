@@ -1,3 +1,5 @@
+#if defined __PPU__
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <spe_thread.h>
@@ -15,3 +17,5 @@ void * spe_thread(void * vargs) {
 	spe_context_run(args->spe, &entry, runflags, args->argp, args->envp, NULL);
 	pthread_exit(NULL);
 } /* spe_thread */
+
+#endif // __PPU__

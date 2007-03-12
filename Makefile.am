@@ -4,13 +4,10 @@
 
 SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
-setup: setup-host setup-cell
+setup: setup-host
 
 setup-host:
 	$(call symlinks, "@top_srcdir@/src", '.*\.h+?p+?')
-
-setup-cell:
-	$(call symlinks, "@top_srcdir@/cell/src", '.*\.h+?p+?')
 
 ################################################################################
 # Function to make symbolic links

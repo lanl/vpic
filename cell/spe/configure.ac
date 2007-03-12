@@ -24,7 +24,6 @@ prefix=$prefix/spe
 ################################################################################
 host_build_directory=`(cd ../..; pwd)`
 host_ac_directory=`(cd $srcdir/../..; pwd)`
-echo "host $host_ac_directory"
 AC_SUBST(HOST_BUILDDIR, [$host_build_directory])
 AC_SUBST(SPE_BUILDDIR, [$host_build_directory/cell/spe])
 AC_SUBST(HOST_ACDIR, [$host_ac_directory])

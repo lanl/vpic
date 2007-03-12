@@ -22,6 +22,14 @@
 #include <emitter.h>
 #include <boundary.h>
 
+#if defined __PPU__
+#include <pthread.h>
+#include <libspe2.h>
+#include <thread_args.h>
+
+const size_t MAX_THREADS = 8;
+#endif // __PPU__
+
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
 #endif
@@ -37,6 +45,15 @@ public:
 
 private:
 
+#if defined __PPU__
+	// cell process control variables
+	pthread_t pid_[MAX_THREADS];
+	spe_context_ptr_t sid_[MAX_THREADS];
+
+	// this will need to be modified for a real problem
+	thread_args arg[MAX_THREADS];
+#endif // __PPU__
+	
   // Directly initialized by user; saved in a restart dump
 
   int step;                 // Number of steps taken so far

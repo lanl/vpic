@@ -5,8 +5,8 @@
 bin_PROGRAMS = advance accel cyclo inbndj interp_e outbndj pcomm \
 	rng_conv rng_seq v4
 
-INCLUDES = @EXTRA_CPPFLAGS@ \
-	-I@top_srcdir@/src/include
+INCLUDES = -I@top_srcdir@/src/include \
+	@EXTRA_CPPFLAGS@
 
 advance_SOURCES = @top_srcdir@/src/main.cpp \
 	@top_srcdir@/src/deck_wrapper.cpp

@@ -5,9 +5,9 @@
 
 cwd=`pwd`
 
-#echo "calling PPE bootstrap"
-#(cd cell/ppe; config/bootstrap $cwd)
-#echo
+echo "calling PPE bootstrap"
+(cd cell/ppe; config/bootstrap $cwd)
+echo
 
 #echo "calling SPE bootstrap"
 #(cd cell/spe; config/bootstrap $cwd)

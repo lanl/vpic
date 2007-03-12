@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+#
+# Create build system using GNU autotools
+#
+
+echo "generating Makefile.am for PPU VPIC library"
+config/lib.am > lib/Makefile.am
+
+echo "calling libtoolize..."
+libtoolize -f --automake
+echo "calling aclocal -I $1/m4"
+aclocal -I $1/m4 > /dev/null 2>&1
+echo "automake -af --foreign"
+automake -af --foreign
+echo "autoconf"
+autoconf

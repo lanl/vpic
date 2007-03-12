@@ -1,7 +1,9 @@
 #include <spu_mfcio.h>
 #include <stdio.h>
+#include <test_args.h>
 
 int main(unsigned long long speid, unsigned long long params) {
+	/*
 	TestArgs args;
 	unsigned int tag = 0;
 
@@ -12,5 +14,6 @@ int main(unsigned long long speid, unsigned long long params) {
 	printf("hello from spe %llx with id %d and value %lf\n",
 		speid, args.id, args.value);
 
+	*/
 	return 0;
 } // main

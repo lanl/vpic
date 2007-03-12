@@ -25,7 +25,7 @@
 #if defined __PPU__
 #include <pthread.h>
 #include <libspe2.h>
-#include <thread_args.h>
+#include <spe_thread.h>
 
 const size_t MAX_THREADS = 8;
 #endif // __PPU__
@@ -45,13 +45,13 @@ public:
 
 private:
 
-#if defined __PPU__
 	// cell process control variables
+#if defined __PPU__
 	pthread_t pid_[MAX_THREADS];
 	spe_context_ptr_t sid_[MAX_THREADS];
 
 	// this will need to be modified for a real problem
-	thread_args arg[MAX_THREADS];
+	thread_args arg_[MAX_THREADS];
 #endif // __PPU__
 	
   // Directly initialized by user; saved in a restart dump

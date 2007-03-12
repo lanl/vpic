@@ -12,9 +12,6 @@ typedef struct {
 	void * envp;
 } thread_args;
 
-/* function for running an SPE thread using pthreads */
-void * spe_thread(void * vargs);
-
 #endif // __PPU__
 
 #endif // spe_thread_h

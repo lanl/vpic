@@ -10,6 +10,22 @@
 
 #include <vpic.hpp>
 
+#if defined __PPU__
+// reference the SPE program 
+extern "C" { spe_program_handle_t test; }
+
+// function to create threads
+void * spe_thread(void * vargs) {
+	thread_args * args = (thread_args *)vargs;
+	unsigned int runflags = 0;
+	unsigned int entry = SPE_DEFAULT_ENTRY;
+	spe_context_run(args->spe, &entry, runflags,
+		args->argp, args->envp, NULL);
+	pthread_exit(NULL);
+} // spe_thread
+
+#endif // __PPU__
+
 void vpic_simulation::initialize( int argc, char **argv ) {
   double tmp;
   species_t *sp;
@@ -30,8 +46,36 @@ void vpic_simulation::initialize( int argc, char **argv ) {
     mp_abort(0,grid->mp);
   }
 
+
+	// cell processor setup
+#if defined __PPU__
+	// this is just a value to pass to the SPEs to test
+	// doing a simple DMA transfer
+	double value __attribute__ ((aligned(16))) = 10.0;
+
+	for(size_t i(0); i<MAX_THREADS; i++) {
+		sid_[i] = spe_context_create(0, NULL);
+		spe_program_load(sid_[i], &test);
+		arg_[i].spe = sid_[i];
+		arg_[i].argp = (void *)&value;
+		arg_[i].envp = NULL;
+		pthread_create(&pid_[i], NULL, &spe_thread, &arg_[i]);
+	} // for
+#endif // __PPU__
+
   // Call the user initialize the simulation
   user_initialization(argc,argv);
+
+
+#if defined __PPU__
+	for(size_t i(0); i<MAX_THREADS; i++) {
+		pthread_join(pid_[i], NULL);
+	} // for
+
+	for(size_t i(0); i<MAX_THREADS; i++) {
+		spe_context_destroy(sid_[i]);
+	} // for
+#endif // __PPU__
 
   // Do some consistency checks on user initialized fields
   if( rank==0 ) MESSAGE(("Checking interdomain synchronization"));

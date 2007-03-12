@@ -48,10 +48,8 @@ CCS_TUNE_CC
 ################################################################################
 if test "$ENABLE_CELL" = "1" ; then
 	AC_SUBST(CELLDIR, [cell])
-	#AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-	#AC_CONFIG_SUBDIRS([cell/ppe cell/spe])
-	AC_SUBST(CELLSUBDIRS, ["ppe"])
-	AC_CONFIG_SUBDIRS([cell/ppe])
+	AC_SUBST(CELLSUBDIRS, ["spe ppe"])
+	AC_CONFIG_SUBDIRS([cell/spe cell/ppe])
 fi
 
 # enable/disable distributed memory parallelism

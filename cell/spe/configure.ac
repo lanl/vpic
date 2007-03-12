@@ -1,102 +1,59 @@
 ################################################################################
-# PPE configure.ac
+# SPE configure.ac
 ################################################################################
-AC_INIT(VPIC_PPE, 3.1.2.1, bergen@lanl.gov)
+AC_INIT(VPIC_SPE, 3.1.2.1, bergen@lanl.gov)
 AC_CONFIG_AUX_DIR(config)
-VERSION_INFORMATION="-release 3.1.2.1 "
-AC_SUBST(VERSION_INFORMATION)
 
 ################################################################################
 # automake and libtool initialization
 ################################################################################
 AM_INIT_AUTOMAKE
-AC_PROG_LIBTOOL
 
 ################################################################################
 # list targets for output
 ################################################################################
-AC_CONFIG_FILES(Makefile \
-	config/rules.mk \
-	lib/Makefile \
-	bin/Makefile)
+AC_CONFIG_FILES(Makefile bin/Makefile)
 
 ################################################################################
-# I haven't figured out a unique tag defined by the ppu compiler
-# so I made one myself
+# append prefix with spe
 ################################################################################
-AC_DEFINE([__PPU__])
+prefix=$prefix/spe
 
 ################################################################################
-# append prefix with ppe
-################################################################################
-prefix=$prefix/ppe
-
-################################################################################
-# set absolute path to spe build directory
+# set absolute paths
 ################################################################################
 host_build_directory=`(cd ../..; pwd)`
 host_ac_directory=`(cd $srcdir/../..; pwd)`
+AC_SUBST(HOST_BUILDDIR, [$host_build_directory])
 AC_SUBST(SPE_BUILDDIR, [$host_build_directory/cell/spe])
 AC_SUBST(HOST_ACDIR, [$host_ac_directory])
-
-################################################################################
-# enable options
-################################################################################
-CCS_ENABLE_DMP
+AC_SUBST(SPE_ACDIR, [$host_ac_directory/cell/spe])
 
 ################################################################################
 # with options
 ################################################################################
-CCS_WITH_PPU_COMPILER
-CCS_WITH_TOOLCHAIN
-CCS_WITH_LIBSPE2
+CCS_WITH_SPU_COMPILER
+CCS_WITH_IBM_SIMDMATH
 CCS_WITH_ADDRESSING
-CCS_WITH_CELL_INSTDIR
+CCS_WITH_LIBMISC_SPU
 
 ################################################################################
 # C/C++ configuration
 ################################################################################
 AC_PROG_CC
-CCS_TUNE_PCC
+CCS_TUNE_SCC
 AC_PROG_CXX
-CCS_TUNE_PCXX
+CCS_TUNE_SCXX
 
 ################################################################################
-# setup EXTRA
+# Flags
 ################################################################################
-EXTRA_CPPFLAGS="$LIBSPE2_CPPFLAGS $TOOLCHAIN_CPPFLAGS"
-EXTRA_LDFLAGS="$LIBSPE2_LDFLAGS"
-EXTRA_LIBS="$LIBSPE2_LIBS"
+EXTRA_CPPFLAGS="$IBM_SIMDMATH_CPPFLAGS $LIBMISC_SPU_CPPFLAGS"
 AC_SUBST(EXTRA_CPPFLAGS)
+EXTRA_LDFLAGS="$IBM_SIMDMATH_LDFLAGS $LIBMISC_SPU_LDFLAGS"
 AC_SUBST(EXTRA_LDFLAGS)
+EXTRA_LIBS="$IBM_SIMDMATH_LIBS $LIBMISC_SPU_LIBS"
 AC_SUBST(EXTRA_LIBS)
-
-################################################################################
-# enable/disable distributed memory parallelism
-################################################################################
-if test "$ENABLE_DMP" = "1" ; then
-	CCS_WITH_PPU_MPI
-
-	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
-	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
-	EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
-
-	AC_SUBST(EXTRA_CPPFLAGS)
-	AC_SUBST(EXTRA_LDFLAGS)
-	AC_SUBST(EXTRA_LIBS)
-
-	# define needed for openmpi
-	AC_DEFINE(OMPI_SKIP_MPICXX)
-fi
-
-################################################################################
-# enable/disable hosted cell build
-################################################################################
-#if test "$ENABLE_HOST" = "1" ; then
-#	AC_SUBST(PPEDIRS, ["bin"])
-AC_SUBST(PPEDIRS, ["lib bin"])
-#AC_SUBST(PPEDIRS, ["bin"])
-#fi
 
 ################################################################################
 # start output

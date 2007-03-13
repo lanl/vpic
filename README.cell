@@ -33,3 +33,24 @@ tells configure not to use the mpi stubs.
 All of the cell specific code in the normal library is included only if __PPU__
 is defined.  Common cell code and SPE code are also included if __SPU__ is
 defined.
+
+Here is a list of the files with modifications:
+
+src/vpic/vpic.hpp
+
+Here is a list of new files:
+
+src/cell/common/process/test_args.h
+src/cell/spe/simple/test.c
+src/cell/ppe/utils/spe_thread.h
+
+Also, everthing under "top-level/cell" is new.  I have not yet added support
+for turning on and off SIMD extensions.  I will work on this.  One way to
+quickly turn on SIMD by default would be to add -DV4VERSION=... to the
+Makefile.am file in "top-level/bin" and in "top-level/cell/ppe/bin".  Or you
+can manually specify it when you run the configure script by doing:
+
+% ./configure CPPFLAGS="-DV4VERSION=..."
+
+Ideally, this would be handled by and --enable-simd type flag.  I will add
+something like this when I have time.

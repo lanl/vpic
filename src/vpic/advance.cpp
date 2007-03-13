@@ -35,6 +35,7 @@ int vpic_simulation::advance(void) {
       if( rank==0 ) MESSAGE(("Performance sorting \"%s\".",sp->name));
       sort_p( sp, grid );
     } 
+
     sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                         accumulator, interpolator, grid );
   }

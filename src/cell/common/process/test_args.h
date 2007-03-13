@@ -3,11 +3,17 @@
 
 #if defined __PPU__ || defined __SPU__
 
-typedef struct
-	{
-		unsigned int id __attribute__ ((aligned(16)));
-		double value __attribute__ ((aligned(16)));
-	} TestArgs; // struct TestArgs
+/* simple example data structure for passing some information to the SPEs */
+typedef struct {
+	unsigned int id __attribute__ ((aligned(16)));
+	double value __attribute__ ((aligned(16)));
+} TestArgs;
+
+/* simple message facility */
+typedef enum {
+	msg_end = 0,
+	msg_advance = 1
+} TestMessage;
 
 #endif // __PPU__ || __SPU__
 

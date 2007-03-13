@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <libspe2.h>
 #include <spe_thread.h>
+#include <test_args.h>
 
 const size_t MAX_THREADS = 8;
 #endif // __PPU__

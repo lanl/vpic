@@ -2,6 +2,11 @@
 # IBM Cell README
 ################################################################################
 
+To configure and build for a Cell version do:
+
+% ./configure --enable-cell
+% make
+
 My current approach for adding support for the IBM Cell to the VPIC library is
 very C-oriented.  This seems like the simplest solution which requires the
 least amount of modification.  The primary changes have been done in the

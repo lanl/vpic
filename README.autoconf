@@ -73,3 +73,8 @@ on the simulator:
 
 This will print some messages showing initialization and the message queue
 being called.
+
+# Normal Build
+To build for an Opteron etc...:
+
+% ./configure --enable-host

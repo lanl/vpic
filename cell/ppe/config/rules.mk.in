@@ -1,0 +1,12 @@
+################################################################################
+# PPE rules.mk
+################################################################################
+
+# rule to copy SPE executable to the current directory
+# and create an embedded, archived image to which
+# the PPE executable can link
+lib%.o: @SPE_BUILDDIR@/bin/%
+	cp @SPE_BUILDDIR@/bin/$* .
+	${PEMB} ${PEMBFLAGS} $* $* $*-emb.o
+	${PSPUAR} ${PSPUARFLAGS} $@ $*-emb.o
+	rm $*

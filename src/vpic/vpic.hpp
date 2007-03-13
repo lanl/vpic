@@ -51,7 +51,7 @@ private:
 	spe_context_ptr_t sid_[MAX_THREADS];
 
 	// this will need to be modified for a real problem
-	thread_args arg_[MAX_THREADS];
+	thread_args arg_[MAX_THREADS] __attribute__ ((aligned(16)));
 #endif // __PPU__
 	
   // Directly initialized by user; saved in a restart dump

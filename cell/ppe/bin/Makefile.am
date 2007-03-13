@@ -9,7 +9,7 @@ INCLUDES = -I@HOST_ACDIR@/src/include \
 
 example_SOURCES = @HOST_ACDIR@/src/main.cpp \
 	@HOST_ACDIR@/src/deck_wrapper.cpp
-example_CPPFLAGS = -DINPUT_DECK=@HOST_ACDIR@/sample/bench/advance_p
+example_CPPFLAGS = -DINPUT_DECK=@HOST_ACDIR@/sample/bergen/advance_p
 example_LDFLAGS = @EXTRA_LDFLAGS@
 example_LDADD = libtest.o @top_builddir@/lib/libvpic.la @EXTRA_LIBS@
 

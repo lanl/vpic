@@ -3,11 +3,11 @@
 
 #if defined __PPU__ || defined __SPU__
 
-struct TestArgs
+typedef struct
 	{
 		unsigned int id __attribute__ ((aligned(16)));
 		double value __attribute__ ((aligned(16)));
-	}; // class TestArgs
+	} TestArgs; // struct TestArgs
 
 #endif // __PPU__ || __SPU__
 

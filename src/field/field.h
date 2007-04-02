@@ -196,7 +196,7 @@ BEGIN_C_DECLS
 
 /* Constructors and destructors **********************************************/
 
-/* In structors.c */
+/* In field_structors.c */
 
 field_t * ALIGNED
 new_field( const grid_t * g );

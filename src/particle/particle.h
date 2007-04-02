@@ -93,7 +93,7 @@ accumulate_rho_p( field_t * ALIGNED f,
                   int np,
                   const grid_t * g );
 
-/* In structors.c */
+/* In particle_structors.c */
 
 particle_t * ALIGNED
 new_particle_array( int np );

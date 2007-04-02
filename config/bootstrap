@@ -1,0 +1,26 @@
+#! /usr/bin/env bash
+#
+# Create build system using GNU autotools
+#
+
+cwd=`pwd`
+
+echo "calling SPE bootstrap"
+(cd cell/spe; config/bootstrap $cwd)
+echo
+
+echo "calling PPE bootstrap"
+(cd cell/ppe; config/bootstrap $cwd)
+echo
+
+echo "generating Makefile.am for VPIC library"
+config/lib.am > lib/Makefile.am
+
+echo "calling libtoolize..."
+libtoolize -f --automake
+echo "calling aclocal -I $cwd/m4"
+aclocal -I $cwd/m4 > /dev/null 2>&1
+echo "automake -af --foreign"
+automake -af --foreign
+echo "autoconf"
+autoconf

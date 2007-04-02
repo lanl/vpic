@@ -1,0 +1,49 @@
+Written by:
+  Kevin J. Bowers, Ph.D.
+  Plasma Physics Group (X-1)
+  Applied Physics Division
+  Los Alamos National Lab
+April 2004 - original version
+
+7.8 million particles advances per second per processor sustained in the
+common case (ss2.lanl.gov cluster; 2.533 GHz Pentium 4 w/ Gigabit Ethernet
+v4 hardware acceleration enabled).
+
+This corresponds to ~1.92 Gflop/s sustained per node in the particle advance
+(~76% of theoretical) and ~1.74 GB/s memory movement to/from floating point
+unit sustained. The basis for the Gflop/s and GB/s estimates are below:
+
+To the author's knowledge, this is the fastest, most efficient, fully
+relativistic 3d particle in cell simulation in the world.
+
+---------------------
+
+Per particle, the common case advance requires approximately:
+
+60 add
+80 multiply
+1  rcp
+2  rsqrt
+6  compares
+20 SIMD bit ops (logicals, conditional moves, conditional zeros)
+
+1 rcp   ~ Initial approximation cost + 2 add + 2 multiply
+1 rsqrt ~ Initial approximation cost + 2 add + 4 multiply
+
+Taking initial approximation cost of the rcp and rsqrt to be four times the
+polishing cost and assuming an add, multiply, compare and vector bit op all
+cost one flop yields:
+
+246 flops per particle in common case
+
+For memory traffic, per particle, the common case requires:
+
+32 bytes memory loads (particle)
+80 bytes L2 loads (interpolator)
+48 bytes L2 loads (accumulator)
+32 bytes memory stores (particle)
+48 bytes L2 stores (accumulator)
+
+This corresponds to 240 bytes shuffled in/out of the floating point unit per
+particle (160 incoming, 80 outgoing).
+

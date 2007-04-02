@@ -1,0 +1,20 @@
+Written by:
+  Kevin J. Bowers, Ph.D.
+  Plasma Physics Group (X-1)
+  Applied Physics Division
+  Los Alamos National Lab
+April 2004 - original version
+
+This code is halfway between Phase 2 and Phase 3 on the VPIC development
+roadmap. (Particle module is almost entirely Phase 3, grid module is hybrid of
+Phase 2 and 3, materials module is Phase 3, field module is entirely Phase 2.)
+
+Phase 1 -> Proof-of-concept code (demonstration of optimal particle advance).
+           Periodic, no domain decomposition.
+Phase 2 -> Cartesian superhexahedral domain decomposition with arbritrary
+           interdomain connectivity. Static decomposition.
+Phase 3 -> Variable meshed cartesian / arbitrary domain decomposition with
+           dynamic multi-constraint load balancing (i.e. cells and particles)
+Phase 4 -> Curvilinear hexahedral arbitrary domain decomposition with
+           dynamic multi-constraint load balancing
+

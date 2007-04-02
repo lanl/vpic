@@ -1,0 +1,51 @@
+/*
+ * Written by:
+ *   Kevin J. Bowers, Ph.D.
+ *   Plasma Physics Group (X-1)
+ *   Applied Physics Division
+ *   Los Alamos National Lab
+ * March/April 2004 - Adapted and extended from earier V4PIC versions
+ *
+ */
+
+/* Libraries the modules need to be linked against */
+
+LIBRARIES += -lm
+INCLUDE_DIRS +=
+LIBRARY_DIRS +=
+
+/* Modules for the modules library */
+
+AddModule(common,src/util/common,common)
+AddModule(mtrand,src/util/mtrand,mtrand)
+AddModule(mp,src/util/mp,mp)
+AddModule(pipeline,src/util/pipeline/serial,pipeline)
+AddModule(v4,src/util/v4,)
+AddModule(grid,src/grid,ops partition structors add_boundary)
+AddModule(material,src/material,coefficient material)
+
+AddModule(field,src/field,load_interpolator clear_accumulators reduce_accumulators unload_accumulator advance_b advance_e energy_f compute_curl_b compute_rhob compute_div_e_err compute_rms_div_e_err clean_div_e compute_div_b_err compute_rms_div_b_err clean_div_b local remote structors)
+AddModule(field_pipelines,src/field/pipelines_v4,load_interpolator_pipeline clear_accumulators_pipeline reduce_accumulators_pipeline unload_accumulator_pipeline advance_b_pipeline advance_e_pipeline energy_f_pipeline compute_curl_b_pipeline compute_rhob_pipeline compute_div_e_err_pipeline compute_rms_div_e_err_pipeline clean_div_e_pipeline compute_div_b_err_pipeline compute_rms_div_b_err_pipeline clean_div_b_pipeline distribute_voxels)
+
+AddModule(particle,src/particle,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p structors)
+AddModule(particle_pipelines,src/particle/pipelines_v4,advance_p_pipeline center_p_pipeline uncenter_p_pipeline energy_p_pipeline)
+
+AddModule(species,src/species,species)
+AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
+AddModule(boundary,src/boundary,maxwellian_reflux absorb_tally link)
+AddModule(vpic,src/vpic,advance dump initialize misc vpic)
+
+/* Additional directories to clean */
+
+CleanDir(.)
+CleanDir(src)
+CleanDir(machine)
+CleanDir(sample)
+CleanDir(sample/test)
+CleanDir(sample/bench)
+CleanDir(interfaces)
+CleanDir(interfaces/c)
+CleanDir(interfaces/fortran)
+CleanDir(interfaces/matlab)
+CleanDir(interfaces/idl)
+

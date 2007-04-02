@@ -1,0 +1,141 @@
+Written by:
+  Kevin J. Bowers, Ph.D.
+  Plasma Physics Group (X-1)
+  Applied Physics Division
+  Los Alamos National Lab
+April 2004 - Original version
+
+To port the code to a machine with an ANSI-C89 and ANSI-C++98 compiler and
+MPI-1 installation, all that usually needs to be done is to write a machine
+description file. In the "machine" directory, there are sample machine
+descriptions for many configurations. The easiest way to port the code is
+to take a machine description that is similar to your machine and customize
+it. Below is an elaborate machine description for an optimized build of VPIC
+on the T-15 nip.lanl.gov cluster using a custom compiler:
+
+#define EXTENSION nip
+LIBRARIES    += -lmpich -lpmpich
+LIBRARY_DIRS += -L/usr/local/mpich-1.2.2.2/lib
+INCLUDE_DIRS += -L/usr/local/mpich-1.2.2.2/include
+CC     = /home2/kbowers/local/bin/gcc-3.3.3p
+CXX    = /home2/kbowers/local/bin/g++-3.3.3p
+LD     = /home2/kbowers/local/bin/g++-3.3.3p
+AR     = ar clq
+RANLIB = ranlib
+RM     = rm -f
+/* Note: Detailed warnings are off for C++ builds because mpio.h in
+   MPICH-1.2.2.2 is not ANSI-C++98 compliant */
+CFLAGS   = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4 
+CXXFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=pentium4 -DV4VERSION=v4_sse.hxx
+LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4
+ARFLAGS  = 
+
+Breaking it down line by line by line:
+
+> #define EXTENSION nip
+
+What extension should be used for the input deck build script and the VPIC
+modules library? See README.install for further information.
+
+> LIBRARIES    += -lmpich -lpmpich
+
+What machine specific libraries do I need to link against?
+
+> LIBRARY_DIRS += -L/usr/local/mpich-1.2.2.2/lib
+
+Where are these libraries located?
+
+> INCLUDE_DIRS += -I/usr/local/mpich-1.2.2.2/include
+
+Where are the include files for these libraries?
+
+> CC     = /home2/kbowers/local/bin/gcc-3.3.3p
+
+What C compiler should I use?
+
+> CXX    = /home2/kbowers/local/bin/g++-3.3.3p
+
+What C++ compiler should I use?
+
+> LD     = /home2/kbowers/local/bin/g++-3.3.3p
+
+What linker should I use?
+
+> AR     = ar clq
+
+What library archiver should I use?
+
+> RANLIB = ranlib
+
+What do I use to put an index on a library? (If your platform does not have
+or need this, you can say "echo" here.)
+
+> RM = rm -f
+
+How do I erase files?
+
+> /* Note: Detailed warnings are off for C++ builds because mpio.h in
+>    MPICH-1.2.2.2 is not ANSI-C++98 compliant */
+
+This demonstrates how comments can be added to a machine description.
+
+> CFLAGS   = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4
+
+What flags should I pass to the C compiler? See below for additional
+information.
+
+> CXXFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=pentium4 -DV4VERSION=v4_sse.hxx
+
+What flags should I pass to the C++ compiler? See below for additional
+information.
+
+> LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4
+
+What flags should I pass to the linker?
+
+> ARFLAGS  = 
+
+What flags should I pass to the archiver?
+
+There are some options which can be used to further tune the port. 
+
+V4VERSION
+=========
+If your processor has 4-vector single precision hardware acceleration written
+for it (from this directory, type "ls src/util/v4"), defining V4VERSION to the
+name of the appropriate header will enable this architecture specific
+optimization.
+
+On Intel and AMD, this means
+"-DV4VERSION=v4_sse.hxx"
+
+On PowerPC (Apple and IBM ... not yet implemented), this means
+"-DV4VERSION=v4_altivec.hxx"
+
+On any other platform, this means
+"-DV4VERSION=v4_portable.hxx"
+
+If you do not want to use the V4 extensions, leave V4VERSION undefined. Also,
+note that V4 extensions can only be used in C++ source code, so defining
+V4VERSION only takes has an effect in CXXFLAGS.
+
+INT16_TYPE
+==========
+If a "short int" is not 16-bits on your platform, define this accordingly.
+
+INT32_TYPE
+==========
+If an "int" is not 32-bits on your platform, define this accordingly.
+
+PREFERRED_ALIGNMENT
+===================
+This dictates the alignment of dynamically allocated memory within the
+simulation. If this is not defined, the code defaults to 16 byte alignment
+for large high performance data structures. Smaller non-performance critical
+data structures use whatever is given to them by "malloc".
+
+USER_GLOBAL_SIZE
+================
+If you want to write input decks that use more that 16384 bytes of user global
+data, set this accordingly.
+

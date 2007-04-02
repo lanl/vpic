@@ -1,0 +1,131 @@
+// Test the random number floating point converters.
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of mtrand test code into an input deck
+
+#include <float.h> /* Need FLT_EPSILON, DBL_EPSILON */
+#include <mtrand_conv.h>
+
+begin_globals {
+};
+
+begin_initialization {
+  double d0, d1;
+  float f0, f1;
+  unsigned INT32_TYPE a0 = 0x00000000, b0 = 0x00000000;
+  unsigned INT32_TYPE a1 = 0xffffffff, b1 = 0xffffffff;
+ 
+  /* Test frand24_c */
+  f0 = frand24_c(a0);
+  f1 = frand24_c(a1);
+  if( f0==0 && f1==1 )
+    printf( "frand24_c:  pass (%.19e, %.19e)\n", f0, 1-f1 );
+  else
+    printf( "frand24_c:  FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+
+  /* Test frand24_c1 */
+  f1 = frand24_c1(a0); /* frand24_c1 operates in reverse */
+  f0 = frand24_c1(a1);
+  if( 0<f0 && f0<2*FLT_EPSILON && f1==1 )
+    printf( "frand24_c1: pass (%.19e, %.19e)\n", f0, 1-f1 );
+  else               
+    printf( "frand24_c1: FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+
+  /* Test frand24_c0 */
+  f0 = frand24_c0(a0);
+  f1 = frand24_c0(a1);
+  if( f0==0 && (1-2*FLT_EPSILON)<f1 && f1<1 )
+    printf( "frand24_c0: pass (%.19e, %.19e)\n", f0, 1-f1 );
+  else
+    printf( "frand24_c0: FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+
+  /* Test frand24_o */
+  f0 = frand24_o(a0);
+  f1 = frand24_o(a1);
+  if( 0<f0 && f0<2*FLT_EPSILON && (1-2*FLT_EPSILON)<f1 && f1<1 )
+    printf( "frand24_o:  pass (%.19e, %.19e)\n", f0, 1-f1 );
+  else
+    printf( "frand24_o:  FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+
+  /* Test drand32_c */
+  d0 = drand32_c(a0);
+  d1 = drand32_c(a1);
+  if( d0==0 && d1==1 )
+    printf( "drand32_c:  pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand32_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand32_c1 */
+  d1 = drand32_c1(a0); /* drand32_c1 operates in reverse */
+  d0 = drand32_c1(a1);
+  if( 0<d0 && d0<2*FLT_EPSILON && d1==1 )
+    printf( "drand32_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else               
+    printf( "drand32_c1: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand32_c0 */
+  d0 = drand32_c0(a0);
+  d1 = drand32_c0(a1);
+  if( d0==0 && (1-FLT_EPSILON)<d1 && d1<1 )
+    printf( "drand32_c0: pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand32_c0: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand32_o */
+  d0 = drand32_o(a0);
+  d1 = drand32_o(a1);
+  if( 0<d0 && d0<FLT_EPSILON && (1-FLT_EPSILON)<d1 && d1<1 )
+    printf( "drand32_o:  pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand32_o:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand53_c */
+  d0 = drand53_c(a0,b0);
+  d1 = drand53_c(a1,b1);
+  if( d0==0 && d1==1 )
+    printf( "drand53_c:  pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand53_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand53_c1 */
+  d1 = drand53_c1(a0,b0); /* drand53_c1 operates in reverse */
+  d0 = drand53_c1(a1,b1);
+  if( 0<d0 && d0<2*DBL_EPSILON && d1==1 )
+    printf( "drand53_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else               
+    printf( "drand53_c1: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand53_c0 */
+  d0 = drand53_c0(a0,b0);
+  d1 = drand53_c0(a1,b1);
+  if( d0==0 && (1-2*DBL_EPSILON)<d1 && d1<1 )
+    printf( "drand53_c0: pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand53_c0: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  /* Test drand53_o */
+  d0 = drand53_o(a0,b0);
+  d1 = drand53_o(a1,b1);
+  if( 0<d0 && d0<2*DBL_EPSILON && (1-2*DBL_EPSILON)<d1 && d1<1 )
+    printf( "drand53_o:  pass (%.19e, %.19e)\n", d0, 1-d1 );
+  else
+    printf( "drand53_o:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+
+  abort(0);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}

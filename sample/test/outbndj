@@ -1,0 +1,148 @@
+// Test current accumulation for out of bounds particles
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+#define drho(x,y,z) drho[LOCAL_CELL_ID(x,y,z)]
+#define divj(x,y,z) divj[LOCAL_CELL_ID(x,y,z)]
+
+#define NX 2
+#define NY 3
+#define NZ 4
+
+begin_globals {
+};
+
+begin_initialization {
+  const int nx = NX, ny = NY, nz = NZ, npart = 21;
+  double drho[ (NX+2)*(NY+2)*(NZ+2) ], divj[ (NX+2)*(NY+2)*(NZ+2) ];
+
+  // Define the grid
+  grid->dt = 1;
+  grid->cvac = nx + ny + nz;
+  grid->eps0 = 1;
+  grid->damp = 0;
+  define_periodic_grid( 0, 0, 0,    // Grid low corner
+                        nx, ny, nz, // Grid high corner
+                        nx, ny, nz, // Grid resolution
+                        1, 1, 1 );  // Processor topology
+
+  define_material("vacuum",1.0,1.0,0.0);
+  species_id test_species = define_species("test_species",1.,npart);
+
+  finalize_materials();
+  finalize_species();
+
+  // Hack into vpic internals
+
+  double cdt_dx = grid->cvac*grid->dt/grid->dx;
+  double cdt_dy = grid->cvac*grid->dt/grid->dy;
+  double cdt_dz = grid->cvac*grid->dt/grid->dz;
+  int num_pass = 0, num_fail = 0;
+  double worst_div_err = 0;
+
+  species_t *sp = find_species_id(test_species,species_list);
+  for(;;) {
+
+    // Load the particles 
+    sp->np = 0;
+    repeat(npart) {
+      double betax = uniform_rand(-nx,nx)/cdt_dx;
+      double betay = uniform_rand(-ny,ny)/cdt_dy;
+      double betaz = uniform_rand(-nz,nz)/cdt_dz;
+      double gamma = 1/sqrt( 1 - betax*betax - betay*betay - betaz*betaz );
+      error_code err = inject_particle( test_species,
+                                        uniform_rand(0,nx),
+                                        uniform_rand(0,ny),
+                                        uniform_rand(0,nz),
+                                        betax*gamma,
+                                        betay*gamma,
+                                        betaz*gamma,
+                                        uniform_rand(0,1) ); 
+      if( err!=SUCCESS ) sim_log("Injection error - " << err);
+    }
+    
+ 
+    // Compute the initial rho
+    clear_rhof( field, grid );
+    accumulate_rho_p( field, sp->p, sp->np, grid );
+    synchronize_rhof( field, grid );
+    for( int z=1; z<=nz+1; z++ ) 
+      for( int y=1; y<=ny+1; y++ ) 
+        for( int x=1; x<=nx+1; x++ ) 
+          drho(x,y,z) = field(x,y,z).rhof;
+
+    // Move the particles and extract the currents
+    clear_accumulators( accumulator, grid );
+    advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
+               accumulator, interpolator, grid );
+    clear_jf( field, grid );
+    reduce_accumulators( accumulator, grid );
+    unload_accumulator( field, accumulator, grid );
+    synchronize_jf( field, grid );
+    
+    // Compute the final rho
+    clear_rhof( field, grid );
+    accumulate_rho_p( field, sp->p, sp->np, grid );
+    synchronize_rhof( field, grid );
+  
+    // Compute divj
+    for( int z=1; z<=nz+1; z++ ) 
+      for( int y=1; y<=ny+1; y++ ) 
+        for( int x=1; x<=nx+1; x++ ) {
+	  if( x==nx+1 ) divj(x,y,z)  = field(1,y,z).jfx;
+	  else          divj(x,y,z)  = field(x,y,z).jfx;
+	  if( x==1 )    divj(x,y,z) -= field(nx,y,z).jfx;
+	  else          divj(x,y,z) -= field(x-1,y,z).jfx;
+	  if( y==ny+1 ) divj(x,y,z) += field(x,1,z).jfy;
+	  else          divj(x,y,z) += field(x,y,z).jfy;
+	  if( y==1 )    divj(x,y,z) -= field(x,ny,z).jfy;
+	  else          divj(x,y,z) -= field(x,y-1,z).jfy;
+	  if( z==nz+1 ) divj(x,y,z) += field(x,y,1).jfz;
+	  else          divj(x,y,z) += field(x,y,z).jfz;
+	  if( z==1 )    divj(x,y,z) -= field(x,y,nz).jfz;
+	  else          divj(x,y,z) -= field(x,y,z-1).jfz;
+	}
+
+    // Compute drho
+    for( int z=1; z<=nz+1; z++ ) 
+      for( int y=1; y<=ny+1; y++ ) 
+        for( int x=1; x<=nx+1; x++ ) 
+          drho(x,y,z) = field(x,y,z).rhof - drho(x,y,z);
+ 
+    // Compute maximum divergence error
+    double max_div_err = 0;
+    for( int z=1; z<=nz+1; z++ ) 
+      for( int y=1; y<=ny+1; y++ ) 
+        for( int x=1; x<=nx+1; x++ ) {
+          double div_err = drho(x,y,z) + divj(x,y,z);
+          if( div_err<0 ) div_err = -div_err;
+          if( div_err>max_div_err ) max_div_err = div_err;
+        }
+    if( max_div_err < 15e-7 ) num_pass++;
+    else                      num_fail++;
+    if( worst_div_err < max_div_err ) worst_div_err = max_div_err;
+
+    if( ((num_pass+num_fail)%10000)==0 )
+      sim_log("pass " << num_pass <<
+              ", fail " << num_fail <<
+              ", worst " << worst_div_err);
+  }
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+

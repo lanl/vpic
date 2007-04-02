@@ -1,0 +1,152 @@
+// Test particle communications
+//
+// Particle starts in center of the center cell of rank 0 and moves exactly
+// +0.5, +0.5, +0.5 of a cell every step. After 10 steps it will land exactly
+// on the corner shared by ranks 0-7. On the push for step 11, the particle
+// will pass through 3 domains simultaneously at land in rank 7. After 20 steps
+// the particle should be in the middle cell of rank 7. After 30 steps it will
+// land exactly on the corner shared by ranks 0-7. On the push for step 31,
+// the particle will pass through 3 domains simultaneously and land in rank 0.
+// On step 40, the particle should end up exactly where it started.
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - Original version written
+
+begin_globals {
+  int fail;
+};
+
+begin_initialization {
+  if( nproc()!=8 ) {
+    sim_log( "This test case requires 8 processors" );
+    abort(0);
+  }
+
+  num_step = 40;
+  define_periodic_grid( 0,  0,  0,     // Box low corner
+                        10, 10, 10,    // Box high corner
+                        10, 10, 10,    // Box resolution
+                        2,  2,  2   ); // Topology
+  grid->dt = 0.5;
+  grid->cvac = 1;
+  grid->eps0 = 1;
+  grid->damp = 0;
+
+  define_species("test_species",1,1,0,2);
+  finalize_species();
+
+  define_material("vacuum",1);
+  finalize_materials();
+
+  if( rank()==0 )
+    inject_particle( "test_species", 2.5, 2.5, 2.5, 1, 1, 1, 0 );
+
+  global->fail = 0;
+}
+
+begin_diagnostics {
+  species_t *sp = find_species_name( "test_species", species_list );
+
+  if( step==0 ) {
+    if( rank()==0 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==10 ) {
+    if( rank()==0 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(5,5,5) || 
+          sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==11 ) {
+    if( rank()==7 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(1,1,1) || 
+          sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==20 ) {
+    if( rank()==7 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==30 ) {
+    if( rank()==7 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(5,5,5) || 
+          sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==31 ) {
+    if( rank()==0 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(1,1,1) || 
+          sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==40 ) {
+    if( rank()==0 ) {
+      if( sp->np!=1 ||
+          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
+          sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
+    } else {
+      if( sp->np!=0 ) global->fail++;
+    }
+  }
+
+  if( step==40 ) {
+    for( int i=0; i<8; i++ ) {
+      if( rank()==i ) {
+        if( global->fail==0 )
+          sim_log_local( "pass" );
+        else
+          sim_log_local( "FAIL (" << global->fail << ")" );
+      }
+      barrier();
+    }
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+

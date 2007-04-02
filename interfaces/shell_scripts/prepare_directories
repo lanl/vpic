@@ -1,0 +1,16 @@
+#!/bin/tcsh -f
+
+if ! -d rundata mkdir rundata
+if ! -d field mkdir field
+if ! -d hydro mkdir hydro
+if ! -d particle mkdir particle 
+if ! -d log mkdir log
+if ! -d fft mkdir fft
+if ! -d movie mkdir movie
+if ! -d poynting mkdir poynting
+if ! -d velocity mkdir velocity
+if ! -d restart mkdir restart
+
+
+
+

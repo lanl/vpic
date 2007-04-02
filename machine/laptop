@@ -1,0 +1,43 @@
+/* 
+ * Written by:
+ *   Kevin J. Bowers, Ph.D.
+ *   Plasma Physics Group (X-1)
+ *   Applied Physics Division
+ *   Los Alamos National Lab
+ * March/April 2004 - Heavily adapted from earlier versions of V4PIC.
+ *
+ */
+
+/* This has been tested on a patched gcc-3.3.3 and LAM-7.0.4 MPI library. It
+   assumes LAM's mpicc and mpiCC have been configured to use a patched
+   gcc-3.3.3 as the default compiler (set the environment variables LAMHCC
+   and LAMHCP accordingly).
+   
+   Earlier versions of LAM will probably work okay (such as 6.5.6). Earlier
+   versions of gcc are known NOT to work (v4_sse.hxx requires patched gcc-3.3
+   or higher). If V4 acceleration or v4_portable.hxx is used, earlier gcc
+   versions should work.  gcc-4.1.x works without patching but has flaky
+   aliasing analysis (use -fno-strict-aliasing).*/
+
+/* File extension to use for libraries and executables */
+#define EXTENSION p3m
+
+/* Machine specific libraries and include directories */
+LIBRARIES += 
+INCLUDE_DIRS +=
+LIBRARY_DIRS +=
+
+/* Which Programs to use on this machine? */
+CC = mpicc
+CXX = mpiCC
+LD = mpiCC
+AR = ar clq
+RANLIB = ranlib
+RM = rm -f
+
+/* What compile flags should be used? */
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse -DV4VERSION=v4_sse.hxx 
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse
+ARFLAGS  = 
+

@@ -1,5 +1,5 @@
 #include <field_pipelines.h>
-#include CONCAT3(<,V4VERSION,>)
+#include <v4.hxx>
 
 using namespace v4;
 

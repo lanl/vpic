@@ -66,7 +66,6 @@ typedef long long int int64;
 #define END_PRIMITIVE   while(0)
 #define STRINGIFY(s)#s
 #define EXPAND_AND_STRINGIFY(s)STRINGIFY(s)
-#define CONCAT3(a,b,c)a/**/b/**/c
 
 /* INDEX_FORTRAN_x and INDEX_C_x give macros for accessing multi-dimensional
    arrays with different conventions. To eliminate potential side effects and

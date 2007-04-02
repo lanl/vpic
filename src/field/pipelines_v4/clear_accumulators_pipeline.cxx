@@ -1,6 +1,6 @@
 #include <field_pipelines.h>
 #include <string.h> /* For memset */
-#include CONCAT3(<,V4VERSION,>)
+#include <v4.hxx>
 
 using namespace v4;
 

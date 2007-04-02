@@ -15,9 +15,9 @@ echo "libvpic_includedir = \${includedir}"
 echo
 echo "libvpic_include_HEADERS = \\"
 
-numfiles=`find src/*/ -follow -type f -regex ".*\.h+?p+?" | wc -l`
+numfiles=`find src/*/ -follow -type f -regex ".*\.h+?x+?" | wc -l`
 cnt=1
-for file in `find src/*/ -follow -type f -regex ".*\.h+?p+?"` ; do
+for file in `find src/*/ -follow -type f -regex ".*\.h+?x+?"` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	\${top_srcdir}/$file"
 	else
@@ -29,9 +29,9 @@ done
 echo
 echo "libvpic_la_SOURCES = \\"
 
-numfiles=`find src/*/ -follow -type f -regex ".*\.c+?p+?" | wc -l`
+numfiles=`find src/*/ -follow -type f -regex ".*\.c+?x+?" | wc -l`
 cnt=1
-for file in `find src/*/ -follow -type f -regex ".*\.c+?p+?"` ; do
+for file in `find src/*/ -follow -type f -regex ".*\.c+?x+?"` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	\${top_srcdir}/$file"
 	else

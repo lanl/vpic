@@ -17,8 +17,8 @@ AC_PROG_LIBTOOL
 ################################################################################
 AC_CONFIG_FILES(Makefile \
 	lib/Makefile \
-	bin/Makefile \
 	cell/Makefile)
+#	bin/Makefile \
 AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
@@ -82,7 +82,8 @@ fi
 # enable/disable host build
 ################################################################################
 if test "$ENABLE_HOST" = "1" ; then
-	AC_SUBST(HOSTDIRS, ["lib bin"])
+#	AC_SUBST(HOSTDIRS, ["lib bin"])
+	AC_SUBST(HOSTDIRS, ["lib"])
 fi
 
 ################################################################################

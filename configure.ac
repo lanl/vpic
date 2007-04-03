@@ -22,10 +22,16 @@ AC_CONFIG_FILES(Makefile \
 AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
+# machine file specification
+################################################################################
+CCS_WITH_MACHINE
+
+################################################################################
 # enable options
 ################################################################################
 CCS_ENABLE_CELL
 CCS_ENABLE_HOST
+CCS_ENABLE_OPT_LEVEL
 CCS_ENABLE_DMP
 CCS_ENABLE_SCALAR
 
@@ -40,6 +46,7 @@ CCS_WITH_CELL_INSTDIR
 ################################################################################
 AC_PROG_CXX
 AC_PROG_CC
+CCS_SIMD_ISA
 CCS_TUNE_CXX
 CCS_TUNE_CC
 

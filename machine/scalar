@@ -36,9 +36,9 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CCFLAGS  = -Wall -ansi -fomit-frame-pointer -march=pentium-m -mfpmath=387 -DSCALAR -DENABLE_DMP
-CXXFLAGS = -fomit-frame-pointer -march=pentium-m -mfpmath=387 -DSCALAR -DOMPI_SKIP_MPICXX
-LDFLAGS  = -Wall -ansi -fomit-frame-pointer -march=pentium-m -mfpmath=387 -DSCALAR -DOMPI_SKIP_MPICXX
+CCFLAGS  = -Wall -ansi -fomit-frame-pointer -march=nocona -mfpmath=387 -DSCALAR -DENABLE_DMP
+CXXFLAGS = -fomit-frame-pointer -march=nocona -mfpmath=387 -DSCALAR -DOMPI_SKIP_MPICXX
+LDFLAGS  = -Wall -ansi -fomit-frame-pointer -march=nocona -mfpmath=387 -DSCALAR -DOMPI_SKIP_MPICXX
 ARFLAGS  = 
 
 CCFLAGS  += $(shell mpicc --showme:compile)

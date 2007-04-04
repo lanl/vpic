@@ -15,9 +15,9 @@ echo "libvpic_includedir = \${includedir}"
 echo
 echo "libvpic_include_HEADERS = \\"
 
-numfiles=`find src/*/ -follow -type f -regex ".*\.h+?x+?" | wc -l`
+numfiles=`find src/*/ -follow -type f -regex ".*\.h+?x+?" | grep -v pipelines_scalar | grep -v pipelines_cell | wc -l`
 cnt=1
-for file in `find src/*/ -follow -type f -regex ".*\.h+?x+?"` ; do
+for file in `find src/*/ -follow -type f -regex ".*\.h+?x+?" | grep -v pipelines_scalar | grep -v pipelines_cell` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	\${top_srcdir}/$file"
 	else
@@ -29,9 +29,9 @@ done
 echo
 echo "libvpic_la_SOURCES = \\"
 
-numfiles=`find src/*/ -follow -type f -regex ".*\.c+?x+?" | wc -l`
+numfiles=`find src/*/ -follow -type f -regex ".*\.c+?x+?" | grep -v pipelines_scalar | grep -v pipelines_cell | wc -l`
 cnt=1
-for file in `find src/*/ -follow -type f -regex ".*\.c+?x+?"` ; do
+for file in `find src/*/ -follow -type f -regex ".*\.c+?x+?" | grep -v pipelines_scalar | grep -v pipelines_cell` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	\${top_srcdir}/$file"
 	else

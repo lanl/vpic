@@ -31,7 +31,6 @@ CCS_WITH_MACHINE
 ################################################################################
 CCS_ENABLE_CELL
 CCS_ENABLE_HOST
-CCS_ENABLE_OPT_LEVEL
 CCS_ENABLE_DMP
 CCS_ENABLE_SCALAR
 
@@ -39,7 +38,8 @@ CCS_ENABLE_SCALAR
 # with options
 ################################################################################
 CCS_WITH_ADDRESSING
-CCS_WITH_CELL_INSTDIR
+CCS_WITH_CPUMODEL
+CCS_WITH_OPT_LEVEL
 
 ################################################################################
 # C/C++ configuration

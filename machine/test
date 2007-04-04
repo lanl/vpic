@@ -13,17 +13,29 @@ CFLAGS="-O2 -g"
 CXXFLAGS="-O2 -g"
 
 ################################################################################
-# ADDRESSING - configure pointer size
+# OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
+# warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
-ADDRESSING=32
+OPT_LEVEL=3
 
 ################################################################################
-# ENABLE_DMP - enable distributed memory parallelism
+# CPUMODEL - specify a particular cpu model (this affects optimization)
+# supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
+################################################################################
+CPUMODEL=nocona
+
+################################################################################
+# ADDRESSING - configure pointer size (32|64)[32]
+################################################################################
+ADDRESSING=64
+
+################################################################################
+# ENABLE_DMP - enable distributed memory parallelism (0|1)[0]
 ################################################################################
 ENABLE_DMP=1
 
 ################################################################################
-# ENABLE_SIMD - enable vector processing
+# ENABLE_SIMD - enable vector processing (0|1)[0]
 ################################################################################
 ENABLE_SIMD=1
 
@@ -33,6 +45,21 @@ ENABLE_SIMD=1
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
 ################################################################################
-MPI_CPPFLAGS="-I/opt/openmpi/1.2/gnu64/include -I/opt/openmpi/1.2/gnu64/include/openmpi -pthread"
-MPI_LDFLAGS="-pthread -L/opt/openmpi/1.2/gnu64/lib"
-MPI_LIBS="-lmpi -lopen-rte -lopen-pal -ldl -Wl,--export-dynamic -lnsl -lutil -lm -ldl"
+#MPI_CPPFLAGS=""
+#MPI_LDFLAGS=""
+#MPI_LIBS=""
+
+# to use mpicc from openmpi
+MPI_CPPFLAGS=`mpicc --showme:compile`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+
+################################################################################
+# ENABLE_HOST - enable host build (0|1)[1]
+################################################################################
+#ENABLE_HOST
+
+################################################################################
+# ENABLE_CELL - enable IBM Cell build (0|1)[0]
+################################################################################
+#ENABLE_CELL

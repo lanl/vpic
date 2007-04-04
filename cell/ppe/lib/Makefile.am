@@ -14,6 +14,7 @@ libvpic_include_HEADERS = \
 	@HOST_ACDIR@/src/boundary/boundary.h \
 	@HOST_ACDIR@/src/emitter/emitter.h \
 	@HOST_ACDIR@/src/field/pipelines_v4/field_pipelines.h \
+	@HOST_ACDIR@/src/field/pipelines_scalar/field_pipelines.h \
 	@HOST_ACDIR@/src/field/field.h \
 	@HOST_ACDIR@/src/grid/grid.h \
 	@HOST_ACDIR@/src/include/boundary.h \
@@ -49,6 +50,22 @@ libvpic_la_SOURCES = \
 	@HOST_ACDIR@/src/emitter/emitter.c \
 	@HOST_ACDIR@/src/emitter/ccube.c \
 	@HOST_ACDIR@/src/emitter/ivory.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_e_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/load_interpolator_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/unload_accumulator_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rhob_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_b_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_e_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/reduce_accumulators_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/distribute_voxels.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_e_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/energy_f_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_curl_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/advance_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/advance_e_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_b_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clear_accumulators_pipeline.c \
 	@HOST_ACDIR@/src/field/compute_curl_b.c \
 	@HOST_ACDIR@/src/field/energy_f.c \
 	@HOST_ACDIR@/src/field/clean_div_b.c \

@@ -16,7 +16,7 @@ setup-host:
 ################################################################################
 define symlinks
 	@(cd $1; [ -d include ] && rm -rf include; \
-		found=`find . -type f -regex $2 -print`; \
+		found=`find . -type f -regex $2 -print | grep -v pipelines_scalar | grep -v pipelines_cell`; \
 		[ -z "$$found" ] || (mkdir include && cd include && \
 		ln -s `echo $$found | sed 's/\.\//\.\.\//g'` .))
 endef

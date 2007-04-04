@@ -17,94 +17,80 @@ libvpic_include_HEADERS = \
 	@HOST_ACDIR@/src/field/pipelines_scalar/field_pipelines.h \
 	@HOST_ACDIR@/src/field/field.h \
 	@HOST_ACDIR@/src/grid/grid.h \
-	@HOST_ACDIR@/src/include/boundary.h \
-	@HOST_ACDIR@/src/include/field_pipelines.h \
-	@HOST_ACDIR@/src/include/field.h \
-	@HOST_ACDIR@/src/include/particle_pipelines.h \
-	@HOST_ACDIR@/src/include/particle.h \
-	@HOST_ACDIR@/src/include/grid.h \
-	@HOST_ACDIR@/src/include/emitter.h \
-	@HOST_ACDIR@/src/include/species.h \
-	@HOST_ACDIR@/src/include/mtrand_conv.h \
-	@HOST_ACDIR@/src/include/mtrand.h \
-	@HOST_ACDIR@/src/include/pipeline.h \
-	@HOST_ACDIR@/src/include/common.h \
-	@HOST_ACDIR@/src/include/mp.h \
-	@HOST_ACDIR@/src/include/material.h \
 	@HOST_ACDIR@/src/material/material.h \
 	@HOST_ACDIR@/src/particle/pipelines_v4/particle_pipelines.h \
 	@HOST_ACDIR@/src/particle/particle.h \
 	@HOST_ACDIR@/src/species/species.h \
+	@HOST_ACDIR@/src/util/mp/mp.h \
+	@HOST_ACDIR@/src/util/common/common.h \
 	@HOST_ACDIR@/src/util/mtrand/mtrand_conv.h \
 	@HOST_ACDIR@/src/util/mtrand/mtrand.h \
-	@HOST_ACDIR@/src/util/pipeline/serial/pipeline.h \
-	@HOST_ACDIR@/src/util/common/common.h \
-	@HOST_ACDIR@/src/util/mp/mp.h
+	@HOST_ACDIR@/src/util/pipeline/serial/pipeline.h
 
 libvpic_la_SOURCES = \
-	@HOST_ACDIR@/src/boundary/maxwellian_reflux.c \
-	@HOST_ACDIR@/src/boundary/arb_reflux.c \
-	@HOST_ACDIR@/src/boundary/absorb_tally.c \
 	@HOST_ACDIR@/src/boundary/link.c \
-	@HOST_ACDIR@/src/emitter/child-langmuir.c \
+	@HOST_ACDIR@/src/boundary/maxwellian_reflux.c \
+	@HOST_ACDIR@/src/boundary/absorb_tally.c \
+	@HOST_ACDIR@/src/boundary/arb_reflux.c \
 	@HOST_ACDIR@/src/emitter/emitter.c \
-	@HOST_ACDIR@/src/emitter/ccube.c \
+	@HOST_ACDIR@/src/emitter/child-langmuir.c \
 	@HOST_ACDIR@/src/emitter/ivory.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_b_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_e_err_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/load_interpolator_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/unload_accumulator_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rhob_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_b_err_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_e_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/reduce_accumulators_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/distribute_voxels.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_e_err_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/energy_f_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_curl_b_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/advance_b_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/advance_e_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_b_err_pipeline.c \
-	@HOST_ACDIR@/src/field/pipelines_scalar/clear_accumulators_pipeline.c \
-	@HOST_ACDIR@/src/field/compute_curl_b.c \
-	@HOST_ACDIR@/src/field/energy_f.c \
-	@HOST_ACDIR@/src/field/clean_div_b.c \
-	@HOST_ACDIR@/src/field/advance_b.c \
-	@HOST_ACDIR@/src/field/advance_e.c \
-	@HOST_ACDIR@/src/field/compute_rms_div_b_err.c \
+	@HOST_ACDIR@/src/emitter/ccube.c \
 	@HOST_ACDIR@/src/field/clear_accumulators.c \
-	@HOST_ACDIR@/src/field/field_structors.c \
-	@HOST_ACDIR@/src/field/compute_rms_div_e_err.c \
-	@HOST_ACDIR@/src/field/load_interpolator.c \
-	@HOST_ACDIR@/src/field/unload_accumulator.c \
-	@HOST_ACDIR@/src/field/compute_rhob.c \
-	@HOST_ACDIR@/src/field/compute_div_b_err.c \
-	@HOST_ACDIR@/src/field/local.c \
-	@HOST_ACDIR@/src/field/clean_div_e.c \
-	@HOST_ACDIR@/src/field/remote.c \
-	@HOST_ACDIR@/src/field/reduce_accumulators.c \
 	@HOST_ACDIR@/src/field/compute_div_e_err.c \
-	@HOST_ACDIR@/src/grid/partition.c \
-	@HOST_ACDIR@/src/grid/ops.c \
+	@HOST_ACDIR@/src/field/advance_b.c \
+	@HOST_ACDIR@/src/field/compute_rhob.c \
+	@HOST_ACDIR@/src/field/unload_accumulator.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/unload_accumulator_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/advance_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/reduce_accumulators_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_e_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rhob_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clear_accumulators_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/advance_e_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_e_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_div_b_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/load_interpolator_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_curl_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_b_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/clean_div_e_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/distribute_voxels.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/compute_rms_div_b_err_pipeline.c \
+	@HOST_ACDIR@/src/field/pipelines_scalar/energy_f_pipeline.c \
+	@HOST_ACDIR@/src/field/advance_e.c \
+	@HOST_ACDIR@/src/field/local.c \
+	@HOST_ACDIR@/src/field/remote.c \
+	@HOST_ACDIR@/src/field/load_interpolator.c \
+	@HOST_ACDIR@/src/field/energy_f.c \
+	@HOST_ACDIR@/src/field/compute_rms_div_e_err.c \
+	@HOST_ACDIR@/src/field/compute_rms_div_b_err.c \
+	@HOST_ACDIR@/src/field/clean_div_b.c \
+	@HOST_ACDIR@/src/field/reduce_accumulators.c \
+	@HOST_ACDIR@/src/field/compute_div_b_err.c \
+	@HOST_ACDIR@/src/field/field_structors.c \
+	@HOST_ACDIR@/src/field/compute_curl_b.c \
+	@HOST_ACDIR@/src/field/clean_div_e.c \
 	@HOST_ACDIR@/src/grid/add_boundary.c \
+	@HOST_ACDIR@/src/grid/ops.c \
 	@HOST_ACDIR@/src/grid/grid_structors.c \
+	@HOST_ACDIR@/src/grid/partition.c \
 	@HOST_ACDIR@/src/material/coefficient.c \
 	@HOST_ACDIR@/src/material/material.c \
-	@HOST_ACDIR@/src/particle/center_p.c \
+	@HOST_ACDIR@/src/particle/sort_p.c \
 	@HOST_ACDIR@/src/particle/advance_p.c \
+	@HOST_ACDIR@/src/particle/energy_p.c \
 	@HOST_ACDIR@/src/particle/boundary_p.c \
 	@HOST_ACDIR@/src/particle/uncenter_p.c \
-	@HOST_ACDIR@/src/particle/hydro_p.c \
+	@HOST_ACDIR@/src/particle/center_p.c \
 	@HOST_ACDIR@/src/particle/move_p.c \
-	@HOST_ACDIR@/src/particle/sort_p.c \
 	@HOST_ACDIR@/src/particle/rho_p.c \
-	@HOST_ACDIR@/src/particle/energy_p.c \
+	@HOST_ACDIR@/src/particle/hydro_p.c \
 	@HOST_ACDIR@/src/particle/particle_structors.c \
 	@HOST_ACDIR@/src/species/species.c \
-	@HOST_ACDIR@/src/util/mtrand/mtrand.c \
-	@HOST_ACDIR@/src/util/pipeline/serial/pipeline.c \
+	@HOST_ACDIR@/src/util/mp/mp.c \
 	@HOST_ACDIR@/src/util/common/common.c \
-	@HOST_ACDIR@/src/util/mp/mp.c
+	@HOST_ACDIR@/src/util/mtrand/mtrand.c \
+	@HOST_ACDIR@/src/util/pipeline/serial/pipeline.c
 
 libvpic_la_LDFLAGS = @VERSION_INFORMATION@ \
 	@EXTRA_LDFLAGS@

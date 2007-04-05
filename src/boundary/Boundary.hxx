@@ -1,6 +1,9 @@
 /*
 	Definition of Boundary_T class
 
+	C++ version of boundary data structure originally
+	invented by Kevin J. Bowers, Ph.D. March/April 2004.
+
 	$Revision: 56 $
 	$Date$
 	$Author$
@@ -25,6 +28,7 @@ class Boundary_T
 		~Boundary_T();
 
 	private:
+
 
 	}; // class Boundary_T
 

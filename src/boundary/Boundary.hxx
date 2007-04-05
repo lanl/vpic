@@ -1,7 +1,7 @@
 /*
 	Definition of Boundary_T class
 
-	$Revision$
+	$Revision: 56 $
 	$Date$
 	$Author$
 

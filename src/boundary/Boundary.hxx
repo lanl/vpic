@@ -5,8 +5,8 @@
 	invented by Kevin J. Bowers, Ph.D. March/April 2004.
 
 	$Revision: 56 $
-	$Date$
-	$Author$
+	$LastChagnedDate: 2007-04-05 08:54:14 -0600 (Thu, 05 Apr 2007) $
+	$LastChangedBy$
 
 	vim: set ts=3 :
 */

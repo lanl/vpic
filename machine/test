@@ -22,12 +22,12 @@ OPT_LEVEL=3
 # CPUMODEL - specify a particular cpu model (this affects optimization)
 # supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CPUMODEL=nocona
+CPUMODEL=pentiumM
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
-ADDRESSING=64
+ADDRESSING=32
 
 ################################################################################
 # ENABLE_DMP - enable distributed memory parallelism (0|1)[0]

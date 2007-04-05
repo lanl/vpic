@@ -4,7 +4,7 @@
 	C++ version of boundary data structure originally
 	invented by Kevin J. Bowers, Ph.D. March/April 2004.
 
-	$Revision: 56 $
+	$Revision$
 	$LastChagnedDate: 2007-04-05 08:54:14 -0600 (Thu, 05 Apr 2007) $
 	$LastChangedBy$
 
@@ -28,7 +28,6 @@ class Boundary_T
 		~Boundary_T();
 
 	private:
-
 
 	}; // class Boundary_T
 

@@ -10,7 +10,7 @@ reduce_accumulators( accumulator_t * ALIGNED a,
   
   args->a = a;
   args->g = g;
-  dispatch_pipelines( reduce_accumulators_pipeline, args, 0 );
+  dispatch_pipelines( reduce_accumulators_pipeline_v4, args, 0 );
   wait_for_pipelines();
 }
 

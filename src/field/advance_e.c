@@ -67,7 +67,7 @@ advance_e( field_t * ALIGNED f,
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( advance_e_pipeline, args, 0 );
+  dispatch_pipelines( advance_e_pipeline_v4, args, 0 );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {

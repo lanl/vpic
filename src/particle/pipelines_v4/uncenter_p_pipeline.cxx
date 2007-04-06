@@ -1,11 +1,12 @@
-#include <particle_pipelines.h>
 #include <v4.h>
-
+#ifdef V4_ACCELERATION
 using namespace v4;
 
+#include <particle_pipelines.h>
+
 void
-uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
-                     int pipeline_rank ) {
+uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
+                        int pipeline_rank ) {
   particle_t           * ALIGNED p   = args->p;
   int                            nq  = args->n >> 2;
   const float                    q_m = args->q_m;
@@ -68,3 +69,4 @@ uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
   }
 }
 
+#endif

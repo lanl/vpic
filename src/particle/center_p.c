@@ -79,7 +79,7 @@ center_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( center_p_pipeline, args, 0 );
+  dispatch_pipelines( center_p_pipeline_v4, args, 0 );
 
   center_p_host( p, n, q_m, f, g );
 

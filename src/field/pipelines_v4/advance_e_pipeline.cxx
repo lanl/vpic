@@ -1,3 +1,7 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 // Note: This is similar to compute_curl_b_pipeline
 
 #if 0 // Original non-pipelined non-vectorized version 
@@ -42,15 +46,12 @@
 #endif
 
 #include <field_pipelines.h>
-#include <v4.h>
-
-using namespace v4;
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-advance_e_pipeline( advance_e_pipeline_args_t * args,
-                    int pipeline_rank ) {
+advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
+                       int pipeline_rank ) {
   field_t                      * ALIGNED f = args->f;
   const material_coefficient_t * ALIGNED m = args->m;
   const grid_t                 *         g = args->g;
@@ -100,9 +101,9 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 2,nx, 2,ny, 2,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
 
   // Process the bulk of the voxels 4 at a time
                                
@@ -235,3 +236,4 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
 }
 
+#endif

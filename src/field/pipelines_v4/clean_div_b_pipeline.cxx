@@ -1,3 +1,7 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 #if 0 // Original non-pipelined non-vectorized version
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
@@ -16,15 +20,12 @@
 #endif
 
 #include <field_pipelines.h>
-#include <v4.h>
-
-using namespace v4;
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
-                      int pipeline_rank ) {
+clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
+                         int pipeline_rank ) {
   field_t      * ALIGNED f = args->f;
   const grid_t *         g = args->g;
 
@@ -62,9 +63,9 @@ clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 2,nx, 2,ny, 2,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
 
   // Process bulk of voxels 4 at a time
 
@@ -128,3 +129,4 @@ clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
 
 }
 
+#endif

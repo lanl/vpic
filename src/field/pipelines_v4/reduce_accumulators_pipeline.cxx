@@ -1,13 +1,14 @@
-#include <field_pipelines.h>
 #include <v4.h>
-
+#ifdef V4_ACCELERATION
 using namespace v4;
+
+#include <field_pipelines.h>
 
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
-                              int pipeline_rank ) {
+reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
+                                 int pipeline_rank ) {
   accumulator_t * ALIGNED a = args->a;
   const grid_t  *         g = args->g;
 
@@ -24,9 +25,9 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
   
   // Process voxels assigned to this pipeline
 
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 1,nx, 1,ny, 1,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
 
 
   pa = &a(x,y,z).jx[0];
@@ -78,3 +79,4 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
   }
 }
 
+#endif

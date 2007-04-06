@@ -18,7 +18,7 @@ void energy_f( double * global,
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( energy_f_pipeline, args, 0 );
+  dispatch_pipelines( energy_f_pipeline_v4, args, 0 );
   wait_for_pipelines();
 
   /* Reduce results from each pipelines */

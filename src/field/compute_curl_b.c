@@ -18,7 +18,7 @@ void
 compute_curl_b( field_t * ALIGNED f,
                 const material_coefficient_t * ALIGNED m,
                 const grid_t * g ) {
-  advance_e_pipeline_args_t args[1];
+  compute_curl_b_pipeline_args_t args[1];
   
   float px, py, pz;
   field_t *f0, *fx, *fy, *fz;
@@ -58,7 +58,7 @@ compute_curl_b( field_t * ALIGNED f,
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( advance_e_pipeline, args, 0 );
+  dispatch_pipelines( compute_curl_b_pipeline_v4, args, 0 );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {

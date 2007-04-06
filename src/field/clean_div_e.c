@@ -30,7 +30,7 @@ void clean_div_e( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  dispatch_pipelines( clean_div_e_pipeline, args, 0 );
+  dispatch_pipelines( clean_div_e_pipeline_v4, args, 0 );
   
   /* Do left over field components on the host */
 

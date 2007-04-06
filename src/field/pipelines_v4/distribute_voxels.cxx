@@ -1,11 +1,15 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 #include <field_pipelines.h>
    
 int
-distribute_voxels( int x0, int x1,     /* range of x-indices (inclusive) */
-                   int y0, int y1,     /* range of y-indices (inclusive) */
-                   int z0, int z1,     /* range of z-indices (inclusive) */
-                   int job, int n_job, /* job ... on [0,n_job-1] */
-                   int * _x, int * _y, int * _z ) {
+distribute_voxels_v4( int x0, int x1,     /* range of x-indices (inclusive) */
+                      int y0, int y1,     /* range of y-indices (inclusive) */
+                      int z0, int z1,     /* range of z-indices (inclusive) */
+                      int job, int n_job, /* job ... on [0,n_job-1] */
+                      int * _x, int * _y, int * _z ) {
   double n_target;
   int x, y, z, nvx, nvy, nvz, n_voxel;
   
@@ -30,6 +34,9 @@ distribute_voxels( int x0, int x1,     /* range of x-indices (inclusive) */
   *_x = x;
   *_y = y;
   *_z = z;
+
   return n_voxel;
 }
+
+#endif
 

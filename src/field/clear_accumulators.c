@@ -15,7 +15,7 @@ clear_accumulators( accumulator_t * ALIGNED a,
      are clearing theirs */
   args->a       = a;
   args->n_voxel = n_voxel;
-  dispatch_pipelines( clear_accumulators_pipeline, args, 0 );
+  dispatch_pipelines( clear_accumulators_pipeline_v4, args, 0 );
   memset( a, 0, n_voxel*sizeof(accumulator_t) );
   wait_for_pipelines();
 }

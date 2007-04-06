@@ -1,3 +1,7 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 #if 0 // Original non-pipelined non-vectorized version
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
@@ -68,16 +72,13 @@
 #endif
 
 #include <field_pipelines.h>
-#include <v4.h>
-
-using namespace v4;
 
 #define fi(x,y,z) fi[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 #define f(x,y,z)  f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
-			    int pipeline_rank ) {
+load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
+                               int pipeline_rank ) {
   interpolator_t * ALIGNED fi = args->fi;
   const field_t  * ALIGNED f  = args->f;
   const grid_t   *         g  = args->g;
@@ -102,9 +103,9 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 1,nx, 1,ny, 1,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
                                
 # define LOAD_PTRS()       \
   pi   = &fi(x,  y,  z  ); \
@@ -161,3 +162,5 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     }
   }
 }
+
+#endif

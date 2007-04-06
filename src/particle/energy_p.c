@@ -57,7 +57,7 @@ energy_p( const particle_t     * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( energy_p_pipeline, args, 0 );
+  dispatch_pipelines( energy_p_pipeline_v4, args, 0 );
 
   local = energy_p_host( p, n, q_m, f, g );
 

@@ -1,3 +1,7 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 #if 0 // Original non-pipelined non-vectorized version
   en_ex = ey_ey = en_ez = en_bx = en_by = en_bz = 0;
   for( z=1; z<=nz; z++ ) {
@@ -41,15 +45,12 @@
 #endif
 
 #include <field_pipelines.h>
-#include <v4.h>
-
-using namespace v4;
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-energy_f_pipeline( energy_f_pipeline_args_t * args,
-                   int pipeline_rank ) {
+energy_f_pipeline_v4( energy_f_pipeline_args_t * args,
+                      int pipeline_rank ) {
   const field_t                * ALIGNED f = args->f;
   const material_coefficient_t * ALIGNED m = args->m;
   const grid_t                 * ALIGNED g = args->g;
@@ -65,9 +66,9 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 1,nx, 1,ny, 1,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
 
 # define LOAD_PTRS()                                                   \
   f0  = &f(x,  y,  z  );                                               \
@@ -131,3 +132,4 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
 
 }
 
+#endif

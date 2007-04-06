@@ -30,7 +30,7 @@ advance_b( field_t * ALIGNED f,
   args->f = f;
   args->g = g;
   args->frac = frac;
-  dispatch_pipelines( advance_b_pipeline, args, 0 );
+  dispatch_pipelines( advance_b_pipeline_v4, args, 0 );
   
   /* While the pipelines are busy, do surface fields */
   

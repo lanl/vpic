@@ -9,6 +9,6 @@ void compute_div_b_err( field_t * ALIGNED f,
   
   args->f = f;
   args->g = g;  
-  dispatch_pipelines( compute_div_b_err_pipeline, args, 0 );
+  dispatch_pipelines( compute_div_b_err_pipeline_v4, args, 0 );
   wait_for_pipelines();
 }

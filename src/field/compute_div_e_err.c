@@ -28,7 +28,7 @@ void compute_div_e_err( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  dispatch_pipelines( compute_rhob_pipeline, args, 0 );
+  dispatch_pipelines( compute_div_e_err_pipeline_v4, args, 0 );
 
   /* Have host compute the exterior of the local domain */
 

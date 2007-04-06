@@ -1,3 +1,7 @@
+#include <v4.h>
+#ifdef V4_ACCELERATION
+using namespace v4;
+
 #if 0 // Original non-pipelined non-vectorized version 
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
@@ -35,16 +39,13 @@
 #endif
 
 #include <field_pipelines.h>
-#include <v4.h>
-
-using namespace v4;
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void
-unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
-			     int pipeline_rank ) {
+unload_accumulator_pipeline_v4( unload_accumulator_pipeline_args_t * args,
+                                int pipeline_rank ) {
   field_t             * ALIGNED f = args->f;
   const accumulator_t * ALIGNED a = args->a;
   const grid_t        *         g = args->g;
@@ -65,9 +66,9 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  n_voxel = distribute_voxels_v4( 1,nx, 1,ny, 1,nz,
+                                  pipeline_rank, n_pipeline,
+                                  &x, &y, &z );
 
 # define LOAD_PTRS()           \
   pa  = &a(x,  y,  z  ).jx[0]; \
@@ -104,3 +105,4 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 
 }
 
+#endif

@@ -6,6 +6,10 @@
 
 BEGIN_C_DECLS
 
+#define DECLARE_PIPELINE(name)                                              \
+void name##_pipeline(    name##_pipeline_args_t *args, int pipeline_rank ); \
+void name##_pipeline_v4( name##_pipeline_args_t *args, int pipeline_rank ) 
+
 /* In advance_p_pipeline.c */
 
 typedef struct advance_p_pipeline_args {
@@ -27,9 +31,7 @@ typedef struct advance_p_pipeline_args {
 
 } advance_p_pipeline_args_t;
 
-void
-advance_p_pipeline( advance_p_pipeline_args_t * args,
-                    int pipeline_rank );
+DECLARE_PIPELINE(advance_p);
 
 /* In center_p_pipeline.c */
 
@@ -41,9 +43,7 @@ typedef struct center_p_pipeline_args {
   const grid_t         *         g;   /* Local domain grid parameters */
 } center_p_pipeline_args_t;
 
-void
-center_p_pipeline( center_p_pipeline_args_t * args,
-                   int pipeline_rank );
+DECLARE_PIPELINE(center_p);
 
 /* In uncenter_p_pipeline.c */
 
@@ -55,9 +55,7 @@ typedef struct uncenter_p_pipeline_args {
   const grid_t         *         g;   /* Local domain grid parameters */
 } uncenter_p_pipeline_args_t;
 
-void
-uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
-                     int pipeline_rank );
+DECLARE_PIPELINE(uncenter_p);
 
 /* In energy_p_pipeline.c */
 
@@ -70,9 +68,9 @@ typedef struct energy_p_pipeline_args {
   double en[MAX_PIPELINE];            /* Return values */
 } energy_p_pipeline_args_t;
 
-void
-energy_p_pipeline( energy_p_pipeline_args_t * args,
-                   int pipeline_rank );
+DECLARE_PIPELINE(energy_p);
+
+#undef DECLARE_PIPELINES
 
 END_C_DECLS
 

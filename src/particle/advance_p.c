@@ -173,7 +173,7 @@ advance_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( advance_p_pipeline, args, 0 );
+  dispatch_pipelines( advance_p_pipeline_v4, args, 0 );
 
   /* Have the host processor do the incomplete quad if necessary.
      Note: This is overlapped with the pipelined processing.  As such,

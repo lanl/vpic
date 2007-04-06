@@ -1,7 +1,8 @@
-#include <particle_pipelines.h>
 #include <v4.h>
-
+#ifdef V4_ACCELERATION
 using namespace v4;
+
+#include <particle_pipelines.h>
 
 /* move_p_local is the version of move_p that executes on the pipeline
    processors.  Note that this function must be kept in sync with
@@ -23,10 +24,10 @@ using namespace v4;
    insuring valid arguments. */
 
 static int
-move_p_local( particle_t       * ALIGNED p,
-              particle_mover_t * ALIGNED pm,
-              accumulator_t * ALIGNED a0,
-              const grid_t * g ) {
+move_p_v4( particle_t       * ALIGNED p,
+           particle_mover_t * ALIGNED pm,
+           accumulator_t * ALIGNED a0,
+           const grid_t * g ) {
   float s_midx, s_midy, s_midz;
   float s_dispx, s_dispy, s_dispz;
   float s_dir[3];
@@ -138,8 +139,8 @@ move_p_local( particle_t       * ALIGNED p,
 }
 
 void
-advance_p_pipeline( advance_p_pipeline_args_t * args,
-                    int pipeline_rank ) {
+advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
+                       int pipeline_rank ) {
   double n_target;
 
   particle_t           * ALIGNED p   = args->p;
@@ -301,7 +302,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
       pm->dispy = uy(N);                              \
       pm->dispz = uz(N);                              \
       pm->i     = (p - p0) + N;                       \
-      if( move_p_local( p0, pm, a0, g ) ) pm++, nm--; \
+      if( move_p_v4( p0, pm, a0, g ) ) pm++, nm--;    \
     }
     move_outbnd(0);
     move_outbnd(1);
@@ -313,3 +314,4 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm -= nm;
 }
 
+#endif

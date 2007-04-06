@@ -13,7 +13,7 @@ load_interpolator( interpolator_t * ALIGNED fi,
   args->fi = fi;
   args->f  = f;
   args->g  = g;  
-  dispatch_pipelines( load_interpolator_pipeline, args, 0 );  
+  dispatch_pipelines( load_interpolator_pipeline_v4, args, 0 );  
   wait_for_pipelines();
 }
 

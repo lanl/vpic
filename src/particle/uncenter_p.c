@@ -79,7 +79,7 @@ uncenter_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( uncenter_p_pipeline, args, 0 );
+  dispatch_pipelines( uncenter_p_pipeline_v4, args, 0 );
 
   uncenter_p_host( p, n, q_m, f, g );
 

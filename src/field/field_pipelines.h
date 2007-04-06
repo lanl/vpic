@@ -9,6 +9,10 @@
 
 BEGIN_C_DECLS
 
+#define DECLARE_PIPELINE(name)                                              \
+void name##_pipeline(    name##_pipeline_args_t *args, int pipeline_rank ); \
+void name##_pipeline_v4( name##_pipeline_args_t *args, int pipeline_rank ) 
+
 /* In distribute_voxels.c */
 
 /* Given a block of voxels to be processed by the pipelines, determine
@@ -26,7 +30,14 @@ distribute_voxels( int x0,  int x1,    /* range of x-indices (inclusive) */
                    int job, int n_job, /* job ... on [0,n_job-1] */
                    int * _x, int * _y, int * _z ); /* first voxel to process */
 
-/* Time stepping pipeliens ***************************************************/
+int
+distribute_voxels_v4( int x0,  int x1,    /* range of x-indices (inclusive) */
+                      int y0,  int y1,    /* range of y-indices (inclusive) */
+                      int z0,  int z1,    /* range of z-indices (inclusive) */
+                      int job, int n_job, /* job ... on [0,n_job-1] */
+                      int * _x, int * _y, int * _z ); /* first voxel to process */
+
+/* Time stepping pipelines ***************************************************/
 
 /* In interpolator_pipeline.c */
 
@@ -40,9 +51,7 @@ typedef struct load_interpolator_pipeline_args {
   const grid_t   *         g;
 } load_interpolator_pipeline_args_t;
 
-void
-load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
-			    int pipeline_rank );
+DECLARE_PIPELINE(load_interpolator);
 
 /* In clear_accumulators_pipeline.c */
 
@@ -54,9 +63,7 @@ typedef struct clear_accumulators_pipeline_args {
   int n_voxel;
 } clear_accumulators_pipeline_args_t;
 
-void
-clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
-                             int pipeline_rank );
+DECLARE_PIPELINE(clear_accumulators);
 
 /* In reduce_accumulators_pipeline.c */
 
@@ -69,9 +76,7 @@ typedef struct reduce_accumulators_pipeline_args {
   const grid_t  *         g;
 } reduce_accumulators_pipeline_args_t;
 
-void
-reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
-                              int pipeline_rank );
+DECLARE_PIPELINE(reduce_accumulators);
 
 /* In unload_accumulator_pipeline.c */
 
@@ -85,9 +90,7 @@ typedef struct unload_accumulator_pipeline_args {
   const grid_t        *         g;
 } unload_accumulator_pipeline_args_t;
 
-void
-unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
-			     int pipeline_rank );
+DECLARE_PIPELINE(unload_accumulator);
 
 /* In advance_b_pipeline.c */
 
@@ -101,9 +104,7 @@ typedef struct advance_b_pipeline_args {
   float frac;
 } advance_b_pipeline_args_t;
 
-void
-advance_b_pipeline( advance_b_pipeline_args_t * args,
-		    int pipeline_rank );
+DECLARE_PIPELINE(advance_b);
 
 /* In advance_e_pipeline.c */
 
@@ -119,9 +120,7 @@ typedef struct advance_e_pipeline_args {
   const grid_t                 *         g;
 } advance_e_pipeline_args_t;
 
-void
-advance_e_pipeline( advance_e_pipeline_args_t * args,
-                    int pipeline_rank );
+DECLARE_PIPELINE(advance_e);
 
 /* Diagnostic pipelines ******************************************************/
 
@@ -139,9 +138,7 @@ typedef struct energy_f_pipeline_args {
   double en[MAX_PIPELINE][6];
 } energy_f_pipeline_args_t;
 
-void
-energy_f_pipeline( energy_f_pipeline_args_t * args,
-                   int pipeline_rank );
+DECLARE_PIPELINE(energy_f);
 
 /* In compute_curl_b_pipeline.c */
 
@@ -157,9 +154,7 @@ typedef struct compute_curl_b_pipeline_args {
   const grid_t                 *         g;
 } compute_curl_b_pipeline_args_t;
 
-void
-compute_curl_b_pipeline( compute_curl_b_pipeline_args_t * args,
-                         int pipeline_rank );
+DECLARE_PIPELINE(compute_curl_b);
 
 /* Divergence cleaning pipelines *********************************************/
 
@@ -177,9 +172,7 @@ typedef struct compute_rhob_pipeline_args {
   const grid_t                 *         g;
 } compute_rhob_pipeline_args_t;
 
-void
-compute_rhob_pipeline( compute_rhob_pipeline_args_t * args,
-                       int pipeline_rank );
+DECLARE_PIPELINE(compute_rhob);
 
 /* In compute_div_e_err_pipeline.c */
 
@@ -195,9 +188,7 @@ typedef struct compute_div_e_err_pipeline_args {
   const grid_t                 *         g;
 } compute_div_e_err_pipeline_args_t;
 
-void
-compute_div_e_err_pipeline( compute_div_e_err_pipeline_args_t * args,
-                            int pipeline_rank );
+DECLARE_PIPELINE(compute_div_e_err);
 
 /* In compute_rms_div_e_err_pipeline.c */
 
@@ -212,9 +203,7 @@ typedef struct compute_rms_div_e_err_pipeline_args {
   double err[MAX_PIPELINE];
 } compute_rms_div_e_err_pipeline_args_t;
 
-void
-compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
-                                int pipeline_rank );
+DECLARE_PIPELINE(compute_rms_div_e_err);
 
 /* In clean_div_e_pipeline.c */
 
@@ -228,9 +217,7 @@ typedef struct clean_div_e_pipeline_args {
   const grid_t                 *         g;
 } clean_div_e_pipeline_args_t;
 
-void
-clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
-                      int pipeline_rank );
+DECLARE_PIPELINE(clean_div_e);
 
 /* In compute_div_b_err_pipeline.c */
 
@@ -243,9 +230,7 @@ typedef struct compute_div_b_err_pipeline_args {
   const grid_t *         g;
 } compute_div_b_err_pipeline_args_t;
 
-void
-compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
-                            int pipeline_rank );
+DECLARE_PIPELINE(compute_div_b_err);
 
 /* In compute_rms_div_b_err_pipeline.c */
 
@@ -260,9 +245,7 @@ typedef struct compute_rms_div_b_err_pipeline_args {
   double err[MAX_PIPELINE];
 } compute_rms_div_b_err_pipeline_args_t;
 
-void
-compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
-                                int pipeline_rank );
+DECLARE_PIPELINE(compute_rms_div_b_err);
 
 /* In clean_div_b_pipeline.c */
 
@@ -275,9 +258,9 @@ typedef struct clean_div_b_pipeline_args {
   const grid_t *         g;
 } clean_div_b_pipeline_args_t;
 
-void
-clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
-                      int pipeline_rank );
+DECLARE_PIPELINE(clean_div_b);
+
+#undef DECLARE_PIPELINE
 
 END_C_DECLS
 

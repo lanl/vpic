@@ -1,11 +1,12 @@
-#include <particle_pipelines.h>
 #include <v4.h>
-
+#ifdef V4_ACCELERATION
 using namespace v4;
 
+#include <particle_pipelines.h>
+
 void
-energy_p_pipeline( energy_p_pipeline_args_t * args,
-                   int pipeline_rank ) {
+energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
+                      int pipeline_rank ) {
   const particle_t     * ALIGNED p   = args->p;
   int                            nq  = args->n >> 2;
   const float                    q_m = args->q_m;
@@ -61,3 +62,4 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
   args->en[pipeline_rank] = en0 + en1 + en2 + en3;
 }
 
+#endif

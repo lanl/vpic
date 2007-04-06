@@ -67,7 +67,11 @@ advance_e( field_t * ALIGNED f,
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( advance_e_pipeline_v4, args, 0 );
+
+  /* FIXME: FOR REASONS NOT YET UNDERSTOOD, THIS V4 PIPELINE IS ACTING
+     UP ON OPTERON / 64-bit / GCC-4.1.2 BUT WORKS FINE on PENTIUM4 / 32-bit
+     GCC-4.1.1 FOR OTHERWISE IDENTICAL COMPILE FLAGS. */
+  dispatch_pipelines( advance_e_pipeline, args, 0 );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {

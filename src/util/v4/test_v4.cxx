@@ -1,7 +1,7 @@
 #include <v4.h>
 #include <stdio.h>
 
-#if V4_ACCELERATION==none
+#ifndef V4_ACCELERATION
 #error "Specify which V4 to use"
 #endif
 

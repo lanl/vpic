@@ -35,9 +35,9 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-/* No V4 hardware acceleration or restricted pointer optimizations */
-CFLAGS   = -Wall -pedantic -ansi -O2 -DRESTRICT=__restrict -g
-CXXFLAGS = -Wall -pedantic -ansi -O2 -DRESTRICT=__restrict -g
-LDFLAGS  = -Wall -pedantic -ansi -O2 -DRESTRICT=__restrict -g
+/* No V4 hardware acceleration */
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -g
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -g
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -g
 ARFLAGS  = 
 

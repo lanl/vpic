@@ -8,7 +8,6 @@
  *
  */
 
-#include <math.h>   /* For exp, sinh */
 #include <material.h>
 
 static float minf( float a, float b ) {
@@ -23,14 +22,8 @@ new_material_coefficients( const grid_t *g,
   const material_t *m;
 
   /* Check the input parameters */
-  if( g==NULL ) {
-    ERROR(("Invalid grid."));
-    return NULL;
-  }
-  if( m_list==NULL ) {
-    ERROR(("Empty material list."));
-    return NULL;
-  }
+  if( g==NULL ) ERROR(("Invalid grid."));
+  if( m_list==NULL ) ERROR(("Empty material list."));
 
   /* Run sanity checks on the material list */
   ax = g->nx>1 ? g->cvac*g->dt/g->dx : 0; ax *= ax;
@@ -73,10 +66,8 @@ new_material_coefficients( const grid_t *g,
   material_coefficient = (material_coefficient_t * ALIGNED)
     malloc_aligned( (m_list->id+1)*sizeof(material_coefficient_t),
                     preferred_alignment );
-  if( material_coefficient==NULL ) {
+  if( material_coefficient==NULL )
     ERROR(("Could not allocate material coefficient array"));
-    return NULL;
-  }
 
   /* Fill up the material coefficient array */
   LIST_FOR_EACH( m, m_list ) {

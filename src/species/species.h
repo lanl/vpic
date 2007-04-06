@@ -16,7 +16,7 @@
 #include <particle.h> /* For particle_t, particle_mover_t */
 #include <mtrand.h>   /* For mt_handle */ 
 
-enum species_enums {
+enum {
   invalid_species_id = -1
 };
 

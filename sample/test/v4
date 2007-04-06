@@ -15,10 +15,10 @@ begin_current_injection {
 begin_field_injection {
 }
 
-#ifdef V4VERSION
-
 #include <stdio.h>
-#include CONCAT3(<,V4VERSION,>)
+#include <v4.h>
+
+#if defined V4_ACCELERATION 
 using namespace v4;
 
 #define TEST_ASSIGN(type,name,op,ai,bi,af,bf)                           \
@@ -845,7 +845,7 @@ begin_initialization {
 #else
 
 begin_initialization {
-  std::cout << "V4VERSION was not specified. No V4 support is provided."
+  std::cout << "A V4 VERSION was not specified. No V4 support is provided."
             << std::endl;
   abort(0);
 }

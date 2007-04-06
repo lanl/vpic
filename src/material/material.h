@@ -29,12 +29,12 @@
  * neighboring domains (if any)!
  *****************************************************************************/
 
-enum material_enums {
-  max_num_materials      = 65535, /* Valid materials are numbered 0...65534 */
-  invalid_material_id    = 65535  /* Material error trap value */
+enum {
+  max_num_materials   = 65535, /* Valid materials are numbered 0...65534 */
+  invalid_material_id = 65535
 };
 
-typedef unsigned INT16_TYPE material_id;
+typedef uint16_t material_id;
 
 typedef struct material {
   material_id id;               /* Unique identifier for material */

@@ -1,6 +1,12 @@
 #ifndef _v4_portable_hxx_
 #define _v4_portable_hxx_
 
+#ifndef IN_v4_h
+#error "Do not include v4_portable.hxx directly; use v4.h"
+#endif
+
+#define V4_ACCELERATION PORTABLE
+
 #ifndef ALIGNED
 #define ALIGNED
 #endif

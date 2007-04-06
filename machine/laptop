@@ -36,8 +36,8 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse
-CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse -DV4VERSION=v4_sse.hxx 
-LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -ffast-math -march=pentium-m -mfpmath=sse
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium-m -mfpmath=sse
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium-m -mfpmath=sse -DUSE_V4_SSE
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium-m -mfpmath=sse
 ARFLAGS  = 
 

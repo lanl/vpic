@@ -8,20 +8,16 @@
  *
  */
 
-#include <string.h> /* For memset */
 #include <particle.h>
 
 particle_t * ALIGNED new_particle_array( int np ) {
   particle_t * ALIGNED p;
 
-  if( np<1 ) { ERROR(("Bad np")); return NULL; }
+  if( np<1 ) ERROR(("Bad np"));
 
   p = (particle_t * ALIGNED)
     malloc_aligned( np*sizeof(particle_t), preferred_alignment );
-  if( p==NULL ) {
-    ERROR(("Failed to allocate particle array."));
-    return NULL;
-  }
+  if( p==NULL ) ERROR(("Failed to allocate particle array."));
   memset( p, 0, np*sizeof(particle_t) );
 
   return p;
@@ -36,14 +32,11 @@ void delete_particle_array( particle_t ** ALIGNED p ) {
 particle_mover_t * ALIGNED new_particle_mover( int nm ) {
   particle_mover_t * ALIGNED pm;
 
-  if( nm<1 ) { ERROR(("Bad nm")); return NULL; }
+  if( nm<1 ) ERROR(("Bad nm"));
 
   pm = (particle_mover_t * ALIGNED)
     malloc_aligned( nm*sizeof(particle_mover_t), preferred_alignment );
-  if( pm==NULL ) {
-    ERROR(("Failed to allocate particle mover."));
-    return NULL;
-  }
+  if( pm==NULL ) ERROR(("Failed to allocate particle mover."));
   memset( pm, 0, nm*sizeof(particle_mover_t) );
 
   return pm;

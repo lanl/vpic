@@ -19,15 +19,14 @@ compute_curl_b( field_t * ALIGNED f,
                 const material_coefficient_t * ALIGNED m,
                 const grid_t * g ) {
   advance_e_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   
   float px, py, pz;
   field_t *f0, *fx, *fy, *fz;
   int x, y, z, nx, ny, nz;
 
-  if( f==NULL ) { ERROR(("Bad field"));                 return; }
-  if( m==NULL ) { ERROR(("Bad material coefficients")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));                  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( m==NULL ) ERROR(("Bad material coefficients"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   nx = g->nx;
   ny = g->ny;
@@ -59,7 +58,7 @@ compute_curl_b( field_t * ALIGNED f,
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( advance_e_pipeline, args, 0, request );
+  dispatch_pipelines( advance_e_pipeline, args, 0 );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {
@@ -97,7 +96,7 @@ compute_curl_b( field_t * ALIGNED f,
     }
   }
 
-  wait_for_pipelines( request );
+  wait_for_pipelines( );
   
   /***************************************************************************
    * Finish tangential B ghost setup

@@ -17,11 +17,11 @@
 
 void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
   int rank, nproc, i, j, k, x, y, z, lnc;
-  INT64_TYPE ii, jj, kk; 
+  int64_t ii, jj, kk; 
 
-  if( g==NULL )                 { ERROR(("Bad grid"));            return; }
-  if( g->mp==NULL             ) { ERROR(("Bad mp"));              return; }
-  if( lnx<1 || lny<1 || lnz<1 ) { ERROR(("Bad local grid size")); return; }
+  if( g==NULL )                 ERROR(("Bad grid"));
+  if( g->mp==NULL             ) ERROR(("Bad mp"));
+  if( lnx<1 || lny<1 || lnz<1 ) ERROR(("Bad local grid size"));
 
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
@@ -40,12 +40,9 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
   /* This is an ugly kludge to interface phase 2 and phase 3 data structures */
   lnc = (lnx+2)*(lny+2)*(lnz+2);
   if( g->range!=NULL ) free_aligned( g->range );
-  g->range = (INT64_TYPE * ALIGNED)
-    malloc_aligned( (nproc+1)*sizeof(INT64_TYPE), preferred_alignment );
-  if( g->range==NULL ) {
-    ERROR(("Could not allocate range array"));
-    return;
-  }
+  g->range = (int64_t * ALIGNED)
+    malloc_aligned( (nproc+1)*sizeof(int64_t), preferred_alignment );
+  if( g->range==NULL ) ERROR(("Could not allocate range array"));
   ii = lnc; /* lnc is not 64-bits */
   mp_allgather_i64(&ii,g->range,1,g->mp);
   jj = 0;
@@ -59,13 +56,10 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
   g->rangeh = g->range[rank+1]-1;
 
   if( g->neighbor!=NULL ) free_aligned( g->neighbor );
-  g->neighbor = (INT64_TYPE * ALIGNED)
-    malloc_aligned( 6*lnc*sizeof(INT64_TYPE), preferred_alignment );
+  g->neighbor = (int64_t * ALIGNED)
+    malloc_aligned( 6*lnc*sizeof(int64_t), preferred_alignment );
+  if( g->neighbor==NULL ) ERROR(("Could not allocate neighbor array"));
 
-  if( g->neighbor==NULL ) {
-    ERROR(("Could not allocate neighbor array"));
-    return;
-  }
   for( z=0; z<=lnz+1; z++ )
     for( y=0; y<=lny+1; y++ )
       for( x=0; x<=lnx+1; x++ ) {
@@ -100,13 +94,13 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
 void join_grid( grid_t * g, int boundary, int rank ) {
   int lx, ly, lz, lnx, lny, lnz, rx, ry, rz, rnx, rny, rnz, rnc;
 
-  if( g==NULL                   ) { ERROR(("Bad grid"));     return; }
-  if( g->mp==NULL               ) { ERROR(("Bad mp"));       return; }
+  if( g==NULL                   ) ERROR(("Bad grid"));
+  if( g->mp==NULL               ) ERROR(("Bad mp"));
   if( boundary<0 ||
       boundary>=27 ||
-      boundary==BOUNDARY(0,0,0) ) { ERROR(("Bad boundary")); return; }
+      boundary==BOUNDARY(0,0,0) ) ERROR(("Bad boundary"));
   if( rank<0 ||
-      rank>=mp_nproc(g->mp)     ) { ERROR(("Bad rank"));     return; }
+      rank>=mp_nproc(g->mp)     ) ERROR(("Bad rank"));
 
   /* Join phase 2 data structures */
   g->bc[boundary] = rank;
@@ -120,10 +114,8 @@ void join_grid( grid_t * g, int boundary, int rank ) {
 
 # define GLUE_FACE(tag,i,j,k,X,Y,Z) BEGIN_PRIMITIVE {           \
     if( boundary==BOUNDARY(i,j,k) ) {                           \
-      if( rnc%((ln##Y+2)*(ln##Z+2))!=0 ) {                      \
+      if( rnc%((ln##Y+2)*(ln##Z+2))!=0 )                        \
         ERROR(("Remote face is incompatible"));                 \
-        return;                                                 \
-      }                                                         \
       rn##X = (rnc/((ln##Y+2)*(ln##Z+2)))-2;                    \
       rn##Y = ln##Y;                                            \
       rn##Z = ln##Z;                                            \
@@ -150,41 +142,31 @@ void join_grid( grid_t * g, int boundary, int rank ) {
 }
 
 void set_fbc( grid_t *g, int boundary, int fbc ) {
-  if( g==NULL                       ) { ERROR(("Bad grid"));      return; }
-  if( g->mp==NULL                   ) { ERROR(("Bad mp"));        return; }
+  if( g==NULL                       ) ERROR(("Bad grid"));
+  if( g->mp==NULL                   ) ERROR(("Bad mp"));
   if( boundary<0 ||
       boundary>=27 ||
-      boundary==BOUNDARY(0,0,0)     ) { ERROR(("Bad boundary"));  return; }
+      boundary==BOUNDARY(0,0,0)     ) ERROR(("Bad boundary"));
   if( fbc>=0 &&
-      fbc<mp_nproc(g->mp)           ) { ERROR(("Use join_grid")); return; }
+      fbc<mp_nproc(g->mp)           ) ERROR(("Use join_grid"));
   if( fbc!=anti_symmetric_fields &&
       fbc!=symmetric_fields      &&
       fbc!=pmc_fields            &&
-      fbc!=absorb_fields            ) { ERROR(("Bad field bc"));  return; }
+      fbc!=absorb_fields            ) ERROR(("Bad field bc"));
   g->bc[boundary] = fbc;
 }
 
 void set_pbc( grid_t *g, int boundary, int pbc ) {
   int lx, ly, lz, lnx, lny, lnz;
 
-  if( g==NULL                       ) { ERROR(("Bad grid"));        return; }
-  if( g->mp==NULL                   ) { ERROR(("Bad mp"));          return; }
+  if( g==NULL                       ) ERROR(("Bad grid"));
+  if( g->mp==NULL                   ) ERROR(("Bad mp"));
   if( boundary<0 ||
       boundary>=27 ||
-      boundary==BOUNDARY(0,0,0)     ) { ERROR(("Bad boundary"));    return; }
-  if( pbc>=0 && pbc<mp_nproc(g->mp) ) { ERROR(("Use join_grid"));   return; }
-
-/* FIXME:  Fix this error condition to work with custom boundary conditions */
-#if 0
-  if( pbc!=absorb_particles &&
-      pbc!=reflect_particles        ) { ERROR(("Bad particle bc")); return; }
-#endif
-
+      boundary==BOUNDARY(0,0,0)     ) ERROR(("Bad boundary"));
+  if( pbc>=0 && pbc<mp_nproc(g->mp) ) ERROR(("Use join_grid"));
   if( pbc!=absorb_particles && pbc!=reflect_particles && 
-      (-pbc-3<0 || -pbc-3>=g->nb) ) { 
-    ERROR(("Bad particle bc")); 
-    return; 
-  }
+      (-pbc-3<0 || -pbc-3>=g->nb) ) ERROR(("Bad particle bc")); 
 
   lnx = g->nx;
   lny = g->ny;

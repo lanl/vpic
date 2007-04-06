@@ -17,21 +17,20 @@ advance_b( field_t * ALIGNED f,
            const grid_t * g,
            float frac ) {
   advance_b_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   
   float px, py, pz;
   field_t *f0, *fx, *fy, *fz;
   int x, y, z, nx, ny, nz;
 
-  if( f==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( f==NULL ) ERROR(("Bad field")); 
+  if( g==NULL ) ERROR(("Bad grid"));
 
   /* Do the bulk of the magnetic fields in the pipelines */
   
   args->f = f;
   args->g = g;
   args->frac = frac;
-  dispatch_pipelines( advance_b_pipeline, args, 0, request );
+  dispatch_pipelines( advance_b_pipeline, args, 0 );
   
   /* While the pipelines are busy, do surface fields */
   
@@ -80,6 +79,6 @@ advance_b( field_t * ALIGNED f,
 
   local_adjust_norm_b(f,g);
   
-  wait_for_pipelines( request );
+  wait_for_pipelines();
 }
 

@@ -39,14 +39,14 @@ void partition_periodic_box( grid_t * g,
   int rank, nproc, px, py, pz; 
 
   /* Make sure the grid can be setup */
-  if( g==NULL                      ) { ERROR(("Bad grid"));         return; }
-  if( g->mp==NULL                  ) { ERROR(("Bad mp"));           return; }
+  if( g==NULL                      ) ERROR(("Bad grid"));
+  if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) { ERROR(("Bad topology"));     return; }
-  if( gnx<1 || gny<1 || gnz<1      ) { ERROR(("Bad res"));          return; }
+      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
+  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
   if( gnx%gpx!=0 ||
       gny%gpy!=0 ||
-      gnz%gpz!=0                   ) { ERROR(("Incompatible res")); return; }
+      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 
@@ -75,14 +75,14 @@ void partition_absorbing_box( grid_t * g,
   int rank, nproc, px, py, pz; 
 
   /* Make sure the grid can be setup */
-  if( g==NULL                      ) { ERROR(("Bad grid"));         return; }
-  if( g->mp==NULL                  ) { ERROR(("Bad mp"));           return; }
+  if( g==NULL                      ) ERROR(("Bad grid"));
+  if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) { ERROR(("Bad topology"));     return; }
-  if( gnx<1 || gny<1 || gnz<1      ) { ERROR(("Bad res"));          return; }
+      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
+  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
   if( gnx%gpx!=0 ||
       gny%gpy!=0 ||
-      gnz%gpz!=0                   ) { ERROR(("Incompatible res")); return; }
+      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 
@@ -132,14 +132,14 @@ void partition_metal_box( grid_t * g,
   int rank, nproc, px, py, pz; 
 
   /* Make sure the grid can be setup */
-  if( g==NULL                      ) { ERROR(("Bad grid"));         return; }
-  if( g->mp==NULL                  ) { ERROR(("Bad mp"));           return; }
+  if( g==NULL                      ) ERROR(("Bad grid"));
+  if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) { ERROR(("Bad topology"));     return; }
-  if( gnx<1 || gny<1 || gnz<1      ) { ERROR(("Bad res"));          return; }
+      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
+  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
   if( gnx%gpx!=0 ||
       gny%gpy!=0 ||
-      gnz%gpz!=0                   ) { ERROR(("Incompatible res")); return; }
+      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 

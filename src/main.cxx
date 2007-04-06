@@ -8,20 +8,11 @@
  *
  */
 
-#include <string.h> /* For strcmp */
 #include <mpi.h>    /* For MPI_Init and MPI_Finalize */
 #include <vpic.hxx>
 
 int main( int argc, char **argv ) {
   MPI_Init(&argc,&argv); 
-
-  /* Do some hardware compatibility checking */
-  if( sizeof(INT32_TYPE)!=4 ||
-      sizeof(INT64_TYPE)!=8 ) {
-    ERROR(( "INT32_TYPE and/or INT64_TYPE have turned this code into a house of lies." ));
-    MPI_Finalize();
-    return 1;
-  }
 
   vpic_simulation simulation; 
   if( argc>=3 && strcmp(argv[1],"restart")==0 ) simulation.restart(argv[2]);

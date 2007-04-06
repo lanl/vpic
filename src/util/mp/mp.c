@@ -8,9 +8,9 @@
  *
  */
 
-#include <mpi.h>
 #include <mp.h>
-#include <string.h>  /* For memcpy */ 
+#include <mpi.h>
+
 /* A mp can handle up to 54 simultaneous communications (27 sends and 27
    receives) ... This is based on every volume, face, edge and corner of a
    box simultaneously engaged in an overlapped send and an overlapped
@@ -402,7 +402,7 @@ error_code mp_allgather_i( int *sbuf, int *rbuf, int n, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_allgather_i64( INT64_TYPE *sbuf, INT64_TYPE *rbuf, int n, mp_handle h ) {
+error_code mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
   if( mp==NULL ) return ERROR_CODE("Bad handle");

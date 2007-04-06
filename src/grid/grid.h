@@ -15,7 +15,6 @@
 #include <mp.h> /* For mp_handle */
 #include <mtrand.h> /* For mt_handle...SEE NOTE BELOW ABOUT BABIES */
 
-
 /* Define a "pointer to boundary handler function" type. */
 
 /* THESE PREDECLARATIONS ARE UGLY AND MAKE BABY JESUS CRY */
@@ -123,21 +122,21 @@ typedef struct grid {
     COMPONENT ID STRATEGY FURTHER LIMITS TO 2^27 PER NODE. THE LIMIT
     IS 2^64 OVER ALL NODES THOUGH. */
 
-  INT64_TYPE * ALIGNED range;    /* (0:nproc) indexed array giving range of global
-                                    indexes of cells owned by each processor.
-                                    Replicated on each processor.
-                                    (range[rank]:range[rank+1]-1) are global cells
-                                    owned by processor "rank". Note:
-                                    range[rank+1]-range[rank] <~ 2^31 / 6 */
-  INT64_TYPE * ALIGNED neighbor; /* (0:5,0:local_num_cells-1) FORTRAN indexed array
-                                    neighbor(0:5,lidx) are the global indexes of
-                                    neighboring cells of the cell with local index
-                                    "lidx". Negative if neighbor is a boundary
-                                    condition. */
-  INT64_TYPE rangel, rangeh;   /* Redundant for move_p performance reasons:
-                                  rangel = range[rank]
-                                  rangeh = range[rank+1]-1.
-                                  Note: rangeh-rangel <~ 2^31 / 6 */
+  int64_t * ALIGNED range;    /* (0:nproc) indexed array giving range of global
+                                 indexes of cells owned by each processor.
+                                 Replicated on each processor.
+                                 (range[rank]:range[rank+1]-1) are global cells
+                                 owned by processor "rank". Note:
+                                 range[rank+1]-range[rank] <~ 2^31 / 6 */
+  int64_t * ALIGNED neighbor; /* (0:5,0:local_num_cells-1) FORTRAN indexed array
+                                 neighbor(0:5,lidx) are the global indexes of
+                                 neighboring cells of the cell with local index
+                                 "lidx". Negative if neighbor is a boundary
+                                 condition. */
+  int64_t rangel, rangeh;   /* Redundant for move_p performance reasons:
+                               rangel = range[rank]
+                               rangeh = range[rank+1]-1.
+                               Note: rangeh-rangel <~ 2^31 / 6 */
 
   /* Enable user-defined boundary handlers */
   int nb;                 /* Number of custom boundary conditions */

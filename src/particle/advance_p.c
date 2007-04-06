@@ -2,8 +2,7 @@
    TO ACCOUNT FOR SPLITTING THE LIST BETWEEN HOST AND PARTICLE PIPELINES */
 
 #include <particle_pipelines.h>
-#include <math.h> /* For sqrt */
-#include <string.h> /* For memcpy */
+#include <unistd.h>
 
 static void
 advance_p_host( particle_t           * ALIGNED p,   /* Particle array */
@@ -141,7 +140,7 @@ advance_p_host( particle_t           * ALIGNED p,   /* Particle array */
 
     }
   }
-
+  
   *nm_seg -= nm;
 }
 
@@ -155,16 +154,15 @@ advance_p( particle_t           * ALIGNED p,
            const interpolator_t * ALIGNED f,
            const grid_t         *         g ) {
   advance_p_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   int rank;
 
-  if( p==NULL  ) { ERROR(("Bad particle array"));      return 0; }
-  if( n<0      ) { ERROR(("Bad number of particles")); return 0; }
-  if( pm==NULL ) { ERROR(("Bad particle mover"));      return 0; }
-  if( nm<0     ) { ERROR(("Bad number of movers"));    return 0; }
-  if( a==NULL  ) { ERROR(("Bad accumulator"));         return 0; }
-  if( f==NULL  ) { ERROR(("Bad interpolator"));        return 0; }
-  if( g==NULL  ) { ERROR(("Bad grid"));                return 0; }
+  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( n<0      ) ERROR(("Bad number of particles"));
+  if( pm==NULL ) ERROR(("Bad particle mover"));
+  if( nm<0     ) ERROR(("Bad number of movers"));
+  if( a==NULL  ) ERROR(("Bad accumulator"));
+  if( f==NULL  ) ERROR(("Bad interpolator"));
+  if( g==NULL  ) ERROR(("Bad grid"));
 
   args->p   = p;
   args->n   = n;
@@ -175,7 +173,7 @@ advance_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( advance_p_pipeline, args, 0, request );
+  dispatch_pipelines( advance_p_pipeline, args, 0 );
 
   /* Have the host processor do the incomplete quad if necessary.
      Note: This is overlapped with the pipelined processing.  As such,
@@ -192,7 +190,7 @@ advance_p( particle_t           * ALIGNED p,
                   &args->seg[n_pipeline].pm,
                   &args->seg[n_pipeline].nm );
 
-  wait_for_pipelines( request );
+  wait_for_pipelines();
 
   /* FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
      INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE

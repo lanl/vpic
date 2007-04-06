@@ -8,7 +8,6 @@
  *
  */
 
-#include <math.h> /* For sqrt */
 #include <species.h>
 
 /* accumulate_hydro_p adds the hydrodynamic fields associated with the
@@ -36,11 +35,11 @@ void accumulate_hydro_p( hydro_t * ALIGNED h0,
   hydro_t * ALIGNED h;
   int stride_10, stride_21, stride_43;
 
-  if( h0==NULL ) { ERROR(("Bad hydro"));               return; }
-  if( p==NULL  ) { ERROR(("Bad particle array"));      return; }
-  if( n<0      ) { ERROR(("Bad number of particles")); return; }
-  if( f0==NULL ) { ERROR(("Bad field"));               return; }
-  if( g==NULL  ) { ERROR(("Bad grid"));                return; }
+  if( h0==NULL ) ERROR(("Bad hydro"));
+  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( n<0      ) ERROR(("Bad number of particles"));
+  if( f0==NULL ) ERROR(("Bad field"));
+  if( g==NULL  ) ERROR(("Bad grid"));
   
   qdt_2mc  = 0.5*q_m*g->dt/g->cvac;
   qdt_4mc2 = 0.25*q_m*g->dt/(g->cvac*g->cvac);

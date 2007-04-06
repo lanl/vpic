@@ -1,4 +1,3 @@
-#include <string.h>   /* For strlen and strcpy */
 #include <emitter.h>
 
 emitter_t *
@@ -10,20 +9,11 @@ new_emitter( const char * name,
   emitter_t * e;
   int len;
 
-  if( e_list==NULL ) {
-    ERROR(("Invalid emitter list."));
-    return NULL;
-  }
+  if( e_list==NULL ) ERROR(("Invalid emitter list."));
   len = (name==NULL) ? 0 : strlen(name);
-  if( len<=0 ) {
-    ERROR(("Cannot create a nameless emitter."));
-    return NULL;
-  }
-  if( find_emitter_name(name,*e_list)!=NULL ) {
-   
+  if( len<=0 ) ERROR(("Cannot create a nameless emitter."));
+  if( find_emitter_name(name,*e_list)!=NULL )
     ERROR(("There is already a emitter named \"%s\".",name)); 
-    return NULL;
-  }
   if( max_component<1 ) {
 
     /* 
@@ -41,10 +31,7 @@ new_emitter( const char * name,
 
   /* sizeof(emitter_t) includes the termininating null of name */
   e = (emitter_t *)malloc(sizeof(emitter_t)+len);
-  if( e==NULL ) {
-    ERROR(("Could not allocate emitter"));
-    return NULL;
-  }
+  if( e==NULL ) ERROR(("Could not allocate emitter"));
 
   /* Initialize the emitter */
 
@@ -53,11 +40,7 @@ new_emitter( const char * name,
   memset( e->model_parameters, 0, MAX_EMISSION_MODEL_SIZE );
   e->component = (int * ALIGNED)malloc_aligned( max_component*sizeof(int),
                                                 preferred_alignment );
-  if( e->component==NULL ) {
-    ERROR(("Could not allocate region components"));
-    free(e);
-    return NULL;
-  }
+  if( e->component==NULL ) ERROR(("Could not allocate region components"));
   e->n_component   = 0;
   e->max_component = max_component;
 

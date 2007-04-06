@@ -19,7 +19,7 @@
 
 typedef struct particle {
   float dx, dy, dz; /* Particle position in cell coordinates (on [-1,1]) */
-  INT32_TYPE i;     /* Index of cell containing the particle */
+  int32_t i;        /* Index of cell containing the particle */
   float ux, uy, uz; /* Particle normalized momentum */
   float q;          /* Particle charge */
 } particle_t;
@@ -30,11 +30,11 @@ typedef struct particle {
 
 typedef struct particle_mover {
   float dispx, dispy, dispz; /* Displacement of particle */
-  INT32_TYPE i;              /* Index of the particle to move */
+  int32_t i;                 /* Index of the particle to move */
 } particle_mover_t;
 
 typedef struct particle_injector {
-  float dx, dy, dz; INT32_TYPE i;
+  float dx, dy, dz; int32_t i;
   float ux, uy, uz, q;
   float dispx, dispy, dispz;
 } particle_injector_t;

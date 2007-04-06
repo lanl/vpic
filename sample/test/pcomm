@@ -91,7 +91,8 @@ begin_diagnostics {
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
-      if( sp->np!=0 ) global->fail++;
+      if( sp->np!=0 ) global->fail++; 
+
     }
   }
 
@@ -102,7 +103,7 @@ begin_diagnostics {
           sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
-      if( sp->np!=0 ) global->fail++;
+      if( sp->np!=0 ) global->fail++; 
     }
   }
 

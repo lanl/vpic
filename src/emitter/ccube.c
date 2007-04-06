@@ -1,4 +1,3 @@
-#include <math.h>    /* For sqrt and fabs */
 #include <emitter.h>
 
 /* FIXME: ERROR TRAPPING AND ERROR RETURNS */

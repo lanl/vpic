@@ -20,40 +20,15 @@
 #endif
 
 #include <stdlib.h> /* For malloc, realloc, free, size_t, NULL */
-#include <limits.h> /* For LONG_MAX */
-
-/* 16-bit ints */
-#ifndef INT16_TYPE
-#define INT16_TYPE short int
-#endif
-
-/* 32-bit ints */
-#ifndef INT32_TYPE
-#define INT32_TYPE int
-#endif
-
-#ifndef INT64_TYPE
-#if LONG_MAX==2147483647L
-/* Long int is 32-bits ... assume long long int is 64-bits */
-/* Warning: This is not ANSI-C89 compliant */
-__extension__
-typedef long long int int64;
-#define INT64_TYPE int64
-#else
-/* Long int is not 32-bits ... assume long int is a 64-bits */
-#define INT64_TYPE long int
-#endif
-#endif
+#include <string.h> /* For string and memory manipulation */
+#include <math.h>   /* For math prototypes */
+#include <stdint.h> /* For fixed width integer types */
+#include <limits.h> /* For integer limits */
+#include <float.h>  /* For floating point limits */
 
 /* PREFERRED_ALIGNMENT is the default alignment */
 #ifndef PREFERRED_ALIGNMENT
 #define PREFERRED_ALIGNMENT 16
-#endif
-
-/* RESTRICT indicates memory accessed through a pointer will not be accessed
-   by other means in the scope of the pointer */
-#ifndef RESTRICT
-#define RESTRICT
 #endif
 
 /* ALIGNED indicates a pointer can be assumed to aligned */
@@ -99,7 +74,9 @@ typedef long long int int64;
    Will print the following message to the log:
 
    Error at src/module/file.c(34):
-           Could not allocate 45 bytes */
+           Could not allocate 45 bytes
+
+   Note: Error messages are abortive but MESSAGE and WARNING are not */
 
 #define CHECKPOINT() BEGIN_PRIMITIVE {		           \
   print_log( "%s(%i): Checkpoint\n", __FILE__, __LINE__ ); \
@@ -121,12 +98,16 @@ typedef long long int int64;
   print_log( "Error at %s(%i):\n\t", __FILE__, __LINE__ ); \
   print_log args;					   \
   print_log( "\n" );                                       \
+  /* FIXME: SHOULD WAIT A FEW SECONDS HERE! */             \
+  exit(1);                                                 \
 } END_PRIMITIVE
 
-enum common_enums {
+/* FIXME: DEPRECATE THIS */
+enum {
   preferred_alignment = PREFERRED_ALIGNMENT
 };
 
+/* FIXME: DEPRECATE THIS */
 typedef const char *error_code;
 #define ERROR_CODE(s) \
   ((error_code)(__FILE__"("EXPAND_AND_STRINGIFY(__LINE__)"): "s))
@@ -141,4 +122,4 @@ void print_log( const char *fmt, ... );
 
 END_C_DECLS
 
-#endif
+#endif /* _common_h_ */

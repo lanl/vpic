@@ -15,17 +15,10 @@ grid_t *new_grid(void) {
   int i;
 
   g = (grid_t *)malloc(sizeof(grid_t));
-  if( g==NULL ) {
-    ERROR(("Could not allocate grid"));
-    return NULL;
-  }
+  if( g==NULL ) ERROR(("Could not allocate grid"));
 
   g->mp = new_mp();
-  if( g->mp==NULL ) {
-    ERROR(("Could not create message passer"));
-    free(g);
-    return NULL;
-  }
+  if( g->mp==NULL ) ERROR(("Could not create message passer"));
   g->dt = 0;
   g->cvac = 0;
   g->eps0 = 0;

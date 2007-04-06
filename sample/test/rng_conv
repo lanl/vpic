@@ -16,8 +16,8 @@ begin_globals {
 begin_initialization {
   double d0, d1;
   float f0, f1;
-  unsigned INT32_TYPE a0 = 0x00000000, b0 = 0x00000000;
-  unsigned INT32_TYPE a1 = 0xffffffff, b1 = 0xffffffff;
+  uint32_t a0 = 0x00000000, b0 = 0x00000000;
+  uint32_t a1 = 0xffffffff, b1 = 0xffffffff;
  
   /* Test frand24_c */
   f0 = frand24_c(a0);

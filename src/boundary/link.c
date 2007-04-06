@@ -1,10 +1,8 @@
-#include <math.h>  /* for fabs, sqrt, log */
 #include <boundary.h>
 #include <common.h>
 #include <mp.h>
 
 #include <stdio.h> /* for debugging output */ 
-#include <stdlib.h>
 
 /*
   -----------------------------------------------------------------------
@@ -43,11 +41,9 @@ void link_boundary( void * _lb, particle_t *r,
        sprintf( fname, "link.%s.%d", timestamp_string, mp_rank(g->mp) ); */
     sprintf( fname, "%s.%d", lb->fbase, mp_rank(g->mp) ); 
     fp = fopen( fname, "r" );
-    if( fp!=NULL ) {
+    if( fp!=NULL )
       ERROR(( "File %s already exists (probably from a earlier run or recovery) ... "
               "Please move it or change link filename", fname ));
-      abort();
-    }
     fp = fopen( fname, "w" );
     if( fp==NULL ) ERROR(("Could not open file %s", fname)); 
     

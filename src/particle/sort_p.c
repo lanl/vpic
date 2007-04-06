@@ -8,7 +8,6 @@
  *
  */
 
-#include <string.h> /* For memset */
 #include <species.h>
 
 void sort_p( struct species * sp,
@@ -22,9 +21,9 @@ void sort_p( struct species * sp,
   p =sp->p; 
   np=sp->np; 
 
-  if( p==NULL ) { ERROR(("Bad particle array"));      return; }
-  if( np<0    ) { ERROR(("Bad number of particles")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));                return; }
+  if( p==NULL ) ERROR(("Bad particle array"));
+  if( np<0    ) ERROR(("Bad number of particles"));
+  if( g==NULL ) ERROR(("Bad grid"));
   if( np==0   ) return; /* Do not need to sort */
 
   nc = (g->nx+2)*(g->ny+2)*(g->nz+2);
@@ -37,18 +36,11 @@ void sort_p( struct species * sp,
      collision models by allowing access to copy array outside sort_p. */ 
   if ( !next ) {
     next = (int * ALIGNED)malloc_aligned( i, preferred_alignment );
-    if( next==NULL ) {
-      ERROR(("Failed to allocate next"));
-      return;
-    }
+    if( next==NULL ) ERROR(("Failed to allocate next"));
   }
   if ( !sp->copy ) {
     sp->copy = (int * ALIGNED)malloc_aligned( i, preferred_alignment );
-    if( sp->copy==NULL ) {
-      ERROR(("Failed to allocate copy"));
-      free_aligned(next);
-      return;
-    }
+    if( sp->copy==NULL ) ERROR(("Failed to allocate copy"));
   }  
   copy=sp->copy; 
 

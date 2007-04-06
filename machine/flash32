@@ -39,8 +39,8 @@ RANLIB = ranlib
 RM     = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=athlon-mp -DRESTRICT=__restrict 
-CXXFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=athlon-mp -DRESTRICT=__restrict -DV4VERSION=v4_sse.hxx 
-LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=athlon-mp -DRESTRICT=__restrict 
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=athlon-mp -mfpmath=sse
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=athlon-mp -mfpmath=sse -DUSE_V4_SSE
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=athlon-mp -mfpmath=sse
 ARFLAGS  = 
 

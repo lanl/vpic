@@ -1,5 +1,4 @@
 #include <particle_pipelines.h>
-#include <math.h> /* For sqrt */
 
 static void
 center_p_host( particle_t           * ALIGNED p,    /* Particle array */
@@ -66,11 +65,10 @@ center_p( particle_t           * ALIGNED p,
           const interpolator_t * ALIGNED f,
           const grid_t         *         g ) {
   center_p_pipeline_args_t args[1];
-  pipeline_request_t request[1];
 
-  if( n<0     ) { ERROR(("Bad number of particles")); return; }
-  if( f==NULL ) { ERROR(("Bad interpolator"));        return; }
-  if( g==NULL ) { ERROR(("Bad grid"));                return; }
+  if( n<0     ) ERROR(("Bad number of particles"));
+  if( f==NULL ) ERROR(("Bad interpolator"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   /* Have the pipelines do the bulk of particles in quads and
      have the host do the final incomplete quad. */
@@ -81,10 +79,10 @@ center_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( center_p_pipeline, args, 0, request );
+  dispatch_pipelines( center_p_pipeline, args, 0 );
 
   center_p_host( p, n, q_m, f, g );
 
-  wait_for_pipelines( request );
+  wait_for_pipelines();
 }
 

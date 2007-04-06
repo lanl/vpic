@@ -9,7 +9,6 @@
  */
 
 #include <vpic.hxx>
-#include <string.h>
 
 int vpic_simulation::advance(void) {
   int rank;

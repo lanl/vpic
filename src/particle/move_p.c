@@ -24,7 +24,7 @@ int move_p( particle_t       * ALIGNED p,
   float s_dir[3];
   float v0, v1, v2, v3, v4, v5;
   int type;
-  INT64_TYPE neighbor;
+  int64_t neighbor;
   float *a;
   p += pm->i;
 
@@ -252,12 +252,12 @@ int inject_p( particle_t * ALIGNED p0,       /* Array to inject into */
   float *rhob;
   particle_t * p = p0 + n;
 
-  if( p==NULL  ) { ERROR(("Bad particle"));    return 0; }
-  if( pm==NULL ) { ERROR(("Bad mover"));       return 0; }
-  if( f==NULL  ) { ERROR(("Bad field"));       return 0; }
-  if( a==NULL  ) { ERROR(("Bad accumulator")); return 0; }
-  if( pi==NULL ) { ERROR(("Bad injector"));    return 0; }
-  if( g==NULL  ) { ERROR(("Bad grid"));        return 0; }
+  if( p==NULL  ) ERROR(("Bad particle"));
+  if( pm==NULL ) ERROR(("Bad mover"));
+  if( f==NULL  ) ERROR(("Bad field"));
+  if( a==NULL  ) ERROR(("Bad accumulator"));
+  if( pi==NULL ) ERROR(("Bad injector"));
+  if( g==NULL  ) ERROR(("Bad grid"));
 
   /* Load the particle and particle mover from the injector */
   p->dx     = pi->dx;

@@ -1,5 +1,5 @@
 #include <particle_pipelines.h>
-#include <v4.hxx>
+#include <v4.h>
 
 using namespace v4;
 
@@ -32,7 +32,7 @@ move_p_local( particle_t       * ALIGNED p,
   float s_dir[3];
   float v0, v1, v2, v3, v4, v5;
   int type;
-  INT64_TYPE neighbor;
+  int64_t neighbor;
   float *a;
   p += pm->i;
 

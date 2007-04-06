@@ -43,7 +43,7 @@ error_code mp_allsum_d( double *local, double *global, int n,
 error_code mp_allsum_i( int *local, int *global, int n,
                                mp_handle h );
 error_code mp_allgather_i( int *sbuf, int *rbuf, int n, mp_handle h );
-error_code mp_allgather_i64( INT64_TYPE *sbuf, INT64_TYPE *rbuf, int n, mp_handle h );
+error_code mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n, mp_handle h );
 
 error_code mp_send_i( int *buf, int n, int dst, mp_handle h );
 error_code mp_recv_i( int *buf, int n, int src, mp_handle h );

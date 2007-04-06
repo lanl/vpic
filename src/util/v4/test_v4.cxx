@@ -1,5 +1,9 @@
-#include <v4_sse.hxx>
+#include <v4.h>
 #include <stdio.h>
+
+#if V4_ACCELERATION==none
+#error "Specify which V4 to use"
+#endif
 
 using namespace v4;
 

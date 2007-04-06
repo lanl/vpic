@@ -9,14 +9,13 @@
 void clean_div_b( field_t * ALIGNED f,
 		  const grid_t * g ) {
   clean_div_b_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   
   float alphadt, px, py, pz;
   field_t *f0, *fx, *fy, *fz;
   int x, y, z, nx, ny, nz;
 
-  if( f==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   nx = g->nx;
   ny = g->ny;
@@ -33,7 +32,7 @@ void clean_div_b( field_t * ALIGNED f,
 
   args->f = f;
   args->g = g;
-  dispatch_pipelines( clean_div_b_pipeline, args, 0, request );
+  dispatch_pipelines( clean_div_b_pipeline, args, 0 );
   
   /* Begin setting derr ghosts */
   begin_remote_ghost_div_b( f, g );
@@ -159,7 +158,7 @@ void clean_div_b( field_t * ALIGNED f,
 
   /* For for pipelines to finish up cleaning div_b in interior */
   
-  wait_for_pipelines( request );
+  wait_for_pipelines();
   
   local_adjust_norm_b(f,g);
 }

@@ -39,9 +39,9 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4 -DRESTRICT=__restrict                        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
-CXXFLAGS =                       -O3 -fomit-frame-pointer -ffast-math -march=pentium4 -DRESTRICT=__restrict -DV4VERSION=v4_sse.hxx -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
-LDFLAGS  = -Wall -pedantic -ansi -O3 -fomit-frame-pointer -ffast-math -march=pentium4 -DRESTRICT=__restrict                        -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse              -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -DUSE_V4_SSE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse              -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1
 ARFLAGS  =
 
 

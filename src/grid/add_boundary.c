@@ -1,6 +1,4 @@
-#include <stdlib.h>  /* for realloc, malloc */
 #include <grid.h>
-#include <string.h>  /* for memset, memcpy */
 
 /* Define custom boundary handler for grid g.  Return integer tag in
    range [-3...-inf] associated with boundary handler which is used with
@@ -20,10 +18,7 @@ int IUO_add_boundary( grid_t *g, boundary_handler_t handler, const void * initia
   else
     g->boundary = (boundary_t *)realloc( g->boundary, (g->nb+1)*sizeof(boundary_t) );
 
-  if( g->boundary==NULL ) {
-    ERROR(( "g->boundary alloc failed" ));
-    return INVALID_BOUNDARY;
-  }
+  if( g->boundary==NULL ) ERROR(( "g->boundary alloc failed" ));
 
   g->boundary[g->nb].handler = handler;
   memset( g->boundary[g->nb].params, 0, MAX_BOUNDARY_DATA_SIZE );

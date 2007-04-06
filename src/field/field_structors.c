@@ -8,7 +8,6 @@
  *
  */
 
-#include <string.h> /* For memset */
 #include <field.h>
 #include <pipeline.h>
 
@@ -16,17 +15,12 @@ field_t * ALIGNED new_field( const grid_t * g ) {
   field_t * ALIGNED f;
   int req;
 
-  if( g==NULL    ) { ERROR(("Bad grid."));       return NULL; }
-  if( g->nx<1 ||
-      g->ny<1 ||
-      g->nz<1    ) { ERROR(("Bad resolution.")); return NULL; }
+  if( g==NULL ) ERROR(("Bad grid."));
+  if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
 
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(field_t);
   f = (field_t * ALIGNED)malloc_aligned( req, preferred_alignment );
-  if( f==NULL ) {
-    ERROR(("Failed to allocate field."));
-    return NULL;
-  }
+  if( f==NULL ) ERROR(("Failed to allocate field."));
   clear_field( f, g );
 
   return f;
@@ -42,8 +36,9 @@ void delete_field( field_t ** ALIGNED f ) {
 
 void clear_field( field_t * ALIGNED f,
 	          const grid_t * g ) {
-  if( f==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( g==NULL ) ERROR(("Bad grid"));
+  /* FIXME: SPU THIS */
   memset( f, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(field_t) );
 }
 
@@ -51,8 +46,8 @@ void clear_jf( field_t * ALIGNED f, const grid_t * g ) {
   int nx, ny, nz, x, y, z;
   field_t *f0;
 
-  if( f==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( f==NULL ) ERROR(("Bad field")); 
+  if( g==NULL ) ERROR(("Bad grid"));
 
   nx = g->nx;
   ny = g->ny;
@@ -74,8 +69,8 @@ void clear_rhof( field_t * ALIGNED f, const grid_t * g ) {
   int nx, ny, nz, x, y, z;
   field_t *f0;
 
-  if( f==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   nx = g->nx;
   ny = g->ny;
@@ -97,17 +92,12 @@ hydro_t * ALIGNED new_hydro( const grid_t * g ) {
   hydro_t * ALIGNED h;
   int req;
 
-  if( g==NULL    ) { ERROR(("Bad grid."));       return NULL; }
-  if( g->nx<1 ||
-      g->ny<1 ||
-      g->nz<1    ) { ERROR(("Bad resolution.")); return NULL; }
+  if( g==NULL ) ERROR(("Bad grid."));
+  if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
 
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(hydro_t);
   h = (hydro_t * ALIGNED)malloc_aligned( req, preferred_alignment );
-  if( h==NULL ) {
-    ERROR(("Failed to allocate hydro."));
-    return NULL;
-  }
+  if( h==NULL ) ERROR(("Failed to allocate hydro."));
   clear_hydro(h,g);
 
   return h;
@@ -121,8 +111,8 @@ void delete_hydro( hydro_t ** ALIGNED h ) {
 
 void clear_hydro( hydro_t * ALIGNED h,
 	          const grid_t * g ) {
-  if( h==NULL ) { ERROR(("Bad hydro")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));  return; }
+  if( h==NULL ) ERROR(("Bad hydro"));
+  if( g==NULL ) ERROR(("Bad grid"));
   memset( h, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(hydro_t) );
 }
 
@@ -132,21 +122,12 @@ interpolator_t * ALIGNED new_interpolator( const grid_t * g ) {
   interpolator_t *fi;
   int req;
 
-  if( g==NULL ) {
-    ERROR(("Invalid grid."));
-    return NULL;
-  }
-  if( g->nx<1 || g->ny<1 || g->nz<1 ) {
-    ERROR(("Invalid grid resolution."));
-    return NULL;
-  }
+  if( g==NULL ) ERROR(("Invalid grid."));
+  if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Invalid grid resolution."));
   
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t);
   fi = (interpolator_t * ALIGNED)malloc_aligned( req, preferred_alignment );
-  if( fi==NULL ) {
-    ERROR(("Failed to allocate interpolator."));
-    return NULL;
-  }
+  if( fi==NULL ) ERROR(("Failed to allocate interpolator."));
   clear_interpolator(fi,g);
 
   return fi;
@@ -160,8 +141,8 @@ void delete_interpolator( interpolator_t ** ALIGNED fi ) {
 
 void clear_interpolator( interpolator_t * ALIGNED fi,
                          const grid_t * g ) {
-  if( fi==NULL ) { ERROR(("Bad interpolator")); return; }
-  if( g==NULL  ) { ERROR(("Bad grid"));         return; }
+  if( fi==NULL ) ERROR(("Bad interpolator"));
+  if( g==NULL  ) ERROR(("Bad grid"));
   memset( fi, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t) );
 }
 
@@ -172,17 +153,12 @@ new_accumulators( const grid_t * g ) {
   accumulator_t *a;
   size_t req;
 
-  if( g==NULL    ) { ERROR(("Bad grid."));       return NULL; }
-  if( g->nx<1 ||
-      g->ny<1 ||
-      g->nz<1    ) { ERROR(("Bad resolution.")); return NULL; }
+  if( g==NULL ) ERROR(("Bad grid."));
+  if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
   req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+n_pipeline)*sizeof(accumulator_t);
   a = (accumulator_t * ALIGNED)malloc_aligned( req, preferred_alignment );
-  if( a==NULL ) {
-    ERROR(("Failed to allocate accumulator."));
-    return NULL;
-  }
+  if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );
 
   return a;

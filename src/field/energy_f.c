@@ -5,22 +5,21 @@ void energy_f( double * global,
                const material_coefficient_t * ALIGNED m,
                const grid_t * ALIGNED g ) {
   energy_f_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   double v0;
   int p;
   
-  if( global==NULL ) { ERROR(("Bad energy"));                return; }
-  if( f==NULL )      { ERROR(("Bad field"));                 return; }
-  if( m==NULL )      { ERROR(("Bad material coefficients")); return; }
-  if( g==NULL )      { ERROR(("Bad grid"));                  return; }
+  if( global==NULL ) ERROR(("Bad energy"));
+  if( f==NULL )      ERROR(("Bad field"));
+  if( m==NULL )      ERROR(("Bad material coefficients"));
+  if( g==NULL )      ERROR(("Bad grid"));
 
   /* Have each pipelines work on a portion of the local voxels */
   
   args->f = f;
   args->m = m;
   args->g = g;
-  dispatch_pipelines( energy_f_pipeline, args, 0,request );
-  wait_for_pipelines( request );
+  dispatch_pipelines( energy_f_pipeline, args, 0 );
+  wait_for_pipelines();
 
   /* Reduce results from each pipelines */
   

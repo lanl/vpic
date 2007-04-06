@@ -1,6 +1,12 @@
 #ifndef _v4_spu_hxx_
 #define _v4_spu_hxx_
 
+#ifndef IN_v4_h
+#error "Do not include v4_spu.hxx directly; use v4.h"
+#endif
+
+#define V4_ACCELERATION SPU
+
 #include <spu_intrinsics.h>
 #include <math.h>
 

@@ -25,7 +25,8 @@ AddModule(grid,src/grid,ops partition grid_structors add_boundary)
 AddModule(material,src/material,coefficient material)
 
 AddModule(field,src/field,load_interpolator clear_accumulators reduce_accumulators unload_accumulator advance_b advance_e energy_f compute_curl_b compute_rhob compute_div_e_err compute_rms_div_e_err clean_div_e compute_div_b_err compute_rms_div_b_err clean_div_b local remote field_structors)
-AddModule(field_pipelines,src/field/pipelines_v4,load_interpolator_pipeline clear_accumulators_pipeline reduce_accumulators_pipeline unload_accumulator_pipeline advance_b_pipeline advance_e_pipeline energy_f_pipeline compute_curl_b_pipeline compute_rhob_pipeline compute_div_e_err_pipeline compute_rms_div_e_err_pipeline clean_div_e_pipeline compute_div_b_err_pipeline compute_rms_div_b_err_pipeline clean_div_b_pipeline distribute_voxels)
+/* FIXME: SOMETHING IN THE V4 FIELD PIPELINES IS BREAKING SUBTLELY UNDER FLASH64 (gcc-4.1.2, operton) THAT WAS NOT BREAKING ON MY HOME COMPUTER (gcc-4.1.1, pentium4).  SHOULD BE INVESTIGATED FURTHER! */
+AddModule(field_pipelines,src/field/pipelines_scalar,load_interpolator_pipeline clear_accumulators_pipeline reduce_accumulators_pipeline unload_accumulator_pipeline advance_b_pipeline advance_e_pipeline energy_f_pipeline compute_curl_b_pipeline compute_rhob_pipeline compute_div_e_err_pipeline compute_rms_div_e_err_pipeline clean_div_e_pipeline compute_div_b_err_pipeline compute_rms_div_b_err_pipeline clean_div_b_pipeline distribute_voxels)
 
 AddModule(particle,src/particle,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p particle_structors)
 AddModule(particle_pipelines,src/particle/pipelines_v4,advance_p_pipeline center_p_pipeline uncenter_p_pipeline energy_p_pipeline)

@@ -25,10 +25,10 @@ void accumulate_rho_p( field_t * ALIGNED f0,
   float w0, w1, w2, w3, w4, w5, w6, w7, t, r8V, *rho;
   int stride_10, stride_21, stride_43;
 
-  if( f0==NULL ) { ERROR(("Bad field"));                return; }
-  if( p==NULL  ) { ERROR(("Bad particle array"));       return; }
-  if( n<0      ) { ERROR(("Bad number of particles"));  return; }
-  if( g==NULL  ) { ERROR(("Bad grid"));                 return; }
+  if( f0==NULL ) ERROR(("Bad field"));
+  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( n<0      ) ERROR(("Bad number of particles"));
+  if( g==NULL  ) ERROR(("Bad grid"));
 
   r8V = 0.125/(g->dx*g->dy*g->dz);
 

@@ -17,18 +17,12 @@ void vpic_simulation::initialize( int argc, char **argv ) {
 
   // Create an empty grid (creates the communicator too)
   grid = new_grid();
-  if( grid==NULL ) {
-    ERROR(("Could not create the grid"));
-    exit(0); // No comm so cannot use mp_abort
-  }
+  if( grid==NULL ) ERROR(("Could not create the grid"));
 
   // Create a random number generator seeded with the rank
   rank = mp_rank(grid->mp);
   rng = mt_new_generator(rank);
-  if( rng==NULL ) {
-    ERROR(("Could not create the random number generator"));
-    mp_abort(0,grid->mp);
-  }
+  if( rng==NULL ) ERROR(("Could not create the random number generator"));
 
   // Call the user initialize the simulation
   user_initialization(argc,argv);

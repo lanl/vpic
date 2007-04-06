@@ -8,11 +8,7 @@
  *
  */
 
-#include <string.h> /* For strlen, strcpy, strcmp */
 #include <species.h>
-
-#include <particle.h> /* for particle_t */ 
-
 
 /* Note: new_species added the created species to the head of the species
  * list. Further the species ids are simply incremented from the previous
@@ -25,64 +21,43 @@ int num_species( const species_t *sp_list ) {
   return sp_list->id+1;
 }
 
-species_id new_species( const char *name,
-                        float q_m,
-                        int max_local_np,
-                        int max_local_nm,
-                        int sort_interval,
-                        species_t **sp_list ) {
+species_id
+new_species( const char *name,
+             float q_m,
+             int max_local_np,
+             int max_local_nm,
+             int sort_interval,
+             species_t **sp_list ) {
   species_t *sp;
   int len;
 
-  if( sp_list==NULL ) {
-    ERROR(("Invalid species list."));
-    return invalid_species_id;
-  }
+  if( sp_list==NULL ) ERROR(("Invalid species list."));
   /* Note: strlen does not include terminating NULL */
   len = (name==NULL) ? 0 : strlen(name);
-  if( len<=0 ) {
-    ERROR(("Cannot create a nameless species."));
-    return invalid_species_id;
-  }
-  if( find_species_name(name,*sp_list)!=NULL ) {
+  if( len<=0 ) ERROR(("Cannot create a nameless species."));
+  if( find_species_name(name,*sp_list)!=NULL ) 
     ERROR(("There is already a species named \"%s\".",name));
-    return invalid_species_id;
-  }
-  if( max_local_np<1 ) {
+  if( max_local_np<1 )
     ERROR(("Invalid max_local_np requested for species \"%s\".",name));
-    return invalid_species_id;
-  }
-  if( max_local_nm<1 ) {
+  if( max_local_nm<1 )
     ERROR(("Invalid max_local_nm requested for species \"%s\".",name));
-    return invalid_species_id;
-  }
   
   /* Note: Since a sp->name is declared as a 1-element char array,
      the terminating NULL is included in sizeof(species_t) */
   sp = (species_t *)malloc(sizeof(species_t)+len);
-  if( sp==NULL ) {
-    ERROR(("Unable to allocate species \"%s\".", name));
-    return invalid_species_id;
-  }
+  if( sp==NULL ) ERROR(("Unable to allocate species \"%s\".", name));
 
   sp->id = num_species(*sp_list);
   sp->np = 0;
   sp->max_np = max_local_np;
   sp->p = new_particle_array( max_local_np );
-  if( sp->p==NULL ) {
+  if( sp->p==NULL )
     ERROR(("Could not allocate particle array for species \"%s\".",name));
-    free(sp);
-    return invalid_species_id;
-  }
   sp->nm = 0;
   sp->max_nm = max_local_nm;
   sp->pm = new_particle_mover( max_local_nm );
-  if( sp->pm==NULL ) {
+  if( sp->pm==NULL )
     ERROR(("Could not allocate mover array for species \"%s\".",name));
-    delete_particle_array(&sp->p);
-    free(sp);
-    return invalid_species_id;
-  }
   sp->q_m = q_m;
   sp->sort_interval = sort_interval;
   sp->copy = NULL;
@@ -126,15 +101,9 @@ species_t **new_species_lookup( species_t *sp_list ) {
   species_t *sp;
   species_t **sp_lookup;
 
-  if( sp_list==NULL ) {
-    ERROR(("Empty species list"));
-    return NULL;
-  }
+  if( sp_list==NULL ) ERROR(("Empty species list"));
   sp_lookup = (species_t **)malloc(num_species(sp_list)*sizeof(species_t **));
-  if( sp_lookup==NULL ) {
-    ERROR(("Could not allocate species lookup"));
-    return NULL;
-  }
+  if( sp_lookup==NULL ) ERROR(("Could not allocate species lookup"));
   LIST_FOR_EACH(sp,sp_list) sp_lookup[sp->id] = sp;
 
   return sp_lookup;

@@ -22,10 +22,7 @@ void vpic_simulation::dump_energies( const char *fname, int append ) {
   int rank = mp_rank(grid->mp);
   species_t *sp;
   
-  if( fname==NULL ) {
-    ERROR(("Invalid file name"));
-    return;
-  }
+  if( fname==NULL ) ERROR(("Invalid file name"));
   
   if( rank==0 ) {
     handle = fopen( fname, append ? "a" : "w" );
@@ -695,7 +692,7 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(int,size,handle);   ABORT(size!=sizeof(grid->range[0]));
   READ(int,ndim,handle);   ABORT(ndim!=1          );
   READ(int,dim[0],handle); ABORT(dim[0]!=nproc+1  );
-  grid->range = (INT64_TYPE * ALIGNED)
+  grid->range = (int64_t * ALIGNED)
     malloc_aligned( size*dim[0], preferred_alignment );
   ABORT(grid->range==NULL)
   fread( grid->range, size, dim[0], handle );
@@ -706,7 +703,7 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[1],handle); ABORT(dim[1]!=grid->nx+2);
   READ(int,dim[2],handle); ABORT(dim[2]!=grid->ny+2);
   READ(int,dim[3],handle); ABORT(dim[3]!=grid->nz+2);
-  grid->neighbor = (INT64_TYPE * ALIGNED)
+  grid->neighbor = (int64_t * ALIGNED)
     malloc_aligned( size*dim[0]*dim[1]*dim[2]*dim[3], preferred_alignment );
   ABORT(grid->neighbor==NULL);
   fread( grid->neighbor, size, dim[0]*dim[1]*dim[2]*dim[3], handle );

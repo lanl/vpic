@@ -1,5 +1,4 @@
 #include <field_pipelines.h>
-#include <string.h> /* For memset */
 
 void
 clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,

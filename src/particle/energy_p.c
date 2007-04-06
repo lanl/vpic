@@ -1,5 +1,4 @@
 #include <particle_pipelines.h>
-#include <math.h> /* For sqrt */
 
 static double
 energy_p_host( const particle_t     * ALIGNED p,    /* First particle to advance */
@@ -42,13 +41,12 @@ energy_p( const particle_t     * ALIGNED p,
           const interpolator_t * ALIGNED f,
           const grid_t         *         g ) {
   energy_p_pipeline_args_t args[1];
-  pipeline_request_t request[1];
   double local, global;
   int rank;
 
-  if( n<0     ) { ERROR(("Bad number of particles")); return -1; }
-  if( f==NULL ) { ERROR(("Bad interpolator"));        return -1; }
-  if( g==NULL ) { ERROR(("Bad grid"));                return -1; }
+  if( n<0     ) ERROR(("Bad number of particles"));
+  if( f==NULL ) ERROR(("Bad interpolator"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   /* Have the pipelines do the bulk of particles in quads and
      have the host do the final incomplete quad. */
@@ -59,11 +57,11 @@ energy_p( const particle_t     * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  dispatch_pipelines( energy_p_pipeline, args, 0, request );
+  dispatch_pipelines( energy_p_pipeline, args, 0 );
 
   local = energy_p_host( p, n, q_m, f, g );
 
-  wait_for_pipelines( request );
+  wait_for_pipelines();
 
   for( rank=0; rank<n_pipeline; rank++ ) local += args->en[rank];
 

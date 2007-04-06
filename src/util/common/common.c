@@ -10,8 +10,6 @@
 
 #include <stdio.h>    /* For vfprintf */
 #include <stdarg.h>   /* For va_list, va_start, va_end */
-#include <stdlib.h>   /* For malloc, realloc, free */
-
 #include <common.h>   /* Declarations */
 
 void * ALIGNED malloc_aligned( size_t n, size_t a ) {

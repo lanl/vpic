@@ -29,8 +29,8 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Wall -pedantic -ansi -O6 -ffast-math -mcpu=ev67 -DRESTRICT=__restrict
-CXXFLAGS = -Wall -pedantic -ansi -O6 -ffast-math -mcpu=ev67 -DRESTRICT=__restrict
-LDFLAGS  = -Wall -pedantic -ansi -O6 -ffast-math -mcpu=ev67 -DRESTRICT=__restrict
+CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -mcpu=ev67 
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -mcpu=ev67
+LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -mcpu=ev67
 ARFLAGS  = 
 

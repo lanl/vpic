@@ -21,12 +21,6 @@ typedef void
 (*pipeline_func_t)( void * args,
                     int pipeline_rank );
 
-/* A pipeline request is used to monitor the pipeline status */
-
-typedef struct pipeline_request {
-  volatile int complete[MAX_PIPELINE];
-} pipeline_request_t;
-
 BEGIN_C_DECLS
 
 /* dispatch_pipelines begins executing the given pipeline function on all
@@ -48,17 +42,16 @@ BEGIN_C_DECLS
 void
 _dispatch_pipelines( pipeline_func_t pipeline,
                      void * args,
-                     int size_args,
-                     pipeline_request_t * request );
+                     int size_args );
                      
-#define dispatch_pipelines(p,a,s,r) \
-  _dispatch_pipelines((pipeline_func_t)(p),(a),(s),(r))
+#define dispatch_pipelines(p,a,s) \
+  _dispatch_pipelines((pipeline_func_t)(p),(a),(s))
 
 /* wait_for_pipelines waits for all the given pipeline_request to
    complete. */
    
 void
-wait_for_pipelines( pipeline_request_t * request );
+wait_for_pipelines( void );
 
 END_C_DECLS
 

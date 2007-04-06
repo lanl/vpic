@@ -10,7 +10,6 @@
 
 #include <species.h>    /* For species_t */ 
 #include <mtrand.h>     /* For mt_handle */ 
-#include <stdlib.h>     /* For malloc, realloc */ 
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
 #define CUSTOM_PBC_MIN_INJECTORS 16 
@@ -45,15 +44,15 @@ int boundary_p( particle_mover_t * ALIGNED pm,
   static int cpb_size=CUSTOM_PBC_MIN_INJECTORS; 
   static particle_injector_t *cmlist=NULL, *cm; 
 
-  if( pm==NULL ) { ERROR(("Bad particle mover"));          return np; }
-  if( nm<0     ) { ERROR(("Bad number of movers"));        return np; }
-  if( max_nm<0 ) { ERROR(("Bad max number of movers"));    return np; }
-  if( p==NULL  ) { ERROR(("Bad particle array"));          return np; }
-  if( np<0     ) { ERROR(("Bad number of particles"));     return np; }
-  if( max_np<0 ) { ERROR(("Bad max number of particles")); return np; }
-  if( f==NULL  ) { ERROR(("Bad field"));                   return np; }
-  if( a==NULL  ) { ERROR(("Bad accumulator"));             return np; }
-  if( g==NULL  ) { ERROR(("Bad grid"));                    return np; }
+  if( pm==NULL ) ERROR(("Bad particle mover"));
+  if( nm<0     ) ERROR(("Bad number of movers"));
+  if( max_nm<0 ) ERROR(("Bad max number of movers"));
+  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( np<0     ) ERROR(("Bad number of particles"));
+  if( max_np<0 ) ERROR(("Bad max number of particles"));
+  if( f==NULL  ) ERROR(("Bad field"));
+  if( a==NULL  ) ERROR(("Bad accumulator"));
+  if( g==NULL  ) ERROR(("Bad grid"));
 
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
@@ -78,13 +77,9 @@ int boundary_p( particle_mover_t * ALIGNED pm,
                                    sizeof(int) +
                                    nm*sizeof(particle_injector_t),
                                    g->mp );
-        if( err!=SUCCESS ) {
-          ERROR(("Unable to size send buffer - %s",err));
-          ps[face] = NULL;
-        } else {
-          buf = (int *)mp_send_buffer(sf2b[face],g->mp);
-          ps[face] = (particle_injector_t *)(&buf[1]);
-        }
+        if( err!=SUCCESS ) ERROR(("Unable to size send buffer - %s",err));
+        buf = (int *)mp_send_buffer(sf2b[face],g->mp);
+        ps[face] = (particle_injector_t *)(&buf[1]);
       }
     }
 
@@ -115,7 +110,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
       particle_t *r = p + pm[nm-1].i;
 #     define TEST_FACE(FACE,cond)                                       \
       if(cond) {                                                        \
-        INT64_TYPE nn = g->neighbor[ 6*r->i + FACE ];                   \
+        int64_t nn = g->neighbor[ 6*r->i + FACE ];                      \
         if( nn==absorb_particles ) goto done_testing;                   \
         if( (nn>=0 && nn<g->range[rank]) ||                             \
             (nn>=g->range[rank+1] && nn<g->range[nproc] ) ) {           \

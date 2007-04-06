@@ -1,8 +1,5 @@
-#include <math.h>  /* for fabs, sqrt, log */
 #include <boundary.h>
-
 #include <stdio.h> /* for debugging output */ 
-#include <stdlib.h>
 
 /*
   -----------------------------------------------------------------------

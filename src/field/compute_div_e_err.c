@@ -12,15 +12,14 @@ void compute_div_e_err( field_t * ALIGNED f,
                         const material_coefficient_t * ALIGNED m,
                         const grid_t * g ) {
   compute_div_e_err_pipeline_args_t args[1];  
-  pipeline_request_t request[1];
 
   float px, py, pz, cj;
   field_t *f0, *fx, *fy, *fz;
   int x, y, z, nx, ny, nz;
 
-  if( f==NULL ) { ERROR(("Bad field"));                 return; }
-  if( m==NULL ) { ERROR(("Bad material coefficients")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));                  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( m==NULL ) ERROR(("Bad material coefficients"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   /* Have pipelines compute the interior of local domain */
   /* FIXME: CHECK IF THIS CAN BE STARTED THIS EARLY */
@@ -29,7 +28,7 @@ void compute_div_e_err( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  dispatch_pipelines( compute_rhob_pipeline, args, 0, request );
+  dispatch_pipelines( compute_rhob_pipeline, args, 0 );
 
   /* Have host compute the exterior of the local domain */
 
@@ -128,7 +127,7 @@ void compute_div_e_err( field_t * ALIGNED f,
   /* Finish up setting interior */
   /* FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE */
 
-  wait_for_pipelines( request );
+  wait_for_pipelines();
 
   local_adjust_div_e(f,g);
 }

@@ -50,10 +50,7 @@ static void IUO_begin_recv( int i, int j, int k, int size,
   sender = g->bc[ rbound ];
   if( sender<0 || sender>=mp_nproc(g->mp) ) return;
   err = mp_size_recv_buffer( sbound, size, g->mp );
-  if( err!=SUCCESS ) {
-    ERROR(("size_recv_buffer failed - %s",err));
-    return;
-  }
+  if( err!=SUCCESS ) ERROR(("size_recv_buffer failed - %s",err));
   err = mp_begin_recv( sbound, size, sender, sbound, g->mp );
   if( err!=SUCCESS ) ERROR(("begin_recv failed - %s",err));
   return;
@@ -68,10 +65,7 @@ static void * ALIGNED IUO_size_send( int i, int j, int k, int size,
   receiver = g->bc[sbound];
   if( receiver<0 || receiver>=mp_nproc(g->mp) ) return NULL;
   err = mp_size_send_buffer( sbound, size, g->mp );
-  if( err!=SUCCESS ) {
-    ERROR(("size_send_buffer failed - %s",err));
-    return NULL;
-  }
+  if( err!=SUCCESS ) ERROR(("size_send_buffer failed - %s",err));
   return (void * ALIGNED)mp_send_buffer( sbound, g->mp );
 }
 
@@ -97,10 +91,7 @@ static void * ALIGNED IUO_end_recv( int i, int j, int k,
   sender = g->bc[rbound];
   if( sender<0 || sender>=mp_nproc(g->mp) ) return NULL;
   err = mp_end_recv( sbound, g->mp );
-  if( err!=SUCCESS ) {
-    ERROR(("end_recv failed - %s",err));
-    return NULL;
-  }
+  if( err!=SUCCESS ) ERROR(("end_recv failed - %s",err));
   return (void * ALIGNED)mp_recv_buffer(sbound,g->mp);
 }
 
@@ -369,8 +360,8 @@ double synchronize_tang_e_norm_b( field_t * ALIGNED field,
   double w1, w2, err = 0, gerr;
   field_t *f;
 
-  if( field==NULL ) { ERROR(("Bad field")); return -1; }
-  if( g==NULL     ) { ERROR(("Bad grid"));  return -1; }
+  if( field==NULL ) ERROR(("Bad field"));
+  if( g==NULL     ) ERROR(("Bad grid"));
 
   local_adjust_tang_e( field, g );
   local_adjust_norm_b( field, g );
@@ -485,8 +476,8 @@ void synchronize_jf( field_t * ALIGNED field,
   float *p, lw, rw;
   field_t *f;
 
-  if( field==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL     ) { ERROR(("Bad grid"));  return; }
+  if( field==NULL ) ERROR(("Bad field"));
+  if( g==NULL     ) ERROR(("Bad grid"));
 
   local_adjust_jf( field, g );
 
@@ -579,8 +570,8 @@ void synchronize_rhof( field_t * ALIGNED field,
   float *p, lw, rw;
   field_t *f;
 
-  if( field==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL     ) { ERROR(("Bad grid"));  return; }
+  if( field==NULL ) ERROR(("Bad field"));
+  if( g==NULL     ) ERROR(("Bad grid"));
 
   local_adjust_rhof( field, g );
 
@@ -669,8 +660,8 @@ void synchronize_rhob( field_t * ALIGNED field,
   float *p, lw, rw;
   field_t *f;
   
-  if( field==NULL ) { ERROR(("Bad field")); return; }
-  if( g==NULL     ) { ERROR(("Bad grid"));  return; }
+  if( field==NULL ) ERROR(("Bad field"));
+  if( g==NULL     ) ERROR(("Bad grid"));
   
   local_adjust_rhob( field, g );
   
@@ -757,8 +748,8 @@ void synchronize_hydro( hydro_t * ALIGNED hydro,
   float *p, lw, rw;
   hydro_t *h;
 
-  if( hydro==NULL ) { ERROR(("Bad hydro")); return; }
-  if( g==NULL     ) { ERROR(("Bad grid"));  return; }
+  if( hydro==NULL ) ERROR(("Bad hydro"));
+  if( g==NULL     ) ERROR(("Bad grid"));
 
   local_adjust_hydro( hydro, g );
 

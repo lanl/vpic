@@ -15,15 +15,14 @@ void clean_div_e( field_t * ALIGNED f,
 		  const material_coefficient_t * ALIGNED m,
 		  const grid_t * g ) {
   clean_div_e_pipeline_args_t args[1];
-  pipeline_request_t request[1];
 
   float alphadt, px, py, pz;
   field_t *f0, *fx, *fy, *fz;
   int x, y, z, nx, ny, nz;
 
-  if( f==NULL ) { ERROR(("Bad field"));                 return; }
-  if( m==NULL ) { ERROR(("Bad material coefficients")); return; }
-  if( g==NULL ) { ERROR(("Bad grid"));                  return; }
+  if( f==NULL ) ERROR(("Bad field"));
+  if( m==NULL ) ERROR(("Bad material coefficients"));
+  if( g==NULL ) ERROR(("Bad grid"));
 
   /* Do majority of field components in single pass on the pipelines */
 
@@ -31,7 +30,7 @@ void clean_div_e( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  dispatch_pipelines( clean_div_e_pipeline, args, 0, request );
+  dispatch_pipelines( clean_div_e_pipeline, args, 0 );
   
   /* Do left over field components on the host */
 
@@ -98,7 +97,7 @@ void clean_div_e( field_t * ALIGNED f,
     }
   }
 
-  wait_for_pipelines( request ); /* FIXME: FINSIH EVEN LATER?? */
+  wait_for_pipelines(); /* FIXME: FINSIH EVEN LATER?? */
 
   local_adjust_tang_e(f,g);
 }

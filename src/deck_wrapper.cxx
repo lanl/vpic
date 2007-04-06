@@ -32,7 +32,7 @@
 #define begin_field_injection \
   void vpic_simulation::user_field_injection(void)
 
-#define repeat(count) for( INT64_TYPE _remain=(INT64_TYPE)(count); _remain; _remain-- )
+#define repeat(count) for( int64_t _remain=(int64_t)(count); _remain; _remain-- )
 
 #define LOCAL_CELL_ID(x,y,z) \
   INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)
@@ -147,12 +147,12 @@
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;		\
   const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;		\
   const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;		\
-  INT64_TYPE *_n0 = grid->neighbor;					\
+  int64_t *_n0 = grid->neighbor;					\
   for( int _k=1; _k<=_nz; _k++ ) {					\
     const double _zn = _z0 + _dz*(_k-1), _zh = _z0 + _dz*_k;		\
     for( int _j=1; _j<=_ny; _j++ ) {					\
       const double _yn = _y0 + _dy*(_j-1), _yh = _y0 + _dy*_j;		\
-      INT64_TYPE *_n = _n0 + 6*_LOCAL_CELL_ID(1,_j,_k);			\
+      int64_t *_n = _n0 + 6*_LOCAL_CELL_ID(1,_j,_k);			\
       for( int _i=1; _i<=_nx; _i++ ) {					\
         const double _xn = _x0 + _dx*(_i-1), _xh = _x0 + _dx*_i;	\
         double x, y, z;							\
@@ -279,7 +279,7 @@
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;	\
   const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;	\
   const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;	\
-  INT64_TYPE *_n0 = grid->neighbor;				\
+  int64_t *_n0 = grid->neighbor;				\
   for( int _k=1; _k<=_nz; _k++ ) {				\
     const double _zl = _z0 + _dz*(_k-1.5);			\
     const double _zc = _z0 + _dz*(_k-0.5);			\
@@ -288,7 +288,7 @@
       const double _yl = _y0 + _dy*(_j-1.5);			\
       const double _yc = _y0 + _dy*(_j-0.5);			\
       const double _yh = _y0 + _dy*(_j+0.5);			\
-      INT64_TYPE *_n = _n0 + 6*_LOCAL_CELL_ID(1,_j,_k);		\
+      int64_t *_n = _n0 + 6*_LOCAL_CELL_ID(1,_j,_k);		\
       for( int _i=1; _i<=_nx; _i++ ) {				\
         const double _xl = _x0 + _dx*(_i-1.5);			\
         const double _xc = _x0 + _dx*(_i-0.5);			\

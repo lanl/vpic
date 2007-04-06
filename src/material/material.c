@@ -8,7 +8,6 @@
  *
  */
 
-#include <string.h> /* For strlen, strcmp, strcpy */
 #include <material.h>
 
 /* Note: new_material added the created species to the head of the species
@@ -31,33 +30,20 @@ material_id new_material( const char *name,
   material_id id;
   int len;
 
-  if( m_list==NULL ) {
-    ERROR(("Invalid material list."));
-    return invalid_material_id;
-  }
+  if( m_list==NULL ) ERROR(("Invalid material list."));
   /* Note: strlen does not include terminating NULL */
   len = (name==NULL) ? 0 : strlen(name);
-  if( len<=0 ) {
-    ERROR(("Cannot create a nameless material."));
-    return invalid_material_id;
-  }
-  if( find_material_name(name,*m_list)!=NULL ) {
+  if( len<=0 ) ERROR(("Cannot create a nameless material."));
+  if( find_material_name(name,*m_list)!=NULL )
     ERROR(("There is already a material named \"%s\".", name));
-    return invalid_material_id;
-  }
   id = num_materials(*m_list);
-  if( id==max_num_materials ) {
+  if( id==max_num_materials )
     ERROR(("Cannot create material \"%s\"; too many materials.", name));
-    return invalid_material_id;
-  }
   
   /* Note: Since a m->name is declared as a 1-element char array,
      the terminating NULL is included in sizeof(material_t) */
   m = (material_t *)malloc(sizeof(material_t)+len);
-  if( m==NULL ) {
-    ERROR(("Unable to allocate material \"%s\".", name));
-    return invalid_material_id;
-  }
+  if( m==NULL ) ERROR(("Unable to allocate material \"%s\".", name));
   m->id     = id;
   m->epsx   = epsx,   m->epsy   = epsy,   m->epsz   = epsz;
   m->mux    = mux,    m->muy    = muy,    m->muz    = muz;

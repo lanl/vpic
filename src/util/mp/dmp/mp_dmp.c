@@ -8,15 +8,9 @@
  *
  */
 
-#include <mp.h>
+#include <mp_dmp.h>
+#include <mp_t.h>
 #include <mpi.h>
-
-/* A mp can handle up to 54 simultaneous communications (27 sends and 27
-   receives) ... This is based on every volume, face, edge and corner of a
-   box simultaneously engaged in an overlapped send and an overlapped
-   receive */
-
-#define NUM_BUF 27
 
 /* BJA:
    We're getting crashbugs from excessive realloc on some problems, so 
@@ -25,22 +19,7 @@
 
 #define RESIZE_FACTOR 1.1
 
-typedef struct mp {
-  int rank, nproc;
-  double elapsed_ref;
-  double time00_ref;
-  int time00_toggle;
-  char * ALIGNED rbuf[NUM_BUF];
-  char * ALIGNED sbuf[NUM_BUF];
-  int rbuf_size[NUM_BUF];
-  int sbuf_size[NUM_BUF];
-  MPI_Request rreq[NUM_BUF];
-  MPI_Request sreq[NUM_BUF];
-  int rreq_size[NUM_BUF];
-  int sreq_size[NUM_BUF];
-} mp_t;
-
-mp_handle new_mp(void) {
+mp_handle new_mp_dmp(void) {
   mp_t *mp;
   int i;
 
@@ -65,7 +44,7 @@ mp_handle new_mp(void) {
   return (mp_handle)mp;
 }
 
-void delete_mp( mp_handle *h ) {
+void delete_mp_dmp( mp_handle *h ) {
   mp_t *mp;
   int i;
 
@@ -92,39 +71,39 @@ void delete_mp( mp_handle *h ) {
   *h = NULL;
 }
 
-int mp_rank( mp_handle h ) {
+int mp_rank_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   return mp==NULL ? -1 : mp->rank;
 }
 
-int mp_nproc( mp_handle h ) {
+int mp_nproc_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   return mp==NULL ? 0 : mp->nproc;
 }
 
-void * ALIGNED mp_recv_buffer( int tag, mp_handle h ) {
+void * ALIGNED mp_recv_buffer_dmp( int tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   if( mp==NULL || tag<0 || tag>=NUM_BUF ) return NULL;
   return mp->rbuf[tag];
 }
 
-void * ALIGNED mp_send_buffer( int tag, mp_handle h ) {
+void * ALIGNED mp_send_buffer_dmp( int tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   if( mp==NULL || tag<0 || tag>=NUM_BUF ) return NULL;
   return mp->sbuf[tag];
 }
 
-void mp_abort( int reason, mp_handle h ) {  
+void mp_abort_dmp( int reason, mp_handle h ) {  
   MPI_Abort(MPI_COMM_WORLD,reason);
 }
 
 /* Adding for clean termination */ 
-void mp_finalize( mp_handle h ) {
+void mp_finalize_dmp( mp_handle h ) {
   MPI_Finalize(); 
 }
 
 
-void mp_barrier( mp_handle h ) {
+void mp_barrier_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   if( mp==NULL ) return;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -132,7 +111,7 @@ void mp_barrier( mp_handle h ) {
 
 /* Returns the time elapsed since the communicator was created.
    Every rank gets the same value */
-double mp_elapsed( mp_handle h ) {
+double mp_elapsed_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   double local_t, global_t;
 
@@ -146,7 +125,7 @@ double mp_elapsed( mp_handle h ) {
 
 /* Stop watch. Different ranks may get different values.
    First call to stop watch returns a measure of the overhead */
-double mp_time00( mp_handle h ) {
+double mp_time00_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
   if( mp==NULL ) return -1;
@@ -156,7 +135,7 @@ double mp_time00( mp_handle h ) {
   return MPI_Wtime() - mp->time00_ref;
 }
 
-error_code mp_size_recv_buffer( int tag, int size, mp_handle h ) {
+error_code mp_size_recv_buffer_dmp( int tag, int size, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   char * ALIGNED rbuf;
 
@@ -199,7 +178,7 @@ error_code mp_size_recv_buffer( int tag, int size, mp_handle h ) {
   return SUCCESS;
 }
 
-error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
+error_code mp_size_send_buffer_dmp( int tag, int size, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   char * ALIGNED sbuf;
 
@@ -242,7 +221,7 @@ error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
   return SUCCESS;
 }
 
-error_code mp_begin_recv( int recv_buf, int msg_size,
+error_code mp_begin_recv_dmp( int recv_buf, int msg_size,
                           int sender, int msg_tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
@@ -269,7 +248,7 @@ error_code mp_begin_recv( int recv_buf, int msg_size,
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_begin_send( int send_buf, int msg_size, int receiver,
+error_code mp_begin_send_dmp( int send_buf, int msg_size, int receiver,
                           int msg_tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
@@ -297,7 +276,7 @@ error_code mp_begin_send( int send_buf, int msg_size, int receiver,
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_end_recv( int recv_buf, mp_handle h ) {
+error_code mp_end_recv_dmp( int recv_buf, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   MPI_Status status;
   int size;
@@ -324,7 +303,7 @@ error_code mp_end_recv( int recv_buf, mp_handle h ) {
   return SUCCESS;
 }
 
-error_code mp_end_send( int send_buf, mp_handle h ) {
+error_code mp_end_send_dmp( int send_buf, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
   if( mp==NULL                        ) return ERROR_CODE("Bad handle");
@@ -339,7 +318,8 @@ error_code mp_end_send( int send_buf, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_allsum_d( double *local, double *global, int n, mp_handle h ) {
+error_code mp_allsum_d_dmp( double *local, double *global,
+	int n, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   
   if( mp==NULL            ) return ERROR_CODE("Bad handle");
@@ -360,7 +340,7 @@ error_code mp_allsum_d( double *local, double *global, int n, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_allsum_i( int *local, int *global, int n, mp_handle h ) {
+error_code mp_allsum_i_dmp( int *local, int *global, int n, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   
   if( mp==NULL            ) return ERROR_CODE("Bad handle");
@@ -381,7 +361,7 @@ error_code mp_allsum_i( int *local, int *global, int n, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_allgather_i( int *sbuf, int *rbuf, int n, mp_handle h ) {
+error_code mp_allgather_i_dmp( int *sbuf, int *rbuf, int n, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   
   if( mp==NULL   ) return ERROR_CODE("Bad handle");
@@ -402,7 +382,8 @@ error_code mp_allgather_i( int *sbuf, int *rbuf, int n, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n, mp_handle h ) {
+error_code mp_allgather_i64_dmp( int64_t *sbuf, int64_t *rbuf,
+	int n, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
   if( mp==NULL ) return ERROR_CODE("Bad handle");
@@ -426,7 +407,7 @@ error_code mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n, mp_handle h ) 
 
 /* We need blocking send/receive to implement turnstiles. */
 
-error_code mp_send_i( int *buf, int n, int dst, mp_handle h ) {
+error_code mp_send_i_dmp( int *buf, int n, int dst, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   
   if( mp==NULL   ) return ERROR_CODE("Bad handle");
@@ -444,7 +425,7 @@ error_code mp_send_i( int *buf, int n, int dst, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-error_code mp_recv_i( int *buf, int n, int src, mp_handle h ) {
+error_code mp_recv_i_dmp( int *buf, int n, int src, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   MPI_Status status;
   

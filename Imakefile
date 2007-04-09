@@ -19,6 +19,7 @@ LIBRARY_DIRS +=
 AddModule(common,src/util/common,common)
 AddModule(mtrand,src/util/mtrand,mtrand)
 AddModule(mp,src/util/mp,mp)
+AddModule(dmp,src/util/mp/dmp,mp_dmp)
 AddModule(pipeline,src/util/pipeline/serial,pipeline)
 AddModule(v4,src/util/v4,)
 AddModule(grid,src/grid,ops partition grid_structors add_boundary)

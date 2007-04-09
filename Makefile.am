@@ -4,10 +4,13 @@
 
 SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
-setup: setup-host
+setup: setup-host setup-build-script
 
 setup-host:
 	$(call symlinks, "@top_srcdir@/src", '.*\.h+?x+?')
+
+setup-build-script:
+	@(mv build.script build.@EXTENSION@ ; chmod 755 build.@EXTENSION@)
 
 ################################################################################
 # Function to make symbolic links

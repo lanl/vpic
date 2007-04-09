@@ -16,7 +16,7 @@ AC_PROG_LIBTOOL
 # list targets for output and commands to run
 ################################################################################
 AC_CONFIG_FILES(Makefile \
-	build \
+	build.script \
 	lib/Makefile \
 	cell/Makefile)
 #	bin/Makefile \

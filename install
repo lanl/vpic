@@ -11,10 +11,9 @@ autoconf=`head -n 1 machine/$1 | grep autoconf | sed 's,#,,g'`
 
 if [ -n "$autoconf" ] ; then
 	./configure --with-machine=$1
-	chmod 755 build
 	make clean
 	make
-	cp lib/.libs/libvpic.a .
+	cp lib/.libs/*.a .
 else
 	rm Makefile
 	imake -DMACHINE=machine/$1

@@ -7,9 +7,19 @@
 #   Los Alamos National Lab
 # March/April 2004 - Original version
 
-rm Makefile
-imake -DMACHINE=machine/$1
-gmake clean
-gmake -j2 all
-# make clean
-# make all
+autoconf=`head -n 1 machine/$1 | grep autoconf | sed 's,#,,g'`
+
+if [ -n "$autoconf" ] ; then
+	./configure --with-machine=$1
+	chmod 755 build
+	make clean
+	make
+	cp lib/.libs/libvpic.a .
+else
+	rm Makefile
+	imake -DMACHINE=machine/$1
+	gmake clean
+	gmake -j2 all
+	# make clean
+	# make all
+fi

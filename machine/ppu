@@ -1,4 +1,4 @@
-#autoconf#######################################################################
+################################################################################
 # test machine configuration file
 ################################################################################
 
@@ -16,18 +16,13 @@ CXXFLAGS="-DUSE_V4_PORTABLE"
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
 # warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
-OPT_LEVEL=3
+OPT_LEVEL=0
 
 ################################################################################
 # CPUMODEL - specify a particular cpu model (this affects optimization)
 # supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CPUMODEL=pentiumM
-
-################################################################################
-# EXTENSION - executable extension
-################################################################################
-EXTENSION=p3
+#CPUMODEL=pentiumM
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
@@ -42,7 +37,7 @@ ENABLE_DMP=1
 ################################################################################
 # ENABLE_SIMD - enable vector processing (0|1)[0]
 ################################################################################
-ENABLE_SIMD=1
+ENABLE_SIMD=0
 
 ################################################################################
 # MPI configuration
@@ -50,14 +45,9 @@ ENABLE_SIMD=1
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
 ################################################################################
-#MPI_CPPFLAGS=""
-#MPI_LDFLAGS=""
-#MPI_LIBS=""
-
-# to use mpicc from openmpi
-MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+MPI_CPPFLAGS="-I/opt/openmpi/1.2/ppc/include/openmpi -I/opt/openmpi/1.2/ppc/include -pthread"
+MPI_LDFLAGS="-pthread -L/opt/openmpi/1.2/ppc/lib -Wl,--export-dynamic"
+MPI_LIBS="-lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lm -ldl"
 
 ################################################################################
 # ENABLE_HOST - enable host build (0|1)[1]

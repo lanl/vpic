@@ -16,6 +16,7 @@ AC_PROG_LIBTOOL
 # list targets for output and commands to run
 ################################################################################
 AC_CONFIG_FILES(Makefile \
+	build \
 	lib/Makefile \
 	cell/Makefile)
 #	bin/Makefile \
@@ -24,7 +25,7 @@ AC_CONFIG_COMMANDS(setup, [make setup])
 ################################################################################
 # machine file specification
 ################################################################################
-CCS_WITH_MACHINE
+CCS_WITH_MACHINE("$srcdir/machine")
 
 ################################################################################
 # enable options
@@ -39,6 +40,7 @@ CCS_ENABLE_SCALAR
 ################################################################################
 CCS_WITH_ADDRESSING
 CCS_WITH_CPUMODEL
+CCS_WITH_EXTENSION
 CCS_WITH_OPT_LEVEL
 
 ################################################################################

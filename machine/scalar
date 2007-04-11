@@ -38,7 +38,7 @@ RM = rm -f
 /* What compile flags should be used? */
 /* FIXME: SCALAR WILL NOT BE QUITE WRITE UNTIL SCALAR PARTICLE PIPELINES
    ARE INSTALLED. */
-CCFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=nocona -mfpmath=sse -DENABLE_DMP
+CCFLAGS  = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=nocona -mfpmath=sse -DENABLE_DMP
 CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=nocona -mfpmath=sse -DOMPI_SKIP_MPICXX
 LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=nocona -mfpmath=sse -DOMPI_SKIP_MPICXX
 ARFLAGS  = 

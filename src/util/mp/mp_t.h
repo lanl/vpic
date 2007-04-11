@@ -4,7 +4,7 @@
 #define mp_t_h
 
 #include <mpi.h>
-#include <common.h>
+#include <util_base.h>
 
 /* A mp can handle up to 54 simultaneous communications (27 sends and 27
 	receives) ... This is based on every volume, face, edge and corner of a

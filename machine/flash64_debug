@@ -39,7 +39,7 @@ RANLIB = ranlib
 RM     = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -g
+CFLAGS   = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long -g
 CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -g -DUSE_V4_PORTABLE
 LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -g
 ARFLAGS  = 

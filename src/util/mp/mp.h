@@ -1,7 +1,7 @@
 #ifndef _mp_h_
 #define _mp_h_
 
-#include <common.h>
+#include <util_base.h>
 #include <mp.hxx>
 
 /* Note: mp module assumes homogeneous cluster (in particular,
@@ -14,7 +14,7 @@ static inline mp_handle new_mp(void) {
 } // new_mp
 
 static inline void delete_mp( mp_handle *h ) {
-	return delete_mp_cxx(h);
+	delete_mp_cxx(h);
 } // delete_mp
 
 static inline int mp_rank( mp_handle h ) {
@@ -34,15 +34,15 @@ static inline void * ALIGNED mp_send_buffer( int sbuf, mp_handle h ) {
 } // mp_send_buffer
 
 static inline void mp_abort( int reason, mp_handle h ) {
-	return mp_abort_cxx(reason, h);
+	mp_abort_cxx(reason, h);
 } // mp_abort
 
 static inline void mp_finalize( mp_handle h ) {
-	return mp_finalize_cxx(h);
+	mp_finalize_cxx(h);
 } // mp_finalize
 
 static inline void mp_barrier( mp_handle h ) {
-	return mp_barrier_cxx(h);
+	mp_barrier_cxx(h);
 } // mp_barrier
 
 static inline double mp_elapsed( mp_handle h ) {

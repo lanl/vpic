@@ -1,7 +1,7 @@
 #ifndef _mp_dmp_h_
 #define _mp_dmp_h_
 
-#include <common.h>
+#include <util_base.h>
 #include <mp_t.h>
 
 /* Note: mp module assumes homogeneous cluster (in particular,

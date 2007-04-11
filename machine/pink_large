@@ -41,7 +41,7 @@ RM = rm -f
 /* What compile flags should be used? */
 
 /* Note: on LANL bproc machines one requires special flags to work with output files >2 GB. */
-CFLAGS   = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse              -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1 
+CFLAGS   = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse              -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1 
 CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -DUSE_V4_SSE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1 
 LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse              -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1 -D_LARGEFILE_SOURCE=1 
 ARFLAGS  = 

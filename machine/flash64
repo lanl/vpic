@@ -36,7 +36,7 @@ RANLIB = ranlib
 RM     = rm -f
 
 /* What compile flags should be used? */
-CBRUTALITY   = -Werror -Wall -pedantic -ansi -Wno-long-long
+CBRUTALITY   = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long
 CXXBRUTALITY = -Werror -Wall -pedantic -ansi -Wno-long-long
 OPTIMIZATION = -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse
 

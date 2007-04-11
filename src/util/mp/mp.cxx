@@ -16,7 +16,7 @@ extern "C" mp_handle new_mp_cxx(void) {
 } // new_mp
 
 extern "C" void delete_mp_cxx( mp_handle *h ) {
-	return MPWrapper::instance().delete_mp(h);
+	MPWrapper::instance().delete_mp(h);
 } // delete_mp
 
 extern "C" int mp_rank_cxx( mp_handle h ) {
@@ -36,16 +36,16 @@ extern "C" void * ALIGNED mp_send_buffer_cxx( int tag, mp_handle h ) {
 } // mp_send_buffer
 
 extern "C" void mp_abort_cxx( int reason, mp_handle h ) {  
-	return MPWrapper::instance().mp_abort(reason, h);
+	MPWrapper::instance().mp_abort(reason, h);
 } // mp_abort
 
 /* Adding for clean termination */ 
 extern "C" void mp_finalize_cxx( mp_handle h ) {
-	return MPWrapper::instance().mp_finalize(h);
+	MPWrapper::instance().mp_finalize(h);
 } // mp_finalize
 
 extern "C" void mp_barrier_cxx( mp_handle h ) {
-	return MPWrapper::instance().mp_barrier(h);
+	MPWrapper::instance().mp_barrier(h);
 } // mp_barrier
 
 /* Returns the time elapsed since the communicator was created.

@@ -133,6 +133,14 @@ free_aligned( void * ALIGNED mem );
 void
 print_log( const char *fmt, ... );
 
+/* This function returns a value to prevent the compiler from optimizing
+   it away the function body.  The caller should not use it though so the
+   declaration casts away the return. */
+
+#define nanodelay(i) ((void)_nanodelay(i))
+uint32_t
+_nanodelay( uint32_t i );
+
 END_C_DECLS
 
 #endif /* _util_base_h_ */

@@ -17,7 +17,7 @@ int main( int argc, char **argv ) {
      after MPI is initialized.  So we start up the pipeline dispatchers
      _before_ starting up MPI. */
 
-  serial.boot(1);
+  boot_pipelines(1);
   MPI_Init(&argc,&argv); 
 
   vpic_simulation simulation; 
@@ -38,7 +38,7 @@ int main( int argc, char **argv ) {
   }
 
   MPI_Finalize();
-  serial.halt();
+  halt_pipelines();
 
   return 0;
 }

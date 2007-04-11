@@ -47,3 +47,11 @@ void print_log( const char *fmt, ... ) {
   va_end( ap );
   fflush( stderr );
 }
+
+uint32_t
+_nanodelay( uint32_t i ) {
+  uint32_t a = 0;
+  for( ; i; i-- ) a^=0xdeadbeef, a>>=1; 
+  return a;
+}
+

@@ -5,7 +5,7 @@ static int busy = 0;
 static void
 serial_boot( int n_pipeline_requested ) {
   if( serial._n_pipeline!=0 ) ERROR(( "Pipelines already booted!" ));
-  if( n_pipeline_requested <= 0 || n_pipeline_requested > MAX_PIPELINE )
+  if( n_pipeline_requested < 1 || n_pipeline_requested > MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
 
   serial._n_pipeline = n_pipeline_requested;

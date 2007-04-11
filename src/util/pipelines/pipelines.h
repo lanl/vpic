@@ -66,21 +66,32 @@ typedef struct pipeline_dispatcher {
 
 } pipeline_dispatcher_t;
 
-/* Temporary hack until users proper starting calling the
-   appropriate kinds of pipelines. */
+/* Temporary hack until functions proper starting calling the
+   appropriate kinds of dispatchers for their pipelines. */
+
+#if 1
 
 #define n_pipeline ((int)serial._n_pipeline)
 #define boot_pipelines serial.boot
 #define halt_pipelines serial.halt
-#define dispatch_pipelines(p,a,s) \
-  serial.dispatch((pipeline_func_t)(p),(a),(s))
+#define dispatch_pipelines(p,a,s) serial.dispatch((pipeline_func_t)(p),(a),(s))
 #define wait_for_pipelines serial.wait
+
+#else
+
+#define n_pipeline ((int)thread._n_pipeline)
+#define boot_pipelines thread.boot
+#define halt_pipelines thread.halt
+#define dispatch_pipelines(p,a,s) thread.dispatch((pipeline_func_t)(p),(a),(s))
+#define wait_for_pipelines thread.wait
+
+#endif
 
 BEGIN_C_DECLS
 
 extern pipeline_dispatcher_t serial;
 extern pipeline_dispatcher_t thread;
-extern pipeline_dispatcher_t cell;
+extern pipeline_dispatcher_t spu;
 
 END_C_DECLS
 

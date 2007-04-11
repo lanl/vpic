@@ -37,7 +37,7 @@ RM     = rm -f
 
 /* What compile flags should be used? */
 CFLAGS   = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse
-CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -DUSE_V4_SSE
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -DUSE_V4_SSE -DOMPI_SKIP_MPICXX
 LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse
 ARFLAGS  = 
 

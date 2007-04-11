@@ -23,14 +23,14 @@
 #define EXTENSION cy
 
 /* Machine specific libraries and include directories */
-LIBRARIES +=    $(shell mpicc --showme:link) 
-INCLUDE_DIRS += $(shell mpicc --showme:compile) 
+LIBRARIES +=
+INCLUDE_DIRS +=
 LIBRARY_DIRS += 
 
 /* Which Programs to use on this machine? */
-CC =  gcc
-CPP = g++
-LD =  g++
+CC =  mpicc
+CXX = mpicxx
+LD =  mpicxx
 AR = ar clq
 RANLIB = ranlib
 RM = rm -f
@@ -38,11 +38,8 @@ RM = rm -f
 /* What compile flags should be used? */
 CCFLAGS  = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse
 
-CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -DUSE_V4_SSE -DOMPI_SKIP_MPICXX
+CXXFLAGS = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -DUSE_V4_SSE -DMPICH_SKIP_MPICXX
 
 LDFLAGS  = -Werror -Wall -pedantic -ansi -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse
 
-ARFLAGS  = 
-
-CCFLAGS  += $(shell mpicc --showme:compile)
-CXXFLAGS += $(shell mpicc --showme:compile)
+ARFLAGS =

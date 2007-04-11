@@ -1,6 +1,4 @@
 #include <boundary.h>
-#include <common.h>
-#include <mp.h>
 
 #include <stdio.h> /* for debugging output */ 
 

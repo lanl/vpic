@@ -11,9 +11,7 @@
 #ifndef _grid_h_
 #define _grid_h_
 
-#include <common.h>
-#include <mp.h> /* For mp_handle */
-#include <mtrand.h> /* For mt_handle...SEE NOTE BELOW ABOUT BABIES */
+#include <util.h>
 
 /* Define a "pointer to boundary handler function" type. */
 

@@ -10,8 +10,6 @@
    THE _LOCAL_ NUMBER OF CELLS).  THIS LATENT BUG IS NOT EXPECTED
    TO AFFECT ANY PRACTICAL SIMULATIONS. */
   
-#include <common.h>
-#include <grid.h>     /* For grid_t */
 #include <material.h> /* For material_coefficient_t */
 
 /* This module implements the following the difference equations on a

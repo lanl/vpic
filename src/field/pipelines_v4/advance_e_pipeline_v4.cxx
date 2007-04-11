@@ -1,4 +1,5 @@
-#include <v4.h>
+#include <field_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
 
@@ -44,8 +45,6 @@ using namespace v4;
     }
   }
 #endif
-
-#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 

@@ -1,7 +1,6 @@
 #ifndef _material_h_
 #define _material_h_
 
-#include <common.h>
 #include <grid.h>   /* For grid_t */
 
 /*****************************************************************************

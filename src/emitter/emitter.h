@@ -1,11 +1,6 @@
 #ifndef _emitter_h_
 #define _emitter_h_
 
-#include <common.h>
-#include <mtrand.h>
-#include <grid.h>
-#include <field.h>
-#include <particle.h>
 #include <species.h>
 
 /* Every local cell has 27 components associated with it (6 faces, 12 edges, 8

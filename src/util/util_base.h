@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef _common_h_
-#define _common_h_
+#ifndef _util_base_h_
+#define _util_base_h_
 
 #ifdef __cplusplus
 #define BEGIN_C_DECLS extern "C" {
@@ -27,16 +27,19 @@
 #include <float.h>  /* For floating point limits */
 
 /* PREFERRED_ALIGNMENT is the default alignment */
+
 #ifndef PREFERRED_ALIGNMENT
 #define PREFERRED_ALIGNMENT 16
 #endif
 
 /* ALIGNED indicates a pointer can be assumed to aligned */
+
 #ifndef ALIGNED
 #define ALIGNED
 #endif
 
-/* These macros facillitate doing evil tricks */
+/* These macros facilitate doing evil tricks */
+
 #define BEGIN_PRIMITIVE do
 #define END_PRIMITIVE   while(0)
 #define STRINGIFY(s)#s
@@ -46,6 +49,7 @@
    arrays with different conventions. To eliminate potential side effects and
    maximize optimization possibilites, xl, xh, yl, yh, zl, zh should be
    local constant ints */
+
 #define INDEX_FORTRAN_1(x,xl,xh)                 \
  ((x)-(xl))
 #define INDEX_FORTRAN_2(x,y,xl,xh,yl,yh)         \
@@ -61,6 +65,7 @@
  ((z)-(zl) + ((zh)-(zl)+1)*((y)-(yl) + ((yh)-(yl)+1)*((x)-(xl))))
 
 /* The following macros deal with linked lists */
+
 #define LIST_FOR_EACH(node,list)        \
   for((node)=(list); (node)!=NULL; (node)=(node)->next)
 #define LIST_FIND_FIRST(node,list,cond) \
@@ -76,7 +81,9 @@
    Error at src/module/file.c(34):
            Could not allocate 45 bytes
 
-   Note: Error messages are abortive but MESSAGE and WARNING are not */
+   Note: Error messages are abortive but MESSAGE and WARNING are not
+
+   FIXME: SHOULD PRINT THE WORLD RANK! */
 
 #define CHECKPOINT() BEGIN_PRIMITIVE {		           \
   print_log( "%s(%i): Checkpoint\n", __FILE__, __LINE__ ); \
@@ -115,11 +122,17 @@ typedef const char *error_code;
 
 BEGIN_C_DECLS
 
-/* In common.c */
-void * ALIGNED malloc_aligned( size_t n, size_t a );
-void free_aligned( void * ALIGNED mem );
-void print_log( const char *fmt, ... );
+/* In util.c */
+
+void * ALIGNED
+malloc_aligned( size_t n, size_t a );
+
+void
+free_aligned( void * ALIGNED mem );
+
+void
+print_log( const char *fmt, ... );
 
 END_C_DECLS
 
-#endif /* _common_h_ */
+#endif /* _util_base_h_ */

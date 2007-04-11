@@ -1,8 +1,7 @@
-#include <v4.h>
+#include <particle_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
-
-#include <particle_pipelines.h>
 
 void
 center_p_pipeline_v4( center_p_pipeline_args_t * args,

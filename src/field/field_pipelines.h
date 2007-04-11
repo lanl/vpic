@@ -1,8 +1,9 @@
 #ifndef _field_pipelines_h_
 #define _field_pipelines_h_
 
+/* FIXME: MAKE THIS A PRIVATE INCLUDE */
+
 #include <field.h>
-#include <pipeline.h>
 
 /* THE FUNCTIONS IN THIS FILE ARE INTENDED TO RUN ON THE PROCESSORS
    THAT EXECUTE PIPELINES (E.G. SPE's ON THE CELL PROCESSOR). */

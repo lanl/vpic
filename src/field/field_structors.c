@@ -9,7 +9,7 @@
  */
 
 #include <field.h>
-#include <pipeline.h>
+#include <pipelines.h>
 
 field_t * ALIGNED new_field( const grid_t * g ) {
   field_t * ALIGNED f;

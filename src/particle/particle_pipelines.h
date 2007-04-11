@@ -1,8 +1,9 @@
 #ifndef _particle_pipelines_h_
 #define _particle_pipelines_h_
 
+/* FIXME: MAKE THIS A PRIVATE INCLUDE! */
+
 #include <particle.h>
-#include <pipeline.h>
 
 BEGIN_C_DECLS
 

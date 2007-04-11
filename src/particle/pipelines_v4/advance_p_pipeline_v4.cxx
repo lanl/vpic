@@ -1,8 +1,7 @@
-#include <v4.h>
+#include <particle_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
-
-#include <particle_pipelines.h>
 
 /* move_p_local is the version of move_p that executes on the pipeline
    processors.  Note that this function must be kept in sync with

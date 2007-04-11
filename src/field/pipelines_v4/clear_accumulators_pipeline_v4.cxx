@@ -1,8 +1,7 @@
-#include <v4.h>
+#include <field_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
-
-#include <field_pipelines.h>
 
 void
 clear_accumulators_pipeline_v4( clear_accumulators_pipeline_args_t * args,

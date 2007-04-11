@@ -8,10 +8,16 @@
  *
  */
 
-#include <mpi.h>    /* For MPI_Init and MPI_Finalize */
+#include <mpi.h>    /* For MPI_Init and MPI_Finalize ... WRAP THIS! */
 #include <vpic.hxx>
 
 int main( int argc, char **argv ) {
+
+  /* Note: Some MPIs will bind threads to cores if threads are booted
+     after MPI is initialized.  So we start up the pipeline dispatchers
+     _before_ starting up MPI. */
+
+  serial.boot(1);
   MPI_Init(&argc,&argv); 
 
   vpic_simulation simulation; 
@@ -32,7 +38,8 @@ int main( int argc, char **argv ) {
   }
 
   MPI_Finalize();
+  serial.halt();
+
   return 0;
 }
-
 

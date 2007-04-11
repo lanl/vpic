@@ -12,9 +12,7 @@
 #ifndef _species_h_
 #define _species_h_
 
-#include <common.h>
 #include <particle.h> /* For particle_t, particle_mover_t */
-#include <mtrand.h>   /* For mt_handle */ 
 
 enum {
   invalid_species_id = -1

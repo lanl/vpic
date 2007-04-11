@@ -11,14 +11,6 @@
 #ifndef _vpic_hxx_
 #define _vpic_hxx_
 
-#include <cmath> /* For sqrt */
-#include <common.h>
-#include <mtrand.h>
-#include <grid.h>
-#include <material.h>
-#include <field.h>
-#include <particle.h>
-#include <species.h>
 #include <emitter.h>
 #include <boundary.h>
 

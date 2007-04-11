@@ -9,7 +9,6 @@
  */
 
 #include <species.h>    /* For species_t */ 
-#include <mtrand.h>     /* For mt_handle */ 
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
 #define CUSTOM_PBC_MIN_INJECTORS 16 

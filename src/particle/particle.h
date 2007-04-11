@@ -12,10 +12,7 @@
 #ifndef _particle_h_
 #define _particle_h_
 
-#include <common.h>
-#include <grid.h> 
 #include <field.h> 
-#include <mtrand.h> /* UGLY: For mt_handle in boundary_p */
 
 typedef struct particle {
   float dx, dy, dz; /* Particle position in cell coordinates (on [-1,1]) */

@@ -10,7 +10,6 @@
 
 #include <vpic.hxx>
 #include <stdio.h>  /* For fopen, fclose, fwrite, fprintf */
-#include <string.h> /* For strlen, memcpy */
 
 /*****************************************************************************
  * ASCII dump IO

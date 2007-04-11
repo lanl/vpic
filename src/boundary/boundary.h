@@ -1,13 +1,7 @@
-#ifndef _boundary_handler_h_
-#define _boundary_handler_h_
+#ifndef _boundary_h_
+#define _boundary_h_
 
-#include <common.h>
-#include <mtrand.h>
-#include <grid.h>
-#include <field.h>
-#include <particle.h>
 #include <species.h>
-#include <mtrand.h>
 
 BEGIN_C_DECLS
 
@@ -49,4 +43,4 @@ void link_boundary( void * params, particle_t *r, particle_mover_t *pm,
 
 END_C_DECLS
 
-#endif 
+#endif /* _boundary_h_ */

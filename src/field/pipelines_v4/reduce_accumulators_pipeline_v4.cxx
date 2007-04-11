@@ -1,8 +1,7 @@
-#include <v4.h>
+#include <field_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
-
-#include <field_pipelines.h>
 
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 

@@ -8,7 +8,6 @@
  *
  */
 
-#include <string.h>  /* For memset */
 #include <vpic.hxx>
 
 vpic_simulation::vpic_simulation() {

@@ -1,9 +1,8 @@
-#include <v4.h>
+#include <field_pipelines.h>
+
 #ifdef V4_ACCELERATION
 using namespace v4;
-
-#include <field_pipelines.h>
-   
+ 
 int
 distribute_voxels_v4( int x0, int x1,     /* range of x-indices (inclusive) */
                       int y0, int y1,     /* range of y-indices (inclusive) */

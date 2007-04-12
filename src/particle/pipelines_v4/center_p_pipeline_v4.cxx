@@ -5,7 +5,8 @@ using namespace v4;
 
 void
 center_p_pipeline_v4( center_p_pipeline_args_t * args,
-                      int pipeline_rank ) {
+                      int pipeline_rank,
+                      int n_pipeline ) {
   particle_t           * ALIGNED p   = args->p;
   int                            nq  = args->n >> 2;
   const float                    q_m = args->q_m;
@@ -55,7 +56,7 @@ center_p_pipeline_v4( center_p_pipeline_args_t * args,
     uz += haz;
     v0  = qdt_4mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     v1  = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) );
-    v2  = v0*v0*v1;
+    v2  = (v0*v0)*v1;
     v3  = v0*fma( v2, fma( v2, two_fifteenths, one_third ), one );
     v4  = v3*rcp( fma( v3*v3, v1, one ) ); v4 += v4;
     v0  = fma( fms( uy,cbz, uz*cby ), v3, ux );

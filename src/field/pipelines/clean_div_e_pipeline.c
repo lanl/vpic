@@ -13,7 +13,8 @@
 
 void
 clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
-                      int pipeline_rank ) {
+                      int pipeline_rank,
+                      int n_pipeline ) {
   field_t                      * ALIGNED f = args->f;
   const material_coefficient_t * ALIGNED m = args->m;
   const grid_t                 *         g = args->g;

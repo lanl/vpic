@@ -20,7 +20,8 @@ using namespace v4;
 
 void
 compute_rms_div_b_err_pipeline_v4( compute_rms_div_b_err_pipeline_args_t * args,
-                                   int pipeline_rank ) {
+                                   int pipeline_rank,
+                                   int n_pipeline ) {
   field_t      * ALIGNED f = args->f;
   const grid_t *         g = args->g;
 

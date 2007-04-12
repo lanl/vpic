@@ -5,7 +5,8 @@ using namespace v4;
 
 void
 energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
-                      int pipeline_rank ) {
+                      int pipeline_rank,
+                      int n_pipeline ) {
   const particle_t     * ALIGNED p   = args->p;
   int                            nq  = args->n >> 2;
   const float                    q_m = args->q_m;

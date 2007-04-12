@@ -4,7 +4,8 @@
 
 void
 reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
-                              int pipeline_rank ) {
+                              int pipeline_rank,
+                              int n_pipeline ) {
   accumulator_t * ALIGNED a = args->a;
   const grid_t  *         g = args->g;
   int n_voxel;

@@ -23,7 +23,7 @@ void energy_f( double * global,
 
   /* Reduce results from each pipelines */
   
-  for( p=1; p<n_pipeline; p++ ) {
+  for( p=1; p<_n_pipeline; p++ ) {
     args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
     args->en[0][2] += args->en[p][2]; args->en[0][3] += args->en[p][3];
     args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];

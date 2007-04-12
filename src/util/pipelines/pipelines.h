@@ -12,19 +12,21 @@
 enum { MAX_PIPELINE = 16 };
 
 /* A pipeline function takes a pointer to arguments for the
-   pipeline and a integer which gives the rank of the pipeline. */
+   pipeline and a integer which gives the rank of the pipeline
+   and the total number of pipelines dispatched. */
 
 typedef void
 (*pipeline_func_t)( void * args,
-                    int pipeline_rank );
+                    int pipeline_rank,
+                    int n_pipeline );
 
 typedef struct pipeline_dispatcher {
 
   /* n_pipelines indicates the number of pipelines currently
      running.  Technically, this should be read only for
-     users!  FIXME: Remove this underscore. */
+     users! */
 
-  int _n_pipeline;
+  int n_pipeline;
 
   /* boot creates the number of pipelines requested.
      Generally, this is number of cores on a node if using symmetric
@@ -71,7 +73,7 @@ typedef struct pipeline_dispatcher {
 
 #if 1
 
-#define n_pipeline ((int)serial._n_pipeline)
+#define _n_pipeline ((int)serial.n_pipeline)
 #define boot_pipelines serial.boot
 #define halt_pipelines serial.halt
 #define dispatch_pipelines(p,a,s) serial.dispatch((pipeline_func_t)(p),(a),(s))
@@ -79,7 +81,7 @@ typedef struct pipeline_dispatcher {
 
 #else
 
-#define n_pipeline ((int)thread._n_pipeline)
+#define _n_pipeline ((int)thread.n_pipeline)
 #define boot_pipelines thread.boot
 #define halt_pipelines thread.halt
 #define dispatch_pipelines(p,a,s) thread.dispatch((pipeline_func_t)(p),(a),(s))

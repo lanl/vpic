@@ -77,7 +77,8 @@ using namespace v4;
 
 void
 load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
-                               int pipeline_rank ) {
+                               int pipeline_rank,
+                               int n_pipeline ) {
   interpolator_t * ALIGNED fi = args->fi;
   const field_t  * ALIGNED f  = args->f;
   const grid_t   *         g  = args->g;

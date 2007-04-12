@@ -5,7 +5,8 @@ using namespace v4;
 
 void
 uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
-                        int pipeline_rank ) {
+                        int pipeline_rank,
+                        int n_pipeline ) {
   particle_t           * ALIGNED p   = args->p;
   int                            nq  = args->n >> 2;
   const float                    q_m = args->q_m;
@@ -17,7 +18,7 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
   v4float ux, uy, uz, q;
   v4float hax, hay, haz, cbx, cby, cbz;
   v4float v0, v1, v2, v3, v4, v5;
-  v4float qdt_2mc(-0.5 *q_m*g->dt/g->cvac); // Negative for backward advance
+  v4float qdt_2mc(-0.5 *q_m*g->dt/g->cvac); // Negative for backward half advance
   v4float qdt_4mc(-0.25*q_m*g->dt/g->cvac); // Negative for backward half Boris rotate
   v4float one(1.);
   v4float one_third(1./3.);
@@ -52,7 +53,7 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
     load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q); // Could use load_4x3_tr
     v0  = qdt_4mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     v1  = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) );
-    v2  = v0*v0*v1;
+    v2  = (v0*v0)*v1;
     v3  = v0*fma( v2, fma( v2, two_fifteenths, one_third ), one );
     v4  = v3*rcp( fma( v3*v3, v1, one ) ); v4 += v4;
     v0  = fma( fms( uy,cbz, uz*cby ), v3, ux );

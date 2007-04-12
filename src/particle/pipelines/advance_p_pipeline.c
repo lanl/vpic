@@ -7,7 +7,8 @@
 
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
-                    int pipeline_rank ) {
+                    int pipeline_rank,
+                    int n_pipeline ) {
   particle_t           * ALIGNED p0  = args->p;
   int                            n   = args->n;
   const float                    q_m = args->q_m;
@@ -34,8 +35,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4, v5;
 
-  if( pipeline_rank<0 ) { /* Host does left over cleanup */
-    pipeline_rank = -pipeline_rank; /* pipeline_rank == n_pipeline */
+  if( pipeline_rank==n_pipeline ) { /* Host does left over cleanup */
 
     /* Determine which particles the host processes, which movers are
        reserved for the host.  Note the host uses the first

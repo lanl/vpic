@@ -8,7 +8,8 @@
 
 void
 advance_b_pipeline( advance_b_pipeline_args_t * args,
-		    int pipeline_rank ) {
+		    int pipeline_rank,
+                    int n_pipeline ) {
   field_t      * ALIGNED f = args->f;
   const grid_t *         g = args->g;
   float frac               = args->frac;

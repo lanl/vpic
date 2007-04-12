@@ -9,7 +9,8 @@ using namespace v4;
 
 void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
-                       int pipeline_rank ) {
+                       int pipeline_rank,
+                       int n_pipeline ) {
   double n_target;
 
   particle_t           * ALIGNED p   = args->p;

@@ -57,7 +57,8 @@ typedef struct pipeline_state {
   volatile int state;
   pipeline_func_t func;
   void *args;
-  int rank;
+  int job;
+  int n_job;
   volatile int *flag;
 } pipeline_state_t;
 
@@ -84,9 +85,9 @@ static int Busy = 0;
  *   number of pipelines available to the program, the threader should
  *   be halted and then re-booted with the new desired number of
  *   pipelines.
- * - Internal: thread._n_pipeline = 0 -> Global variables need to be
+ * - Internal: thread.n_pipeline = 0 -> Global variables need to be
  *   initialized. No other global variables should be trusted when
- *   thread._n_pipeline = 0.
+ *   thread.n_pipeline = 0.
  *
  ***************************************************************************/
 
@@ -115,7 +116,7 @@ static int Busy = 0;
  * Dependencies: pthread_self, pthread_cond_init, pthread_mutex_init
  *               pthread_create
  *
- * Globals read/altered: thread._n_pipeline (rw), Host (rw),
+ * Globals read/altered: thread.n_pipeline (rw), Host (rw),
  *                       Pipeline (rw)
  *
  * Notes:
@@ -132,11 +133,11 @@ thread_boot( int num_pipe ) {
 
   /* Check if arguments are valid and Threader isn't already initialized */
 
-  if( thread._n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
+  if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
   if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
 
-  /* Initialize some global variables. Note: thread._n_pipeline = 0 here */ 
+  /* Initialize some global variables. Note: thread.n_pipeline = 0 here */ 
 
   Host = pthread_self();
   Id = 0;
@@ -145,11 +146,10 @@ thread_boot( int num_pipe ) {
 
   for( i=0; i<num_pipe; i++ ) {
 
-    /* Initialize the pipeline rank and state. Note: PIPELINE_ACK will
+    /* Initialize the pipeline state. Note: PIPELINE_ACK will
        be cleared once the thread control function pipeline_mgr starts
        executing and the thread is ready to execute pipelines. */
 
-    Pipeline[i].rank  = i;
     Pipeline[i].state = PIPELINE_ACK;
 
     /* Initialize the pipeline mutex and signal condition variables
@@ -181,7 +181,7 @@ thread_boot( int num_pipe ) {
 
   }
 
-  thread._n_pipeline = num_pipe;
+  thread.n_pipeline = num_pipe;
   Busy = 0;
 }
 
@@ -206,7 +206,7 @@ thread_boot( int num_pipe ) {
  *               pthread_cond_signal, pthread_mutex_destroy,
  *               pthread_cond_destroy
  *
- * Globals read/altered: thread._n_pipeline (r), Pipeline (rw)
+ * Globals read/altered: thread.n_pipeline (r), Pipeline (rw)
  *
  * Notes:
  * - This function will spin forever if a thread is executing a
@@ -222,13 +222,13 @@ thread_halt( void ) {
   /* Make sure the host is the caller and there are pipelines to
      terminate */
 
-  if( !thread._n_pipeline ) ERROR(( "Boot the thread dispatcher first!" ));
+  if( !thread.n_pipeline ) ERROR(( "Boot the thread dispatcher first!" ));
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may halt the thread dispatcher!" ));
 
   /* Terminate the threads */
 
-  for( id=0; id<thread._n_pipeline; id++ ) {
+  for( id=0; id<thread.n_pipeline; id++ ) {
 
     /* Signal the thread to terminate. Note: If the thread is
        executing a pipeline which doesn't return, this function will
@@ -257,26 +257,27 @@ thread_halt( void ) {
      results if the mutexes were destroyed before all the pipelines
      were terminated */
 
-  for( id=0; id<thread._n_pipeline; id++ )
+  for( id=0; id<thread.n_pipeline; id++ )
     if( pthread_mutex_destroy( &Pipeline[id].mutex ) ||
         pthread_cond_destroy( &Pipeline[id].wake ) )
       ERROR(( "Unable to destroy pipeline resources!" ));
 
   /* Finish up */
 
-  thread._n_pipeline = Id = 0;
+  thread.n_pipeline = Id = 0;
   Busy = 0;
 }
 
 /****************************************************************************
  *
- * Function: parallel_execute(pipeline,params,rank,flag)
+ * Function: parallel_execute(pipeline,params,job,n_job,flag)
  *
  * Sends a thread to work on a given pipeline.
  *
  * Arguments: pipeline (pipeline_func_t) - Pointer to function to be executed
  *            params (void *) - Pointer to parameters to pass to the function
- *            rank (int) - Identifier of the pipeline job
+ *            job (int) - Identifier of the pipeline job
+ *            n_job (int) - Identifier of total number of jobs
  *            flag (volatile int *) - Pointer to an int used to signal the
  *              host the pipeline is complete.  NULL if the host does not
  *              need notification.
@@ -292,7 +293,7 @@ thread_halt( void ) {
  * Dependencies: pthread_mutex_unlock, pthread_self, pthread_mutex_trylock,
  *               pthread_equal, pthread_mutex_lock, pthread_cond_signal
  *
- * Globals read/altered: thread._n_pipeline (r), Pipeline (rw)
+ * Globals read/altered: thread.n_pipeline (r), Pipeline (rw)
  *
  * Notes:
  * - Only the host may call this.
@@ -311,14 +312,15 @@ thread_halt( void ) {
 static void
 parallel_execute( pipeline_func_t func,
                   void *args,
-                  int rank,
+                  int job,
+                  int n_job,
                   volatile int *flag ) {
   int id;
 
   /* Determine that the thread dispatcher is initialized and that
      caller is the host thread. */
 
-  if( thread._n_pipeline==0 )
+  if( thread.n_pipeline==0 )
     ERROR(( "Boot the thread dispatcher first!" ));
 
   if( !pthread_equal( Host, pthread_self() ) )
@@ -332,7 +334,7 @@ parallel_execute( pipeline_func_t func,
 
     /* Get an id of a pipeline to query. */
 
-    id = Id; if( (++Id) >= thread._n_pipeline ) Id = 0;
+    id = Id; if( (++Id) >= thread.n_pipeline ) Id = 0;
 
     if( !pthread_mutex_trylock( &Pipeline[id].mutex ) ) {
       
@@ -351,10 +353,11 @@ parallel_execute( pipeline_func_t func,
            pipeline and return */
         
         Pipeline[id].state = PIPELINE_EXECUTE;
-        Pipeline[id].func = func;
-        Pipeline[id].args = args;
-        Pipeline[id].rank = rank;
-        Pipeline[id].flag = flag;
+        Pipeline[id].func  = func;
+        Pipeline[id].args  = args;
+        Pipeline[id].job   = job;
+        Pipeline[id].n_job = n_job;
+        Pipeline[id].flag  = flag;
         pthread_cond_signal( &Pipeline[id].wake );
         pthread_mutex_unlock( &Pipeline[id].mutex );
         return;
@@ -432,7 +435,8 @@ pipeline_mgr( void *_pipeline ) {
          necessary.  Note: the pipeline mutex is locked while the
          pipeline is executing a task. */
 
-      if( pipeline->func ) pipeline->func( pipeline->args, pipeline->rank );
+      if( pipeline->func )
+        pipeline->func( pipeline->args, pipeline->job, pipeline->n_job );
       if( pipeline->flag ) *pipeline->flag = 1;
 
       /* Pass through into the next case */
@@ -463,16 +467,20 @@ thread_dispatch( pipeline_func_t func,
                  int sz_args ) {
   int rank;
 
-  if( thread._n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
+  if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
 
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call thread_dispatch" ));
 
   if( Busy ) ERROR(( "Pipelines are busy!" ));
 
-  for( rank=0; rank<thread._n_pipeline; rank++ ) {
+  for( rank=0; rank<thread.n_pipeline; rank++ ) {
     Done[rank] = 0;
-    parallel_execute( func, ((char *)args) + rank*sz_args, rank, &Done[rank] );
+    parallel_execute( func,
+                      ((char *)args) + rank*sz_args,
+                      rank,
+                      thread.n_pipeline,
+                      &Done[rank] );
   }
 
   Busy = 1;
@@ -482,7 +490,7 @@ static void
 thread_wait( void ) {
   int rank;
 
-  if( thread._n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
+  if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
 
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call thread_wait" ));
@@ -490,7 +498,7 @@ thread_wait( void ) {
   if( !Busy ) ERROR(( "Pipelines are not busy!" ));
 
   rank = 0;
-  while( rank<thread._n_pipeline ) {
+  while( rank<thread.n_pipeline ) {
     if( Done[rank] ) rank++;
     else             nanodelay(5);
   }

@@ -5,7 +5,8 @@
 
 void
 unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
-			     int pipeline_rank ) {
+			     int pipeline_rank,
+                             int n_pipeline ) {
   field_t             * ALIGNED f = args->f;
   const accumulator_t * ALIGNED a = args->a;
   const grid_t        *         g = args->g;

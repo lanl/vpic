@@ -89,7 +89,7 @@ double compute_rms_div_e_err( field_t * ALIGNED f,
 
   wait_for_pipelines();
 
-  for( p=0; p<n_pipeline; p++ ) err += args->err[p];
+  for( p=0; p<_n_pipeline; p++ ) err += args->err[p];
 
   /* Reduce the results from all nodes */
 

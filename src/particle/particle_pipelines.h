@@ -7,9 +7,9 @@
 
 BEGIN_C_DECLS
 
-#define DECLARE_PIPELINE(name)                                              \
-void name##_pipeline(    name##_pipeline_args_t *args, int pipeline_rank ); \
-void name##_pipeline_v4( name##_pipeline_args_t *args, int pipeline_rank ) 
+#define DECLARE_PIPELINE(name)                                                 \
+void name##_pipeline(    name##_pipeline_args_t *args, int pipe, int n_pipe ); \
+void name##_pipeline_v4( name##_pipeline_args_t *args, int pipe, int n_pipe )
 
 /* In advance_p_pipeline.c */
 
@@ -66,12 +66,13 @@ typedef struct energy_p_pipeline_args {
   float                          q_m; /* Charge to mass ratio */
   const interpolator_t * ALIGNED f;   /* Interpolator array */
   const grid_t         *         g;   /* Local domain grid parameters */
-  double en[MAX_PIPELINE];            /* Return values */
+  double en[MAX_PIPELINE+1];          /* Return values
+                                         en[n_pipeline] used by host */
 } energy_p_pipeline_args_t;
 
 DECLARE_PIPELINE(energy_p);
 
-#undef DECLARE_PIPELINES
+#undef DECLARE_PIPELINE
 
 END_C_DECLS
 

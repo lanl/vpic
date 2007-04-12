@@ -45,7 +45,7 @@ advance_p( particle_t           * ALIGNED p,
      However, it is worth reconsidering this at some point in the
      future. */
 
-  advance_p_pipeline( args, -n_pipeline );
+  advance_p_pipeline( args, _n_pipeline, _n_pipeline );
 
   wait_for_pipelines();
 
@@ -54,7 +54,7 @@ advance_p( particle_t           * ALIGNED p,
      MOVERS TO ELIMINATE HOLES IN THE ALLOCATION. */
 
   nm = 0;
-  for( rank=0; rank<=n_pipeline; rank++ ) {
+  for( rank=0; rank<=_n_pipeline; rank++ ) {
     if( pm+nm!=args->seg[rank].pm )
       memmove( pm+nm, args->seg[rank].pm, args->seg[rank].nm*sizeof(*pm) );
     nm += args->seg[rank].nm;

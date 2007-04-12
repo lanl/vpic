@@ -10,9 +10,9 @@
 
 BEGIN_C_DECLS
 
-#define DECLARE_PIPELINE(name)                                              \
-void name##_pipeline(    name##_pipeline_args_t *args, int pipeline_rank ); \
-void name##_pipeline_v4( name##_pipeline_args_t *args, int pipeline_rank ) 
+#define DECLARE_PIPELINE(name)                                                 \
+void name##_pipeline(    name##_pipeline_args_t *args, int pipe, int n_pipe ); \
+void name##_pipeline_v4( name##_pipeline_args_t *args, int pipe, int n_pipe )
 
 /* In distribute_voxels.c */
 

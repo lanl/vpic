@@ -156,7 +156,7 @@ new_accumulators( const grid_t * g ) {
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
-  req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+n_pipeline)*sizeof(accumulator_t);
+  req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+_n_pipeline)*sizeof(accumulator_t);
   a = (accumulator_t * ALIGNED)malloc_aligned( req, preferred_alignment );
   if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );

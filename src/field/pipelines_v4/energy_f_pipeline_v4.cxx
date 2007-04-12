@@ -49,7 +49,8 @@ using namespace v4;
 
 void
 energy_f_pipeline_v4( energy_f_pipeline_args_t * args,
-                      int pipeline_rank ) {
+                      int pipeline_rank,
+                      int n_pipeline ) {
   const field_t                * ALIGNED f = args->f;
   const material_coefficient_t * ALIGNED m = args->m;
   const grid_t                 * ALIGNED g = args->g;

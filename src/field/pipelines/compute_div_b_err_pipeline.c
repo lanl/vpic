@@ -3,7 +3,8 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 void compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
-                                 int pipeline_rank ) {
+                                 int pipeline_rank,
+                                 int n_pipeline ) {
   field_t      * ALIGNED f = args->f;
   const grid_t *         g = args->g;
   int n_voxel;

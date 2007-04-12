@@ -34,10 +34,6 @@ AddModule(field_pipelines_v4,src/field/pipelines_v4,load_interpolator_pipeline_v
 
 AddModule(particle,src/particle,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p particle_structors)
 
-AddModule(particle_pipelines,src/particle/pipelines,advance_p_pipeline center_p_pipeline uncenter_p_pipeline energy_p_pipeline)
-
-AddModule(particle_pipelines_v4,src/particle/pipelines_v4,advance_p_pipeline_v4 center_p_pipeline_v4 uncenter_p_pipeline_v4 energy_p_pipeline_v4)
-
 AddModule(species,src/species,species)
 AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
 AddModule(boundary,src/boundary,maxwellian_reflux absorb_tally link)

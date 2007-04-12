@@ -5,7 +5,6 @@
  *   Applied Physics Division
  *   Los Alamos National Lab
  * March/April 2004 - Adapted and extended from earier V4PIC versions
- *
  */
 
 /* Libraries the modules need to be linked against */

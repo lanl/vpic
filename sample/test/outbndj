@@ -63,7 +63,7 @@ begin_initialization {
                                         betay*gamma,
                                         betaz*gamma,
                                         uniform_rand(0,1) ); 
-      if( err!=SUCCESS ) sim_log("Injection error - " << err);
+      if( err ) sim_log("Injection error - " << err);
     }
     
  

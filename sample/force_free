@@ -159,7 +159,7 @@ begin_initialization {
     if( inject_particle( ion, x, y, z,
                          (-vperp1*sn + vpara*cs)/tmp,
                          ( vperp1*cs + vpara*sn)/tmp,
-                         vperp2/tmp, qi ) != SUCCESS ) sim_log("Ion inj err");
+                         vperp2/tmp, qi ) != NO_ERROR ) sim_log("Ion inj err");
 
     // Pick electron velocity/c from a bi-Maxwellian in the drift frame,
     // boost / rotate it into the lab frame and inject the electron
@@ -175,7 +175,7 @@ begin_initialization {
     if( inject_particle( electron, x, y, z,
                          (-vperp1*sn + vpara*cs)/tmp,
                          ( vperp1*cs + vpara*sn)/tmp,
-                         vperp2/tmp, qe ) != SUCCESS ) sim_log("e- inj err");
+                         vperp2/tmp, qe ) != NO_ERROR ) sim_log("e- inj err");
   }
 }
 

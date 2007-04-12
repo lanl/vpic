@@ -76,7 +76,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
                                    sizeof(int) +
                                    nm*sizeof(particle_injector_t),
                                    g->mp );
-        if( err!=SUCCESS ) ERROR(("Unable to size send buffer - %s",err));
+        if( err ) ERROR(("Unable to size send buffer - %s",err));
         buf = (int *)mp_send_buffer(sf2b[face],g->mp);
         ps[face] = (particle_injector_t *)(&buf[1]);
       }
@@ -159,7 +159,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) {
         err = mp_size_recv_buffer( rf2b[face], sizeof(int), g->mp );
-        if( err!=SUCCESS ) ERROR(("Unable to size recv buffer - %s",err));
+        if( err ) ERROR(("Unable to size recv buffer - %s",err));
         mp_begin_recv( rf2b[face], sizeof(int),
                        g->bc[rf2b[face]], sf2b[face], g->mp );
       }
@@ -182,7 +182,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
         buf = (int *)mp_recv_buffer( rf2b[face], g->mp );
         n = sizeof(int) + buf[0]*sizeof(particle_injector_t);
         err = mp_size_recv_buffer( rf2b[face], n, g->mp );
-        if( err!=SUCCESS ) ERROR(("Unable to size recv buffer - %s",err));
+        if( err ) ERROR(("Unable to size recv buffer - %s",err));
         mp_begin_recv( rf2b[face], n,
                        g->bc[rf2b[face]], sf2b[face], g->mp );
       }

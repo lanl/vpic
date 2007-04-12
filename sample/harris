@@ -268,7 +268,7 @@ begin_initialization {
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
     err = inject_particle( ion, x, y, z, ux, uy, uz, qi );
-    if( err!=SUCCESS ) sim_log_local(err);
+    if( err ) sim_log_local(err);
 
     ux = maxwellian_rand(uthe);
     uy = maxwellian_rand(uthe);
@@ -277,7 +277,7 @@ begin_initialization {
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
     err = inject_particle( electron, x, y, z, ux, uy, uz, qe );
-    if( err!=SUCCESS ) sim_log_local(err);
+    if( err ) sim_log_local(err);
     // inject particle can also take a particle age (on [0,1]) but age
     // defaults to 0 (which it should for the initial inject)
   }

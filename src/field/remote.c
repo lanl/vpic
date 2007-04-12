@@ -50,9 +50,9 @@ static void IUO_begin_recv( int i, int j, int k, int size,
   sender = g->bc[ rbound ];
   if( sender<0 || sender>=mp_nproc(g->mp) ) return;
   err = mp_size_recv_buffer( sbound, size, g->mp );
-  if( err!=SUCCESS ) ERROR(("size_recv_buffer failed - %s",err));
+  if( err ) ERROR(("size_recv_buffer failed - %s",err));
   err = mp_begin_recv( sbound, size, sender, sbound, g->mp );
-  if( err!=SUCCESS ) ERROR(("begin_recv failed - %s",err));
+  if( err ) ERROR(("begin_recv failed - %s",err));
   return;
 }
 
@@ -65,7 +65,7 @@ static void * ALIGNED IUO_size_send( int i, int j, int k, int size,
   receiver = g->bc[sbound];
   if( receiver<0 || receiver>=mp_nproc(g->mp) ) return NULL;
   err = mp_size_send_buffer( sbound, size, g->mp );
-  if( err!=SUCCESS ) ERROR(("size_send_buffer failed - %s",err));
+  if( err ) ERROR(("size_send_buffer failed - %s",err));
   return (void * ALIGNED)mp_send_buffer( sbound, g->mp );
 }
 
@@ -78,7 +78,7 @@ static void IUO_begin_send( int i, int j, int k, int size,
   receiver = g->bc[sbound];
   if( receiver<0 || receiver>=mp_nproc(g->mp) ) return;
   err = mp_begin_send( sbound, size, receiver, sbound, g->mp );
-  if( err!=SUCCESS ) ERROR(("begin_send failed - %s",err));
+  if( err ) ERROR(("begin_send failed - %s",err));
 }
 
 static void * ALIGNED IUO_end_recv( int i, int j, int k,
@@ -91,7 +91,7 @@ static void * ALIGNED IUO_end_recv( int i, int j, int k,
   sender = g->bc[rbound];
   if( sender<0 || sender>=mp_nproc(g->mp) ) return NULL;
   err = mp_end_recv( sbound, g->mp );
-  if( err!=SUCCESS ) ERROR(("end_recv failed - %s",err));
+  if( err ) ERROR(("end_recv failed - %s",err));
   return (void * ALIGNED)mp_recv_buffer(sbound,g->mp);
 }
 
@@ -104,7 +104,7 @@ static void IUO_end_send( int i, int j, int k,
   receiver = g->bc[sbound];
   if( receiver<0 || receiver>=mp_nproc(g->mp) ) return;
   err = mp_end_send( sbound, g->mp );
-  if( err!=SUCCESS ) ERROR(("end_send failed - %s",err));
+  if( err ) ERROR(("end_send failed - %s",err));
 }    
 
 /*****************************************************************************

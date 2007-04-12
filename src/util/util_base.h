@@ -118,7 +118,7 @@ enum {
 typedef const char *error_code;
 #define ERROR_CODE(s) \
   ((error_code)(__FILE__"("EXPAND_AND_STRINGIFY(__LINE__)"): "s))
-#define SUCCESS ((error_code)NULL)
+#define NO_ERROR ((error_code)NULL)
 
 BEGIN_C_DECLS
 

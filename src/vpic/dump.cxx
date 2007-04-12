@@ -811,18 +811,18 @@ void vpic_simulation::restart( const char *fbase ) {
   species_lookup = new_species_lookup(species_list);
   ABORT(species_lookup==NULL);
 
-  err = mp_size_recv_buffer(BOUNDARY(-1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_recv_buffer(BOUNDARY( 1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_recv_buffer(BOUNDARY( 0,-1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_recv_buffer(BOUNDARY( 0, 1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_recv_buffer(BOUNDARY( 0, 0,-1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_recv_buffer(BOUNDARY( 0, 0, 1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY(-1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY( 1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY( 0,-1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY( 0, 1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY( 0, 0,-1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
-  err = mp_size_send_buffer(BOUNDARY( 0, 0, 1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err!=SUCCESS);
+  err = mp_size_recv_buffer(BOUNDARY(-1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_recv_buffer(BOUNDARY( 1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_recv_buffer(BOUNDARY( 0,-1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_recv_buffer(BOUNDARY( 0, 1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_recv_buffer(BOUNDARY( 0, 0,-1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_recv_buffer(BOUNDARY( 0, 0, 1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY(-1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY( 1, 0, 0),(grid->ny+1)*(grid->nz+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY( 0,-1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY( 0, 1, 0),(grid->nz+1)*(grid->nx+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY( 0, 0,-1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
+  err = mp_size_send_buffer(BOUNDARY( 0, 0, 1),(grid->nx+1)*(grid->ny+1)*sizeof(hydro[0]),grid->mp); ABORT(err);
 
   mp_barrier(grid->mp);
   return;

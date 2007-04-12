@@ -45,7 +45,7 @@ begin_initialization {
                                       maxwellian_rand(1),
                                       maxwellian_rand(1),
                                       uniform_rand(0,1) );
-    if( err!=SUCCESS ) sim_log("Injection error - " << err);
+    if( err ) sim_log("Injection error - " << err);
   }
 
   species_t *sp = find_species_name( "test_species", species_list );

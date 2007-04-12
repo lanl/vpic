@@ -36,8 +36,8 @@ RANLIB = ranlib
 RM     = rm -f
 
 /* What compile flags should be used? */
-CBRUTALITY   = -Werror -Wall -pedantic -ansi -std=c99 -Wno-long-long
-CXXBRUTALITY = -Werror -Wall -pedantic -ansi -Wno-long-long
+CBRUTALITY   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long
+CXXBRUTALITY = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long
 OPTIMIZATION = -O2 -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse
 
 CFLAGS   = ${CBRUTALITY}   ${OPTIMIZATION} 

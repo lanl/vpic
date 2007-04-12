@@ -105,5 +105,5 @@ error_code vpic_simulation::inject_particle( species_id id,
   sp->np++;
   // FIXME: if inject_p fails, sp->np should not be incremented
 
-  return SUCCESS;
+  return NO_ERROR;
 }

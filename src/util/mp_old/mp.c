@@ -171,11 +171,11 @@ error_code mp_size_recv_buffer( int tag, int size, mp_handle h ) {
       malloc_aligned( size, preferred_alignment );
     if( mp->rbuf[tag]==NULL ) return ERROR_CODE("malloc_aligned failed");
     mp->rbuf_size[tag] = size;
-    return SUCCESS;
+    return NO_ERROR;
   }
 
   /* Is there already a large enough buffer */
-  if( mp->rbuf_size[tag]>=size ) return SUCCESS;
+  if( mp->rbuf_size[tag]>=size ) return NO_ERROR;
 
   /* Try to reduce the number of realloc calls */
 
@@ -196,7 +196,7 @@ error_code mp_size_recv_buffer( int tag, int size, mp_handle h ) {
   mp->rbuf[tag]      = rbuf;
   mp->rbuf_size[tag] = size;
 
-  return SUCCESS;
+  return NO_ERROR;
 }
 
 error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
@@ -214,11 +214,11 @@ error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
       malloc_aligned( size, preferred_alignment );
     if( mp->sbuf[tag]==NULL ) return ERROR_CODE("malloc_aligned failed");
     mp->sbuf_size[tag] = size;
-    return SUCCESS;
+    return NO_ERROR;
   }
 
   /* Is there already a large enough buffer */
-  if( mp->sbuf_size[tag]>=size ) return SUCCESS;
+  if( mp->sbuf_size[tag]>=size ) return NO_ERROR;
 
   /* Try to reduce the number of realloc calls */
 
@@ -239,7 +239,7 @@ error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
   mp->sbuf[tag]      = sbuf;
   mp->sbuf_size[tag] = size;
 
-  return SUCCESS;
+  return NO_ERROR;
 }
 
 error_code mp_begin_recv( int recv_buf, int msg_size,
@@ -258,7 +258,7 @@ error_code mp_begin_recv( int recv_buf, int msg_size,
   switch( MPI_Irecv( mp->rbuf[recv_buf], msg_size, MPI_BYTE,
                      sender, msg_tag, MPI_COMM_WORLD,
                      &mp->rreq[recv_buf] ) ) {
-  case MPI_SUCCESS:   return SUCCESS;
+  case MPI_SUCCESS:   return NO_ERROR;
   case MPI_ERR_COMM:  return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_TYPE:  return ERROR_CODE("MPI_ERR_TYPE");
   case MPI_ERR_COUNT: return ERROR_CODE("MPI_ERR_COUNT");
@@ -285,7 +285,7 @@ error_code mp_begin_send( int send_buf, int msg_size, int receiver,
   switch( MPI_Issend( mp->sbuf[send_buf], msg_size, MPI_BYTE,
                       receiver,	msg_tag, MPI_COMM_WORLD,
                       &mp->sreq[send_buf] ) ) {
-  case MPI_SUCCESS:   return SUCCESS;
+  case MPI_SUCCESS:   return NO_ERROR;
   case MPI_ERR_COMM:  return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_COUNT: return ERROR_CODE("MPI_ERR_COUNT");
   case MPI_ERR_TYPE:  return ERROR_CODE("MPI_ERR_TYPE");
@@ -321,7 +321,7 @@ error_code mp_end_recv( int recv_buf, mp_handle h ) {
   if( mp->rreq_size[recv_buf] != size )
     return ERROR_CODE("Sizes do not match");
 
-  return SUCCESS;
+  return NO_ERROR;
 }
 
 error_code mp_end_send( int send_buf, mp_handle h ) {
@@ -331,7 +331,7 @@ error_code mp_end_send( int send_buf, mp_handle h ) {
   if( send_buf<0 || send_buf>=NUM_BUF ) return ERROR_CODE("Bad send_buf");
 
   switch( MPI_Wait( &mp->sreq[send_buf], MPI_STATUS_IGNORE ) ) {
-  case MPI_SUCCESS:     return SUCCESS;
+  case MPI_SUCCESS:     return NO_ERROR;
   case MPI_ERR_REQUEST: return ERROR_CODE("MPI_ERR_REQUEST");
   case MPI_ERR_ARG:     return ERROR_CODE("MPI_ERR_ARG");
   default:              break;
@@ -349,7 +349,7 @@ error_code mp_allsum_d( double *local, double *global, int n, mp_handle h ) {
   
   switch( MPI_Allreduce( local, global, n, MPI_DOUBLE,
                          MPI_SUM, MPI_COMM_WORLD ) ) {
-  case MPI_SUCCESS:    return SUCCESS;
+  case MPI_SUCCESS:    return NO_ERROR;
   case MPI_ERR_COMM:   return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_BUFFER: return ERROR_CODE("MPI_ERR_BUFFER");
   case MPI_ERR_COUNT:  return ERROR_CODE("MPI_ERR_COUNT");
@@ -370,7 +370,7 @@ error_code mp_allsum_i( int *local, int *global, int n, mp_handle h ) {
   
   switch( MPI_Allreduce( local, global, n, MPI_INT,
                          MPI_SUM, MPI_COMM_WORLD ) ) {
-  case MPI_SUCCESS:    return SUCCESS;
+  case MPI_SUCCESS:    return NO_ERROR;
   case MPI_ERR_COMM:   return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_BUFFER: return ERROR_CODE("MPI_ERR_BUFFER");
   case MPI_ERR_COUNT:  return ERROR_CODE("MPI_ERR_COUNT");
@@ -391,7 +391,7 @@ error_code mp_allgather_i( int *sbuf, int *rbuf, int n, mp_handle h ) {
   
   switch( MPI_Allgather( sbuf, n, MPI_INT,
                          rbuf, n, MPI_INT, MPI_COMM_WORLD ) ) {
-  case MPI_SUCCESS:    return SUCCESS;
+  case MPI_SUCCESS:    return NO_ERROR;
   case MPI_ERR_COMM:   return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_OTHER:  return ERROR_CODE("MPI_ERR_OTHER");
   case MPI_ERR_COUNT:  return ERROR_CODE("MPI_ERR_COUNT");
@@ -413,7 +413,7 @@ error_code mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n, mp_handle h ) 
   /* FIXME: THIS IS BROKEN */
   switch( MPI_Allgather( sbuf, n, MPI_LONG_LONG,
                          rbuf, n, MPI_LONG_LONG, MPI_COMM_WORLD ) ) {
-  case MPI_SUCCESS:  return SUCCESS;
+  case MPI_SUCCESS:  return NO_ERROR;
   case MPI_ERR_COMM: return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_OTHER: return ERROR_CODE("MPI_ERR_OTHER");
   case MPI_ERR_COUNT: return ERROR_CODE("MPI_ERR_COUNT");
@@ -433,7 +433,7 @@ error_code mp_send_i( int *buf, int n, int dst, mp_handle h ) {
   
   switch( MPI_Send( buf, n, MPI_INT, dst, 0, MPI_COMM_WORLD ) ) {
 
-  case MPI_SUCCESS:    return SUCCESS;
+  case MPI_SUCCESS:    return NO_ERROR;
   case MPI_ERR_COMM:   return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_OTHER:  return ERROR_CODE("MPI_ERR_OTHER");
   case MPI_ERR_COUNT:  return ERROR_CODE("MPI_ERR_COUNT");
@@ -452,7 +452,7 @@ error_code mp_recv_i( int *buf, int n, int src, mp_handle h ) {
   
   switch( MPI_Recv( buf, n, MPI_INT, src, 0, MPI_COMM_WORLD, &status ) ) {
 
-  case MPI_SUCCESS:    return SUCCESS;
+  case MPI_SUCCESS:    return NO_ERROR;
   case MPI_ERR_COMM:   return ERROR_CODE("MPI_ERR_COMM");
   case MPI_ERR_OTHER:  return ERROR_CODE("MPI_ERR_OTHER");
   case MPI_ERR_COUNT:  return ERROR_CODE("MPI_ERR_COUNT");

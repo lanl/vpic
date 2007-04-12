@@ -13,8 +13,8 @@ echo "calling PPE bootstrap"
 (cd cell/ppe; config/bootstrap $cwd)
 echo
 
-#echo "generating Makefile.am for VPIC library"
-#config/lib.am > lib/Makefile.am
+echo "generating Makefile.am for VPIC library"
+config/lib.am > lib/Makefile.am
 
 echo "calling libtoolize..."
 libtoolize -f --automake

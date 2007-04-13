@@ -3,10 +3,6 @@
 
 #include <particle.h>
 
-#ifndef PMETHOD
-#define PMETHOD serial
-#endif
-
 #ifndef V4_ACCELERATION
 #define ADVANCE_P_PIPELINE (pipeline_func_t)advance_p_pipeline
 #else

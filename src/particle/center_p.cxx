@@ -1,9 +1,5 @@
 #include <particle.h>
 
-#ifndef PMETHOD
-#define PMETHOD serial
-#endif
-
 #ifndef V4_ACCELERATION
 #define CENTER_P_PIPELINE (pipeline_func_t)center_p_pipeline
 #else

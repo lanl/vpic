@@ -11,13 +11,15 @@
 #include <mpi.h>    /* For MPI_Init and MPI_Finalize ... WRAP THIS! */
 #include <vpic.hxx>
 
-int main( int argc, char **argv ) {
+int
+main( int argc,
+      char **argv ) {
 
   /* Note: Some MPIs will bind threads to cores if threads are booted
      after MPI is initialized.  So we start up the pipeline dispatchers
      _before_ starting up MPI. */
 
-  boot_pipelines(1);
+  PMETHOD.boot( PMETHOD_BOOT_REQUEST );
   MPI_Init(&argc,&argv); 
 
   vpic_simulation simulation; 
@@ -38,7 +40,7 @@ int main( int argc, char **argv ) {
   }
 
   MPI_Finalize();
-  halt_pipelines();
+  PMETHOD.halt();
 
   return 0;
 }

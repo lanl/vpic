@@ -119,8 +119,8 @@ compute_rhob( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
   
-  PMETHOD.dispatch( COMPUTE_RHOB_PIPELINE, args, 0 );
-  compute_rhob_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( COMPUTE_RHOB_PIPELINE, args, 0 );
+  compute_rhob_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
   /* Have the host work on the exterior of the local domain */
 
@@ -218,7 +218,7 @@ compute_rhob( field_t * ALIGNED f,
   /* Finish up setting the interior */
   /* FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE */
 
-  PMETHOD.wait();
+  PSTYLE.wait();
 
   local_adjust_rhob(f,g);
 }

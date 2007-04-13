@@ -97,8 +97,8 @@ compute_rms_div_e_err( field_t * ALIGNED f,
 
   args->f = f;
   args->g = g;
-  PMETHOD.dispatch( COMPUTE_RMS_DIV_E_ERR_PIPELINE, args, 0 );
-  compute_rms_div_e_err_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( COMPUTE_RMS_DIV_E_ERR_PIPELINE, args, 0 );
+  compute_rms_div_e_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
   /* Have the host accumulator the exterior of the local domain */
 
@@ -167,9 +167,9 @@ compute_rms_div_e_err( field_t * ALIGNED f,
   
   /* Reduce the results from the host and pipelines */
 
-  PMETHOD.wait();
+  PSTYLE.wait();
 
-  for( p=0; p<=PMETHOD.n_pipeline; p++ ) err += args->err[p];
+  for( p=0; p<=PSTYLE.n_pipeline; p++ ) err += args->err[p];
 
   /* Reduce the results from all nodes */
 

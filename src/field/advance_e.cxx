@@ -317,8 +317,8 @@ advance_e( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  PMETHOD.dispatch( ADVANCE_E_PIPELINE, args, 0 );
-  advance_e_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( ADVANCE_E_PIPELINE, args, 0 );
+  advance_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {
@@ -356,7 +356,7 @@ advance_e( field_t * ALIGNED f,
     }
   }
 
-  PMETHOD.wait();
+  PSTYLE.wait();
   
   /***************************************************************************
    * Finish tangential B ghost setup

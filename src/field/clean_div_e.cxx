@@ -127,8 +127,8 @@ clean_div_e( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  PMETHOD.dispatch( CLEAN_DIV_E_PIPELINE, args, 0 );
-  clean_div_e_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( CLEAN_DIV_E_PIPELINE, args, 0 );
+  clean_div_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
   /* Do left over field components on the host */
 
@@ -195,7 +195,7 @@ clean_div_e( field_t * ALIGNED f,
     }
   }
 
-  PMETHOD.wait(); /* FIXME: FINISH EVEN LATER?? */
+  PSTYLE.wait(); /* FIXME: FINISH EVEN LATER?? */
 
   local_adjust_tang_e(f,g);
 }

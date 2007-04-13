@@ -302,7 +302,7 @@ load_interpolator( interpolator_t * ALIGNED fi,
   args->f  = f;
   args->g  = g;
 
-  PMETHOD.dispatch( LOAD_INTERPOLATOR_PIPELINE, args, 0 );  
-  load_interpolator_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( LOAD_INTERPOLATOR_PIPELINE, args, 0 );  
+  load_interpolator_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 }

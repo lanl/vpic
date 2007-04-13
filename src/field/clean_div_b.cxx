@@ -216,8 +216,8 @@ clean_div_b( field_t * ALIGNED f,
   args->f = f;
   args->g = g;
 
-  PMETHOD.dispatch( CLEAN_DIV_B_PIPELINE, args, 0 );
-  clean_div_b_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( CLEAN_DIV_B_PIPELINE, args, 0 );
+  clean_div_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
   /* Begin setting derr ghosts */
   begin_remote_ghost_div_b( f, g );
@@ -343,7 +343,7 @@ clean_div_b( field_t * ALIGNED f,
 
   /* For for pipelines to finish up cleaning div_b in interior */
   
-  PMETHOD.wait();
+  PSTYLE.wait();
   
   local_adjust_norm_b(f,g);
 }

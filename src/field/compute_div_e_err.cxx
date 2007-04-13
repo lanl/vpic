@@ -120,8 +120,8 @@ compute_div_e_err( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  PMETHOD.dispatch( COMPUTE_DIV_E_ERR_PIPELINE, args, 0 );
-  compute_div_e_err_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( COMPUTE_DIV_E_ERR_PIPELINE, args, 0 );
+  compute_div_e_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
   /* Have host compute the exterior of the local domain */
 
@@ -220,7 +220,7 @@ compute_div_e_err( field_t * ALIGNED f,
   /* Finish up setting interior */
   /* FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE */
 
-  PMETHOD.wait();
+  PSTYLE.wait();
 
   local_adjust_div_e(f,g);
 }

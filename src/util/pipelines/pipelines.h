@@ -73,12 +73,8 @@ BEGIN_C_DECLS
 /* Temporary hack to allow compile time reconfiguration of which
    pipeline dispatcher to use by default. */
    
-#ifndef PMETHOD
-#define PMETHOD serial
-#endif
-
-#ifndef PMETHOD_BOOT_REQUEST
-#define PMETHOD_BOOT_REQUEST 1
+#ifndef PSTYLE
+#define PSTYLE serial
 #endif
 
 extern pipeline_dispatcher_t serial;

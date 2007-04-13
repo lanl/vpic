@@ -171,13 +171,13 @@ void energy_f( double * global,
   args->m = m;
   args->g = g;
 
-  PMETHOD.dispatch( ENERGY_F_PIPELINE, args, 0 );
-  energy_f_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( ENERGY_F_PIPELINE, args, 0 );
+  energy_f_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 
   /* Reduce results from each pipelines */
   
-  for( p=1; p<=PMETHOD.n_pipeline; p++ ) {
+  for( p=1; p<=PSTYLE.n_pipeline; p++ ) {
     args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
     args->en[0][2] += args->en[p][2]; args->en[0][3] += args->en[p][3];
     args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];

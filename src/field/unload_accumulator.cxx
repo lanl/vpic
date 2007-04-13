@@ -208,7 +208,7 @@ unload_accumulator( field_t * ALIGNED f,
   args->a = a;
   args->g = g;
 
-  PMETHOD.dispatch( UNLOAD_ACCUMULATOR_PIPELINE, args, 0 );
-  unload_accumulator_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( UNLOAD_ACCUMULATOR_PIPELINE, args, 0 );
+  unload_accumulator_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 }

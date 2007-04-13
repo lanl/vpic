@@ -191,7 +191,7 @@ center_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  PMETHOD.dispatch( CENTER_P_PIPELINE, args, 0 );
-  center_p_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( CENTER_P_PIPELINE, args, 0 );
+  center_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 }

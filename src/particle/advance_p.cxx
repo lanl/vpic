@@ -422,7 +422,7 @@ advance_p( particle_t           * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  PMETHOD.dispatch( ADVANCE_P_PIPELINE, args, 0 );
+  PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
 
   /* Have the host processor do the incomplete quad if necessary.
      Note: This is overlapped with the pipelined processing.  As such,
@@ -435,16 +435,16 @@ advance_p( particle_t           * ALIGNED p,
      However, it is worth reconsidering this at some point in the
      future. */
 
-  advance_p_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  advance_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
-  PMETHOD.wait();
+  PSTYLE.wait();
 
   /* FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
      INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
      MOVERS TO ELIMINATE HOLES IN THE ALLOCATION. */
 
   nm = 0;
-  for( rank=0; rank<=PMETHOD.n_pipeline; rank++ ) {
+  for( rank=0; rank<=PSTYLE.n_pipeline; rank++ ) {
     if( pm+nm!=args->seg[rank].pm )
       memmove( pm+nm, args->seg[rank].pm, args->seg[rank].nm*sizeof(*pm) );
     nm += args->seg[rank].nm;

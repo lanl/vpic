@@ -157,7 +157,7 @@ reduce_accumulators( accumulator_t * ALIGNED a,
   args->a = a;
   args->g = g;
 
-  PMETHOD.dispatch( REDUCE_ACCUMULATORS_PIPELINE, args, 0 );
-  reduce_accumulators_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( REDUCE_ACCUMULATORS_PIPELINE, args, 0 );
+  reduce_accumulators_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 }

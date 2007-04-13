@@ -205,8 +205,8 @@ advance_b( field_t * ALIGNED f,
   args->g    = g;
   args->frac = frac;
 
-  PMETHOD.dispatch( ADVANCE_B_PIPELINE, args, 0 );
-  advance_b_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( ADVANCE_B_PIPELINE, args, 0 );
+  advance_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
   /* While the pipelines are busy, do surface fields */
   
@@ -255,5 +255,5 @@ advance_b( field_t * ALIGNED f,
 
   local_adjust_norm_b(f,g);
   
-  PMETHOD.wait();
+  PSTYLE.wait();
 }

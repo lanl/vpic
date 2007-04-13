@@ -102,8 +102,6 @@ compute_curl_b_pipeline_v4( compute_curl_b_pipeline_args_t * args,
   const float py = (ny>1) ? g->cvac*g->dt/g->dy : 0;
   const float pz = (nz>1) ? g->cvac*g->dt/g->dz : 0;
 
-  float f00_cbx_rmux, f00_cby_rmuy, f00_cbz_rmuz;
-
   const v4float vpx(px);
   const v4float vpy(py);
   const v4float vpz(pz);
@@ -268,8 +266,8 @@ compute_curl_b( field_t * ALIGNED f,
   args->m = m;
   args->g = g;
 
-  PMETHOD.dispatch( COMPUTE_CURL_B_PIPELINE, args, 0 );
-  compute_curl_b_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
+  PSTYLE.dispatch( COMPUTE_CURL_B_PIPELINE, args, 0 );
+  compute_curl_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
   /* Do left over interior ex */
   for( z=2; z<=nz; z++ ) {
@@ -307,7 +305,7 @@ compute_curl_b( field_t * ALIGNED f,
     }
   }
 
-  PMETHOD.wait();
+  PSTYLE.wait();
   
   /***************************************************************************
    * Finish tangential B ghost setup

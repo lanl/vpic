@@ -11,6 +11,10 @@
 #include <mpi.h>    /* For MPI_Init and MPI_Finalize ... WRAP THIS! */
 #include <vpic.hxx>
 
+#ifndef PIPELINE_BOOT_REQUEST
+#define PIPELINE_BOOT_REQUEST 1
+#endif
+
 int
 main( int argc,
       char **argv ) {
@@ -19,7 +23,7 @@ main( int argc,
      after MPI is initialized.  So we start up the pipeline dispatchers
      _before_ starting up MPI. */
 
-  PMETHOD.boot( PMETHOD_BOOT_REQUEST );
+  PSTYLE.boot( PIPELINE_BOOT_REQUEST );
   MPI_Init(&argc,&argv); 
 
   vpic_simulation simulation; 
@@ -40,7 +44,7 @@ main( int argc,
   }
 
   MPI_Finalize();
-  PMETHOD.halt();
+  PSTYLE.halt();
 
   return 0;
 }

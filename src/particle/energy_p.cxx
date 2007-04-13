@@ -167,12 +167,12 @@ energy_p( const particle_t     * ALIGNED p,
   args->f   = f;
   args->g   = g;
 
-  PMETHOD.dispatch( ENERGY_P_PIPELINE, args, 0 );
-  energy_p_pipeline( args, PMETHOD.n_pipeline, PMETHOD.n_pipeline );
-  PMETHOD.wait();
+  PSTYLE.dispatch( ENERGY_P_PIPELINE, args, 0 );
+  energy_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  PSTYLE.wait();
 
   local = 0;
-  for( rank=0; rank<=PMETHOD.n_pipeline; rank++ )
+  for( rank=0; rank<=PSTYLE.n_pipeline; rank++ )
     local += args->en[rank];
   mp_allsum_d( &local, &global, 1, g->mp );
   return (double)g->cvac*(double)g->cvac*global/(double)q_m;

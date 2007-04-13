@@ -25,13 +25,8 @@ AddModule(pipelines,src/util/pipelines,pipelines_serial pipelines_thread)
 AddModule(v4,src/util/v4,)
 AddModule(grid,src/grid,ops partition grid_structors add_boundary)
 AddModule(material,src/material,coefficient material)
-
 AddModule(field,src/field,load_interpolator clear_accumulators reduce_accumulators unload_accumulator advance_b advance_e energy_f compute_curl_b compute_rhob compute_div_e_err compute_rms_div_e_err clean_div_e compute_div_b_err compute_rms_div_b_err clean_div_b local remote field_structors distribute_voxels)
-
-
-
 AddModule(particle,src/particle,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p particle_structors)
-
 AddModule(species,src/species,species)
 AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
 AddModule(boundary,src/boundary,maxwellian_reflux absorb_tally link)

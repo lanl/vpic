@@ -2,11 +2,6 @@
 
 #include <field.h>
 
-/* FIXME: FOR REASONS NOT YET UNDERSTOOD, THIS V4 PIPELINE IS ACTING
-   UP ON OPTERON / 64-bit / GCC-4.1.2 BUT WORKS FINE on PENTIUM4 / 32-bit
-   GCC-4.1.1 FOR OTHERWISE IDENTICAL COMPILE FLAGS. */
-#undef V4_ACCELERATION
-
 #ifndef V4_ACCELERATION
 #define ADVANCE_E_PIPELINE (pipeline_func_t)advance_e_pipeline
 #else
@@ -117,8 +112,6 @@ advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
   const float py = (ny>1) ? (1+damp)*g->cvac*g->dt/g->dy : 0;
   const float pz = (nz>1) ? (1+damp)*g->cvac*g->dt/g->dz : 0;
   const float cj = g->dt/g->eps0;
-
-  float f00_cbx_rmux, f00_cby_rmuy, f00_cbz_rmuz;
 
   const v4float vdamp(damp);
   const v4float vpx(px);

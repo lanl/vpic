@@ -5,12 +5,14 @@
 ################################################################################
 # CFLAGS - configure C compiler behavior
 ################################################################################
-CFLAGS="-DUSE_V4_PORTABLE"
+CFLAGS="-DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
+#CFLAGS="-DUSE_V4_SSE -D_XOPEN_SOURCE=600"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-CXXFLAGS="-DUSE_V4_PORTABLE"
+CXXFLAGS="-DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
+#CXXFLAGS="-DUSE_V4_SSE -D_XOPEN_SOURCE=600"
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
@@ -27,7 +29,7 @@ CPUMODEL=pentiumM
 ################################################################################
 # EXTENSION - executable extension
 ################################################################################
-EXTENSION=pm3
+EXTENSION=pm
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]

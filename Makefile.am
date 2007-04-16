@@ -4,6 +4,8 @@
 
 SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
+all-local: copy-extension-lib
+
 setup: setup-host setup-build-script
 
 setup-host:
@@ -11,6 +13,9 @@ setup-host:
 
 setup-build-script:
 	@(mv build.script build.@EXTENSION@ ; chmod 755 build.@EXTENSION@)
+
+copy-extension-lib:
+	@(cp lib/.libs/libvpic.a @top_srcdir@/libvpic.@EXTENSION@.a)
 
 ################################################################################
 # Function to make symbolic links

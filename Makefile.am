@@ -4,9 +4,11 @@
 
 SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
+setup: setup-host setup-build-script
+
 all-local: copy-extension-lib
 
-setup: setup-host setup-build-script
+clean-local: clean-extension-lib
 
 setup-host:
 	$(call symlinks, "@top_srcdir@/src", '.*\.h+?x+?')
@@ -16,6 +18,9 @@ setup-build-script:
 
 copy-extension-lib:
 	@(cp lib/.libs/libvpic.a @top_srcdir@/libvpic.@EXTENSION@.a)
+
+clean-extension-lib:
+	@(rm @top_srcdir@/libvpic.@EXTENSION@.a)
 
 ################################################################################
 # Function to make symbolic links

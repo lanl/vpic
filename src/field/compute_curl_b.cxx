@@ -2,6 +2,9 @@
 
 #include <field.h>
 
+// See note and advance_e
+#undef V4_ACCELERATION
+
 #ifndef V4_ACCELERATION
 #define COMPUTE_CURL_B_PIPELINE (pipeline_func_t)compute_curl_b_pipeline
 #else

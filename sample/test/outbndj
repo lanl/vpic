@@ -20,6 +20,7 @@ begin_globals {
 begin_initialization {
   const int nx = NX, ny = NY, nz = NZ, npart = 21;
   double drho[ (NX+2)*(NY+2)*(NZ+2) ], divj[ (NX+2)*(NY+2)*(NZ+2) ];
+  int n_iter;
 
   // Define the grid
   grid->dt = 1;
@@ -46,7 +47,7 @@ begin_initialization {
   double worst_div_err = 0;
 
   species_t *sp = find_species_id(test_species,species_list);
-  for(;;) {
+  for(n_iter=50000;n_iter;n_iter--) {
 
     // Load the particles 
     sp->np = 0;
@@ -132,6 +133,8 @@ begin_initialization {
               ", fail " << num_fail <<
               ", worst " << worst_div_err);
   }
+
+  abort(0);
 }
 
 begin_diagnostics {

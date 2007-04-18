@@ -2,6 +2,22 @@
 
 #include <field.h>
 
+/* FIXME: Ben noticed that the pcomm unit test was failing under
+   USE_V4_PORTABLE.  Subsequently testing by me confirmed this on my desktop
+   and confirmed that it was not occurring under V4_SSE or no V4 accleration
+   at all.  The problem was later isolated to this code (again ... sigh). 
+   gcc-4.1.x is very flaky about function for unknown reasons (though I
+   suspect it is that it can't handle 16-bit integer arithmetic for material
+   index handling mixed in with all the other joy simultaneously).  Since
+   compute_curl_b is very similar to this function, I am disabling
+   V4_ACCELERATION in there to be on the safe side too.   All other users
+   of 16-bit material indexes are not V4 enabled currently.  At some point
+   in the near future, I'll probably rethink how material properties are
+   specified to use less indirection in inner loops like this to be more v4
+   (and thus cell) friendly. */
+
+#undef V4_ACCELERATION
+
 #ifndef V4_ACCELERATION
 #define ADVANCE_E_PIPELINE (pipeline_func_t)advance_e_pipeline
 #else

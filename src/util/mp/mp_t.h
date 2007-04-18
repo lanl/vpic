@@ -3,8 +3,24 @@
 #ifndef mp_t_h
 #define mp_t_h
 
-#include <mpi.h>
 #include <util_base.h>
+#include <mpi.h> /* FIXME: Hmmm ... mpi should not be publically exposed.
+                    But since it is for now, here is a handy dandy
+                    turnstyle.  (Useful for debugging.) */
+
+#define BEGIN_TURNSTYLE do {                                          \
+   int _rank, _size, _baton = 0;                                      \
+   MPI_Comm_rank( MPI_COMM_WORLD, &_rank );                           \
+   MPI_Comm_size( MPI_COMM_WORLD, &_size );                           \
+   if( _rank!=0 ) MPI_Recv( &_baton, 1, MPI_INT, _rank-1, _rank-1,    \
+                            MPI_COMM_WORLD, MPI_STATUS_IGNORE );      \
+   do
+
+#define END_TURNSTYLE                                                    \
+     while(0);                                                           \
+     if( _rank!=_size-1 ) MPI_Send( &_baton, 1, MPI_INT, _rank+1, _rank, \
+                                    MPI_COMM_WORLD );                    \
+   } while(0)
 
 /* A mp can handle up to 54 simultaneous communications (27 sends and 27
 	receives) ... This is based on every volume, face, edge and corner of a

@@ -186,8 +186,8 @@ begin_initialization {
   int n, count;
   seed_rand(1);
   for( n=count=0; n<N; n++ ) if( sequence[n] != mt_urand(rng) ) count++;
-  if( count==0 ) printf( "pass\n" );
-  else           printf( "FAIL\n" );
+  if( count==0 ) sim_log( "pass" );
+  else           sim_log( "FAIL" );
   abort(0);
 }
 

@@ -36,8 +36,8 @@ RM = rm -f
 
 /* What compile flags should be used? */
 /* No V4 hardware acceleration */
-CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -g
-CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -g
-LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -g
+CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -g
+CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -g
+LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -g
 ARFLAGS  = 
 

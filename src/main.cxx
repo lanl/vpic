@@ -35,7 +35,12 @@ main( int argc,
 
   while(simulation.advance()); 
 
+  /* Let all processors finish up */
+
+  MPI_Barrier( MPI_COMM_WORLD );
+
   /* Issue a termination message when we exit cleanly. */ 
+
   {
     int rank; 
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );

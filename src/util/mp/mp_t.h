@@ -4,9 +4,7 @@
 #define mp_t_h
 
 #include <util_base.h>
-#include <mpi.h> /* FIXME: Hmmm ... mpi should not be publically exposed.
-                    But since it is for now, here is a handy dandy
-                    turnstyle.  (Useful for debugging.) */
+#include <mpi.h>
 
 #define BEGIN_TURNSTYLE do {                                          \
    int _rank, _size, _baton = 0;                                      \
@@ -27,9 +25,6 @@
 	box simultaneously engaged in an overlapped send and an overlapped
 	receive */
 #define NUM_BUF 27
-
-/* Opaque data type so users do not have to see message passing internals */
-typedef void * mp_handle;
 
 typedef struct mp {
 	int rank, nproc;

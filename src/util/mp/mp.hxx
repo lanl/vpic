@@ -10,7 +10,7 @@
 #ifndef mp_hxx
 #define mp_hxx
 
-#include <mp_t.h>
+#include <util_base.h>
 
 BEGIN_C_DECLS
 

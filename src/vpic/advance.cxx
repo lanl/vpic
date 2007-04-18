@@ -16,11 +16,12 @@ int vpic_simulation::advance(void) {
   emitter_t *emitter;
   double overhead, err;
 
-  overhead = mp_time00(grid->mp);
-
   // Determine if we are done ... see note below why this is done here
 
   if( num_step>0 && step>=num_step ) return 0;
+
+  overhead = mp_time00(grid->mp);
+
   rank = mp_rank(grid->mp);
 
   // At this point, fields are at E_0 and B_0 and the particle positions

@@ -11,9 +11,6 @@
 #ifndef MPWrapper_hxx
 #define MPWrapper_hxx
 
-#include <DMPPolicy.hxx>
-#include <AAISPolicy.hxx>
-
 template<class MPPolicy> class MPWrapper_T
 	: public MPPolicy
 	{
@@ -40,8 +37,10 @@ template<class MPPolicy> class MPWrapper_T
 
 // compile time selection of implementation policy
 #if defined USE_AAIS_MP
+	#include <AAISPolicy.hxx>
 	typedef MPWrapper_T<AAISPolicy> MPWrapper;
 #else
+	#include <DMPPolicy.hxx>
 	typedef MPWrapper_T<DMPPolicy> MPWrapper;
 #endif // MP Implementation
 

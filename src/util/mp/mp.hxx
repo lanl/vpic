@@ -14,6 +14,11 @@
 
 BEGIN_C_DECLS
 
+void mp_init_cxx(int argc, char ** argv);
+
+/* Adding for clean termination */ 
+void mp_finalize_cxx();
+
 mp_handle new_mp_cxx(void);
 
 void delete_mp_cxx( mp_handle *h );
@@ -27,9 +32,6 @@ void * ALIGNED mp_recv_buffer_cxx( int tag, mp_handle h );
 void * ALIGNED mp_send_buffer_cxx( int tag, mp_handle h );
 
 void mp_abort_cxx( int reason, mp_handle h );
-
-/* Adding for clean termination */ 
-void mp_finalize_cxx( mp_handle h );
 
 void mp_barrier_cxx( mp_handle h );
 

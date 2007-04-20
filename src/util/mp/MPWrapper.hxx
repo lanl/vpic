@@ -12,6 +12,7 @@
 #define MPWrapper_hxx
 
 #include <DMPPolicy.hxx>
+#include <AAISPolicy.hxx>
 
 template<class MPPolicy> class MPWrapper_T
 	: public MPPolicy

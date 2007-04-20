@@ -24,7 +24,7 @@ main( int argc,
      _before_ starting up MPI. */
 
   PSTYLE.boot( PIPELINE_BOOT_REQUEST );
-  MPI_Init(&argc,&argv); 
+  mp_init(argc, argv);
 
   vpic_simulation simulation; 
   if( argc>=3 && strcmp(argv[1],"restart")==0 ) simulation.restart(argv[2]);
@@ -37,20 +37,18 @@ main( int argc,
 
   /* Let all processors finish up */
 
-  MPI_Barrier( MPI_COMM_WORLD );
+  simulation.barrier();
 
   /* Issue a termination message when we exit cleanly. */ 
 
   {
-    int rank; 
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int rank = (int)simulation.rank();
     if ( rank==0 ) 
       MESSAGE(("Maximum number of time steps reached.  Job has completed.")); 
   }
 
-  MPI_Finalize();
+  mp_finalize();
   PSTYLE.halt();
 
   return 0;
 }
-

@@ -11,6 +11,15 @@
 #include <MPWrapper.hxx>
 #include <mp.hxx>
 
+extern "C" void mp_init_cxx(int argc, char ** argv) {
+	MPWrapper::instance().mp_init(argc, argv);
+} // mp_init
+
+/* Adding for clean termination */ 
+extern "C" void mp_finalize_cxx() {
+	MPWrapper::instance().mp_finalize();
+} // mp_finalize
+
 extern "C" mp_handle new_mp_cxx(void) {
 	return MPWrapper::instance().new_mp();
 } // new_mp
@@ -38,11 +47,6 @@ extern "C" void * ALIGNED mp_send_buffer_cxx( int tag, mp_handle h ) {
 extern "C" void mp_abort_cxx( int reason, mp_handle h ) {  
 	MPWrapper::instance().mp_abort(reason, h);
 } // mp_abort
-
-/* Adding for clean termination */ 
-extern "C" void mp_finalize_cxx( mp_handle h ) {
-	MPWrapper::instance().mp_finalize(h);
-} // mp_finalize
 
 extern "C" void mp_barrier_cxx( mp_handle h ) {
 	MPWrapper::instance().mp_barrier(h);

@@ -4,23 +4,36 @@
 
 SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
-setup: setup-host setup-build-script
+setup: setup-host
 
-all-local: copy-extension-lib
+all-local: copy-build-script copy-extension-lib copy-samples
 
-clean-local: clean-extension-lib
+clean-local: clean-extension-lib clean-samples clean-build-script
 
 setup-host:
 	$(call symlinks, "@top_srcdir@/src", '.*\.h+?x+?')
 
-setup-build-script:
-	@(mv build.script build.@EXTENSION@ ; chmod 755 build.@EXTENSION@)
+copy-build-script:
+	@(cp build.script build.@EXTENSION@ ; chmod 755 build.@EXTENSION@)
 
 copy-extension-lib:
-	@(cp lib/.libs/libvpic.a @top_srcdir@/libvpic.@EXTENSION@.a)
+	@(cp lib/.libs/libvpic.a @top_builddir@/libvpic.@EXTENSION@.a)
+
+copy-samples:
+	@([ ! -d @top_builddir@/sample ] && \
+		cp -r @top_srcdir@/sample @top_builddir@)
+
+clean-build-script:
+	rm -rf @top_builddir@/build.@EXTENSION@
+#	@(rm -rf @top_builddir@/build.@EXTENSION@)
 
 clean-extension-lib:
-	@(rm @top_srcdir@/libvpic.@EXTENSION@.a)
+	rm -rf @top_builddir@/libvpic.@EXTENSION@.a
+#	@(rm -rf @top_builddir@/libvpic.@EXTENSION@.a)
+
+clean-samples:
+	rm -rf @top_builddir@/sample
+#	@(rm -rf @top_builddir@/sample)
 
 ################################################################################
 # Function to make symbolic links

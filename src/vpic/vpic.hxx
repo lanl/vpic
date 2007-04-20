@@ -27,6 +27,17 @@ public:
   void modify_runparams( const char *fname );
   int advance( void );
 
+  // some helpers that need to be exposed to
+  // remove direct MPI calls
+
+  inline double rank(void) {
+    return (double)mp_rank(grid->mp);
+  }
+
+  inline void barrier(void) {
+    mp_barrier(grid->mp);
+  }
+
 private:
 
   // Directly initialized by user; saved in a restart dump
@@ -284,16 +295,8 @@ private:
   ////////////////////////
   // Miscellaneous helpers
 
-  inline double rank(void) {
-    return (double)mp_rank(grid->mp);
-  }
-
   inline double nproc(void) {
     return (double)mp_nproc(grid->mp);
-  }
-
-  inline void barrier(void) {
-    mp_barrier(grid->mp);
   }
 
   inline double time00( void ) {

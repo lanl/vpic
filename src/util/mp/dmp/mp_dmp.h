@@ -9,6 +9,9 @@
 
 BEGIN_C_DECLS
 
+void mp_init_dmp(int argc, char ** argv); 
+void mp_finalize_dmp(); 
+
 mp_handle new_mp_dmp(void);
 void delete_mp_dmp( mp_handle *h );
 
@@ -22,7 +25,6 @@ double mp_elapsed_dmp( mp_handle h );
 double mp_time00_dmp( mp_handle h );
 
 void mp_abort_dmp( int reason, mp_handle h );
-void mp_finalize_dmp( mp_handle h ); 
 void mp_barrier_dmp( mp_handle h );
 
 error_code mp_size_recv_buffer_dmp( int rbuf, int size, mp_handle h );

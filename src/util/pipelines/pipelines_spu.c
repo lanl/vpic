@@ -40,6 +40,9 @@
 
 #include <pipelines.h>
 #include <pthread.h>
+
+#if defined __SPU__
+
 #include <libspe2.h>
 
 static void *
@@ -556,3 +559,4 @@ pipeline_dispatcher_t spu = {
   spu_wait      /* wait */
 };
 
+#endif /* __SPU__ */

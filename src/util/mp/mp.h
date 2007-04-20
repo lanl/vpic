@@ -9,6 +9,14 @@
 
 BEGIN_C_DECLS
 
+static inline void mp_init(int argc, char ** argv) {
+	mp_init_cxx(argc, argv);
+} // mp_finalize
+
+static inline void mp_finalize() {
+	mp_finalize_cxx();
+} // mp_finalize
+
 static inline mp_handle new_mp(void) {
 	return new_mp_cxx();
 } // new_mp
@@ -36,10 +44,6 @@ static inline void * ALIGNED mp_send_buffer( int sbuf, mp_handle h ) {
 static inline void mp_abort( int reason, mp_handle h ) {
 	mp_abort_cxx(reason, h);
 } // mp_abort
-
-static inline void mp_finalize( mp_handle h ) {
-	mp_finalize_cxx(h);
-} // mp_finalize
 
 static inline void mp_barrier( mp_handle h ) {
 	mp_barrier_cxx(h);

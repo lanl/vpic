@@ -6,6 +6,14 @@
 
 struct DMPPolicy {
 
+	inline void mp_init(int argc, char ** argv) {
+		return mp_init_dmp(argc, argv);
+	} // mp_finalize
+
+	inline void mp_finalize() {
+		return mp_finalize_dmp();
+	} // mp_finalize
+
 	inline mp_handle new_mp(void) {
 		return new_mp_dmp();
 	} // new_mp
@@ -41,10 +49,6 @@ struct DMPPolicy {
 	inline void mp_abort( int reason, mp_handle h ) {
 		return mp_abort_dmp(reason, h);
 	} // mp_abort
-
-	inline void mp_finalize( mp_handle h ) {
-		return mp_finalize_dmp(h);
-	} // mp_finalize
 
 	inline void mp_barrier( mp_handle h ) {
 		return mp_barrier_dmp(h);

@@ -24,6 +24,17 @@ main( int argc,
      _before_ starting up MPI. */
 
   PSTYLE.boot( PIPELINE_BOOT_REQUEST );
+
+# ifdef USE_CELL_SPUS
+  /* FIXME: n_pipeline rationalization throughout code.
+     Also, need to discuss MPI processor model for RoadRunner with Ben
+     to determine if each there is a one-to-one correspondence with
+     an MPI processor and PPU (hopefully there is) or if there are
+     multiple PPU's per MPI process.  It may make some subtle
+     differences in PPU threading model and SPU dispatcher. */
+  spu.boot( 8 );
+# endif
+
   mp_init(argc, argv);
 
   vpic_simulation simulation; 
@@ -48,7 +59,13 @@ main( int argc,
   }
 
   mp_finalize();
+
   PSTYLE.halt();
+
+# ifdef USE_CELL_SPUS
+  spu.halt();
+# endif
 
   return 0;
 }
+

@@ -77,9 +77,11 @@ BEGIN_C_DECLS
 #define PSTYLE serial
 #endif
 
-
 extern pipeline_dispatcher_t serial;
 extern pipeline_dispatcher_t thread;
+
+#ifdef USE_CELL_SPUS
+
 extern pipeline_dispatcher_t spu;
 
 /* Due to the vagaries of Cell, spu.dispatch has some restrictions
@@ -121,6 +123,8 @@ extern pipeline_dispatcher_t spu;
 
 #define SPU_PIPELINE(x) \
   ((pipeline_func_t)(uint64_t)(spe_program_handle_t *)&(x))
+
+#endif
 
 END_C_DECLS
 

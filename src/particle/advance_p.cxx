@@ -17,13 +17,41 @@ typedef struct advance_p_pipeline_args {
   int                            nm;  /* Number of movers */
   accumulator_t        * ALIGNED a;   /* Accumuator arrays */
   const interpolator_t * ALIGNED f;   /* Interpolator array */
+
+# ifdef USE_CELL_SPUS
+  /* The copy of the grid_t struct is passed to eliminate the need for
+     pointer chasing through PPU memory in the SPUS. */
+  grid_t                         g;   /* Local domain grid parameters */
+# else
   const grid_t         *         g;   /* Local domain grid parameters */
- 
-  /* Return values */
+# endif
+
+  /* Pipeline return values */
+
+# ifdef USE_CELL_SPUS
+  /* 16-byte align the first pipeline return value.  Note: This is
+     more wasteful than necessary if no padding needed.
+     Unfortunately, C++98 does not support zero sized structure
+     members ... sigh ... */
+  char _pad[ 16-( ( 4*sizeof(void *)  +
+                    2*sizeof(int) +
+                    1*sizeof(float) + 
+                    1*sizeof(grid_t) ) & 15 ) ];
+# endif
 
   struct {
     particle_mover_t * ALIGNED pm; /* First mover in segment */
     int nm;                        /* Number of used movers in segment */
+
+#   ifdef USE_CELL_SPUS
+    /* 16-byte align the next pipeline return value (and thus the
+       entire structure).  Note: This is more wasteful than necessary
+       if no padding needed.  Unfortunately, ISO C++98 does not
+       support zero sized structure members ... sigh ... */
+    const char _pad[ 16-( ( 1*sizeof(void *) +
+                            1*sizeof(int) ) & 15 ) ];
+#   endif
+
   } seg[MAX_PIPELINE+1];           /* seg[n_pipeline] used by host */
 
 } advance_p_pipeline_args_t;
@@ -402,7 +430,14 @@ advance_p( particle_t           * ALIGNED p,
            accumulator_t        * ALIGNED a,
            const interpolator_t * ALIGNED f,
            const grid_t         *         g ) {
+# ifdef USE_CELL_SPUS
+  char * _stack[ 16 + sizeof(advance_p_pipeline_args_t) ];
+  advance_p_pipeline_args_t * args =
+    (advance_p_pipeline_args_t *)((((size_t)_stack)+15)&~15);
+# else
   advance_p_pipeline_args_t args[1];
+# endif
+
   int rank;
 
   if( p==NULL  ) ERROR(("Bad particle array"));
@@ -420,9 +455,18 @@ advance_p( particle_t           * ALIGNED p,
   args->nm  = nm;
   args->a   = a;
   args->f   = f;
-  args->g   = g;
 
+# ifdef USE_CELL_SPUS
+  args->g   = *g;
+# else
+  args->g   = g;
+# endif
+
+# ifdef USE_CELL_SPUS
+  spu.dispatch( SPU_PIPELINE( advance_p_pipeline_spu ), args, 0 );
+# else
   PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
+# endif
 
   /* Have the host processor do the incomplete quad if necessary.
      Note: This is overlapped with the pipelined processing.  As such,

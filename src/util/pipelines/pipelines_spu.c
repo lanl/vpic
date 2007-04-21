@@ -1,3 +1,5 @@
+#ifdef USE_CELL_SPUS
+
 /****************************************************************************
  *
  * Copyright (c) 2000, Kevin James Bowers
@@ -555,4 +557,6 @@ pipeline_dispatcher_t spu = {
   (dispatcher_func_t)spu_dispatch, /* dispatch */
   spu_wait      /* wait */
 };
+
+#endif /* USE_CELL_SPUS */
 

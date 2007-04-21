@@ -145,6 +145,11 @@ typedef struct field {
   material_id nmat, cmat;          /* Material at cell centers and nodes */
   float rhof, rhob;                /* Free and bound charge density */
   float div_e_err, div_b_err;      /* Divergence errors */
+# ifdef USE_CELL_SPUS
+  float _pad[12];                  /* 128-byte align (next power of two) */
+# else
+  /**/                             /* 16-byte align */
+# endif
 } field_t;
 
 /* Hydro arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation indexed
@@ -159,7 +164,11 @@ typedef struct hydro {
   float px, py, pz;    /* Momentum density       => < p_i f > */
   float txx, tyy, tzz; /* Stress diagonal        => < p_i v_j f >, i==j */
   float tyz, tzx, txy; /* Stress off-diagonal    => < p_i v_j f >, i!=j */
-  float pad0, pad1;    /* 16-byte align the structure */
+# ifdef USE_CELL_SPUS
+  float _pad[2];       /* 64-byte align (next power of two) */
+# else
+  float _pad[2];       /* 16-byte align */
+# endif
 } hydro_t;
 
 /* Interpolator arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation
@@ -174,7 +183,11 @@ typedef struct interpolator {
   float cbx, dcbxdx;
   float cby, dcbydy;
   float cbz, dcbzdz;
-  float pad0, pad1; /* 16-byte align the structure */
+# ifdef USE_CELL_SPUS
+  float _pad[14]; /* 128-byte align (next power of two) */
+# else
+  float _pad[2];  /* 16-byte align */
+# endif
 } interpolator_t;
 
 /* Accumulator arrays shall be a (nx+2)x(ny+2)x(nz+2)x(1+n_pipeline)
@@ -188,6 +201,11 @@ typedef struct accumulator {
   float jx[4]; /* jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1) */
   float jy[4]; /* jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1) */
   float jz[4]; /* jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0) */
+# ifdef USE_CELL_SPUS
+  float _pad[4]; /* 64-byte align (next power of two ) */
+# else
+  /**/           /* 16-byte align */
+# endif
 } accumulator_t;
 
 BEGIN_C_DECLS

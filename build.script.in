@@ -2,5 +2,5 @@
 
 INPUT_DECK_DIR=`pwd`
 
-cd @abs_builddir@
-@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@top_srcdir@/src/include @top_srcdir@/src/main.cxx @top_srcdir@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$1.@EXTENSION@ -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ libvpic.@EXTENSION@.a -lm
+cd @abs_top_builddir@
+@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@abs_top_srcdir@/src/include @abs_top_srcdir@/src/main.cxx @abs_top_srcdir@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$1.@EXTENSION@ -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ libvpic.@EXTENSION@.a -lm

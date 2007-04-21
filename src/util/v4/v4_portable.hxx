@@ -5,7 +5,8 @@
 #error "Do not include v4_portable.hxx directly; use v4.h"
 #endif
 
-#define V4_ACCELERATION PORTABLE
+#define V4_ACCELERATION
+#define V4_PORTABLE_ACCELERATION
 
 #ifndef ALIGNED
 #define ALIGNED

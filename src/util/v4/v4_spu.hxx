@@ -5,9 +5,11 @@
 #error "Do not include v4_spu.hxx directly; use v4.h"
 #endif
 
-#define V4_ACCELERATION SPU
+#define V4_ACCELERATION
+#define V4_SPU_ACCELERATION
 
-#include <spu_intrinsics.h>
+#include <spu_intrinsics.h> /* Requires -Wno-long-long to include */
+#include <stdint.h>
 #include <math.h>
 
 #ifndef ALIGNED
@@ -222,10 +224,10 @@ namespace v4 {
   inline void load_4x2_tr( const void * ALIGNED pa, const void * ALIGNED pb,
                            const void * ALIGNED pc, const void * ALIGNED pd,
                            v4 &a, v4 &b ) {
-    vec_llong2 a_v = { *(const long long * ALIGNED)pa,
-                       *(const long long * ALIGNED)pb }; // 0 4 1 5
-    vec_llong2 b_v = { *(const long long * ALIGNED)pc,
-                       *(const long long * ALIGNED)pd }; // 2 6 3 7
+    vec_llong2 a_v = { *(const int64_t * ALIGNED)pa,
+                       *(const int64_t * ALIGNED)pb }; // 0 4 1 5
+    vec_llong2 b_v = { *(const int64_t * ALIGNED)pc,
+                       *(const int64_t * ALIGNED)pd }; // 2 6 3 7
     a.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr4 ); // 0 1 2 3
     b.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr5 ); // 4 5 6 7
   }
@@ -300,10 +302,10 @@ namespace v4 {
 
     // Store the 2 columns of the matrix
 
-    ((long long * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
-    ((long long * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
-    ((long long * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
-    ((long long * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
+    ((int64_t * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
+    ((int64_t * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
+    ((int64_t * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
+    ((int64_t * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
@@ -330,10 +332,10 @@ namespace v4 {
 
     // Store the 3 columns of the matrix
 
-    ((long long * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
-    ((long long * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
-    ((long long * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
-    ((long long * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
+    ((int64_t * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
+    ((int64_t * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
+    ((int64_t * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
+    ((int64_t * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
 
     ((int * ALIGNED)pa)[2]       = spu_extract( a0, 2 );
     ((int * ALIGNED)pb)[2]       = spu_extract( b0, 2 );

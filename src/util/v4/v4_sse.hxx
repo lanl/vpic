@@ -5,7 +5,8 @@
 #error "Do not include v4_sse.hxx directly; use v4.h"
 #endif
 
-#define V4_ACCELERATION SSE
+#define V4_ACCELERATION
+#define V4_SSE_ACCELERATION
 
 #include <xmmintrin.h>
 #include <math.h>

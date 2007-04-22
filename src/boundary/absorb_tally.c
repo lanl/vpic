@@ -1,15 +1,10 @@
 #include <boundary.h>
-#include <stdio.h> /* for debugging output */ 
+#include <stdio.h> // for debugging output
 
-/*
-  -----------------------------------------------------------------------
-  VPIC-3
-
-  Special absorbing boundary condition that tallies the number of 
-  particles absorbed of each species.  
-  -----------------------------------------------------------------------
-  Written by:  Brian J. Albright, X-1, LANL   July, 2005
-*/ 
+// Special absorbing boundary condition that tallies the number of
+// particles absorbed of each species.
+//
+// Written by:  Brian J. Albright, X-1, LANL   July, 2005
 
 void absorb_tally( void * params, particle_t *r, 
                    particle_mover_t *pm, field_t *f, accumulator_t *a, 
@@ -18,7 +13,7 @@ void absorb_tally( void * params, particle_t *r,
   absorb_tally_t * absorb_tally_data = (absorb_tally_t *)params;
   int ispec; 
 
-  /* obtain reflux data for particle according to particle species */ 
+  // obtain reflux data for particle according to particle species
   for ( ispec=0; 
         ispec<absorb_tally_data->nspec && s->id!=absorb_tally_data->id[ispec]; 
 	++ispec )

@@ -13,18 +13,19 @@
 #define MARDER_CBZ() f0->cbz += pz*( f0->div_b_err - fz->div_b_err )
 
 typedef struct clean_div_b_pipeline_args {
-  field_t      * ALIGNED f;
-  const grid_t *         g;
+  field_t      * ALIGNED(16) f;
+  const grid_t *             g;
 } clean_div_b_pipeline_args_t;
 
 static void
 clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
   
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -41,7 +42,7 @@ clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
   py *= alphadt;
   pz *= alphadt;
 
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
                                pipeline_rank, n_pipeline,
@@ -81,10 +82,11 @@ static void
 clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
                          int pipeline_rank,
                          int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
   
   const int nx = g->nx;
@@ -111,10 +113,10 @@ clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
   v4float fy_div_b_err;           // Voxel quad -y neighbor div b err
   v4float fz_div_b_err;           // Voxel quad -z neighbor div b err
 
-  field_t * ALIGNED f00, * ALIGNED f01, * ALIGNED f02, * ALIGNED f03; // Voxel quad
-  field_t * ALIGNED fx0, * ALIGNED fx1, * ALIGNED fx2, * ALIGNED fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED fy0, * ALIGNED fy1, * ALIGNED fy2, * ALIGNED fy3; // Voxel quad +x neighbors
-  field_t * ALIGNED fz0, * ALIGNED fz1, * ALIGNED fz2, * ALIGNED fz3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +x neighbors
 
   // Process voxels assigned to this pipeline 
   
@@ -171,8 +173,8 @@ clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
 #endif
 
 void
-clean_div_b( field_t * ALIGNED f,
-             const grid_t * g ) {
+clean_div_b( field_t      * ALIGNED(16) f,
+             const grid_t *             g ) {
   clean_div_b_pipeline_args_t args[1];
   
   float alphadt, px, py, pz;
@@ -193,10 +195,10 @@ clean_div_b( field_t * ALIGNED f,
   py *= alphadt;
   pz *= alphadt;
 
-  /* Have pipelines do Marder pass in interior.  The host handles
-     stragglers. */
+  // Have pipelines do Marder pass in interior.  The host handles
+  // stragglers.
 
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(2,y,  z);
@@ -219,11 +221,11 @@ clean_div_b( field_t * ALIGNED f,
   PSTYLE.dispatch( CLEAN_DIV_B_PIPELINE, args, 0 );
   clean_div_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
-  /* Begin setting derr ghosts */
+  // Begin setting derr ghosts
   begin_remote_ghost_div_b( f, g );
   local_ghost_div_b( f, g);
 
-  /* Do left over bx */
+  // Do left over bx
   for( y=1; y<=ny; y++ ) {
     f0 = &f(2,y,1);
     fx = &f(1,y,1);
@@ -243,7 +245,7 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* Left over by */
+  // Left over by
   for( z=1; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(1,y,  z);
@@ -261,7 +263,7 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* Left over bz */
+  // Left over bz
   for( z=2; z<=nz; z++ ) {
     f0 = &f(1,1,z);
     fz = &f(1,1,z-1);
@@ -279,13 +281,13 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* Finish setting derr ghosts */
+  // Finish setting derr ghosts
   
   end_remote_ghost_div_b( f, g );
 
-  /* Do Marder pass in exterior */
+  // Do Marder pass in exterior
 
-  /* Exterior bx */
+  // Exterior bx
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(1,y,z);
@@ -301,7 +303,7 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* Exterior by */
+  // Exterior by
   for( z=1; z<=nz; z++ ) {
     f0 = &f(1,1,z);
     fy = &f(1,0,z);
@@ -321,7 +323,7 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* Exterior bz */
+  // Exterior bz
   for( y=1; y<=ny; y++ ) {
     f0 = &f(1,y,1);
     fz = &f(1,y,0);
@@ -341,7 +343,7 @@ clean_div_b( field_t * ALIGNED f,
     }
   }
 
-  /* For for pipelines to finish up cleaning div_b in interior */
+  // Wait for pipelines to finish up cleaning div_b in interior
   
   PSTYLE.wait();
   

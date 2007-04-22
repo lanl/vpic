@@ -8,23 +8,24 @@
  *
  */
 
-#include <species.h>    /* For species_t */ 
+#include <species.h> // For species_t 
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
 #define CUSTOM_PBC_MIN_INJECTORS 16 
 #define CUSTOM_PBC_RESIZE_FACTOR 1.1
 
-int boundary_p( particle_mover_t * ALIGNED pm,
-                int nm,
-		int max_nm,
-		particle_t * ALIGNED p,
-		int np,
-		int max_np,
-		field_t * ALIGNED f,
-		accumulator_t * ALIGNED a,
-		const grid_t * g,
-		species_t * sp,
-		mt_handle rng ) {
+int
+boundary_p( particle_mover_t * ALIGNED(16) pm,
+            int                            nm,
+            int                            max_nm,
+            particle_t       * ALIGNED(16) p,
+            int                            np,
+            int                            max_np,
+            field_t          * ALIGNED(16) f,
+            accumulator_t    * ALIGNED(16) a,
+            const grid_t     *             g,
+            species_t        *             sp,
+            mt_handle                      rng ) {
   const int sf2b[6] = { BOUNDARY(-1, 0, 0),
                         BOUNDARY( 0,-1, 0),
                         BOUNDARY( 0, 0,-1),
@@ -59,16 +60,16 @@ int boundary_p( particle_mover_t * ALIGNED pm,
 # define SHARED_REMOTELY(bound) \
   (g->bc[bound]>=0 && g->bc[bound]<nproc && g->bc[bound]!=rank)
 
-/* 3 passes may no longer suffice with custom pbcs like reflux or secondary 
-   emission in multi-dimensions. */ 
+  // 3 passes may no longer suffice with custom pbcs like reflux or
+  // secondary emission in multi-dimensions.
 
 # define MAX_PASSES 6   
 
   for( pass=0; pass<MAX_PASSES; pass++ ) {  
 
-    /* Create particle injectors ... the sizing is probably overkill ... it
-       ensures that any given send buffer is large enough to hold injectors
-       for the entire mover list */
+    // Create particle injectors ... the sizing is probably overkill
+    // ... it ensures that any given send buffer is large enough to
+    // hold injectors for the entire mover list
     for( face=0; face<6; face++ ) {
       ns[face] = 0;
       if( SHARED_REMOTELY(sf2b[face]) ) {
@@ -82,12 +83,12 @@ int boundary_p( particle_mover_t * ALIGNED pm,
       }
     }
 
-    /* Create space for particle injectors created from custom pbc */   
+    // Create space for particle injectors created from custom pbc
     if ( !cmlist ) {
       cpb_size=( nm<CUSTOM_PBC_MIN_INJECTORS ? CUSTOM_PBC_MIN_INJECTORS : nm ); 
       cmlist=(particle_injector_t *)malloc((size_t)cpb_size*sizeof(particle_injector_t)); 
       if ( !cmlist ) ERROR(("Could not alloate space for cpb injector array.")); 
-    } else if ( nm>cpb_size ) {  /* Need to resize injector array */ 
+    } else if ( nm>cpb_size ) { // Need to resize injector array 
       particle_injector_t *cmlist_tmp; 
       cpb_size=nm*CUSTOM_PBC_RESIZE_FACTOR;
       cmlist_tmp=realloc( cmlist, (size_t)cpb_size*sizeof(particle_injector_t) ); 
@@ -97,13 +98,14 @@ int boundary_p( particle_mover_t * ALIGNED pm,
 
     cm = cmlist;
 
-    /* Load the particle send buffers
-       Note: particle mover is processed in reverse order. This allows us to
-       backfill holes in the particle list created by absorption and/or 
-       communication. This assumes particles on the mover list are
-       monotonically increasing. That is: pm[n].i > pm[n-1].i for n=1...nm-1.
-       advance_p and inject_particle create movers with property if all aged
-       particle injection occurs after advance_p and before this */
+    // Load the particle send buffers.  Note: particle mover is
+    // processed in reverse order.  This allows us to backfill holes
+    // in the particle list created by absorption and/or
+    // communication.  This assumes particles on the mover list are
+    // monotonically increasing.  That is: pm[n].i > pm[n-1].i for
+    // n=1...nm-1.  advance_p and inject_particle create movers with
+    // property if all aged particle injection occurs after advance_p
+    // and before this
 
     for( ; nm; nm-- ) {
       particle_t *r = p + pm[nm-1].i;
@@ -154,7 +156,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
       np -= remove_p( r, p, np, f, g );
     }
 
-    /* Exchange particle counts */
+    // Exchange particle counts
 
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) {
@@ -175,7 +177,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(sf2b[face]) ) mp_end_send( sf2b[face], g->mp );
     
-    /* Exchange particles */
+    // Exchange particles
 
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) {
@@ -211,7 +213,7 @@ int boundary_p( particle_mover_t * ALIGNED pm,
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(sf2b[face]) ) mp_end_send( sf2b[face], g->mp );
 
-    /* Handle particle injectors from custom pbcs */ 
+    // Handle particle injectors from custom pbcs
     while ( cm!=cmlist ) {
       if ( np==max_np || nm==max_nm ) break;
       nm += inject_p( p, np, pm+nm, f, a, --cm, g );
@@ -223,5 +225,5 @@ int boundary_p( particle_mover_t * ALIGNED pm,
   }
 
   if( nm>0 ) WARNING(("Ignoring %i unprocessed movers on rank %i", nm, rank));
-  return np; /* New number of particles */
+  return np; // New number of particles
 }

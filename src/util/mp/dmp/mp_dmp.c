@@ -12,10 +12,12 @@
 #include <mp_t.h>
 #include <mpi.h>
 
-/* BJA:
-   We're getting crashbugs from excessive realloc on some problems, so 
-   this multiplier will help reduce the number of such send/receive 
-   buffer resizes, though at a modest cost of excess memory */ 
+// BJA: We're getting crashbugs from excessive realloc on some
+// problems, so this multiplier will help reduce the number of such
+// send/receive buffer resizes, though at a modest cost of excess
+// memory
+//
+// KJB: THE RESIZE_FACTOR 1.3125 IS THEORETICALLY BETTER.
 
 #define RESIZE_FACTOR 1.1
 
@@ -23,7 +25,7 @@ void mp_init_dmp(int argc, char ** argv) {
 	MPI_Init(&argc, &argv);
 }
 
-/* Adding for clean termination */ 
+// Adding for clean termination 
 void mp_finalize_dmp() {
   MPI_Finalize(); 
 }
@@ -45,7 +47,7 @@ mp_handle new_mp_dmp(void) {
     mp->sbuf[i] = NULL;
     mp->rbuf_size[i] = 0;
     mp->sbuf_size[i] = 0;
-    /* FIXME: Init rreq and sreq? */
+    // FIXME: Init rreq and sreq?
     mp->rreq_size[i] = 0;
     mp->sreq_size[i] = 0;
   }
@@ -72,7 +74,7 @@ void delete_mp_dmp( mp_handle *h ) {
     mp->sbuf[i] = NULL;
     mp->rbuf_size[i] = 0;
     mp->sbuf_size[i] = 0;
-    /* FIXME: Delete rreq and sreq? */
+    // FIXME: Delete rreq and sreq?
     mp->rreq_size[i] = 0;
     mp->sreq_size[i] = 0;
   }
@@ -90,13 +92,13 @@ int mp_nproc_dmp( mp_handle h ) {
   return mp==NULL ? 0 : mp->nproc;
 }
 
-void * ALIGNED mp_recv_buffer_dmp( int tag, mp_handle h ) {
+void * ALIGNED(16) mp_recv_buffer_dmp( int tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   if( mp==NULL || tag<0 || tag>=NUM_BUF ) return NULL;
   return mp->rbuf[tag];
 }
 
-void * ALIGNED mp_send_buffer_dmp( int tag, mp_handle h ) {
+void * ALIGNED(16) mp_send_buffer_dmp( int tag, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   if( mp==NULL || tag<0 || tag>=NUM_BUF ) return NULL;
   return mp->sbuf[tag];
@@ -112,8 +114,8 @@ void mp_barrier_dmp( mp_handle h ) {
   MPI_Barrier(MPI_COMM_WORLD);
 }
 
-/* Returns the time elapsed since the communicator was created.
-   Every rank gets the same value */
+// Returns the time elapsed since the communicator was created.  Every
+// rank gets the same value.
 double mp_elapsed_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   double local_t, global_t;
@@ -126,8 +128,8 @@ double mp_elapsed_dmp( mp_handle h ) {
   return global_t;
 }
 
-/* Stop watch. Different ranks may get different values.
-   First call to stop watch returns a measure of the overhead */
+// Stop watch. Different ranks may get different values.  First call
+// to stop watch returns a measure of the overhead.
 double mp_time00_dmp( mp_handle h ) {
   mp_t *mp = (mp_t *)h;
 
@@ -140,39 +142,39 @@ double mp_time00_dmp( mp_handle h ) {
 
 error_code mp_size_recv_buffer_dmp( int tag, int size, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
-  char * ALIGNED rbuf;
+  char * ALIGNED(16) rbuf;
 
-  /* Check input arguments */
+  // Check input arguments
   if( mp==NULL            ) return ERROR_CODE("Bad handle");
   if( tag<0 || tag>=NUM_BUF ) return ERROR_CODE("Bad tag");
   if( size<=0               ) return ERROR_CODE("Bad size");
 
-  /* If no buffer allocated for this tag */
+  // If no buffer allocated for this tag
   if( mp->rbuf[tag]==NULL ) {
-    mp->rbuf[tag] = (char * ALIGNED)
-      malloc_aligned( size, preferred_alignment );
+    mp->rbuf[tag] = (char * ALIGNED(16))
+      malloc_aligned( size, 16 );
     if( mp->rbuf[tag]==NULL ) return ERROR_CODE("malloc_aligned failed");
     mp->rbuf_size[tag] = size;
     return NO_ERROR;
   }
 
-  /* Is there already a large enough buffer */
+  // Is there already a large enough buffer
   if( mp->rbuf_size[tag]>=size ) return NO_ERROR;
 
-  /* Try to reduce the number of realloc calls */
+  // Try to reduce the number of realloc calls
 
   size*=RESIZE_FACTOR; 
 
-  /* Create the new recv buffer */
+  // Create the new recv buffer
 
-  rbuf = (char * ALIGNED)malloc_aligned( size, preferred_alignment );
+  rbuf = (char * ALIGNED(16))malloc_aligned( size, 16 );
   if( rbuf==NULL ) return ERROR_CODE("malloc_aligned failed");
 
-  /* Preserve the old recv buffer data */
+  // Preserve the old recv buffer data
 
   memcpy( rbuf, mp->rbuf[tag], mp->rbuf_size[tag] );
 
-  /* Free the old recv buffer */
+  // Free the old recv buffer
 
   free_aligned( mp->rbuf[tag] );
   mp->rbuf[tag]      = rbuf;
@@ -183,39 +185,39 @@ error_code mp_size_recv_buffer_dmp( int tag, int size, mp_handle h ) {
 
 error_code mp_size_send_buffer_dmp( int tag, int size, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
-  char * ALIGNED sbuf;
+  char * ALIGNED(16) sbuf;
 
-  /* Check input arguments */
+  // Check input arguments
   if( mp==NULL              ) return ERROR_CODE("Bad handle");
   if( tag<0 || tag>=NUM_BUF ) return ERROR_CODE("Bad tag");
   if( size<=0               ) return ERROR_CODE("Bad size");
 
-  /* If no buffer allocated for this tag */
+  // If no buffer allocated for this tag
   if( mp->sbuf[tag]==NULL ) {
-    mp->sbuf[tag] = (char * ALIGNED)
-      malloc_aligned( size, preferred_alignment );
+    mp->sbuf[tag] = (char * ALIGNED(16))
+      malloc_aligned( size, 16 );
     if( mp->sbuf[tag]==NULL ) return ERROR_CODE("malloc_aligned failed");
     mp->sbuf_size[tag] = size;
     return NO_ERROR;
   }
 
-  /* Is there already a large enough buffer */
+  // Is there already a large enough buffer
   if( mp->sbuf_size[tag]>=size ) return NO_ERROR;
 
-  /* Try to reduce the number of realloc calls */
+  // Try to reduce the number of realloc calls
 
   size *= RESIZE_FACTOR; 
 
-  /* Create the new send buffer */
+  // Create the new send buffer
 
-  sbuf = (char * ALIGNED)malloc_aligned( size, preferred_alignment );
+  sbuf = (char * ALIGNED(16))malloc_aligned( size, 16 );
   if( sbuf==NULL ) return ERROR_CODE("malloc_aligned failed");
 
-  /* Preserve the old send buffer data */
+  // Preserve the old send buffer data
 
   memcpy( sbuf, mp->sbuf[tag], mp->sbuf_size[tag] );
 
-  /* Free the old recv buffer */
+  // Free the old recv buffer
 
   free_aligned( mp->sbuf[tag] );
   mp->sbuf[tag]      = sbuf;
@@ -394,7 +396,7 @@ error_code mp_allgather_i64_dmp( int64_t *sbuf, int64_t *rbuf,
   if( rbuf==NULL ) return ERROR_CODE("Bad recv");
   if( n<1      ) return ERROR_CODE("Bad n");
 
-  /* FIXME: THIS IS BROKEN */
+  // FIXME: THIS IS BROKEN
   switch( MPI_Allgather( sbuf, n, MPI_LONG_LONG,
                          rbuf, n, MPI_LONG_LONG, MPI_COMM_WORLD ) ) {
   case MPI_SUCCESS:  return NO_ERROR;
@@ -408,7 +410,7 @@ error_code mp_allgather_i64_dmp( int64_t *sbuf, int64_t *rbuf,
   return ERROR_CODE("Unknown MPI error");
 }
 
-/* We need blocking send/receive to implement turnstiles. */
+// We need blocking send/receive to implement turnstiles.
 
 error_code mp_send_i_dmp( int *buf, int n, int dst, mp_handle h ) {
   mp_t *mp = (mp_t *)h;

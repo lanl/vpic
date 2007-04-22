@@ -10,11 +10,11 @@
 
 #include <species.h>
 
-/* Note: new_species added the created species to the head of the species
- * list. Further the species ids are simply incremented from the previous
- * head of the list. The first species is numbered 0. As a result, the total
- * number of species in the species list is the id of the species at the
- * head of the list plus one. */
+// Note: new_species added the created species to the head of the
+// species list. Further the species ids are simply incremented from
+// the previous head of the list. The first species is numbered 0. As
+// a result, the total number of species in the species list is the id
+// of the species at the head of the list plus one.
 
 int num_species( const species_t *sp_list ) {
   if( sp_list==NULL ) return 0;
@@ -32,7 +32,7 @@ new_species( const char *name,
   int len;
 
   if( sp_list==NULL ) ERROR(("Invalid species list."));
-  /* Note: strlen does not include terminating NULL */
+  // Note: strlen does not include terminating NULL
   len = (name==NULL) ? 0 : strlen(name);
   if( len<=0 ) ERROR(("Cannot create a nameless species."));
   if( find_species_name(name,*sp_list)!=NULL ) 
@@ -42,8 +42,8 @@ new_species( const char *name,
   if( max_local_nm<1 )
     ERROR(("Invalid max_local_nm requested for species \"%s\".",name));
   
-  /* Note: Since a sp->name is declared as a 1-element char array,
-     the terminating NULL is included in sizeof(species_t) */
+  // Note: Since a sp->name is declared as a 1-element char array, the
+  // terminating NULL is included in sizeof(species_t)
   sp = (species_t *)malloc(sizeof(species_t)+len);
   if( sp==NULL ) ERROR(("Unable to allocate species \"%s\".", name));
 

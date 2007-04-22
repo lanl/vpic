@@ -16,7 +16,7 @@ BEGIN_C_DECLS
 
 void mp_init_cxx(int argc, char ** argv);
 
-/* Adding for clean termination */ 
+// Adding for clean termination
 void mp_finalize_cxx();
 
 mp_handle new_mp_cxx(void);
@@ -27,20 +27,20 @@ int mp_rank_cxx( mp_handle h );
 
 int mp_nproc_cxx( mp_handle h );
 
-void * ALIGNED mp_recv_buffer_cxx( int tag, mp_handle h );
+void * ALIGNED(16) mp_recv_buffer_cxx( int tag, mp_handle h );
 
-void * ALIGNED mp_send_buffer_cxx( int tag, mp_handle h );
+void * ALIGNED(16) mp_send_buffer_cxx( int tag, mp_handle h );
 
 void mp_abort_cxx( int reason, mp_handle h );
 
 void mp_barrier_cxx( mp_handle h );
 
-/* Returns the time elapsed since the communicator was created.
-   Every rank gets the same value */
+// Returns the time elapsed since the communicator was created.  Every
+// rank gets the same value
 double mp_elapsed_cxx( mp_handle h );
 
-/* Stop watch. Different ranks may get different values.
-   First call to stop watch returns a measure of the overhead */
+// Stop watch. Different ranks may get different values.  First call
+// to stop watch returns a measure of the overhead
 double mp_time00_cxx( mp_handle h );
 
 error_code mp_size_recv_buffer_cxx( int tag, int size, mp_handle h );
@@ -69,7 +69,7 @@ error_code mp_allgather_i_cxx( int *sbuf, int *rbuf, int n,
 error_code mp_allgather_i64_cxx( int64_t *sbuf, int64_t *rbuf, int n,
 	mp_handle h );
 
-/* We need blocking send/receive to implement turnstiles. */
+// We need blocking send/receive to implement turnstiles.
 
 error_code mp_send_i_cxx( int *buf, int n, int dst, mp_handle h );
 

@@ -31,11 +31,11 @@
  *
  ***************************************************************************/
 
-/* Modified extensively for VPIC-3P by K. Bowers 4/10/2007 */
+// Modified extensively for VPIC-3P by K. Bowers 4/10/2007
 
-/* TO DO: 
-   (?) Signal blocking in pipelines
-   (?) Timeouts in thread_halt, thread_boot (spin wait) */
+// TO DO: 
+// (?) Signal blocking in pipelines
+// (?) Timeouts in thread_halt, thread_boot (spin wait)
 
 #include <pipelines.h>
 #include <pthread.h>
@@ -131,30 +131,30 @@ static void
 thread_boot( int num_pipe ) {
   int i;
 
-  /* Check if arguments are valid and Threader isn't already initialized */
+  // Check if arguments are valid and Threader isn't already initialized
 
   if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
   if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
 
-  /* Initialize some global variables. Note: thread.n_pipeline = 0 here */ 
+  // Initialize some global variables. Note: thread.n_pipeline = 0 here 
 
   Host = pthread_self();
   Id = 0;
 
-  /* Initialize all the pipelines */
+  // Initialize all the pipelines
 
   for( i=0; i<num_pipe; i++ ) {
 
-    /* Initialize the pipeline state. Note: PIPELINE_ACK will
-       be cleared once the thread control function pipeline_mgr starts
-       executing and the thread is ready to execute pipelines. */
+    // Initialize the pipeline state. Note: PIPELINE_ACK will be
+    // cleared once the thread control function pipeline_mgr starts
+    // executing and the thread is ready to execute pipelines.
 
     Pipeline[i].state = PIPELINE_ACK;
 
-    /* Initialize the pipeline mutex and signal condition variables
-       and spawn the pipeline.  Note: When mutexes are initialized,
-       they are initialized to the unlocked state */
+    // Initialize the pipeline mutex and signal condition variables
+    // and spawn the pipeline.  Note: When mutexes are initialized,
+    // they are initialized to the unlocked state
 
     if( pthread_cond_init( &Pipeline[i].wake, NULL ) )
       ERROR(( "pthread_cond_init failed" ));
@@ -168,14 +168,13 @@ thread_boot( int num_pipe ) {
                         &Pipeline[i] ) )
       ERROR(( "pthread_create failed" ));
 
-
-    /* The thread spawn was successful.  Wait for the thread to
-       acknowledge and go to sleep.  This insures all created threads
-       will be ready to execute pipelines upon return from this
-       function.  Note: If the thread never acknowledges this function
-       will spin forever (maybe should add a time out) - however, if
-       this happens, it is not the library's fault (O/S or pthreads
-       screwed up) */
+    // The thread spawn was successful.  Wait for the thread to
+    // acknowledge and go to sleep.  This insures all created threads
+    // will be ready to execute pipelines upon return from this
+    // function.  Note: If the thread never acknowledges this function
+    // will spin forever (maybe should add a time out) - however, if
+    // this happens, it is not the library's fault (O/S or pthreads
+    // screwed up)
 
     while( Pipeline[i].state != PIPELINE_SLEEP ) nanodelay(50);
 
@@ -219,50 +218,50 @@ static void
 thread_halt( void ) {
   int id;
 
-  /* Make sure the host is the caller and there are pipelines to
-     terminate */
+  // Make sure the host is the caller and there are pipelines to
+  // terminate
 
   if( !thread.n_pipeline ) ERROR(( "Boot the thread dispatcher first!" ));
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may halt the thread dispatcher!" ));
 
-  /* Terminate the threads */
+  // Terminate the threads
 
   for( id=0; id<thread.n_pipeline; id++ ) {
 
-    /* Signal the thread to terminate. Note: If the thread is
-       executing a pipeline which doesn't return, this function will
-       spin forever here (maybe should add a timeout, forced kill) */
+    // Signal the thread to terminate. Note: If the thread is
+    // executing a pipeline which doesn't return, this function will
+    // spin forever here (maybe should add a timeout, forced kill)
 
     pthread_mutex_lock( &Pipeline[id].mutex );
     Pipeline[id].state = PIPELINE_TERMINATE;
     pthread_cond_signal( &Pipeline[id].wake );
     pthread_mutex_unlock( &Pipeline[id].mutex );
 
-    /* Wait for the thread to terminate. Note: As Pipeline[id].state =
-       PIPELINE_TERMINATE now, non-terminated threads calling
-       parallel_execute will not be able to dispatch pipelines to
-       terminated pipelines (see the innermost switch in
-       parallel_execute) */
+    // Wait for the thread to terminate. Note: As Pipeline[id].state =
+    // PIPELINE_TERMINATE now, non-terminated threads calling
+    // parallel_execute will not be able to dispatch pipelines to
+    // terminated pipelines (see the innermost switch in
+    // parallel_execute).
 
     if( pthread_join( Pipeline[id].handle, NULL ) )
       ERROR(( "Unable to terminate pipeline!" ));
 
   }
 
-  /* Free resources associated with Threader as all pipelines are now
-     dead.  Note: This must be done in a separate loop because
-     non-terminated pipelines calling parallel_execute may try to
-     access mutexes for destroyed pipelines and Id and with unknown
-     results if the mutexes were destroyed before all the pipelines
-     were terminated */
+  // Free resources associated with Threader as all pipelines are now
+  // dead.  Note: This must be done in a separate loop because
+  // non-terminated pipelines calling parallel_execute may try to
+  // access mutexes for destroyed pipelines and Id and with unknown
+  // results if the mutexes were destroyed before all the pipelines
+  // were terminated.
 
   for( id=0; id<thread.n_pipeline; id++ )
     if( pthread_mutex_destroy( &Pipeline[id].mutex ) ||
         pthread_cond_destroy( &Pipeline[id].wake ) )
       ERROR(( "Unable to destroy pipeline resources!" ));
 
-  /* Finish up */
+  // Finish up
 
   thread.n_pipeline = Id = 0;
   Busy = 0;
@@ -317,8 +316,8 @@ parallel_execute( pipeline_func_t func,
                   volatile int *flag ) {
   int id;
 
-  /* Determine that the thread dispatcher is initialized and that
-     caller is the host thread. */
+  // Determine that the thread dispatcher is initialized and that
+  // caller is the host thread.
 
   if( thread.n_pipeline==0 )
     ERROR(( "Boot the thread dispatcher first!" ));
@@ -326,31 +325,31 @@ parallel_execute( pipeline_func_t func,
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call parallel_execute" ));
 
-  /* If pipelines are potentially available to execute tasks, loop
-     until we dispatch the task to a pipeline (or we detect
-     thread_halt is running) */
+  // If pipelines are potentially available to execute tasks, loop
+  // until we dispatch the task to a pipeline (or we detect
+  // thread_halt is running)
 
   for(;;) {
 
-    /* Get an id of a pipeline to query. */
+    // Get an id of a pipeline to query.
 
     id = Id; if( (++Id) >= thread.n_pipeline ) Id = 0;
 
     if( !pthread_mutex_trylock( &Pipeline[id].mutex ) ) {
       
-      /* If the thready isn't executing, see if the task can be
-         dispatched to this pipeline.  Note: host now has control over
-         the thread's state. */
+      // If the thready isn't executing, see if the task can be
+      // dispatched to this pipeline.  Note: host now has control over
+      // the thread's state.
       
       switch( Pipeline[id].state ) {
         
-        /* Note: all cases relinquish control over the pipeline's
-           state */
+        // Note: all cases relinquish control over the pipeline's
+        // state
         
       case PIPELINE_SLEEP:
         
-        /* The pipeline is available - assign the task, wake the
-           pipeline and return */
+        // The pipeline is available - assign the task, wake the
+        // pipeline and return
         
         Pipeline[id].state = PIPELINE_EXECUTE;
         Pipeline[id].func  = func;
@@ -364,7 +363,7 @@ parallel_execute( pipeline_func_t func,
         
       case PIPELINE_TERMINATE:
         
-        /* The query pipeline was terminated.  Something is amiss! */
+        // The query pipeline was terminated.  Something is amiss!
         
         pthread_mutex_unlock( &Pipeline[id].mutex );
         ERROR(( "parallel_execute called while thread_halt is running - "
@@ -372,15 +371,15 @@ parallel_execute( pipeline_func_t func,
         
       default:
         
-        /* Pipeline isn't ready to accept new tasks (pipeline is about
-           to wake-up to execute an already assigned task) */
+        // Pipeline isn't ready to accept new tasks (pipeline is about
+        // to wake-up to execute an already assigned task)
         
         pthread_mutex_unlock( &Pipeline[id].mutex );
         
-      } /* switch */
-    } /* if pipeline might be ready */
-  } /* for */  
-  /* Never get here */
+      } // switch
+    } // if pipeline might be ready
+  } // for
+  // Never get here
 }
 
 /****************************************************************************
@@ -408,14 +407,14 @@ void *
 pipeline_mgr( void *_pipeline ) {
   pipeline_state_t *pipeline = _pipeline;
 
-  /* Pipeline state is PIPELINE_ACK and the pipeline mutex is unlocked
-     when entering.  Since pthread_cond_wait unlockes the pipeline
-     mutex when the pipeline goes to sleep and the PIPELINE_ACK case
-     writes the pipeline state, the mutex needs to be locked first. */
+  // Pipeline state is PIPELINE_ACK and the pipeline mutex is unlocked
+  // when entering.  Since pthread_cond_wait unlockes the pipeline
+  // mutex when the pipeline goes to sleep and the PIPELINE_ACK case
+  // writes the pipeline state, the mutex needs to be locked first.
      
   pthread_mutex_lock( &pipeline->mutex );
 
-  /* Loop while the pipeline is still executing */
+  // Loop while the pipeline is still executing
 
   for(;;) {
 
@@ -423,42 +422,42 @@ pipeline_mgr( void *_pipeline ) {
 
     case PIPELINE_TERMINATE:
 
-      /* Terminate the pipeline. Unlock the mutex first (as
-         pthread_cond_wait locks it when the pipeline wakes up). */
+      // Terminate the pipeline. Unlock the mutex first (as
+      // pthread_cond_wait locks it when the pipeline wakes up).
 
       pthread_mutex_unlock( &pipeline->mutex );
       return NULL;
 
     case PIPELINE_EXECUTE:
 
-      /* Execute the given task and set the completion flag if
-         necessary.  Note: the pipeline mutex is locked while the
-         pipeline is executing a task. */
+      // Execute the given task and set the completion flag if
+      // necessary.  Note: the pipeline mutex is locked while the
+      // pipeline is executing a task.
 
       if( pipeline->func )
         pipeline->func( pipeline->args, pipeline->job, pipeline->n_job );
       if( pipeline->flag ) *pipeline->flag = 1;
 
-      /* Pass through into the next case */
+      // Pass through into the next case
 
     case PIPELINE_ACK:
     case PIPELINE_SLEEP:
     default:
 
-      /* Go to sleep. Note: pthread_cond_wait unlocks the pipeline
-         mutex while the pipeline is sleeping and locks it when the
-         pipeline wakes up */
+      // Go to sleep. Note: pthread_cond_wait unlocks the pipeline
+      // mutex while the pipeline is sleeping and locks it when the
+      // pipeline wakes up
 
       pipeline->state = PIPELINE_SLEEP;
       pthread_cond_wait( &pipeline->wake, &pipeline->mutex );
 
       break;
 
-    } /* switch */
+    } // switch
 
-  } /* for */
+  } // for
 
-  return NULL; /* Never get here - Avoid compiler warning */
+  return NULL; // Never get here - Avoid compiler warning
 }
 
 static void
@@ -507,10 +506,10 @@ thread_wait( void ) {
 }
 
 pipeline_dispatcher_t thread = {
-  0,               /* n_pipeline */
-  thread_boot,     /* boot */
-  thread_halt,     /* halt */
-  thread_dispatch, /* dispatch */
-  thread_wait      /* wait */
+  0,               // n_pipeline
+  thread_boot,     // boot
+  thread_halt,     // halt
+  thread_dispatch, // dispatch
+  thread_wait      // wait
 };
 

@@ -19,26 +19,82 @@
 #define END_C_DECLS
 #endif
 
-#include <stdlib.h> /* For malloc, realloc, free, size_t, NULL */
-#include <string.h> /* For string and memory manipulation */
-#include <math.h>   /* For math prototypes */
-#include <stdint.h> /* For fixed width integer types */
-#include <limits.h> /* For integer limits */
-#include <float.h>  /* For floating point limits */
+#include <stdlib.h> // For malloc, realloc, free, size_t, NULL
+#include <string.h> // For string and memory manipulation
+#include <math.h>   // For math prototypes
+#include <stdint.h> // For fixed width integer types
+#include <limits.h> // For integer limits
+#include <float.h>  // For floating point limits
 
-/* PREFERRED_ALIGNMENT is the default alignment */
+// Alignment macros
 
-#ifndef PREFERRED_ALIGNMENT
-#define PREFERRED_ALIGNMENT 16
-#endif
+// This pointer modifier indicates that a pointer can be assumed to
+// have at least the given power-of-two alignment.
 
-/* ALIGNED indicates a pointer can be assumed to aligned */
+// FIXME: May want to use compiler instrincs for to provide compiler
+// the aligment information as well.
 
 #ifndef ALIGNED
-#define ALIGNED
+#define ALIGNED(a)
 #endif
 
-/* These macros facilitate doing evil tricks */
+// Normal pointers (e.g. a *) are in whatever address space the given
+// compile unit uses.  However, sometimes it is necessary to declare
+// pointers that are understable in multiple address spaces.  The
+// MEM_PTR macro declares a pointer to external memory with the
+// specified alignment.  This allows declaractions to be compiled on
+// both the SPU and PPU with appropriate annotations to necessary
+// write the appropriate DMA transfers.
+
+#ifdef __SPU__
+# ifdef USE_32_BIT_POINTERS
+#   define MEM_PTR(type,align) uint32_t
+# else
+#   define MEM_PTR(type,align) uint64_t
+# endif
+#else
+# define MEM_PTR(type,align) type * ALIGNED(align)
+#endif
+
+// The SIZEOF_MEM_PTR macro gives the number of bytes taken by a MEM_PTR.
+
+#define SIZEOF_MEM_PTR sizeof(MEM_PTR(void,1))
+
+// DECLARE_ALIGNED_ARRAY declares an array containing count elements
+// with the given alignment in memory.  The scope of the array is the
+// scope of context in which it is declared.  Note: This macro is
+// really two statements (there is no way to bundle the macro into one
+// semantic statement linguistically without defeating the purpose of
+// the macro).  Thus, it is not as robust as it could be.  Thus, sure
+// any usage of this macro occurs in contexts where two back-to-back
+// statments in the same context would be in the same scope.  That is:
+//
+//   if(...) { DECLARE_ALIGNED_ARRAY(t,n,c,a); ... } // OKAY!
+//   else      DECLARE_ALIGNED_ARRAY(t,n,c,a);       // NOT OKAY!
+//
+// For 99.9% of the expected usage, this should not matter.
+//
+// align should be a power of two.
+
+#define DECLARE_ALIGNED_ARRAY(type,name,count,align)                        \
+  char _##type##_##name##_##count##_##align[(count)*sizeof(type)+(align)];  \
+  type * ALIGNED(align) const name = (type * ALIGNED(align))                \
+    ( ( (size_t)_##type##_##name##_##count##_##align + (align) - 1 ) &      \
+      (~((align)-1)) )
+
+// PAD(s,a) computes the amount of bytes necessary to add to "s" bytes
+// to make "s" evenly divisible by "a" (a power of two).  Note: PAD is
+// more wasteful than necessary if no padding needed.  Ideally PAD
+// should be:
+//   ( ( (a) - ( (s) & ( (a)-1 ) ) ) & ( (a)-1 ) )
+// Unfortunately, C++98 does not support zero sized structure members
+// and the preprocessor cannot evaluate the typical inputs to size to
+// allow correct autogeneration when no alignment necessary ... sigh
+// ...
+
+#define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) ) 
+
+// These macros facilitate doing evil tricks
 
 #define BEGIN_PRIMITIVE do
 #define END_PRIMITIVE   while(0)
@@ -46,10 +102,10 @@
 #define _UTIL_STRINGIFY(s)#s
 #define EXPAND_AND_STRINGIFY(s)_UTIL_STRINGIFY(s)
 
-/* INDEX_FORTRAN_x and INDEX_C_x give macros for accessing multi-dimensional
-   arrays with different conventions. To eliminate potential side effects and
-   maximize optimization possibilites, xl, xh, yl, yh, zl, zh should be
-   local constant ints */
+// INDEX_FORTRAN_x and INDEX_C_x give macros for accessing
+// multi-dimensional arrays with different conventions. To eliminate
+// potential side effects and maximize optimization possibilites, xl,
+// xh, yl, yh, zl, zh should be local constant ints
 
 #define INDEX_FORTRAN_1(x,xl,xh)                 \
  ((x)-(xl))
@@ -65,26 +121,26 @@
 #define INDEX_C_3(x,y,z,xl,xh,yl,yh,zl,zh) \
  ((z)-(zl) + ((zh)-(zl)+1)*((y)-(yl) + ((yh)-(yl)+1)*((x)-(xl))))
 
-/* The following macros deal with linked lists */
+// The following macros deal with linked lists
 
 #define LIST_FOR_EACH(node,list)        \
   for((node)=(list); (node)!=NULL; (node)=(node)->next)
 #define LIST_FIND_FIRST(node,list,cond) \
   for((node)=(list); (node)!=NULL; (node)=(node)->next) if(cond) break
 
-/* The following macros give a provide a simple logging capabilty. Due to the
-   way they work, usage needs double parenthesis. That is:
+// The following macros give a provide a simple logging capabilty. Due
+// to the way they work, usage needs double parenthesis. That is:
+//
+//   ERROR(("Could not allocate %i bytes", req));
+//
+// will print the following message to the log:
+//
+//   Error at src/module/file.c(34):
+//           Could not allocate 45 bytes
+//
+// Note: Error messages are abortive but MESSAGE and WARNING are not
 
-     ERROR(("Could not allocate %i bytes", req));
-
-   Will print the following message to the log:
-
-   Error at src/module/file.c(34):
-           Could not allocate 45 bytes
-
-   Note: Error messages are abortive but MESSAGE and WARNING are not
-
-   FIXME: SHOULD PRINT THE WORLD RANK! */
+// FIXME: SHOULD PRINT THE WORLD RANK!
 
 #define CHECKPOINT() BEGIN_PRIMITIVE {		           \
   print_log( "%s(%i): Checkpoint\n", __FILE__, __LINE__ ); \
@@ -110,37 +166,33 @@
   exit(1);                                                 \
 } END_PRIMITIVE
 
-/* FIXME: DEPRECATE THIS */
-enum {
-  preferred_alignment = PREFERRED_ALIGNMENT
-};
-
-/* FIXME: DEPRECATE THIS */
+// FIXME: DEPRECATE THIS
 typedef const char *error_code;
 #define ERROR_CODE(s) \
   ((error_code)(__FILE__"("EXPAND_AND_STRINGIFY(__LINE__)"): "s))
 #define NO_ERROR ((error_code)NULL)
 
-/* Opaque data type so users do not have to see message passing internals */
-/* moved from mp.h */
-typedef void * mp_handle;
+// Opaque data type so users do not have to see message passing
+// internals moved from mp.h.
+
+typedef void * mp_handle; // FIXME: This really doesn't belong here.
 
 BEGIN_C_DECLS
 
-/* In util.c */
+// In util.c
 
-void * ALIGNED
+void *
 malloc_aligned( size_t n, size_t a );
 
 void
-free_aligned( void * ALIGNED mem );
+free_aligned( void * mem );
 
 void
 print_log( const char *fmt, ... );
 
-/* This function returns a value to prevent the compiler from optimizing
-   it away the function body.  The caller should not use it though so the
-   declaration casts away the return. */
+// This function returns a value to prevent the compiler from
+// optimizing it away the function body.  The caller should not use it
+// though so the declaration casts away the return.
 
 #define nanodelay(i) ((void)_nanodelay(i))
 uint32_t
@@ -148,4 +200,4 @@ _nanodelay( uint32_t i );
 
 END_C_DECLS
 
-#endif /* _util_base_h_ */
+#endif // _util_base_h_

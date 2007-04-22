@@ -12,7 +12,7 @@
 #ifndef _species_h_
 #define _species_h_
 
-#include <particle.h> /* For particle_t, particle_mover_t */
+#include <particle.h> // For particle_t, particle_mover_t
 
 enum {
   invalid_species_id = -1
@@ -21,25 +21,27 @@ enum {
 typedef int species_id;
 
 typedef struct species {
-  species_id id;          /* Unique identifier for a species */
-  int np, max_np;         /* Current and maximum local number of particles */
-  particle_t * ALIGNED p; /* Array of particles for the species */
-  int nm, max_nm;         /* Number of movers in use */
-  particle_mover_t *pm;   /* Array of particles for the mover list */
-  float q_m;              /* Species charge to mass ratio */
-  int sort_interval;      /* How often to sort the species */
-  int * ALIGNED copy;     /* Static array of length (nx+2)*(ny+2)*(nz+2).  Each 
-                             value corresponds to the associated particle array 
-                             index of the first particle in the cell.  Array 
-                             is allocated and values computed in sort_p.  
-                             Purpose is for implementing collision models */ 
-  struct species *next;   /* Next species in the list */
-  char name[1];           /* Name is resized on allocation */
+  species_id id;                     // Unique identifier for a species
+  int np, max_np;                    // Number and max local particles
+  particle_t * ALIGNED(16) p;        // Array of particles for the species
+  int nm, max_nm;                    // Number and max local movers in use
+  particle_mover_t * ALIGNED(16) pm; // Particle movers
+  float q_m;                         // Species charge to mass ratio
+  int sort_interval;                 // How often to sort the species
+  int * ALIGNED(16) copy;            // Static array of length
+  /**/                               // (nx+2)*(ny+2)*(nz+2).  Each value
+  /**/                               // corresponds to the associated particle
+  /**/                               // array index of the first particle in
+  /**/                               // the cell.  Array is allocated and
+  /**/                               // values computed in sort_p.  Purpose is
+  /**/                               // for implementing collision models
+  struct species *next;              // Next species in the list
+  char name[1];                      // Name is resized on allocation
 } species_t;
 
 BEGIN_C_DECLS
 
-/* In species.c */
+// In species.c
 
 int
 num_species( const species_t *sp_list );
@@ -71,5 +73,5 @@ delete_species_lookup( species_t ***sp_array );
 
 END_C_DECLS
 
-#endif /* _species_h_ */
+#endif // _species_h_
 

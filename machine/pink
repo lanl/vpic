@@ -39,8 +39,8 @@ RANLIB = ranlib
 RM = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse
-CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -DUSE_V4_SSE -DOMPI_SKIP_MPICXX
-LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse
+CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS
+CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS -DUSE_V4_SSE -DOMPI_SKIP_MPICXX
+LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=pentium4 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS
 ARFLAGS  = 
 

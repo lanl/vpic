@@ -10,23 +10,24 @@
 #define f(x,y,z)  f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct load_interpolator_pipeline_args {
-  interpolator_t * ALIGNED fi;
-  const field_t  * ALIGNED f;
-  const grid_t   *         g;
+  interpolator_t * ALIGNED(16) fi;
+  const field_t  * ALIGNED(16) f;
+  const grid_t   *             g;
 } load_interpolator_pipeline_args_t;
 
 static void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 			    int pipeline_rank,
                             int n_pipeline ) {
-  interpolator_t * ALIGNED fi = args->fi;
-  const field_t  * ALIGNED f  = args->f;
-  const grid_t   *         g  = args->g;
+  interpolator_t * ALIGNED(16) fi = args->fi;
+  const field_t  * ALIGNED(16) f  = args->f;
+  const grid_t   *             g  = args->g;
   
-  interpolator_t * ALIGNED pi;
-  const field_t * ALIGNED pf0;
-  const field_t * ALIGNED pfx,  * ALIGNED pfy,  * ALIGNED pfz;
-  const field_t * ALIGNED pfyz, * ALIGNED pfzx, * ALIGNED pfxy;
+  interpolator_t * ALIGNED(16) pi;
+
+  const field_t * ALIGNED(16) pf0;
+  const field_t * ALIGNED(16) pfx,  * ALIGNED(16) pfy,  * ALIGNED(16) pfz;
+  const field_t * ALIGNED(16) pfyz, * ALIGNED(16) pfzx, * ALIGNED(16) pfxy;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -38,7 +39,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
   float w0, w1, w2, w3;
 
-  /* Process the voxels assigned to this pipeline */
+  // Process the voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -58,7 +59,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   
   for( ; n_voxel; n_voxel-- ) {
 
-    /* ex interpolation */
+    // ex interpolation
     w0 = pf0->ex;
     w1 = pfy->ex;
     w2 = pfz->ex;
@@ -68,7 +69,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->dexdz    = fourth*( (w3 - w0) - (w1 - w2) );
     pi->d2exdydz = fourth*( (w3 + w0) - (w1 + w2) );
 
-    /* ey interpolation coefficients */
+    // ey interpolation coefficients
     w0 = pf0->ey;
     w1 = pfz->ey;
     w2 = pfx->ey;
@@ -78,7 +79,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->deydx    = fourth*( (w3 - w0) - (w1 - w2) );
     pi->d2eydzdx = fourth*( (w3 + w0) - (w1 + w2) );
 
-    /* ez interpolation coefficients */
+    // ez interpolation coefficients
     w0 = pf0->ez;
     w1 = pfx->ez;
     w2 = pfy->ez;
@@ -88,19 +89,19 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->dezdy    = fourth*( (w3 - w0) - (w1 - w2) );
     pi->d2ezdxdy = fourth*( (w3 + w0) - (w1 + w2) );
 
-    /* bx interpolation coefficients */
+    // bx interpolation coefficients
     w0 = pf0->cbx;
     w1 = pfx->cbx;
     pi->cbx    = half*( w1 + w0 );
     pi->dcbxdx = half*( w1 - w0 );
 
-    /* by interpolation coefficients */
+    // by interpolation coefficients
     w0 = pf0->cby;
     w1 = pfy->cby;
     pi->cby    = half*( w1 + w0 );
     pi->dcbydy = half*( w1 - w0 );
 
-    /* bz interpolation coefficients */
+    // bz interpolation coefficients
     w0 = pf0->cbz;
     w1 = pfz->cbz;
     pi->cbz    = half*( w1 + w0 );
@@ -128,14 +129,15 @@ static void
 load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int pipeline_rank,
                                int n_pipeline ) {
-  interpolator_t * ALIGNED fi = args->fi;
-  const field_t  * ALIGNED f  = args->f;
-  const grid_t   *         g  = args->g;
+  interpolator_t * ALIGNED(16) fi = args->fi;
+  const field_t  * ALIGNED(16) f  = args->f;
+  const grid_t   *             g  = args->g;
 
-  interpolator_t * ALIGNED pi;
-  const field_t * ALIGNED pf0;
-  const field_t * ALIGNED pfx,  * ALIGNED pfy,  * ALIGNED pfz;
-  const field_t * ALIGNED pfyz, * ALIGNED pfzx, * ALIGNED pfxy;
+  interpolator_t * ALIGNED(16) pi;
+
+  const field_t * ALIGNED(16) pf0;
+  const field_t * ALIGNED(16) pfx,  * ALIGNED(16) pfy,  * ALIGNED(16) pfz;
+  const field_t * ALIGNED(16) pfyz, * ALIGNED(16) pfzx, * ALIGNED(16) pfxy;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -220,16 +222,16 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 #endif
 
 void
-load_interpolator( interpolator_t * ALIGNED fi,
-                   const field_t * ALIGNED f,
-                   const grid_t * g ) {
+load_interpolator( interpolator_t * ALIGNED(16) fi,
+                   const field_t  * ALIGNED(16) f,
+                   const grid_t   *             g ) {
   load_interpolator_pipeline_args_t args[1];
 
   if( fi==NULL ) ERROR(("Bad interpolator"));
   if( f==NULL )  ERROR(("Bad field"));
   if( g==NULL )  ERROR(("Bad grid"));
 
-# if 0 /* Original non-pipelined version */  
+# if 0 // Original non-pipelined version
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
 
@@ -244,7 +246,7 @@ load_interpolator( interpolator_t * ALIGNED fi,
 
       for( x=1; x<=nx; x++ ) {
 
-        /* ex interpolation coefficients */
+        // ex interpolation coefficients
         w0 = pf0->ex;
         w1 = pfy->ex;
         w2 = pfz->ex;
@@ -254,7 +256,7 @@ load_interpolator( interpolator_t * ALIGNED fi,
         pi->dexdz    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2exdydz = 0.25*(  w0 - w1 - w2 + w3 );
         
-        /* ey interpolation coefficients */
+        // ey interpolation coefficients
         w0 = pf0->ey;
         w1 = pfz->ey;
         w2 = pfx->ey;
@@ -264,7 +266,7 @@ load_interpolator( interpolator_t * ALIGNED fi,
         pi->deydx    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2eydzdx = 0.25*(  w0 - w1 - w2 + w3 );
         
-        /* ez interpolation coefficients */
+        // ez interpolation coefficients
         w0 = pf0->ez;
         w1 = pfx->ez;
         w2 = pfy->ez;
@@ -274,19 +276,19 @@ load_interpolator( interpolator_t * ALIGNED fi,
         pi->dezdy    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2ezdxdy = 0.25*(  w0 - w1 - w2 + w3 );
         
-        /* bx interpolation coefficients */
+        // bx interpolation coefficients
         w0 = pf0->cbx;
         w1 = pfx->cbx;
         pi->cbx    = 0.5*(  w0 + w1 );
         pi->dcbxdx = 0.5*( -w0 + w1 );
         
-        /* by interpolation coefficients */
+        // by interpolation coefficients
         w0 = pf0->cby;
         w1 = pfy->cby;
         pi->cby    = 0.5*(  w0 + w1 );
         pi->dcbydy = 0.5*( -w0 + w1 );
         
-        /* bz interpolation coefficients */
+        // bz interpolation coefficients
         w0 = pf0->cbz;
         w1 = pfz->cbz;
         pi->cbz    = 0.5*(  w0 + w1 );

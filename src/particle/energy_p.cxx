@@ -7,48 +7,48 @@
 #endif
 
 typedef struct energy_p_pipeline_args {
-  const particle_t     * ALIGNED p;   /* Particle array */
-  int                            n;   /* Number of particles */
-  float                          q_m; /* Charge to mass ratio */
-  const interpolator_t * ALIGNED f;   /* Interpolator array */
-  const grid_t         *         g;   /* Local domain grid parameters */
-  double en[MAX_PIPELINE+1];          /* Return values
-                                         en[n_pipeline] used by host */
+  const particle_t     * ALIGNED(16) p;   // Particle array
+  int                                n;   // Number of particles
+  float                              q_m; // Charge to mass ratio
+  const interpolator_t * ALIGNED(16) f;   // Interpolator array
+  const grid_t         *             g;   // Local domain grid parameters
+  double en[MAX_PIPELINE+1];              // Return values
+  /**/                                    // en[n_pipeline] used by host
 } energy_p_pipeline_args_t;
 
 static void
 energy_p_pipeline( energy_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
-  const particle_t     * ALIGNED p   = args->p;
-  int                            n   = args->n;
-  const float                    q_m = args->q_m;
-  const interpolator_t * ALIGNED f0  = args->f;
-  const grid_t *                 g   = args->g;
+  const particle_t     * ALIGNED(16) p   = args->p;
+  int                                n   = args->n;
+  const float                        q_m = args->q_m;
+  const interpolator_t * ALIGNED(16) f0  = args->f;
+  const grid_t         *             g   = args->g;
 
   const float qdt_2mc = 0.5*q_m*g->dt/g->cvac;
   const float one     = 1.;
 
-  const interpolator_t * ALIGNED f;
+  const interpolator_t * ALIGNED(16) f;
 
   double en = 0;
 
   float dx, dy, dz;
   float v0, v1, v2;
 
-  if( pipeline_rank==n_pipeline ) { /* Host does left over cleanup */
+  if( pipeline_rank==n_pipeline ) { // Host does left over cleanup
 
-    /* Determine which particles the host processes, which movers are
-       reserved for the host.  Note the host uses the first
-       accumulator array. */
+    // Determine which particles the host processes, which movers are
+    // reserved for the host.  Note the host uses the first
+    // accumulator array.
 
     p += n;
     n &= 3;
     p -= n;
 
-  } else { /* Pipelines do any rough equal number of particle quads */
+  } else { // Pipelines do any rough equal number of particle quads
 
-    /* Determine which particles to process in this pipeline */
+    // Determine which particles to process in this pipeline
 
     double n_target = (double)(n>>2)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -58,7 +58,7 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
 
   }
 
-  /* Process particles quads for this pipeline */
+  // Process particles quads for this pipeline
 
   for(;n;n--,p++) {
     dx  = p->dx;
@@ -87,11 +87,11 @@ static void
 energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  const particle_t     * ALIGNED p   = args->p;
-  int                            nq  = args->n >> 2;
-  const float                    q_m = args->q_m;
-  const interpolator_t * ALIGNED f0  = args->f;
-  const grid_t *                 g   = args->g;
+  const particle_t     * ALIGNED(16) p   = args->p;
+  int                                nq  = args->n >> 2;
+  const float                        q_m = args->q_m;
+  const interpolator_t * ALIGNED(16) f0  = args->f;
+  const grid_t         *             g   = args->g;
   double n_target;
 
   v4float dx, dy, dz; v4int ii;
@@ -145,11 +145,11 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
 #endif
 
 double
-energy_p( const particle_t     * ALIGNED p,
-          const int                      n,
-          const float                    q_m,
-          const interpolator_t * ALIGNED f,
-          const grid_t         *         g ) {
+energy_p( const particle_t     * ALIGNED(16) p,
+          const int                          n,
+          const float                        q_m,
+          const interpolator_t * ALIGNED(16) f,
+          const grid_t         *             g ) {
   energy_p_pipeline_args_t args[1];
   double local, global;
   int rank;
@@ -158,8 +158,8 @@ energy_p( const particle_t     * ALIGNED p,
   if( f==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-  /* Have the pipelines do the bulk of particles in quads and
-     have the host do the final incomplete quad. */
+  // Have the pipelines do the bulk of particles in quads and have the
+  // host do the final incomplete quad.
 
   args->p   = p;
   args->n   = n;

@@ -40,7 +40,7 @@ vpic_simulation::vpic_simulation() {
   f_time = 0;
   u_time = 0;
 
-  /* Allow run-time modification of variables */ 
+  // Allow run-time modification of variables
   quota=11;
 
   memset( user_global, 0, USER_GLOBAL_SIZE );

@@ -1,5 +1,5 @@
-/* FIXME: PARTICLE MOVERS NEED TO BE OVERALLOCATED IN STRUCTORS TO
-   ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES */
+// FIXME: PARTICLE MOVERS NEED TO BE OVERALLOCATED IN STRUCTORS TO
+// ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES
 
 #include <particle.h>
 
@@ -10,29 +10,29 @@
 #endif
 
 typedef struct advance_p_pipeline_args {
-  particle_t           * ALIGNED p;   /* Particle array */
-  int                            n;   /* Number of particles */
-  float                          q_m; /* Charge to mass ratio */
-  particle_mover_t     * ALIGNED pm;  /* Particle mover array */
-  int                            nm;  /* Number of movers */
-  accumulator_t        * ALIGNED a;   /* Accumuator arrays */
-  const interpolator_t * ALIGNED f;   /* Interpolator array */
+  particle_t           * ALIGNED(16) p;   // Particle array
+  int                                n;   // Number of particles
+  float                              q_m; // Charge to mass ratio
+  particle_mover_t     * ALIGNED(16) pm;  // Particle mover array
+  int                                nm;  // Number of movers
+  accumulator_t        * ALIGNED(16) a;   // Accumuator arrays
+  const interpolator_t * ALIGNED(16) f;   // Interpolator array
 
 # ifdef USE_CELL_SPUS
-  /* The copy of the grid_t struct is passed to eliminate the need for
-     pointer chasing through PPU memory in the SPUS. */
-  grid_t                         g;   /* Local domain grid parameters */
+  // The copy of the grid_t struct is passed to eliminate the need for
+  // pointer chasing through PPU memory in the SPUS.
+  grid_t                         g;   // Local domain grid parameters
 # else
-  const grid_t         *         g;   /* Local domain grid parameters */
+  const grid_t         *         g;   // Local domain grid parameters
 # endif
 
-  /* Pipeline return values */
+  // Pipeline return values
 
 # ifdef USE_CELL_SPUS
-  /* 16-byte align the first pipeline return value.  Note: This is
-     more wasteful than necessary if no padding needed.
-     Unfortunately, C++98 does not support zero sized structure
-     members ... sigh ... */
+  // 16-byte align the first pipeline return value.  Note: This is
+  // more wasteful than necessary if no padding needed.
+  // Unfortunately, C++98 does not support zero sized structure
+  // members ... sigh ...
   char _pad[ 16-( ( 4*sizeof(void *)  +
                     2*sizeof(int) +
                     1*sizeof(float) + 
@@ -40,19 +40,19 @@ typedef struct advance_p_pipeline_args {
 # endif
 
   struct {
-    particle_mover_t * ALIGNED pm; /* First mover in segment */
-    int nm;                        /* Number of used movers in segment */
+    particle_mover_t * ALIGNED(16) pm; // First mover in segment
+    int nm;                            // Number of used movers in segment
 
 #   ifdef USE_CELL_SPUS
-    /* 16-byte align the next pipeline return value (and thus the
-       entire structure).  Note: This is more wasteful than necessary
-       if no padding needed.  Unfortunately, ISO C++98 does not
-       support zero sized structure members ... sigh ... */
+    // 16-byte align the next pipeline return value (and thus the
+    // entire structure).  Note: This is more wasteful than necessary
+    // if no padding needed.  Unfortunately, ISO C++98 does not
+    // support zero sized structure members ... sigh ...
     const char _pad[ 16-( ( 1*sizeof(void *) +
                             1*sizeof(int) ) & 15 ) ];
 #   endif
 
-  } seg[MAX_PIPELINE+1];           /* seg[n_pipeline] used by host */
+  } seg[MAX_PIPELINE+1]; // seg[n_pipeline] used by host
 
 } advance_p_pipeline_args_t;
 
@@ -60,14 +60,14 @@ static void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
                     int n_pipeline ) {
-  particle_t           * ALIGNED p0  = args->p;
-  int                            n   = args->n;
-  const float                    q_m = args->q_m;
-  particle_mover_t     * ALIGNED pm  = args->pm;
-  int                            nm  = args->nm;
-  accumulator_t        * ALIGNED a0  = args->a;
-  const interpolator_t * ALIGNED f0  = args->f;
-  const grid_t *                 g   = args->g;
+  particle_t           * ALIGNED(16) p0  = args->p;
+  int                                n   = args->n;
+  const float                        q_m = args->q_m;
+  particle_mover_t     * ALIGNED(16) pm  = args->pm;
+  int                                nm  = args->nm;
+  accumulator_t        * ALIGNED(16) a0  = args->a;
+  const interpolator_t * ALIGNED(16) f0  = args->f;
+  const grid_t *                     g   = args->g;
 
   const float qdt_2mc        = 0.5*q_m*g->dt/g->cvac;
   const float cdt_dx         = g->cvac*g->dt/g->dx;
@@ -77,30 +77,30 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
 
-  particle_t           * ALIGNED p;
-  const interpolator_t * ALIGNED f;
-  float                * ALIGNED a;
+  particle_t           * ALIGNED(16) p;
+  const interpolator_t * ALIGNED(16) f;
+  float                * ALIGNED(16) a;
 
   int ii;
   float dx, dy, dz, ux, uy, uz, q;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4, v5;
 
-  if( pipeline_rank==n_pipeline ) { /* Host does left over cleanup */
+  if( pipeline_rank==n_pipeline ) { // Host does left over cleanup
 
-    /* Determine which particles the host processes, which movers are
-       reserved for the host.  Note the host uses the first
-       accumulator array. */
+    // Determine which particles the host processes, which movers are
+    // reserved for the host.  Note the host uses the first
+    // accumulator array.
 
     p  = p0 + n; pm += nm;
     n &= 3;      nm  = n>nm ? nm : n;
     p -= n;      pm -= nm;
 
-  } else { /* Pipelines do any rough equal number of particle quads */
+  } else { // Pipelines do any rough equal number of particle quads
 
     double n_target;
 
-    /* Determine which particles to process in this pipeline */
+    // Determine which particles to process in this pipeline
 
     n_target = (double)(n>>2)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -108,16 +108,16 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
     n *= 4;
 
-    /* Determine which movers are reserved for this pipeline */
+    // Determine which movers are reserved for this pipeline
 
-    nm -= (args->n&3)>nm ? nm : (args->n&3); /* Reserve last movers for host */
+    nm -= (args->n&3)>nm ? nm : (args->n&3); // Reserve last movers for host
 
     n_target = (double)nm / (double)n_pipeline; 
     nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
     pm += nm;
     nm  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nm;
 
-    /* Determine which accumulator array to use */
+    // Determine which accumulator array to use
 
     a0 += (1+pipeline_rank)*(g->nx+2)*(g->ny+2)*(g->nz+2);
 
@@ -126,76 +126,76 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].pm = pm;
   args->seg[pipeline_rank].nm = nm;
 
-  /* Process particles quads for this pipeline */
+  // Process particles quads for this pipeline
 
   for(;n;n--,p++) {
-    dx = p->dx;                              /* Load position */
+    dx = p->dx;                              // Load position
     dy = p->dy;
     dz = p->dz;
     ii = p->i;
-    f = f0 + ii;                             /* Interpolate E */
+    f = f0 + ii;                             // Interpolate E
     hax = qdt_2mc*(    ( f->ex    + dy*f->dexdy    ) +
                     dz*( f->dexdz + dy*f->d2exdydz ) );
     hay = qdt_2mc*(    ( f->ey    + dz*f->deydz    ) +
                     dx*( f->deydx + dz*f->d2eydzdx ) );
     haz = qdt_2mc*(    ( f->ez    + dx*f->dezdx    ) +
                     dy*( f->dezdy + dx*f->d2ezdxdy ) );
-    cbx = f->cbx + dx*f->dcbxdx;             /* Interpolate B */
+    cbx = f->cbx + dx*f->dcbxdx;             // Interpolate B
     cby = f->cby + dy*f->dcbydy;
     cbz = f->cbz + dz*f->dcbzdz;
-    ux = p->ux;                              /* Load momentum */
+    ux = p->ux;                              // Load momentum
     uy = p->uy;
     uz = p->uz;
     q  = p->q;
-    ux += hax;                               /* Half advance E */
+    ux += hax;                               // Half advance E
     uy += hay;
     uz += haz;
-    v0 = qdt_2mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz))); /* Boris - scalars */
+    v0 = qdt_2mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz))); // Boris - scalars
     v1 = cbx*cbx + (cby*cby + cbz*cbz);
     v2 = (v0*v0)*v1;
     v3 = v0*(one+v2*(one_third+v2*two_fifteenths));
     v4 = v3/(one+v1*(v3*v3));
     v4 += v4;
-    v0 = ux + v3*( uy*cbz - uz*cby );        /* Boris - uprime */
+    v0 = ux + v3*( uy*cbz - uz*cby );        // Boris - uprime
     v1 = uy + v3*( uz*cbx - ux*cbz );
     v2 = uz + v3*( ux*cby - uy*cbx );
-    ux += v4*( v1*cbz - v2*cby );            /* Boris - rotation */
+    ux += v4*( v1*cbz - v2*cby );            // Boris - rotation
     uy += v4*( v2*cbx - v0*cbz );
     uz += v4*( v0*cby - v1*cbx );
-    ux += hax;                               /* Half advance E */
+    ux += hax;                               // Half advance E
     uy += hay;
     uz += haz;
-    p->ux = ux;                              /* Store momentum */
+    p->ux = ux;                              // Store momentum
     p->uy = uy;
     p->uz = uz;
-    v0 = one/(float)sqrt(one + (ux*ux+ (uy*uy + uz*uz))); /* Get norm displacement */
+    v0 = one/(float)sqrt(one + (ux*ux+ (uy*uy + uz*uz))); // Get norm displacement
     ux *= cdt_dx;
     uy *= cdt_dy;
     uz *= cdt_dz;
     ux *= v0;
     uy *= v0;
     uz *= v0;
-    v0 = dx + ux;                            /* Streak midpoint (inbnds) */
+    v0 = dx + ux;                            // Streak midpoint (inbnds)
     v1 = dy + uy;
     v2 = dz + uz;
-    v3 = v0 + ux;                            /* New position */
+    v3 = v0 + ux;                            // New position
     v4 = v1 + uy;
     v5 = v2 + uz;
-    if(  v3<=one && v4<=one && v5<=one &&          /* Check if inbnds */
+    if(  v3<=one && v4<=one && v5<=one &&    // Check if inbnds
         -v3<=one && -v4<=one && -v5<=one ) {
 
-      /* Common case (inbnds)
-         Note: accumulator values are 4 times the total physical charge that
-         passed through the appropriate current quadrant in a time-step */
+      // Common case (inbnds).  Note: accumulator values are 4 times
+      // the total physical charge that passed through the appropriate
+      // current quadrant in a time-step
 
-      p->dx = v3;                            /* Store new position */
+      p->dx = v3;                            // Store new position
       p->dy = v4;
       p->dz = v5;
-      dx = v0;                               /* Streak mid */
+      dx = v0;                               // Streak midpoint
       dy = v1;
       dz = v2;
-      v5 = q*ux*uy*uz*one_third;             /* Compute correction */
-      a = (float *)( a0 + ii );              /* Get accumulator */
+      v5 = q*ux*uy*uz*one_third;             // Compute correction
+      a = (float *)( a0 + ii );              // Get accumulator
 #     define accumulate_j(X,Y,Z)                                  \
       v4  = q*u##X;   /* v2 = q ux                            */  \
       v1  = v4*d##Y;  /* v1 = q ux dy                         */  \
@@ -248,15 +248,15 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
                        int n_pipeline ) {
   double n_target;
 
-  particle_t           * ALIGNED p   = args->p;
-  particle_t           * ALIGNED p0  = p;
-  int                            nq  = args->n >> 2;
-  const float                    q_m = args->q_m;
-  particle_mover_t     * ALIGNED pm  = args->pm;
-  int                            nm  = args->nm;
-  accumulator_t        * ALIGNED a0  = args->a;
-  const interpolator_t * ALIGNED f0  = args->f;
-  const grid_t *                 g   = args->g;
+  particle_t           * ALIGNED(16) p   = args->p;
+  particle_t           * ALIGNED(16) p0  = p;
+  int                                nq  = args->n >> 2;
+  const float                        q_m = args->q_m;
+  particle_mover_t     * ALIGNED(16) pm  = args->pm;
+  int                                nm  = args->nm;
+  accumulator_t        * ALIGNED(16) a0  = args->a;
+  const interpolator_t * ALIGNED(16) f0  = args->f;
+  const grid_t         *             g   = args->g;
 
   v4float dx, dy, dz; v4int ii;
   v4float ux, uy, uz, q;
@@ -422,14 +422,14 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 #endif
 
 int
-advance_p( particle_t           * ALIGNED p,
-           const int                      n,
-           const float                    q_m,
-           particle_mover_t     * ALIGNED pm,
-           int                            nm,       
-           accumulator_t        * ALIGNED a,
-           const interpolator_t * ALIGNED f,
-           const grid_t         *         g ) {
+advance_p( particle_t           * ALIGNED(16) p,
+           const int                          n,
+           const float                        q_m,
+           particle_mover_t     * ALIGNED(16) pm,
+           int                                nm,       
+           accumulator_t        * ALIGNED(16) a,
+           const interpolator_t * ALIGNED(16) f,
+           const grid_t         *             g ) {
 # ifdef USE_CELL_SPUS
   char * _stack[ 16 + sizeof(advance_p_pipeline_args_t) ];
   advance_p_pipeline_args_t * args =
@@ -468,24 +468,24 @@ advance_p( particle_t           * ALIGNED p,
   PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
 # endif
 
-  /* Have the host processor do the incomplete quad if necessary.
-     Note: This is overlapped with the pipelined processing.  As such,
-     it uses an entire accumulator.  Reserving an entirely accumulator
-     for the host processor to handle at most 3 particles is wasteful
-     of memory.  It is anticipated that it may be useful at some point
-     in the future have pipelines accumulating currents while the host
-     processor is doing other more substantive work (e.g. accumulating
-     currents from particles received from neighboring nodes).
-     However, it is worth reconsidering this at some point in the
-     future. */
+  // Have the host processor do the incomplete quad if necessary.
+  // Note: This is overlapped with the pipelined processing.  As such,
+  // it uses an entire accumulator.  Reserving an entirely accumulator
+  // for the host processor to handle at most 3 particles is wasteful
+  // of memory.  It is anticipated that it may be useful at some point
+  // in the future have pipelines accumulating currents while the host
+  // processor is doing other more substantive work (e.g. accumulating
+  // currents from particles received from neighboring nodes).
+  // However, it is worth reconsidering this at some point in the
+  // future.
 
   advance_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
   PSTYLE.wait();
 
-  /* FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
-     INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
-     MOVERS TO ELIMINATE HOLES IN THE ALLOCATION. */
+  // FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
+  // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
+  // MOVERS TO ELIMINATE HOLES IN THE ALLOCATION.
 
   nm = 0;
   for( rank=0; rank<=PSTYLE.n_pipeline; rank++ ) {

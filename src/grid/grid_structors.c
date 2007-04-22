@@ -10,7 +10,8 @@
 
 #include <grid.h>
 
-grid_t *new_grid(void) {
+grid_t *
+new_grid( void ) {
   grid_t *g;
   int i;
 

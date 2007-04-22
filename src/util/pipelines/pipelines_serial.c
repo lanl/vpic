@@ -1,4 +1,4 @@
-#include <pipelines.h> /* For common.h, datatypes and prototypes */
+#include <pipelines.h> // For util_base.h, datatypes and prototypes
 
 static int busy = 0;
 static int in_pipeline = 0;
@@ -51,10 +51,10 @@ serial_halt( void ) {
 }
 
 pipeline_dispatcher_t serial = {
-  0,               /* n_pipeline */
-  serial_boot,     /* boot */
-  serial_halt,     /* halt */
-  serial_dispatch, /* dispatch */
-  serial_wait      /* wait */
+  0,               // n_pipeline
+  serial_boot,     // boot
+  serial_halt,     // halt
+  serial_dispatch, // dispatch
+  serial_wait      // wait
 };
 

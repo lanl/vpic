@@ -47,8 +47,9 @@
  * Local ghosts
  *****************************************************************************/
 
-void local_ghost_tang_b( field_t * ALIGNED f,
-			 const grid_t * g ) {
+void
+local_ghost_tang_b( field_t      * ALIGNED(16) f,
+                    const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   const float cdt_dx = g->cvac*g->dt/g->dx;
   const float cdt_dy = g->cvac*g->dt/g->dy;
@@ -57,10 +58,10 @@ void local_ghost_tang_b( field_t * ALIGNED f,
   float decay, drive, higend, t1, t2;
   field_t *fg, *fh;
 
-  /* Absorbing boundary condition is 2nd order accurate implementation of a
-     1st order Higend ABC with 15 degree annihilation cone except for 1d
-     simulations where the 2nd order accurate implementation of a 1st order
-     Mur boundary condition is used. */
+  // Absorbing boundary condition is 2nd order accurate implementation
+  // of a 1st order Higend ABC with 15 degree annihilation cone except
+  // for 1d simulations where the 2nd order accurate implementation of
+  // a 1st order Mur boundary condition is used.
   higend = ( nx>1 || ny>1 || nz>1 ) ? 1.03527618 : 1.;
 
 # define APPLY_LOCAL_TANG_B(i,j,k,X,Y,Z)                                 \
@@ -120,14 +121,16 @@ void local_ghost_tang_b( field_t * ALIGNED f,
   APPLY_LOCAL_TANG_B( 0, 0, 1,z,x,y);
 }
 
-/* Note: local_adjust_div_e zeros the error on the boundaries for absorbing
-   boundary conditions. Thus, ghost norm e value is irrevelant */
+// Note: local_adjust_div_e zeros the error on the boundaries for
+// absorbing boundary conditions.  Thus, ghost norm e value is
+// irrevelant.
 
-void local_ghost_norm_e( field_t * ALIGNED f,
-                         const grid_t * g ) {
+void
+local_ghost_norm_e( field_t      * ALIGNED(16) f,
+                    const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
-  field_t * ALIGNED f0, * ALIGNED f1, * ALIGNED f2;
+  field_t * ALIGNED(16) f0, * ALIGNED(16) f1, * ALIGNED(16) f2;
 
 # define APPLY_LOCAL_NORM_E(i,j,k,X,Y,Z)                        \
   do {                                                          \
@@ -175,8 +178,9 @@ void local_ghost_norm_e( field_t * ALIGNED f,
   APPLY_LOCAL_NORM_E( 0, 0, 1,z,x,y);
 }
 
-void local_ghost_div_b( field_t * ALIGNED f,
-                        const grid_t * g ) {
+void
+local_ghost_div_b( field_t      * ALIGNED(16) f,
+                   const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -214,11 +218,12 @@ void local_ghost_div_b( field_t * ALIGNED f,
  * Local adjusts
  *****************************************************************************/
 
-/* FIXME: Specialty edge loops should be added to zero e_tang on local edges
-   exclusively to handle concave domain geometries */
+// FIXME: Specialty edge loops should be added to zero e_tang on local
+// edges exclusively to handle concave domain geometries
 
-void local_adjust_tang_e( field_t * ALIGNED f,
-                          const grid_t * g ) {
+void
+local_adjust_tang_e( field_t      * ALIGNED(16) f,
+                     const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
   field_t *fs;
@@ -258,8 +263,9 @@ void local_adjust_tang_e( field_t * ALIGNED f,
   ADJUST_TANG_E( 0, 0, 1,z,x,y);
 }
 
-void local_adjust_norm_b( field_t * ALIGNED f,
-                          const grid_t * g ) {
+void
+local_adjust_norm_b( field_t      * ALIGNED(16) f,
+                     const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -289,8 +295,9 @@ void local_adjust_norm_b( field_t * ALIGNED f,
   ADJUST_NORM_B( 0, 0, 1,z,x,y);
 }
 
-void local_adjust_div_e( field_t * ALIGNED f,
-                         const grid_t * g ) {
+void
+local_adjust_div_e( field_t      * ALIGNED(16) f,
+                    const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -320,13 +327,14 @@ void local_adjust_div_e( field_t * ALIGNED f,
   ADJUST_DIV_E_ERR( 0, 0, 1,z,x,y);
 }
 
-/* anti_symmetric => Opposite sign image charges (zero jf_tang)
-   symmetric      => Same sign image charges (double jf_tang) 
-   absorbing      => No image charges, half cell accumulation (double jf_tang)
-   (rhob/jf_norm account for particles that hit boundary and reflect/stick) */
+// anti_symmetric => Opposite sign image charges (zero jf_tang)
+// symmetric      => Same sign image charges (double jf_tang) 
+// absorbing      => No image charges, half cell accumulation (double jf_tang)
+// (rhob/jf_norm account for particles that hit boundary and reflect/stick)
 
-void local_adjust_jf( field_t * ALIGNED f,
-			const grid_t * g ) {
+void
+local_adjust_jf( field_t      * ALIGNED(16) f,
+                 const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -359,14 +367,15 @@ void local_adjust_jf( field_t * ALIGNED f,
   ADJUST_JF( 0, 0, 1,z,x,y);
 }
 
-/* anti_symmetric => Opposite sign image charges (zero rhof/rhob)
-   symmetric      => Same sign image charges (double rhof)
-                  => (double rhof, rhob is already correct)
-   absorbing      => No image charges, half cell accumulation (double rhof)
-   (rhob/jf_norm account for particles that hit the boundary) */
+// anti_symmetric => Opposite sign image charges (zero rhof/rhob)
+// symmetric      => Same sign image charges (double rhof)
+//                => (double rhof, rhob is already correct)
+// absorbing      => No image charges, half cell accumulation (double rhof)
+// (rhob/jf_norm account for particles that hit the boundary)
 
-void local_adjust_rhof( field_t * ALIGNED f,
-                        const grid_t * g ) {
+void
+local_adjust_rhof( field_t      * ALIGNED(16) f,
+                   const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -397,13 +406,14 @@ void local_adjust_rhof( field_t * ALIGNED f,
   ADJUST_RHOF( 0, 0, 1,z,x,y);
 }
 
-/* anti_symmetric => Opposite sign image charges (zero rhob)
-   symmetric      => Same sign image charges (rhob already correct)
-   absorbing      => No image charges, half cell accumulation (rhob already
-                     correct) */
+// anti_symmetric => Opposite sign image charges (zero rhob)
+// symmetric      => Same sign image charges (rhob already correct)
+// absorbing      => No image charges, half cell accumulation (rhob already
+//                   correct)
 
-void local_adjust_rhob( field_t * ALIGNED f,
-                        const grid_t * g ) {
+void
+local_adjust_rhob( field_t      * ALIGNED(16) f,
+                   const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
 
@@ -433,11 +443,12 @@ void local_adjust_rhob( field_t * ALIGNED f,
   ADJUST_RHOB( 0, 0, 1,z,x,y);
 }
 
-/* Because hydro fields are purely diagnostic, correct the hydro along local
-   boundaries for particle cell accumulations */
+// Because hydro fields are purely diagnostic, correct the hydro along
+// local boundaries for particle cell accumulations
 
-void local_adjust_hydro( hydro_t * ALIGNED hydro,
-                         const grid_t * g ) {
+void
+local_adjust_hydro( hydro_t      * ALIGNED(16) hydro,
+                    const grid_t *             g ) {
   const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
   int bc, face, x, y, z;
   hydro_t *h;

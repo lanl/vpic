@@ -24,20 +24,21 @@
     cj*( f0->rhof + f0->rhob ) )
 
 typedef struct compute_div_e_err_pipeline_args {
-  field_t                      * ALIGNED f;
-  const material_coefficient_t * ALIGNED m;
-  const grid_t                 *         g;
+  field_t                      * ALIGNED(16) f;
+  const material_coefficient_t * ALIGNED(16) m;
+  const grid_t                 *             g;
 } compute_div_e_err_pipeline_args_t;
 
 static void
 compute_div_e_err_pipeline( compute_div_e_err_pipeline_args_t * args,
                             int pipeline_rank,
                             int n_pipeline ) {
-  field_t                      * ALIGNED f = args->f;
-  const material_coefficient_t * ALIGNED m = args->m;
-  const grid_t                 *         g = args->g;
+  field_t                      * ALIGNED(16) f = args->f;
+  const material_coefficient_t * ALIGNED(16) m = args->m;
+  const grid_t                 *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -49,7 +50,7 @@ compute_div_e_err_pipeline( compute_div_e_err_pipeline_args_t * args,
   const float pz = (nz>1) ? 1./g->dz : 0;
   const float cj = 1./g->eps0;
 
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
 
   n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
                                pipeline_rank, n_pipeline,
@@ -84,9 +85,9 @@ compute_div_e_err_pipeline( compute_div_e_err_pipeline_args_t * args,
 #endif
 
 void
-compute_div_e_err( field_t * ALIGNED f,
-                   const material_coefficient_t * ALIGNED m,
-                   const grid_t * g ) {
+compute_div_e_err( field_t                      * ALIGNED(16) f,
+                   const material_coefficient_t * ALIGNED(16) m,
+                   const grid_t                 *             g ) {
   compute_div_e_err_pipeline_args_t args[1];  
 
   float px, py, pz, cj;
@@ -97,11 +98,12 @@ compute_div_e_err( field_t * ALIGNED f,
   if( m==NULL ) ERROR(("Bad material coefficients"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-  /* Have pipelines compute the interior of local domain (the host
-     handles stragglers in the interior) */
-  /* FIXME: CHECK IF THIS CAN BE STARTED THIS EARLY */
+  // Have pipelines compute the interior of local domain (the host
+  // handles stragglers in the interior)
 
-# if 0 /* Original non-pipelined version */
+  // FIXME: CHECK IF THIS CAN BE STARTED THIS EARLY
+
+# if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(2,y,  z);
@@ -123,7 +125,7 @@ compute_div_e_err( field_t * ALIGNED f,
   PSTYLE.dispatch( COMPUTE_DIV_E_ERR_PIPELINE, args, 0 );
   compute_div_e_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
-  /* Have host compute the exterior of the local domain */
+  // Have host compute the exterior of the local domain
 
   nx = g->nx;
   ny = g->ny;
@@ -133,19 +135,19 @@ compute_div_e_err( field_t * ALIGNED f,
   pz = (nz>1) ? 1./g->dz : 0;
   cj = 1./g->eps0;
 
-  /* Begin setting normal e ghosts */
+  // Begin setting normal e ghosts
 
   begin_remote_ghost_norm_e( f, g );
 
   local_ghost_norm_e( f, g );
 
-  /* Finish setting normal e ghosts */
+  // Finish setting normal e ghosts
 
   end_remote_ghost_norm_e( f, g );
 
-  /* Compute divergence error in exterior */
+  // Compute divergence error in exterior
 
-  /* z faces, x edges, y edges and all corners */
+  // z faces, x edges, y edges and all corners
   for( y=1; y<=ny+1; y++ ) {
     f0 = &f(1,y,  1);
     fx = &f(0,y,  1);
@@ -173,7 +175,7 @@ compute_div_e_err( field_t * ALIGNED f,
     }
   }
 
-  /* y faces, z edges */
+  // y faces, z edges
   for( z=2; z<=nz; z++ ) {
     f0 = &f(1,1,z);
     fx = &f(0,1,z);
@@ -201,7 +203,7 @@ compute_div_e_err( field_t * ALIGNED f,
     }
   }
 
-  /* x faces */
+  // x faces
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(1,y,  z);
@@ -217,8 +219,9 @@ compute_div_e_err( field_t * ALIGNED f,
     }
   }
 
-  /* Finish up setting interior */
-  /* FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE */
+  // Finish up setting interior
+
+  // FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE
 
   PSTYLE.wait();
 

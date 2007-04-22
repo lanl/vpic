@@ -32,13 +32,14 @@
   (rank) = _ix + gpx*( _iy + gpy*_iz );                 \
 } END_PRIMITIVE
 
-void partition_periodic_box( grid_t * g,
-                             double glx, double gly, double glz,
-                             int gnx, int gny, int gnz,
-                             int gpx, int gpy, int gpz ) {
+void
+partition_periodic_box( grid_t * g,
+                        double glx, double gly, double glz,
+                        int gnx, int gny, int gnz,
+                        int gpx, int gpy, int gpz ) {
   int rank, nproc, px, py, pz; 
 
-  /* Make sure the grid can be setup */
+  // Make sure the grid can be setup
   if( g==NULL                      ) ERROR(("Bad grid"));
   if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
@@ -50,15 +51,15 @@ void partition_periodic_box( grid_t * g,
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 
-  /* Setup basic variables */
+  // Setup basic variables
   RANK_TO_INDEX(rank,px,py,pz);
   g->x0 = px*(glx/gpx); g->y0 = py*(gly/gpy); g->z0 = pz*(glz/gpz);
   g->dx = glx/gnx;      g->dy = gly/gny;      g->dz = glz/gnz;
 
-  /* Size the local grid */
+  // Size the local grid
   size_grid(g,gnx/gpx,gny/gpy,gnz/gpz);
 
-  /* Join the grid to neighbors */
+  // Join the grid to neighbors
   INDEX_TO_RANK(px-1,py,  pz,  rank); join_grid(g,BOUNDARY(-1, 0, 0),rank);
   INDEX_TO_RANK(px,  py-1,pz,  rank); join_grid(g,BOUNDARY( 0,-1, 0),rank);
   INDEX_TO_RANK(px,  py,  pz-1,rank); join_grid(g,BOUNDARY( 0, 0,-1),rank);
@@ -67,14 +68,15 @@ void partition_periodic_box( grid_t * g,
   INDEX_TO_RANK(px,  py,  pz+1,rank); join_grid(g,BOUNDARY( 0, 0, 1),rank);
 }
 
-void partition_absorbing_box( grid_t * g,
-                              double glx, double gly, double glz,
-                              int gnx, int gny, int gnz,
-                              int gpx, int gpy, int gpz,
-                              int pbc ) {
+void
+partition_absorbing_box( grid_t * g,
+                         double glx, double gly, double glz,
+                         int gnx, int gny, int gnz,
+                         int gpx, int gpy, int gpz,
+                         int pbc ) {
   int rank, nproc, px, py, pz; 
 
-  /* Make sure the grid can be setup */
+  // Make sure the grid can be setup
   if( g==NULL                      ) ERROR(("Bad grid"));
   if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
@@ -88,7 +90,7 @@ void partition_absorbing_box( grid_t * g,
 
   partition_periodic_box( g, glx, gly, glz, gnx, gny, gnz, gpx, gpy, gpz );
 
-  /* Override periodic boundary conditions */
+  // Override periodic boundary conditions
 
   RANK_TO_INDEX(rank,px,py,pz);
 
@@ -122,16 +124,17 @@ void partition_absorbing_box( grid_t * g,
   }
 }
 
-/* FIXME: HANDLE 1D and 2D SIMULATIONS IN PARTITION_METAL_BOX
-   FIXME: ALLOW USER TO SPECIFIC PBC TO USE ON BOX */ 
+// FIXME: HANDLE 1D and 2D SIMULATIONS IN PARTITION_METAL_BOX
+// FIXME: ALLOW USER TO SPECIFIC PBC TO USE ON BOX
 
-void partition_metal_box( grid_t * g,
-                          double glx, double gly, double glz,
-                          int gnx, int gny, int gnz,
-                          int gpx, int gpy, int gpz ) {
+void
+partition_metal_box( grid_t * g,
+                     double glx, double gly, double glz,
+                     int gnx, int gny, int gnz,
+                     int gpx, int gpy, int gpz ) {
   int rank, nproc, px, py, pz; 
 
-  /* Make sure the grid can be setup */
+  // Make sure the grid can be setup
   if( g==NULL                      ) ERROR(("Bad grid"));
   if( g->mp==NULL                  ) ERROR(("Bad mp"));
   if( gpx<1 || gpy<1 || gpz<1 ||
@@ -143,15 +146,15 @@ void partition_metal_box( grid_t * g,
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 
-  /* Setup basic variables */
+  // Setup basic variables
   RANK_TO_INDEX(rank,px,py,pz);
   g->x0 = px*(glx/gpx); g->y0 = py*(gly/gpy); g->z0 = pz*(glz/gpz);
   g->dx = glx/gnx;      g->dy = gly/gny;      g->dz = glz/gnz;
   
-  /* Size the local grid */
+  // Size the local grid
   size_grid(g,gnx/gpx,gny/gpy,gnz/gpz);
 
-  /* Join the grid to neighbors */
+  // Join the grid to neighbors
   if( px==0 ) {
     set_fbc(g,BOUNDARY(-1,0,0),anti_symmetric_fields);
     set_pbc(g,BOUNDARY(-1,0,0),reflect_particles);

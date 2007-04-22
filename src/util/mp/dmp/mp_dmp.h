@@ -4,8 +4,8 @@
 #include <util_base.h>
 #include <mp_t.h>
 
-/* Note: mp module assumes homogeneous cluster (in particular,
-   bit-for-bit compatible data layouts between nodes */
+// Note: mp module assumes homogeneous cluster (in particular,
+// bit-for-bit compatible data layouts between nodes
 
 BEGIN_C_DECLS
 
@@ -18,8 +18,8 @@ void delete_mp_dmp( mp_handle *h );
 int mp_rank_dmp( mp_handle h );
 int mp_nproc_dmp( mp_handle h );
 
-void * ALIGNED mp_recv_buffer_dmp( int rbuf, mp_handle h );
-void * ALIGNED mp_send_buffer_dmp( int sbuf, mp_handle h );
+void * ALIGNED(16) mp_recv_buffer_dmp( int rbuf, mp_handle h );
+void * ALIGNED(16) mp_send_buffer_dmp( int sbuf, mp_handle h );
 
 double mp_elapsed_dmp( mp_handle h );
 double mp_time00_dmp( mp_handle h );

@@ -9,18 +9,18 @@
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct reduce_accumulators_pipeline_args {
-  accumulator_t * ALIGNED a;
-  const grid_t  *         g;
+  accumulator_t * ALIGNED(16) a;
+  const grid_t  *             g;
 } reduce_accumulators_pipeline_args_t;
 
 static void
 reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
                               int pipeline_rank,
                               int n_pipeline ) {
-  accumulator_t * ALIGNED a = args->a;
-  const grid_t  *         g = args->g;
+  accumulator_t * ALIGNED(16) a = args->a;
+  const grid_t  *             g = args->g;
 
-  float * ALIGNED pa, * ALIGNED paa;
+  float * ALIGNED(16) pa, * ALIGNED(16) paa;
   int p, x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -28,7 +28,7 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
   const int nz = g->nz;
   const int stride = 12*(nx+2)*(ny+2)*(nz+2);
 
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
 
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -73,10 +73,10 @@ static void
 reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
                                  int pipeline_rank,
                                  int n_pipeline ) {
-  accumulator_t * ALIGNED a = args->a;
-  const grid_t  *         g = args->g;
+  accumulator_t * ALIGNED(16) a = args->a;
+  const grid_t  *             g = args->g;
 
-  float * ALIGNED pa, * ALIGNED paa;
+  float * ALIGNED(16) pa, * ALIGNED(16) paa;
   int p, x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -147,8 +147,8 @@ reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
 #endif
 
 void
-reduce_accumulators( accumulator_t * ALIGNED a,
-                     const grid_t  *         g ) {
+reduce_accumulators( accumulator_t * ALIGNED(16) a,
+                     const grid_t  *             g ) {
   reduce_accumulators_pipeline_args_t args[1];
   
   if( a==NULL ) ERROR(("Bad accumulator"));

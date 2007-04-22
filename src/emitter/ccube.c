@@ -1,47 +1,49 @@
 #include <emitter.h>
 
-/* FIXME: ERROR TRAPPING AND ERROR RETURNS */
+// FIXME: ERROR TRAPPING AND ERROR RETURNS
 
-/* FIXME: This is just the Ivory model without the sqrt(1/6) factor */
-/*        True ccube model treats magnetic insulation. */ 
+// FIXME: This is just the Ivory model without the sqrt(1/6) factor
+// True ccube model treats magnetic insulation.
 
 void
-ccube( emitter_t * e,                     /* Actual emitter */
-       const interpolator_t * ALIGNED fi, /* field interp */
-       field_t * ALIGNED f,               /* rhob accum */
-       accumulator_t * ALIGNED a,         /* injected current accum*/
-       grid_t * g,                        /* matching grid */
-       mt_handle rng ) {                  /* Random number generator */
+ccube( emitter_t            *             e,      // Actual emitter
+       const interpolator_t * ALIGNED(16) fi,     // field interp
+       field_t              * ALIGNED(16) f,      // rhob accum
+       accumulator_t        * ALIGNED(16) a,      // injected current accum
+       grid_t               *             g,      // matching grid
+       mt_handle                          rng ) { // Random number generator
   ccube_t * args = (ccube_t *)e->model_parameters;
   particle_injector_t pi;
   int i, n;
 
-  /* Loop over all components of the region */
+  // Loop over all components of the region
 
   for( n=0; n<e->n_component; n++ ) {
 
      i = EXTRACT_LOCAL_CELL( e->component[n] );
 
-     /*  Notes:
-        - ex, ey and ez in the interpolator for a cell are the average values of the
-          fields in that cell
-        - based on ccube law (proportional to a child langmuir law with a threshold)
-            J = 4 eps0 (2q/m)^(1/2) V^(3/2) / ( 9 L^2 )
-          Total charge inject uses L as the width of a cell in the direction of emission
-          normal. V is the avergae voltage drop across the cell (neglecting gauge
-          issues).
-        - Particles are emitted with a bi-Maxwellian distribution.
-        - Particles are randomly distributed across the inject surface and have random
-          ages. 
-        - Particles are only emitted if transverse field is greater in magnitude than 
-          user-defined threshold: thresh_e_norm */
+     // Notes:
+     // - ex, ey and ez in the interpolator for a cell are the average
+     //   values of the fields in that cell
+     // - based on ccube law (proportional to a child langmuir law
+     //   with a threshold)
+     //     J = 4 eps0 (2q/m)^(1/2) V^(3/2) / ( 9 L^2 )
+     //   Total charge inject uses L as the width of a cell in the
+     //   direction of emission normal. V is the avergae voltage drop
+     //   across the cell (neglecting gauge issues).
+     // - Particles are emitted with a bi-Maxwellian distribution.
+     // - Particles are randomly distributed across the inject surface
+     //   and have random ages.
+     // - Particles are only emitted if transverse field is greater in
+     //   magnitude than user-defined threshold: thresh_e_norm
 
-        /* For use in debugging: MESSAGE(("\n(x,y,z,i)=%f %f %f %i" \
-                    "\n(ux,uy,uz,q)=%f %f %f %f"\
-                    "\n(dx,dy,dz)= %f %f %f",\
-                    pi.dx, pi.dy, pi.dz, pi.i,\
-                    pi.ux, pi.uy, pi.uz, pi.q,\
-                    pi.dispx, pi.dispy, pi.dispz));\*/
+     /* For use in debugging:
+        MESSAGE(("\n(x,y,z,i)=%f %f %f %i"
+                 "\n(ux,uy,uz,q)=%f %f %f %f"
+                 "\n(dx,dy,dz)= %f %f %f",
+                 pi.dx, pi.dy, pi.dz, pi.i,
+                 pi.ux, pi.uy, pi.uz, pi.q,
+                 pi.dispx, pi.dispy, pi.dispz)); */
 
 #    define EMIT_PARTICLES(X,Y,Z,dir) BEGIN_PRIMITIVE {                                \
        if( e->sp->q_m * (dir fi[i].e##X) > 0 ) {                                       \

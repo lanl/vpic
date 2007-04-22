@@ -18,8 +18,8 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct compute_rms_div_e_err_pipeline_args {
-  field_t      * ALIGNED f;
-  const grid_t *         g;
+  field_t      * ALIGNED(16) f;
+  const grid_t *             g;
   double err[MAX_PIPELINE+1];
 } compute_rms_div_e_err_pipeline_args_t;
 
@@ -27,10 +27,10 @@ static void
 compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
   
-  field_t * ALIGNED f0;
+  field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -39,7 +39,7 @@ compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
 
   double err;
 
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
 
   n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
                                pipeline_rank, n_pipeline,
@@ -68,8 +68,8 @@ compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
 #endif
 
 double
-compute_rms_div_e_err( field_t * ALIGNED f,
-                       const grid_t * g ) {
+compute_rms_div_e_err( field_t      * ALIGNED(16) f,
+                       const grid_t *             g ) {
   compute_rms_div_e_err_pipeline_args_t args[1];
   int p;
 
@@ -80,7 +80,7 @@ compute_rms_div_e_err( field_t * ALIGNED f,
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   err = 0;
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
@@ -92,15 +92,15 @@ compute_rms_div_e_err( field_t * ALIGNED f,
   }
 # endif
   
-  /* Have the pipelines accumulate the interior of the local domain
-     (the host handled stragglers in the interior). */
+  // Have the pipelines accumulate the interior of the local domain
+  // (the host handled stragglers in the interior).
 
   args->f = f;
   args->g = g;
   PSTYLE.dispatch( COMPUTE_RMS_DIV_E_ERR_PIPELINE, args, 0 );
   compute_rms_div_e_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
 
-  /* Have the host accumulator the exterior of the local domain */
+  // Have the host accumulator the exterior of the local domain
 
   nx = g->nx;
   ny = g->ny;
@@ -108,7 +108,7 @@ compute_rms_div_e_err( field_t * ALIGNED f,
 
   err = 0;
 
-  /* Do exterior faces */
+  // Do exterior faces
 
   for( y=2; y<=ny; y++ ) {
     for( z=2; z<=nz; z++ ) {
@@ -131,7 +131,7 @@ compute_rms_div_e_err( field_t * ALIGNED f,
     }
   }
 
-  /* Do exterior edges */
+  // Do exterior edges
 
   for( x=2; x<=nx; x++ ) {
     f0 = &f(   x,   1,   1); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
@@ -154,7 +154,7 @@ compute_rms_div_e_err( field_t * ALIGNED f,
     f0 = &f(nx+1,nz+1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
   }
 
-  /* Do exterior corners */
+  // Do exterior corners
 
   f0 = &f(   1,   1,   1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   f0 = &f(nx+1,   1,   1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
@@ -165,13 +165,13 @@ compute_rms_div_e_err( field_t * ALIGNED f,
   f0 = &f(   1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   f0 = &f(nx+1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   
-  /* Reduce the results from the host and pipelines */
+  // Reduce the results from the host and pipelines
 
   PSTYLE.wait();
 
   for( p=0; p<=PSTYLE.n_pipeline; p++ ) err += args->err[p];
 
-  /* Reduce the results from all nodes */
+  // Reduce the results from all nodes
 
   local[0] = err*g->dx*g->dy*g->dz;
   local[1] = g->nx*g->ny*g->nz*g->dx*g->dy*g->dz;

@@ -9,7 +9,7 @@
  */
 
 #include <vpic.hxx>
-#include <stdio.h>  /* For fopen, fclose, fwrite, fprintf */
+#include <stdio.h>  // For fopen, fclose, fwrite, fprintf
 
 /*****************************************************************************
  * ASCII dump IO
@@ -54,7 +54,7 @@ void vpic_simulation::dump_energies( const char *fname, int append ) {
   }
 }
 
-/* Note: dump_species/materials assume that names do not contain any \n! */
+// Note: dump_species/materials assume that names do not contain any \n!
 
 void vpic_simulation::dump_species( const char *fname ) {
   FILE *handle;
@@ -142,14 +142,14 @@ enum dump_types {
   WRITE( float,     grid->cvac,             file );                      \
   WRITE( float,     grid->eps0,             file );                      \
   WRITE( float,     grid->damp,             file );                      \
-  WRITE( int,       mp_rank(grid->mp),  file );                      \
-  WRITE( int,       mp_nproc(grid->mp), file );                      \
+  WRITE( int,       mp_rank(grid->mp),      file );                      \
+  WRITE( int,       mp_nproc(grid->mp),     file );                      \
   /* Species parameters */                                               \
   WRITE( int,       sp_id,                  file );                      \
   WRITE( float,     q_m,                    file );                      \
 } END_PRIMITIVE
 
-/* Note dim _MUST_ be a pointer to an int */
+// Note dim _MUST_ be a pointer to an int
 
 #define WRITE_ARRAY_HEADER(p,ndim,dim,file) BEGIN_PRIMITIVE {    \
   WRITE( int, sizeof(p[0]), file );                              \
@@ -157,24 +157,25 @@ enum dump_types {
   fwrite( dim, sizeof(int), ndim, file );                        \
 } END_PRIMITIVE
 
-/* The WRITE macro copies the output "value" into a temporary variable of the
-   requested output "type" so that the write to the "file" occurs from a known
-   binary data type. For example, if grid.dx were changed from a float to a
-   double, routines which say WRITE(float,grid.dx,out) will still work fine
-   without modification (you will lose some precision in the output file
-   obviously). Note: No effort is made to convert the raw binary data from the
-   root node's native format. Usually, integer data will be little endian
-   32-bit values and floating data with be little endian 32-bit IEEE single
-   precision write copies. However, specialty types could be created so that
-   the type cast __WRITE_tmp = (type)(value) automatically does the underlying
-   conversion in C++ */
+// The WRITE macro copies the output "value" into a temporary variable
+// of the requested output "type" so that the write to the "file"
+// occurs from a known binary data type. For example, if grid.dx were
+// changed from a float to a double, routines which say
+// WRITE(float,grid.dx,out) will still work fine without modification
+// (you will lose some precision in the output file obviously). Note:
+// No effort is made to convert the raw binary data from the root
+// node's native format. Usually, integer data will be little endian
+// 32-bit values and floating data with be little endian 32-bit IEEE
+// single precision write copies. However, specialty types could be
+// created so that the type cast __WRITE_tmp = (type)(value)
+// automatically does the underlying conversion in C++
 
 #define WRITE(type,value,file) BEGIN_PRIMITIVE { \
   type __WRITE_tmp = (type)(value);              \
   fwrite( &__WRITE_tmp, sizeof(type), 1, file ); \
 } END_PRIMITIVE
 
-/* Note: strlen does not include the terminating NULL */
+// Note: strlen does not include the terminating NULL
 #define WRITE_STRING(string,file) BEGIN_PRIMITIVE {       \
   int __WRITE_STRING_len = 0;                             \
   if( string!=NULL ) __WRITE_STRING_len = strlen(string); \
@@ -263,14 +264,16 @@ void vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   fclose( handle ); 
 }
 
-void vpic_simulation::dump_hydro( const char *sp_name,
-                                  const char *fbase, int ftag ) {
+void
+vpic_simulation::dump_hydro( const char *sp_name,
+                             const char *fbase,
+                             int ftag ) {
   species_t *sp;
   char fname[256];
   FILE *handle;
   int dim[3];
 
-  /* FIXME: Potential deadlocks on error returns */
+  // FIXME: Potential deadlocks on error returns
 
   if( sp_name==NULL ) {
     ERROR(("Invalid species name"));
@@ -321,9 +324,9 @@ void vpic_simulation::dump_particles( const char *sp_name,
   FILE *handle;
   int dim[1], buf_start, n_buf;
   static particle_t *p_buf=NULL;
-# define PBUF_SIZE 32768 /* 1MB of particles */
+# define PBUF_SIZE 32768 // 1MB of particles
   
-  /* FIXME: Potential deadlocks on error returns */
+  // FIXME: Potential deadlocks on error returns
 
   if( sp_name==NULL ) {
     ERROR(("Invalid species name"));
@@ -342,8 +345,8 @@ void vpic_simulation::dump_particles( const char *sp_name,
   }
 
   if ( !p_buf ) {
-    p_buf = (particle_t * ALIGNED)
-      malloc_aligned(PBUF_SIZE*sizeof(p_buf[0]), preferred_alignment);
+    p_buf = (particle_t * ALIGNED(16))
+      malloc_aligned(PBUF_SIZE*sizeof(p_buf[0]), 16);
     if( p_buf==NULL ) {
       ERROR(("Failed to allocate particle buffer."));
       return;
@@ -367,10 +370,14 @@ void vpic_simulation::dump_particles( const char *sp_name,
   dim[0] = sp->np;
   WRITE_ARRAY_HEADER( p_buf, 1, dim, handle );
 
-  /* Copy a PBUF_SIZE hunk of the particle list into the particle buffer,
-     timecenter it and write it out. This is done this way to guarantee the 
-     particle list unchanged while not requiring too much memory. */
-  /* FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE LARGE. */
+  // Copy a PBUF_SIZE hunk of the particle list into the particle
+  // buffer, timecenter it and write it out. This is done this way to
+  // guarantee the particle list unchanged while not requiring too
+  // much memory.
+
+  // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
+  // LARGE.
+
   for( buf_start=0; buf_start<sp->np; buf_start += PBUF_SIZE ) {
     n_buf = PBUF_SIZE;
     if( buf_start+n_buf > sp->np ) n_buf = sp->np - buf_start;
@@ -380,15 +387,16 @@ void vpic_simulation::dump_particles( const char *sp_name,
   }
 
   fclose( handle );
-  /* BJA: Make p_buf a static buffer to avoid too frequent malloc/free */  
-  /* free_aligned( p_buf ); */
+  // BJA: Make p_buf a static buffer to avoid too frequent malloc/free
+  // free_aligned( p_buf );
 }
 
-/* FIXME: dump_restart and restart would be much cleaner if the materials,
-   fields and species modules had their own binary IO routines */
+// FIXME: dump_restart and restart would be much cleaner if the
+// materials, fields and species modules had their own binary IO
+// routines
 
-/* FIXME: put emission model and custom boundary conditions into the 
-   restart files */ 
+// FIXME: put emission model and custom boundary conditions into the
+// restart files
 
 void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
   char fname[256];
@@ -419,7 +427,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
    * Restart saved directly initialized variables *
    ************************************************/
 
-  /* variables not already saved above */
+  // variables not already saved above
 
   WRITE( int, num_step,             handle );
   WRITE( int, status_interval,      handle );
@@ -437,7 +445,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
    * Restart saved helper initialized variables *
    **********************************************/
 
-  /* random number generator */
+  // random number generator
 
   dim[0] = mt_getsize(rng);
   state = (char *)malloc(dim[0]);
@@ -450,7 +458,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
   fwrite( state, 1, dim[0], handle );
   free(state);
 
-  /* materials */
+  // materials
 
   WRITE( int, num_materials(material_list), handle );
   LIST_FOR_EACH(m,material_list) {
@@ -467,7 +475,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
     WRITE( float,     m->sigmaz, handle );
   }
 
-  /* grid variables not already saved above */
+  // grid variables not already saved above
 
   dim[0] = 3;
   dim[1] = 3;
@@ -487,7 +495,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
   WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, handle );
   fwrite( grid->neighbor, sizeof(grid->neighbor[0]), dim[0]*dim[1]*dim[2]*dim[3], handle );
 
-  /* fields */
+  // fields
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
@@ -495,7 +503,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
   WRITE_ARRAY_HEADER( field, 3, dim, handle );
   fwrite( field, sizeof(field[0]), dim[0]*dim[1]*dim[2], handle );
 
-  /* species */
+  // species
 
   WRITE( int, num_species(species_list), handle );
   LIST_FOR_EACH(sp,species_list) {
@@ -510,7 +518,7 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
     if ( dim[0]>0 ) fwrite( sp->p, sizeof(sp->p[0]), dim[0], handle ); 
   }
 
-  /* custom boundary condition data */
+  // custom boundary condition data
 
   WRITE( int,        grid->nb,       handle );
   if( grid->nb>0 ) fwrite( grid->boundary, sizeof(grid->boundary[0]), grid->nb, handle );
@@ -534,13 +542,16 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
 
   fclose( handle );
 
-  /* Synchronize here in case to prevent ranks who immediately terminate
-     after a restart dump from disrupting ranks still in the process
-     of dumping */
-  /* BJA - New modality of job termination involves putting a barrier in the 
-     termination section of the input deck and removing it here.  Aside from 
-     requiring fewer barriers, this is needed to make turnstiles work. */ 
-  /* mp_barrier( grid->mp ); */
+  // Synchronize here in case to prevent ranks who immediately
+  // terminate after a restart dump from disrupting ranks still in the
+  // process of dumping
+
+  // BJA - New modality of job termination involves putting a barrier
+  // in the termination section of the input deck and removing it
+  // here.  Aside from requiring fewer barriers, this is needed to
+  // make turnstiles work.
+
+  // mp_barrier( grid->mp );
 
 }
 
@@ -559,26 +570,26 @@ void vpic_simulation::restart( const char *fbase ) {
                                 abort_str = #cond;     \
                                 goto abort;          }
 
-  /* Create an empty grid (creates the communicator too) */
+  // Create an empty grid (creates the communicator too)
   grid = new_grid();
-  if( grid==NULL ) { /* Cannot use abort until grid->mp and rank are setup */
+  if( grid==NULL ) { // Cannot use abort until grid->mp and rank are setup
     ERROR(("Could not create the grid"));
     exit(0);
   }
   rank = mp_rank(grid->mp);
   nproc = mp_nproc(grid->mp);
 
-  /* Create a random number generator seeded with the rank
-     This will be reseeded below */
+  // Create a random number generator seeded with the rank. This will
+  // be reseeded below.
   rng = mt_new_generator(rank); ABORT(rng==NULL);
 
-  /* Open the restart dump */
+  // Open the restart dump
   ABORT(fbase==NULL);
   if( rank==0 ) MESSAGE(("Restarting from \"%s\"",fbase));
   sprintf( fname, "%s.%i", fbase, rank );
   handle = fopen( fname, "rb" ); ABORT(handle==NULL);
 
-  /* Machine compatibility information */
+  // Machine compatibility information
   READ(char,     c,handle);  ABORT(c!=CHAR_BIT         );
   READ(char,     c,handle);  ABORT(c!=2                );
   READ(char,     c,handle);  ABORT(c!=4                );
@@ -589,11 +600,11 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(float,    f,handle);  ABORT(f!=1.0              );
   READ(double,   d,handle);  ABORT(d!=1.0              );
 
-  /* Dump type and header version */
+  // Dump type and header version
   READ(int,n,handle); ABORT(n!=0           );
   READ(int,n,handle); ABORT(n!=restart_dump);
 
-  /* High level information */
+  // High level information
   READ(int,  step,      handle); ABORT(step<0       );
   READ(int,  grid->nx,  handle); ABORT(grid->nx<1   );
   READ(int,  grid->ny,  handle); ABORT(grid->ny<1   );
@@ -611,7 +622,7 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(int,  n,         handle); ABORT(n!=rank      );
   READ(int,  n,         handle); ABORT(n!=nproc     );
 
-  /* Species parameters */
+  // Species parameters
   READ(int,  n,handle); ABORT(n!=invalid_species_id);
   READ(float,f,handle); ABORT(f!=0                 );
   
@@ -619,7 +630,7 @@ void vpic_simulation::restart( const char *fbase ) {
    * Restart saved directly initialized variables *
    ************************************************/
 
-  /* variables not already restored above */
+  // variables not already restored above
 
   READ(int,    num_step,             handle); 
   READ(int,    status_interval,      handle);
@@ -636,7 +647,7 @@ void vpic_simulation::restart( const char *fbase ) {
    * Restart saved helper initialized variables *
    **********************************************/
 
-  /* random number generator */
+  // random number generator
 
   READ(int,size,  handle);           ABORT(size!=sizeof(char));
   READ(int,ndim,  handle);           ABORT(ndim!=1           );
@@ -647,12 +658,12 @@ void vpic_simulation::restart( const char *fbase ) {
   mt_setstate(rng,state,dim[0]);
   free(state);
 
-  /* materials ... material_list must be put together in
-     the same order it was originally in */
+  // materials ... material_list must be put together in the same
+  // order it was originally in
 
   READ(int,n,handle); ABORT(n<1);
   for(last_m=NULL;n;n--) {
-    /* Note: sizeof(m[0]) includes terminating '\0' */
+    // Note: sizeof(m[0]) includes terminating '\0'
     READ(int,size,handle);                       ABORT(size<1 );
     m = (material_t *)malloc(sizeof(m[0])+size); ABORT(m==NULL);
     fread(m->name,1,size,handle);
@@ -679,7 +690,7 @@ void vpic_simulation::restart( const char *fbase ) {
     }
   }
 
-  /* grid variables not already saved above */
+  // grid variables not already saved above
 
   READ(int,size,  handle); ABORT(size!=sizeof(grid->bc[0]));
   READ(int,ndim,  handle); ABORT(ndim!=3          );
@@ -691,8 +702,7 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(int,size,handle);   ABORT(size!=sizeof(grid->range[0]));
   READ(int,ndim,handle);   ABORT(ndim!=1          );
   READ(int,dim[0],handle); ABORT(dim[0]!=nproc+1  );
-  grid->range = (int64_t * ALIGNED)
-    malloc_aligned( size*dim[0], preferred_alignment );
+  grid->range = (int64_t * ALIGNED(16))malloc_aligned( size*dim[0], 16 );
   ABORT(grid->range==NULL)
   fread( grid->range, size, dim[0], handle );
 
@@ -702,15 +712,15 @@ void vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[1],handle); ABORT(dim[1]!=grid->nx+2);
   READ(int,dim[2],handle); ABORT(dim[2]!=grid->ny+2);
   READ(int,dim[3],handle); ABORT(dim[3]!=grid->nz+2);
-  grid->neighbor = (int64_t * ALIGNED)
-    malloc_aligned( size*dim[0]*dim[1]*dim[2]*dim[3], preferred_alignment );
+  grid->neighbor = (int64_t * ALIGNED(16))
+    malloc_aligned( size*dim[0]*dim[1]*dim[2]*dim[3], 16 );
   ABORT(grid->neighbor==NULL);
   fread( grid->neighbor, size, dim[0]*dim[1]*dim[2]*dim[3], handle );
 
   grid->rangel = grid->range[rank];
   grid->rangeh = grid->range[rank+1]-1;
 
-  /* fields */
+  // fields
 
   READ(int,size,  handle); ABORT(size!=sizeof(field[0]));
   READ(int,ndim,  handle); ABORT(ndim!=3              );
@@ -721,12 +731,12 @@ void vpic_simulation::restart( const char *fbase ) {
   ABORT(field==NULL);
   fread( field, size, dim[0]*dim[1]*dim[2], handle );
 
-  /* species ... species_list must be put together in
-     the same order it was originally in */
+  // species ... species_list must be put together in the same order
+  // it was originally in
 
   READ(int,n,handle); ABORT(n<1);
   for(last_sp=NULL;n;n--) {
-    /* Note: sizeof(sp[0]) includes terminating '\0' */
+    // Note: sizeof(sp[0]) includes terminating '\0'
     READ(int,size,handle);                        ABORT(size<1 );
     sp = (species_t *)malloc(sizeof(sp[0])+size); ABORT(sp==NULL);
     fread(sp->name,1,size,handle);
@@ -760,7 +770,7 @@ void vpic_simulation::restart( const char *fbase ) {
     }
   }
 
-  /* custom boundary condition data */
+  // custom boundary condition data
   
   READ( int, grid->nb, handle ); ABORT( grid->nb<0 );
   if( grid->nb==0 ) grid->boundary = NULL;
@@ -834,20 +844,18 @@ void vpic_simulation::restart( const char *fbase ) {
   mp_abort(abort_line,grid->mp);
 }
 
-
-/*
-  Add capability to modify certain fields "on the fly" so that one can, e.g., extend
-  a run, change a quota, or modify a dump interval without having to rerun from the start. 
-
-  File is specified in arg 3 slot in command line inputs.  File is in ASCII format with
-  each field in the form: field val [newline].
-
-  Allowable values of field variables are: 
-  num_steps, quota, restart_interval, hydro_interval, field_interval, particle_interval
-
-  [x]_interval sets interval value for dump type [x].  Set interval to zero to turn off 
-  dump type. 
-*/ 
+// Add capability to modify certain fields "on the fly" so that one
+// can, e.g., extend a run, change a quota, or modify a dump interval
+// without having to rerun from the start.
+//
+// File is specified in arg 3 slot in command line inputs.  File is in
+// ASCII format with each field in the form: field val [newline].
+//
+// Allowable values of field variables are: num_steps, quota,
+// restart_interval, hydro_interval, field_interval, particle_interval
+//
+// [x]_interval sets interval value for dump type [x].  Set interval
+// to zero to turn off dump type.
 
 # define SETIVAR( V, A, S )                                                     \
   {                                                                             \
@@ -862,13 +870,14 @@ void vpic_simulation::restart( const char *fbase ) {
 # define ITEST( V, N, A ) if ( sscanf( line, N " %d", &iarg )==1 ) SETIVAR( V, A, N ); 
 # define DTEST( V, N, A ) if ( sscanf( line, N " %le", &darg )==1 ) SETDVAR( V, A, N ); 
 
-void vpic_simulation::modify_runparams( const char *fname ) {
+void
+vpic_simulation::modify_runparams( const char *fname ) {
   FILE *handle=NULL; 
   char line[128];
   int iarg=0; 
   double darg=0; 
 
-  /* Open the modfile */
+  // Open the modfile
   if( mp_rank(grid->mp)==0 ) MESSAGE(("Modifying run parameters from file \"%s\"", fname));
   handle = fopen( fname, "r" ); 
   if ( handle==NULL ) {
@@ -877,7 +886,7 @@ void vpic_simulation::modify_runparams( const char *fname ) {
     if( handle!=NULL ) fclose(handle); handle=NULL;
     mp_abort(__LINE__,grid->mp);
   }
-  /* Parse modfile */ 
+  // Parse modfile
   while ( fgets( line, 127, handle ) ) {
     DTEST( quota,             "quota",             darg ); 
     ITEST( num_step,          "num_step",          iarg ); 

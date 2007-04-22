@@ -17,9 +17,9 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct energy_f_pipeline_args {
-  const field_t                * ALIGNED f;
-  const material_coefficient_t * ALIGNED m;
-  const grid_t                 *         g;
+  const field_t                * ALIGNED(16) f;
+  const material_coefficient_t * ALIGNED(16) m;
+  const grid_t                 *             g;
   double en[MAX_PIPELINE+1][6];
 } energy_f_pipeline_args_t;
 
@@ -27,13 +27,13 @@ static void
 energy_f_pipeline( energy_f_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
-  const field_t                * ALIGNED f = args->f;
-  const material_coefficient_t * ALIGNED m = args->m;
-  const grid_t                 * ALIGNED g = args->g;
+  const field_t                * ALIGNED(16) f = args->f;
+  const material_coefficient_t * ALIGNED(16) m = args->m;
+  const grid_t                 *             g = args->g;
     
-  const field_t * ALIGNED f0;
-  const field_t * ALIGNED fx,  * ALIGNED fy,  * ALIGNED fz;
-  const field_t * ALIGNED fyz, * ALIGNED fzx, * ALIGNED fxy;
+  const field_t * ALIGNED(16) f0;
+  const field_t * ALIGNED(16) fx,  * ALIGNED(16) fy,  * ALIGNED(16) fz;
+  const field_t * ALIGNED(16) fyz, * ALIGNED(16) fzx, * ALIGNED(16) fxy;
   int x, y, z, n_voxel;
   
   const int nx = g->nx;
@@ -42,7 +42,7 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
 
   double en_ex, en_ey, en_ez, en_bx, en_by, en_bz;
   
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -61,7 +61,7 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
 
   en_ex = en_ey = en_ez = en_bx = en_by = en_bz = 0;
   for( ; n_voxel; n_voxel-- ) {
-    /* FIXME: CHECK IF THIS IS THE CORRECT LAGRANGIAN DEFINITION */
+    // FIXME: CHECK IF THIS IS THE CORRECT LAGRANGIAN DEFINITION
 
     en_ex += 0.25*( m[ f0->ematx].epsx* f0->ex * f0->ex +
                     m[ fy->ematx].epsx* fy->ex * fy->ex +
@@ -107,10 +107,11 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
 #error "V4 version not implemented"
 #endif
 
-void energy_f( double * global,
-               const field_t * ALIGNED f,
-               const material_coefficient_t * ALIGNED m,
-               const grid_t * ALIGNED g ) {
+void
+energy_f( double                       *             global,
+          const field_t                * ALIGNED(16) f,
+          const material_coefficient_t * ALIGNED(16) m,
+          const grid_t                 * ALIGNED(16) g ) {
   energy_f_pipeline_args_t args[1];
   double v0;
   int p;
@@ -120,7 +121,7 @@ void energy_f( double * global,
   if( m==NULL )      ERROR(("Bad material coefficients"));
   if( g==NULL )      ERROR(("Bad grid"));
 
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   en_ex = ey_ey = en_ez = en_bx = en_by = en_bz = 0;
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
@@ -133,7 +134,7 @@ void energy_f( double * global,
       fxy = &f(2,y+1,z  );
       for( x=1; x<=nx; x++ ) {
       
-         /* FIXME: CHECK IF THIS IS THE CORRECT LAGRANGIAN DEFINITION */
+        // FIXME: CHECK IF THIS IS THE CORRECT LAGRANGIAN DEFINITION
          
          en_ex += 0.25*( m[ f0->ematx].epsx* f0->ex * f0->ex +
                          m[ fy->ematx].epsx* fy->ex * fy->ex +
@@ -165,7 +166,7 @@ void energy_f( double * global,
   }
 # endif
 
-  /* Have each pipelines work on a portion of the local voxels */
+  // Have each pipelines work on a portion of the local voxels
   
   args->f = f;
   args->m = m;
@@ -175,7 +176,7 @@ void energy_f( double * global,
   energy_f_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
 
-  /* Reduce results from each pipelines */
+  // Reduce results from each pipelines
   
   for( p=1; p<=PSTYLE.n_pipeline; p++ ) {
     args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
@@ -183,14 +184,14 @@ void energy_f( double * global,
     args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];
   }
     
-  /* Convert to physical units and reduce results between nodes */
+  // Convert to physical units and reduce results between nodes
   
   v0 = 0.5*g->eps0*g->dx*g->dy*g->dz;
   args->en[0][0] *= v0; args->en[0][1] *= v0;
   args->en[0][2] *= v0; args->en[0][3] *= v0;
   args->en[0][4] *= v0; args->en[0][5] *= v0;
 
-  /* Reduce results between nodes */
+  // Reduce results between nodes
 
   mp_allsum_d( args->en[0], global, 6, g->mp );
 }

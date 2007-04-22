@@ -30,11 +30,11 @@ struct DMPPolicy {
 		return mp_nproc_dmp(h);
 	} // mp_nproc
 
-	inline void * ALIGNED mp_recv_buffer( int rbuf, mp_handle h ) {
+	inline void * ALIGNED(16) mp_recv_buffer( int rbuf, mp_handle h ) {
 		return mp_recv_buffer_dmp(rbuf, h);
 	} // mp_recv_buffer
 
-	inline void * ALIGNED mp_send_buffer( int sbuf, mp_handle h ) {
+	inline void * ALIGNED(16) mp_send_buffer( int sbuf, mp_handle h ) {
 		return mp_send_buffer_dmp(sbuf, h);
 	} // mp_send_buffer
 

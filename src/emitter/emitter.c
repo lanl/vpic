@@ -16,30 +16,29 @@ new_emitter( const char * name,
     ERROR(("There is already a emitter named \"%s\".",name)); 
   if( max_component<1 ) {
 
-    /* 
-      BJA: commented ERROR() out for the following reason:  If an emitter 
-      is localized and does not reside on a given processor, then the number
-      of faces will be 0 on processors which don't contain the emitter.
-      The proper behavior should be to silently return NULL rather than 
-      throw an error condition. */
+    // BJA: commented ERROR() out for the following reason: If an
+    // emitter is localized and does not reside on a given processor,
+    // then the number of faces will be 0 on processors which don't
+    // contain the emitter.  The proper behavior should be to silently
+    // return NULL rather than throw an error condition.
 
-    /* ERROR(("Invalid max_component requested for emitter \"%s\".",name)); */
+    // ERROR(("Invalid max_component requested for emitter \"%s\".",name));
     return NULL;
   }
 
-  /* Create the emitter */
+  // Create the emitter
 
-  /* sizeof(emitter_t) includes the termininating null of name */
+  // sizeof(emitter_t) includes the termininating null of name
   e = (emitter_t *)malloc(sizeof(emitter_t)+len);
   if( e==NULL ) ERROR(("Could not allocate emitter"));
 
-  /* Initialize the emitter */
+  // Initialize the emitter
 
   e->sp             = sp;
   e->emission_model = emission_model;
   memset( e->model_parameters, 0, MAX_EMISSION_MODEL_SIZE );
-  e->component = (int * ALIGNED)malloc_aligned( max_component*sizeof(int),
-                                                preferred_alignment );
+  e->component =
+    (int * ALIGNED(16))malloc_aligned( max_component*sizeof(int), 16 );
   if( e->component==NULL ) ERROR(("Could not allocate region components"));
   e->n_component   = 0;
   e->max_component = max_component;

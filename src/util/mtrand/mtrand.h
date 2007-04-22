@@ -32,13 +32,13 @@
 #  define __ARGLIST(args) ()
 #endif
 
-#include <stddef.h> /* Need size_t */
+#include <stddef.h> // Need size_t
 
-/* Setup the mt_handle datatype */
+// Setup the mt_handle datatype
 typedef void *mt_handle;
 
-/* Note: All these trinary operators should be evaluated
-   at compile time for any self-respecting compiler. */
+// Note: All these trinary operators should be evaluated at compile
+// time for any self-respecting compiler.
 #include <limits.h>
 #define mt_CRAND_MAX   ((CHAR_BIT*sizeof(signed char)<32) ?             \
                         SCHAR_MAX : 0x7fffffff)

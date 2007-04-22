@@ -2,19 +2,20 @@
 
 #include <field.h>
 
-/* FIXME: Ben noticed that the pcomm unit test was failing under
-   USE_V4_PORTABLE.  Subsequently testing by me confirmed this on my desktop
-   and confirmed that it was not occurring under V4_SSE or no V4 accleration
-   at all.  The problem was later isolated to this code (again ... sigh). 
-   gcc-4.1.x is very flaky about function for unknown reasons (though I
-   suspect it is that it can't handle 16-bit integer arithmetic for material
-   index handling mixed in with all the other joy simultaneously).  Since
-   compute_curl_b is very similar to this function, I am disabling
-   V4_ACCELERATION in there to be on the safe side too.   All other users
-   of 16-bit material indexes are not V4 enabled currently.  At some point
-   in the near future, I'll probably rethink how material properties are
-   specified to use less indirection in inner loops like this to be more v4
-   (and thus cell) friendly. */
+// FIXME: Ben noticed that the pcomm unit test was failing under
+// USE_V4_PORTABLE.  Subsequently testing by me confirmed this on my
+// desktop and confirmed that it was not occurring under V4_SSE or no
+// V4 accleration at all.  The problem was later isolated to this code
+// (again ... sigh).  gcc-4.1.x is very flaky about function for
+// unknown reasons (though I suspect it is that it can't handle 16-bit
+// integer arithmetic for material index handling mixed in with all
+// the other joy simultaneously).  Since compute_curl_b is very
+// similar to this function, I am disabling V4_ACCELERATION in there
+// to be on the safe side too.  All other users of 16-bit material
+// indexes are not V4 enabled currently.  At some point in the near
+// future, I'll probably rethink how material properties are specified
+// to use less indirection in inner loops like this to be more v4 (and
+// thus cell) friendly.
 
 #undef V4_ACCELERATION
 
@@ -46,20 +47,21 @@
            m[f0->ematz].drivez*( f0->tcaz - cj*f0->jfz )
 
 typedef struct advance_e_pipeline_args {
-  field_t                      * ALIGNED f;
-  const material_coefficient_t * ALIGNED m;
-  const grid_t                 *         g;
+  field_t                      * ALIGNED(16) f;
+  const material_coefficient_t * ALIGNED(16) m;
+  const grid_t                 *             g;
 } advance_e_pipeline_args_t;
 
 static void
 advance_e_pipeline( advance_e_pipeline_args_t * args,
                     int pipeline_rank,
                     int n_pipeline ) {
-  field_t                      * ALIGNED f = args->f;
-  const material_coefficient_t * ALIGNED m = args->m;
-  const grid_t                 *         g = args->g;
+  field_t                      * ALIGNED(16) f = args->f;
+  const material_coefficient_t * ALIGNED(16) m = args->m;
+  const grid_t                 *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -72,7 +74,7 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
   const float pz = (nz>1) ? (1+damp)*g->cvac*g->dt/g->dz : 0;
   const float cj = g->dt/g->eps0;
 
-  /* Process the voxels assigned to this pipeline */
+  // Process the voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
                                pipeline_rank, n_pipeline,
@@ -112,11 +114,12 @@ static void
 advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline ) {
-  field_t                      * ALIGNED f = args->f;
-  const material_coefficient_t * ALIGNED m = args->m;
-  const grid_t                 *         g = args->g;
+  field_t                      * ALIGNED(16) f = args->f;
+  const material_coefficient_t * ALIGNED(16) m = args->m;
+  const grid_t                 *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -152,10 +155,10 @@ advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
 
   v4float f0_cbx_rmux, f0_cby_rmuy, f0_cbz_rmuz;
 
-  field_t * ALIGNED f00, * ALIGNED f01, * ALIGNED f02, * ALIGNED f03; // Voxel quad
-  field_t * ALIGNED fx0, * ALIGNED fx1, * ALIGNED fx2, * ALIGNED fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED fy0, * ALIGNED fy1, * ALIGNED fy2, * ALIGNED fy3; // Voxel quad +y neighbors
-  field_t * ALIGNED fz0, * ALIGNED fz1, * ALIGNED fz2, * ALIGNED fz3; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
 
   // Process the voxels assigned to this pipeline 
   
@@ -261,9 +264,9 @@ advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
 #endif
 
 void
-advance_e( field_t * ALIGNED f,
-           const material_coefficient_t * ALIGNED m,
-           const grid_t * g ) {
+advance_e( field_t                      * ALIGNED(16) f,
+           const material_coefficient_t * ALIGNED(16) m,
+           const grid_t                 *             g ) {
   advance_e_pipeline_args_t args[1];
   
   float damp, px, py, pz, cj;
@@ -297,15 +300,15 @@ advance_e( field_t * ALIGNED f,
    * Note: ez all (1:nx+1,1:ny+1,1:nz  ) interior (1:nx,1:ny,2:nz)
    ***************************************************************************/
 
-  /* Do majority interior in a single pass.  The host handles
-     stragglers. */
-  /* FIXME: CHECK IF IT IS SAFE TO DISPATCH THE PIPELINES EVEN EARLIER
-     AND COMPLETE THEM EVEN LATER.  I DON'T THINK IT IS SAFE TO
-     DISPATCH THEM EARLIER UNDER ABSORBING BOUNDARY CONDITIONS BUT I
-     AM NOT SURE.  I THINK IT IS PROBABLY SAFE TO FINISH THEM
-     LATER. */
+  // Do majority interior in a single pass.  The host handles
+  // stragglers.
 
-# if 0 /* Original non-pipelined version */
+  // FIXME: CHECK IF IT IS SAFE TO DISPATCH THE PIPELINES EVEN EARLIER
+  // AND COMPLETE THEM EVEN LATER.  I DON'T THINK IT IS SAFE TO
+  // DISPATCH THEM EARLIER UNDER ABSORBING BOUNDARY CONDITIONS BUT I
+  // AM NOT SURE.  I THINK IT IS PROBABLY SAFE TO FINISH THEM LATER.
+
+# if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(2,y,  z);
@@ -329,7 +332,7 @@ advance_e( field_t * ALIGNED f,
   PSTYLE.dispatch( ADVANCE_E_PIPELINE, args, 0 );
   advance_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
-  /* Do left over interior ex */
+  // Do left over interior ex
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(1,y,  z);
@@ -339,7 +342,7 @@ advance_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over interior ey */
+  // Do left over interior ey
   for( z=2; z<=nz; z++ ) {
     f0 = &f(2,1,z);
     fx = &f(1,1,z);
@@ -352,7 +355,7 @@ advance_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over interior ez */
+  // Do left over interior ez
   for( y=2; y<=ny; y++ ) {
     f0 = &f(2,y,  1);
     fx = &f(1,y,  1);
@@ -377,7 +380,7 @@ advance_e( field_t * ALIGNED f,
    * Update exterior fields
    ***************************************************************************/
 
-  /* Do exterior ex */
+  // Do exterior ex
   for( y=1; y<=ny+1; y++ ) {
     f0 = &f(1,y,  1);
     fy = &f(1,y-1,1);
@@ -423,7 +426,7 @@ advance_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do exterior ey */
+  // Do exterior ey
   for( z=1; z<=nz+1; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(1,y,z);
@@ -463,7 +466,7 @@ advance_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do exterior ez */
+  // Do exterior ez
   for( z=1; z<=nz; z++ ) {
     f0 = &f(1,1,z);
     fx = &f(0,1,z);

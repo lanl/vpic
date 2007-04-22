@@ -8,11 +8,11 @@
  *
  */
 
-#include <stdlib.h> /* For malloc, NULL and size_t                     */
-#include <stdint.h> /* For int32_t                                     */
-#include <math.h>   /* For sqrt, log and tan                           */
-#include "mtrand_conv.h" /* For drand53_o, drand53_c0, drand53_c1, ... */
-#include "mtrand.h" /* Assure consistency with the header              */
+#include <stdlib.h> // For malloc, NULL and size_t
+#include <stdint.h> // For int32_t
+#include <math.h>   // For sqrt, log and tan
+#include "mtrand_conv.h" // For drand53_o, drand53_c0, drand53_c1, ...
+#include "mtrand.h" // Assure consistency with the header
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795029
@@ -77,42 +77,43 @@ int mt_srand( mt_handle h, unsigned int s ) {
 
   if( h==NULL ) return 1;
   g->next = MT19937_N;
-  g->state[0] = s^0x900df00cUL;  /* state[0] on srand(1) is goodfood */
-  g->state[0] &= 0xffffffffUL;   /* 64-bit compatibility */
+  g->state[0] = s^0x900df00cUL;  // state[0] on srand(1) is goodfood
+  g->state[0] &= 0xffffffffUL;   // 64-bit compatibility
   for( j=1; j<MT19937_N; j++ ) {
     g->state[j] = 1812433253UL*(g->state[j-1]^(g->state[j-1]>>30)) + j;
-    g->state[j] &= 0xffffffffUL; /* 64-bit compatibility */
+    g->state[j] &= 0xffffffffUL; // 64-bit compatibility
   }
   return 0;
 }
 
 #if CHAR_BIT==8
-/* mt_getsize returns the number of chars required to hold the generator's
-   internal state in the format used by mt_getstate function. This routine
-   assumes 8-bit "char"s */
+// mt_getsize returns the number of chars required to hold the
+// generator's internal state in the format used by mt_getstate
+// function. This routine assumes 8-bit "char"s
 size_t mt_getsize( mt_handle h ) {
   return 4*(MT19937_N+1);
 }
 
-/* mt_getstate saves the state of the generator in a machine independent
-   format on machines with 8-bits "char"s (true on virtually all hardware
-   in the last 30 years) if the char array is large enough to hold it. */
+// mt_getstate saves the state of the generator in a machine
+// independent format on machines with 8-bits "char"s (true on
+// virtually all hardware in the last 30 years) if the char array is
+// large enough to hold it.
 int mt_getstate( mt_handle h, char *s, size_t n ) {
   mt_gen_t *g = (mt_gen_t *)h;
   size_t j;
 
-  /* Error checking */
+  // Error checking
   if( h==NULL || s==NULL ) return -1;
   j = mt_getsize(h);
   if( n<j ) return j;
 
-  /* Serialize g->next */
+  // Serialize g->next
   *(s++) = (g->next & 0x000000ff) >> 0;
   *(s++) = (g->next & 0x0000ff00) >> 8;
   *(s++) = (g->next & 0x00ff0000) >> 16;
   *(s++) = (g->next & 0xff000000) >> 24;
 
-  /* Serialize g->state */
+  // Serialize g->state
   for( j=0; j<MT19937_N; j++ ) {
     *(s++) = (g->state[j] & 0x000000ff) >> 0;
     *(s++) = (g->state[j] & 0x0000ff00) >> 8;
@@ -123,28 +124,29 @@ int mt_getstate( mt_handle h, char *s, size_t n ) {
   return 0;
 }
 
-/* mt_setstate sets the state of the generator. It can take a state provided
-   by mt_getstate or a user designed state of at least 5 bytes. A valid
-   user designed state has at least one non-zero char among s[4] through
-   s[min(n,mt_getsize(h))-1]. This routine assumes 8-bit chars. */
+// mt_setstate sets the state of the generator. It can take a state
+// provided by mt_getstate or a user designed state of at least 5
+// bytes. A valid user designed state has at least one non-zero char
+// among s[4] through s[min(n,mt_getsize(h))-1]. This routine assumes
+// 8-bit chars.
 int mt_setstate( mt_handle h, const char *s, size_t n ) {
   mt_gen_t *g = (mt_gen_t *)h;
   size_t j, k;
 
-  /* Error checking */
+  // Error checking
   if( h==NULL || s==NULL || n<5 ) return 1;
   j = 4*(MT19937_N+1); if( j>n ) j=n;
   for( k=4; k<j; k++ ) if( s[k]!=0 ) break;
   if( k==j ) return 2;
 
-  /* Extract g->next */
+  // Extract g->next
   g->next  = ((uint32_t)(s[0])) << 0;
   g->next |= ((uint32_t)(s[1])) << 8;
   g->next |= ((uint32_t)(s[2])) << 16;
   g->next |= ((uint32_t)(s[3])) << 24;
   if( g->next<0 || g->next>MT19937_N ) g->next=MT19937_N;
 
-  /* Extract g->state */
+  // Extract g->state
   k=4;
   for( j=0, k=4; j<MT19937_N; j++ ) {
     g->state[j]  = ((uint32_t)(s[k++])) << 0;  if( k==n ) k=4;
@@ -160,10 +162,12 @@ int mt_setstate( mt_handle h, const char *s, size_t n ) {
 /*****************************************************************************
  * Generate integer random numbers                                           *
  *****************************************************************************/
-/* The irf code-generator is very portable but not maximally efficient when
-   dealing with short and char datatypes (for example, on a 32-bit system with
-   8-bit chars, 4 chars could be made for every 32-bit rand). Note: any
-   self-respecting compiler will optimize the bit shift at compile time */
+
+// The irf code-generator is very portable but not maximally efficient
+// when dealing with short and char datatypes (for example, on a
+// 32-bit system with 8-bit chars, 4 chars could be made for every
+// 32-bit rand). Note: any self-respecting compiler will optimize the
+// bit shift at compile time
 #define irf( name, t, s )				                    \
 t mt_##name( mt_handle h ) {						    \
   uint32_t y;								    \
@@ -179,8 +183,8 @@ int mt_##name##_fill( mt_handle h, t * x, size_t n ) {		            \
   }									    \
   return 0;                                                                 \
 }                    
-irf(crand,   signed char,        1) /* Force signed chars */
-irf(shrand,  signed short int,   1) /* Can't use 's' due to srand */
+irf(crand,   signed char,        1) // Force signed chars
+irf(shrand,  signed short int,   1) // Can't use 's' due to srand
 irf(rand,    signed int,         1)
 irf(lrand,   signed long int,    1)
 irf(ucrand,  unsigned char,      0)
@@ -260,11 +264,13 @@ drf(drand_c,  drand53_c )
  * f(x) = exp( -x^2 / 2 ) / sqrt( 2*pi )                                     *
  *****************************************************************************/
 
+// FIXME: ZIGGURAT METHOD IS BETTER!
+
 double mt_normal_drand( mt_handle h ) {
   double d1, d2, d3;
   uint32_t a, b;
   normal_drand_core();
-  return d1*d3; /* d2*d3 is also a normal drand but it is wasted! */
+  return d1*d3; // d2*d3 is also a normal drand but it is wasted!
 }
 
 int mt_normal_drand_fill( mt_handle h, double * x, size_t n ) {
@@ -287,11 +293,13 @@ int mt_normal_drand_fill( mt_handle h, double * x, size_t n ) {
  * f(x) = exp( -(ln x)^2 / (2 sigma^2) ) / (x*sigma*sqrt( 2*pi ))            *
  *****************************************************************************/
 
+// FIXME: ZIGGURAT METHOD IS BETTER!
+
 double mt_lognormal_drand( mt_handle h, double sigma ) {
   double d1, d2, d3;
   uint32_t a, b;
   normal_drand_core();
-  return exp(sigma*d1*d3); /* d2*d3 is wasted! */
+  return exp(sigma*d1*d3); // d2*d3 is wasted!
 }
 
 int mt_lognormal_drand_fill( mt_handle h, double sigma,
@@ -316,12 +324,14 @@ int mt_lognormal_drand_fill( mt_handle h, double sigma,
  * f(x) = ?                                                                  *
  *****************************************************************************/
 
+// FIXME: ZIGGURAT METHOD IS BETTER!
+
 double mt_bs_drand( mt_handle h, double gamma ) {
   double d1, d2, d3;
   uint32_t a, b;
   normal_drand_core();
   d1 *= 0.5*gamma*d3; d1 += sqrt( 1+d1*d1 ); d1 *= d1;
-  return d1; /* d2 is wasted! */
+  return d1; // d2 is wasted!
 }
 
 int mt_bs_drand_fill( mt_handle h, double gamma,
@@ -421,7 +431,7 @@ int mt_gumbel_drand_fill( mt_handle h, double * x, size_t n ) {
  * f(x) = gamma*(x^(gamma-1))*exp(-x^gamma)                                  *
  *****************************************************************************/
 
-/* FIXME: Optimize integer and sqrt cases of pow?? */
+// FIXME: Optimize integer and sqrt cases of pow??
 
 double mt_weibull_drand( mt_handle h, double gamma ) {
   double rgamma = 1/gamma;
@@ -536,21 +546,23 @@ int mt_randperm( mt_handle h, int * x, int n ) {
   uint32_t a, d;
   int i, t, r;
 
-  /* Error checking */
+  // Error checking
   if( h==NULL || x==NULL || n<1 ) return 1;
 
-  /* Create the initial permutation */
+  // Create the initial permutation
   for( i=0; i<n; i++ ) x[i] = i;
 
-  /* Apply a random swap to each element of the permutation such that any of
-     the n! permutations could be generated with equal probability. Note:
-     The method used to pick a random number on [0...t-1] ([0...n-i-1]) uses
-     the highest quality (most significant) bits of a urand32 to determine an
-     _exactly_ uniformly distributed rand. A simpler "mod n" method uses the
-     least significant bits and is not exactly uniform unless 2^32 is an exact
-     multiple of t. Note: the d calculation is done with double precision
-     because 2^32 cannot be represented with 32-bit ints and not all 32-bit
-     integers have an exact single precision representation. */
+  // Apply a random swap to each element of the permutation such that
+  // any of the n! permutations could be generated with equal
+  // probability. Note: The method used to pick a random number on
+  // [0...t-1] ([0...n-i-1]) uses the highest quality (most
+  // significant) bits of a urand32 to determine an _exactly_
+  // uniformly distributed rand. A simpler "mod n" method uses the
+  // least significant bits and is not exactly uniform unless 2^32 is
+  // an exact multiple of t. Note: the d calculation is done with
+  // double precision because 2^32 cannot be represented with 32-bit
+  // ints and not all 32-bit integers have an exact single precision
+  // representation.
   for( i=0; i<n-1; i++ ) {
     t = n-i;
     d = (uint32_t)((double)4294967296./(double)t);
@@ -577,10 +589,10 @@ int mt_shuffle( mt_handle h, void * x, size_t n, size_t s ) {
   size_t i, t, r;
   char *xi, *xr, c;
 
-  /* Error checking */
+  // Error checking
   if( h==NULL || x==NULL || n<1 || s<1 ) return 1;
 
-  /* See randperm comment */
+  // See randperm comment
   for( i=0; i<n-1; i++ ) {
     t = n-i;
     d = (size_t)((double)4294967296./(double)t);

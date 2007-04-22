@@ -49,7 +49,7 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   synchronize_rhof( field, grid );
   compute_rhob( field, material_coefficient, grid );
 
-#if 1 /* Internal sanity checks */
+#if 1 // Internal sanity checks
   if( rank==0 ) MESSAGE(("Checking electric field divergence"));
   compute_div_e_err( field, material_coefficient, grid );
   tmp = compute_rms_div_e_err( field, grid );

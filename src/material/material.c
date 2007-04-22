@@ -10,11 +10,11 @@
 
 #include <material.h>
 
-/* Note: new_material added the created species to the head of the species
- * list. Further the species ids are simply incremented from the previous
- * head of the list. The first species is numbered 0. As a result, the total
- * number of species in the species list is the id of the species at the
- * head of the list plus one. */
+// Note: new_material added the created species to the head of the
+// species list. Further the species ids are simply incremented from
+// the previous head of the list. The first species is numbered 0. As
+// a result, the total number of species in the species list is the id
+// of the species at the head of the list plus one.
 
 int num_materials( const material_t *m_list ) {
   if( m_list==NULL ) return 0;
@@ -31,7 +31,7 @@ material_id new_material( const char *name,
   int len;
 
   if( m_list==NULL ) ERROR(("Invalid material list."));
-  /* Note: strlen does not include terminating NULL */
+  // Note: strlen does not include terminating NULL
   len = (name==NULL) ? 0 : strlen(name);
   if( len<=0 ) ERROR(("Cannot create a nameless material."));
   if( find_material_name(name,*m_list)!=NULL )
@@ -40,8 +40,8 @@ material_id new_material( const char *name,
   if( id==max_num_materials )
     ERROR(("Cannot create material \"%s\"; too many materials.", name));
   
-  /* Note: Since a m->name is declared as a 1-element char array,
-     the terminating NULL is included in sizeof(material_t) */
+  // Note: Since a m->name is declared as a 1-element char array, the
+  // terminating NULL is included in sizeof(material_t)
   m = (material_t *)malloc(sizeof(material_t)+len);
   if( m==NULL ) ERROR(("Unable to allocate material \"%s\".", name));
   m->id     = id;

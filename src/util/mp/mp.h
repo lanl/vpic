@@ -4,8 +4,8 @@
 #include <util_base.h>
 #include <mp.hxx>
 
-/* Note: mp module assumes homogeneous cluster (in particular,
-   bit-for-bit compatible data layouts between nodes */
+// Note: mp module assumes homogeneous cluster (in particular,
+// bit-for-bit compatible data layouts between nodes
 
 BEGIN_C_DECLS
 
@@ -33,11 +33,11 @@ static inline int mp_nproc( mp_handle h ) {
 	return mp_nproc_cxx(h);
 } // mp_nproc
 
-static inline void * ALIGNED mp_recv_buffer( int rbuf, mp_handle h ) {
+static inline void * ALIGNED(16) mp_recv_buffer( int rbuf, mp_handle h ) {
 	return mp_recv_buffer_cxx(rbuf, h);
 } // mp_recv_buffer
 
-static inline void * ALIGNED mp_send_buffer( int sbuf, mp_handle h ) {
+static inline void * ALIGNED(16) mp_send_buffer( int sbuf, mp_handle h ) {
 	return mp_send_buffer_cxx(sbuf, h);
 } // mp_send_buffer
 

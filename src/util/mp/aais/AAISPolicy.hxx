@@ -91,13 +91,13 @@ struct AAISPolicy {
 		return mp ? mp->nproc : -1;	
 	} // mp_nproc
 
-	inline void * ALIGNED mp_recv_buffer( int tag, mp_handle h ) {
+	inline void * ALIGNED(16) mp_recv_buffer( int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		if(!mp || tag<0 || tag>=NUM_BUF) { return NULL; }
 		return mp->rbuf[tag];
 	} // mp_recv_buffer
 
-	inline void * ALIGNED mp_send_buffer( int tag, mp_handle h ) {
+	inline void * ALIGNED(16) mp_send_buffer( int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		if(!mp || tag<0 || tag>=NUM_BUF) { return NULL; }
 		return mp->sbuf[tag];

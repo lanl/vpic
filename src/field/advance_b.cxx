@@ -8,19 +8,19 @@
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
  
-/* WTF!  Under -ffast-math, gcc-4.1.1 thinks it is okay to treat the
-   below as
-     f0->cbx = ( f0->cbx + py*( blah ) ) - pz*( blah )
-   even with explicit parenthesis are in there!  Oh my ...
-   -ffast-math must not be used */
+// WTF!  Under -ffast-math, gcc-4.1.1 thinks it is okay to treat the
+// below as
+//   f0->cbx = ( f0->cbx + py*( blah ) ) - pz*( blah )
+// even with explicit parenthesis are in there!  Oh my ...
+// -fno-unsafe-math-optimizations must not be used
 
 #define UPDATE_CBX() f0->cbx -= ( py*( fy->ez-f0->ez ) - pz*( fz->ey-f0->ey ) )
 #define UPDATE_CBY() f0->cby -= ( pz*( fz->ex-f0->ex ) - px*( fx->ez-f0->ez ) )
 #define UPDATE_CBZ() f0->cbz -= ( px*( fx->ey-f0->ey ) - py*( fy->ex-f0->ex ) )
 
 typedef struct advance_b_pipeline_args {
-  field_t      * ALIGNED f;
-  const grid_t *         g;
+  field_t      * ALIGNED(16) f;
+  const grid_t *             g;
   float frac;
 } advance_b_pipeline_args_t;
 
@@ -28,11 +28,12 @@ static void
 advance_b_pipeline( advance_b_pipeline_args_t * args,
 		    int pipeline_rank,
                     int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
-  const float frac         = args->frac;
+  field_t      * ALIGNED(16) f    = args->f;
+  const grid_t *             g    = args->g;
+  const float                frac = args->frac;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -43,7 +44,7 @@ advance_b_pipeline( advance_b_pipeline_args_t * args,
   const float py = (ny>1) ? frac*g->cvac*g->dt/g->dy : 0;
   const float pz = (nz>1) ? frac*g->cvac*g->dt/g->dz : 0;
 
-  /* Process the voxels assigned to this pipeline */
+  // Process the voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -83,11 +84,12 @@ static void
 advance_b_pipeline_v4( advance_b_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
-  const float frac         = args->frac;
+  field_t      * ALIGNED(16) f    = args->f;
+  const grid_t *             g    = args->g;
+  const float                frac = args->frac;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -109,10 +111,10 @@ advance_b_pipeline_v4( advance_b_pipeline_args_t * args,
   v4float fz_ex, fz_ey;           // Voxel quad +z neighbor fields
   v4float dummy;
 
-  field_t * ALIGNED f00, * ALIGNED f01, * ALIGNED f02, * ALIGNED f03; // Voxel quad
-  field_t * ALIGNED fx0, * ALIGNED fx1, * ALIGNED fx2, * ALIGNED fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED fy0, * ALIGNED fy1, * ALIGNED fy2, * ALIGNED fy3; // Voxel quad +y neighbors
-  field_t * ALIGNED fz0, * ALIGNED fz1, * ALIGNED fz2, * ALIGNED fz3; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
   
   // Process the voxels assigned to this pipeline 
   
@@ -169,9 +171,9 @@ advance_b_pipeline_v4( advance_b_pipeline_args_t * args,
 #endif
 
 void
-advance_b( field_t * ALIGNED f,
-           const grid_t * g,
-           float frac ) {
+advance_b( field_t      * ALIGNED(16) f,
+           const grid_t *             g,
+           float                      frac ) {
   advance_b_pipeline_args_t args[1];
   
   float px, py, pz;
@@ -181,10 +183,10 @@ advance_b( field_t * ALIGNED f,
   if( f==NULL ) ERROR(("Bad field")); 
   if( g==NULL ) ERROR(("Bad grid"));
 
-  /* Do the bulk of the magnetic fields in the pipelines.  The host
-     handles stragglers. */
+  // Do the bulk of the magnetic fields in the pipelines.  The host
+  // handles stragglers.
 
-# if 0 /* Original non-pipeline version */
+# if 0 // Original non-pipeline version
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(1,y,z);
@@ -208,7 +210,7 @@ advance_b( field_t * ALIGNED f,
   PSTYLE.dispatch( ADVANCE_B_PIPELINE, args, 0 );
   advance_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
-  /* While the pipelines are busy, do surface fields */
+  // While the pipelines are busy, do surface fields
   
   nx = g->nx;
   ny = g->ny;
@@ -217,7 +219,7 @@ advance_b( field_t * ALIGNED f,
   py = (ny>1) ? frac*g->cvac*g->dt/g->dy : 0;
   pz = (nz>1) ? frac*g->cvac*g->dt/g->dz : 0;
 
-  /* Do left over bx */
+  // Do left over bx
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(nx+1,y,  z);
@@ -227,7 +229,7 @@ advance_b( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over by */
+  // Do left over by
   for( z=1; z<=nz; z++ ) {
     f0 = &f(1,ny+1,z);
     fx = &f(2,ny+1,z);
@@ -240,7 +242,7 @@ advance_b( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over bz */
+  // Do left over bz
   for( y=1; y<=ny; y++ ) {
     f0 = &f(1,y,  nz+1);
     fx = &f(2,y,  nz+1);

@@ -39,8 +39,8 @@ RANLIB = ranlib
 RM     = rm -f
 
 /* What compile flags should be used? */
-CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -g
-CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -DUSE_V4_PORTABLE
-LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g
+CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=opteron -mfpmath=sse -m64
+CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=opteron -mfpmath=sse -m64 -DUSE_V4_PORTABLE
+LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=opteron -mfpmath=sse -m64
 ARFLAGS  = 
 

@@ -14,18 +14,18 @@ static float minf( float a, float b ) {
   return a<b ? a : b;
 }
 
-material_coefficient_t * ALIGNED
+material_coefficient_t * ALIGNED(16)
 new_material_coefficients( const grid_t *g,
                            const material_t *m_list ) {
   float ax, ay, az, cg2;
   material_coefficient_t *mc, *material_coefficient;
   const material_t *m;
 
-  /* Check the input parameters */
+  // Check the input parameters
   if( g==NULL ) ERROR(("Invalid grid."));
   if( m_list==NULL ) ERROR(("Empty material list."));
 
-  /* Run sanity checks on the material list */
+  // Run sanity checks on the material list
   ax = g->nx>1 ? g->cvac*g->dt/g->dx : 0; ax *= ax;
   ay = g->ny>1 ? g->cvac*g->dt/g->dy : 0; ay *= ay;
   az = g->nz>1 ? g->cvac*g->dt/g->dz : 0; az *= az;
@@ -62,21 +62,20 @@ new_material_coefficients( const grid_t *g,
                 m->name, sqrt(cg2) ));
   }
 
-  /* Allocate the material coefficients */
-  material_coefficient = (material_coefficient_t * ALIGNED)
-    malloc_aligned( (m_list->id+1)*sizeof(material_coefficient_t),
-                    preferred_alignment );
+  // Allocate the material coefficients
+  material_coefficient = (material_coefficient_t * ALIGNED(16))
+    malloc_aligned( (m_list->id+1)*sizeof(material_coefficient_t), 16 );
   if( material_coefficient==NULL )
     ERROR(("Could not allocate material coefficient array"));
 
-  /* Fill up the material coefficient array */
+  // Fill up the material coefficient array
   LIST_FOR_EACH( m, m_list ) {
     mc = material_coefficient + m->id;
 
-    /* Advance E coefficients
-       Note: m ->sigma{x,y,z} = 0 -> Non conductive
-             mc->decay{x,y,z} = 0 -> Perfect conductor to numerical precision
-             otherwise            -> Conductive */
+    // Advance E coefficients
+    // Note: m ->sigma{x,y,z} = 0 -> Non conductive
+    //       mc->decay{x,y,z} = 0 -> Perfect conductor to numerical precision
+    //       otherwise            -> Conductive
     ax = ( m->sigmax*g->dt ) / ( m->epsx*g->eps0 );
     ay = ( m->sigmay*g->dt ) / ( m->epsy*g->eps0 );
     az = ( m->sigmaz*g->dt ) / ( m->epsz*g->eps0 );
@@ -96,11 +95,12 @@ new_material_coefficients( const grid_t *g,
     mc->rmuy = 1./m->muy;
     mc->rmuz = 1./m->muz;
 
-    /* Clean div E coefficients
-       Note: The charge density due to J = sigma E currents is not computed.
-       Consequently, the divergence error inside conductors cannot computed.
-       The divergence error multiplier is thus set to zero to ignore
-       divergence errors inside conducting materials. */
+    // Clean div E coefficients.  Note: The charge density due to J =
+    // sigma E currents is not computed.  Consequently, the divergence
+    // error inside conductors cannot computed.  The divergence error
+    // multiplier is thus set to zero to ignore divergence errors
+    // inside conducting materials.
+
     mc->nonconductive = ( ax==0 && ay==0 && az==0 ) ? 1. : 0.;
     mc->epsx = m->epsx;
     mc->epsy = m->epsy;
@@ -110,9 +110,8 @@ new_material_coefficients( const grid_t *g,
   return material_coefficient;  
 }
 
-void delete_material_coefficients( material_coefficient_t ** ALIGNED mc ) {
+void delete_material_coefficients( material_coefficient_t ** ALIGNED(16) mc ) {
   if( mc==NULL ) return;
   if( *mc!=NULL ) free_aligned(*mc);
   *mc = NULL;
 }
-

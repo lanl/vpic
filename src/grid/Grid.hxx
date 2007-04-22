@@ -37,9 +37,9 @@ class Grid_T
 		size_t nx_, ny_, nz_; /* Cell dimensions */
 		int bc_[27];
 
-		uint64_t * range_ ALIGN(16);
-		uint64_t * neighbor_ ALIGN(16);
-		uint64_t * rangeh_ ALIGN(16);
+		uint64_t * range_ ALIGNED(16);
+		uint64_t * neighbor_ ALIGNED(16);
+		uint64_t * rangeh_ ALIGNED(16);
 
 		size_t nb_;
 

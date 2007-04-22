@@ -13,4 +13,4 @@
 # endif
 #endif
 #undef IN_v4_h
-#endif /* _v4_h_ */
+#endif // _v4_h_

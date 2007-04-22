@@ -23,20 +23,21 @@
     f0->ez += m[f0->ematz].drivez*pz*(fz->div_e_err-f0->div_e_err)
 
 typedef struct clean_div_e_pipeline_args {
-  field_t                      * ALIGNED f;
-  const material_coefficient_t * ALIGNED m;
-  const grid_t                 *         g;
+  field_t                      * ALIGNED(16) f;
+  const material_coefficient_t * ALIGNED(16) m;
+  const grid_t                 *             g;
 } clean_div_e_pipeline_args_t;
 
 static void
 clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  field_t                      * ALIGNED f = args->f;
-  const material_coefficient_t * ALIGNED m = args->m;
-  const grid_t                 *         g = args->g;
+  field_t                      * ALIGNED(16) f = args->f;
+  const material_coefficient_t * ALIGNED(16) m = args->m;
+  const grid_t                 *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -53,7 +54,7 @@ clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
   py *= alphadt;
   pz *= alphadt;
   
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
 
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -90,9 +91,9 @@ clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
 #endif
 
 void
-clean_div_e( field_t * ALIGNED f,
-             const material_coefficient_t * ALIGNED m,
-             const grid_t * g ) {
+clean_div_e( field_t                      * ALIGNED(16) f,
+             const material_coefficient_t * ALIGNED(16) m,
+             const grid_t                 *             g ) {
   clean_div_e_pipeline_args_t args[1];
   
   float alphadt, px, py, pz;
@@ -103,10 +104,10 @@ clean_div_e( field_t * ALIGNED f,
   if( m==NULL ) ERROR(("Bad material coefficients"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-  /* Do majority of field components in single pass on the pipelines.
-     The host handles stragglers. */
+  // Do majority of field components in single pass on the pipelines.
+  // The host handles stragglers.
 
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(1,y,  z);
@@ -130,7 +131,7 @@ clean_div_e( field_t * ALIGNED f,
   PSTYLE.dispatch( CLEAN_DIV_E_PIPELINE, args, 0 );
   clean_div_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   
-  /* Do left over field components on the host */
+  // Do left over field components on the host
 
   nx = g->nx;
   ny = g->ny;
@@ -143,7 +144,7 @@ clean_div_e( field_t * ALIGNED f,
   py *= alphadt;
   pz *= alphadt;
   
-  /* Do left over ex */
+  // Do left over ex
   for( y=1; y<=ny+1; y++ ) {
     f0 = &f(1,y,nz+1);
     fx = &f(2,y,nz+1);
@@ -161,7 +162,7 @@ clean_div_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over ey */
+  // Do left over ey
   for( z=1; z<=nz+1; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(nx+1,y,  z);
@@ -178,7 +179,7 @@ clean_div_e( field_t * ALIGNED f,
     }
   }
 
-  /* Do left over ez */
+  // Do left over ez
   for( z=1; z<=nz; z++ ) {
     f0 = &f(1,ny+1,z);
     fz = &f(1,ny+1,z+1);
@@ -195,7 +196,7 @@ clean_div_e( field_t * ALIGNED f,
     }
   }
 
-  PSTYLE.wait(); /* FIXME: FINISH EVEN LATER?? */
+  PSTYLE.wait(); // FIXME: FINISH EVEN LATER??
 
   local_adjust_tang_e(f,g);
 }

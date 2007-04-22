@@ -8,11 +8,11 @@
  *
  */
 
-#include <util_base.h> /* Declarations */
-#include <stdio.h>     /* For vfprintf */
-#include <stdarg.h>    /* For va_list, va_start, va_end */
+#include <util_base.h> // Declarations
+#include <stdio.h>     // For vfprintf
+#include <stdarg.h>    // For va_list, va_start, va_end
 
-void * ALIGNED malloc_aligned( size_t n, size_t a ) {
+void * malloc_aligned( size_t n, size_t a ) {
   char *mem_u, *mem_a, **mem_p;
 
   a--;
@@ -25,10 +25,10 @@ void * ALIGNED malloc_aligned( size_t n, size_t a ) {
     mem_p[0] = mem_u;
   }
 
-  return (void * ALIGNED)mem_a;
+  return (void *)mem_a;
 }
 
-void free_aligned( void * ALIGNED mem ) {
+void free_aligned( void * mem ) {
   char *mem_u, *mem_a, **mem_p;
 
   if( mem!=NULL ) {

@@ -33,12 +33,12 @@
  *
  ***************************************************************************/
 
-/* Modified extensively for VPIC-3P by K. Bowers 4/10/2007 */
-/* Modified extensively for VPIC-3P SPU dispatch by K. Bowers 4/20/2007 */
+// Modified extensively for VPIC-3P by K. Bowers 4/10/2007
+// Modified extensively for VPIC-3P SPU dispatch by K. Bowers 4/20/2007
 
-/* TO DO: 
-   (?) Signal blocking in spu_control_threads
-   (?) Timeouts in spu_halt, spu_boot (spin wait) */
+// TO DO:
+// (?) Signal blocking in spu_control_threads
+// (?) Timeouts in spu_halt, spu_boot (spin wait)
 
 #include <pipelines.h>
 #include <pthread.h>
@@ -134,32 +134,32 @@ static void
 spu_boot( int num_pipe ) {
   int i;
 
-  /* Check if arguments are valid and dispatcher isn't already initialized */
+  // Check if arguments are valid and dispatcher isn't already initialized
 
   if( spu.n_pipeline != 0 ) ERROR(( "Halt the spu dispatcher first!" ));
   if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
 
-  /* Initialize some global variables. Note: spu.n_pipeline = 0 here */ 
+  // Initialize some global variables. Note: spu.n_pipeline = 0 here
 
   Host = pthread_self();
   Id = 0;
 
-  /* Initialize all the pipelines */
+  // Initialize all the pipelines
 
   for( i=0; i<num_pipe; i++ ) {
 
-    /* Initialize the spu control thread state. Note:
-       SPU_CONTROL_THREAD_ACK will be cleared once the spu control
-       thread starts executing and the spu control thread is ready to
-       execute pipelines. */
+    // Initialize the spu control thread state. Note:
+    // SPU_CONTROL_THREAD_ACK will be cleared once the spu control
+    // thread starts executing and the spu control thread is ready to
+    // execute pipelines.
 
     SPU_Control_State[i].state = SPU_CONTROL_THREAD_ACK;
 
-    /* Initialize the spu control thread mutex, signal condition
-       variables and spe context and spawn the spu control thread.
-       Note: When mutexes are initialized, they are initialized to the
-       unlocked state */
+    // Initialize the spu control thread mutex, signal condition
+    // variables and spe context and spawn the spu control thread.
+    // Note: When mutexes are initialized, they are initialized to the
+    // unlocked state
 
     if( pthread_cond_init( &SPU_Control_State[i].wake, NULL ) )
       ERROR(( "pthread_cond_init failed" ));
@@ -176,14 +176,14 @@ spu_boot( int num_pipe ) {
                         &SPU_Control_State[i] ) )
       ERROR(( "pthread_create failed" ));
 
-    /* The spu control thread spawn was successful.  Wait for the spu
-       control thread to acknowledge and go to sleep.  This insures
-       all created spu control threads will be ready to execute
-       pipelines upon return from this function.  Note: If the spu
-       control thread never acknowledges this function will spin
-       forever (maybe should add a time out) - however, if this
-       happens, it is not the library's fault (O/S or pthreads screwed
-       up) */
+    // The spu control thread spawn was successful.  Wait for the spu
+    // control thread to acknowledge and go to sleep.  This insures
+    // all created spu control threads will be ready to execute
+    // pipelines upon return from this function.  Note: If the spu
+    // control thread never acknowledges this function will spin
+    // forever (maybe should add a time out) - however, if this
+    // happens, it is not the library's fault (O/S or pthreads screwed
+    // up)
 
     while( SPU_Control_State[i].state != SPU_CONTROL_THREAD_SLEEP )
       nanodelay(50);
@@ -227,48 +227,48 @@ static void
 spu_halt( void ) {
   int id;
 
-  /* Make sure the host is the caller and there are spu control threads to
-     terminate */
+  // Make sure the host is the caller and there are spu control
+  // threads to terminate
 
   if( !spu.n_pipeline ) ERROR(( "Boot the spu dispatcher first!" ));
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may halt the spu dispatcher!" ));
 
-  /* Terminate the spu control threads */
+  // Terminate the spu control threads
 
   for( id=0; id<spu.n_pipeline; id++ ) {
-
-    /* Signal the spu control thread to terminate. Note: If the spu
-       control thread is executing a pipeline which doesn't return,
-       this function will spin forever here (maybe should add a
-       timeout, forced kill) */
+    
+    // Signal the spu control thread to terminate.  Note: If the spu
+    // control thread is executing a pipeline which doesn't return,
+    // this function will spin forever here (maybe should add a
+    // timeout, forced kill)
 
     pthread_mutex_lock( &SPU_Control_State[id].mutex );
     SPU_Control_State[id].state = SPU_CONTROL_THREAD_TERMINATE;
     pthread_cond_signal( &SPU_Control_State[id].wake );
     pthread_mutex_unlock( &SPU_Control_State[id].mutex );
 
-    /* Wait for the spu control thread to terminate. Note: As
-       SPU_Control_State[id].state = SPU_CONTROL_THREAD_TERMINATE
-       now, non-terminated spu control threads calling
-       parallel_execute will not be able to dispatch pipelines to
-       terminated spu_control_threads (see the innermost switch in
-       parallel_execute) (This note does not apply for this
-       restricted dispatcher.) */
+    // Wait for the spu control thread to terminate. Note: As
+    // SPU_Control_State[id].state = SPU_CONTROL_THREAD_TERMINATE now,
+    // non-terminated spu control threads calling parallel_execute
+    // will not be able to dispatch pipelines to terminated
+    // spu_control_threads (see the innermost switch in
+    // parallel_execute).  This note does not apply for this
+    // restricted dispatcher.
 
     if( pthread_join( SPU_Control_State[id].handle, NULL ) )
       ERROR(( "Unable to terminate spu control thread!" ));
 
   }
 
-  /* Free resources associated with dispatcher as all spu control
-     threads are now dead.  Note: This must be done in a separate loop
-     because non-terminated spu control threads calling
-     parallel_execute may try to access mutexes for destroyed spu
-     control threads and Id and with unknown results if the mutexes
-     were destroyed before all the spu control threads were
-     terminated.  (This note does not apply for this restricted
-     dispatcher.) */
+  // Free resources associated with dispatcher as all spu control
+  // threads are now dead.  Note: This must be done in a separate loop
+  // because non-terminated spu control threads calling
+  // parallel_execute may try to access mutexes for destroyed spu
+  // control threads and Id and with unknown results if the mutexes
+  // were destroyed before all the spu control threads were
+  // terminated.  This note does not apply for this restricted
+  // dispatcher.
 
   for( id=0; id<spu.n_pipeline; id++ )
     if( spe_context_destroy( SPU_Control_State[id].context ) ||
@@ -276,7 +276,7 @@ spu_halt( void ) {
         pthread_cond_destroy( &SPU_Control_State[id].wake ) )
       ERROR(( "Unable to destroy spu control thread resources!" ));
 
-  /* Finish up */
+  // Finish up
 
   spu.n_pipeline = Id = 0;
   Busy = 0;
@@ -334,8 +334,8 @@ parallel_execute( spe_program_handle_t * pipeline,
                   volatile int *flag ) {
   int id;
 
-  /* Determine that the spu dispatcher is initialized and that
-     caller is the host spu. */
+  // Determine that the spu dispatcher is initialized and that caller
+  // is the host spu.
 
   if( spu.n_pipeline==0 )
     ERROR(( "Boot the spu dispatcher first!" ));
@@ -343,31 +343,31 @@ parallel_execute( spe_program_handle_t * pipeline,
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call parallel_execute" ));
 
-  /* Loop until we hand off the task to a spu control thread (or we
-     detect spu_halt is running) */
+  // Loop until we hand off the task to a spu control thread (or we
+  // detect spu_halt is running)
 
   for(;;) {
 
-    /* Get an id of a spu control thread to query. */
+    // Get an id of a spu control thread to query.
 
     id = Id; if( (++Id) >= spu.n_pipeline ) Id = 0;
 
     if( !pthread_mutex_trylock( &SPU_Control_State[id].mutex ) ) {
       
-      /* If the spu control thread isn't executing a pipeline, see if
-         the task can be handed off to this spu control thread.  Note:
-         host ppu thread now has control over the spu control thread's
-         state. */
+      // If the spu control thread isn't executing a pipeline, see if
+      // the task can be handed off to this spu control thread.  Note:
+      // host ppu thread now has control over the spu control thread's
+      // state.
       
       switch( SPU_Control_State[id].state ) {
         
-        /* Note: all cases relinquish control over the spu control
-           thread's state */
+        // Note: all cases relinquish control over the spu control
+        // thread's state
         
       case SPU_CONTROL_THREAD_SLEEP:
         
-        /* The spu control thread is available - assign the task, wake
-           the spu control thread and return */
+        // The spu control thread is available - assign the task, wake
+        // the spu control thread and return
         
         SPU_Control_State[id].state    = SPU_CONTROL_THREAD_EXECUTE;
         SPU_Control_State[id].pipeline = pipeline;
@@ -381,8 +381,8 @@ parallel_execute( spe_program_handle_t * pipeline,
         
       case SPU_CONTROL_THREAD_TERMINATE:
         
-        /* The query spu control thread was terminated.  Something is
-           amiss! */
+        // The query spu control thread was terminated.  Something is
+        // amiss!
         
         pthread_mutex_unlock( &SPU_Control_State[id].mutex );
         ERROR(( "parallel_execute called while spu_halt is running - "
@@ -390,15 +390,15 @@ parallel_execute( spe_program_handle_t * pipeline,
         
       default:
         
-        /* Spu control thread isn't ready to accept new tasks (it is
-           about to wake-up to execute an already assigned task) */
+        // Spu control thread isn't ready to accept new tasks (it is
+        // about to wake-up to execute an already assigned task)
         
         pthread_mutex_unlock( &SPU_Control_State[id].mutex );
         
-      } /* switch */
-    } /* if spu control thread might be available */
-  } /* for */  
-  /* Never get here */
+      } // switch
+    } // if spu control thread might be available
+  } // for
+  // Never get here
 }
 
 /****************************************************************************
@@ -428,16 +428,16 @@ spu_control_thread( void *_this_control_thread ) {
   unsigned int entry;
   uint64_t env;
 
-  /* Spu control thread state is SPU_CONTROL_THREAD_ACK and the spu
-     control thread mutex is unlocked when entering.  Since
-     pthread_cond_wait unlockes the spu control thread mutex when the
-     spu control thread goes to sleep and the SPU_CONTROL_THREAD_ACK
-     case writes the spu control thread state, the mutex needs to be
-     locked first. */
+  // Spu control thread state is SPU_CONTROL_THREAD_ACK and the spu
+  // control thread mutex is unlocked when entering.  Since
+  // pthread_cond_wait unlockes the spu control thread mutex when the
+  // spu control thread goes to sleep and the SPU_CONTROL_THREAD_ACK
+  // case writes the spu control thread state, the mutex needs to be
+  // locked first.
      
   pthread_mutex_lock( &this_control_thread->mutex );
 
-  /* Loop while the spu control thread is still executing */
+  // Loop while the spu control thread is still executing
 
   for(;;) {
 
@@ -445,20 +445,20 @@ spu_control_thread( void *_this_control_thread ) {
 
     case SPU_CONTROL_THREAD_TERMINATE:
 
-      /* Terminate the spu control thread. Unlock the mutex first (as
-         pthread_cond_wait locks it when the spu control thread wakes
-         up). */
+      // Terminate the spu control thread. Unlock the mutex first (as
+      // pthread_cond_wait locks it when the spu control thread wakes
+      // up).
 
       pthread_mutex_unlock( &this_control_thread->mutex );
       return NULL;
 
     case SPU_CONTROL_THREAD_EXECUTE:
 
-      /* Note: the spu control thread mutex is locked while the spu
-         control thread is executing a task. */
+      // Note: the spu control thread mutex is locked while the spu
+      // control thread is executing a task.
 
-      /* Load the program into the context, execute the given task and
-         set the completion flag if necessary. */
+      // Load the program into the context, execute the given task and
+      // set the completion flag if necessary.
 
       if( spe_program_load( this_control_thread->context,
                             this_control_thread->pipeline ) )
@@ -477,26 +477,26 @@ spu_control_thread( void *_this_control_thread ) {
 
       if( this_control_thread->flag ) *this_control_thread->flag = 1;
 
-      /* Pass through into the next case */
+      // Pass through into the next case
 
     case SPU_CONTROL_THREAD_ACK:
     case SPU_CONTROL_THREAD_SLEEP:
     default:
 
-      /* Go to sleep. Note: pthread_cond_wait unlocks the spu control
-         thread mutex while the spu control thread is sleeping and
-         locks it when the spu control thread wakes up */
+      // Go to sleep. Note: pthread_cond_wait unlocks the spu control
+      // thread mutex while the spu control thread is sleeping and
+      // locks it when the spu control thread wakes up
 
       this_control_thread->state = SPU_CONTROL_THREAD_SLEEP;
       pthread_cond_wait( &this_control_thread->wake,
                          &this_control_thread->mutex );
       break;
 
-    } /* switch */
+    } // switch
 
-  } /* for */
+  } // for
 
-  return NULL; /* Never get here - Avoid compiler warning */
+  return NULL; // Never get here - Avoid compiler warning
 }
 
 static void
@@ -551,12 +551,12 @@ spu_wait( void ) {
 typedef void (*dispatcher_func_t)( pipeline_func_t, void *, int );
 
 pipeline_dispatcher_t spu = {
-  0,            /* n_pipeline */
-  spu_boot,     /* boot */
-  spu_halt,     /* halt */
-  (dispatcher_func_t)spu_dispatch, /* dispatch */
-  spu_wait      /* wait */
+  0,            // n_pipeline
+  spu_boot,     // boot
+  spu_halt,     // halt
+  (dispatcher_func_t)spu_dispatch, // dispatch
+  spu_wait      // wait
 };
 
-#endif /* USE_CELL_SPUS */
+#endif // USE_CELL_SPUS
 

@@ -13,9 +13,11 @@
 #define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3(x,y,z,0,lnx+1,0,lny+1,0,lnz+1)
 #define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3(x,y,z,0,rnx+1,0,rny+1,0,rnz+1)
 
-/* Everybody must size their local grid in parallel */
+// Everybody must size their local grid in parallel
 
-void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
+void
+size_grid( grid_t * g,
+           int lnx, int lny, int lnz ) {
   int rank, nproc, i, j, k, x, y, z, lnc;
   int64_t ii, jj, kk; 
 
@@ -26,7 +28,7 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
 
-  /* Setup phase 2 data structures */
+  // Setup phase 2 data structures
   g->nx = lnx;
   g->ny = lny;
   g->nz = lnz;
@@ -36,14 +38,14 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
         g->bc[ BOUNDARY(i,j,k) ] = pec_fields;
   g->bc[ BOUNDARY(0,0,0) ] = rank;
 
-  /* Setup phase 3 data structures */
-  /* This is an ugly kludge to interface phase 2 and phase 3 data structures */
+  // Setup phase 3 data structures.  This is an ugly kludge to
+  // interface phase 2 and phase 3 data structures
   lnc = (lnx+2)*(lny+2)*(lnz+2);
   if( g->range!=NULL ) free_aligned( g->range );
-  g->range = (int64_t * ALIGNED)
-    malloc_aligned( (nproc+1)*sizeof(int64_t), preferred_alignment );
+  g->range =
+    (int64_t * ALIGNED(16))malloc_aligned( (nproc+1)*sizeof(int64_t), 16 );
   if( g->range==NULL ) ERROR(("Could not allocate range array"));
-  ii = lnc; /* lnc is not 64-bits */
+  ii = lnc; // lnc is not 64-bits
   mp_allgather_i64(&ii,g->range,1,g->mp);
   jj = 0;
   g->range[nproc] = 0;
@@ -56,8 +58,8 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
   g->rangeh = g->range[rank+1]-1;
 
   if( g->neighbor!=NULL ) free_aligned( g->neighbor );
-  g->neighbor = (int64_t * ALIGNED)
-    malloc_aligned( 6*lnc*sizeof(int64_t), preferred_alignment );
+  g->neighbor =
+    (int64_t * ALIGNED(16))malloc_aligned( 6*lnc*sizeof(int64_t), 16 );
   if( g->neighbor==NULL ) ERROR(("Could not allocate neighbor array"));
 
   for( z=0; z<=lnz+1; z++ )
@@ -70,14 +72,14 @@ void size_grid( grid_t * g, int lnx, int lny, int lnz ) {
         g->neighbor[i+3] = g->rangel + LOCAL_CELL_ID(x+1,y,z);
         g->neighbor[i+4] = g->rangel + LOCAL_CELL_ID(x,y+1,z);
         g->neighbor[i+5] = g->rangel + LOCAL_CELL_ID(x,y,z+1);
-        /* Set boundary faces appropriately */
+        // Set boundary faces appropriately
         if( x==1   ) g->neighbor[i+0] = reflect_particles;
         if( y==1   ) g->neighbor[i+1] = reflect_particles;
         if( z==1   ) g->neighbor[i+2] = reflect_particles;
         if( x==lnx ) g->neighbor[i+3] = reflect_particles;
         if( y==lny ) g->neighbor[i+4] = reflect_particles;
         if( z==lnz ) g->neighbor[i+5] = reflect_particles;
-        /* Set ghost cells appropriately */
+        // Set ghost cells appropriately
         if( x==0 || x==lnx+1 ||
             y==0 || y==lny+1 ||
             z==0 || z==lnz+1 ) {
@@ -102,15 +104,14 @@ void join_grid( grid_t * g, int boundary, int rank ) {
   if( rank<0 ||
       rank>=mp_nproc(g->mp)     ) ERROR(("Bad rank"));
 
-  /* Join phase 2 data structures */
+  // Join phase 2 data structures
   g->bc[boundary] = rank;
 
-  /* Join phase 3 data structures */
+  // Join phase 3 data structures
   lnx = g->nx;
   lny = g->ny;
   lnz = g->nz;
-  rnc = g->range[rank+1] - g->range[rank]; /* NOTE: rnc <~ 2^31 / 6 */
-
+  rnc = g->range[rank+1] - g->range[rank]; // Note: rnc <~ 2^31 / 6
 
 # define GLUE_FACE(tag,i,j,k,X,Y,Z) BEGIN_PRIMITIVE {           \
     if( boundary==BOUNDARY(i,j,k) ) {                           \

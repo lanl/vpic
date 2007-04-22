@@ -11,22 +11,24 @@
 #include <field.h>
 #include <pipelines.h>
 
-field_t * ALIGNED new_field( const grid_t * g ) {
-  field_t * ALIGNED f;
+field_t * ALIGNED(16)
+new_field( const grid_t * g ) {
+  field_t * ALIGNED(16) f;
   int req;
 
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
 
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(field_t);
-  f = (field_t * ALIGNED)malloc_aligned( req, preferred_alignment );
+  f = (field_t * ALIGNED(16))malloc_aligned( req, 16 );
   if( f==NULL ) ERROR(("Failed to allocate field."));
   clear_field( f, g );
 
   return f;
 }
 
-void delete_field( field_t ** ALIGNED f ) {
+void
+delete_field( field_t ** ALIGNED(16) f ) {
   if( f==NULL ) return;
   if( *f!=NULL ) free_aligned(*f);
   *f = NULL;
@@ -34,15 +36,18 @@ void delete_field( field_t ** ALIGNED f ) {
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
-void clear_field( field_t * ALIGNED f,
-	          const grid_t * g ) {
+void
+clear_field( field_t      * ALIGNED(16) f,
+             const grid_t *             g ) {
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
-  /* FIXME: SPU THIS */
+  // FIXME: SPU THIS
   memset( f, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(field_t) );
 }
 
-void clear_jf( field_t * ALIGNED f, const grid_t * g ) {
+void
+clear_jf( field_t      * ALIGNED(16) f,
+          const grid_t *             g ) {
   int nx, ny, nz, x, y, z;
   field_t *f0;
 
@@ -65,7 +70,9 @@ void clear_jf( field_t * ALIGNED f, const grid_t * g ) {
   }
 }
 
-void clear_rhof( field_t * ALIGNED f, const grid_t * g ) {
+void
+clear_rhof( field_t      * ALIGNED(16) f,
+            const grid_t *             g ) {
   int nx, ny, nz, x, y, z;
   field_t *f0;
 
@@ -88,29 +95,32 @@ void clear_rhof( field_t * ALIGNED f, const grid_t * g ) {
 
 /*****************************************************************************/
 
-hydro_t * ALIGNED new_hydro( const grid_t * g ) {
-  hydro_t * ALIGNED h;
+hydro_t * ALIGNED(16)
+new_hydro( const grid_t * g ) {
+  hydro_t * ALIGNED(16) h;
   int req;
 
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
 
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(hydro_t);
-  h = (hydro_t * ALIGNED)malloc_aligned( req, preferred_alignment );
+  h = (hydro_t * ALIGNED(16))malloc_aligned( req, 16 );
   if( h==NULL ) ERROR(("Failed to allocate hydro."));
   clear_hydro(h,g);
 
   return h;
 }
 
-void delete_hydro( hydro_t ** ALIGNED h ) {
+void
+delete_hydro( hydro_t ** ALIGNED(16) h ) {
   if( h==NULL ) return;
   if( *h!=NULL ) free_aligned(*h);
   *h = NULL;
 }
 
-void clear_hydro( hydro_t * ALIGNED h,
-	          const grid_t * g ) {
+void
+clear_hydro( hydro_t * ALIGNED(16) h,
+             const grid_t * g ) {
   if( h==NULL ) ERROR(("Bad hydro"));
   if( g==NULL ) ERROR(("Bad grid"));
   memset( h, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(hydro_t) );
@@ -118,7 +128,8 @@ void clear_hydro( hydro_t * ALIGNED h,
 
 /*****************************************************************************/
 
-interpolator_t * ALIGNED new_interpolator( const grid_t * g ) {
+interpolator_t * ALIGNED(16)
+new_interpolator( const grid_t * g ) {
   interpolator_t *fi;
   int req;
 
@@ -126,21 +137,23 @@ interpolator_t * ALIGNED new_interpolator( const grid_t * g ) {
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Invalid grid resolution."));
   
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t);
-  fi = (interpolator_t * ALIGNED)malloc_aligned( req, preferred_alignment );
+  fi = (interpolator_t * ALIGNED(16))malloc_aligned( req, 16 );
   if( fi==NULL ) ERROR(("Failed to allocate interpolator."));
   clear_interpolator(fi,g);
 
   return fi;
 }
 
-void delete_interpolator( interpolator_t ** ALIGNED fi ) {
+void
+delete_interpolator( interpolator_t ** ALIGNED(16) fi ) {
   if( fi==NULL ) return;
   if( *fi!=NULL ) free_aligned( fi );
   *fi = NULL;
 }
 
-void clear_interpolator( interpolator_t * ALIGNED fi,
-                         const grid_t * g ) {
+void
+clear_interpolator( interpolator_t * ALIGNED(16) fi,
+                    const grid_t * g ) {
   if( fi==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
   memset( fi, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t) );
@@ -148,7 +161,7 @@ void clear_interpolator( interpolator_t * ALIGNED fi,
 
 /*****************************************************************************/
 
-accumulator_t * ALIGNED
+accumulator_t * ALIGNED(16)
 new_accumulators( const grid_t * g ) {
   accumulator_t *a;
   size_t req;
@@ -156,8 +169,9 @@ new_accumulators( const grid_t * g ) {
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
+  // FIXME: SPU THIS
   req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+PSTYLE.n_pipeline)*sizeof(accumulator_t);
-  a = (accumulator_t * ALIGNED)malloc_aligned( req, preferred_alignment );
+  a = (accumulator_t * ALIGNED(16))malloc_aligned( req, 16 );
   if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );
 
@@ -165,7 +179,7 @@ new_accumulators( const grid_t * g ) {
 }
 
 void
-delete_accumulators( accumulator_t ** ALIGNED a ) {
+delete_accumulators( accumulator_t ** ALIGNED(16) a ) {
   if( a==NULL ) return;
   if( *a!=NULL ) free_aligned( a );
   *a = NULL;

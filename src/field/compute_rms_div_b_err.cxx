@@ -18,8 +18,8 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct compute_rms_div_b_err_pipeline_args {
-  field_t      * ALIGNED f;
-  const grid_t *         g;
+  field_t      * ALIGNED(16) f;
+  const grid_t *             g;
   double err[MAX_PIPELINE+1];
 } compute_rms_div_b_err_pipeline_args_t;
 
@@ -27,10 +27,10 @@ static void
 compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
                              
-  field_t * ALIGNED f0;
+  field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -39,7 +39,7 @@ compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
 
   double err;
 
-  /* Process voxels assigned to this pipeline */
+  // Process voxels assigned to this pipeline
 
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -68,8 +68,8 @@ compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
 #endif
 
 double
-compute_rms_div_b_err( field_t * ALIGNED f,
-                       const grid_t * g ) {
+compute_rms_div_b_err( field_t      * ALIGNED(16) f,
+                       const grid_t *             g ) {
   compute_rms_div_b_err_pipeline_args_t args[1];
   int p;
   
@@ -78,7 +78,7 @@ compute_rms_div_b_err( field_t * ALIGNED f,
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   err = 0;
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {

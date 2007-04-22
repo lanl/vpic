@@ -1,7 +1,7 @@
 #include <field.h>
 
-/* Any compiler worth its salt has highly optimized version for the
-   target platform */
+// Any compiler worth its salt has highly optimized version for the
+// target platform
 
 #undef V4_ACCELERATION
 
@@ -12,16 +12,17 @@
 #endif
 
 typedef struct clear_accumulators_pipeline_args {
-  accumulator_t * ALIGNED a; /* Base of all the accumulators */
-  int n_voxel;
+  accumulator_t * ALIGNED(16) a;       // Base of all the accumulators
+  int                         n_voxel;
 } clear_accumulators_pipeline_args_t;
 
 static void
 clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
                              int pipeline_rank,
                              int n_pipeline ) {
-  /* Have each pipeline clear its personal accumulator */
-  memset( args->a + pipeline_rank*args->n_voxel, 0, args->n_voxel*sizeof(accumulator_t) );
+  // Have each pipeline clear its personal accumulator
+  memset( args->a + pipeline_rank*args->n_voxel, 0,
+          args->n_voxel*sizeof(accumulator_t) );
 }
 
 #ifdef V4_ACCELERATION
@@ -29,8 +30,8 @@ clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
 #endif
 
 void
-clear_accumulators( accumulator_t * ALIGNED a,
-                    const grid_t * g ) {
+clear_accumulators( accumulator_t * ALIGNED(16) a,
+                    const grid_t  *             g ) {
   clear_accumulators_pipeline_args_t args[1];
 
   if( a==NULL ) ERROR(("Invalid accumulator"));

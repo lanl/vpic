@@ -57,20 +57,21 @@ private:
 
   // Helper initialized by user; restart-saved
 
-  mt_handle rng;             // Random helpers (seed defaults to rank)
-  material_t *material_list; // Material helpers
-  grid_t *grid;              // Grid helpers
-  field_t * ALIGNED field;   // Grid helpers / field helpers
-  species_t *species_list;   // Species helpers / particle helpers
-  emitter_t *emitter_list;   // Particle emitters
+  mt_handle rng;               // Random helpers (seed defaults to rank)
+  material_t *material_list;   // Material helpers
+  grid_t *grid;                // Grid helpers
+  field_t * ALIGNED(16) field; // Grid helpers / field helpers
+  species_t *species_list;     // Species helpers / particle helpers
+  emitter_t *emitter_list;     // Particle emitters
 
   // Helper initialized by user; not restart-saved (can be derived from above)
 
-  material_coefficient_t * ALIGNED material_coefficient; // Material helpers
-  interpolator_t * ALIGNED interpolator; // Grid helpers
-  accumulator_t * ALIGNED accumulator;   // Grid helpers
-  hydro_t * ALIGNED hydro;               // Grid helpers
-  species_t **species_lookup;            // Species helpers / particle helpers
+  material_coefficient_t * ALIGNED(16) material_coefficient;
+  /**/                                       // Material helpers
+  interpolator_t * ALIGNED(16) interpolator; // Grid helpers
+  accumulator_t * ALIGNED(16) accumulator;   // Grid helpers
+  hydro_t * ALIGNED(16) hydro;               // Grid helpers
+  species_t **species_lookup;                // Species / particle helpers
 
   // Internal use only variables; restart saved
 
@@ -264,8 +265,9 @@ private:
                               double ux, double uy, double uz,
                               double q,  double age = 0 );
 
-  /* It is more efficient to use species id for repeated particle injection as
-     it does not require the string compare costs for species name lookup */
+  // It is more efficient to use species id for repeated particle
+  // injection as it does not require the string compare costs for
+  // species name lookup
   inline error_code inject_particle( const char *name,
                                      double x,  double y,  double z,
                                      double ux, double uy, double uz,
@@ -341,4 +343,4 @@ private:
   void user_diagnostics(void);
 };
 
-#endif /* _vpic_hxx_ */
+#endif // _vpic_hxx_

@@ -9,18 +9,19 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct compute_div_b_err_pipeline_args {
-  field_t      * ALIGNED f;
-  const grid_t *         g;
+  field_t      * ALIGNED(16) f;
+  const grid_t *             g;
 } compute_div_b_err_pipeline_args_t;
 
 static void
 compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
                             int pipeline_rank,
                             int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
   
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -31,7 +32,7 @@ compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
   const float py = (ny>1) ? 1./g->dy : 0;
   const float pz = (nz>1) ? 1./g->dz : 0;
 
-  /* Process the voxels assigned to this pipeline */
+  // Process the voxels assigned to this pipeline
   
   n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
                                pipeline_rank, n_pipeline,
@@ -71,10 +72,11 @@ static void
 compute_div_b_err_pipeline_v4( compute_div_b_err_pipeline_args_t * args,
                                int pipeline_rank,
                                int n_pipeline ) {
-  field_t      * ALIGNED f = args->f;
-  const grid_t *         g = args->g;
+  field_t      * ALIGNED(16) f = args->f;
+  const grid_t *             g = args->g;
 
-  field_t * ALIGNED f0, * ALIGNED fx, * ALIGNED fy, * ALIGNED fz;
+  field_t * ALIGNED(16) f0;
+  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -95,10 +97,10 @@ compute_div_b_err_pipeline_v4( compute_div_b_err_pipeline_args_t * args,
   v4float fy_cby;                 // Voxel quad +y neighbor y magnetic fields
   v4float fz_cbz;                 // Voxel quad +z neighbor z magnetic fields
 
-  field_t * ALIGNED f00, * ALIGNED f01, * ALIGNED f02, * ALIGNED f03; // Voxel quad
-  field_t * ALIGNED fx0, * ALIGNED fx1, * ALIGNED fx2, * ALIGNED fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED fy0, * ALIGNED fy1, * ALIGNED fy2, * ALIGNED fy3; // Voxel quad +x neighbors
-  field_t * ALIGNED fz0, * ALIGNED fz1, * ALIGNED fz2, * ALIGNED fz3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +x neighbors
 
   // Process the voxels assigned to this pipeline 
   
@@ -151,14 +153,14 @@ compute_div_b_err_pipeline_v4( compute_div_b_err_pipeline_args_t * args,
 #endif
 
 void
-compute_div_b_err( field_t * ALIGNED f,
-                   const grid_t * g ) {
+compute_div_b_err( field_t      * ALIGNED(16) f,
+                   const grid_t *             g ) {
   compute_div_b_err_pipeline_args_t args[1];
   
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
   
-# if 0 /* Original non-pipelined version */
+# if 0 // Original non-pipelined version
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
       f0 = &f(1,y,z);

@@ -12,7 +12,7 @@
 #include <math.h>
 
 #ifndef ALIGNED
-#define ALIGNED
+#define ALIGNED(n)
 #endif
 
 // This requires gcc-3.3 and up
@@ -50,46 +50,52 @@ namespace v4 {
 
     // v4 memory manipulation friends
         
-    friend inline void load_4x1( const void * ALIGNED p, v4 &a );
-    friend inline void store_4x1( const v4 &a, void * ALIGNED p );
-    friend inline void stream_4x1( const v4 &a, void * ALIGNED p );
-    friend inline void copy_4x1( void * ALIGNED dst,
-                                 const void * ALIGNED src );
-    friend inline void swap_4x1( void * ALIGNED a, void * ALIGNED b );
+    friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
+    friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void copy_4x1( void * ALIGNED(16) dst,
+                                 const void * ALIGNED(16) src );
+    friend inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
 
     // v4 transposed memory manipulation friends
 
     friend inline void load_4x1_tr( const void *a0, const void *a1,
                                     const void *a2, const void *a3,
                                     v4 &a );
-    friend inline void load_4x2_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x2_tr( const void * ALIGNED(8) a0,
+                                    const void * ALIGNED(8) a1,
+                                    const void * ALIGNED(8) a2,
+                                    const void * ALIGNED(8) a3,
                                     v4 &a, v4 &b );
-    friend inline void load_4x3_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x3_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c );
-    friend inline void load_4x4_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
     
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(8) a0,
+                                     void * ALIGNED(8) a1,
+                                     void * ALIGNED(8) a2,
+                                     void * ALIGNED(8) a3 );
     friend inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3 );
     friend inline void store_4x4_tr( const v4 &a, const v4 &b,
                                      const v4 &c, const v4 &d,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3 );
 
   protected:
 
@@ -161,27 +167,29 @@ namespace v4 {
 
   // v4 memory manipulation functions
   
-  inline void load_4x1( const void * ALIGNED p, v4 &a ) {
-    a.v = _mm_load_ps((float * ALIGNED)p);
+  inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
+    a.v = _mm_load_ps((float * ALIGNED(16))p);
   }
 
-  inline void store_4x1( const v4 &a, void * ALIGNED p ) {
-    _mm_store_ps((float * ALIGNED)p,a.v);
+  inline void store_4x1( const v4 &a, void * ALIGNED(16) p ) {
+    _mm_store_ps((float * ALIGNED(16))p,a.v);
   }
 
-  inline void stream_4x1( const v4 &a, void * ALIGNED p ) {
-    _mm_stream_ps((float * ALIGNED)p,a.v);
+  inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
+    _mm_stream_ps((float * ALIGNED(16))p,a.v);
   }
 
   // FIXME: Ordering semantics
-  inline void copy_4x1( void * ALIGNED dst, const void * ALIGNED src ) {
-    _mm_store_ps( (float * ALIGNED)dst, _mm_load_ps( (float * ALIGNED)src ) );
+  inline void copy_4x1( void * ALIGNED(16) dst, const void * ALIGNED(16) src ) {
+    _mm_store_ps( (float * ALIGNED(16))dst,
+                  _mm_load_ps( (float * ALIGNED(16))src ) );
   }
 
-  inline void swap_4x1( void * ALIGNED a, void * ALIGNED b ) {
-    __m128 t = _mm_load_ps((float * ALIGNED)a);
-    _mm_store_ps( (float * ALIGNED)a, _mm_load_ps( (float * ALIGNED)b ) );
-    _mm_store_ps( (float * ALIGNED)b, t );
+  inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
+    __m128 t = _mm_load_ps((float * ALIGNED(16))a);
+    _mm_store_ps( (float * ALIGNED(16))a,
+                  _mm_load_ps( (float * ALIGNED(16))b ) );
+    _mm_store_ps( (float * ALIGNED(16))b, t );
   }
 
   // v4 transposed memory manipulation functions
@@ -194,57 +202,63 @@ namespace v4 {
     a.i[3] = ((const int *)a3)[0];
   }
   
-  inline void load_4x2_tr( const void * ALIGNED a0, const void * ALIGNED a1,
-                           const void * ALIGNED a2, const void * ALIGNED a3,
+  inline void load_4x2_tr( const void * ALIGNED(8) a0,
+                           const void * ALIGNED(8) a1,
+                           const void * ALIGNED(8) a2,
+                           const void * ALIGNED(8) a3,
                            v4 &a, v4 &b ) {
     __m128 t = a.v, a_v = t, b_v;
-    a_v = _mm_loadl_pi(a_v,(__m64 * ALIGNED)a0); // a0 b0 .. .. -> a
-    a_v = _mm_loadh_pi(a_v,(__m64 * ALIGNED)a1); // a0 b0 a1 b1 -> a
-    b_v = a_v;                                   // a0 b0 a1 b1 -> b
-    t =   _mm_loadl_pi(t,  (__m64 * ALIGNED)a2); // a2 b2 .. .. -> t
-    t =   _mm_loadh_pi(t,  (__m64 * ALIGNED)a3); // a2 b2 a3 b3 -> t
-    a_v = _mm_shuffle_ps(a_v,t,0x88);            // a0 a1 a2 a3 -> a
-    b_v = _mm_shuffle_ps(b_v,t,0xdd);            // b0 b1 b2 b3 -> b
+    a_v = _mm_loadl_pi(a_v,(__m64 * ALIGNED(8))a0); // a0 b0 .. .. -> a
+    a_v = _mm_loadh_pi(a_v,(__m64 * ALIGNED(8))a1); // a0 b0 a1 b1 -> a
+    b_v = a_v;                                      // a0 b0 a1 b1 -> b
+    t =   _mm_loadl_pi(t,  (__m64 * ALIGNED(8))a2); // a2 b2 .. .. -> t
+    t =   _mm_loadh_pi(t,  (__m64 * ALIGNED(8))a3); // a2 b2 a3 b3 -> t
+    a_v = _mm_shuffle_ps(a_v,t,0x88);               // a0 a1 a2 a3 -> a
+    b_v = _mm_shuffle_ps(b_v,t,0xdd);               // b0 b1 b2 b3 -> b
     a.v = a_v;
     b.v = b_v;
   }
   
-  inline void load_4x3_tr( const void * ALIGNED a0, const void * ALIGNED a1,
-                           const void * ALIGNED a2, const void * ALIGNED a3,
+  inline void load_4x3_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
                            v4 &a, v4 &b, v4 &c ) {
     __m128 t = a.v, u = t, a_v = t, b_v, c_v = t;
-    a_v = _mm_loadl_pi(a_v, (__m64 * ALIGNED)a0);    // a0 b0 .. .. -> a
-    c_v = _mm_loadl_pi(c_v,((__m64 * ALIGNED)a0)+1); // c0 .. .. .. -> c
-    a_v = _mm_loadh_pi(a_v, (__m64 * ALIGNED)a1);    // a0 b0 a1 b1 -> a
-    c_v = _mm_loadh_pi(c_v,((__m64 * ALIGNED)a1)+1); // c0 .. c1 .. -> c
-    b_v = a_v;                                       // a0 b0 a1 b1 -> b
-    t =   _mm_loadl_pi(t,   (__m64 * ALIGNED)a2);    // a2 b2 .. .. -> t 
-    u =   _mm_loadl_pi(u,  ((__m64 * ALIGNED)a2)+1); // c2 .. .. .. -> u 
-    t =   _mm_loadh_pi(t,   (__m64 * ALIGNED)a3);    // a2 b2 a3 b3 -> t
-    u =   _mm_loadh_pi(u,  ((__m64 * ALIGNED)a3)+1); // c2 .. c3 .. -> u
-    a.v = _mm_shuffle_ps(a_v,t,0x88);                // a0 a1 a2 a3 -> a
-    b.v = _mm_shuffle_ps(b_v,t,0xdd);                // b0 b1 b2 b3 -> b
-    c.v = _mm_shuffle_ps(c_v,u,0x88);                // c0 c1 c2 c3 -> c
+    a_v = _mm_loadl_pi(a_v, (__m64 * ALIGNED(16))a0);    // a0 b0 .. .. -> a
+    c_v = _mm_loadl_pi(c_v,((__m64 * ALIGNED(16))a0)+1); // c0 .. .. .. -> c
+    a_v = _mm_loadh_pi(a_v, (__m64 * ALIGNED(16))a1);    // a0 b0 a1 b1 -> a
+    c_v = _mm_loadh_pi(c_v,((__m64 * ALIGNED(16))a1)+1); // c0 .. c1 .. -> c
+    b_v = a_v;                                           // a0 b0 a1 b1 -> b
+    t =   _mm_loadl_pi(t,   (__m64 * ALIGNED(16))a2);    // a2 b2 .. .. -> t 
+    u =   _mm_loadl_pi(u,  ((__m64 * ALIGNED(16))a2)+1); // c2 .. .. .. -> u 
+    t =   _mm_loadh_pi(t,   (__m64 * ALIGNED(16))a3);    // a2 b2 a3 b3 -> t
+    u =   _mm_loadh_pi(u,  ((__m64 * ALIGNED(16))a3)+1); // c2 .. c3 .. -> u
+    a.v = _mm_shuffle_ps(a_v,t,0x88);                    // a0 a1 a2 a3 -> a
+    b.v = _mm_shuffle_ps(b_v,t,0xdd);                    // b0 b1 b2 b3 -> b
+    c.v = _mm_shuffle_ps(c_v,u,0x88);                    // c0 c1 c2 c3 -> c
   }
 
-  inline void load_4x4_tr( const void * ALIGNED a0, const void * ALIGNED a1,
-                           const void * ALIGNED a2, const void * ALIGNED a3,
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
                            v4 &a, v4 &b, v4 &c, v4 &d ) {
     __m128 t = a.v, u = t, a_v = t, b_v, c_v = t, d_v;
-    a_v = _mm_loadl_pi(a_v, (__m64 * ALIGNED)a0);    // a0 b0 .. .. -> a
-    c_v = _mm_loadl_pi(c_v,((__m64 * ALIGNED)a0)+1); // c0 d0 .. .. -> c
-    a_v = _mm_loadh_pi(a_v, (__m64 * ALIGNED)a1);    // a0 b0 a1 b1 -> a
-    c_v = _mm_loadh_pi(c_v,((__m64 * ALIGNED)a1)+1); // c0 d0 c1 d1 -> c
-    b_v = a_v;                                       // a0 b0 a1 b1 -> b
-    d_v = c_v;                                       // c0 d0 c1 d1 -> d
-    t =   _mm_loadl_pi(t,   (__m64 * ALIGNED)a2);    // a2 b2 .. .. -> t 
-    u =   _mm_loadl_pi(u,  ((__m64 * ALIGNED)a2)+1); // c2 d2 .. .. -> u 
-    t =   _mm_loadh_pi(t,   (__m64 * ALIGNED)a3);    // a2 b2 a3 b3 -> t
-    u =   _mm_loadh_pi(u,  ((__m64 * ALIGNED)a3)+1); // c2 d2 c3 d3 -> u
-    a.v = _mm_shuffle_ps(a_v,t,0x88);                // a0 a1 a2 a3 -> a
-    b.v = _mm_shuffle_ps(b_v,t,0xdd);                // b0 b1 b2 b3 -> b
-    c.v = _mm_shuffle_ps(c_v,u,0x88);                // c0 c1 c2 c3 -> c
-    d.v = _mm_shuffle_ps(d_v,u,0xdd);                // d0 d1 d2 d3 -> d
+    a_v = _mm_loadl_pi(a_v, (__m64 * ALIGNED(16))a0);    // a0 b0 .. .. -> a
+    c_v = _mm_loadl_pi(c_v,((__m64 * ALIGNED(16))a0)+1); // c0 d0 .. .. -> c
+    a_v = _mm_loadh_pi(a_v, (__m64 * ALIGNED(16))a1);    // a0 b0 a1 b1 -> a
+    c_v = _mm_loadh_pi(c_v,((__m64 * ALIGNED(16))a1)+1); // c0 d0 c1 d1 -> c
+    b_v = a_v;                                           // a0 b0 a1 b1 -> b
+    d_v = c_v;                                           // c0 d0 c1 d1 -> d
+    t =   _mm_loadl_pi(t,   (__m64 * ALIGNED(16))a2);    // a2 b2 .. .. -> t 
+    u =   _mm_loadl_pi(u,  ((__m64 * ALIGNED(16))a2)+1); // c2 d2 .. .. -> u 
+    t =   _mm_loadh_pi(t,   (__m64 * ALIGNED(16))a3);    // a2 b2 a3 b3 -> t
+    u =   _mm_loadh_pi(u,  ((__m64 * ALIGNED(16))a3)+1); // c2 d2 c3 d3 -> u
+    a.v = _mm_shuffle_ps(a_v,t,0x88);                    // a0 a1 a2 a3 -> a
+    b.v = _mm_shuffle_ps(b_v,t,0xdd);                    // b0 b1 b2 b3 -> b
+    c.v = _mm_shuffle_ps(c_v,u,0x88);                    // c0 c1 c2 c3 -> c
+    d.v = _mm_shuffle_ps(d_v,u,0xdd);                    // d0 d1 d2 d3 -> d
   }
 
   inline void store_4x1_tr( const v4 &a,
@@ -256,49 +270,49 @@ namespace v4 {
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
-                            void * ALIGNED a0, void * ALIGNED a1,
-                            void * ALIGNED a2, void * ALIGNED a3 ) {
+                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
+                            void * ALIGNED(8) a2, void * ALIGNED(8) a3 ) {
     __m128 a_v = a.v, b_v = b.v, t;
-    t = _mm_unpacklo_ps(a_v,b_v);         // a0 b0 a1 b1 -> t
-    _mm_storel_pi((__m64 * ALIGNED)a0,t); // a0 b0       -> a0
-    _mm_storeh_pi((__m64 * ALIGNED)a1,t); // a1 b1       -> a1
-    t = _mm_unpackhi_ps(a_v,b_v);         // a2 b2 a3 b3 -> t
-    _mm_storel_pi((__m64 * ALIGNED)a2,t); // a2 b2       -> a2
-    _mm_storeh_pi((__m64 * ALIGNED)a3,t); // a3 b3       -> a3
+    t = _mm_unpacklo_ps(a_v,b_v);            // a0 b0 a1 b1 -> t
+    _mm_storel_pi((__m64 * ALIGNED(8))a0,t); // a0 b0       -> a0
+    _mm_storeh_pi((__m64 * ALIGNED(8))a1,t); // a1 b1       -> a1
+    t = _mm_unpackhi_ps(a_v,b_v);            // a2 b2 a3 b3 -> t
+    _mm_storel_pi((__m64 * ALIGNED(8))a2,t); // a2 b2       -> a2
+    _mm_storeh_pi((__m64 * ALIGNED(8))a3,t); // a3 b3       -> a3
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                            void * ALIGNED a0, void * ALIGNED a1,
-                            void * ALIGNED a2, void * ALIGNED a3 ) {
+                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
     __m128 a_v = a.v, b_v = b.v, t;
-    t = _mm_unpacklo_ps(a_v,b_v);         // a0 b0 a1 b1 -> t
-    _mm_storel_pi((__m64 * ALIGNED)a0,t); // a0 b0       -> a0
-    _mm_storeh_pi((__m64 * ALIGNED)a1,t); // a1 b1       -> a1
-    t = _mm_unpackhi_ps(a_v,b_v);         // a2 b2 a3 b3 -> t
-    _mm_storel_pi((__m64 * ALIGNED)a2,t); // a2 b2       -> a2
-    _mm_storeh_pi((__m64 * ALIGNED)a3,t); // a3 b3       -> a3
-    ((int * ALIGNED)a0)[2] = c.i[0];
-    ((int * ALIGNED)a1)[2] = c.i[1];
-    ((int * ALIGNED)a2)[2] = c.i[2];
-    ((int * ALIGNED)a3)[2] = c.i[3];
+    t = _mm_unpacklo_ps(a_v,b_v);             // a0 b0 a1 b1 -> t
+    _mm_storel_pi((__m64 * ALIGNED(16))a0,t); // a0 b0       -> a0
+    _mm_storeh_pi((__m64 * ALIGNED(16))a1,t); // a1 b1       -> a1
+    t = _mm_unpackhi_ps(a_v,b_v);             // a2 b2 a3 b3 -> t
+    _mm_storel_pi((__m64 * ALIGNED(16))a2,t); // a2 b2       -> a2
+    _mm_storeh_pi((__m64 * ALIGNED(16))a3,t); // a3 b3       -> a3
+    ((int * ALIGNED(16))a0)[2] = c.i[0];
+    ((int * ALIGNED(16))a1)[2] = c.i[1];
+    ((int * ALIGNED(16))a2)[2] = c.i[2];
+    ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
   
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-                            void * ALIGNED a0, void * ALIGNED a1,
-                            void * ALIGNED a2, void * ALIGNED a3 ) {
+                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
     __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
-    t = _mm_unpacklo_ps(a_v,b_v);             // a0 b0 a1 b1 -> t
-    u = _mm_unpacklo_ps(c_v,d_v);             // c0 d0 c1 d1 -> u
-    _mm_storel_pi( (__m64 * ALIGNED)a0,   t); // a0 b0 .. .. -> a0
-    _mm_storel_pi(((__m64 * ALIGNED)a0)+1,u); // a0 b0 c0 d0 -> a0
-    _mm_storeh_pi( (__m64 * ALIGNED)a1,   t); // a1 b1 .. .. -> a1
-    _mm_storeh_pi(((__m64 * ALIGNED)a1)+1,u); // a1 b1 a2 b2 -> a1
-    t = _mm_unpackhi_ps(a_v,b_v);             // a0 b0 a1 b1 -> t
-    u = _mm_unpackhi_ps(c_v,d_v);             // c0 d0 c1 d1 -> u
-    _mm_storel_pi( (__m64 * ALIGNED)a2,   t); // a2 b2 .. .. -> a2
-    _mm_storel_pi(((__m64 * ALIGNED)a2)+1,u); // a2 b2 c3 d3 -> a2
-    _mm_storeh_pi( (__m64 * ALIGNED)a3,   t); // a3 b3 .. .. -> a3
-    _mm_storeh_pi(((__m64 * ALIGNED)a3)+1,u); // a3 b3 c3 d3 -> a3
+    t = _mm_unpacklo_ps(a_v,b_v);                 // a0 b0 a1 b1 -> t
+    u = _mm_unpacklo_ps(c_v,d_v);                 // c0 d0 c1 d1 -> u
+    _mm_storel_pi( (__m64 * ALIGNED(16))a0,   t); // a0 b0 .. .. -> a0
+    _mm_storel_pi(((__m64 * ALIGNED(16))a0)+1,u); // a0 b0 c0 d0 -> a0
+    _mm_storeh_pi( (__m64 * ALIGNED(16))a1,   t); // a1 b1 .. .. -> a1
+    _mm_storeh_pi(((__m64 * ALIGNED(16))a1)+1,u); // a1 b1 a2 b2 -> a1
+    t = _mm_unpackhi_ps(a_v,b_v);                 // a0 b0 a1 b1 -> t
+    u = _mm_unpackhi_ps(c_v,d_v);                 // c0 d0 c1 d1 -> u
+    _mm_storel_pi( (__m64 * ALIGNED(16))a2,   t); // a2 b2 .. .. -> a2
+    _mm_storel_pi(((__m64 * ALIGNED(16))a2)+1,u); // a2 b2 c3 d3 -> a2
+    _mm_storeh_pi( (__m64 * ALIGNED(16))a3,   t); // a3 b3 .. .. -> a3
+    _mm_storeh_pi(((__m64 * ALIGNED(16))a3)+1,u); // a3 b3 c3 d3 -> a3
   }
 
   //////////////
@@ -685,9 +699,9 @@ namespace v4 {
     friend inline v4float clear_bits(  const v4int &m, const v4float &a );
     friend inline v4float set_bits(    const v4int &m, const v4float &a );
     friend inline v4float toggle_bits( const v4int &m, const v4float &a );
-    friend inline void increment_4x1( float * ALIGNED p, const v4float &a );
-    friend inline void decrement_4x1( float * ALIGNED p, const v4float &a );
-    friend inline void scale_4x1(     float * ALIGNED p, const v4float &a );
+    friend inline void increment_4x1( float * ALIGNED(16) p, const v4float &a );
+    friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
+    friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
     
   public:
@@ -978,18 +992,18 @@ namespace v4 {
     return b;
   }
 
-  inline void increment_4x1( float * ALIGNED p, const v4float &a ) {
+  inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) {
     _mm_store_ps( p, _mm_add_ps( _mm_load_ps( p ), a.v ) );
   }
 
-  inline void decrement_4x1( float * ALIGNED p, const v4float &a ) {
+  inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a ) {
     _mm_store_ps( p, _mm_sub_ps( _mm_load_ps( p ), a.v ) );
   }
 
-  inline void scale_4x1( float * ALIGNED p, const v4float &a ) {
+  inline void scale_4x1( float * ALIGNED(16) p, const v4float &a ) {
     _mm_store_ps( p, _mm_mul_ps( _mm_load_ps( p ), a.v ) );
   }
 
 } // namespace v4
 
-#endif /* _v4_sse_hxx_ */
+#endif // _v4_sse_hxx_

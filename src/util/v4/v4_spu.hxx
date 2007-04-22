@@ -8,12 +8,12 @@
 #define V4_ACCELERATION
 #define V4_SPU_ACCELERATION
 
-#include <spu_intrinsics.h> /* Requires -Wno-long-long to include */
+#include <spu_intrinsics.h> // Requires -Wno-long-long to include
 #include <stdint.h>
 #include <math.h>
 
 #ifndef ALIGNED
-#define ALIGNED
+#define ALIGNED(16)
 #endif
 
 namespace v4 {
@@ -80,12 +80,12 @@ namespace v4 {
 
     // v4 memory manipulation friends
         
-    friend inline void load_4x1( const void * ALIGNED p, v4 &a );
-    friend inline void store_4x1( const v4 &a, void * ALIGNED p );
-    friend inline void stream_4x1( const v4 &a, void * ALIGNED p );
-    friend inline void copy_4x1( void * ALIGNED dst,
-                                 const void * ALIGNED src );
-    friend inline void swap_4x1( void * ALIGNED a, void * ALIGNED b );
+    friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
+    friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void copy_4x1( void * ALIGNED(16) dst,
+                                 const void * ALIGNED(16) src );
+    friend inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
 
     // v4 transposed memory manipulation friends
     // Note: Half aligned values are permissible in the 4x2_tr variants!
@@ -93,34 +93,40 @@ namespace v4 {
     friend inline void load_4x1_tr( const void *a0, const void *a1,
                                     const void *a2, const void *a3,
                                     v4 &a );
-    friend inline void load_4x2_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x2_tr( const void * ALIGNED(8) a0,
+                                    const void * ALIGNED(8) a1,
+                                    const void * ALIGNED(8) a2,
+                                    const void * ALIGNED(8) a3,
                                     v4 &a, v4 &b );
-    friend inline void load_4x3_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x3_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c );
-    friend inline void load_4x4_tr( const void * ALIGNED a0,
-                                    const void * ALIGNED a1,
-                                    const void * ALIGNED a2,
-                                    const void * ALIGNED a3,
+    friend inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
     
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(8) a0,
+                                     void * ALIGNED(8) a1,
+                                     void * ALIGNED(8) a2,
+                                     void * ALIGNED(8) a3 );
     friend inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3 );
     friend inline void store_4x4_tr( const v4 &a, const v4 &b,
                                      const v4 &c, const v4 &d,
-                                     void * ALIGNED a0, void * ALIGNED a1,
-                                     void * ALIGNED a2, void * ALIGNED a3 );
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3 );
 
   protected:
 
@@ -184,27 +190,27 @@ namespace v4 {
 
   // v4 memory manipulation functions
   
-  inline void load_4x1( const void * ALIGNED p, v4 &a ) {
-    a.vi = *((const vec_int4 * ALIGNED)p);
+  inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
+    a.vi = *((const vec_int4 * ALIGNED(16))p);
   }
 
-  inline void store_4x1( const v4 &a, void * ALIGNED p ) {
-    *((vec_int4 * ALIGNED)p) = a.vi;
+  inline void store_4x1( const v4 &a, void * ALIGNED(16) p ) {
+    *((vec_int4 * ALIGNED(16))p) = a.vi;
   }
 
-  inline void stream_4x1( const v4 &a, void * ALIGNED p ) {
-    *((vec_int4 * ALIGNED)p) = a.vi;
+  inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
+    *((vec_int4 * ALIGNED(16))p) = a.vi;
   }
 
   // FIXME: Ordering semantics
-  inline void copy_4x1( void * ALIGNED dst, const void * ALIGNED src ) {
-    *((vec_int4 * ALIGNED)dst) = *((const vec_int4 * ALIGNED)src);
+  inline void copy_4x1( void * ALIGNED(16) dst, const void * ALIGNED(16) src ) {
+    *((vec_int4 * ALIGNED(16))dst) = *((const vec_int4 * ALIGNED(16))src);
   }
 
-  inline void swap_4x1( void * ALIGNED a, void * ALIGNED b ) {
-    vec_int4 t               = *((vec_int4 * ALIGNED)a);
-    *((vec_int4 * ALIGNED)a) = *((vec_int4 * ALIGNED)b);
-    *((vec_int4 * ALIGNED)b) = t;
+  inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
+    vec_int4 t                   = *((vec_int4 * ALIGNED(16))a);
+    *((vec_int4 * ALIGNED(16))a) = *((vec_int4 * ALIGNED(16))b);
+    *((vec_int4 * ALIGNED(16))b) = t;
   }
 
   // v4 transposed memory manipulation functions
@@ -221,24 +227,28 @@ namespace v4 {
   // preferable for 128-byte aligned results.  (Compiler optimization
   // may actually do that for free!)
 
-  inline void load_4x2_tr( const void * ALIGNED pa, const void * ALIGNED pb,
-                           const void * ALIGNED pc, const void * ALIGNED pd,
+  inline void load_4x2_tr( const void * ALIGNED(8) pa,
+                           const void * ALIGNED(8) pb,
+                           const void * ALIGNED(8) pc,
+                           const void * ALIGNED(8) pd,
                            v4 &a, v4 &b ) {
-    vec_llong2 a_v = { *(const int64_t * ALIGNED)pa,
-                       *(const int64_t * ALIGNED)pb }; // 0 4 1 5
-    vec_llong2 b_v = { *(const int64_t * ALIGNED)pc,
-                       *(const int64_t * ALIGNED)pd }; // 2 6 3 7
+    vec_llong2 a_v = { *(const int64_t * ALIGNED(8))pa,
+                       *(const int64_t * ALIGNED(8))pb }; // 0 4 1 5
+    vec_llong2 b_v = { *(const int64_t * ALIGNED(8))pc,
+                       *(const int64_t * ALIGNED(8))pd }; // 2 6 3 7
     a.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr4 ); // 0 1 2 3
     b.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr5 ); // 4 5 6 7
   }
   
-  inline void load_4x3_tr( const void * ALIGNED pa, const void * ALIGNED pb,
-                           const void * ALIGNED pc, const void * ALIGNED pd,
+  inline void load_4x3_tr( const void * ALIGNED(16) pa,
+                           const void * ALIGNED(16) pb,
+                           const void * ALIGNED(16) pc,
+                           const void * ALIGNED(16) pd,
                            v4 &a, v4 &b, v4 &c ) {
-    vec_int4 a0 = *((const vec_int4 * ALIGNED)pa);
-    vec_int4 b0 = *((const vec_int4 * ALIGNED)pb);
-    vec_int4 c0 = *((const vec_int4 * ALIGNED)pc);
-    vec_int4 d0 = *((const vec_int4 * ALIGNED)pd);
+    vec_int4 a0 = *((const vec_int4 * ALIGNED(16))pa);
+    vec_int4 b0 = *((const vec_int4 * ALIGNED(16))pb);
+    vec_int4 c0 = *((const vec_int4 * ALIGNED(16))pc);
+    vec_int4 d0 = *((const vec_int4 * ALIGNED(16))pd);
 
     // Step 1: Transpose the block matrix
 
@@ -254,13 +264,15 @@ namespace v4 {
     c.vi = spu_shuffle( c1, d1, _tr2 );        // c  =  2  6 10 14
   }
 
-  inline void load_4x4_tr( const void * ALIGNED pa, const void * ALIGNED pb,
-                           const void * ALIGNED pc, const void * ALIGNED pd,
+  inline void load_4x4_tr( const void * ALIGNED(16) pa,
+                           const void * ALIGNED(16) pb,
+                           const void * ALIGNED(16) pc,
+                           const void * ALIGNED(16) pd,
                            v4 &a, v4 &b, v4 &c, v4 &d ) {
-    vec_int4 a0 = *((const vec_int4 * ALIGNED)pa);
-    vec_int4 b0 = *((const vec_int4 * ALIGNED)pb);
-    vec_int4 c0 = *((const vec_int4 * ALIGNED)pc);
-    vec_int4 d0 = *((const vec_int4 * ALIGNED)pd);
+    vec_int4 a0 = *((const vec_int4 * ALIGNED(16))pa);
+    vec_int4 b0 = *((const vec_int4 * ALIGNED(16))pb);
+    vec_int4 c0 = *((const vec_int4 * ALIGNED(16))pc);
+    vec_int4 d0 = *((const vec_int4 * ALIGNED(16))pd);
 
     // Step 1: Transpose the block matrix
 
@@ -286,8 +298,10 @@ namespace v4 {
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
-                            void * ALIGNED pa, void * ALIGNED pb,
-                            void * ALIGNED pc, void * ALIGNED pd ) {
+                            void * ALIGNED(8) pa,
+                            void * ALIGNED(8) pb,
+                            void * ALIGNED(8) pc,
+                            void * ALIGNED(8) pd ) {
     vec_int4 a1 = a.vi;                        // a =  0  1  2  3
     vec_int4 b1 = b.vi;                        // b =  4  5  6  7
     vec_int4 c1 = spu_shuffle( a1, a1, _tr1 ); // c =  2  3  x  x
@@ -302,15 +316,15 @@ namespace v4 {
 
     // Store the 2 columns of the matrix
 
-    ((int64_t * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
-    ((int64_t * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
-    ((int64_t * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
-    ((int64_t * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
+    ((int64_t * ALIGNED(8))pa)[0] = spu_extract( (vec_llong2)a0, 0 );
+    ((int64_t * ALIGNED(8))pb)[0] = spu_extract( (vec_llong2)b0, 0 );
+    ((int64_t * ALIGNED(8))pc)[0] = spu_extract( (vec_llong2)c0, 0 );
+    ((int64_t * ALIGNED(8))pd)[0] = spu_extract( (vec_llong2)d0, 0 );
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                            void * ALIGNED pa, void * ALIGNED pb,
-                            void * ALIGNED pc, void * ALIGNED pd ) {
+                            void * ALIGNED(16) pa, void * ALIGNED(16) pb,
+                            void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {
     vec_int4 a0 = a.vi;                        // a =  0  1  2  3
     vec_int4 b0 = b.vi;                        // b =  4  5  6  7
     vec_int4 c0 = c.vi;                        // c =  8  9 10 11
@@ -332,20 +346,20 @@ namespace v4 {
 
     // Store the 3 columns of the matrix
 
-    ((int64_t * ALIGNED)pa)[0] = spu_extract( (vec_llong2)a0, 0 );
-    ((int64_t * ALIGNED)pb)[0] = spu_extract( (vec_llong2)b0, 0 );
-    ((int64_t * ALIGNED)pc)[0] = spu_extract( (vec_llong2)c0, 0 );
-    ((int64_t * ALIGNED)pd)[0] = spu_extract( (vec_llong2)d0, 0 );
+    ((int64_t * ALIGNED(16))pa)[0] = spu_extract( (vec_llong2)a0, 0 );
+    ((int64_t * ALIGNED(16))pb)[0] = spu_extract( (vec_llong2)b0, 0 );
+    ((int64_t * ALIGNED(16))pc)[0] = spu_extract( (vec_llong2)c0, 0 );
+    ((int64_t * ALIGNED(16))pd)[0] = spu_extract( (vec_llong2)d0, 0 );
 
-    ((int * ALIGNED)pa)[2]       = spu_extract( a0, 2 );
-    ((int * ALIGNED)pb)[2]       = spu_extract( b0, 2 );
-    ((int * ALIGNED)pc)[2]       = spu_extract( c0, 2 );
-    ((int * ALIGNED)pd)[2]       = spu_extract( d0, 2 );
+    ((int * ALIGNED(16))pa)[2]     = spu_extract( a0, 2 );
+    ((int * ALIGNED(16))pb)[2]     = spu_extract( b0, 2 );
+    ((int * ALIGNED(16))pc)[2]     = spu_extract( c0, 2 );
+    ((int * ALIGNED(16))pd)[2]     = spu_extract( d0, 2 );
   }
   
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-                            void * ALIGNED pa, void * ALIGNED pb,
-                            void * ALIGNED pc, void * ALIGNED pd ) {
+                            void * ALIGNED(16) pa, void * ALIGNED(16) pb,
+                            void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {
     vec_int4 a0 = a.vi;
     vec_int4 b0 = b.vi;
     vec_int4 c0 = c.vi;
@@ -360,10 +374,10 @@ namespace v4 {
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    *((vec_int4 * ALIGNED)pa) = spu_shuffle( a1, b1, _tr2 );
-    *((vec_int4 * ALIGNED)pb) = spu_shuffle( a1, b1, _tr3 );
-    *((vec_int4 * ALIGNED)pc) = spu_shuffle( c1, d1, _tr2 );
-    *((vec_int4 * ALIGNED)pd) = spu_shuffle( c1, d1, _tr3 );
+    *((vec_int4 * ALIGNED(16))pa) = spu_shuffle( a1, b1, _tr2 );
+    *((vec_int4 * ALIGNED(16))pb) = spu_shuffle( a1, b1, _tr3 );
+    *((vec_int4 * ALIGNED(16))pc) = spu_shuffle( c1, d1, _tr2 );
+    *((vec_int4 * ALIGNED(16))pd) = spu_shuffle( c1, d1, _tr3 );
   }
 
   //////////////
@@ -695,9 +709,9 @@ namespace v4 {
     friend inline v4float clear_bits(  const v4int &m, const v4float &a );
     friend inline v4float set_bits(    const v4int &m, const v4float &a );
     friend inline v4float toggle_bits( const v4int &m, const v4float &a );
-    friend inline void increment_4x1( float * ALIGNED p, const v4float &a );
-    friend inline void decrement_4x1( float * ALIGNED p, const v4float &a );
-    friend inline void scale_4x1(     float * ALIGNED p, const v4float &a );
+    friend inline void increment_4x1( float * ALIGNED(16) p, const v4float &a );
+    friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
+    friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
     
   public:
@@ -1039,18 +1053,21 @@ namespace v4 {
     return b;
   }
 
-  inline void increment_4x1( float * ALIGNED p, const v4float &a ) {
-    *((vec_float4 * ALIGNED)p) = spu_add( *((vec_float4 * ALIGNED)p), a.vf );
+  inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) {
+    *((vec_float4 * ALIGNED(16))p) =
+      spu_add( *((vec_float4 * ALIGNED(16))p), a.vf );
   }
 
-  inline void decrement_4x1( float * ALIGNED p, const v4float &a ) {
-    *((vec_float4 * ALIGNED)p) = spu_sub( *((vec_float4 * ALIGNED)p), a.vf );
+  inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a ) {
+    *((vec_float4 * ALIGNED(16))p) =
+      spu_sub( *((vec_float4 * ALIGNED(16))p), a.vf );
   }
 
-  inline void scale_4x1( float * ALIGNED p, const v4float &a ) {
-    *((vec_float4 * ALIGNED)p) = spu_mul( *((vec_float4 * ALIGNED)p), a.vf );
+  inline void scale_4x1( float * ALIGNED(16) p, const v4float &a ) {
+    *((vec_float4 * ALIGNED(16))p) =
+      spu_mul( *((vec_float4 * ALIGNED(16))p), a.vf );
   }
 
 } // namespace v4
 
-#endif /* _v4_spu_hxx_ */
+#endif // _v4_spu_hxx_

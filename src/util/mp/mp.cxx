@@ -15,7 +15,7 @@ extern "C" void mp_init_cxx(int argc, char ** argv) {
 	MPWrapper::instance().mp_init(argc, argv);
 } // mp_init
 
-/* Adding for clean termination */ 
+// Adding for clean termination
 extern "C" void mp_finalize_cxx() {
 	MPWrapper::instance().mp_finalize();
 } // mp_finalize
@@ -36,11 +36,11 @@ extern "C" int mp_nproc_cxx( mp_handle h ) {
 	return MPWrapper::instance().mp_nproc(h);
 } // mp_nproc
 
-extern "C" void * ALIGNED mp_recv_buffer_cxx( int tag, mp_handle h ) {
+extern "C" void * ALIGNED(16) mp_recv_buffer_cxx( int tag, mp_handle h ) {
 	return MPWrapper::instance().mp_recv_buffer(tag, h);
 } // mp_recv_buffer
 
-extern "C" void * ALIGNED mp_send_buffer_cxx( int tag, mp_handle h ) {
+extern "C" void * ALIGNED(16) mp_send_buffer_cxx( int tag, mp_handle h ) {
 	return MPWrapper::instance().mp_send_buffer(tag, h);
 } // mp_send_buffer
 
@@ -52,14 +52,14 @@ extern "C" void mp_barrier_cxx( mp_handle h ) {
 	MPWrapper::instance().mp_barrier(h);
 } // mp_barrier
 
-/* Returns the time elapsed since the communicator was created.
-   Every rank gets the same value */
+// Returns the time elapsed since the communicator was created.  Every
+// rank gets the same value
 extern "C" double mp_elapsed_cxx( mp_handle h ) {
 	return MPWrapper::instance().mp_elapsed(h);
 } // mp_elapsed
 
-/* Stop watch. Different ranks may get different values.
-   First call to stop watch returns a measure of the overhead */
+// Stop watch. Different ranks may get different values.  First call
+// to stop watch returns a measure of the overhead.
 extern "C" double mp_time00_cxx( mp_handle h ) {
 	return MPWrapper::instance().mp_time00(h);
 } // mp_time00
@@ -113,7 +113,7 @@ extern "C" error_code mp_allgather_i64_cxx( int64_t *sbuf, int64_t *rbuf,
 	return MPWrapper::instance().mp_allgather_i64(sbuf, rbuf, n, h);
 } // mp_allgather_i64
 
-/* We need blocking send/receive to implement turnstiles. */
+// We need blocking send/receive to implement turnstiles.
 
 extern "C" error_code mp_send_i_cxx( int *buf, int n, int dst, mp_handle h ) {
 	return MPWrapper::instance().mp_send_i(buf, n, dst, h);

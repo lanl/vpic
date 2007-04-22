@@ -333,11 +333,12 @@
   }								\
 } END_PRIMITIVE
 
-/* rgn is a logical equation that specifies the interior of the volume emitter 
-   This mechanism is only efficient for volumeteric emission processes that
-   occupy a small portion of the simulation volume. For volumetric emission
-   processes that occupy the entire simulation volume, recommend using the
-   begin_particle_injection { }; input deck segment. */
+// rgn is a logical equation that specifies the interior of the volume
+// emitter.  This mechanism is only efficient for volumeteric emission
+// processes that occupy a small portion of the simulation volume.
+// For volumetric emission processes that occupy the entire simulation
+// volume, recommend using the begin_particle_injection { }; input
+// deck segment.
 
 #define define_volume_emitter(name,sp_id,emission_model,rgn) BEGIN_PRIMITIVE {   \
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;  \
@@ -377,10 +378,10 @@
   }                                                             \
 } END_PRIMITIVE
 
-/* rgn is a logical equation.
-   rgn = true for interior of region
-   rgn = false for exterior of region
-   A surface emitter emits into the exterior of the region. */
+// rgn is a logical equation.
+// rgn = true for interior of region
+// rgn = false for exterior of region
+// A surface emitter emits into the exterior of the region.
 
 #define define_surface_emitter(name,sp_id,emission_model,rgn) BEGIN_PRIMITIVE {   \
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;	\

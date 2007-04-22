@@ -10,6 +10,8 @@
 
 #include <species.h>
 
+// FIXME: V4 ACCELERATE THIS!
+
 void
 sort_p( struct species * sp,
         const grid_t * g ) {

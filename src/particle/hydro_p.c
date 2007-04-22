@@ -21,23 +21,24 @@
 #define h(x,y,z) h0[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
 
 void
-accumulate_hydro_p( hydro_t              * ALIGNED(16) h0,
-                    const particle_t     * ALIGNED(16) p,
-                    int                                n,
-                    float                              q_m,
-                    const interpolator_t * ALIGNED(16) f0,
-                    const grid_t         *             g ) {
+accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
+                    const particle_t     * ALIGNED(128) p0,
+                    int                                 n,
+                    float                               q_m,
+                    const interpolator_t * ALIGNED(16)  f0,
+                    const grid_t         *              g ) {
   float dx, dy, dz; int ii;
   float ux, uy, uz, q;
   float vx, vy, vz, ke_mc;
   float w0, w1, w2, w3, w4, w5, w6, w7;
   float qdt_2mc, qdt_4mc2, c, r8V, mc_q;
+  const particle_t     * ALIGNED(16) p;
   const interpolator_t * ALIGNED(16) f;
   hydro_t * ALIGNED(16) h;
   int stride_10, stride_21, stride_43;
 
   if( h0==NULL ) ERROR(("Bad hydro"));
-  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( p0==NULL ) ERROR(("Bad particle array"));
   if( n<0      ) ERROR(("Bad number of particles"));
   if( f0==NULL ) ERROR(("Bad field"));
   if( g==NULL  ) ERROR(("Bad grid"));
@@ -52,7 +53,7 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16) h0,
   stride_21 = &h(0,1,0) - &h(1,0,0);
   stride_43 = &h(0,0,1) - &h(1,1,0);
 
-  for(;n;n--,p++) {
+  for( p=p0; n; n--, p++ ) {
     // Load the particle
     dx = p->dx;
     dy = p->dy;

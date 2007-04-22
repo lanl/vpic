@@ -19,15 +19,16 @@
 #define f(x,y,z) f0[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
 
 void
-accumulate_rho_p( field_t          * ALIGNED(16) f0,
-                  const particle_t * ALIGNED(16) p,
-                  int                            n,
-                  const grid_t     *             g ) {
+accumulate_rho_p( field_t          * ALIGNED(16)  f0,
+                  const particle_t * ALIGNED(128) p0,
+                  int                             n,
+                  const grid_t     *              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t, r8V, *rho;
   int stride_10, stride_21, stride_43;
+  const particle_t * ALIGNED(16) p;
 
   if( f0==NULL ) ERROR(("Bad field"));
-  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( p0==NULL ) ERROR(("Bad particle array"));
   if( n<0      ) ERROR(("Bad number of particles"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
@@ -37,7 +38,7 @@ accumulate_rho_p( field_t          * ALIGNED(16) f0,
   stride_21 = &f(0,1,0).rhof - &f(1,0,0).rhof;
   stride_43 = &f(0,0,1).rhof - &f(1,1,0).rhof;
 
-  for(;n;n--,p++) {
+  for( p=p0; n; n--, p++ ) {
     // Compute the trilinear coefficients
     t   = p->dx;    // t  = x
     w0  = r8V*p->q; // w0 = w/8

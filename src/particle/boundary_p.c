@@ -15,17 +15,17 @@
 #define CUSTOM_PBC_RESIZE_FACTOR 1.1
 
 int
-boundary_p( particle_mover_t * ALIGNED(16) pm,
-            int                            nm,
-            int                            max_nm,
-            particle_t       * ALIGNED(16) p,
-            int                            np,
-            int                            max_np,
-            field_t          * ALIGNED(16) f,
-            accumulator_t    * ALIGNED(16) a,
-            const grid_t     *             g,
-            species_t        *             sp,
-            mt_handle                      rng ) {
+boundary_p( particle_mover_t * ALIGNED(16)  pm,
+            int                             nm,
+            int                             max_nm,
+            particle_t       * ALIGNED(128) p0,
+            int                             np,
+            int                             max_np,
+            field_t          * ALIGNED(16)  f,
+            accumulator_t    * ALIGNED(16)  a,
+            const grid_t     *              g,
+            species_t        *              sp,
+            mt_handle                       rng ) {
   const int sf2b[6] = { BOUNDARY(-1, 0, 0),
                         BOUNDARY( 0,-1, 0),
                         BOUNDARY( 0, 0,-1),
@@ -47,7 +47,7 @@ boundary_p( particle_mover_t * ALIGNED(16) pm,
   if( pm==NULL ) ERROR(("Bad particle mover"));
   if( nm<0     ) ERROR(("Bad number of movers"));
   if( max_nm<0 ) ERROR(("Bad max number of movers"));
-  if( p==NULL  ) ERROR(("Bad particle array"));
+  if( p0==NULL ) ERROR(("Bad particle array"));
   if( np<0     ) ERROR(("Bad number of particles"));
   if( max_np<0 ) ERROR(("Bad max number of particles"));
   if( f==NULL  ) ERROR(("Bad field"));
@@ -108,7 +108,7 @@ boundary_p( particle_mover_t * ALIGNED(16) pm,
     // and before this
 
     for( ; nm; nm-- ) {
-      particle_t *r = p + pm[nm-1].i;
+      particle_t * ALIGNED(16) r = p0 + pm[nm-1].i;
 #     define TEST_FACE(FACE,cond)                                       \
       if(cond) {                                                        \
         int64_t nn = g->neighbor[ 6*r->i + FACE ];                      \
@@ -153,7 +153,7 @@ boundary_p( particle_mover_t * ALIGNED(16) pm,
       WARNING(("Unknown boundary interaction ... using absorption"));
       WARNING(("pass=%i, species=%i, rank=%i", pass, sp->id, mp_rank(g->mp)));
     done_testing:
-      np -= remove_p( r, p, np, f, g );
+      np -= remove_p( r, p0, np, f, g );
     }
 
     // Exchange particle counts
@@ -201,7 +201,7 @@ boundary_p( particle_mover_t * ALIGNED(16) pm,
         pr = (particle_injector_t *)&buf[1];
         for(;n;n--) {
           if( np==max_np || nm==max_nm ) break;
-          nm += inject_p( p, np, pm+nm, f, a, pr, g );
+          nm += inject_p( p0, np, pm+nm, f, a, pr, g );
           pr++;
           np++;
         }
@@ -216,7 +216,7 @@ boundary_p( particle_mover_t * ALIGNED(16) pm,
     // Handle particle injectors from custom pbcs
     while ( cm!=cmlist ) {
       if ( np==max_np || nm==max_nm ) break;
-      nm += inject_p( p, np, pm+nm, f, a, --cm, g );
+      nm += inject_p( p0, np, pm+nm, f, a, --cm, g );
       np++; 
     } 
     if ( cm!=cmlist ) 

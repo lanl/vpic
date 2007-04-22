@@ -43,10 +43,17 @@
 #define SQRT_TWO                  1.41421356237
 #define SET_VELOCITY(SIGN,X,Y,Z)  u##X=SIGN fabs(u0);u##Y=u1;u##Z=u2; break;
  
-void maxwellian_reflux( void * _data, particle_t *r, 
-                        particle_mover_t *pm, field_t *f, accumulator_t *a, 
-			const grid_t *g, species_t *s, 
-			particle_injector_t **ppi, mt_handle rng, int face ) {
+void
+maxwellian_reflux( void * _data,
+                   particle_t *r, 
+                   particle_mover_t *pm,
+                   field_t *f,
+                   accumulator_t *a, 
+                   const grid_t *g,
+                   species_t *s, 
+                   particle_injector_t **ppi,
+                   mt_handle rng,
+                   int face ) {
   maxwellian_reflux_t * reflux_data = (maxwellian_reflux_t *)_data;
   float u0, u1, u2;       // u0 = para, u1 & u2 = perp
   float ux, uy, uz;       // x, y, z normalized momenta
@@ -135,8 +142,6 @@ void maxwellian_reflux( void * _data, particle_t *r,
 #endif 
 
   // increment pointer to injector
-  (*ppi)++;  
-
-  return;
+  (*ppi)++;
 }
 

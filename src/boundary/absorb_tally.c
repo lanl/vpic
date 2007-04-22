@@ -6,10 +6,17 @@
 //
 // Written by:  Brian J. Albright, X-1, LANL   July, 2005
 
-void absorb_tally( void * params, particle_t *r, 
-                   particle_mover_t *pm, field_t *f, accumulator_t *a, 
-		   const grid_t *g, species_t *s, 
-		   particle_injector_t **ppi, mt_handle rng, int face ) {
+void
+absorb_tally( void * params,
+              particle_t *r, 
+              particle_mover_t *pm,
+              field_t *f,
+              accumulator_t *a, 
+              const grid_t *g,
+              species_t *s, 
+              particle_injector_t **ppi,
+              mt_handle rng,
+              int face ) {
   absorb_tally_t * absorb_tally_data = (absorb_tally_t *)params;
   int ispec; 
 
@@ -20,8 +27,6 @@ void absorb_tally( void * params, particle_t *r,
     ; 
   if ( ispec==absorb_tally_data->nspec ) 
     ERROR(("Unknown species passed to boundary handler."));
-  ++(absorb_tally_data->nabs[ispec]); 
-
-  return;
+  ++(absorb_tally_data->nabs[ispec]);
 }
 

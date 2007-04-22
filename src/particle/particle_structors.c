@@ -10,13 +10,13 @@
 
 #include <particle.h>
 
-particle_t * ALIGNED(16)
+particle_t * ALIGNED(128)
 new_particle_array( int np ) {
-  particle_t * ALIGNED(16) p;
+  particle_t * ALIGNED(128) p;
 
   if( np<1 ) ERROR(("Bad np"));
 
-  p = (particle_t * ALIGNED(16))malloc_aligned( np*sizeof(particle_t), 16 );
+  p = (particle_t * ALIGNED(128))malloc_aligned( np*sizeof(particle_t), 128 );
   if( p==NULL ) ERROR(("Failed to allocate particle array."));
   memset( p, 0, np*sizeof(particle_t) );
 
@@ -24,7 +24,7 @@ new_particle_array( int np ) {
 }
 
 void
-delete_particle_array( particle_t ** ALIGNED(16) p ) {
+delete_particle_array( particle_t ** ALIGNED(128) p ) {
   if( p==NULL ) return;
   if( *p!=NULL ) free_aligned(*p);
   *p = NULL;

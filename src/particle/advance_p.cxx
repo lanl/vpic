@@ -10,13 +10,13 @@
 #endif
 
 typedef struct advance_p_pipeline_args {
-  particle_t           * ALIGNED(16) p;   // Particle array
-  int                                n;   // Number of particles
-  float                              q_m; // Charge to mass ratio
-  particle_mover_t     * ALIGNED(16) pm;  // Particle mover array
-  int                                nm;  // Number of movers
-  accumulator_t        * ALIGNED(16) a;   // Accumuator arrays
-  const interpolator_t * ALIGNED(16) f;   // Interpolator array
+  particle_t           * ALIGNED(128) p0;  // Particle array
+  int                                 np;  // Number of particles
+  float                               q_m; // Charge to mass ratio
+  particle_mover_t     * ALIGNED(16)  pm;  // Particle mover array
+  int                                 nm;  // Number of movers
+  accumulator_t        * ALIGNED(16)  a;   // Accumuator arrays
+  const interpolator_t * ALIGNED(16)  f;   // Interpolator array
 
 # ifdef USE_CELL_SPUS
   // The copy of the grid_t struct is passed to eliminate the need for
@@ -60,14 +60,14 @@ static void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
                     int n_pipeline ) {
-  particle_t           * ALIGNED(16) p0  = args->p;
-  int                                n   = args->n;
-  const float                        q_m = args->q_m;
-  particle_mover_t     * ALIGNED(16) pm  = args->pm;
-  int                                nm  = args->nm;
-  accumulator_t        * ALIGNED(16) a0  = args->a;
-  const interpolator_t * ALIGNED(16) f0  = args->f;
-  const grid_t *                     g   = args->g;
+  particle_t           * ALIGNED(128) p0  = args->p0;
+  int                                 n   = args->np;
+  const float                         q_m = args->q_m;
+  particle_mover_t     * ALIGNED(16)  pm  = args->pm;
+  int                                 nm  = args->nm;
+  accumulator_t        * ALIGNED(16)  a0  = args->a;
+  const interpolator_t * ALIGNED(16)  f0  = args->f;
+  const grid_t *                      g   = args->g;
 
   const float qdt_2mc        = 0.5*q_m*g->dt/g->cvac;
   const float cdt_dx         = g->cvac*g->dt/g->dx;
@@ -93,7 +93,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     // accumulator array.
 
     p  = p0 + n; pm += nm;
-    n &= 3;      nm  = n>nm ? nm : n;
+    n &= 7;      nm  = n>nm ? nm : n;
     p -= n;      pm -= nm;
 
   } else { // Pipelines do any rough equal number of particle quads
@@ -102,15 +102,15 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
     // Determine which particles to process in this pipeline
 
-    n_target = (double)(n>>2)/(double)n_pipeline;
+    n_target = (double)(n>>3)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p  = p0 + 4*n;
+    p  = p0 + 8*n;
     n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 4;
+    n *= 8;
 
     // Determine which movers are reserved for this pipeline
 
-    nm -= (args->n&3)>nm ? nm : (args->n&3); // Reserve last movers for host
+    nm -= (args->np&7)>nm ? nm : (args->np&7); // Reserve last movers for host
 
     n_target = (double)nm / (double)n_pipeline; 
     nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -248,15 +248,15 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
                        int n_pipeline ) {
   double n_target;
 
-  particle_t           * ALIGNED(16) p   = args->p;
-  particle_t           * ALIGNED(16) p0  = p;
-  int                                nq  = args->n >> 2;
-  const float                        q_m = args->q_m;
-  particle_mover_t     * ALIGNED(16) pm  = args->pm;
-  int                                nm  = args->nm;
-  accumulator_t        * ALIGNED(16) a0  = args->a;
-  const interpolator_t * ALIGNED(16) f0  = args->f;
-  const grid_t         *             g   = args->g;
+  particle_t           * ALIGNED(128) p0  = args->p0;
+  particle_t           * ALIGNED(64)  p   = p0;
+  int                                 nq  = args->np;
+  const float                         q_m = args->q_m;
+  particle_mover_t     * ALIGNED(16)  pm  = args->pm;
+  int                                 nm  = args->nm;
+  accumulator_t        * ALIGNED(16)  a0  = args->a;
+  const interpolator_t * ALIGNED(16)  f0  = args->f;
+  const grid_t         *              g   = args->g;
 
   v4float dx, dy, dz; v4int ii;
   v4float ux, uy, uz, q;
@@ -275,14 +275,15 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
   // Determine which particles to process in this pipeline
 
-  n_target = (double)nq / (double)n_pipeline;
+  n_target = (double)(nq>>3)/(double)n_pipeline;
   nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 4*nq;
+  p  += 8*nq;
   nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
+  nq *= 2;
 
   // Determine which movers are reserved for this pipeline
 
-  nm -= (args->n&3)>nm ? nm : (args->n&3); // Reserve last movers for host
+  nm -= (args->np&7)>nm ? nm : (args->np&7); // Reserve last movers for host
 
   n_target = (double)nm / (double)n_pipeline; 
   nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -422,14 +423,14 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 #endif
 
 int
-advance_p( particle_t           * ALIGNED(16) p,
-           const int                          n,
-           const float                        q_m,
-           particle_mover_t     * ALIGNED(16) pm,
-           int                                nm,       
-           accumulator_t        * ALIGNED(16) a,
-           const interpolator_t * ALIGNED(16) f,
-           const grid_t         *             g ) {
+advance_p( particle_t           * ALIGNED(128) p0,
+           const int                           np,
+           const float                         q_m,
+           particle_mover_t     * ALIGNED(16)  pm,
+           int                                 nm,       
+           accumulator_t        * ALIGNED(16)  a,
+           const interpolator_t * ALIGNED(16)  f,
+           const grid_t         *              g ) {
 # ifdef USE_CELL_SPUS
   char * _stack[ 16 + sizeof(advance_p_pipeline_args_t) ];
   advance_p_pipeline_args_t * args =
@@ -440,16 +441,16 @@ advance_p( particle_t           * ALIGNED(16) p,
 
   int rank;
 
-  if( p==NULL  ) ERROR(("Bad particle array"));
-  if( n<0      ) ERROR(("Bad number of particles"));
+  if( p0==NULL ) ERROR(("Bad particle array"));
+  if( np<0     ) ERROR(("Bad number of particles"));
   if( pm==NULL ) ERROR(("Bad particle mover"));
   if( nm<0     ) ERROR(("Bad number of movers"));
   if( a==NULL  ) ERROR(("Bad accumulator"));
   if( f==NULL  ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
-  args->p   = p;
-  args->n   = n;
+  args->p0  = p0;
+  args->np  = np;
   args->q_m = q_m;
   args->pm  = pm;
   args->nm  = nm;

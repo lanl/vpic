@@ -67,6 +67,4 @@ link_boundary( void * _lb,
   fprintf( fp, "%d %e %e %e %e %e %e %e\n",
            s->id, x, y, z, r->ux, r->uy, r->uz, r->q );
   lb->n_out++;
-
-  return;
 }

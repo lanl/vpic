@@ -15,7 +15,9 @@
  * ASCII dump IO
  *****************************************************************************/
 
-void vpic_simulation::dump_energies( const char *fname, int append ) {
+void
+vpic_simulation::dump_energies( const char *fname,
+                                int append ) {
   double en_f[6], en_p;
   FILE *handle = NULL;
   int rank = mp_rank(grid->mp);
@@ -56,7 +58,8 @@ void vpic_simulation::dump_energies( const char *fname, int append ) {
 
 // Note: dump_species/materials assume that names do not contain any \n!
 
-void vpic_simulation::dump_species( const char *fname ) {
+void
+vpic_simulation::dump_species( const char *fname ) {
   FILE *handle;
   species_t *sp;
   if( mp_rank(grid->mp)==0 ) {
@@ -76,7 +79,8 @@ void vpic_simulation::dump_species( const char *fname ) {
   }
 }
 
-void vpic_simulation::dump_materials( const char *fname ) {
+void
+vpic_simulation::dump_materials( const char *fname ) {
   FILE *handle;
   material_t *m;
 
@@ -190,7 +194,8 @@ enum dump_types {
   (value) = __READ_tmp;                         \
 } END_PRIMITIVE
 
-void vpic_simulation::dump_grid( const char *fbase ) {
+void
+vpic_simulation::dump_grid( const char *fbase ) {
   char fname[256];
   FILE *handle;
   int dim[4];
@@ -231,7 +236,8 @@ void vpic_simulation::dump_grid( const char *fbase ) {
   fclose(handle);
 }
 
-void vpic_simulation::dump_fields( const char *fbase, int ftag ) {
+void
+vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   char fname[256];
   FILE *handle;
   int dim[3];
@@ -317,13 +323,15 @@ vpic_simulation::dump_hydro( const char *sp_name,
   fclose( handle );
 }
 
-void vpic_simulation::dump_particles( const char *sp_name,
-                                      const char *fbase, int ftag ) {
+void
+vpic_simulation::dump_particles( const char *sp_name,
+                                 const char *fbase,
+                                 int ftag ) {
   species_t *sp;
   char fname[256];
   FILE *handle;
   int dim[1], buf_start, n_buf;
-  static particle_t *p_buf=NULL;
+  static particle_t * ALIGNED(128) p_buf=NULL;
 # define PBUF_SIZE 32768 // 1MB of particles
   
   // FIXME: Potential deadlocks on error returns
@@ -345,8 +353,8 @@ void vpic_simulation::dump_particles( const char *sp_name,
   }
 
   if ( !p_buf ) {
-    p_buf = (particle_t * ALIGNED(16))
-      malloc_aligned(PBUF_SIZE*sizeof(p_buf[0]), 16);
+    p_buf = (particle_t * ALIGNED(128))
+      malloc_aligned(PBUF_SIZE*sizeof(p_buf[0]), 128);
     if( p_buf==NULL ) {
       ERROR(("Failed to allocate particle buffer."));
       return;
@@ -398,7 +406,9 @@ void vpic_simulation::dump_particles( const char *sp_name,
 // FIXME: put emission model and custom boundary conditions into the
 // restart files
 
-void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
+void
+vpic_simulation::dump_restart( const char *fbase,
+                               int ftag ) {
   char fname[256];
   FILE *handle;
   int dim[4];
@@ -555,7 +565,8 @@ void vpic_simulation::dump_restart( const char *fbase, int ftag ) {
 
 }
 
-void vpic_simulation::restart( const char *fbase ) {
+void
+vpic_simulation::restart( const char *fbase ) {
   int rank, nproc, abort_line, size, ndim, dim[4], n;
   char fname[256], c, *abort_str, *state;
   FILE *handle = NULL;

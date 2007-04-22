@@ -7,21 +7,21 @@
 #endif
 
 typedef struct energy_p_pipeline_args {
-  const particle_t     * ALIGNED(16) p;   // Particle array
-  int                                n;   // Number of particles
-  float                              q_m; // Charge to mass ratio
-  const interpolator_t * ALIGNED(16) f;   // Interpolator array
-  const grid_t         *             g;   // Local domain grid parameters
-  double en[MAX_PIPELINE+1];              // Return values
-  /**/                                    // en[n_pipeline] used by host
+  const particle_t     * ALIGNED(128) p0;  // Particle array
+  int                                 np;  // Number of particles
+  float                               q_m; // Charge to mass ratio
+  const interpolator_t * ALIGNED(16)  f;   // Interpolator array
+  const grid_t         *              g;   // Local domain grid parameters
+  double en[MAX_PIPELINE+1];               // Return values
+  /**/                                     // en[n_pipeline] used by host
 } energy_p_pipeline_args_t;
 
 static void
 energy_p_pipeline( energy_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
-  const particle_t     * ALIGNED(16) p   = args->p;
-  int                                n   = args->n;
+  const particle_t     * ALIGNED(16) p   = args->p0;
+  int                                n   = args->np;
   const float                        q_m = args->q_m;
   const interpolator_t * ALIGNED(16) f0  = args->f;
   const grid_t         *             g   = args->g;
@@ -43,18 +43,18 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
     // accumulator array.
 
     p += n;
-    n &= 3;
+    n &= 7;
     p -= n;
 
   } else { // Pipelines do any rough equal number of particle quads
 
     // Determine which particles to process in this pipeline
 
-    double n_target = (double)(n>>2)/(double)n_pipeline;
+    double n_target = (double)(n>>3)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p += 4*n;
+    p += 8*n;
     n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 4;
+    n *= 8;
 
   }
 
@@ -87,8 +87,8 @@ static void
 energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  const particle_t     * ALIGNED(16) p   = args->p;
-  int                                nq  = args->n >> 2;
+  const particle_t     * ALIGNED(64) p   = args->p0;
+  int                                nq  = args->np;
   const float                        q_m = args->q_m;
   const interpolator_t * ALIGNED(16) f0  = args->f;
   const grid_t         *             g   = args->g;
@@ -104,10 +104,11 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
 
   // Determine which particle quads to process in this pipeline
 
-  n_target = (double)nq / (double)n_pipeline;
+  n_target = (double)(nq>>3) / (double)n_pipeline;
   nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 4*nq;
+  p  += 8*nq;
   nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
+  nq *= 2;
 
   // Process the particle quads for this pipeline
 
@@ -145,24 +146,25 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
 #endif
 
 double
-energy_p( const particle_t     * ALIGNED(16) p,
-          const int                          n,
-          const float                        q_m,
-          const interpolator_t * ALIGNED(16) f,
-          const grid_t         *             g ) {
+energy_p( const particle_t     * ALIGNED(128) p0,
+          const int                           np,
+          const float                         q_m,
+          const interpolator_t * ALIGNED(16)  f,
+          const grid_t         *              g ) {
   energy_p_pipeline_args_t args[1];
   double local, global;
   int rank;
 
-  if( n<0     ) ERROR(("Bad number of particles"));
+  // FIXME: p0 NULL checking
+  if( np<0    ) ERROR(("Bad number of particles"));
   if( f==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL ) ERROR(("Bad grid"));
 
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p   = p;
-  args->n   = n;
+  args->p0  = p0;
+  args->np  = np;
   args->q_m = q_m;
   args->f   = f;
   args->g   = g;

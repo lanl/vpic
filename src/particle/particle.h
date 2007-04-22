@@ -43,38 +43,40 @@ struct species;
 // In boundary_p.c
 
 int
-boundary_p( particle_mover_t * ALIGNED(16) pm,
-            int                            nm,
-            int                            max_nm,
-            particle_t       * ALIGNED(16) p,
-            int                            np,
-            int                            max_np,
-            field_t          * ALIGNED(16) f,
-            accumulator_t    * ALIGNED(16) a,
-            const grid_t     *             g,
-            struct species   *             sp,
-            mt_handle                      rng );
+boundary_p( particle_mover_t * ALIGNED(16)  pm,
+            int                             nm,
+            int                             max_nm,
+            particle_t       * ALIGNED(128) p0,
+            int                             np,
+            int                             max_np,
+            field_t          * ALIGNED(16)  f,
+            accumulator_t    * ALIGNED(16)  a,
+            const grid_t     *              g,
+            struct species   *              sp,
+            mt_handle                       rng );
 
 // In hydro_p.c
 
 void
-accumulate_hydro_p( hydro_t              * ALIGNED(16) h0,
-                    const particle_t     * ALIGNED(16) p,
-                    int                                np,
-                    float                              q_m,
-                    const interpolator_t * ALIGNED(16) f0,
-                    const grid_t         *             g );
+accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
+                    const particle_t     * ALIGNED(128) p0,
+                    int                                 np,
+                    float                               q_m,
+                    const interpolator_t * ALIGNED(16)  f0,
+                    const grid_t         *              g );
 
 // In move_p.c
 
 int
-inject_p( particle_t                * ALIGNED(16) p,  // Array to inject into
-          int                                     i,  // Where to inject
-          particle_mover_t          * ALIGNED(16) pm, // Free mover
-          field_t                   * ALIGNED(16) f,
-          accumulator_t             * ALIGNED(16) a,
-          const particle_injector_t *             pi,
-          const grid_t              *             g );
+inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
+          int                                      np, // Where to inject
+                                                       // Caller promises
+                                                       // <max_np.
+          particle_mover_t          * ALIGNED(16)  pm, // Free mover
+          field_t                   * ALIGNED(16)  f,  // rhob accum
+          accumulator_t             * ALIGNED(16)  a,  // j accum
+          const particle_injector_t *              pi,
+          const grid_t              *              g );
 
 // In sort_p.c
 
@@ -85,21 +87,21 @@ sort_p( struct species * sp,
 // In rho_p.c
 
 void
-accumulate_rho_p( field_t          * ALIGNED(16) f,
-                  const particle_t * ALIGNED(16) p,
-                  int                            np,
-                  const grid_t     *             g );
+accumulate_rho_p( field_t          * ALIGNED(16)  f,
+                  const particle_t * ALIGNED(128) p0,
+                  int                             np,
+                  const grid_t     *              g );
 
 // In particle_structors.c
 
-particle_t * ALIGNED(16)
+particle_t * ALIGNED(128)
 new_particle_array( int np );
 
 particle_mover_t * ALIGNED(16)
 new_particle_mover( int nm );
 
 void
-delete_particle_array( particle_t ** ALIGNED(16) p );
+delete_particle_array( particle_t ** ALIGNED(128) p );
 
 void
 delete_particle_mover( particle_mover_t ** ALIGNED(16) pm );
@@ -109,14 +111,14 @@ delete_particle_mover( particle_mover_t ** ALIGNED(16) pm );
 // Returns the number particle movers in use
 
 int
-advance_p( particle_t           * ALIGNED(16) p,
-           int                                n,
-           const float                        q_m,
-           particle_mover_t     * ALIGNED(16) pm,
-           int                                nm,
-           accumulator_t        * ALIGNED(16) a,
-           const interpolator_t * ALIGNED(16) f,
-           const grid_t         *             g );
+advance_p( particle_t           * ALIGNED(128) p0,
+           int                                 np,
+           const float                         q_m,
+           particle_mover_t     * ALIGNED(16)  pm,
+           int                                 nm,
+           accumulator_t        * ALIGNED(16)  a,
+           const interpolator_t * ALIGNED(16)  f,
+           const grid_t         *              g );
 
 // In energy.c
 
@@ -127,11 +129,11 @@ advance_p( particle_t           * ALIGNED(16) p,
 // FIXME: SHOULD THIS FUNCTION DO THE REDUCE OVER ALL NODES??
 
 double
-energy_p( const particle_t     * ALIGNED(16) p,
-          int                                np,
-          float                              q_m,
-          const interpolator_t * ALIGNED(16) f,
-          const grid_t         *             g );
+energy_p( const particle_t     * ALIGNED(128) p0,
+          int                                 np,
+          float                               q_m,
+          const interpolator_t * ALIGNED(16)  f,
+          const grid_t         *              g );
 
 // In center_p.c
 
@@ -141,11 +143,11 @@ energy_p( const particle_t     * ALIGNED(16) p,
 // the time step.
 
 void
-center_p( particle_t           * ALIGNED(16) p,
-          int                                np,
-          const float                        q_m,
-          const interpolator_t * ALIGNED(16) f,
-          const grid_t         *             g );
+center_p( particle_t           * ALIGNED(128) p0,
+          int                                 np,
+          const float                         q_m,
+          const interpolator_t * ALIGNED(16)  f,
+          const grid_t         *              g );
 
 // In uncenter_p.c
 
@@ -154,11 +156,11 @@ center_p( particle_t           * ALIGNED(16) p,
 // step stale.
 
 void
-uncenter_p( particle_t           * ALIGNED(16) p,
-            int                                np,
-            const float                        q_m,
-            const interpolator_t * ALIGNED(16) f,
-            const grid_t         *             g );
+uncenter_p( particle_t           * ALIGNED(128) p0,
+            int                                 np,
+            const float                         q_m,
+            const interpolator_t * ALIGNED(16)  f,
+            const grid_t         *              g );
 
 // INTERNAL USE ONLY FUNCTIONS
 
@@ -168,17 +170,17 @@ uncenter_p( particle_t           * ALIGNED(16) p,
 // move_p implementation as well!
 
 int
-move_p( particle_t       * ALIGNED(16) p, 
-        particle_mover_t * ALIGNED(16) m,
-        accumulator_t    * ALIGNED(16) a,
-        const grid_t     *             g );
+move_p( particle_t       * ALIGNED(128) p0, 
+        particle_mover_t * ALIGNED(16)  m,
+        accumulator_t    * ALIGNED(16)  a,
+        const grid_t     *              g );
 
 int
-remove_p( particle_t   * ALIGNED(16) r,
-          particle_t   * ALIGNED(16) p,
-          int                        np,
-          field_t      * ALIGNED(16) f,
-          const grid_t *             g );
+remove_p( particle_t   * ALIGNED(16)  r,
+          particle_t   * ALIGNED(128) p0,
+          int                         np,
+          field_t      * ALIGNED(16)  f,
+          const grid_t *              g );
 
 END_C_DECLS
 

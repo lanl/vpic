@@ -17,10 +17,10 @@
 // responsible for insuring valid arguments.
 
 int
-move_p( particle_t       * ALIGNED(16) p,
-        particle_mover_t * ALIGNED(16) pm,
-        accumulator_t    * ALIGNED(16) a0,
-        const grid_t     *             g ) {
+move_p( particle_t       * ALIGNED(128) p0,
+        particle_mover_t * ALIGNED(16)  pm,
+        accumulator_t    * ALIGNED(16)  a0,
+        const grid_t     *              g ) {
   float s_midx, s_midy, s_midz;
   float s_dispx, s_dispy, s_dispz;
   float s_dir[3];
@@ -28,7 +28,7 @@ move_p( particle_t       * ALIGNED(16) p,
   int type;
   int64_t neighbor;
   float *a;
-  p += pm->i;
+  particle_t * ALIGNED(16) p = p0 + pm->i;
 
   for(;;) {
     s_midx = p->dx;
@@ -152,21 +152,23 @@ move_p( particle_t       * ALIGNED(16) p,
 // rhob is synchronized, these charges cancel.
 
 int
-remove_p( particle_t   * ALIGNED(16) r,
-          particle_t   * ALIGNED(16) p,
-          int                        np,
-          field_t      * ALIGNED(16) f,
-          const grid_t *             g ) {
+remove_p( particle_t   * ALIGNED(16)  r,
+          particle_t   * ALIGNED(128) p0,
+          int                         np,
+          field_t      * ALIGNED(16)  f,
+          const grid_t *              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, j, k;
   float *rhob;
+  particle_t * ALIGNED(16) p;
 
-  if( r==NULL || p==NULL || f==NULL || g==NULL || (r-p)<0 || (r-p)>=np )
+  if( r==NULL || p0==NULL || f==NULL || g==NULL || (r-p0)<0 || (r-p0)>=np )
     return 0;
 
   // Backfill the particle to remove
+  // FIXME: V4 acceleration this
   np--;
-  p += np;
+  p = p0 + np;
   t = p->dx; p->dx = r->dx; r->dx = t;
   t = p->dy; p->dy = r->dy; r->dy = t;
   t = p->dz; p->dz = r->dz; r->dz = t;
@@ -250,19 +252,19 @@ remove_p( particle_t   * ALIGNED(16) r,
 // rhob is synchronized, these charges cancel.
 
 int
-inject_p( particle_t                * ALIGNED(16) p0, // Array to inject into
-          int                                     n,  // Where to inject
-          particle_mover_t          * ALIGNED(16) pm, // Particle mover
-          field_t                   * ALIGNED(16) f,
-          accumulator_t             * ALIGNED(16) a,
-          const particle_injector_t *             pi,
-          const grid_t              *             g ) {
+inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
+          int                                      n,  // Where to inject
+          particle_mover_t          * ALIGNED(16)  pm, // Free particle mover
+          field_t                   * ALIGNED(16)  f,  // For rhob accum
+          accumulator_t             * ALIGNED(16)  a,  // For J accum
+          const particle_injector_t *              pi,
+          const grid_t              *              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, j, k;
   float *rhob;
-  particle_t * p = p0 + n;
+  particle_t * ALIGNED(16) p;
 
-  if( p==NULL  ) ERROR(("Bad particle"));
+  if( p0==NULL ) ERROR(("Bad particle"));
   if( pm==NULL ) ERROR(("Bad mover"));
   if( f==NULL  ) ERROR(("Bad field"));
   if( a==NULL  ) ERROR(("Bad accumulator"));
@@ -270,6 +272,7 @@ inject_p( particle_t                * ALIGNED(16) p0, // Array to inject into
   if( g==NULL  ) ERROR(("Bad grid"));
 
   // Load the particle and particle mover from the injector
+  p         = p0 + n;
   p->dx     = pi->dx;
   p->dy     = pi->dy;
   p->dz     = pi->dz;

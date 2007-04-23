@@ -24,12 +24,12 @@
 struct emitter;
 
 typedef void
-(*emission_model_t)( struct emitter       *             e,
-                     const interpolator_t * ALIGNED(16) fi,
-                     field_t              * ALIGNED(16) f, 
-                     accumulator_t        * ALIGNED(16) a, 
-                     grid_t               *             g, 
-                     mt_handle                          rng );
+(*emission_model_t)( struct emitter       *              e,
+                     const interpolator_t * ALIGNED(128) fi,
+                     field_t              * ALIGNED(16)  f, 
+                     accumulator_t        * ALIGNED(128) a, 
+                     grid_t               *              g, 
+                     mt_handle                           rng );
 
 typedef struct emitter {
   int * ALIGNED(16) component;
@@ -68,12 +68,12 @@ typedef struct child_langmuir {
 } child_langmuir_t;
 
 void
-child_langmuir( emitter_t            *             e,
-                const interpolator_t * ALIGNED(16) fi,    // For field interp
-                field_t              * ALIGNED(16) f,     // For rhob accum
-                accumulator_t        * ALIGNED(16) a,     // For J accum
-                grid_t               *             g,     // Underlying grid
-                mt_handle                          rng ); // Random numbers
+child_langmuir( emitter_t            *              e,
+                const interpolator_t * ALIGNED(128) fi,    // For field interp
+                field_t              * ALIGNED(16)  f,     // For rhob accum
+                accumulator_t        * ALIGNED(128) a,     // For J accum
+                grid_t               *              g,     // Underlying grid
+                mt_handle                           rng ); // Random numbers
 
 // In ccube.c
 
@@ -85,12 +85,12 @@ typedef struct ccube {
 } ccube_t;
 
 void
-ccube( emitter_t            *             e,
-       const interpolator_t * ALIGNED(16) fi,    // For field interp
-       field_t              * ALIGNED(16) f,     // For rhob accum
-       accumulator_t        * ALIGNED(16) a,     // For J accum
-       grid_t               *             g,     // Underlying grid
-       mt_handle                          rng ); // Random numbers
+ccube( emitter_t            *              e,
+       const interpolator_t * ALIGNED(128) fi,    // For field interp
+       field_t              * ALIGNED(16)  f,     // For rhob accum
+       accumulator_t        * ALIGNED(128) a,     // For J accum
+       grid_t               *              g,     // Underlying grid
+       mt_handle                           rng ); // Random numbers
 
 // In ivory.c
 
@@ -102,12 +102,12 @@ typedef struct ivory {
 } ivory_t;
 
 void
-ivory( emitter_t            *             e,
-       const interpolator_t * ALIGNED(16) fi,    // For field interp
-       field_t              * ALIGNED(16) f,     // For rhob accum
-       accumulator_t        * ALIGNED(16) a,     // For J accum
-       grid_t               *             g,     // Underlying grid
-       mt_handle                          rng ); // Random numbers
+ivory( emitter_t            *              e,
+       const interpolator_t * ALIGNED(128) fi,    // For field interp
+       field_t              * ALIGNED(16)  f,     // For rhob accum
+       accumulator_t        * ALIGNED(128) a,     // For J accum
+       grid_t               *              g,     // Underlying grid
+       mt_handle                           rng ); // Random numbers
 
 END_C_DECLS
 

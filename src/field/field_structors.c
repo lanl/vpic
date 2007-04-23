@@ -128,16 +128,16 @@ clear_hydro( hydro_t * ALIGNED(16) h,
 
 /*****************************************************************************/
 
-interpolator_t * ALIGNED(16)
+interpolator_t * ALIGNED(128)
 new_interpolator( const grid_t * g ) {
-  interpolator_t *fi;
+  interpolator_t * ALIGNED(128) fi;
   int req;
 
   if( g==NULL ) ERROR(("Invalid grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Invalid grid resolution."));
   
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t);
-  fi = (interpolator_t * ALIGNED(16))malloc_aligned( req, 16 );
+  fi = (interpolator_t * ALIGNED(128))malloc_aligned( req, 16 );
   if( fi==NULL ) ERROR(("Failed to allocate interpolator."));
   clear_interpolator(fi,g);
 
@@ -145,14 +145,15 @@ new_interpolator( const grid_t * g ) {
 }
 
 void
-delete_interpolator( interpolator_t ** ALIGNED(16) fi ) {
+delete_interpolator( interpolator_t ** ALIGNED(128) fi ) {
   if( fi==NULL ) return;
   if( *fi!=NULL ) free_aligned( fi );
   *fi = NULL;
 }
 
+// FIXME: SPU THIS?
 void
-clear_interpolator( interpolator_t * ALIGNED(16) fi,
+clear_interpolator( interpolator_t * ALIGNED(128) fi,
                     const grid_t * g ) {
   if( fi==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
@@ -161,17 +162,22 @@ clear_interpolator( interpolator_t * ALIGNED(16) fi,
 
 /*****************************************************************************/
 
-accumulator_t * ALIGNED(16)
+accumulator_t * ALIGNED(128)
 new_accumulators( const grid_t * g ) {
-  accumulator_t *a;
+  accumulator_t * ALIGNED(128) a;
   size_t req;
 
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
-  // FIXME: SPU THIS
+  // FIXME: n_accumulator copies can be problematic
+  // with multiple pipeline styles simultaneously.
+
+  // FIXME: accumulators should be spaced by round-up-even n_voxel
+  // to keep 128-byte alignment of individual accumulators!
+
   req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+PSTYLE.n_pipeline)*sizeof(accumulator_t);
-  a = (accumulator_t * ALIGNED(16))malloc_aligned( req, 16 );
+  a = (accumulator_t * ALIGNED(128))malloc_aligned( req, 128 );
   if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );
 
@@ -179,7 +185,7 @@ new_accumulators( const grid_t * g ) {
 }
 
 void
-delete_accumulators( accumulator_t ** ALIGNED(16) a ) {
+delete_accumulators( accumulator_t ** ALIGNED(128) a ) {
   if( a==NULL ) return;
   if( *a!=NULL ) free_aligned( a );
   *a = NULL;

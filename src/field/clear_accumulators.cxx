@@ -12,8 +12,8 @@
 #endif
 
 typedef struct clear_accumulators_pipeline_args {
-  accumulator_t * ALIGNED(16) a;       // Base of all the accumulators
-  int                         n_voxel;
+  accumulator_t * ALIGNED(128) a;       // Base of all the accumulators
+  int                          n_voxel;
 } clear_accumulators_pipeline_args_t;
 
 static void
@@ -30,8 +30,8 @@ clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
 #endif
 
 void
-clear_accumulators( accumulator_t * ALIGNED(16) a,
-                    const grid_t  *             g ) {
+clear_accumulators( accumulator_t * ALIGNED(128) a,
+                    const grid_t  *              g ) {
   clear_accumulators_pipeline_args_t args[1];
 
   if( a==NULL ) ERROR(("Invalid accumulator"));

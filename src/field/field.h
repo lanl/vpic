@@ -250,21 +250,21 @@ void
 clear_hydro( hydro_t      * ALIGNED(16) h,
              const grid_t *             g );
 
-interpolator_t * ALIGNED(16)
+interpolator_t * ALIGNED(128)
 new_interpolator( const grid_t * g );
 
 void
-delete_interpolator( interpolator_t ** ALIGNED(16) fi );
+delete_interpolator( interpolator_t ** ALIGNED(128) fi );
 
 void
-clear_interpolator( interpolator_t * ALIGNED(16) fi,
-                    const grid_t   *             g );
+clear_interpolator( interpolator_t * ALIGNED(128) fi,
+                    const grid_t   *              g );
 
-accumulator_t * ALIGNED(16)
+accumulator_t * ALIGNED(128)
 new_accumulators( const grid_t * g );
 
 void
-delete_accumulators( accumulator_t ** ALIGNED(16) a );
+delete_accumulators( accumulator_t ** ALIGNED(128) a );
 
 // Time stepping functions
 
@@ -278,9 +278,9 @@ delete_accumulators( accumulator_t ** ALIGNED(16) a );
 // functions.
 
 void
-load_interpolator( interpolator_t * ALIGNED(16) fi,
-                   const field_t  * ALIGNED(16) f,
-                   const grid_t   *             g );
+load_interpolator( interpolator_t * ALIGNED(128) fi,
+                   const field_t  * ALIGNED(16)  f,
+                   const grid_t   *              g );
 
 
 // In clear_accumulators.c
@@ -288,8 +288,8 @@ load_interpolator( interpolator_t * ALIGNED(16) fi,
 // This zeros out all the accumulator arrays in a pipelined fashion.
 
 void
-clear_accumulators( accumulator_t * ALIGNED(16) a,
-                    const grid_t  *             g );
+clear_accumulators( accumulator_t * ALIGNED(128) a,
+                    const grid_t  *              g );
 
 // In reduce_accumulators.c
 
@@ -300,8 +300,8 @@ clear_accumulators( accumulator_t * ALIGNED(16) a,
 // reduction).
 
 void
-reduce_accumulators( accumulator_t * ALIGNED(16) a,
-                     const grid_t  *             g );
+reduce_accumulators( accumulator_t * ALIGNED(128) a,
+                     const grid_t  *              g );
 
 // In unload_accumulator.c
 
@@ -315,9 +315,9 @@ reduce_accumulators( accumulator_t * ALIGNED(16) a,
 // accumulators have been reduced into the host accumulator.
 
 void
-unload_accumulator( field_t             * ALIGNED(16) f, 
-                    const accumulator_t * ALIGNED(16) a,
-                    const grid_t        *             g );
+unload_accumulator( field_t             * ALIGNED(16)  f, 
+                    const accumulator_t * ALIGNED(128) a,
+                    const grid_t        *              g );
 
 // In advance_b.c
 

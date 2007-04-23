@@ -10,18 +10,18 @@
 #define f(x,y,z)  f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct load_interpolator_pipeline_args {
-  interpolator_t * ALIGNED(16) fi;
-  const field_t  * ALIGNED(16) f;
-  const grid_t   *             g;
+  interpolator_t * ALIGNED(128) fi;
+  const field_t  * ALIGNED(16)  f;
+  const grid_t   *              g;
 } load_interpolator_pipeline_args_t;
 
 static void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 			    int pipeline_rank,
                             int n_pipeline ) {
-  interpolator_t * ALIGNED(16) fi = args->fi;
-  const field_t  * ALIGNED(16) f  = args->f;
-  const grid_t   *             g  = args->g;
+  interpolator_t * ALIGNED(128) fi = args->fi;
+  const field_t  * ALIGNED(16)  f  = args->f;
+  const grid_t   *              g  = args->g;
   
   interpolator_t * ALIGNED(16) pi;
 
@@ -129,9 +129,9 @@ static void
 load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int pipeline_rank,
                                int n_pipeline ) {
-  interpolator_t * ALIGNED(16) fi = args->fi;
-  const field_t  * ALIGNED(16) f  = args->f;
-  const grid_t   *             g  = args->g;
+  interpolator_t * ALIGNED(128) fi = args->fi;
+  const field_t  * ALIGNED(16)  f  = args->f;
+  const grid_t   *              g  = args->g;
 
   interpolator_t * ALIGNED(16) pi;
 
@@ -150,7 +150,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   const v4int   sgn_1_2(  0, 1<<31, 1<<31,     0 );
   const v4int   sgn_2_3(  0,     0, 1<<31, 1<<31 );
   const v4int   sgn_1_3(  0, 1<<31,     0, 1<<31 );
-  const v4int   sel_0_1( -1,   -1,     0,     0 );
+  const v4int   sel_0_1( -1,    -1,     0,     0 );
 
   v4float w0, w1, w2, w3;
 
@@ -179,31 +179,39 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     w1 =                       v4float( pfy->ex);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float( pfz->ex) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v4float(pfyz->ex);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ), &pi->ex );
+    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+               &pi->ex );
 
     // ey interpolation coefficients 
     w0 = toggle_bits( sgn_1_2, v4float( pf0->ey) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float( pfz->ey);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float( pfx->ey) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v4float(pfzx->ey);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ), &pi->ey );
+    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+               &pi->ey );
 
     // ez interpolation coefficients 
     w0 = toggle_bits( sgn_1_2, v4float( pf0->ez) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float( pfx->ez);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float( pfy->ez) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v4float(pfxy->ez);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ), &pi->ez );
+    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+               &pi->ez );
 
     // bx and by interpolation coefficients 
-    w0  = toggle_bits( sgn_1_3, merge( sel_0_1, v4float(pf0->cbx), v4float(pf0->cby) ) ); // [ w0x -w0x w0y -w0y ]
-    w1  =                       merge( sel_0_1, v4float(pfx->cbx), v4float(pfy->cby) );   // [ w1x  w1x w1y  w1y ]
+    w0  = toggle_bits( sgn_1_3,
+                       merge( sel_0_1,
+                              v4float(pf0->cbx),
+                              v4float(pf0->cby) ) ); // [ w0x -w0x w0y -w0y ]
+    w1  =              merge( sel_0_1,
+                              v4float(pfx->cbx),
+                              v4float(pfy->cby) );   // [ w1x  w1x w1y  w1y ]
     store_4x1( half*( w1 + w0 ), &pi->cbx );
 
     // bz interpolation coefficients 
     w0  = toggle_bits( sgn_1_3, v4float(pf0->cbz) ); // [ w0 -w0 d/c d/c ]
     w1  =                       v4float(pfz->cbz);   // [ w1 -w1 d/c d/c ]
-    store_4x1( half*( w1 + w0 ), &pi->cbz );         // Note after bz coefficients is padding!
+    store_4x1( half*( w1 + w0 ), &pi->cbz ); // Note: Padding after bz coeff!
 
     pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
     
@@ -222,9 +230,9 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 #endif
 
 void
-load_interpolator( interpolator_t * ALIGNED(16) fi,
-                   const field_t  * ALIGNED(16) f,
-                   const grid_t   *             g ) {
+load_interpolator( interpolator_t * ALIGNED(128) fi,
+                   const field_t  * ALIGNED(16)  f,
+                   const grid_t   *              g ) {
   load_interpolator_pipeline_args_t args[1];
 
   if( fi==NULL ) ERROR(("Bad interpolator"));

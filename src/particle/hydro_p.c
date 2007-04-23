@@ -25,7 +25,7 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
                     const particle_t     * ALIGNED(128) p0,
                     int                                 n,
                     float                               q_m,
-                    const interpolator_t * ALIGNED(16)  f0,
+                    const interpolator_t * ALIGNED(128) f0,
                     const grid_t         *              g ) {
   float dx, dy, dz; int ii;
   float ux, uy, uz, q;
@@ -34,7 +34,7 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
   float qdt_2mc, qdt_4mc2, c, r8V, mc_q;
   const particle_t     * ALIGNED(16) p;
   const interpolator_t * ALIGNED(16) f;
-  hydro_t * ALIGNED(16) h;
+  hydro_t              * ALIGNED(16) h;
   int stride_10, stride_21, stride_43;
 
   if( h0==NULL ) ERROR(("Bad hydro"));

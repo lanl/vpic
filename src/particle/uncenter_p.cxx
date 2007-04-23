@@ -10,7 +10,7 @@ typedef struct uncenter_p_pipeline_args {
   particle_t           * ALIGNED(128) p0;  // Particle array
   int                                 np;  // Number of particle
   float                               q_m; // Charge to mass ratio
-  const interpolator_t * ALIGNED(16)  f;   // Interpolator array
+  const interpolator_t * ALIGNED(128) f0;  // Interpolator array
   const grid_t         *              g;   // Local domain grid parameters
 } uncenter_p_pipeline_args_t;
 
@@ -18,11 +18,11 @@ static void
 uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline ) {
-  particle_t           * ALIGNED(16) p   = args->p0;
-  int                                n   = args->np;
-  const float                        q_m = args->q_m;
-  const interpolator_t * ALIGNED(16) f0  = args->f;
-  const grid_t *                     g   = args->g;
+  particle_t           * ALIGNED(16)  p   = args->p0;
+  int                                 n   = args->np;
+  const float                         q_m = args->q_m;
+  const interpolator_t * ALIGNED(128) f0  = args->f0;
+  const grid_t *                      g   = args->g;
 
   const float qdt_2mc        = -0.5 *q_m*g->dt/g->cvac; // Negative for backward half advance
   const float qdt_4mc        = -0.25*q_m*g->dt/g->cvac; // Negative for backward half Boris rotate
@@ -106,11 +106,11 @@ static void
 uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
                         int pipeline_rank,
                         int n_pipeline ) {
-  particle_t           * ALIGNED(64) p   = args->p0;
-  int                                nq  = args->np;
-  const float                        q_m = args->q_m;
-  const interpolator_t * ALIGNED(16) f0  = args->f;
-  const grid_t         *             g   = args->g;
+  particle_t           * ALIGNED(64)  p   = args->p0;
+  int                                 nq  = args->np;
+  const float                         q_m = args->q_m;
+  const interpolator_t * ALIGNED(128) f0  = args->f0;
+  const grid_t         *              g   = args->g;
   double n_target;
 
   v4float dx, dy, dz; v4int ii;
@@ -175,14 +175,14 @@ void
 uncenter_p( particle_t           * ALIGNED(128) p0,
             const int                           np,
             const float                         q_m,
-            const interpolator_t * ALIGNED(16)  f,
+            const interpolator_t * ALIGNED(128) f0,
             const grid_t         *              g ) {
   uncenter_p_pipeline_args_t args[1];
 
   // FIXME: p0 NULL checking
-  if( np<0    ) ERROR(("Bad number of particles"));
-  if( f==NULL ) ERROR(("Bad interpolator"));
-  if( g==NULL ) ERROR(("Bad grid"));
+  if( np<0     ) ERROR(("Bad number of particles"));
+  if( f0==NULL ) ERROR(("Bad interpolator"));
+  if( g==NULL  ) ERROR(("Bad grid"));
 
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
@@ -190,7 +190,7 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
   args->p0  = p0;
   args->np  = np;
   args->q_m = q_m;
-  args->f   = f;
+  args->f0  = f0;
   args->g   = g;
 
   PSTYLE.dispatch( UNCENTER_P_PIPELINE, args, 0 );

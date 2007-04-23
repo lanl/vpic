@@ -19,7 +19,7 @@
 int
 move_p( particle_t       * ALIGNED(128) p0,
         particle_mover_t * ALIGNED(16)  pm,
-        accumulator_t    * ALIGNED(16)  a0,
+        accumulator_t    * ALIGNED(128) a0,
         const grid_t     *              g ) {
   float s_midx, s_midy, s_midz;
   float s_dispx, s_dispy, s_dispz;
@@ -256,7 +256,7 @@ inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
           int                                      n,  // Where to inject
           particle_mover_t          * ALIGNED(16)  pm, // Free particle mover
           field_t                   * ALIGNED(16)  f,  // For rhob accum
-          accumulator_t             * ALIGNED(16)  a,  // For J accum
+          accumulator_t             * ALIGNED(128) a0, // For J accum
           const particle_injector_t *              pi,
           const grid_t              *              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
@@ -267,7 +267,7 @@ inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
   if( p0==NULL ) ERROR(("Bad particle"));
   if( pm==NULL ) ERROR(("Bad mover"));
   if( f==NULL  ) ERROR(("Bad field"));
-  if( a==NULL  ) ERROR(("Bad accumulator"));
+  if( a0==NULL ) ERROR(("Bad accumulator"));
   if( pi==NULL ) ERROR(("Bad injector"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
@@ -338,5 +338,5 @@ inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
   rhob += j;            *rhob += w6;
   rhob += i;            *rhob += w7;
 
-  return move_p(p0,pm,a,g);
+  return move_p(p0,pm,a0,g);
 }

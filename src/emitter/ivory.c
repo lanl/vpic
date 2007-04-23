@@ -3,12 +3,12 @@
 // FIXME: ERROR TRAPPING AND ERROR RETURNS
 
 void
-ivory( emitter_t            *             e,      // Actual emitter
-       const interpolator_t * ALIGNED(16) fi,     // field interp
-       field_t              * ALIGNED(16) f,      // rhob accum
-       accumulator_t        * ALIGNED(16) a,      // injected current accum
-       grid_t               *             g,      // matching grid
-       mt_handle                          rng ) { // Random number generator
+ivory( emitter_t            *              e,      // Actual emitter
+       const interpolator_t * ALIGNED(128) fi,     // field interp
+       field_t              * ALIGNED(16)  f,      // rhob accum
+       accumulator_t        * ALIGNED(128) a,      // injected current accum
+       grid_t               *              g,      // matching grid
+       mt_handle                           rng ) { // Random number generator
   ivory_t * args = (ivory_t *)e->model_parameters;
   particle_injector_t pi;
   int i, n;

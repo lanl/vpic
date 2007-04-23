@@ -22,7 +22,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
             int                             np,
             int                             max_np,
             field_t          * ALIGNED(16)  f,
-            accumulator_t    * ALIGNED(16)  a,
+            accumulator_t    * ALIGNED(128) a0,
             const grid_t     *              g,
             species_t        *              sp,
             mt_handle                       rng ) {
@@ -51,7 +51,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
   if( np<0     ) ERROR(("Bad number of particles"));
   if( max_np<0 ) ERROR(("Bad max number of particles"));
   if( f==NULL  ) ERROR(("Bad field"));
-  if( a==NULL  ) ERROR(("Bad accumulator"));
+  if( a0==NULL ) ERROR(("Bad accumulator"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
   rank = mp_rank(g->mp);
@@ -138,7 +138,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
         nn = -nn - 3; /* Assumes reflecting/absorbing are -1, -2 */     \
         if ( nn>=0 && nn<g->nb ) {                                      \
           g->boundary[nn].handler( g->boundary[nn].params,              \
-                                   r, &pm[nm-1], f, a, g, sp, &cm, rng, FACE ); \
+                                   r, &pm[nm-1], f, a0, g, sp, &cm, rng, FACE ); \
           goto done_testing;                                            \
         }                                                               \
       }
@@ -201,7 +201,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
         pr = (particle_injector_t *)&buf[1];
         for(;n;n--) {
           if( np==max_np || nm==max_nm ) break;
-          nm += inject_p( p0, np, pm+nm, f, a, pr, g );
+          nm += inject_p( p0, np, pm+nm, f, a0, pr, g );
           pr++;
           np++;
         }
@@ -216,7 +216,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
     // Handle particle injectors from custom pbcs
     while ( cm!=cmlist ) {
       if ( np==max_np || nm==max_nm ) break;
-      nm += inject_p( p0, np, pm+nm, f, a, --cm, g );
+      nm += inject_p( p0, np, pm+nm, f, a0, --cm, g );
       np++; 
     } 
     if ( cm!=cmlist ) 

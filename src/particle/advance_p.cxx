@@ -15,8 +15,8 @@ typedef struct advance_p_pipeline_args {
   float                               q_m; // Charge to mass ratio
   particle_mover_t     * ALIGNED(16)  pm;  // Particle mover array
   int                                 nm;  // Number of movers
-  accumulator_t        * ALIGNED(16)  a;   // Accumuator arrays
-  const interpolator_t * ALIGNED(16)  f;   // Interpolator array
+  accumulator_t        * ALIGNED(128) a0;  // Accumuator arrays
+  const interpolator_t * ALIGNED(128) f0;  // Interpolator array
 
 # ifdef USE_CELL_SPUS
   // The copy of the grid_t struct is passed to eliminate the need for
@@ -65,8 +65,8 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float                         q_m = args->q_m;
   particle_mover_t     * ALIGNED(16)  pm  = args->pm;
   int                                 nm  = args->nm;
-  accumulator_t        * ALIGNED(16)  a0  = args->a;
-  const interpolator_t * ALIGNED(16)  f0  = args->f;
+  accumulator_t        * ALIGNED(128) a0  = args->a0;
+  const interpolator_t * ALIGNED(128) f0  = args->f0;
   const grid_t *                      g   = args->g;
 
   const float qdt_2mc        = 0.5*q_m*g->dt/g->cvac;
@@ -254,8 +254,8 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   const float                         q_m = args->q_m;
   particle_mover_t     * ALIGNED(16)  pm  = args->pm;
   int                                 nm  = args->nm;
-  accumulator_t        * ALIGNED(16)  a0  = args->a;
-  const interpolator_t * ALIGNED(16)  f0  = args->f;
+  accumulator_t        * ALIGNED(128) a0  = args->a0;
+  const interpolator_t * ALIGNED(128) f0  = args->f0;
   const grid_t         *              g   = args->g;
 
   v4float dx, dy, dz; v4int ii;
@@ -428,8 +428,8 @@ advance_p( particle_t           * ALIGNED(128) p0,
            const float                         q_m,
            particle_mover_t     * ALIGNED(16)  pm,
            int                                 nm,       
-           accumulator_t        * ALIGNED(16)  a,
-           const interpolator_t * ALIGNED(16)  f,
+           accumulator_t        * ALIGNED(128) a0,
+           const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g ) {
 # ifdef USE_CELL_SPUS
   char * _stack[ 16 + sizeof(advance_p_pipeline_args_t) ];
@@ -445,8 +445,8 @@ advance_p( particle_t           * ALIGNED(128) p0,
   if( np<0     ) ERROR(("Bad number of particles"));
   if( pm==NULL ) ERROR(("Bad particle mover"));
   if( nm<0     ) ERROR(("Bad number of movers"));
-  if( a==NULL  ) ERROR(("Bad accumulator"));
-  if( f==NULL  ) ERROR(("Bad interpolator"));
+  if( a0==NULL ) ERROR(("Bad accumulator"));
+  if( f0==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
   args->p0  = p0;
@@ -454,8 +454,8 @@ advance_p( particle_t           * ALIGNED(128) p0,
   args->q_m = q_m;
   args->pm  = pm;
   args->nm  = nm;
-  args->a   = a;
-  args->f   = f;
+  args->a0  = a0;
+  args->f0  = f0;
 
 # ifdef USE_CELL_SPUS
   args->g   = *g;

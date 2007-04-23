@@ -67,11 +67,11 @@ private:
   // Helper initialized by user; not restart-saved (can be derived from above)
 
   material_coefficient_t * ALIGNED(16) material_coefficient;
-  /**/                                       // Material helpers
-  interpolator_t * ALIGNED(16) interpolator; // Grid helpers
-  accumulator_t * ALIGNED(16) accumulator;   // Grid helpers
-  hydro_t * ALIGNED(16) hydro;               // Grid helpers
-  species_t **species_lookup;                // Species / particle helpers
+  /**/                                        // Material helpers
+  interpolator_t * ALIGNED(128) interpolator; // Grid helpers
+  accumulator_t * ALIGNED(128) accumulator;   // Grid helpers
+  hydro_t * ALIGNED(16) hydro;                // Grid helpers
+  species_t **species_lookup;                 // Species / particle helpers
 
   // Internal use only variables; restart saved
 

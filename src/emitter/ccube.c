@@ -6,12 +6,12 @@
 // True ccube model treats magnetic insulation.
 
 void
-ccube( emitter_t            *             e,      // Actual emitter
-       const interpolator_t * ALIGNED(16) fi,     // field interp
-       field_t              * ALIGNED(16) f,      // rhob accum
-       accumulator_t        * ALIGNED(16) a,      // injected current accum
-       grid_t               *             g,      // matching grid
-       mt_handle                          rng ) { // Random number generator
+ccube( emitter_t            *              e,      // Actual emitter
+       const interpolator_t * ALIGNED(128) fi,     // field interp
+       field_t              * ALIGNED(16)  f,      // rhob accum
+       accumulator_t        * ALIGNED(128) a,      // injected current accum
+       grid_t               *              g,      // matching grid
+       mt_handle                           rng ) { // Random number generator
   ccube_t * args = (ccube_t *)e->model_parameters;
   particle_injector_t pi;
   int i, n;

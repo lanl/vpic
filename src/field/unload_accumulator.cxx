@@ -10,18 +10,18 @@
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 typedef struct unload_accumulator_pipeline_args {
-  field_t             * ALIGNED(16) f;
-  const accumulator_t * ALIGNED(16) a;
-  const grid_t        *             g;
+  field_t             * ALIGNED(16)  f;
+  const accumulator_t * ALIGNED(128) a;
+  const grid_t        *              g;
 } unload_accumulator_pipeline_args_t;
 
 static void
 unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 			     int pipeline_rank,
                              int n_pipeline ) {
-  field_t             * ALIGNED(16) f = args->f;
-  const accumulator_t * ALIGNED(16) a = args->a;
-  const grid_t        *             g = args->g;
+  field_t             * ALIGNED(16)  f = args->f;
+  const accumulator_t * ALIGNED(128) a = args->a;
+  const grid_t        *              g = args->g;
   
   field_t * ALIGNED(16) f0;
   field_t * ALIGNED(16) fx,  * ALIGNED(16) fy,  * ALIGNED(16) fz;
@@ -93,9 +93,9 @@ static void
 unload_accumulator_pipeline_v4( unload_accumulator_pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  field_t             * ALIGNED(16) f = args->f;
-  const accumulator_t * ALIGNED(16) a = args->a;
-  const grid_t        *             g = args->g;
+  field_t             * ALIGNED(16)  f = args->f;
+  const accumulator_t * ALIGNED(128) a = args->a;
+  const grid_t        *              g = args->g;
 
   field_t * ALIGNED(16) f0;
   field_t * ALIGNED(16) fx,  * ALIGNED(16) fy,  * ALIGNED(16) fz;
@@ -159,9 +159,9 @@ unload_accumulator_pipeline_v4( unload_accumulator_pipeline_args_t * args,
 #endif
 
 void
-unload_accumulator( field_t             * ALIGNED(16) f, 
-                    const accumulator_t * ALIGNED(16) a,
-                    const grid_t        *             g ) {
+unload_accumulator( field_t             * ALIGNED(16)  f, 
+                    const accumulator_t * ALIGNED(128) a,
+                    const grid_t        *              g ) {
   unload_accumulator_pipeline_args_t args[1];
   
   if( f==NULL ) ERROR(("Bad field"));

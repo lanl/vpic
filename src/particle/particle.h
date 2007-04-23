@@ -50,7 +50,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
             int                             np,
             int                             max_np,
             field_t          * ALIGNED(16)  f,
-            accumulator_t    * ALIGNED(16)  a,
+            accumulator_t    * ALIGNED(128) a0,
             const grid_t     *              g,
             struct species   *              sp,
             mt_handle                       rng );
@@ -62,7 +62,7 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
                     const particle_t     * ALIGNED(128) p0,
                     int                                 np,
                     float                               q_m,
-                    const interpolator_t * ALIGNED(16)  f0,
+                    const interpolator_t * ALIGNED(128) f0,
                     const grid_t         *              g );
 
 // In move_p.c
@@ -74,7 +74,7 @@ inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
                                                        // <max_np.
           particle_mover_t          * ALIGNED(16)  pm, // Free mover
           field_t                   * ALIGNED(16)  f,  // rhob accum
-          accumulator_t             * ALIGNED(16)  a,  // j accum
+          accumulator_t             * ALIGNED(128) a0, // j accum
           const particle_injector_t *              pi,
           const grid_t              *              g );
 
@@ -116,8 +116,8 @@ advance_p( particle_t           * ALIGNED(128) p0,
            const float                         q_m,
            particle_mover_t     * ALIGNED(16)  pm,
            int                                 nm,
-           accumulator_t        * ALIGNED(16)  a,
-           const interpolator_t * ALIGNED(16)  f,
+           accumulator_t        * ALIGNED(128) a0,
+           const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g );
 
 // In energy.c
@@ -132,7 +132,7 @@ double
 energy_p( const particle_t     * ALIGNED(128) p0,
           int                                 np,
           float                               q_m,
-          const interpolator_t * ALIGNED(16)  f,
+          const interpolator_t * ALIGNED(128) f0,
           const grid_t         *              g );
 
 // In center_p.c
@@ -146,7 +146,7 @@ void
 center_p( particle_t           * ALIGNED(128) p0,
           int                                 np,
           const float                         q_m,
-          const interpolator_t * ALIGNED(16)  f,
+          const interpolator_t * ALIGNED(128) f0,
           const grid_t         *              g );
 
 // In uncenter_p.c
@@ -159,7 +159,7 @@ void
 uncenter_p( particle_t           * ALIGNED(128) p0,
             int                                 np,
             const float                         q_m,
-            const interpolator_t * ALIGNED(16)  f,
+            const interpolator_t * ALIGNED(128) f0,
             const grid_t         *              g );
 
 // INTERNAL USE ONLY FUNCTIONS
@@ -172,7 +172,7 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
 int
 move_p( particle_t       * ALIGNED(128) p0, 
         particle_mover_t * ALIGNED(16)  m,
-        accumulator_t    * ALIGNED(16)  a,
+        accumulator_t    * ALIGNED(128) a0,
         const grid_t     *              g );
 
 int

@@ -25,7 +25,7 @@ accumulate_rho_p( field_t          * ALIGNED(16)  f0,
                   const grid_t     *              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t, r8V, *rho;
   int stride_10, stride_21, stride_43;
-  const particle_t * ALIGNED(16) p;
+  const particle_t * ALIGNED(32) p;
 
   if( f0==NULL ) ERROR(("Bad field"));
   if( p0==NULL ) ERROR(("Bad particle array"));

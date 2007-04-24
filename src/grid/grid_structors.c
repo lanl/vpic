@@ -44,7 +44,8 @@ new_grid( void ) {
   return g;
 }
 
-void delete_grid( grid_t **g ) {
+void
+delete_grid( grid_t **g ) {
   if( g==NULL ) return;
   delete_mp(&((*g)->mp));
   if( (*g)->range!=NULL ) free_aligned( (*g)->range );

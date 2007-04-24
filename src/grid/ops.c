@@ -59,7 +59,7 @@ size_grid( grid_t * g,
 
   if( g->neighbor!=NULL ) free_aligned( g->neighbor );
   g->neighbor =
-    (int64_t * ALIGNED(16))malloc_aligned( 6*lnc*sizeof(int64_t), 16 );
+    (int64_t * ALIGNED(128))malloc_aligned( 6*lnc*sizeof(int64_t), 128 );
   if( g->neighbor==NULL ) ERROR(("Could not allocate neighbor array"));
 
   for( z=0; z<=lnz+1; z++ )

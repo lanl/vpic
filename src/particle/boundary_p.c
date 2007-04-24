@@ -11,11 +11,17 @@
 #include <species.h> // For species_t 
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
-#define CUSTOM_PBC_MIN_INJECTORS 16 
+
+#define CUSTOM_PBC_MIN_INJECTORS 16
+
+// FIXME: ~1.3125 is fastest growth without causing heap fragmentation
+// out of place realloc.  Just below golden ratio is fastest growth
+// without causing heap fragment with free / malloc resize.
+
 #define CUSTOM_PBC_RESIZE_FACTOR 1.1
 
 int
-boundary_p( particle_mover_t * ALIGNED(16)  pm,
+boundary_p( particle_mover_t * ALIGNED(128) pm,
             int                             nm,
             int                             max_nm,
             particle_t       * ALIGNED(128) p0,
@@ -83,7 +89,15 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
       }
     }
 
-    // Create space for particle injectors created from custom pbc
+    // Create space for particle injectors created from custom pbc The
+    // array is large enough to accomodate on particle injected per
+    // movers
+
+    // FIXME: THIS IS ASSUMES THAT CUSTOM BOUNDARY CONDITIONS INJECT
+    // AT MOST ONE PARTICLE PER INCIDENT PARTICLE.  THIS IS USUALLY
+    // TRUE (SOME SECONDARY MODELS MAY NOT SATISFY) BUT THIS
+    // ARCHITECTURAL FLAW SHOULD BE FIXED.
+
     if ( !cmlist ) {
       cpb_size=( nm<CUSTOM_PBC_MIN_INJECTORS ? CUSTOM_PBC_MIN_INJECTORS : nm ); 
       cmlist=(particle_injector_t *)malloc((size_t)cpb_size*sizeof(particle_injector_t)); 
@@ -91,6 +105,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
     } else if ( nm>cpb_size ) { // Need to resize injector array 
       particle_injector_t *cmlist_tmp; 
       cpb_size=nm*CUSTOM_PBC_RESIZE_FACTOR;
+      // FIXME: Just free and malloc here!
       cmlist_tmp=realloc( cmlist, (size_t)cpb_size*sizeof(particle_injector_t) ); 
       if ( !cmlist_tmp ) ERROR(("Could not realloate space for cpb injector array.")); 
       cmlist=cmlist_tmp; 
@@ -108,7 +123,7 @@ boundary_p( particle_mover_t * ALIGNED(16)  pm,
     // and before this
 
     for( ; nm; nm-- ) {
-      particle_t * ALIGNED(16) r = p0 + pm[nm-1].i;
+      particle_t * ALIGNED(32) r = p0 + pm[nm-1].i;
 #     define TEST_FACE(FACE,cond)                                       \
       if(cond) {                                                        \
         int64_t nn = g->neighbor[ 6*r->i + FACE ];                      \

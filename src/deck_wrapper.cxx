@@ -51,63 +51,65 @@
 
 //-----------------------------------------------------------------------------
 
-// These macros provide support for setting materials, boundary conditions
-// and field values inside and on the surface of regions.
+// These macros provide support for setting materials, boundary
+// conditions and field values inside and on the surface of regions.
 //
-// Most macros work by providing a logical expression in terms of double
-// precision coordinates x,y,z that are non-zero if a point is inside the
-// intended region and 0 if not. The field macros also take several other
-// equations to set field values. For example:
+// Most macros work by providing a logical expression in terms of
+// double precision coordinates x,y,z that are non-zero if a point is
+// inside the intended region and 0 if not. The field macros also take
+// several other equations to set field values. For example:
 //
 // set_region_field( x>0 && sqrt(x*x+y*y+z*z)<1,  // A half-sphere region 
-//                   sin(k*x), 0, 0,               // electric field
-//                   0, sin(k*x), bz );            // magnetic field
+//                   sin(k*x), 0, 0,              // electric field
+//                   0, sin(k*x), bz );           // magnetic field
 //
 // There are two types of regions, point regions and regular regions.
 //
-// A material value or field component is inside a point region if its location
-// is inside the region. A boundary condition face is inside a point region if
-// all corners of the face are inside the region. Otherwise, a face is on the
-// partially inside a point region if some corner of the face is inside the
+// A material value or field component is inside a point region if its
+// location is inside the region. A boundary condition face is inside
+// a point region if all corners of the face are inside the
+// region. Otherwise, a face is on the partially inside a point region
+// if some corner of the face is inside the region.
+//
+// A regular region has two parts: an interior and a
+// surface. set_region_bc further divides the surface into an interior
+// surface and an exterior surface.  The mapping of the region to the
+// grid is dictated by the solely by the location of cell centers.
+//
+// Interior cells are cells whose centers are inside the
+// region. Exterior cells are cells whose centers are outside the
 // region.
-//
-// A regular region has two parts: an interior and a surface. set_region_bc
-// further divides the surface into an interior surface and an exterior surface.
-// The mapping of the region to the grid is dictated by the solely by the
-// location of cell centers.
-//
-// Interior cells are cells whose centers are inside the region. Exterior cells
-// are cells whose centers are outside the region.
 // 
-// Surface faces are faces for which one associated cell-center is inside the
-// region. Interior faces are faces where both associated cell-centers
-// are inside the region. Interior surface faces are faces whose associated
-// cell-center is inside the region but neighbor cell-center is outside the
-// region. The exterior surface faces are faces whose associated cell-center
-// is outside the region but neighbor cell-center is inside the region.
+// Surface faces are faces for which one associated cell-center is
+// inside the region. Interior faces are faces where both associated
+// cell-centers are inside the region. Interior surface faces are
+// faces whose associated cell-center is inside the region but
+// neighbor cell-center is outside the region. The exterior surface
+// faces are faces whose associated cell-center is outside the region
+// but neighbor cell-center is inside the region.
 //
-// Surface edges are edges for which up to 3 associated cell-centers are
-// inside the region. Interior edges are edges where all associated
-// cell-centers are inside the region.
+// Surface edges are edges for which up to 3 associated cell-centers
+// are inside the region. Interior edges are edges where all
+// associated cell-centers are inside the region.
 //
-// Surface nodes are nodes for which up to 7 one associated cell-centers are
-// inside the region. Interior nodes are nodes where all associated cell-centers
-// are inside the region.
+// Surface nodes are nodes for which up to 7 one associated
+// cell-centers are inside the region. Interior nodes are nodes where
+// all associated cell-centers are inside the region.
 
 // Define a region that fills the whole simulation
 #define everywhere 1
 
 // Define a macro to allow different parts of a region to be selected.
-// Note: particle boundary conditions are negative numbers so 0 is an invalid
-// particle boundary condition. Likewise, 0 as a const char * is a NULL string
-// (lookup_material will give invalid_material_id)
+// Note: particle boundary conditions are negative numbers so 0 is an
+// invalid particle boundary condition. Likewise, 0 as a const char *
+// is a NULL string (lookup_material will give invalid_material_id)
 #define leave_unchanged 0
 
 // region macro internal use
 #define _LOCAL_CELL_ID(x,y,z) INDEX_FORTRAN_3(x,y,z,0,_nx+1,0,_ny+1,0,_nz+1)
 
-// The x=x statements are to avoid a compiler warning if the supplied region
-// or field equation does not use x, y and/or z
+// The x=x statements are to avoid a compiler warning if the supplied
+// region or field equation does not use x, y and/or z
 
 #define set_point_region_material(rgn,name) BEGIN_PRIMITIVE {		\
   const material_id _rmat = lookup_material((const char *)name);	\
@@ -147,7 +149,7 @@
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;		\
   const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;		\
   const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;		\
-  int64_t *_n0 = grid->neighbor;					\
+  int64_t * ALIGNED(128) _n0 = grid->neighbor;                          \
   for( int _k=1; _k<=_nz; _k++ ) {					\
     const double _zn = _z0 + _dz*(_k-1), _zh = _z0 + _dz*_k;		\
     for( int _j=1; _j<=_ny; _j++ ) {					\
@@ -279,7 +281,7 @@
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;	\
   const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;	\
   const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;	\
-  int64_t *_n0 = grid->neighbor;				\
+  int64_t * ALIGNED(128) _n0 = grid->neighbor;                  \
   for( int _k=1; _k<=_nz; _k++ ) {				\
     const double _zl = _z0 + _dz*(_k-1.5);			\
     const double _zc = _z0 + _dz*(_k-0.5);			\
@@ -499,19 +501,20 @@
   }									\
 } END_PRIMITIVE
 
-// Define a "turnstile" function so that we can avoid slamming the I/O 
-// subsystems on large jobs.  These macros use blocking send/receives to 
-// serialize writes.  
+// Define a "turnstile" function so that we can avoid slamming the I/O
+// subsystems on large jobs.  These macros use blocking send/receives
+// to serialize writes.
 //
-// For example, to set up 10 turnstiles (i.e., at most 10 simultaneous writes):
+// For example, to set up 10 turnstiles (i.e., at most 10 simultaneous
+// writes):
 //
 // begin_turnstile(10); 
 //   [code]
 // end_turnstile;
 //
-// begin_turnstile(1) (i.e., one turnstile) effectively serializes the code.  
-// Some basic input argument error checking is done on the number of turnstiles.  
-// Turnstiles should not be nested.  
+// begin_turnstile(1) (i.e., one turnstile) effectively serializes the
+// code.  Some basic input argument error checking is done on the
+// number of turnstiles.  Turnstiles should not be nested.
 
 #define begin_turnstile(NUM_TURNSTILES)                                              \
   BEGIN_PRIMITIVE {                                                                  \

@@ -18,7 +18,7 @@ static void
 uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline ) {
-  particle_t           * ALIGNED(16)  p   = args->p0;
+  particle_t           * ALIGNED(32)  p   = args->p0;
   int                                 n   = args->np;
   const float                         q_m = args->q_m;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
@@ -42,18 +42,18 @@ uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
     // Determine which particles the host processes
 
     p += n;
-    n &= 7;
+    n &= 3;
     p -= n;
 
   } else { // Pipelines do any rough equal number of particle quads 
 
     // Determine which particles to process in this pipeline
 
-    double n_target = (double)(n>>3)/(double)n_pipeline;
+    double n_target = (double)(n>>2)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p += 8*n;
+    p += 4*n;
     n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 8;
+    n *= 4;
 
   }
 
@@ -106,7 +106,7 @@ static void
 uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
                         int pipeline_rank,
                         int n_pipeline ) {
-  particle_t           * ALIGNED(64)  p   = args->p0;
+  particle_t           * ALIGNED(128) p   = args->p0;
   int                                 nq  = args->np;
   const float                         q_m = args->q_m;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
@@ -126,11 +126,10 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
 
   // Determine which particle quads to process in this pipeline
 
-  n_target = (double)(nq>>3) / (double)n_pipeline;
+  n_target = (double)(nq>>2) / (double)n_pipeline;
   nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 8*nq;
+  p  += 4*nq;
   nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
-  nq *= 2;
 
   // Process the particle quads for this pipeline
 

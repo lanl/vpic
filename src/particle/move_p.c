@@ -28,7 +28,7 @@ move_p( particle_t       * ALIGNED(128) p0,
   int type;
   int64_t neighbor;
   float *a;
-  particle_t * ALIGNED(16) p = p0 + pm->i;
+  particle_t * ALIGNED(32) p = p0 + pm->i;
 
   for(;;) {
     s_midx = p->dx;
@@ -152,7 +152,7 @@ move_p( particle_t       * ALIGNED(128) p0,
 // rhob is synchronized, these charges cancel.
 
 int
-remove_p( particle_t   * ALIGNED(16)  r,
+remove_p( particle_t   * ALIGNED(32)  r,
           particle_t   * ALIGNED(128) p0,
           int                         np,
           field_t      * ALIGNED(16)  f,
@@ -160,7 +160,7 @@ remove_p( particle_t   * ALIGNED(16)  r,
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, j, k;
   float *rhob;
-  particle_t * ALIGNED(16) p;
+  particle_t * ALIGNED(32) p;
 
   if( r==NULL || p0==NULL || f==NULL || g==NULL || (r-p0)<0 || (r-p0)>=np )
     return 0;
@@ -262,7 +262,7 @@ inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, j, k;
   float *rhob;
-  particle_t * ALIGNED(16) p;
+  particle_t * ALIGNED(32) p;
 
   if( p0==NULL ) ERROR(("Bad particle"));
   if( pm==NULL ) ERROR(("Bad mover"));

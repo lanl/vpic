@@ -42,18 +42,24 @@ struct species;
 
 // In boundary_p.c
 
-int
-boundary_p( particle_mover_t * ALIGNED(16)  pm,
-            int                             nm,
-            int                             max_nm,
-            particle_t       * ALIGNED(128) p0,
-            int                             np,
-            int                             max_np,
-            field_t          * ALIGNED(16)  f,
-            accumulator_t    * ALIGNED(128) a0,
-            const grid_t     *              g,
-            struct species   *              sp,
-            mt_handle                       rng );
+int // New number of particles
+boundary_p( particle_mover_t * ALIGNED(128) pm,     // Particle mover array
+            int                             nm,     // Number of used movers;
+                                                    // i.e. number of
+                                                    // particles that had a
+                                                    // boundary interaction
+            int                             max_nm, // Max number of movers
+            particle_t       * ALIGNED(128) p0,     // Particle array
+            int                             np,     // Number of particles
+            int                             max_np, // Max number of particles
+            field_t          * ALIGNED(16)  f0,     // For rhob accum and/or
+                                                    // custom pbcs i.e. field
+                                                    // emission
+            accumulator_t    * ALIGNED(128) a0,     // For j accum
+            const grid_t     *              g,      // Local grid params
+            struct species   *              sp,     // Species params for use
+                                                    // in custom pbcs
+            mt_handle                       rng );  // RNG for custom pbcs
 
 // In hydro_p.c
 
@@ -67,16 +73,19 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
 
 // In move_p.c
 
-int
-inject_p( particle_t                * ALIGNED(128) p0, // Array to inject into
-          int                                      np, // Where to inject
-                                                       // Caller promises
-                                                       // <max_np.
-          particle_mover_t          * ALIGNED(16)  pm, // Free mover
-          field_t                   * ALIGNED(16)  f,  // rhob accum
-          accumulator_t             * ALIGNED(128) a0, // j accum
-          const particle_injector_t *              pi,
-          const grid_t              *              g );
+int // 0 if free mover was not used, 1 if free mover was used
+inject_p( particle_t                * ALIGNED(128) p0,  // Array to inject into
+          int                                      np,  // Where to inject;
+                                                        // caller promises
+                                                        // np<max_np.
+          particle_mover_t          * ALIGNED(16)  m,   // Free mover to store
+                                                        // remaining motion
+                                                        // params if boundary
+                                                        // hit during injection
+          field_t                   * ALIGNED(16)  f0,  // For rhob accum
+          accumulator_t             * ALIGNED(128) a0,  // For j accum
+          const particle_injector_t *              pi,  // Particle to inject
+          const grid_t              *              g ); // Local grid params
 
 // In sort_p.c
 
@@ -97,25 +106,23 @@ accumulate_rho_p( field_t          * ALIGNED(16)  f,
 particle_t * ALIGNED(128)
 new_particle_array( int np );
 
-particle_mover_t * ALIGNED(16)
+particle_mover_t * ALIGNED(128)
 new_particle_mover( int nm );
 
 void
 delete_particle_array( particle_t ** ALIGNED(128) p );
 
 void
-delete_particle_mover( particle_mover_t ** ALIGNED(16) pm );
+delete_particle_mover( particle_mover_t ** ALIGNED(128) pm );
 
 // In advance_p.c
 
-// Returns the number particle movers in use
-
-int
+int // Number of particles had a boundary interaction
 advance_p( particle_t           * ALIGNED(128) p0,
            int                                 np,
            const float                         q_m,
-           particle_mover_t     * ALIGNED(16)  pm,
-           int                                 nm,
+           particle_mover_t     * ALIGNED(128) pm,
+           int                                 max_nm,
            accumulator_t        * ALIGNED(128) a0,
            const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g );
@@ -170,16 +177,16 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
 // move_p implementation as well!
 
 int
-move_p( particle_t       * ALIGNED(128) p0, 
-        particle_mover_t * ALIGNED(16)  m,
-        accumulator_t    * ALIGNED(128) a0,
-        const grid_t     *              g );
+move_p( particle_t       * ALIGNED(128) p0,  // Particle array
+        particle_mover_t * ALIGNED(16)  m,   // Particle mover to apply
+        accumulator_t    * ALIGNED(128) a0,  // Accumulator to use
+        const grid_t     *              g ); // Grid parameters
 
 int
-remove_p( particle_t   * ALIGNED(16)  r,
-          particle_t   * ALIGNED(128) p0,
-          int                         np,
-          field_t      * ALIGNED(16)  f,
+remove_p( particle_t   * ALIGNED(32)  r,   // Particle to remove
+          particle_t   * ALIGNED(128) p0,  // Particle array
+          int                         np,  // Number of particles
+          field_t      * ALIGNED(16)  f0,  // For rhob accumulation
           const grid_t *              g );
 
 END_C_DECLS

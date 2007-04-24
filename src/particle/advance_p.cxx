@@ -9,50 +9,54 @@
 #define ADVANCE_P_PIPELINE (pipeline_func_t)advance_p_pipeline_v4
 #endif
 
+typedef struct particle_mover_seg {
+
+  MEM_PTR( particle_mover_t, 16 ) pm; // First mover in segment
+  int nm;                             // Number of movers in use
+
+# ifdef USE_CELL_SPUS
+
+  // Pad to 16-byte boundary
+  char _pad[ PAD( SIZEOF_MEM_PTR+sizeof(int), 16 ) ];
+
+# endif
+
+} particle_mover_seg_t;
+
 typedef struct advance_p_pipeline_args {
-  particle_t           * ALIGNED(128) p0;  // Particle array
-  int                                 np;  // Number of particles
-  float                               q_m; // Charge to mass ratio
-  particle_mover_t     * ALIGNED(16)  pm;  // Particle mover array
-  int                                 nm;  // Number of movers
-  accumulator_t        * ALIGNED(128) a0;  // Accumuator arrays
-  const interpolator_t * ALIGNED(128) f0;  // Interpolator array
+
+  MEM_PTR( particle_t,           128 ) p0;     // Particle array
+  int                                  np;     // Number of particles
+  float                                q_m;    // Charge to mass ratio
+  MEM_PTR( particle_mover_t,     128 ) pm;     // Particle mover array
+  int                                  max_nm; // Number of movers
+  //char _pad0[4]; // (Implicit if 64-bit mem ptrs)
+  MEM_PTR( accumulator_t,        128 ) a0;     // Accumulator arrays
+  MEM_PTR( const interpolator_t, 128 ) f0;     // Interpolator array
+  MEM_PTR( const grid_t,         1   ) g;      // Local domain grid parameters
+  MEM_PTR( particle_mover_seg_t, 128 ) seg;    // Destination for return values
 
 # ifdef USE_CELL_SPUS
-  // The copy of the grid_t struct is passed to eliminate the need for
-  // pointer chasing through PPU memory in the SPUS.
-  grid_t                         g;   // Local domain grid parameters
-# else
-  const grid_t         *         g;   // Local domain grid parameters
+
+  // Unpack the grid parameters so that the SPU does not have to
+  // go pointer chasing through external memory.
+
+  // Local domain grid parameters used by advance_p_pipeline_spu
+  float cvac, dt, dx, dy, dz; // Space time mesh parameters and coupling
+  int nx, ny, nz;             // Local voxel mesh resolution
+
+  // Local domain grid parameters used by move_p_spu
+  MEM_PTR( const int64_t, 128 ) neighbor; // Global voxel indices of
+  /**/                                    // voxels adjacent to local voxels
+  int rangel, rangeh;                     // Local to global voxel mapping
+
+  // Pad to 16-byte boundary 
+  char _pad[ PAD( 7*SIZEOF_MEM_PTR +
+                  7*sizeof(int)    +
+                  6*sizeof(float)  +
+                  SIZEOF_MEM_PTR-4, 16 ) ];
+
 # endif
-
-  // Pipeline return values
-
-# ifdef USE_CELL_SPUS
-  // 16-byte align the first pipeline return value.  Note: This is
-  // more wasteful than necessary if no padding needed.
-  // Unfortunately, C++98 does not support zero sized structure
-  // members ... sigh ...
-  char _pad[ 16-( ( 4*sizeof(void *)  +
-                    2*sizeof(int) +
-                    1*sizeof(float) + 
-                    1*sizeof(grid_t) ) & 15 ) ];
-# endif
-
-  struct {
-    particle_mover_t * ALIGNED(16) pm; // First mover in segment
-    int nm;                            // Number of used movers in segment
-
-#   ifdef USE_CELL_SPUS
-    // 16-byte align the next pipeline return value (and thus the
-    // entire structure).  Note: This is more wasteful than necessary
-    // if no padding needed.  Unfortunately, ISO C++98 does not
-    // support zero sized structure members ... sigh ...
-    const char _pad[ 16-( ( 1*sizeof(void *) +
-                            1*sizeof(int) ) & 15 ) ];
-#   endif
-
-  } seg[MAX_PIPELINE+1]; // seg[n_pipeline] used by host
 
 } advance_p_pipeline_args_t;
 
@@ -64,7 +68,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   int                                 n   = args->np;
   const float                         q_m = args->q_m;
   particle_mover_t     * ALIGNED(16)  pm  = args->pm;
-  int                                 nm  = args->nm;
+  int                                 nm  = args->max_nm;
   accumulator_t        * ALIGNED(128) a0  = args->a0;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
   const grid_t *                      g   = args->g;
@@ -77,7 +81,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
 
-  particle_t           * ALIGNED(16) p;
+  particle_t           * ALIGNED(32) p;
   const interpolator_t * ALIGNED(16) f;
   float                * ALIGNED(16) a;
 
@@ -93,7 +97,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     // accumulator array.
 
     p  = p0 + n; pm += nm;
-    n &= 7;      nm  = n>nm ? nm : n;
+    n &= 3;      nm  = n>nm ? nm : n;
     p -= n;      pm -= nm;
 
   } else { // Pipelines do any rough equal number of particle quads
@@ -102,15 +106,15 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
     // Determine which particles to process in this pipeline
 
-    n_target = (double)(n>>3)/(double)n_pipeline;
+    n_target = (double)(n>>2)/(double)n_pipeline;
     n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p  = p0 + 8*n;
+    p  = p0 + 4*n;
     n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 8;
+    n *= 4;
 
     // Determine which movers are reserved for this pipeline
 
-    nm -= (args->np&7)>nm ? nm : (args->np&7); // Reserve last movers for host
+    nm -= (args->np&3)>nm ? nm : (args->np&3); // Reserve last movers for host
 
     n_target = (double)nm / (double)n_pipeline; 
     nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -249,11 +253,11 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   double n_target;
 
   particle_t           * ALIGNED(128) p0  = args->p0;
-  particle_t           * ALIGNED(64)  p   = p0;
+  particle_t           * ALIGNED(128) p   = p0;
   int                                 nq  = args->np;
   const float                         q_m = args->q_m;
   particle_mover_t     * ALIGNED(16)  pm  = args->pm;
-  int                                 nm  = args->nm;
+  int                                 nm  = args->max_nm;
   accumulator_t        * ALIGNED(128) a0  = args->a0;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
   const grid_t         *              g   = args->g;
@@ -275,15 +279,14 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
   // Determine which particles to process in this pipeline
 
-  n_target = (double)(nq>>3)/(double)n_pipeline;
+  n_target = (double)(nq>>2)/(double)n_pipeline;
   nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 8*nq;
+  p  += 4*nq;
   nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
-  nq *= 2;
 
   // Determine which movers are reserved for this pipeline
 
-  nm -= (args->np&7)>nm ? nm : (args->np&7); // Reserve last movers for host
+  nm -= (args->np&3)>nm ? nm : (args->np&3); // Reserve last movers for host
 
   n_target = (double)nm / (double)n_pipeline; 
   nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
@@ -426,50 +429,34 @@ int
 advance_p( particle_t           * ALIGNED(128) p0,
            const int                           np,
            const float                         q_m,
-           particle_mover_t     * ALIGNED(16)  pm,
-           int                                 nm,       
+           particle_mover_t     * ALIGNED(128) pm,
+           int                                 max_nm,       
            accumulator_t        * ALIGNED(128) a0,
            const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g ) {
-# ifdef USE_CELL_SPUS
-  char * _stack[ 16 + sizeof(advance_p_pipeline_args_t) ];
-  advance_p_pipeline_args_t * args =
-    (advance_p_pipeline_args_t *)((((size_t)_stack)+15)&~15);
-# else
-  advance_p_pipeline_args_t args[1];
-# endif
-
-  int rank;
+  DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, args, 1, 128 );
+  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, seg, MAX_PIPELINE+1, 128 );
+  int nm, rank;
 
   if( p0==NULL ) ERROR(("Bad particle array"));
   if( np<0     ) ERROR(("Bad number of particles"));
   if( pm==NULL ) ERROR(("Bad particle mover"));
-  if( nm<0     ) ERROR(("Bad number of movers"));
+  if( max_nm<0 ) ERROR(("Bad number of movers"));
   if( a0==NULL ) ERROR(("Bad accumulator"));
   if( f0==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
 
-  args->p0  = p0;
-  args->np  = np;
-  args->q_m = q_m;
-  args->pm  = pm;
-  args->nm  = nm;
-  args->a0  = a0;
-  args->f0  = f0;
+  args->p0     = p0;
+  args->np     = np;
+  args->q_m    = q_m;
+  args->pm     = pm;
+  args->max_nm = max_nm;
+  args->a0     = a0;
+  args->f0     = f0;
+  args->g      = g;
+  args->seg    = seg;
 
-# ifdef USE_CELL_SPUS
-  args->g   = *g;
-# else
-  args->g   = g;
-# endif
-
-# ifdef USE_CELL_SPUS
-  spu.dispatch( SPU_PIPELINE( advance_p_pipeline_spu ), args, 0 );
-# else
-  PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
-# endif
-
-  // Have the host processor do the incomplete quad if necessary.
+  // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,
   // it uses an entire accumulator.  Reserving an entirely accumulator
   // for the host processor to handle at most 3 particles is wasteful
@@ -480,13 +467,36 @@ advance_p( particle_t           * ALIGNED(128) p0,
   // However, it is worth reconsidering this at some point in the
   // future.
 
-  advance_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+# ifdef USE_CELL_SPUS
 
+  args->cvac = g->cvac;
+  args->dt   = g->dt;
+  args->dx   = g->dx;
+  args->dy   = g->dy;
+  args->dz   = g->dz;
+  args->nx   = g->nx;
+  args->ny   = g->ny;
+  args->nz   = g->nz;
+
+  args->neighbor = g->neighbor;
+  args->rangel   = g->rangel;
+  args->rangeh   = g->rangeh;
+
+  spu.dispatch( SPU_PIPELINE( advance_p_pipeline_spu ), args, 0 );
+  advance_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
+  spu.wait();
+
+# else
+
+  PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
+  advance_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
+
+# endif
 
   // FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
   // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
-  // MOVERS TO ELIMINATE HOLES IN THE ALLOCATION.
+  // MOVERS TO ELIMINATE HOLES FROM THE PIPELINING.
 
   nm = 0;
   for( rank=0; rank<=PSTYLE.n_pipeline; rank++ ) {
@@ -497,3 +507,4 @@ advance_p( particle_t           * ALIGNED(128) p0,
 
   return nm;
 }
+

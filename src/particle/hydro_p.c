@@ -32,7 +32,7 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
   float vx, vy, vz, ke_mc;
   float w0, w1, w2, w3, w4, w5, w6, w7;
   float qdt_2mc, qdt_4mc2, c, r8V, mc_q;
-  const particle_t     * ALIGNED(16) p;
+  const particle_t     * ALIGNED(32) p;
   const interpolator_t * ALIGNED(16) f;
   hydro_t              * ALIGNED(16) h;
   int stride_10, stride_21, stride_43;

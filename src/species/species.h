@@ -21,22 +21,22 @@ enum {
 typedef int species_id;
 
 typedef struct species {
-  species_id id;                     // Unique identifier for a species
-  int np, max_np;                    // Number and max local particles
-  particle_t * ALIGNED(128) p;       // Array of particles for the species
-  int nm, max_nm;                    // Number and max local movers in use
-  particle_mover_t * ALIGNED(16) pm; // Particle movers
-  float q_m;                         // Species charge to mass ratio
-  int sort_interval;                 // How often to sort the species
-  int * ALIGNED(16) copy;            // Static array of length
-  /**/                               // (nx+2)*(ny+2)*(nz+2).  Each value
-  /**/                               // corresponds to the associated particle
-  /**/                               // array index of the first particle in
-  /**/                               // the cell.  Array is allocated and
-  /**/                               // values computed in sort_p.  Purpose is
-  /**/                               // for implementing collision models
-  struct species *next;              // Next species in the list
-  char name[1];                      // Name is resized on allocation
+  species_id id;                      // Unique identifier for a species
+  int np, max_np;                     // Number and max local particles
+  particle_t * ALIGNED(128) p;        // Array of particles for the species
+  int nm, max_nm;                     // Number and max local movers in use
+  particle_mover_t * ALIGNED(128) pm; // Particle movers
+  float q_m;                          // Species charge to mass ratio
+  int sort_interval;                  // How often to sort the species
+  int * ALIGNED(16) copy;             // Static array of length
+  /**/                                // (nx+2)*(ny+2)*(nz+2).  Each value
+  /**/                                // corresponds to the associated particle
+  /**/                                // array index of the first particle in
+  /**/                                // the cell.  Array is allocated and
+  /**/                                // values computed in sort_p.  Purpose is
+  /**/                                // for implementing collision models
+  struct species *next;               // Next species in the list
+  char name[1];                       // Name is resized on allocation
 } species_t;
 
 BEGIN_C_DECLS

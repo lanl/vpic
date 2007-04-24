@@ -723,8 +723,8 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[1],handle); ABORT(dim[1]!=grid->nx+2);
   READ(int,dim[2],handle); ABORT(dim[2]!=grid->ny+2);
   READ(int,dim[3],handle); ABORT(dim[3]!=grid->nz+2);
-  grid->neighbor = (int64_t * ALIGNED(16))
-    malloc_aligned( size*dim[0]*dim[1]*dim[2]*dim[3], 16 );
+  grid->neighbor = (int64_t * ALIGNED(128))
+    malloc_aligned( size*dim[0]*dim[1]*dim[2]*dim[3], 128 );
   ABORT(grid->neighbor==NULL);
   fread( grid->neighbor, size, dim[0]*dim[1]*dim[2]*dim[3], handle );
 

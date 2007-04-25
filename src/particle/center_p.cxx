@@ -7,55 +7,42 @@
 #endif
 
 typedef struct center_p_pipeline_args {
-  particle_t           * ALIGNED(128) p0;  // Particle array
-  int                                 np;  // Number of particles
-  float                               q_m; // Charge to mass ratio
-  const interpolator_t * ALIGNED(128) f0;  // Interpolator array
-  const grid_t         *              g;   // Local domain grid parameters
+  MEM_PTR( particle_t,           128 ) p0;   // Particle array
+  MEM_PTR( const interpolator_t, 128 ) f0;   // Interpolator array
+  float                                q_m;  // Charge to mass ratio
+  float                                cvac; // Speed of light
+  float                                dt;   // Timestep
+  int                                  np;   // Number of particles
+# ifdef USE_CELL_SPUS // Align to 16-bytes
+  char _pad[PAD(2*SIZEOF_MEM_PTR+3*sizeof(float)+sizeof(int),16)];
+# endif
 } center_p_pipeline_args_t;
 
 static void
 center_p_pipeline( center_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
-  particle_t           * ALIGNED(32)  p   = args->p0;
-  int                                 n   = args->np;
-  const float                         q_m = args->q_m;
-  const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t *                      g   = args->g;
+  const interpolator_t * ALIGNED(128) f0 = args->f0;
 
-  const float qdt_2mc        = 0.5 *q_m*g->dt/g->cvac;
-  const float qdt_4mc        = 0.25*q_m*g->dt/g->cvac; // For half Boris rotate
+  particle_t           * ALIGNED(32)  p;
+  const interpolator_t * ALIGNED(16)  f;
+
+  const float qdt_2mc        = 0.5 *args->q_m*args->dt/args->cvac;
+  const float qdt_4mc        = 0.25*args->q_m*args->dt/args->cvac; // For half Boris rotate
   const float one            = 1.;
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
 
-  const interpolator_t * ALIGNED(16) f;
-
-  int ii;
   float dx, dy, dz, ux, uy, uz;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4;
 
-  if( pipeline_rank==n_pipeline ) { // Host does left over cleanup
+  int first, ii, n;
 
-    // Determine which particles the host processes
+  // Determine which particle quads this pipeline processes
 
-    p += n;
-    n &= 3;
-    p -= n;
-
-  } else { // Pipelines do any rough equal number of particle quads
-
-    // Determine which particles to process in this pipeline
-
-    double n_target = (double)(n>>2)/(double)n_pipeline;
-    n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p += 4*n;
-    n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 4;
-
-  }
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, n );
+  p = args->p0 + first;
 
   // Process particles for this pipeline
 
@@ -106,30 +93,32 @@ static void
 center_p_pipeline_v4( center_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  particle_t           * ALIGNED(128) p   = args->p0;
-  int                                 nq  = args->np;
-  const float                         q_m = args->q_m;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t         *              g   = args->g;
-  double n_target;
 
-  v4float dx, dy, dz; v4int ii;
-  v4float ux, uy, uz, q;
+  particle_t           * ALIGNED(128) p;
+  const float          * ALIGNED(16)  vp0;
+  const float          * ALIGNED(16)  vp1;
+  const float          * ALIGNED(16)  vp2;
+  const float          * ALIGNED(16)  vp3;
+
+  const v4float qdt_2mc(0.5 *args->q_m*args->dt/args->cvac);
+  const v4float qdt_4mc(0.25*args->q_m*args->dt/args->cvac); // For half Boris rotate
+  const v4float one(1.);
+  const v4float one_third(1./3.);
+  const v4float two_fifteenths(2./15.);
+
+  v4float dx, dy, dz, ux, uy, uz, q;
   v4float hax, hay, haz, cbx, cby, cbz;
   v4float v0, v1, v2, v3, v4, v5;
-  v4float qdt_2mc(0.5 *q_m*g->dt/g->cvac);
-  v4float qdt_4mc(0.25*q_m*g->dt/g->cvac); // For half Boris rotate
-  v4float one(1.);
-  v4float one_third(1./3.);
-  v4float two_fifteenths(2./15.);
-  float *vp0, *vp1, *vp2, *vp3;
+  v4int   ii;
 
-  // Determine which particles quads to process in this pipeline
+  int first, nq;
 
-  n_target = (double)(nq>>2) / (double)n_pipeline;
-  nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 4*nq;
-  nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
+  // Determine which particle quads this pipeline processes
+
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, nq );
+  p = args->p0 + first;
+  nq >>= 2;
 
   // Process the particle quads for this pipeline
 
@@ -137,10 +126,10 @@ center_p_pipeline_v4( center_p_pipeline_args_t * args,
     load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
 
     // Interpolate fields
-    vp0 = (float *)(f0 + ii(0));
-    vp1 = (float *)(f0 + ii(1));
-    vp2 = (float *)(f0 + ii(2));
-    vp3 = (float *)(f0 + ii(3));
+    vp0 = (const float * ALIGNED(16))(f0 + ii(0));
+    vp1 = (const float * ALIGNED(16))(f0 + ii(1));
+    vp2 = (const float * ALIGNED(16))(f0 + ii(2));
+    vp3 = (const float * ALIGNED(16))(f0 + ii(3));
     load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2); hax = qdt_2mc*fma( fma( dy, v2, v1 ), dz, fma( dy, v0, hax ) );
     load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5); hay = qdt_2mc*fma( fma( dz, v5, v4 ), dx, fma( dz, v3, hay ) );
     load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2); haz = qdt_2mc*fma( fma( dx, v2, v1 ), dy, fma( dx, v0, haz ) );
@@ -176,7 +165,7 @@ center_p( particle_t           * ALIGNED(128) p0,
           const float                         q_m,
           const interpolator_t * ALIGNED(128) f0,
           const grid_t         *              g ) {
-  center_p_pipeline_args_t args[1];
+  DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
   // FIXME: p0 NULL checking
   if( np<0     ) ERROR(("Bad number of particles"));
@@ -186,13 +175,26 @@ center_p( particle_t           * ALIGNED(128) p0,
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p0  = p0;
-  args->np  = np;
-  args->q_m = q_m;
-  args->f0  = f0;
-  args->g   = g;
+  args->p0   = p0;
+  args->f0   = f0;
+  args->q_m  = q_m;
+  args->cvac = g->cvac;
+  args->dt   = g->dt;
+  args->np   = np;
+
+# ifdef USE_CELL_SPUS
+
+  spu.dispatch( SPU_PIPELINE( center_p_pipeline_spu ), args, 0 );
+  center_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
+  spu.wait();
+
+# else
 
   PSTYLE.dispatch( CENTER_P_PIPELINE, args, 0 );
   center_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
+
+# endif
+
 }
+

@@ -26,6 +26,14 @@
 #include <limits.h> // For integer limits
 #include <float.h>  // For floating point limits
 
+// These macros facilitate doing evil tricks
+
+#define BEGIN_PRIMITIVE do
+#define END_PRIMITIVE   while(0)
+
+#define _UTIL_STRINGIFY(s)#s
+#define EXPAND_AND_STRINGIFY(s)_UTIL_STRINGIFY(s)
+
 // Alignment macros
 
 // This pointer modifier indicates that a pointer can be assumed to
@@ -69,14 +77,14 @@
 // any usage of this macro occurs in contexts where two back-to-back
 // statments in the same context would be in the same scope.  That is:
 //
-//   if(...) { DECLARE_ALIGNED_ARRAY(t,n,c,a); ... } // OKAY!
-//   else      DECLARE_ALIGNED_ARRAY(t,n,c,a);       // NOT OKAY!
+//   if(...) { DECLARE_ALIGNED_ARRAY(type,align,name,count); ... } // OKAY!
+//   else      DECLARE_ALIGNED_ARRAY(type,align,name,count);     // NOT OKAY!
 //
 // For 99.9% of the expected usage, this should not matter.
 //
 // align should be a power of two.
 
-#define DECLARE_ALIGNED_ARRAY(type,name,count,align)                        \
+#define DECLARE_ALIGNED_ARRAY(type,align,name,count)                        \
   char _aa_##name[(count)*sizeof(type)+(align)];                            \
   type * ALIGNED(align) const name = (type * ALIGNED(align))                \
     ( ( (size_t)_aa_##name + (align) - 1 ) & (~((align)-1)) )
@@ -93,13 +101,32 @@
 
 #define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) ) 
 
-// These macros facilitate doing evil tricks
+// Workload distribution macros
 
-#define BEGIN_PRIMITIVE do
-#define END_PRIMITIVE   while(0)
+// Let items be enumerated 0,1, ... "N"-1 and pipelines be
+// enumerated 0,1, ... "P" (0:P-1 refer to pipeline processes
+// and pipeline P refers to the dispatching process).
+// DISTRIBUTE determines the first item "i" and the number
+// of items "n" that should be assigned to pipeline "p".
+// The items are assigned such that each pipeline process
+// gets an approximate equal share of items and that the
+// number of items each pipeline process gets is a
+// multiple of the block size "b".  The dispatching process
+// is assigned all remaining items.  The items are assigned
+// in monotonically increasing order.
+//
+// This macro is robust.  (All arguments only evaluated once;
+// inputs can be same as output.)  Any compiler worth its
+// salt will replace the divison and modulo with bit shifts
+// and masks for power-of-two block sizes.
 
-#define _UTIL_STRINGIFY(s)#s
-#define EXPAND_AND_STRINGIFY(s)_UTIL_STRINGIFY(s)
+#define DISTRIBUTE( N, b, p, P, i, n ) BEGIN_PRIMITIVE {             \
+    int _N = (N), _b = (b), _p = (p), _P = (P);                      \
+    double _t = (double)(_N/_b)/(double)_P;                          \
+    int _i =                    _b*(int)(_t*(double) _p   +0.5);     \
+    (n) = (_p==_P) ? (_N%_b) : (_b*(int)(_t*(double)(_p+1)+0.5)-_i); \
+    (i) = _i;                                                        \
+  } END_PRIMITIVE
 
 // INDEX_FORTRAN_x and INDEX_C_x give macros for accessing
 // multi-dimensional arrays with different conventions. To eliminate

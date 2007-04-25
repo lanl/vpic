@@ -64,16 +64,17 @@ static void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
                     int n_pipeline ) {
-  particle_t           * ALIGNED(128) p0  = args->p0;
-  int                                 n   = args->np;
-  const float                         q_m = args->q_m;
-  particle_mover_t     * ALIGNED(16)  pm  = args->pm;
-  int                                 nm  = args->max_nm;
-  accumulator_t        * ALIGNED(128) a0  = args->a0;
-  const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t *                      g   = args->g;
+  particle_t           * ALIGNED(128) p0 = args->p0;
+  accumulator_t        * ALIGNED(128) a0 = args->a0;
+  const interpolator_t * ALIGNED(128) f0 = args->f0;
+  const grid_t *                      g  = args->g;
 
-  const float qdt_2mc        = 0.5*q_m*g->dt/g->cvac;
+  particle_t           * ALIGNED(32)  p;
+  particle_mover_t     * ALIGNED(16)  pm;
+  const interpolator_t * ALIGNED(16)  f;
+  float                * ALIGNED(16)  a;
+
+  const float qdt_2mc        = 0.5*args->q_m*g->dt/g->cvac;
   const float cdt_dx         = g->cvac*g->dt/g->dx;
   const float cdt_dy         = g->cvac*g->dt/g->dy;
   const float cdt_dz         = g->cvac*g->dt/g->dz;
@@ -81,56 +82,38 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
 
-  particle_t           * ALIGNED(32) p;
-  const interpolator_t * ALIGNED(16) f;
-  float                * ALIGNED(16) a;
-
-  int ii;
   float dx, dy, dz, ux, uy, uz, q;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4, v5;
 
-  if( pipeline_rank==n_pipeline ) { // Host does left over cleanup
+  int first, ii, n, nm;
 
-    // Determine which particles the host processes, which movers are
-    // reserved for the host.  Note the host uses the first
-    // accumulator array.
+  // Determine which particles this pipeline processes
 
-    p  = p0 + n; pm += nm;
-    n &= 3;      nm  = n>nm ? nm : n;
-    p -= n;      pm -= nm;
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, n );
+  p = args->p0 + first;
 
-  } else { // Pipelines do any rough equal number of particle quads
+  // Determine which movers are reserved for this pipeline
+  // Movers (16 bytes) are reserved for pipelines in multiples of 8
+  // such that the set of particle movers reserved for a pipeline is
+  // 128-bit aligned and a multiple of 128-bits in size. 
 
-    double n_target;
-
-    // Determine which particles to process in this pipeline
-
-    n_target = (double)(n>>2)/(double)n_pipeline;
-    n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p  = p0 + 4*n;
-    n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 4;
-
-    // Determine which movers are reserved for this pipeline
-
-    nm -= (args->np&3)>nm ? nm : (args->np&3); // Reserve last movers for host
-
-    n_target = (double)nm / (double)n_pipeline; 
-    nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    pm += nm;
-    nm  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nm;
-
-    // Determine which accumulator array to use
-
-    a0 += (1+pipeline_rank)*(g->nx+2)*(g->ny+2)*(g->nz+2);
-
-  }
+  nm = args->max_nm - (args->np&3); // Guarantee host pipeline gets enough 
+  if( nm<0 ) nm = 0;
+  DISTRIBUTE( nm, 8, pipeline_rank, n_pipeline, first, nm );
+  pm = args->pm + first;
+  if( pipeline_rank==n_pipeline ) nm = args->max_nm - first;
 
   args->seg[pipeline_rank].pm = pm;
   args->seg[pipeline_rank].nm = nm;
 
-  // Process particles quads for this pipeline
+  // Determine which accumulator array to use
+  // The host gets the first accumulator array
+
+  if( pipeline_rank!=n_pipeline )
+    a0 += (1+pipeline_rank)*(g->nx+2)*(g->ny+2)*(g->nz+2);
+
+  // Process particles for this pipeline
 
   for(;n;n--,p++) {
     dx = p->dx;                              // Load position
@@ -250,55 +233,59 @@ static void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline ) {
-  double n_target;
+  particle_t           * ALIGNED(128) p0 = args->p0;
+  accumulator_t        * ALIGNED(128) a0 = args->a0;
+  const interpolator_t * ALIGNED(128) f0 = args->f0;
+  const grid_t         *              g  = args->g;
 
-  particle_t           * ALIGNED(128) p0  = args->p0;
-  particle_t           * ALIGNED(128) p   = p0;
-  int                                 nq  = args->np;
-  const float                         q_m = args->q_m;
-  particle_mover_t     * ALIGNED(16)  pm  = args->pm;
-  int                                 nm  = args->max_nm;
-  accumulator_t        * ALIGNED(128) a0  = args->a0;
-  const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t         *              g   = args->g;
+  particle_t           * ALIGNED(128) p;
+  particle_mover_t     * ALIGNED(16)  pm; 
+  float                * ALIGNED(16)  vp0;
+  float                * ALIGNED(16)  vp1;
+  float                * ALIGNED(16)  vp2;
+  float                * ALIGNED(16)  vp3;
 
-  v4float dx, dy, dz; v4int ii;
-  v4float ux, uy, uz, q;
+  const v4float qdt_2mc(0.5*args->q_m*g->dt/g->cvac);
+  const v4float cdt_dx(g->cvac*g->dt/g->dx);
+  const v4float cdt_dy(g->cvac*g->dt/g->dy);
+  const v4float cdt_dz(g->cvac*g->dt/g->dz);
+  const v4float one(1.);
+  const v4float one_third(1./3.);
+  const v4float two_fifteenths(2./15.);
+  const v4float neg_one(-1.);
+
+  v4float dx, dy, dz, ux, uy, uz, q;
   v4float hax, hay, haz, cbx, cby, cbz;
   v4float v0, v1, v2, v3, v4, v5;
-  v4int outbnd;
-  v4float qdt_2mc(0.5*q_m*g->dt/g->cvac);
-  v4float cdt_dx(g->cvac*g->dt/g->dx);
-  v4float cdt_dy(g->cvac*g->dt/g->dy);
-  v4float cdt_dz(g->cvac*g->dt/g->dz);
-  v4float one(1.);
-  v4float one_third(1./3.);
-  v4float two_fifteenths(2./15.);
-  v4float neg_one(-1.);
-  float *vp0, *vp1, *vp2, *vp3;
+  v4int   ii, outbnd;
 
-  // Determine which particles to process in this pipeline
+  int first, nq, nm;
 
-  n_target = (double)(nq>>2)/(double)n_pipeline;
-  nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 4*nq;
-  nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
+  // Determine which particle quads this pipeline processes
+
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, nq );
+  p = args->p0 + first;
+  nq >>= 2;
 
   // Determine which movers are reserved for this pipeline
+  // Movers (16 bytes) are reserved for pipelines in multiples of 8
+  // such that the set of particle movers reserved for a pipeline is
+  // 128-bit aligned and a multiple of 128-bits in size. 
 
-  nm -= (args->np&3)>nm ? nm : (args->np&3); // Reserve last movers for host
-
-  n_target = (double)nm / (double)n_pipeline; 
-  nm  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  pm += nm;
-  nm  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nm;
+  nm = args->max_nm - (args->np&3); // Guarantee host pipeline gets enough 
+  if( nm<0 ) nm = 0;
+  DISTRIBUTE( nm, 8, pipeline_rank, n_pipeline, first, nm );
+  pm = args->pm + first;
+  if( pipeline_rank==n_pipeline ) nm = args->max_nm - first;
 
   args->seg[pipeline_rank].pm = pm;
   args->seg[pipeline_rank].nm = nm;
 
-  // Determine which accumulator array is reserved for this pipeline
+  // Determine which accumulator array to use
+  // The host gets the first accumulator array
 
-  a0 += (1+pipeline_rank)*(g->nx+2)*(g->ny+2)*(g->nz+2);
+  if( pipeline_rank!=n_pipeline )
+    a0 += (1+pipeline_rank)*(g->nx+2)*(g->ny+2)*(g->nz+2);
 
   // Process the particle quads for this pipeline
 
@@ -306,10 +293,10 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
 
     // Interpolate fields
-    vp0 = (float *)(f0 + ii(0));
-    vp1 = (float *)(f0 + ii(1));
-    vp2 = (float *)(f0 + ii(2));
-    vp3 = (float *)(f0 + ii(3));
+    vp0 = (float * ALIGNED(16))(f0 + ii(0));
+    vp1 = (float * ALIGNED(16))(f0 + ii(1));
+    vp2 = (float * ALIGNED(16))(f0 + ii(2));
+    vp3 = (float * ALIGNED(16))(f0 + ii(3));
     load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2); hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
     load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5); hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
     load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2); haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
@@ -374,10 +361,10 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     dy = v1;
     dz = v2;
     v5 = q*ux*uy*uz*one_third;     // Charge conservation correction
-    vp0 = (float *)(a0 + ii(0));   // Accumulator pointers
-    vp1 = (float *)(a0 + ii(1));
-    vp2 = (float *)(a0 + ii(2));
-    vp3 = (float *)(a0 + ii(3));
+    vp0 = (float * ALIGNED(16))(a0 + ii(0)); // Accumulator pointers
+    vp1 = (float * ALIGNED(16))(a0 + ii(1));
+    vp2 = (float * ALIGNED(16))(a0 + ii(2));
+    vp3 = (float * ALIGNED(16))(a0 + ii(3));
 #   define accumulate_j(X,Y,Z)                                      \
     v4  = q*u##X;   /* v4 = q ux                            */      \
     v1  = v4*d##Y;  /* v1 = q ux dy                         */      \
@@ -434,8 +421,8 @@ advance_p( particle_t           * ALIGNED(128) p0,
            accumulator_t        * ALIGNED(128) a0,
            const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g ) {
-  DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, args, 1, 128 );
-  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, seg, MAX_PIPELINE+1, 128 );
+  DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
   int nm, rank;
 
   if( p0==NULL ) ERROR(("Bad particle array"));
@@ -507,4 +494,3 @@ advance_p( particle_t           * ALIGNED(128) p0,
 
   return nm;
 }
-

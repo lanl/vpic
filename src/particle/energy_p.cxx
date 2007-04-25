@@ -7,56 +7,41 @@
 #endif
 
 typedef struct energy_p_pipeline_args {
-  const particle_t     * ALIGNED(128) p0;  // Particle array
-  int                                 np;  // Number of particles
-  float                               q_m; // Charge to mass ratio
-  const interpolator_t * ALIGNED(128) f0;  // Interpolator array
-  const grid_t         *              g;   // Local domain grid parameters
-  double en[MAX_PIPELINE+1];               // Return values
-  /**/                                     // en[n_pipeline] used by host
+  MEM_PTR( const particle_t,     128 ) p0;   // Particle array
+  MEM_PTR( const interpolator_t, 128 ) f0;   // Interpolator array
+  MEM_PTR( double,               128 ) en;   // Return values
+  float                                q_m;  // Charge to mass ratio
+  float                                cvac; // Speed of light
+  float                                dt;   // Timestep
+  int                                  np;   // Number of particles
+# ifdef USE_CELL_SPUS // Align to 16-bytes
+  char _pad[PAD(3*SIZEOF_MEM_PTR+3*sizeof(float)+sizeof(int),16)];
+# endif
 } energy_p_pipeline_args_t;
 
 static void
 energy_p_pipeline( energy_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
-  const particle_t     * ALIGNED(32)  p   = args->p0;
-  int                                 n   = args->np;
-  const float                         q_m = args->q_m;
   const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t         *              g   = args->g;
 
-  const float qdt_2mc = 0.5*q_m*g->dt/g->cvac;
+  const particle_t     * ALIGNED(32)  p;
+  const interpolator_t * ALIGNED(16)  f;
+
+  const float qdt_2mc = 0.5*args->q_m*args->dt/args->cvac;
   const float one     = 1.;
-
-  const interpolator_t * ALIGNED(16) f;
-
-  double en = 0;
 
   float dx, dy, dz;
   float v0, v1, v2;
 
-  if( pipeline_rank==n_pipeline ) { // Host does left over cleanup
+  double en = 0;
 
-    // Determine which particles the host processes, which movers are
-    // reserved for the host.  Note the host uses the first
-    // accumulator array.
+  int first, n;
 
-    p += n;
-    n &= 3;
-    p -= n;
+  // Determine which particles this pipeline processes
 
-  } else { // Pipelines do any rough equal number of particle quads
-
-    // Determine which particles to process in this pipeline
-
-    double n_target = (double)(n>>2)/(double)n_pipeline;
-    n  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-    p += 4*n;
-    n  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - n;
-    n *= 4;
-
-  }
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, n );
+  p = args->p0 + first;
 
   // Process particles quads for this pipeline
 
@@ -87,27 +72,31 @@ static void
 energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
-  const particle_t     * ALIGNED(128) p   = args->p0;
-  int                                 nq  = args->np;
-  const float                         q_m = args->q_m;
-  const interpolator_t * ALIGNED(128) f0  = args->f0;
-  const grid_t         *              g   = args->g;
-  double n_target;
+  const interpolator_t * ALIGNED(128) f0 = args->f0;
 
-  v4float dx, dy, dz; v4int ii;
+  const particle_t     * ALIGNED(128) p;
+  const float          * ALIGNED(16)  vp0;
+  const float          * ALIGNED(16)  vp1;
+  const float          * ALIGNED(16)  vp2;
+  const float          * ALIGNED(16)  vp3;
+
+  const v4float qdt_2mc(0.5*args->q_m*args->dt/args->cvac);
+  const v4float one(1.);
+
+  v4float dx, dy, dz;
   v4float ex, ey, ez;
   v4float v0, v1, v2, q;
-  v4float qdt_2mc(0.5*q_m*g->dt/g->cvac);
-  v4float one(1.);
-  float *vp0, *vp1, *vp2, *vp3;
+  v4int ii;
+
   double en0 = 0, en1 = 0, en2 = 0, en3 = 0;
 
-  // Determine which particle quads to process in this pipeline
+  int first, nq;
 
-  n_target = (double)(nq>>2) / (double)n_pipeline;
-  nq  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  p  += 4*nq;
-  nq  = (int)( n_target*(double)(pipeline_rank+1) + 0.5 ) - nq;
+  // Determine which particle quads this pipeline processes
+
+  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, nq );
+  p = args->p0 + first;
+  nq >>= 2;
 
   // Process the particle quads for this pipeline
 
@@ -150,7 +139,8 @@ energy_p( const particle_t     * ALIGNED(128) p0,
           const float                         q_m,
           const interpolator_t * ALIGNED(128) f0,
           const grid_t         *              g ) {
-  energy_p_pipeline_args_t args[1];
+  DECLARE_ALIGNED_ARRAY( energy_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( double, 128, en, MAX_PIPELINE+1 );
   double local, global;
   int rank;
 
@@ -162,19 +152,31 @@ energy_p( const particle_t     * ALIGNED(128) p0,
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p0  = p0;
-  args->np  = np;
-  args->q_m = q_m;
-  args->f0  = f0;
-  args->g   = g;
+  args->p0   = p0;
+  args->f0   = f0;
+  args->en   = en;
+  args->q_m  = q_m;
+  args->cvac = g->cvac;
+  args->dt   = g->dt;
+  args->np   = np;
+
+# ifdef USE_CELL_SPUS
+
+  spu.dispatch( SPU_PIPELINE( energy_p_pipeline_spu ), args, 0 );
+  energy_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
+  spu.wait();
+
+# else
 
   PSTYLE.dispatch( ENERGY_P_PIPELINE, args, 0 );
   energy_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
 
+# endif
+
   local = 0;
   for( rank=0; rank<=PSTYLE.n_pipeline; rank++ )
-    local += args->en[rank];
+    local += en[rank];
   mp_allsum_d( &local, &global, 1, g->mp );
   return (double)g->cvac*(double)g->cvac*global/(double)q_m;
 }

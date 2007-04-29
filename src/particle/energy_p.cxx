@@ -1,23 +1,5 @@
-#include <particle.h>
-
-#ifndef V4_ACCELERATION
-#define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline
-#else
-#define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline_v4
-#endif
-
-typedef struct energy_p_pipeline_args {
-  MEM_PTR( const particle_t,     128 ) p0;   // Particle array
-  MEM_PTR( const interpolator_t, 128 ) f0;   // Interpolator array
-  MEM_PTR( double,               128 ) en;   // Return values
-  float                                q_m;  // Charge to mass ratio
-  float                                cvac; // Speed of light
-  float                                dt;   // Timestep
-  int                                  np;   // Number of particles
-# ifdef USE_CELL_SPUS // Align to 16-bytes
-  char _pad[PAD(3*SIZEOF_MEM_PTR+3*sizeof(float)+sizeof(int),16)];
-# endif
-} energy_p_pipeline_args_t;
+#define IN_particle_pipeline
+#include <particle_pipelines.h>
 
 static void
 energy_p_pipeline( energy_p_pipeline_args_t * args,
@@ -28,7 +10,7 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
   const particle_t     * ALIGNED(32)  p;
   const interpolator_t * ALIGNED(16)  f;
 
-  const float qdt_2mc = 0.5*args->q_m*args->dt/args->cvac;
+  const float qdt_2mc = args->qdt_2mc;
   const float one     = 1.;
 
   float dx, dy, dz;
@@ -80,7 +62,7 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
   const float          * ALIGNED(16)  vp2;
   const float          * ALIGNED(16)  vp3;
 
-  const v4float qdt_2mc(0.5*args->q_m*args->dt/args->cvac);
+  const v4float qdt_2mc(args->qdt_2mc);
   const v4float one(1.);
 
   v4float dx, dy, dz;
@@ -152,26 +134,25 @@ energy_p( const particle_t     * ALIGNED(128) p0,
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p0   = p0;
-  args->f0   = f0;
-  args->en   = en;
-  args->q_m  = q_m;
-  args->cvac = g->cvac;
-  args->dt   = g->dt;
-  args->np   = np;
+  args->p0      = p0;
+  args->f0      = f0;
+  args->en      = en;
+  args->qdt_2mc = 0.5*q_m*g->dt/g->cvac;
+  args->np      = np;
 
 # ifdef USE_CELL_SPUS
-
   spu.dispatch( SPU_PIPELINE( energy_p_pipeline_spu ), args, 0 );
   energy_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
   spu.wait();
-
 # else
-
+# ifndef V4_ACCELERATION
+# define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline
+# else
+# define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline_v4
+# endif
   PSTYLE.dispatch( ENERGY_P_PIPELINE, args, 0 );
   energy_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
-
 # endif
 
   local = 0;

@@ -1,25 +1,8 @@
-#include <particle.h>
-
-#ifndef V4_ACCELERATION
-#define UNCENTER_P_PIPELINE (pipeline_func_t)uncenter_p_pipeline
-#else
-#define UNCENTER_P_PIPELINE (pipeline_func_t)uncenter_p_pipeline_v4
-#endif
-
-typedef struct uncenter_p_pipeline_args {
-  MEM_PTR( particle_t,           128 ) p0;   // Particle array
-  MEM_PTR( const interpolator_t, 128 ) f0;   // Interpolator array
-  float                                q_m;  // Charge to mass ratio
-  float                                cvac; // Speed of light
-  float                                dt;   // Timestep
-  int                                  np;   // Number of particle
-# ifdef USE_CELL_SPUS // Align to 16-bytes
-  char _pad[PAD(2*SIZEOF_MEM_PTR+3*sizeof(float)+sizeof(int),16)];
-# endif
-} uncenter_p_pipeline_args_t;
+#define IN_particle_pipeline
+#include <particle_pipelines.h>
 
 static void
-uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
+uncenter_p_pipeline( center_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline ) {
   const interpolator_t * ALIGNED(128) f0 = args->f0;
@@ -27,8 +10,8 @@ uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
   particle_t           * ALIGNED(32)  p;
   const interpolator_t * ALIGNED(16)  f;
 
-  const float qdt_2mc        = -0.5 *args->q_m*args->dt/args->cvac; // Negative for backward half advance
-  const float qdt_4mc        = -0.25*args->q_m*args->dt/args->cvac; // Negative for backward half Boris rotate
+  const float qdt_2mc        =     -args->qdt_2mc; // For backward half advance
+  const float qdt_4mc        = -0.5*args->qdt_2mc; // For backward half rotate
   const float one            = 1.;
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
@@ -47,38 +30,39 @@ uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
   // Process particles for this pipeline
 
   for(;n;n--,p++) {
-    dx = p->dx;                              // Load position
-    dy = p->dy;
-    dz = p->dz;
-    ii = p->i;
-    f = f0 + ii;                             // Interpolate E
-    hax = qdt_2mc*(    ( f->ex    + dy*f->dexdy    ) +
-                    dz*( f->dexdz + dy*f->d2exdydz ) );
-    hay = qdt_2mc*(    ( f->ey    + dz*f->deydz    ) +
-                    dx*( f->deydx + dz*f->d2eydzdx ) );
-    haz = qdt_2mc*(    ( f->ez    + dx*f->dezdx    ) +
-                    dy*( f->dezdy + dx*f->d2ezdxdy ) );
-    cbx = f->cbx + dx*f->dcbxdx;             // Interpolate B
-    cby = f->cby + dy*f->dcbydy;
-    cbz = f->cbz + dz*f->dcbzdz;
-    ux = p->ux;                              // Load momentum
-    uy = p->uy;
-    uz = p->uz;
-    v0 = qdt_4mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz))); // Boris - scalars
-    v1 = cbx*cbx + (cby*cby + cbz*cbz);
-    v2 = (v0*v0)*v1;
-    v3 = v0*(one+v2*(one_third+v2*two_fifteenths));
-    v4 = v3/(one+v1*(v3*v3));
-    v4 += v4;
-    v0 = ux + v3*( uy*cbz - uz*cby );        // Boris - uprime
-    v1 = uy + v3*( uz*cbx - ux*cbz );
-    v2 = uz + v3*( ux*cby - uy*cbx );
-    ux += v4*( v1*cbz - v2*cby );            // Boris - rotation
-    uy += v4*( v2*cbx - v0*cbz );
-    uz += v4*( v0*cby - v1*cbx );
-    ux += hax;                               // Half advance E
-    uy += hay;
-    uz += haz;
+    dx   = p->dx;                            // Load position
+    dy   = p->dy;
+    dz   = p->dz;
+    ii   = p->i;
+    f    = f0 + ii;                          // Interpolate E
+    hax  = qdt_2mc*(    ( f->ex    + dy*f->dexdy    ) +
+                     dz*( f->dexdz + dy*f->d2exdydz ) );
+    hay  = qdt_2mc*(    ( f->ey    + dz*f->deydz    ) +
+                     dx*( f->deydx + dz*f->d2eydzdx ) );
+    haz  = qdt_2mc*(    ( f->ez    + dx*f->dezdx    ) +
+                     dy*( f->dezdy + dx*f->d2ezdxdy ) );
+    cbx  = f->cbx + dx*f->dcbxdx;            // Interpolate B
+    cby  = f->cby + dy*f->dcbydy;
+    cbz  = f->cbz + dz*f->dcbzdz;
+    ux   = p->ux;                            // Load momentum
+    uy   = p->uy;
+    uz   = p->uz;
+    v0   = qdt_4mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz)));
+    /**/                                     // Boris - scalars
+    v1   = cbx*cbx + (cby*cby + cbz*cbz);
+    v2   = (v0*v0)*v1;
+    v3   = v0*(one+v2*(one_third+v2*two_fifteenths));
+    v4   = v3/(one+v1*(v3*v3));
+    v4  += v4;
+    v0   = ux + v3*( uy*cbz - uz*cby );      // Boris - uprime
+    v1   = uy + v3*( uz*cbx - ux*cbz );
+    v2   = uz + v3*( ux*cby - uy*cbx );
+    ux  += v4*( v1*cbz - v2*cby );           // Boris - rotation
+    uy  += v4*( v2*cbx - v0*cbz );
+    uz  += v4*( v0*cby - v1*cbx );
+    ux  += hax;                              // Half advance E
+    uy  += hay;
+    uz  += haz;
     p->ux = ux;                              // Store momentum
     p->uy = uy;
     p->uz = uz;
@@ -90,7 +74,7 @@ uncenter_p_pipeline( uncenter_p_pipeline_args_t * args,
 using namespace v4;
 
 static void
-uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
+uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
                         int pipeline_rank,
                         int n_pipeline ) {
   const interpolator_t * ALIGNED(128) f0  = args->f0;
@@ -101,8 +85,8 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
   const float          * ALIGNED(16)  vp2;
   const float          * ALIGNED(16)  vp3;
 
-  const v4float qdt_2mc(-0.5 *args->q_m*args->dt/args->cvac); // Negative for backward half advance
-  const v4float qdt_4mc(-0.25*args->q_m*args->dt/args->cvac); // Negative for backward half Boris rotate
+  const v4float qdt_2mc(    -args->qdt_2mc); // For backward half advance
+  const v4float qdt_4mc(-0.5*args->qdt_2mc); // For backward half Boris rotate
   const v4float one(1.);
   const v4float one_third(1./3.);
   const v4float two_fifteenths(2./15.);
@@ -138,7 +122,8 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
     load_4x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);        cbz = fma( v5, dz, cbz );
 
     // Update momentum
-    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q); // Could use load_4x3_tr
+    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
+    /**/                                              // Could use load_4x3_tr
     v0  = qdt_4mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     v1  = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) );
     v2  = (v0*v0)*v1;
@@ -153,7 +138,8 @@ uncenter_p_pipeline_v4( uncenter_p_pipeline_args_t * args,
     ux += hax;
     uy += hay;
     uz += haz;
-    store_4x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux); // Could use store_4x3_tr
+    store_4x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
+    /**/                                              // Could use store_4x3_tr
   }
 }
 
@@ -165,7 +151,7 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
             const float                         q_m,
             const interpolator_t * ALIGNED(128) f0,
             const grid_t         *              g ) {
-  DECLARE_ALIGNED_ARRAY( uncenter_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
   // FIXME: p0 NULL checking
   if( np<0     ) ERROR(("Bad number of particles"));
@@ -175,25 +161,24 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p0   = p0;
-  args->f0   = f0;
-  args->q_m  = q_m;
-  args->cvac = g->cvac;
-  args->dt   = g->dt;
-  args->np   = np;
+  args->p0      = p0;
+  args->f0      = f0;
+  args->qdt_2mc = 0.5*q_m*g->dt/g->cvac;
+  args->np      = np;
 
 # ifdef USE_CELL_SPUS
-
   spu.dispatch( SPU_PIPELINE( uncenter_p_pipeline_spu ), args, 0 );
   uncenter_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
   spu.wait();
-
 # else
-
+# ifndef V4_ACCELERATION
+# define UNCENTER_P_PIPELINE (pipeline_func_t)uncenter_p_pipeline
+# else
+# define UNCENTER_P_PIPELINE (pipeline_func_t)uncenter_p_pipeline_v4
+# endif
   PSTYLE.dispatch( UNCENTER_P_PIPELINE, args, 0 );
   uncenter_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
   PSTYLE.wait();
-
 # endif
 
 }

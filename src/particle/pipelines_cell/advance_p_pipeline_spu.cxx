@@ -7,7 +7,7 @@
 // DMA tag usage:
 //  0: 2 - Particle buffer 0 (read, write, mover write)
 //  3: 5 - Particle buffer 1 (read, write, mover write)
-//  6: 8 - Particle buffer 1 (read, write, mover write)
+//  6: 8 - Particle buffer 2 (read, write, mover write)
 //  9:16 - Interpolator cache
 // 17:25 - Accumulator cache
 // 26:29 - Neighbor cache
@@ -68,7 +68,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_TYPE           0             /* r/o */
 #define CACHELINE_LOG2SIZE   7             /* 1 per line - 128 byte lines */
 #define CACHE_LOG2NWAY       2             /* 4 way */
-#define CACHE_LOG2NSETS      7             /* 128 lines per way */
+#define CACHE_LOG2NSETS      6             /* 128 lines per way */
 #define CACHE_SET_TAGID(set) (9+(set)&0x7) /* tags 9:16 */
 #include <cache-api.h>
 
@@ -101,7 +101,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 
 #define PTR_ACCUMULATOR(v) cache_rw( accumulator_cache,                 \
                                      args->a0 +                         \
-                                     (v)*sizeof(interpolator_t) )
+                                     (v)*sizeof(accumulator_t) )
 
 // Neighbor cache: 2048 cached cell adjacencies (16K).  Roughly three
 // complete second nearest neighborhoods of voxel adjacencies can
@@ -285,153 +285,187 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
                         int idx,   // Index of first particle
                         int nq ) { // Number of particle quads
 
-  const v4float qdt_2mc(args->qdt_2mc);
-  const v4float cdt_dx(args->cdt_dx);
-  const v4float cdt_dy(args->cdt_dy);
-  const v4float cdt_dz(args->cdt_dz);
+  const v4float qdt_2mc( args->qdt_2mc );
+  const v4float cdt_dx(  args->cdt_dx  );
+  const v4float cdt_dy(  args->cdt_dy  );
+  const v4float cdt_dz(  args->cdt_dz  );
   const v4float one(1.);
   const v4float one_third(1./3.);
   const v4float two_fifteenths(2./15.);
   const v4float neg_one(-1.);
 
-  v4float dx, dy, dz, ux, uy, uz, q;
-  v4float hax, hay, haz, cbx, cby, cbz;
-  v4float v0, v1, v2, v3, v4, v5;
-  v4int   ii, outbnd;
+  v4float dx, dy, dz; v4int   ii;
+  v4float ux, uy, uz; v4float q;
 
-  float * ALIGNED(16) vp0;
-  float * ALIGNED(16) vp1;
-  float * ALIGNED(16) vp2;
-  float * ALIGNED(16) vp3;
+  v4float ex, v0, v1, v2;
+  v4float ey, v3, v4, v5;
+  v4float ez, v6, v7, v8;
+  v4float bx, v9;
+  v4float by, v10;
+  v4float bz, v11;
+  v4float hax, hay, haz;
+  v4float cbx, cby, cbz;
+
+  v4float ux0, uy0, uz0;
+  v4float v12, cbs, ths, v15, v16, v17;
+  v4float wx0, wy0, wz0;
+  v4float uxh, uyh, uzh;
+
+  v4float rgamma;
+  v4float ddx, ddy, ddz;
+  v4float dxh, dyh, dzh;
+  v4float dx1, dy1, dz1;
+  v4int   outbnd;
+
+  v4float qa, ccc;
+  v4float a0x, a1x, a2x, a3x, a4x;
+  v4float a0y, a1y, a2y, a3y, a4y;
+  v4float a0z, a1z, a2z, a3z, a4z;
+
+  const interpolator_t * ALIGNED(128) fi0;
+  const interpolator_t * ALIGNED(128) fi1;
+  const interpolator_t * ALIGNED(128) fi2;
+  const interpolator_t * ALIGNED(128) fi3;
+
+  accumulator_t * ALIGNED(64) ja0;
+  accumulator_t * ALIGNED(64) ja1;
+  accumulator_t * ALIGNED(64) ja2;
+  accumulator_t * ALIGNED(64) ja3;
 
   int nm = 0;
 
   // Process the particle quads for this pipeline
 
   for( ; nq; nq--, p+=4, idx+=4 ) {
-    load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
 
-    // Interpolate fields
+    // Load the next particle quad
 
-    vp0 = (float * ALIGNED(16))PTR_INTERPOLATOR(ii(0)); cache_lock( interpolator_cache, vp0 );
-    vp1 = (float * ALIGNED(16))PTR_INTERPOLATOR(ii(1)); cache_lock( interpolator_cache, vp1 );
-    vp2 = (float * ALIGNED(16))PTR_INTERPOLATOR(ii(2)); cache_lock( interpolator_cache, vp2 );
-    vp3 = (float * ALIGNED(16))PTR_INTERPOLATOR(ii(3)); // cache_lock( interpolator_cache, vp3 );
-    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2); hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
-    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5); hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
-    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2); haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
-    load_4x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4); cbx = fma( v3, dx, cbx );
-    /**/                                                    cby = fma( v4, dy, cby );
-    load_4x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);        cbz = fma( v5, dz, cbz );
-    cache_unlock( interpolator_cache, vp0 );
-    cache_unlock( interpolator_cache, vp1 );
-    cache_unlock( interpolator_cache, vp2 );
-    // cache_unlock( interpolator_cache, vp3 );
+    load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx, dx, dy, dz, ii );
+    load_4x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux, ux, uy, uz, q  );
+
+    // Interpolate fields and cache the accumulator
+
+    // Strangely, using ii(n) twice instead of extracting once and
+    // saving in temporary is much faster.  Must be a register
+    // pressure effect on gcc as gcc never seems to use more than 80
+    // registers.  XLC uses 128 registers but takes over 6X longer to
+    // execute (why does XLC hate this loop so ... Kevin sad).
+
+    fi0 = PTR_INTERPOLATOR(ii(0)); cache_lock( interpolator_cache, fi0 );
+    fi1 = PTR_INTERPOLATOR(ii(1)); cache_lock( interpolator_cache, fi1 );
+    fi2 = PTR_INTERPOLATOR(ii(2)); cache_lock( interpolator_cache, fi2 );
+    fi3 = PTR_INTERPOLATOR(ii(3));
+
+    ja0 = PTR_ACCUMULATOR(ii(0));  cache_lock( accumulator_cache, ja0 );
+    ja1 = PTR_ACCUMULATOR(ii(1));  cache_lock( accumulator_cache, ja1 );
+    ja2 = PTR_ACCUMULATOR(ii(2));  cache_lock( accumulator_cache, ja2 );
+    ja3 = PTR_ACCUMULATOR(ii(3));
+
+    load_4x4_tr( &fi0->ex,  &fi1->ex,  &fi2->ex,  &fi3->ex,  ex, v0, v1, v2  );
+    load_4x4_tr( &fi0->ey,  &fi1->ey,  &fi2->ey,  &fi3->ey,  ey, v3, v4, v5  );
+    load_4x4_tr( &fi0->ez,  &fi1->ez,  &fi2->ez,  &fi3->ez,  ez, v6, v7, v8  );
+    load_4x4_tr( &fi0->cbx, &fi1->cbx, &fi2->cbx, &fi3->cbx, bx, v9, by, v10 );
+    load_4x2_tr( &fi0->cbz, &fi1->cbz, &fi2->cbz, &fi3->cbz, bz, v11 );
+
+    cache_unlock( interpolator_cache, fi0 );
+    cache_unlock( interpolator_cache, fi1 );
+    cache_unlock( interpolator_cache, fi2 );
+
+    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, ex ) );
+    hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, ey ) );
+    haz = qdt_2mc*fma( fma( v8, dx, v7 ), dy, fma( v6, dx, ez ) );
+
+    cbx = fma( v9,  dx, bx );
+    cby = fma( v10, dy, by );
+    cbz = fma( v11, dz, bz );
 
     // Update momentum
-    // If you are willing to eat a 5-10% performance hit,
-    // v0 = qdt_2mc/sqrt(blah) is a few ulps more accurate (but still
-    // quite in the noise numerically) for cyclotron frequencies
-    // approaching the nyquist frequency.
 
-    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
-    ux += hax;
-    uy += hay;
-    uz += haz;
-    v0  = qdt_2mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
-    v1  = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) );
-    v2  = (v0*v0)*v1;
-    v3  = v0*fma( fma( two_fifteenths, v2, one_third ), v2, one );
-    v4  = v3*rcp(fma( v3*v3, v1, one ));
-    v4 += v4;
-    v0  = fma( fms( uy,cbz, uz*cby ), v3, ux );
-    v1  = fma( fms( uz,cbx, ux*cbz ), v3, uy );
-    v2  = fma( fms( ux,cby, uy*cbx ), v3, uz );
-    ux  = fma( fms( v1,cbz, v2*cby ), v4, ux );
-    uy  = fma( fms( v2,cbx, v0*cbz ), v4, uy );
-    uz  = fma( fms( v0,cby, v1*cbx ), v4, uz );
-    ux += hax;
-    uy += hay;
-    uz += haz;
-    store_4x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
+    ux0 = ux + hax;
+    uy0 = uy + hay;
+    uz0 = uz + haz;
+    v12 = qdt_2mc*rsqrt( one + fma( ux0,ux0, fma( uy0,uy0, uz0*uz0 ) ) );
+    cbs = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) ); // |cB|^2
+    ths = (v12*v12)*cbs;                           // |theta|^2 = |wc dt/2|^2
+    v15 = v12*fma( fma( two_fifteenths, ths, one_third ), ths, one );
+    v16 = v15*rcp( fma( v15*v15, cbs, one ) );
+    v17 = v16 + v16;
+    wx0 = fma( fms( uy0,cbz, uz0*cby ), v15, ux0 );
+    wy0 = fma( fms( uz0,cbx, ux0*cbz ), v15, uy0 );
+    wz0 = fma( fms( ux0,cby, uy0*cbx ), v15, uz0 );
+    uxh = fma( fms( wy0,cbz, wz0*cby ), v17, ux0 ) + hax;
+    uyh = fma( fms( wz0,cbx, wx0*cbz ), v17, uy0 ) + hay;
+    uzh = fma( fms( wx0,cby, wy0*cbx ), v17, uz0 ) + haz;
+    store_4x4_tr( uxh, uyh, uzh,  q, &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux );
     
     // Update the position of inbnd particles
 
-    v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
-    ux *= cdt_dx;
-    uy *= cdt_dy;
-    uz *= cdt_dz;
-    ux *= v0;
-    uy *= v0;
-    uz *= v0;      // ux,uy,uz are normalized displ (relative to cell size)
-    v0  = dx + ux;
-    v1  = dy + uy;
-    v2  = dz + uz; // New particle midpoint
-    v3  = v0 + ux;
-    v4  = v1 + uy;
-    v5  = v2 + uz; // New particle position
-    outbnd = (v3>one) | (v3<neg_one) |
-             (v4>one) | (v4<neg_one) |
-             (v5>one) | (v5<neg_one);
-    v3  = merge(outbnd,dx,v3); // Do not update outbnd particles
-    v4  = merge(outbnd,dy,v4);
-    v5  = merge(outbnd,dz,v5);
-    store_4x4_tr(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
-    
+    rgamma = rsqrt( one + fma( uxh,uxh, fma( uyh,uyh, uzh*uzh ) ) );
+    ddx = (uxh*cdt_dx)*rgamma;
+    ddy = (uyh*cdt_dy)*rgamma;
+    ddz = (uzh*cdt_dz)*rgamma; // ddx,ddy,ddz are normalized displacement
+    dxh = dx  + ddx;
+    dyh = dy  + ddy;
+    dzh = dz  + ddz;           // Half step position
+    dx1 = dxh + ddx;
+    dy1 = dyh + ddy;
+    dz1 = dzh + ddz;           // New particle position
+    outbnd = (dx1>one) | (dx1<neg_one) |
+             (dy1>one) | (dy1<neg_one) |
+             (dz1>one) | (dz1<neg_one);  
+    store_4x4_tr( merge(outbnd,dx,dx1), // Do not update outbnd particles
+                  merge(outbnd,dy,dy1),
+                  merge(outbnd,dz,dz1),
+                  ii,
+                  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx );
+
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
 
-    q  = czero(outbnd,q);          // Do not accumulate outbnd particles
-    dx = v0;                       // Streak midpoint (valid for inbnd only)
-    dy = v1;
-    dz = v2;
-    v5 = q*ux*uy*uz*one_third;     // Charge conservation correction
+    qa  = czero(outbnd,q);          // Do not accumulate outbnd particles
+    /**/                            // The half step position is not the
+    /**/                            // streak midpoint for them!
+    ccc = qa*ddx*ddy*ddz*one_third; // Charge conservation correction
 
-    vp0 = (float * ALIGNED(16))PTR_ACCUMULATOR(ii(0)); cache_lock( accumulator_cache, vp0 );
-    vp1 = (float * ALIGNED(16))PTR_ACCUMULATOR(ii(1)); cache_lock( accumulator_cache, vp1 );
-    vp2 = (float * ALIGNED(16))PTR_ACCUMULATOR(ii(2)); cache_lock( accumulator_cache, vp2 );
-    vp3 = (float * ALIGNED(16))PTR_ACCUMULATOR(ii(3)); // cache_lock( accumulator_cache, vp3 );
+#   define ACCUMULATE_J(X,Y,Z)                                          \
+    a4##X  = qa*dd##X;      /* a4 = qa ddx                                */ \
+    a1##X  = a4##X*d##Y##h; /* a1 = qa ddx dyh                            */ \
+    a0##X  = a4##X-a1##X;   /* a0 = qa ddx (1-dyh)                        */ \
+    a1##X += a4##X;         /* a1 = qa ddx (1+dyh)                        */ \
+    a4##X  = one+d##Z##h;   /* a4 = 1+dzh                                 */ \
+    a2##X  = a0##X*a4##X;   /* a2 = qa ddx (1-dyh)(1+dzh)                 */ \
+    a3##X  = a1##X*a4##X;   /* a3 = qa ddx (1+dyh)(1+dzh)                 */ \
+    a4##X  = one-d##Z##h;   /* a4 = 1-dzh                                 */ \
+    a0##X *= a4##X;         /* a0 = qa ddx (1-dyh)(1-dzh)                 */ \
+    a1##X *= a4##X;         /* a1 = qa ddx (1+dyh)(1-dzh)                 */ \
+    a0##X += ccc;           /* a0 = qa ddx [ (1-dyh)(1-dzh) + ddy*ddz/3 ] */ \
+    a1##X -= ccc;           /* a1 = qa ddx [ (1+dyh)(1-dzh) - ddy*ddz/3 ] */ \
+    a2##X -= ccc;           /* a2 = qa ddx [ (1-dyh)(1+dzh) - ddy*ddz/3 ] */ \
+    a3##X += ccc;           /* a3 = qa ddx [ (1+dyh)(1+dzh) + ddy*ddz/3 ] */ \
+    transpose(a0##X,a1##X,a2##X,a3##X);                                 \
+    increment_4x1(ja0->j##X,a0##X);                                     \
+    increment_4x1(ja1->j##X,a1##X);                                     \
+    increment_4x1(ja2->j##X,a2##X);                                     \
+    increment_4x1(ja3->j##X,a3##X);
 
-#   define ACCUMULATE_J(X,Y,Z,offset)                               \
-    v4  = q*u##X;   /* v4 = q ux                            */      \
-    v1  = v4*d##Y;  /* v1 = q ux dy                         */      \
-    v0  = v4-v1;    /* v0 = q ux (1-dy)                     */      \
-    v1 += v4;       /* v1 = q ux (1+dy)                     */      \
-    v4  = one+d##Z; /* v4 = 1+dz                            */      \
-    v2  = v0*v4;    /* v2 = q ux (1-dy)(1+dz)               */      \
-    v3  = v1*v4;    /* v3 = q ux (1+dy)(1+dz)               */      \
-    v4  = one-d##Z; /* v4 = 1-dz                            */      \
-    v0 *= v4;       /* v0 = q ux (1-dy)(1-dz)               */      \
-    v1 *= v4;       /* v1 = q ux (1+dy)(1-dz)               */      \
-    v0 += v5;       /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */      \
-    v1 -= v5;       /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */      \
-    v2 -= v5;       /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */      \
-    v3 += v5;       /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */      \
-    transpose(v0,v1,v2,v3);                                         \
-    increment_4x1(vp0+offset,v0);                                   \
-    increment_4x1(vp1+offset,v1);                                   \
-    increment_4x1(vp2+offset,v2);                                   \
-    increment_4x1(vp3+offset,v3);
-
-    ACCUMULATE_J( x,y,z, 0 );
-    ACCUMULATE_J( y,z,x, 4 );
-    ACCUMULATE_J( z,x,y, 8 );
+    ACCUMULATE_J( x,y,z );
+    ACCUMULATE_J( y,z,x );
+    ACCUMULATE_J( z,x,y );
 
 #   undef ACCUMULATE_J
 
-    cache_unlock( accumulator_cache, vp0 );
-    cache_unlock( accumulator_cache, vp1 );
-    cache_unlock( accumulator_cache, vp2 );
-    // cache_unlock( accumulator_cache, vp3 );
+    cache_unlock( accumulator_cache, ja0 );
+    cache_unlock( accumulator_cache, ja1 );
+    cache_unlock( accumulator_cache, ja2 );
 
     // Update position and accumulate outbnd
     
 #   define MOVE_OUTBND(N)                                      \
     if( outbnd(N) ) {                                          \
-      pm->dispx = ux(N);                                       \
-      pm->dispy = uy(N);                                       \
-      pm->dispz = uz(N);                                       \
+      pm->dispx = ddx(N);                                      \
+      pm->dispy = ddy(N);                                      \
+      pm->dispz = ddz(N);                                      \
       pm->i     = idx + N;                                     \
       if( move_p_spu( p+N, pm ) ) pm++, nm++;                  \
     }

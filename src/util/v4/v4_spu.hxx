@@ -13,29 +13,10 @@
 #include <math.h>
 
 #ifndef ALIGNED
-#define ALIGNED(16)
+#define ALIGNED(n)
 #endif
 
 namespace v4 {
-
-  // FIXME: CHECK VECTOR CASTING BETWEEN TYPES IS FREE IN COMPILER GENERATED
-  // ASSEMBLY
-
-  // FIXME: IT MAY BE FASTER WAY TO ASSEMBLY THESE VECTOR CONSTANTS ON THE FLY
-  // (e.g spu_splats)
-
-  const vec_uint4  _vufalse = {          0,          0,
-                                         0,          0 };
-  const vec_uint4  _vutrue  = { 0xffffffff, 0xffffffff,
-                                0xffffffff, 0xffffffff };
-
-  const vec_int4   _vizero  = {  0,  0,  0,  0 };
-  const vec_int4   _vione   = {  1,  1,  1,  1 };
-
-  const vec_float4 _vfzero  = {   0,   0,   0,   0 };
-  const vec_float4 _vfhalf  = { 0.5, 0.5, 0.5, 0.5 };
-  const vec_float4 _vfone   = {   1,   1,   1,   1 };
-
 
   const vec_uchar16 _tr0 = {  0, 1, 2, 3,    4, 5, 6, 7,
                              16,17,18,19,   20,21,22,23 };
@@ -49,8 +30,6 @@ namespace v4 {
                              16,17,18,19,   24,25,26,27 };
   const vec_uchar16 _tr5 = {  4, 5, 6, 7,   12,13,14,15,
                              20,21,22,23,   28,29,30,31 };
-
-  const vec_uint4   _visignbits = { 1<<31, 1<<31, 1<<31, 1<<31 };
 
   class v4;
   class v4int;
@@ -79,7 +58,7 @@ namespace v4 {
     friend inline v4 merge(    const v4int &c, const v4 &a, const v4 &b );
 
     // v4 memory manipulation friends
-        
+    
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
@@ -133,94 +112,98 @@ namespace v4 {
     union {
       int i[4];
       float f[4];
-      vec_float4 vf;
-      vec_int4   vi; // FIXME: ALWAYS USE vf WITH CASTING??
+      vec_float4 v;
     };
     
   public:
 
-    v4() {}                        // Default constructor
-    v4(const v4 &a) { vi = a.vi; } // Copy constructor
-    ~v4() {}                       // Default destructor
+    v4() {}                      // Default constructor
+    v4(const v4 &a) { v = a.v; } // Copy constructor
+    ~v4() {}                     // Default destructor
 
   };
   
   // v4 miscellaneous functions
 
+  // FIXME: Castless variant?
   inline int any( const v4 &a ) {
-    return
-      spu_extract( spu_gather( spu_cmpeq( a.vi, _vizero ) ), 0 )==15 ? 0 : -1; 
+    return spu_extract( spu_gather( spu_cmpeq( (vec_int4)a.v,
+                                               spu_splats( 0 ) ) ), 0 )==15 ?
+      0 : -1; 
   }
   
+  // FIXME: Castless variant?
   inline int all( const v4 &a ) {
-    return
-      spu_extract( spu_gather( spu_cmpeq( a.vi, _vizero ) ), 0 )==0 ? -1 : 0;
+    return spu_extract( spu_gather( spu_cmpeq( (vec_int4)a.v,
+                                               spu_splats( 0 ) ) ), 0 )==0 ?
+      -1 : 0;
   }
   
   inline v4 splat( const v4 & a, const int n ) {
     v4 b;
-    b.vi = spu_splats( spu_extract( a.vi, n ) ); // FIXME: A better way?
+    b.v = spu_splats( spu_extract( a.v, n ) );
     return b;
   }
 
   inline void swap( v4 &a, v4 &b ) { 
-    vec_int4 t = a.vi; a.vi = b.vi; b.vi = t;
+    vec_float4 t = a.v; a.v = b.v; b.v = t;
   }
 
   inline void transpose( v4 &a, v4 &b, v4 &c, v4 &d ) {
-    vec_int4 a0 = a.vi;                        // a0 =  0  1  2  3
-    vec_int4 b0 = b.vi;                        // b0 =  4  5  6  7
-    vec_int4 c0 = c.vi;                        // c0 =  8  9 10 11
-    vec_int4 d0 = d.vi;                        // d0 = 12 13 14 15
+    vec_float4 a0 = a.v;                         // a0 =  0  1  2  3
+    vec_float4 b0 = b.v;                         // b0 =  4  5  6  7
+    vec_float4 c0 = c.v;                         // c0 =  8  9 10 11
+    vec_float4 d0 = d.v;                         // d0 = 12 13 14 15
 
     // Step 1: Transpose the block matrix
 
-    vec_int4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
-    vec_int4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
-    vec_int4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
-    vec_int4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
+    vec_float4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
+    vec_float4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
+    vec_float4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
+    vec_float4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    a.vi = spu_shuffle( a1, b1, _tr2 );        // a  =  0  4  8 12
-    b.vi = spu_shuffle( a1, b1, _tr3 );        // b  =  1  5  9 13
-    c.vi = spu_shuffle( c1, d1, _tr2 );        // c  =  2  6 10 14
-    d.vi = spu_shuffle( c1, d1, _tr3 );        // d  =  3  7 11 15
+    a.v = spu_shuffle( a1, b1, _tr2 );           // a  =  0  4  8 12
+    b.v = spu_shuffle( a1, b1, _tr3 );           // b  =  1  5  9 13
+    c.v = spu_shuffle( c1, d1, _tr2 );           // c  =  2  6 10 14
+    d.v = spu_shuffle( c1, d1, _tr3 );           // d  =  3  7 11 15
   }
 
   // v4 memory manipulation functions
   
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
-    a.vi = *((const vec_int4 * ALIGNED(16))p);
+    a.v = *((const vec_float4 * ALIGNED(16))p);
   }
 
   inline void store_4x1( const v4 &a, void * ALIGNED(16) p ) {
-    *((vec_int4 * ALIGNED(16))p) = a.vi;
+    *((vec_float4 * ALIGNED(16))p) = a.v;
   }
 
   inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
-    *((vec_int4 * ALIGNED(16))p) = a.vi;
+    *((vec_float4 * ALIGNED(16))p) = a.v;
   }
 
   // FIXME: Ordering semantics
-  inline void copy_4x1( void * ALIGNED(16) dst, const void * ALIGNED(16) src ) {
-    *((vec_int4 * ALIGNED(16))dst) = *((const vec_int4 * ALIGNED(16))src);
+  inline void copy_4x1(       void * ALIGNED(16) dst,
+                        const void * ALIGNED(16) src ) {
+    *((vec_float4 * ALIGNED(16))dst) = *((const vec_float4 * ALIGNED(16))src);
   }
 
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
-    vec_int4 t                   = *((vec_int4 * ALIGNED(16))a);
-    *((vec_int4 * ALIGNED(16))a) = *((vec_int4 * ALIGNED(16))b);
-    *((vec_int4 * ALIGNED(16))b) = t;
+    vec_float4 t                   = *((vec_float4 * ALIGNED(16))a);
+    *((vec_float4 * ALIGNED(16))a) = *((vec_float4 * ALIGNED(16))b);
+    *((vec_float4 * ALIGNED(16))b) = t;
   }
 
   // v4 transposed memory manipulation functions
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3, v4 &a ) {
-    a.i[0] = ((const int *)a0)[0];
-    a.i[1] = ((const int *)a1)[0];
-    a.i[2] = ((const int *)a2)[0];
-    a.i[3] = ((const int *)a3)[0];
+    a.f[0] = ((const float *)a0)[0];
+    a.f[1] = ((const float *)a1)[0];
+    a.f[2] = ((const float *)a2)[0];
+    a.f[3] = ((const float *)a3)[0];
   }
 
   // Note: load_4x4_tr with last two shuffles discared may be
@@ -232,12 +215,13 @@ namespace v4 {
                            const void * ALIGNED(8) pc,
                            const void * ALIGNED(8) pd,
                            v4 &a, v4 &b ) {
+    // FIXME: a float based variant?
     vec_llong2 a_v = { *(const int64_t * ALIGNED(8))pa,
                        *(const int64_t * ALIGNED(8))pb }; // 0 4 1 5
     vec_llong2 b_v = { *(const int64_t * ALIGNED(8))pc,
                        *(const int64_t * ALIGNED(8))pd }; // 2 6 3 7
-    a.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr4 ); // 0 1 2 3
-    b.vi = (vec_int4)spu_shuffle( a_v, b_v, _tr5 ); // 4 5 6 7
+    a.v = (vec_float4)spu_shuffle( a_v, b_v, _tr4 ); // 0 1 2 3
+    b.v = (vec_float4)spu_shuffle( a_v, b_v, _tr5 ); // 4 5 6 7
   }
   
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
@@ -245,23 +229,23 @@ namespace v4 {
                            const void * ALIGNED(16) pc,
                            const void * ALIGNED(16) pd,
                            v4 &a, v4 &b, v4 &c ) {
-    vec_int4 a0 = *((const vec_int4 * ALIGNED(16))pa);
-    vec_int4 b0 = *((const vec_int4 * ALIGNED(16))pb);
-    vec_int4 c0 = *((const vec_int4 * ALIGNED(16))pc);
-    vec_int4 d0 = *((const vec_int4 * ALIGNED(16))pd);
+    vec_float4 a0 = *((const vec_float4 * ALIGNED(16))pa);
+    vec_float4 b0 = *((const vec_float4 * ALIGNED(16))pb);
+    vec_float4 c0 = *((const vec_float4 * ALIGNED(16))pc);
+    vec_float4 d0 = *((const vec_float4 * ALIGNED(16))pd);
 
     // Step 1: Transpose the block matrix
 
-    vec_int4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
-    vec_int4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
-    vec_int4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
-    vec_int4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
+    vec_float4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
+    vec_float4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
+    vec_float4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
+    vec_float4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    a.vi = spu_shuffle( a1, b1, _tr2 );        // a  =  0  4  8 12
-    b.vi = spu_shuffle( a1, b1, _tr3 );        // b  =  1  5  9 13
-    c.vi = spu_shuffle( c1, d1, _tr2 );        // c  =  2  6 10 14
+    a.v = spu_shuffle( a1, b1, _tr2 );           // a  =  0  4  8 12
+    b.v = spu_shuffle( a1, b1, _tr3 );           // b  =  1  5  9 13
+    c.v = spu_shuffle( c1, d1, _tr2 );           // c  =  2  6 10 14
   }
 
   inline void load_4x4_tr( const void * ALIGNED(16) pa,
@@ -269,32 +253,32 @@ namespace v4 {
                            const void * ALIGNED(16) pc,
                            const void * ALIGNED(16) pd,
                            v4 &a, v4 &b, v4 &c, v4 &d ) {
-    vec_int4 a0 = *((const vec_int4 * ALIGNED(16))pa);
-    vec_int4 b0 = *((const vec_int4 * ALIGNED(16))pb);
-    vec_int4 c0 = *((const vec_int4 * ALIGNED(16))pc);
-    vec_int4 d0 = *((const vec_int4 * ALIGNED(16))pd);
+    vec_float4 a0 = *((const vec_float4 * ALIGNED(16))pa);
+    vec_float4 b0 = *((const vec_float4 * ALIGNED(16))pb);
+    vec_float4 c0 = *((const vec_float4 * ALIGNED(16))pc);
+    vec_float4 d0 = *((const vec_float4 * ALIGNED(16))pd);
 
     // Step 1: Transpose the block matrix
 
-    vec_int4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
-    vec_int4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
-    vec_int4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
-    vec_int4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
+    vec_float4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
+    vec_float4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
+    vec_float4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
+    vec_float4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    a.vi = spu_shuffle( a1, b1, _tr2 );        // a  =  0  4  8 12
-    b.vi = spu_shuffle( a1, b1, _tr3 );        // b  =  1  5  9 13
-    c.vi = spu_shuffle( c1, d1, _tr2 );        // c  =  2  6 10 14
-    d.vi = spu_shuffle( c1, d1, _tr3 );        // d  =  3  7 11 15
+    a.v = spu_shuffle( a1, b1, _tr2 );           // a  =  0  4  8 12
+    b.v = spu_shuffle( a1, b1, _tr3 );           // b  =  1  5  9 13
+    c.v = spu_shuffle( c1, d1, _tr2 );           // c  =  2  6 10 14
+    d.v = spu_shuffle( c1, d1, _tr3 );           // d  =  3  7 11 15
   }
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 ) {
-    ((int *)a0)[0] = a.i[0];
-    ((int *)a1)[0] = a.i[1];
-    ((int *)a2)[0] = a.i[2];
-    ((int *)a3)[0] = a.i[3];
+    ((float *)a0)[0] = a.f[0];
+    ((float *)a1)[0] = a.f[1];
+    ((float *)a2)[0] = a.f[2];
+    ((float *)a3)[0] = a.f[3];
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -302,19 +286,20 @@ namespace v4 {
                             void * ALIGNED(8) pb,
                             void * ALIGNED(8) pc,
                             void * ALIGNED(8) pd ) {
-    vec_int4 a1 = a.vi;                        // a =  0  1  2  3
-    vec_int4 b1 = b.vi;                        // b =  4  5  6  7
-    vec_int4 c1 = spu_shuffle( a1, a1, _tr1 ); // c =  2  3  x  x
-    vec_int4 d1 = spu_shuffle( b1, b1, _tr1 ); // d =  6  7  x  x
+    vec_float4 a1 = a.v;                         // a =  0  1  2  3
+    vec_float4 b1 = b.v;                         // b =  4  5  6  7
+    vec_float4 c1 = spu_shuffle( a1, a1, _tr1 ); // c =  2  3  x  x
+    vec_float4 d1 = spu_shuffle( b1, b1, _tr1 ); // d =  6  7  x  x
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    vec_int4 a0 = spu_shuffle( a1, b1, _tr2 ); // a  =  0  4  x  x
-    vec_int4 b0 = spu_shuffle( a1, b1, _tr3 ); // b  =  1  5  x  x
-    vec_int4 c0 = spu_shuffle( c1, d1, _tr2 ); // c  =  2  6  x  x
-    vec_int4 d0 = spu_shuffle( c1, d1, _tr3 ); // d  =  3  7  x  x
+    vec_float4 a0 = spu_shuffle( a1, b1, _tr2 ); // a  =  0  4  x  x
+    vec_float4 b0 = spu_shuffle( a1, b1, _tr3 ); // b  =  1  5  x  x
+    vec_float4 c0 = spu_shuffle( c1, d1, _tr2 ); // c  =  2  6  x  x
+    vec_float4 d0 = spu_shuffle( c1, d1, _tr3 ); // d  =  3  7  x  x
 
     // Store the 2 columns of the matrix
+    // FIXME: A castless variant??
 
     ((int64_t * ALIGNED(8))pa)[0] = spu_extract( (vec_llong2)a0, 0 );
     ((int64_t * ALIGNED(8))pb)[0] = spu_extract( (vec_llong2)b0, 0 );
@@ -325,24 +310,24 @@ namespace v4 {
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
                             void * ALIGNED(16) pa, void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {
-    vec_int4 a0 = a.vi;                        // a =  0  1  2  3
-    vec_int4 b0 = b.vi;                        // b =  4  5  6  7
-    vec_int4 c0 = c.vi;                        // c =  8  9 10 11
-    vec_int4 d0;                               // d =  x  x  x  x ... no warn
+    vec_float4 a0 = a.v;                         // a =  0  1  2  3
+    vec_float4 b0 = b.v;                         // b =  4  5  6  7
+    vec_float4 c0 = c.v;                         // c =  8  9 10 11
+    vec_float4 d0;                               // d =  x  x  x  x ... no warn
     
     // Step 1: Transpose the block matrix
 
-    vec_int4 a1 = spu_shuffle( a0, c0, _tr0 ); // a =  0  1  8  9
-    vec_int4 b1 = spu_shuffle( b0, b0, _tr0 ); // b =  4  5  x  x
-    vec_int4 c1 = spu_shuffle( a0, c0, _tr1 ); // c =  2  3 10 11
-    vec_int4 d1 = spu_shuffle( b0, b0, _tr1 ); // d =  6  7  x  x
+    vec_float4 a1 = spu_shuffle( a0, c0, _tr0 ); // a =  0  1  8  9
+    vec_float4 b1 = spu_shuffle( b0, b0, _tr0 ); // b =  4  5  x  x
+    vec_float4 c1 = spu_shuffle( a0, c0, _tr1 ); // c =  2  3 10 11
+    vec_float4 d1 = spu_shuffle( b0, b0, _tr1 ); // d =  6  7  x  x
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    a0 = spu_shuffle( a1, b1, _tr2 );          // a  =  0  4  8  x
-    b0 = spu_shuffle( a1, b1, _tr3 );          // b  =  1  5  9  x
-    c0 = spu_shuffle( c1, d1, _tr2 );          // c  =  2  6 10  x
-    d0 = spu_shuffle( c1, d1, _tr3 );          // d  =  3  7 11  x
+    a0 = spu_shuffle( a1, b1, _tr2 );            // a  =  0  4  8  x
+    b0 = spu_shuffle( a1, b1, _tr3 );            // b  =  1  5  9  x
+    c0 = spu_shuffle( c1, d1, _tr2 );            // c  =  2  6 10  x
+    d0 = spu_shuffle( c1, d1, _tr3 );            // d  =  3  7 11  x
 
     // Store the 3 columns of the matrix
 
@@ -351,33 +336,33 @@ namespace v4 {
     ((int64_t * ALIGNED(16))pc)[0] = spu_extract( (vec_llong2)c0, 0 );
     ((int64_t * ALIGNED(16))pd)[0] = spu_extract( (vec_llong2)d0, 0 );
 
-    ((int * ALIGNED(16))pa)[2]     = spu_extract( a0, 2 );
-    ((int * ALIGNED(16))pb)[2]     = spu_extract( b0, 2 );
-    ((int * ALIGNED(16))pc)[2]     = spu_extract( c0, 2 );
-    ((int * ALIGNED(16))pd)[2]     = spu_extract( d0, 2 );
+    ((float * ALIGNED(16))pa)[2]   = spu_extract( a0, 2 );
+    ((float * ALIGNED(16))pb)[2]   = spu_extract( b0, 2 );
+    ((float * ALIGNED(16))pc)[2]   = spu_extract( c0, 2 );
+    ((float * ALIGNED(16))pd)[2]   = spu_extract( d0, 2 );
   }
   
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) pa, void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {
-    vec_int4 a0 = a.vi;
-    vec_int4 b0 = b.vi;
-    vec_int4 c0 = c.vi;
-    vec_int4 d0 = d.vi;
+    vec_float4 a0 = a.v;
+    vec_float4 b0 = b.v;
+    vec_float4 c0 = c.v;
+    vec_float4 d0 = d.v;
 
     // Step 1: Transpose the block matrix
 
-    vec_int4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
-    vec_int4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
-    vec_int4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
-    vec_int4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
+    vec_float4 a1 = spu_shuffle( a0, c0, _tr0 ); // a1 =  0  1  8  9
+    vec_float4 b1 = spu_shuffle( b0, d0, _tr0 ); // b1 =  4  5 12 13
+    vec_float4 c1 = spu_shuffle( a0, c0, _tr1 ); // c1 =  2  3 10 11
+    vec_float4 d1 = spu_shuffle( b0, d0, _tr1 ); // d1 =  6  7 14 15
 
     // Step 2: Transpose 2x2 subblocks of matrix
 
-    *((vec_int4 * ALIGNED(16))pa) = spu_shuffle( a1, b1, _tr2 );
-    *((vec_int4 * ALIGNED(16))pb) = spu_shuffle( a1, b1, _tr3 );
-    *((vec_int4 * ALIGNED(16))pc) = spu_shuffle( c1, d1, _tr2 );
-    *((vec_int4 * ALIGNED(16))pd) = spu_shuffle( c1, d1, _tr3 );
+    *((vec_float4 * ALIGNED(16))pa) = spu_shuffle( a1, b1, _tr2 );
+    *((vec_float4 * ALIGNED(16))pb) = spu_shuffle( a1, b1, _tr3 );
+    *((vec_float4 * ALIGNED(16))pc) = spu_shuffle( c1, d1, _tr2 );
+    *((vec_float4 * ALIGNED(16))pd) = spu_shuffle( c1, d1, _tr3 );
   }
 
   //////////////
@@ -462,13 +447,13 @@ namespace v4 {
     
     v4int() {}                              // Default constructor
     v4int( const v4int &a ) {               // Copy constructor
-      vi = a.vi;
+      v = a.v;
     }
     v4int( const v4 &a ) {                  // Initialize from mixed
-      vi = a.vi;
+      v = a.v;
     }
     v4int( const int &a ) {                 // Initialize from scalar
-      vi = spu_splats( a );
+      v = (vec_float4)spu_splats( a );
     }
     v4int( const int &i0, const int &i1,
            const int &i2, const int &i3 ) { // Initialize from scalars
@@ -485,18 +470,18 @@ namespace v4 {
       return *this;                               \
     }
 
-    ASSIGN(=,   vi = b.vi )
-    ASSIGN(+=,  vi = spu_add( vi, b.vi ) )
-    ASSIGN(-=,  vi = spu_sub( vi, b.vi ) )
+    ASSIGN(=,   v  = b.v )
+    ASSIGN(+=,  v  = (vec_float4)spu_add( (vec_int4)v, (vec_int4)b.v ) )
+    ASSIGN(-=,  v  = (vec_float4)spu_sub( (vec_int4)v, (vec_int4)b.v ) )
     ASSIGN(*=,  i[0] *= b.i[0]; i[1] *= b.i[1];
                 i[2] *= b.i[2]; i[3] *= b.i[3] ) // FIXME: Sigh ...
     ASSIGN(/=,  i[0] /= b.i[0]; i[1] /= b.i[1];
                 i[2] /= b.i[2]; i[3] /= b.i[3] ) // FIXME: Sigh ...
     ASSIGN(%=,  i[0] %= b.i[0]; i[1] %= b.i[1];
                 i[2] %= b.i[2]; i[3] %= b.i[3] ) // FIXME: Sigh ...
-    ASSIGN(^=,  vi = spu_xor( vi, b.vi ) )
-    ASSIGN(&=,  vi = spu_and( vi, b.vi ) )
-    ASSIGN(|=,  vi = spu_or(  vi, b.vi ) )
+    ASSIGN(^=,  v = (vec_float4)spu_xor( (vec_int4)v, (vec_int4)b.v ) )
+    ASSIGN(&=,  v = (vec_float4)spu_and( (vec_int4)v, (vec_int4)b.v ) )
+    ASSIGN(|=,  v = (vec_float4)spu_or(  (vec_int4)v, (vec_int4)b.v ) )
     ASSIGN(<<=, i[0] <<= b.i[0]; i[1] <<= b.i[1];
                 i[2] <<= b.i[2]; i[3] <<= b.i[3] ) // FIXME: Sigh ...
     ASSIGN(>>=, i[0] >>= b.i[0]; i[1] >>= b.i[1];
@@ -506,8 +491,9 @@ namespace v4 {
 
     // v4int member access operator
     
-    int &operator()(const int n) {
-      return i[n];
+    inline int &operator []( const int n ) { return i[n]; }
+    inline int  operator ()( const int n ) {
+      return spu_extract( (vec_int4)v, n );
     }
 
   };
@@ -521,23 +507,27 @@ namespace v4 {
     return b;                                   \
   }
 
-  PREFIX_UNARY(+, b.vi = a.vi )
-  PREFIX_UNARY(-, b.vi = spu_sub( _vizero, a.vi ) )
-  PREFIX_UNARY(!, b.vi = (vec_int4)spu_cmpeq( _vizero, a.vi ) )
-  PREFIX_UNARY(~, b.vi = spu_xor( (vec_int4)_vutrue, a.vi ) ) // FIXME: Sigh
+  PREFIX_UNARY(+, b.v = a.v )
+  PREFIX_UNARY(-, b.v = (vec_float4)spu_sub( spu_splats( 0 ),
+                                             (vec_int4)a.v ) )
+  PREFIX_UNARY(!, b.v = (vec_float4)spu_cmpeq( spu_splats( 0 ),
+                                               (vec_int4)a.v ) )
+  PREFIX_UNARY(~, b.v = (vec_float4)spu_xor( spu_splats( -1 ),
+                                             (vec_int4)a.v ) )
+  // FIXME: Sigh
   
 # undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
 
-# define PREFIX_INCDEC(op,intrinsic)            \
-  inline v4int operator op( v4int & a ) {       \
-    vec_int4 a_vi = a.vi;                       \
-    v4int b;                                    \
-    a_vi = intrinsic( a_vi, _vione );           \
-    a.vi = a_vi;                                \
-    b.vi = a_vi;                                \
-    return b;                                   \
+# define PREFIX_INCDEC(op,intrinsic)                                    \
+  inline v4int operator op( v4int & a ) {                               \
+    vec_float4 a_v = a.v;                                               \
+    v4int b;                                                            \
+    a_v = (vec_float4)intrinsic( (vec_int4)a_v, spu_splats( 1 ) );      \
+    a.v = a_v;                                                          \
+    b.v = a_v;                                                          \
+    return b;                                                           \
   }
 
   PREFIX_INCDEC(++,spu_add)
@@ -547,13 +537,13 @@ namespace v4 {
 
   // v4int postfix increment / decrement
 
-# define POSTFIX_INCDEC(op,intrinsic)           \
-  inline v4int operator op( v4int & a, int ) {  \
-    vec_int4 a_vi = a.vi;                     \
-    v4int b;                                    \
-    b.vi = a_vi;                                \
-    a.vi = intrinsic( a_vi, _vione );           \
-    return b;                                   \
+# define POSTFIX_INCDEC(op,intrinsic)                                   \
+  inline v4int operator op( v4int & a, int ) {                          \
+    vec_float4 a_v = a.v;                                               \
+    v4int b;                                                            \
+    b.v = a_v;                                                          \
+    a.v = (vec_float4)intrinsic( (vec_int4)a_v, spu_splats( 1 ) );      \
+    return b;                                                           \
   }
 
   POSTFIX_INCDEC(++,spu_add)
@@ -570,17 +560,17 @@ namespace v4 {
     return c;                                                   \
   }
 
-  BINARY(+,  c.vi = spu_add( a.vi, b.vi ) )
-  BINARY(-,  c.vi = spu_sub( a.vi, b.vi ) )
+  BINARY(+,  c.v = (vec_float4)spu_add( (vec_int4)a.v, (vec_int4)b.v ) )
+  BINARY(-,  c.v = (vec_float4)spu_sub( (vec_int4)a.v, (vec_int4)b.v ) )
   BINARY(*,  c.i[0] = a.i[0]*b.i[0]; c.i[1] = a.i[1]*b.i[1];
              c.i[2] = a.i[2]*b.i[2]; c.i[3] = a.i[3]*b.i[3] ) // FIXME: Sigh
   BINARY(/,  c.i[0] = a.i[0]/b.i[0]; c.i[1] = a.i[1]/b.i[1];
              c.i[2] = a.i[2]/b.i[2]; c.i[3] = a.i[3]/b.i[3] ) // FIXME: Sigh
   BINARY(%,  c.i[0] = a.i[0]%b.i[0]; c.i[1] = a.i[1]%b.i[1];
              c.i[2] = a.i[2]%b.i[2]; c.i[3] = a.i[3]%b.i[3] ) // FIXME: Sigh
-  BINARY(^,  c.vi = spu_xor( a.vi, b.vi ) )
-  BINARY(&,  c.vi = spu_and( a.vi, b.vi ) )
-  BINARY(|,  c.vi = spu_or(  a.vi, b.vi ) )
+  BINARY(^,  c.v = (vec_float4)spu_xor( (vec_int4)a.v, (vec_int4)b.v ) )
+  BINARY(&,  c.v = (vec_float4)spu_and( (vec_int4)a.v, (vec_int4)b.v ) )
+  BINARY(|,  c.v = (vec_float4)spu_or(  (vec_int4)a.v, (vec_int4)b.v ) )
   BINARY(<<, c.i[0] = a.i[0]<<b.i[0]; c.i[1] = a.i[1]<<b.i[1];
              c.i[2] = a.i[2]<<b.i[2]; c.i[3] = a.i[3]<<b.i[3] ) // FIXME: Sigh
   BINARY(>>, c.i[0] = a.i[0]>>b.i[0]; c.i[1] = a.i[1]>>b.i[1];
@@ -597,17 +587,30 @@ namespace v4 {
     return c;                                                  \
   }
 
-  LOGICAL(<,  c.vi = (vec_int4)spu_cmpgt( b.vi, a.vi ) )
-  LOGICAL(>,  c.vi = (vec_int4)spu_cmpgt( a.vi, b.vi ) )
-  LOGICAL(==, c.vi = (vec_int4)spu_cmpeq( a.vi, b.vi ) )
-  LOGICAL(!=, c.vi = (vec_int4)spu_xor( _vutrue, spu_cmpeq( a.vi, b.vi ) ) ) // FIXME: Sigh
-  LOGICAL(<=, c.vi = (vec_int4)spu_xor( _vutrue, spu_cmpgt( a.vi, b.vi ) ) ) // FIXME: Sigh
-  LOGICAL(>=, c.vi = (vec_int4)spu_xor( _vutrue, spu_cmpgt( b.vi, a.vi ) ) ) // FIXME: Sigh
-  LOGICAL(&&, c.vi = (vec_int4)spu_nor(  spu_cmpeq( a.vi, _vizero ),
-                                         spu_cmpeq( b.vi, _vizero ) ) )
-  LOGICAL(||, c.vi = (vec_int4)spu_nand( spu_cmpeq( a.vi, _vizero ),
-                                         spu_cmpeq( b.vi, _vizero ) ) )
-  
+  LOGICAL(<,  c.v = (vec_float4)spu_cmpgt( (vec_int4)b.v, (vec_int4)a.v ) )
+  LOGICAL(>,  c.v = (vec_float4)spu_cmpgt( (vec_int4)a.v, (vec_int4)b.v ) )
+  LOGICAL(==, c.v = (vec_float4)spu_cmpeq( (vec_int4)a.v, (vec_int4)b.v ) )
+  LOGICAL(!=, c.v = (vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                         spu_cmpeq( (vec_int4)a.v,
+                                                    (vec_int4)b.v ) ) )
+  /**/                                                           // FIXME: Sigh
+  LOGICAL(<=, c.v = (vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                         spu_cmpgt( (vec_int4)a.v,
+                                                    (vec_int4)b.v ) ) )
+  /**/                                                           // FIXME: Sigh
+  LOGICAL(>=, c.v = (vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                         spu_cmpgt( (vec_int4)b.v,
+                                                    (vec_int4)a.v ) ) )
+  /**/                                                           // FIXME: Sigh
+  LOGICAL(&&, c.v = (vec_float4)spu_nor( spu_cmpeq( (vec_int4)a.v,
+                                                    spu_splats( 0 ) ),
+                                         spu_cmpeq( (vec_int4)b.v,
+                                                    spu_splats( 0 ) ) ) )
+  LOGICAL(||, c.v = (vec_float4)spu_nand( spu_cmpeq( (vec_int4)a.v,
+                                                     spu_splats( 0 ) ),
+                                          spu_cmpeq( (vec_int4)b.v,
+                                                     spu_splats( 0 ) ) ) )
+
 # undef LOGICAL
 
   // v4int miscellaneous functions
@@ -623,19 +626,19 @@ namespace v4 {
 
   inline v4 czero( const v4int &c, const v4 &a ) {
     v4 b;
-    b.vi = spu_andc( a.vi, c.vi );
+    b.v = spu_andc( a.v, c.v );
     return b;
   }
 
   inline v4 notczero( const v4int &c, const v4 &a ) {
     v4 b;
-    b.vi = spu_and( a.vi, c.vi );
+    b.v = spu_and( a.v, c.v );
     return b;
   }
   
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f ) {
     v4 m;
-    m.vi = spu_sel( f.vi, t.vi, (vec_uint4)c.vi );
+    m.v = spu_sel( f.v, t.v, (vec_uint4)c.v );
     return m;
   }
 
@@ -703,15 +706,24 @@ namespace v4 {
     friend inline v4float rsqrt( const v4float &a );
     friend inline v4float rcp_approx( const v4float &a );
     friend inline v4float rcp( const v4float &a );
-    friend inline v4float fma(  const v4float &a, const v4float &b, const v4float &c );
-    friend inline v4float fms(  const v4float &a, const v4float &b, const v4float &c );
-    friend inline v4float fnms( const v4float &a, const v4float &b, const v4float &c );
+    friend inline v4float fma(  const v4float &a,
+                                const v4float &b,
+                                const v4float &c );
+    friend inline v4float fms(  const v4float &a,
+                                const v4float &b,
+                                const v4float &c );
+    friend inline v4float fnms( const v4float &a,
+                                const v4float &b,
+                                const v4float &c );
     friend inline v4float clear_bits(  const v4int &m, const v4float &a );
     friend inline v4float set_bits(    const v4int &m, const v4float &a );
     friend inline v4float toggle_bits( const v4int &m, const v4float &a );
-    friend inline void increment_4x1( float * ALIGNED(16) p, const v4float &a );
-    friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
-    friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
+    friend inline void increment_4x1( float * ALIGNED(16) p,
+                                      const v4float &a );
+    friend inline void decrement_4x1( float * ALIGNED(16) p,
+                                      const v4float &a );
+    friend inline void scale_4x1(     float * ALIGNED(16) p,
+                                      const v4float &a );
     // FIXME: crack
     
   public:
@@ -720,17 +732,18 @@ namespace v4 {
     
     v4float() {}                                  // Default constructor
     v4float( const v4float &a ) {                 // Copy constructor
-      vf = a.vf;
+      v = a.v;
     }
     v4float( const v4 &a ) {                      // Initialize from mixed
-      vf = a.vf;
+      v = a.v;
     }
     v4float( const float &a ) {                   // Initialize from scalar
-      vf = spu_splats(a);
+      v = spu_splats(a);
     }
     v4float( const float &f0, const float &f1,
              const float &f2, const float &f3 ) { // Initalize from scalars
-      // FIXME: vec_float4 t = { f0, f1, f2, f3 }; ... seg faults gcc .. MAYBE NOT ANYMORE
+      // FIXME: vec_float4 t = { f0, f1, f2, f3 };
+      // ... seg faults gcc .. MAYBE NOT ANYMORE
       f[0] = f0; f[1] = f1; f[2] = f2; f[3] = f3;
     }
     ~v4float() {}                                 // Destructor
@@ -739,12 +752,12 @@ namespace v4 {
 
 #   define ASSIGN(op,intrinsic)                         \
     inline v4float &operator op( const v4float &b ) {	\
-      vf = intrinsic( vf, b.vf );                       \
+      v = intrinsic( v, b.v );                          \
       return *this;                                     \
     }
 
     inline v4float &operator =( const v4float &b ) {
-      vf = b.vf;
+      v = b.v;
       return *this;
     }
 
@@ -753,19 +766,19 @@ namespace v4 {
     ASSIGN(*=,spu_mul)
 
     inline v4float &operator /=( const v4float &a ) {
-      vec_float4 a_vf = a.vf, b_vf;
+      vec_float4 a_v = a.v, b_v;
 
       // Compute an estimate of the reciprocal of a (12-bit accurate)
 
-      b_vf = spu_re( a_vf );
+      b_v = spu_re( a_v );
      
       // FIXME: CHECK NUMERICS ... MAY WANT ADDITIONAL N-R STEPS:
-      // b_vf = spu_nmsub(a_vf,spu_mul(b_vf,b_vf),spu_add(b_vf,b_vf));
+      // b_v = spu_nmsub(a_v,spu_mul(b_v,b_v),spu_add(b_v,b_v));
 
       // Compute a * refined( (1/b)_estimate ) to get result a/b
 
-      vf = spu_mul( vf,
-                    spu_nmsub(a_vf,spu_mul(b_vf,b_vf),spu_add(b_vf,b_vf) ) );
+      v = spu_mul( v,
+                   spu_nmsub(a_v,spu_mul(b_v,b_v),spu_add(b_v,b_v) ) );
 
       return *this;
     }
@@ -774,7 +787,8 @@ namespace v4 {
 
     // v4float member access operator
 
-    float &operator()(const int n) { return f[n]; }
+    inline float &operator []( const int n ) { return f[n]; }
+    inline float  operator ()( const int n ) { return spu_extract( v, n ); }
 
   };
 
@@ -782,59 +796,59 @@ namespace v4 {
 
   inline v4float operator +( const v4float &a ) {
     v4float b;
-    b.vf = a.vf;
+    b.v = a.v;
     return b;
   }
 
   inline v4float operator -( const v4float &a ) {
     v4float b;
-    b.vf = spu_sub( _vfzero, a.vf );
+    b.v = spu_sub( spu_splats( 0.f ), a.v );
     return b;
   }
 
   inline v4int operator !( const v4float &a ) {
     v4int b;
-    b.vi = (vec_int4)spu_cmpeq( a.vf, _vfzero );
+    b.v = (vec_float4)spu_cmpeq( a.v, spu_splats( 0.f ) );
     return b;
   }
 
   // v4float prefix increment / decrement operators
 
   inline v4float operator ++( v4float &a ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    a_vf = spu_add( a_vf, _vfone );
-    a.vf = a_vf;
-    b.vf = a_vf;
+    a_v = spu_add( a_v, spu_splats( 1.f ) );
+    a.v = a_v;
+    b.v = a_v;
     return b;
   }
 
   inline v4float operator --( v4float &a ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    a_vf = spu_sub( a_vf, _vfone );
-    a.vf = a_vf;
-    b.vf = a_vf;
+    a_v = spu_sub( a_v, spu_splats( 1.f ) );
+    a.v = a_v;
+    b.v = a_v;
     return b;
   }
 
   // v4float postfix increment / decrement operators
 
   inline v4float operator ++( v4float &a, int ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    b.vf = a_vf;
-    a_vf = spu_add( a_vf, _vfone );
-    a.vf = a_vf;
+    b.v = a_v;
+    a_v = spu_add( a_v, spu_splats( 1.f ) );
+    a.v = a_v;
     return b;
   }
 
   inline v4float operator --( v4float &a, int ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    b.vf = a_vf;
-    a_vf = spu_sub( a_vf, _vfone );
-    a.vf = a_vf;
+    b.v = a_v;
+    a_v = spu_sub( a_v, spu_splats( 1.f ) );
+    a.v = a_v;
     return b;
   }
 
@@ -843,7 +857,7 @@ namespace v4 {
 # define BINARY(op,intrinsic)                                        \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
-    c.vf = intrinsic( a.vf, b.vf );                                  \
+    c.v = intrinsic( a.v, b.v );                                     \
     return c;                                                        \
   }
 
@@ -852,20 +866,19 @@ namespace v4 {
   BINARY(*,spu_mul)
 
   inline v4float operator /( const v4float &n, const v4float &a ) {
-    vec_float4 a_vf = a.vf, b_vf;
+    vec_float4 a_v = a.v, b_v;
     v4float c;
     
     // Compute an estimate of the reciprocal of a (12-bit accurate)
     
-    b_vf = spu_re( a_vf );
+    b_v = spu_re( a_v );
     
     // FIXME: CHECK NUMERICS ... MAY WANT ADDITIONAL N-R STEPS:
-    // b_vf = spu_nmsub(a_vf,spu_mul(b_vf,b_vf),spu_add(b_vf,b_vf));
+    // b_v = spu_nmsub(a_v,spu_mul(b_v,b_v),spu_add(b_v,b_v));
     
     // Compute a * refined( (1/b)_estimate ) to get result a/b
     
-    c.vf = spu_mul( n.vf,
-                    spu_nmsub(a_vf,spu_mul(b_vf,b_vf),spu_add(b_vf,b_vf) ) );
+    c.v = spu_mul( n.v, spu_nmsub(a_v,spu_mul(b_v,b_v),spu_add(b_v,b_v) ) );
 
     return c;
   }
@@ -877,20 +890,24 @@ namespace v4 {
 # define LOGICAL(op,assembly)                                      \
   inline v4int operator op( const v4float &a, const v4float &b ) { \
     v4int c;                                                       \
-    c.vi = assembly;                                               \
+    c.v = assembly;                                                \
     return c;                                                      \
   }
 
-  LOGICAL(< ,(vec_int4)spu_cmpgt(b.vf,a.vf))
-  LOGICAL(> ,(vec_int4)spu_cmpgt(a.vf,b.vf))
-  LOGICAL(==,(vec_int4)spu_cmpeq(a.vf,b.vf))
-  LOGICAL(!=,(vec_int4)spu_xor(_vutrue,spu_cmpeq(a.vf,b.vf))) // FIXME: ALMOST CERTAINLY NOT IEEE.  MAY BE A BETTER WAY.
-  LOGICAL(<=,(vec_int4)spu_xor(_vutrue,spu_cmpgt(a.vf,b.vf))) // FIXME: SEE ABOVE
-  LOGICAL(>=,(vec_int4)spu_xor(_vutrue,spu_cmpgt(b.vf,a.vf))) // FIXME: SEE ABOVE
-  LOGICAL(&&,(vec_int4)spu_nor(  spu_cmpeq(a.vf,_vfzero),
-                                 spu_cmpeq(b.vf,_vfzero) ))
-  LOGICAL(||,(vec_int4)spu_nand( spu_cmpeq(a.vf,_vfzero),
-                                 spu_cmpeq(b.vf,_vfzero) ))
+  LOGICAL(< ,(vec_float4)spu_cmpgt( b.v, a.v ))
+  LOGICAL(> ,(vec_float4)spu_cmpgt( a.v, b.v ))
+  LOGICAL(==,(vec_float4)spu_cmpeq( a.v, b.v ))
+  LOGICAL(!=,(vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                  spu_cmpeq( a.v, b.v ) ))
+  // FIXME: ALMOST CERTAINLY NOT IEEE.  MAY BE A BETTER WAY.
+  LOGICAL(<=,(vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                  spu_cmpgt( a.v, b.v ) )) // FIXME: SEE ABOVE
+  LOGICAL(>=,(vec_float4)spu_xor( spu_splats( 0xffffffff ),
+                                  spu_cmpgt( b.v, a.v ) )) // FIXME: SEE ABOVE
+  LOGICAL(&&,(vec_float4)spu_nor(  spu_cmpeq( a.v, spu_splats( 0.f ) ),
+                                   spu_cmpeq( b.v, spu_splats( 0.f ) ) ))
+  LOGICAL(||,(vec_float4)spu_nand( spu_cmpeq( a.v, spu_splats( 0.f ) ),
+                                   spu_cmpeq( b.v, spu_splats( 0.f ) ) ))
 
 # undef LOGICAL
 
@@ -924,41 +941,41 @@ namespace v4 {
 
   inline v4float fabs( const v4float &a ) {
     v4float b;
-    b.vf = (vec_float4)spu_andc( (vec_uint4)a.vf, (vec_uint4)_visignbits );
+    b.v = spu_andc( a.v, (vec_float4)spu_splats( 1<<31 ) );
     return b;            
   }
 
   inline v4float sqrt( const v4float &a ) {
-    vec_float4 a_vf = a.vf, b_vf;
+    vec_float4 a_v = a.v, b_v, half = spu_splats( 0.5f );
     v4float b;
 
     // Compute an estimate of the rsqrt (12-bit accurate)
 
-    b_vf = spu_rsqrte( a_vf );
+    b_v = spu_rsqrte( a_v );
 
     // FIXME: CHECK NUMERICS.  MIGHT WANT TO USE ADDITIONAL REFINEMENT:
-    // b_vf = spu_madd( _vfhalf,
-    //                  spu_nmsub( a_vf,
-    //                             spu_mul( b_vf, spu_mul( b_vf, b_vf ) ),
-    //                             b_vf ),
-    //                  b_vf );
+    // b_v = spu_madd( half,
+    //                 spu_nmsub( a_v,
+    //                            spu_mul( b_v, spu_mul( b_v, b_v ) ),
+    //                            b_v ),
+    //                 b_v );
 
     // Compute the sqrt(a) via a*refined_rsqrt_estimate(a) ~ sqrt(a)
 
-    b.vf = spu_mul( a_vf,
-                    spu_madd( _vfhalf,
-                              spu_nmsub( a_vf,
-                                         spu_mul( b_vf, spu_mul( b_vf, b_vf ) ),
-                                         b_vf ),
-                              b_vf ) );
+    b.v = spu_mul( a_v,
+                   spu_madd( half,
+                             spu_nmsub( a_v,
+                                        spu_mul( b_v, spu_mul( b_v, b_v ) ),
+                                        b_v ),
+                             b_v ) );
 
     return b;
   }
 
   inline v4float copysign( const v4float &a, const v4float &b ) {
     v4float c;
-    c.vf = (vec_float4)spu_or( spu_andc( (vec_uint4)a.vf, (vec_uint4)_visignbits ),
-                               spu_and(  (vec_uint4)b.vf, (vec_uint4)_visignbits ) );
+    c.v = spu_or( spu_andc( a.v, (vec_float4)spu_splats( 1<<31 ) ),
+                  spu_and(  b.v, (vec_float4)spu_splats( 1<<31 ) ) );
     return c;
   }
 
@@ -968,104 +985,104 @@ namespace v4 {
   // v4float miscelleanous functions
   
   inline v4float rsqrt_approx( const v4float &a ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    b.vf = spu_rsqrte( a_vf );
+    b.v = spu_rsqrte( a_v );
     return b;
   }
   
   inline v4float rsqrt( const v4float &a ) {
-    vec_float4 a_vf = a.vf, b_vf;
+    vec_float4 a_v = a.v, b_v, half = spu_splats( 0.5f );
     v4float b;
 
     // Compute an estimate of the rsqrt (12-bit accurate)
 
-    b_vf = spu_rsqrte( a_vf );
+    b_v = spu_rsqrte( a_v );
 
     // Refine the estimate with N-R.
     // FIXME: CHECK NUMERICS.  MIGHT WANT TO USE ADDITIONAL REFINEMENT.
 
-    b.vf = spu_madd( _vfhalf,
-                     spu_nmsub( a_vf,
-                                spu_mul( b_vf, spu_mul( b_vf, b_vf ) ),
-                                b_vf ),
-                     b_vf );
+    b.v = spu_madd( half,
+                    spu_nmsub( a_v,
+                               spu_mul( b_v, spu_mul( b_v, b_v ) ),
+                               b_v ),
+                    b_v );
     
     return b;
   }
 
   inline v4float rcp_approx( const v4float &a ) {
-    vec_float4 a_vf = a.vf;
+    vec_float4 a_v = a.v;
     v4float b;
-    b.vf = spu_re( a_vf );
+    b.v = spu_re( a_v );
     return b;
   }
   
   inline v4float rcp( const v4float &a ) {
-    vec_float4 a_vf = a.vf, b_vf;
+    vec_float4 a_v = a.v, b_v;
     v4float b;
 
     // Compute an estimate of the reciprocal of a (12-bit accurate)
 
-    b_vf = spu_re( a_vf );
+    b_v = spu_re( a_v );
     
     // Perform Newton-Raphson refinement (one step should give 24-bit)
     // FIXME: CHECK NUMERICS ... MAY WANT TO USE ADDITIONAL REFINEMNT.
     
-    b.vf = spu_nmsub(a_vf,spu_mul(b_vf,b_vf),spu_add(b_vf,b_vf));
+    b.v = spu_nmsub(a_v,spu_mul(b_v,b_v),spu_add(b_v,b_v));
 
     return b;
   }
 
   inline v4float fma(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
-    d.vf = spu_madd( a.vf, b.vf, c.vf );
+    d.v = spu_madd( a.v, b.v, c.v );
     return d;
   }
 
   inline v4float fms(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
-    d.vf = spu_msub( a.vf, b.vf, c.vf );
+    d.v = spu_msub( a.v, b.v, c.v );
     return d;
   }
 
   inline v4float fnms( const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
-    d.vf = spu_nmsub( a.vf, b.vf, c.vf );
+    d.v = spu_nmsub( a.v, b.v, c.v );
     return d;
   }
 
   inline v4float clear_bits( const v4int &m, const v4float &a ) {
     v4float b;
-    b.vf = (vec_float4)spu_andc( (vec_uint4)a.vf, (vec_uint4)m.vi );
+    b.v = spu_andc( a.v, m.v );
     return b;
   }
 
   inline v4float set_bits( const v4int &m, const v4float &a ) {
     v4float b;
-    b.vf = (vec_float4)spu_or( (vec_uint4)a.vf, (vec_uint4)m.vi );
+    b.v = spu_or( a.v, m.v );
     return b;
   }
 
   inline v4float toggle_bits( const v4int &m, const v4float &a ) {
     v4float b;
-    b.vf = (vec_float4)spu_xor( (vec_uint4)a.vf, (vec_uint4)m.vi );
+    b.v = spu_xor( a.v, m.v );
     return b;
   }
 
   inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) {
     *((vec_float4 * ALIGNED(16))p) =
-      spu_add( *((vec_float4 * ALIGNED(16))p), a.vf );
+      spu_add( *((vec_float4 * ALIGNED(16))p), a.v );
   }
 
   inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a ) {
     *((vec_float4 * ALIGNED(16))p) =
-      spu_sub( *((vec_float4 * ALIGNED(16))p), a.vf );
+      spu_sub( *((vec_float4 * ALIGNED(16))p), a.v );
   }
 
   inline void scale_4x1( float * ALIGNED(16) p, const v4float &a ) {
     *((vec_float4 * ALIGNED(16))p) =
-      spu_mul( *((vec_float4 * ALIGNED(16))p), a.vf );
+      spu_mul( *((vec_float4 * ALIGNED(16))p), a.v );
   }
 
 } // namespace v4

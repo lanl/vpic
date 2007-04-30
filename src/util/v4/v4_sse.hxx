@@ -454,9 +454,8 @@ namespace v4 {
 
     // v4int member access operator
     
-    int &operator()(const int n) {
-      return i[n];
-    }
+    inline int &operator []( const int n ) { return i[n]; }
+    inline int  operator ()( const int n ) { return i[n]; }
 
   };
 
@@ -743,7 +742,8 @@ namespace v4 {
 
     // v4float member access operator
 
-    float &operator()(const int n) { return f[n]; }
+    inline float &operator []( const int n ) { return f[n]; }
+    inline float  operator ()( const int n ) { return f[n]; }
 
   };
 

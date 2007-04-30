@@ -5,6 +5,18 @@
 #error "Specify which V4 to use"
 #endif
 
+#ifndef DECLARE_ALLGNED_ARRAY
+#if 1
+#define DECLARE_ALIGNED_ARRAY(type,align,name,count)                        \
+  char _aa_##name[(count)*sizeof(type)+(align)];                            \
+  type * ALIGNED(align) const name = (type * ALIGNED(align))                \
+    ( ( (size_t)_aa_##name + (align) - 1 ) & (~((align)-1)) )
+#else
+#define DECLARE_ALIGNED_ARRAY(type,align,name,count)                    \
+  type name[count] __attribute__((__aligned__(align)))
+#endif
+#endif
+
 using namespace v4;
 
 #define TEST_ASSIGN(type,name,op,ai,bi,af,bf)                           \
@@ -65,14 +77,14 @@ using namespace v4;
       printf( ""#type"_logical_"#name": pass\n" );			\
   }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class v4 tests
 
 void test_any(void) {
   v4int a;
   int i;
   for( i=0; i<16; i++ ) {
-    a(0) = i&1, a(1) = i&2, a(2) = i&4, a(3) = i&8;
+    a[0] = i&1, a[1] = i&2, a[2] = i&4, a[3] = i&8;
     if( ( i>0 && !any(a) ) || ( i==0 && any(a) ) ) {
       printf( "any: FAIL\n" );
       return;
@@ -85,7 +97,7 @@ void test_all(void) {
   v4int a;
   int i;
   for( i=0; i<16; i++ ) {
-    a(0) = i&1, a(1) = i&2, a(2) = i&4, a(3) = i&8;
+    a[0] = i&1, a[1] = i&2, a[2] = i&4, a[3] = i&8;
     if( ( i<15 && all(a) ) || ( i==15 && !all(a) ) ) {
       printf( "all: FAIL\n" );
       return;
@@ -132,18 +144,18 @@ void test_transpose(void) {
 }
 
 void test_load_4x1(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0(1,0,0,0);
   v4int a1(0,0,0,0);
   v4int a2(0,0,0,0);
   v4int a3(0,0,0,0);
   int i;
   for( i=0; i<16; i++ ) mem[i] = i;
-  load_4x1( mem, a0 );
-  load_4x1( mem+4, a1 );
-  load_4x1( mem+8, a2 );
+  load_4x1( mem,    a0 );
+  load_4x1( mem+4,  a1 );
+  load_4x1( mem+8,  a2 );
   load_4x1( mem+12, a3 );
-  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 1, 2, 3)) ||
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
@@ -153,18 +165,18 @@ void test_load_4x1(void) {
 }
 
 void test_store_4x1(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 1, 2, 3);
   v4int a1( 4, 5, 6, 7);
   v4int a2( 8, 9,10,11);
   v4int a3(12,13,14,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   store_4x1(a0,mem);
   store_4x1(a1,mem+4);
   store_4x1(a2,mem+8);
   store_4x1(a3,mem+12);
-  for(i=0; i<16; i++) if(mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 1, 2, 3)) ||
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
@@ -174,18 +186,18 @@ void test_store_4x1(void) {
 }
 
 void test_stream_4x1(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 1, 2, 3);
   v4int a1( 4, 5, 6, 7);
   v4int a2( 8, 9,10,11);
   v4int a3(12,13,14,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   stream_4x1(a0,mem);
   stream_4x1(a1,mem+4);
   stream_4x1(a2,mem+8);
   stream_4x1(a3,mem+12);
-  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 1, 2, 3)) ||
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
@@ -195,40 +207,40 @@ void test_stream_4x1(void) {
 }
 
 void test_copy_4x1(void) {
-  v4float vmem[4]; float * mem = (float *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   int i;
-  for(i=0; i<8; i++) mem[i] = i;
+  for( i=0; i<8; i++ ) mem[i] = i;
   copy_4x1(mem+8, mem  );
   copy_4x1(mem+12,mem+4);
-  for(i=8; i<16; i++) mem[i] += 8;
-  for(i=0; i<16; i++) if(mem[i]!=i) break;
+  for( i=8; i<16; i++ ) mem[i] += 8;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( i!=16 ) printf( "copy_4x1: FAIL\n" );
   else        printf( "copy_4x1: pass\n" );
 }
 
 void test_swap_4x1(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   int i;
-  for(i=0; i<8; i++) mem[i] = i;
+  for( i=0; i<8; i++ ) mem[i] = i;
   copy_4x1(mem+12, mem  );
   copy_4x1(mem+8,  mem+4);
-  for(i=8; i<16; i++) mem[i] += 8;
+  for( i=8; i<16; i++ ) mem[i] += 8;
   swap_4x1(mem+8,  mem+12 );
-  for(i=0; i<16; i++) if(mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( i!=16 ) printf( "swap_4x1: FAIL\n" );
   else        printf( "swap_4x1: pass\n" );
 }
 
 void test_load_4x1_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0, a1, a2, a3;
   int i;
-  for(i=0; i<16; i++ ) mem[i] = i;
+  for( i=0; i<16; i++ ) mem[i] = i;
   load_4x1_tr(mem,  mem+4,mem+8, mem+12,a0);
   load_4x1_tr(mem+1,mem+5,mem+9, mem+13,a1);
   load_4x1_tr(mem+2,mem+6,mem+10,mem+14,a2);
   load_4x1_tr(mem+3,mem+7,mem+11,mem+15,a3);
-  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -238,13 +250,13 @@ void test_load_4x1_tr(void) {
 }
 
 void test_load_4x2_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0, a1, a2, a3;
   int i;
-  for(i=0; i<16; i++ ) mem[i] = i;
+  for( i=0; i<16; i++ ) mem[i] = i;
   load_4x2_tr(mem,  mem+4,mem+8, mem+12,a0,a1);
   load_4x2_tr(mem+2,mem+6,mem+10,mem+14,a2,a3);
-  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -254,12 +266,12 @@ void test_load_4x2_tr(void) {
 }
 
 void test_load_4x3_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0, a1, a2;
   int i;
-  for(i=0; i<16; i++ ) mem[i] = i;
+  for( i=0; i<16; i++ ) mem[i] = i;
   load_4x3_tr(mem,mem+4,mem+8,mem+12,a0,a1,a2);
-  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -268,12 +280,12 @@ void test_load_4x3_tr(void) {
 }
 
 void test_load_4x4_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0, a1, a2, a3;
   int i;
-  for(i=0; i<16; i++ ) mem[i] = i;
+  for( i=0; i<16; i++ ) mem[i] = i;
   load_4x4_tr(mem,mem+4,mem+8,mem+12,a0,a1,a2,a3);
-  for( i=0; i<16; i++ ) if( mem[i] != i ) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -283,18 +295,18 @@ void test_load_4x4_tr(void) {
 }
 
 void test_store_4x1_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 4, 8,12);
   v4int a1( 1, 5, 9,13);
   v4int a2( 2, 6,10,14);
   v4int a3( 3, 7,11,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   store_4x1_tr(a0,mem,  mem+4,mem+8, mem+12);
   store_4x1_tr(a1,mem+1,mem+5,mem+9, mem+13);
   store_4x1_tr(a2,mem+2,mem+6,mem+10,mem+14);
   store_4x1_tr(a3,mem+3,mem+7,mem+11,mem+15);
-  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -304,16 +316,16 @@ void test_store_4x1_tr(void) {
 }
 
 void test_store_4x2_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 4, 8,12);
   v4int a1( 1, 5, 9,13);
   v4int a2( 2, 6,10,14);
   v4int a3( 3, 7,11,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   store_4x2_tr(a0,a1,mem,  mem+4,mem+8, mem+12);
   store_4x2_tr(a2,a3,mem+2,mem+6,mem+10,mem+14);
-  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -323,15 +335,15 @@ void test_store_4x2_tr(void) {
 }
 
 void test_store_4x3_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 4, 8,12);
   v4int a1( 1, 5, 9,13);
   v4int a2( 2, 6,10,14);
   v4int a3( 3, 7,11,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   store_4x3_tr(a0,a1,a2,mem,  mem+4,mem+8, mem+12);
-  for(i=0; i<16; i++)
+  for( i=0; i<16; i++ )
     if( ( (i&3)!=3 && mem[i]!=i ) || ( (i&3)==3 && mem[i]!=0 ) ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
@@ -341,15 +353,15 @@ void test_store_4x3_tr(void) {
 }
 
 void test_store_4x4_tr(void) {
-  v4int vmem[4]; int * mem = (int *)vmem;
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 4, 8,12);
   v4int a1( 1, 5, 9,13);
   v4int a2( 2, 6,10,14);
   v4int a3( 3, 7,11,15);
   int i;
-  for(i=0; i<16; i++) mem[i] = 0;
+  for( i=0; i<16; i++ ) mem[i] = 0;
   store_4x4_tr(a0,a1,a2,a3,mem,  mem+4,mem+8, mem+12);
-  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
@@ -358,7 +370,7 @@ void test_store_4x4_tr(void) {
   else        printf( "store_4x4_tr: pass\n" );
 }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class v4int tests
 
 void test_int_scalar_constructor(void) {
@@ -390,6 +402,7 @@ void test_int_access( void ) {
   v4int a(0,1,2,3);
   int i;
   for( i=0; i<4; i++ ) if( a(i)!=i ) break;
+  for( i=0; i<4; i++ ) if( a[i]!=i ) break;
   if( i!=4 ) printf( "int_access: FAIL\n" );
   else       printf( "int_access: pass\n" );
 }
@@ -469,7 +482,7 @@ void test_merge(void) {
   else                           printf( "merge: pass\n" );
 }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // v4float class
 
 void test_float_scalar_constructor(void) {
@@ -497,6 +510,7 @@ void test_float_access( void ) {
   v4float a(0,1,2,3);
   int i;
   for( i=0; i<4; i++ ) if( a(i)!=i ) break;
+  for( i=0; i<4; i++ ) if( a[i]!=i ) break;
   if( i!=4 ) printf( "float_access: FAIL\n" );
   else       printf( "float_access: pass\n" );
 }
@@ -655,18 +669,18 @@ void test_float_toggle_bits(void) {
 }
 
 void test_float_increment_4x1(void) {
-  v4float vmem[1]; float * mem = (float *)vmem;
+  DECLARE_ALIGNED_ARRAY( float, 16, mem, 4 );
   v4float a(1,2,3,4);
   mem[0] = 5; mem[1] = 6; mem[2] = 7; mem[3] = 8;
   increment_4x1( mem, a );
   if( any(a!=v4float(1,2,3,4)) ||
-      mem[0]!=6 || mem[1]!=8 ||
+      mem[0]!=6  || mem[1]!=8 ||
       mem[2]!=10 || mem[3]!=12 ) printf( "float_increment_4x1: FAIL\n" );
   else                           printf( "float_increment_4x1: pass\n" );
 }
 
 void test_float_decrement_4x1(void) {
-  v4float vmem[1]; float * mem = (float *)vmem;
+  DECLARE_ALIGNED_ARRAY( float, 16, mem, 4 );
   v4float a(1,2,3,4);
   mem[0] = 5; mem[1] = 6; mem[2] = 7; mem[3] = 8;
   decrement_4x1( mem, a );
@@ -677,12 +691,12 @@ void test_float_decrement_4x1(void) {
 }
 
 void test_float_scale_4x1(void) {
-  v4float vmem[1]; float * mem = (float *)vmem;
+  DECLARE_ALIGNED_ARRAY( float, 16, mem, 4 );
   v4float a(1,2,3,4);
   mem[0] = 5; mem[1] = 6; mem[2] = 7; mem[3] = 8;
   scale_4x1( mem, a );
   if( any(a!=v4float(1,2,3,4)) ||
-      mem[0]!=5 || mem[1]!=12 ||
+      mem[0]!=5  || mem[1]!=12 ||
       mem[2]!=21 || mem[3]!=32 ) printf( "float_scale_4x1: FAIL\n" );
   else                           printf( "float_scale_4x1: pass\n" );
 }

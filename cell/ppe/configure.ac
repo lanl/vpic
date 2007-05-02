@@ -36,6 +36,11 @@ AC_SUBST(HOST_ACDIR, [$host_ac_directory])
 echo "host directory $host_ac_directory"
 
 ################################################################################
+# define to get PPU code
+################################################################################
+#AC_DEFINE(CELL_PPU_BUILD)
+
+################################################################################
 # machine file specification
 ################################################################################
 CCS_WITH_MACHINE("$host_ac_directory/machine")

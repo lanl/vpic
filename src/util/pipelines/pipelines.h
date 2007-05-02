@@ -75,7 +75,7 @@ BEGIN_C_DECLS
 extern pipeline_dispatcher_t serial;
 extern pipeline_dispatcher_t thread;
 
-#ifdef USE_CELL_SPUS
+#ifdef CELL_PPU_BUILD
 
 extern pipeline_dispatcher_t spu;
 

@@ -410,7 +410,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
   args->a0       = a0;
   args->f0       = f0;
   args->seg      = seg;
-# ifdef USE_CELL_SPUS
+# ifdef CELL_PPU_BUILD
   args->neighbor = g->neighbor;
   args->rangel   = g->rangel;
   args->rangeh   = g->rangeh;
@@ -440,7 +440,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
   // However, it is worth reconsidering this at some point in the
   // future.
 
-# ifdef USE_CELL_SPUS
+# ifdef CELL_PPU_BUILD
   spu.dispatch( SPU_PIPELINE( advance_p_pipeline_spu ), args, 0 );
   advance_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
   spu.wait();

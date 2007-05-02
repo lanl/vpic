@@ -24,7 +24,7 @@ main( int argc,
 
   PSTYLE.boot( PIPELINE_BOOT_REQUEST );
 
-# ifdef USE_CELL_SPUS
+# ifdef CELL_PPU_BUILD
   // FIXME: n_pipeline rationalization throughout code.  Also, need to
   // discuss MPI processor model for RoadRunner with Ben to determine
   // if each there is a one-to-one correspondence with an MPI
@@ -60,7 +60,7 @@ main( int argc,
 
   PSTYLE.halt();
 
-# ifdef USE_CELL_SPUS
+# ifdef CELL_PPU_BUILD
   spu.halt();
 # endif
 

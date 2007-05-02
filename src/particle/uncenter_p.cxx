@@ -166,7 +166,7 @@ uncenter_p( particle_t           * ALIGNED(128) p0,
   args->qdt_2mc = 0.5*q_m*g->dt/g->cvac;
   args->np      = np;
 
-# ifdef USE_CELL_SPUS
+# ifdef CELL_PPU_BUILD
   spu.dispatch( SPU_PIPELINE( uncenter_p_pipeline_spu ), args, 0 );
   uncenter_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
   spu.wait();

@@ -1,5 +1,8 @@
 #define IN_particle_pipeline
 #include <particle_pipelines.h>
+
+#ifdef CELL_SPU_BUILD
+
 #include <spu_mfcio.h>
 #include <profile.h>
 //#include <stdio.h>
@@ -646,3 +649,5 @@ main( uint64_t spu_id,
   prof_stop();
   return 0;
 }
+
+#endif // CELL_SPU_BUILD

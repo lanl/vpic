@@ -37,8 +37,8 @@ RM = rm -f
 /* What compile flags should be used? */
 /* FIXME: IS GOODMAND A 32-BIT MACHINE?? */
 /* No V4 hardware acceleration */
-CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS
-CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS
-LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DUSE_32_BIT_POINTERS
+CFLAGS   = -Werror -Wall -pedantic -std=c99   -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DADDRESSING_32
+CXXFLAGS = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DADDRESSING_32
+LDFLAGS  = -Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -march=pentium3 -mfpmath=sse -m32 -DADDRESSING_32
 ARFLAGS  = 
 

@@ -55,7 +55,7 @@
 // write the appropriate DMA transfers.
 
 #ifdef __SPU__
-# ifdef USE_32_BIT_POINTERS
+# ifdef ADDRESSING_32
 #   define MEM_PTR(type,align) uint32_t
 # else
 #   define MEM_PTR(type,align) uint64_t

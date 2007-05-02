@@ -15,9 +15,9 @@ echo "libvpic_includedir = \${includedir}"
 echo
 echo "libvpic_include_HEADERS = \\"
 
-numfiles=`find ../../src/*/ -follow -type f -regex ".*\.h+?p+?" | wc -l`
+numfiles=`find ../../src/*/ -follow -type f -regex ".*\.h+?x+?" | wc -l`
 cnt=1
-for file in `find ../../src/*/ -follow -type f -regex ".*\.h+?p+?" | sed 's/^..\/..\///g'` ; do
+for file in `find ../../src/*/ -follow -type f -regex ".*\.h+?x+?" | sed 's/^..\/..\///g'` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	@HOST_ACDIR@/$file"
 	else
@@ -29,9 +29,9 @@ done
 echo
 echo "libvpic_la_SOURCES = \\"
 
-numfiles=`find ../../src/*/ -follow -type f -regex ".*\.c+?p+?" | wc -l`
+numfiles=`find ../../src/*/ -follow -type f -regex ".*\.c+?x+?" | wc -l`
 cnt=1
-for file in `find ../../src/*/ -follow -type f -regex ".*\.c+?p+?" | sed 's/^..\/..\///g'` ; do
+for file in `find ../../src/*/ -follow -type f -regex ".*\.c+?x+?" | sed 's/^..\/..\///g'` ; do
 	if [ $cnt == $numfiles ] ; then
 		echo "	@HOST_ACDIR@/$file"
 	else

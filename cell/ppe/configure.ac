@@ -18,7 +18,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	config/rules.mk \
 	lib/Makefile \
-	bin/Makefile)
+	../../build.script)
 
 ################################################################################
 # append prefix with ppe
@@ -31,7 +31,14 @@ prefix=$prefix/ppe
 host_build_directory=`(cd ../..; pwd)`
 host_ac_directory=`(cd $srcdir/../..; pwd)`
 AC_SUBST(SPE_BUILDDIR, [$host_build_directory/cell/spe])
+AC_SUBST(HOST_BUILDDIR, [$host_build_directory])
 AC_SUBST(HOST_ACDIR, [$host_ac_directory])
+echo "host directory $host_ac_directory"
+
+################################################################################
+# machine file specification
+################################################################################
+CCS_WITH_MACHINE("$host_ac_directory/machine")
 
 ################################################################################
 # enable options
@@ -46,6 +53,7 @@ CCS_WITH_TOOLCHAIN
 CCS_WITH_LIBSPE2
 CCS_WITH_ADDRESSING
 CCS_WITH_CELL_INSTDIR
+CCS_WITH_EXTENSION
 
 ################################################################################
 # C/C++ configuration
@@ -88,7 +96,7 @@ fi
 ################################################################################
 #if test "$ENABLE_HOST" = "1" ; then
 #	AC_SUBST(PPEDIRS, ["bin"])
-AC_SUBST(PPEDIRS, ["lib bin"])
+AC_SUBST(PPEDIRS, [lib])
 #AC_SUBST(PPEDIRS, ["bin"])
 #fi
 

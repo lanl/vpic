@@ -174,18 +174,18 @@ boundary_p( particle_mover_t * ALIGNED(128) pm,
     // Exchange particle counts
 
     for( face=0; face<6; face++ )
-      if( SHARED_REMOTELY(rf2b[face]) ) {
-        err = mp_size_recv_buffer( rf2b[face], sizeof(int), g->mp );
-        if( err ) ERROR(("Unable to size recv buffer - %s",err));
-        mp_begin_recv( rf2b[face], sizeof(int),
-                       g->bc[rf2b[face]], sf2b[face], g->mp );
-      }
-    for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(sf2b[face]) ) {
         buf = (int *)mp_send_buffer( sf2b[face], g->mp );
         buf[0] = ns[face];
         mp_begin_send( sf2b[face], sizeof(int),
                        g->bc[sf2b[face]], sf2b[face], g->mp );
+      }
+    for( face=0; face<6; face++ )
+      if( SHARED_REMOTELY(rf2b[face]) ) {
+        err = mp_size_recv_buffer( rf2b[face], sizeof(int), g->mp );
+        if( err ) ERROR(("Unable to size recv buffer - %s",err));
+        mp_begin_recv( rf2b[face], sizeof(int),
+                       g->bc[rf2b[face]], sf2b[face], g->mp );
       }
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) mp_end_recv( rf2b[face], g->mp );
@@ -195,6 +195,11 @@ boundary_p( particle_mover_t * ALIGNED(128) pm,
     // Exchange particles
 
     for( face=0; face<6; face++ )
+      if( SHARED_REMOTELY(sf2b[face]) )
+        mp_begin_send( sf2b[face],
+                       sizeof(int) + ns[face]*sizeof(particle_injector_t),
+                       g->bc[sf2b[face]], sf2b[face], g->mp );
+    for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) {
         buf = (int *)mp_recv_buffer( rf2b[face], g->mp );
         n = sizeof(int) + buf[0]*sizeof(particle_injector_t);
@@ -203,11 +208,6 @@ boundary_p( particle_mover_t * ALIGNED(128) pm,
         mp_begin_recv( rf2b[face], n,
                        g->bc[rf2b[face]], sf2b[face], g->mp );
       }
-    for( face=0; face<6; face++ )
-      if( SHARED_REMOTELY(sf2b[face]) )
-        mp_begin_send( sf2b[face],
-                       sizeof(int) + ns[face]*sizeof(particle_injector_t),
-                       g->bc[sf2b[face]], sf2b[face], g->mp );
     for( face=0; face<6; face++ )
       if( SHARED_REMOTELY(rf2b[face]) ) {
         mp_end_recv( rf2b[face], g->mp );

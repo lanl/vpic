@@ -136,16 +136,6 @@ begin_remote_ghost_tang_b( field_t      * ALIGNED(16) field,
   int size, face, x, y, z;
   float *p;
 
-# define BEGIN_RECV(i,j,k,X,Y,Z) \
-  IUO_begin_recv(i,j,k,(1+n##Y*(n##Z+1)+n##Z*(n##Y+1))*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
-  BEGIN_RECV( 1, 0, 0,x,y,z);
-  BEGIN_RECV( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0, 0, 1,z,x,y);
-# undef BEGIN_RECV
-
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {          \
     size = (1+n##Y*(n##Z+1)+n##Z*(n##Y+1))*sizeof(float);   \
     p = (float *)IUO_size_send( i, j, k, size, g );         \
@@ -164,6 +154,16 @@ begin_remote_ghost_tang_b( field_t      * ALIGNED(16) field,
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
 # undef BEGIN_SEND
+
+# define BEGIN_RECV(i,j,k,X,Y,Z) \
+  IUO_begin_recv(i,j,k,(1+n##Y*(n##Z+1)+n##Z*(n##Y+1))*sizeof(float),g)
+  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 1, 0, 0,x,y,z);
+  BEGIN_RECV( 0, 1, 0,y,z,x);
+  BEGIN_RECV( 0, 0, 1,z,x,y);
+# undef BEGIN_RECV
 }
 
 void
@@ -211,16 +211,6 @@ begin_remote_ghost_norm_e( field_t      * ALIGNED(16) field,
   int size, face, x, y, z;
   float *p;
 
-# define BEGIN_RECV(i,j,k,X,Y,Z) \
-  IUO_begin_recv(i,j,k,( 1 + (n##Y+1)*(n##Z+1) )*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
-  BEGIN_RECV( 1, 0, 0,x,y,z);
-  BEGIN_RECV( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0, 0, 1,z,x,y);
-# undef BEGIN_RECV
-
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {          \
     size = ( 1+ (n##Y+1)*(n##Z+1) )*sizeof(float);          \
     p = (float *)IUO_size_send( i, j, k, size, g );         \
@@ -238,6 +228,16 @@ begin_remote_ghost_norm_e( field_t      * ALIGNED(16) field,
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
 # undef BEGIN_SEND
+
+# define BEGIN_RECV(i,j,k,X,Y,Z) \
+  IUO_begin_recv(i,j,k,( 1 + (n##Y+1)*(n##Z+1) )*sizeof(float),g)
+  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 1, 0, 0,x,y,z);
+  BEGIN_RECV( 0, 1, 0,y,z,x);
+  BEGIN_RECV( 0, 0, 1,z,x,y);
+# undef BEGIN_RECV
 }
 
 void
@@ -283,16 +283,6 @@ begin_remote_ghost_div_b( field_t      * ALIGNED(16) field,
   int size, face, x, y, z;
   float *p;
 
-# define BEGIN_RECV(i,j,k,X,Y,Z) \
-  IUO_begin_recv(i,j,k,(1+n##Y*n##Z)*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
-  BEGIN_RECV( 1, 0, 0,x,y,z);
-  BEGIN_RECV( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0, 0, 1,z,x,y);
-# undef BEGIN_RECV
-
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {           \
     size = ( 1 + n##Y*n##Z )*sizeof(float);                  \
     p = (float *)IUO_size_send( i, j, k, size, g );          \
@@ -310,6 +300,16 @@ begin_remote_ghost_div_b( field_t      * ALIGNED(16) field,
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
 # undef BEGIN_SEND
+
+# define BEGIN_RECV(i,j,k,X,Y,Z) \
+  IUO_begin_recv(i,j,k,(1+n##Y*n##Z)*sizeof(float),g)
+  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 1, 0, 0,x,y,z);
+  BEGIN_RECV( 0, 1, 0,y,z,x);
+  BEGIN_RECV( 0, 0, 1,z,x,y);
+# undef BEGIN_RECV
 }
 
 void

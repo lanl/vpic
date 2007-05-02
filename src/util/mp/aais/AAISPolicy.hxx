@@ -2,17 +2,20 @@
 #define AAISPolicy_hxx
 
 #include <mp_t.h>
+#include <mp_dmp.h>
 #include <P2PConnection.hxx>
 
 struct AAISPolicy {
 
 	inline void mp_init(int argc, char ** argv) {
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_init called" << std::endl;
 		p2p.init(argc, argv);
 	} // mp_init
 
 	inline void mp_finalize() {
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_finalize called" << std::endl;
 		p2p.finalize();
 	} // mp_finalize
 
@@ -26,6 +29,9 @@ struct AAISPolicy {
 		// get rank and size from point-to-point connection
 		mp->rank = p2p.rank();
 		mp->nproc = p2p.size();
+
+//		std::cerr << "WRAPPER: new_mp called for rank " <<
+//			mp->rank << std::endl;
 
 		// get wtime from point-to-point connection
 		mp->elapsed_ref = p2p.wtime();
@@ -47,6 +53,7 @@ struct AAISPolicy {
 	} // new_mp
 
 	inline void delete_mp( mp_handle *h ) {
+//		std::cerr << "WRAPPER: delete_mp called" << std::endl;
 		mp_t * mp;
 
 		if(!h) { return; }
@@ -83,22 +90,26 @@ struct AAISPolicy {
 
 	inline int mp_rank( mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
+//		std::cerr << "WRAPPER: mp_rank called" << std::endl;
 		return mp ? mp->rank : -1;	
 	} // mp_rank
 
 	inline int mp_nproc( mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
+//		std::cerr << "WRAPPER: mp_nproc called" << std::endl;
 		return mp ? mp->nproc : -1;	
 	} // mp_nproc
 
 	inline void * ALIGNED(16) mp_recv_buffer( int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
+//		std::cerr << "WRAPPER: mp_recv_buffer called" << std::endl;
 		if(!mp || tag<0 || tag>=NUM_BUF) { return NULL; }
 		return mp->rbuf[tag];
 	} // mp_recv_buffer
 
 	inline void * ALIGNED(16) mp_send_buffer( int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
+//		std::cerr << "WRAPPER: mp_send_buffer called" << std::endl;
 		if(!mp || tag<0 || tag>=NUM_BUF) { return NULL; }
 		return mp->sbuf[tag];
 	} // mp_send_buffer
@@ -106,9 +117,10 @@ struct AAISPolicy {
 	inline double mp_elapsed( mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_elapsed called" << std::endl;
 		double time = p2p.wtime() - mp->elapsed_ref;
 
-		p2p.request(P2PTag::allreduce_max_double, 1);
+		p2p.request(P2PTag::allreduce_max_double, P2PTag::data, 1);
 		p2p.send(&time, 1);
 		p2p.recv(&time, 1);
 
@@ -118,6 +130,7 @@ struct AAISPolicy {
 	inline double mp_time00( mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_time00 called" << std::endl;
 		
 		if(!mp) { return -1; }
 
@@ -132,21 +145,25 @@ struct AAISPolicy {
 
 	inline void mp_abort( int reason, mp_handle h ) {
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_abort called" << std::endl;
 		p2p.request(P2PTag::abort);
 		p2p.send(&reason, 1);
 	} // mp_abort
 
 	inline void mp_barrier( mp_handle h ) {
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_barrier called" << std::endl;
 		p2p.request(P2PTag::barrier);
 		p2p.sync();
 	} // mp_barrier
 
 	inline error_code mp_size_recv_buffer( int tag, int size, mp_handle h ) {
+//		std::cerr << "WRAPPER: mp_size_recv_buffer called" << std::endl;
 		return mp_size_recv_buffer_dmp(tag, size, h);
 	} // mp_size_recv_buffer
 
 	inline error_code mp_size_send_buffer( int tag, int size, mp_handle h ) {
+//		std::cerr << "WRAPPER: mp_size_send_buffer called" << std::endl;
 		return mp_size_send_buffer_dmp(tag, size, h);
 	} // mp_size_send_buffer
 
@@ -154,6 +171,7 @@ struct AAISPolicy {
 		int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_begin_recv called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(rbuf<0 || rbuf>=NUM_BUF) { return ERROR_CODE("Bad recv_buf"); }
@@ -166,13 +184,18 @@ struct AAISPolicy {
 
 		mp->rreq_size[rbuf] = size;
 
-		// request an isend
-		p2p.request(P2PTag::irecv);
+		/*
+		std::cerr << "WRAPPER: p2p.irecv rank " << p2p.rank() <<
+			" size " << size << " from " << sender <<
+			" with tag " << tag << std::endl;
+		*/
 
-		// send data non-blocking
+		p2p.request(P2PTag::irecv, tag, size, sender);
+
 		switch(p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size,
-			mp->rreq[rbuf])) {
+			tag, mp->rreq[rbuf])) {
 			case MPI_SUCCESS:
+//		std::cerr << "WRAPPER: p2p.irecv succeeded" << std::endl;
 				return NO_ERROR;
 			case MPI_ERR_COMM:
 				return ERROR_CODE("MPI_ERR_COMM");
@@ -196,6 +219,7 @@ struct AAISPolicy {
 		int tag, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_begin_send called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf<0 || sbuf>=NUM_BUF) { return ERROR_CODE("Bad send_buf"); }
@@ -210,12 +234,16 @@ struct AAISPolicy {
 
 		mp->sreq_size[sbuf] = size;
 
-		// request an isend
-		p2p.request(P2PTag::isend);
+		/*
+		std::cerr << "WRAPPER: p2p.isend rank " << p2p.rank() <<
+			" size " << size << " to " << receiver <<
+			" with tag " << tag << std::endl;
+		*/
 
-		// send data non-blocking
+		p2p.request(P2PTag::isend, tag, size, receiver);
+
 		switch(p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size,
-			mp->sreq[sbuf])) {
+			tag, mp->sreq[sbuf])) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
 			case MPI_ERR_COMM:
@@ -241,12 +269,16 @@ struct AAISPolicy {
 		P2PConnection & p2p = P2PConnection::instance();
 		MPI_Status status;
 		int size;
+		//std::cerr << "WRAPPER: mp_end_recv called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(rbuf<0 || rbuf>=NUM_BUF) { return ERROR_CODE("Bad recv_buf"); }
 
+		//std::cout << "WRAPPER: begin wait " << p2p.rank() << std::endl;
+
 		switch(p2p.wait(mp->rreq[rbuf], status)) {
 			case MPI_SUCCESS:
+		//std::cout << "WRAPPER: end wait" << std::endl;
 				break;
 			case MPI_ERR_REQUEST:
 				return ERROR_CODE("MPI_Wait - MPI_ERR_REQUEST");
@@ -256,8 +288,11 @@ struct AAISPolicy {
 				return ERROR_CODE("MPI_Wait - Unknown MPI error");
 		} // switch
 
+		///*
+		//std::cout << "WRAPPER: begin get count" << std::endl;
 		switch(p2p.get_count<char>(status, size)) {
 			case MPI_SUCCESS:
+		//std::cout << "WRAPPER: end get count" << std::endl;
 				break;
 			case MPI_ERR_ARG:
 				return ERROR_CODE("MPI_Get_count - MPI_ERR_ARG");
@@ -270,6 +305,7 @@ struct AAISPolicy {
 		if(mp->rreq_size[rbuf] != size) {
 			return ERROR_CODE("Sizes do not match");
 		} // if
+		//*/
 
 		return NO_ERROR;
 	} // mp_end_recv
@@ -277,6 +313,7 @@ struct AAISPolicy {
 	inline error_code mp_end_send( int sbuf, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+		//std::cerr << "WRAPPER: mp_end_send called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf<0 || sbuf>=NUM_BUF) { return ERROR_CODE("Bad send_buf"); }
@@ -299,6 +336,7 @@ struct AAISPolicy {
 		int n, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_allsum_d called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(local==NULL) { return ERROR_CODE("Bad local"); }
@@ -307,7 +345,7 @@ struct AAISPolicy {
 			return ERROR_CODE("Overlapping local and global");
 		} // if
 
-		p2p.request(P2PTag::allreduce_sum_double, n);
+		p2p.request(P2PTag::allreduce_sum_double, P2PTag::data, n);
 		p2p.send(local, n);
 		p2p.recv(global, n);
 
@@ -319,6 +357,7 @@ struct AAISPolicy {
 		mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_allsum_i called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(local==NULL) { return ERROR_CODE("Bad local"); }
@@ -327,7 +366,7 @@ struct AAISPolicy {
 			return ERROR_CODE("Overlapping local and global");
 		} // if
 
-		p2p.request(P2PTag::allreduce_sum_int, n);
+		p2p.request(P2PTag::allreduce_sum_int, P2PTag::data, n);
 		p2p.send(local, n);
 		p2p.recv(global, n);
 
@@ -339,13 +378,14 @@ struct AAISPolicy {
 		mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_allgather_i called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf==NULL) { return ERROR_CODE("Bad send"); }
 		if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
 		if(n<1) { return ERROR_CODE("Bad n"); }
 
-		p2p.request(P2PTag::allgather_int, n);
+		p2p.request(P2PTag::allgather_int, P2PTag::data, n);
 		p2p.send(sbuf, n);
 		p2p.send(rbuf, n*p2p.size());
 
@@ -357,15 +397,16 @@ struct AAISPolicy {
 		mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_allgather_i64 called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf==NULL) { return ERROR_CODE("Bad send"); }
 		if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
 		if(n<1) { return ERROR_CODE("Bad n"); }
 
-		p2p.request(P2PTag::allgather_long_long, n);
+		p2p.request(P2PTag::allgather_int64, P2PTag::data, n);
 		p2p.send(sbuf, n);
-		p2p.send(rbuf, n*p2p.size());
+		p2p.recv(rbuf, n*p2p.size());
 
 		// need to fix error code propagation
 		return NO_ERROR;
@@ -374,10 +415,11 @@ struct AAISPolicy {
 	error_code mp_send_i( int *buf, int n, int dst, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_send_i called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 
-		p2p.request(P2PTag::send, n, dst);
+		p2p.request(P2PTag::send, P2PTag::data, n, dst);
 		switch(p2p.send(buf, n)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
@@ -398,10 +440,11 @@ struct AAISPolicy {
 	error_code mp_recv_i( int *buf, int n, int src, mp_handle h ) {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
+//		std::cerr << "WRAPPER: mp_recv_i called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 
-		p2p.request(P2PTag::recv, n, src);
+		p2p.request(P2PTag::recv, P2PTag::data, n, src);
 		switch(p2p.recv(buf, n)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;

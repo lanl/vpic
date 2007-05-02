@@ -5,14 +5,12 @@
 ################################################################################
 # CFLAGS - configure C compiler behavior
 ################################################################################
-#CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
+CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-#CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
+CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
@@ -24,17 +22,17 @@ OPT_LEVEL=-1
 # CPUMODEL - specify a particular cpu model (this affects optimization)
 # supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CPUMODEL=pentiumM
+CPUMODEL=opteron
 
 ################################################################################
 # EXTENSION - executable extension
 ################################################################################
-EXTENSION=pm
+EXTENSION=op
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
-ADDRESSING=32
+ADDRESSING=64
 
 ################################################################################
 # ENABLE_DMP - enable distributed memory parallelism (0|1)[0]

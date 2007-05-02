@@ -19,8 +19,8 @@
 #include <P2PData.hxx>
 #include <Type2MPIType.hxx>
 
-#define SERVER 0
-#define CLIENT 1
+#define HOST 0
+#define ACCEL 1
 
 /*!
 	\struct MPICommunicationPolicy MPICommunicationPolicy.h
@@ -40,18 +40,22 @@ template<int ROLE> class MPICommunicationPolicy
 		int peer_rank() { return p2p_peer_rank_; }
 
 		int poll(P2PHeader & header);
-		int request(int tag, int count = 0, int rank = 0);
+		int request(int p2ptag, int tag = P2PTag::data,
+			int count = 0, int rank = 0);
 
-		template<typename T> int send(T * buffer, int count);
-		template<typename T> int recv(T * buffer, int count);
+		template<typename T> int send(T * buffer, int count,
+			int tag = P2PTag::data);
+		template<typename T> int recv(T * buffer, int count,
+			int tag = P2PTag::data);
 
 		template<typename T> int isend(T * buffer, int count,
-			MPI_Request & request);
+			int tag, MPI_Request & request);
 		template<typename T> int irecv(T * buffer, int count,
-			MPI_Request & request);
+			int tag, MPI_Request & request);
 
 		int wait(MPI_Request & request, MPI_Status & status);
-		template<typename T> int get_count(MPI_Status & status, int & count);
+		template<typename T> int get_count(MPI_Status & status,
+			int & count, T * dummy = NULL);
 		int sync();
 
 		double wtime() { return MPI_Wtime(); }
@@ -109,7 +113,7 @@ void MPICommunicationPolicy<ROLE>::init(int argc, char ** argv)
 		
 		/*
 		// output some info
-		std::string role_str = ROLE == SERVER ? "host" : "accelerator";
+		std::string role_str = ROLE == HOST ? "host" : "accelerator";
 		std::cout << role_str << ": " << 
 			" world rank: " << world_rank_ << 
 			" world size: " << world_size_ << 
@@ -123,21 +127,21 @@ void MPICommunicationPolicy<ROLE>::init(int argc, char ** argv)
 	} // MPICommunicationPolicy<>::initialize
 
 template<>
-void MPICommunicationPolicy<SERVER>::finalize()
+void MPICommunicationPolicy<HOST>::finalize()
 	{
 		MPI_Finalize();
 	} // MPICommunicationPolicy<>::finalize
 
 template<>
-void MPICommunicationPolicy<CLIENT>::finalize()
+void MPICommunicationPolicy<ACCEL>::finalize()
 	{
 		P2PHeader header;
-		MPI_Send(&header, 2, MPI_INT, p2p_peer_rank_, P2PTag::end, p2p_comm_);
+		MPI_Send(&header, 3, MPI_INT, p2p_peer_rank_, P2PTag::end, p2p_comm_);
 		MPI_Finalize();
 	} // MPICommunicationPolicy<>::finalize
 
 template<>
-int MPICommunicationPolicy<SERVER>::poll(P2PHeader & header)
+int MPICommunicationPolicy<HOST>::poll(P2PHeader & header)
 	{
 		MPI_Status status;
 
@@ -145,52 +149,67 @@ int MPICommunicationPolicy<SERVER>::poll(P2PHeader & header)
 
 		const int tag = status.MPI_TAG;
 
-		MPI_Recv(&header, 2, MPI_INT, p2p_peer_rank_, tag,
+		MPI_Recv(&header, 3, MPI_INT, p2p_peer_rank_, tag,
 			p2p_comm_, &status);
 
 		return tag;
 	} // MPICommunicationPolicy<>::poll
 
 template<>
-int MPICommunicationPolicy<CLIENT>::request(int tag, int count, int rank)
+int MPICommunicationPolicy<ACCEL>::request(int p2ptag, int tag,
+	int count, int rank)
 	{
-		P2PHeader header(count, rank);
-		return MPI_Send(&header, 2, MPI_INT, p2p_peer_rank_, tag, p2p_comm_);
-	} // MPICommunicatorPolicy<>::send
+		P2PHeader header(tag, count, rank);
+		return MPI_Send(&header, 3, MPI_INT, p2p_peer_rank_,
+			p2ptag, p2p_comm_);
+	} // MPICommunicatorPolicy<>::request
 
 template<int ROLE>
 template<typename T>
-int MPICommunicationPolicy<ROLE>::send(T * buffer, int count)
+int MPICommunicationPolicy<ROLE>::send(T * buffer, int count, int tag)
 	{
 		return MPI_Send(buffer, count, Type2MPIType<T>::type(),
-			p2p_peer_rank_, P2PTag::data, p2p_comm_);
+			p2p_peer_rank_, tag, p2p_comm_);
 	} // MPICommunicatorPolicy<>::send
 
 template<int ROLE>
 template<typename T>
-int MPICommunicationPolicy<ROLE>::recv(T * buffer, int count)
+int MPICommunicationPolicy<ROLE>::recv(T * buffer, int count, int tag)
 	{
 		MPI_Status status;
 		return MPI_Recv(buffer, count, Type2MPIType<T>::type(),
-			p2p_peer_rank_, P2PTag::data, p2p_comm_, &status);
+			p2p_peer_rank_, tag, p2p_comm_, &status);
 	} // MPICommunicatorPolicy<>::send
 
 template<>
 template<typename T>
-int MPICommunicationPolicy<CLIENT>::isend(T * buffer,
-	int count, MPI_Request & request)
+int MPICommunicationPolicy<ACCEL>::isend(T * buffer,
+	int count, int tag, MPI_Request & request)
 	{
+		/*
+		return MPI_Send(buffer, count, Type2MPIType<T>::type(),
+			p2p_peer_rank_, tag, p2p_comm_);
+		*/
+		///*
 		return MPI_Isend(buffer, count, Type2MPIType<T>::type(),
-			p2p_peer_rank_, P2PTag::data, p2p_comm_, &request);
+			p2p_peer_rank_, tag, p2p_comm_, &request);
+		//*/
 	} // MPICommunicatorPolicy<>::send
 
 template<>
 template<typename T>
-int MPICommunicationPolicy<CLIENT>::irecv(T * buffer,
-	int count, MPI_Request & request)
+int MPICommunicationPolicy<ACCEL>::irecv(T * buffer,
+	int count, int tag, MPI_Request & request)
 	{
+		/*
+		MPI_Status status;
+		return MPI_Recv(buffer, count, Type2MPIType<T>::type(),
+			p2p_peer_rank_, tag, p2p_comm_, &status);
+		*/
+		///*
 		return MPI_Irecv(buffer, count, Type2MPIType<T>::type(),
-			p2p_peer_rank_, P2PTag::data, p2p_comm_, &request);
+			p2p_peer_rank_, tag, p2p_comm_, &request);
+		//*/
 	} // MPICommunicatorPolicy<>::send
 
 template<int ROLE>
@@ -198,72 +217,33 @@ int MPICommunicationPolicy<ROLE>::wait(MPI_Request & request,
 	MPI_Status & status)
 	{
 		return MPI_Wait(&request, &status);
+		//return MPI_SUCCESS;
 	} // MPICommunicationPolicy<>::wait
 
 template<>
 template<typename T>
-int MPICommunicationPolicy<CLIENT>::get_count(MPI_Status & status,
-	int & count)
+int MPICommunicationPolicy<ACCEL>::get_count(MPI_Status & status,
+	int & count, T * dummy)
 	{
 		return MPI_Get_count(&status, Type2MPIType<T>::type(), &count);
 	} // MPICommunicationPolicy<>::wait
 
 template<>
-int MPICommunicationPolicy<SERVER>::sync()
+int MPICommunicationPolicy<HOST>::sync()
 	{
 		P2PHeader header;
-		return MPI_Send(&header, 2, MPI_BYTE, p2p_peer_rank_,
+		return MPI_Send(&header, 2, MPI_INT, p2p_peer_rank_,
 			P2PTag::data, p2p_comm_);
 	} // MPICommunicationPolicy<>::sync
 
 template<>
-int MPICommunicationPolicy<CLIENT>::sync()
+int MPICommunicationPolicy<ACCEL>::sync()
 	{
 		MPI_Status status;
 		P2PHeader header;
 		return MPI_Recv(&header, 2, MPI_INT, p2p_peer_rank_,
 			P2PTag::data, p2p_comm_, &status);
 	} // MPICommunicationPolicy<>::sync
-
-/*
-template<>
-int MPICommunicationPolicy<SERVER>::barrier()
-	{
-		MPI_Status status;
-		P2PHeader header;
-		return MPI_Send(&header, 1, MPI_BYTE, p2p_peer_rank_,
-			P2PTag::barrier, p2p_comm_);
-	} // MPICommunicationPolicy<>::wait
-
-template<>
-int MPICommunicationPolicy<CLIENT>::barrier()
-	{
-		MPI_Status status;
-		P2PHeader header;
-		MPI_Send(&header, 2, MPI_INT, p2p_peer_rank_,
-			P2PTag::barrier, p2p_comm_);
-		return MPI_Recv(&header, 2, MPI_INT, p2p_peer_rank_,
-			P2PTag::barrier, p2p_comm_, &status);
-	} // MPICommunicationPolicy<>::wait
-
-template<>
-template<typename T>
-int MPICommunicationPolicy<SERVER>::allreduce_max(T * sbuf, T * rbuf,
-	P2PHeader & header)
-	{
-	} // MPICommunicationPolicy<>::allreduce_max
-
-template<>
-template<typename T>
-int MPICommunicationPolicy<CLIENT>::allreduce_max(T * sbuf, T * rbuf,
-	P2PHeader & header)
-	{
-		MPI_Send(&header, 2, MPI_INT, p2p_peer_rank_,
-			P2PTag::allreduce_max, p2p_comm_);
-		MPI_Send(sbuf, header.count, Type2MPIType<T>::type(),
-			p2p_peer_rank_, P2PTag::data, p2p_comm_);
-	} // MPICommunicationPolicy<>::allreduce_max
-*/
 
 // Borrowed from Paul Henning
 template<int ROLE>
@@ -325,8 +305,8 @@ void MPICommunicationPolicy<ROLE>::initialize_communicators()
 
 		// create dmp communicator
 		MPI_Group dmp_group;
-		MPI_Group_incl(world_group, role_size[SERVER],
-			role_type[SERVER], &dmp_group);
+		MPI_Group_incl(world_group, role_size[HOST],
+			role_type[HOST], &dmp_group);
 		MPI_Comm_create(MPI_COMM_WORLD, dmp_group, &dmp_comm_);
 
 		// create a private communicator
@@ -357,7 +337,7 @@ void MPICommunicationPolicy<ROLE>::initialize_communicators()
 	} // MPICommunicationPolicy<>::initialize_communicators
 
 template<>
-void MPICommunicationPolicy<SERVER>::propagate_dmp_rank()
+void MPICommunicationPolicy<HOST>::propagate_dmp_rank()
 	{
 		MPI_Comm_rank(dmp_comm_, &dmp_rank_);
 		MPI_Comm_size(dmp_comm_, &dmp_size_);
@@ -370,7 +350,7 @@ void MPICommunicationPolicy<SERVER>::propagate_dmp_rank()
 	} // MPICommunicationPolicy<>::propagate_dmp_rank
 
 template<>
-void MPICommunicationPolicy<CLIENT>::propagate_dmp_rank()
+void MPICommunicationPolicy<ACCEL>::propagate_dmp_rank()
 	{
 		// receive from host
 		int info[2];

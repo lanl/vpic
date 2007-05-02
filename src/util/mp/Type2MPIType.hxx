@@ -15,10 +15,17 @@ template<> struct Type2MPIType<int>
 		inline static MPI_Datatype type() { return MPI_INT; }
 	}; // struct Type2MPIType
 
+template<> struct Type2MPIType<int64_t>
+	{
+		inline static MPI_Datatype type() { return MPI_LONG_LONG; }
+	}; // struct Type2MPIType
+
+/*
 template<> struct Type2MPIType<long long>
 	{
 		inline static MPI_Datatype type() { return MPI_LONG_LONG; }
 	}; // struct Type2MPIType
+*/
 
 template<> struct Type2MPIType<double>
 	{

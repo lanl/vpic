@@ -36,7 +36,9 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   compute_div_b_err( field, grid );
   tmp = compute_rms_div_b_err( field, grid );
   if( rank==0 ) MESSAGE(("RMS error = %e (charge/volume)",tmp));
+  if( rank==0 ) MESSAGE(("trying clean_div_b"));
   clean_div_b( field, grid );
+  if( rank==0 ) MESSAGE(("succeeded clean_div_b"));
 
   // Load fields not initialized by the user
   if( rank==0 ) MESSAGE(("Initializing radiation damping fields"));

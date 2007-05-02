@@ -27,14 +27,15 @@ struct P2PTag {
 		allreduce_sum_double,
 		allreduce_sum_int,
 		allgather_int,
-		allgather_long_long
+		allgather_int64
 	}; // enum
 }; // class P2PTag
 
 struct P2PHeader {
-	P2PHeader(int count_ = 0, int rank_ = 0)
-		: count(count_), rank(rank_) {}
+	P2PHeader(int tag_ = P2PTag::data, int count_ = 0, int rank_ = 0)
+		: tag(tag_), count(count_), rank(rank_) {}
 
+	int tag;
 	int count;
 	int rank;
 }; // struct P2PHeader

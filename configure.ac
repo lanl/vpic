@@ -18,9 +18,17 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	build.script \
 	lib/Makefile \
+	mprelay/Makefile \
+	accelerator/Makefile \
 	cell/Makefile)
 #	bin/Makefile \
 AC_CONFIG_COMMANDS(setup, [make setup])
+
+################################################################################
+# need this so that ppe build will create build script correctly
+################################################################################
+AC_SUBST(HOST_ACDIR, [$srcdir])
+AC_SUBST(HOST_BUILDDIR, [`pwd`])
 
 ################################################################################
 # machine file specification
@@ -57,8 +65,16 @@ CCS_TUNE_CC
 ################################################################################
 if test "$ENABLE_CELL" = "1" ; then
 	AC_SUBST(CELLDIR, [cell])
-	AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-	AC_CONFIG_SUBDIRS([cell/spe cell/ppe])
+#	AC_SUBST(CELLSUBDIRS, ["spe ppe"])
+	AC_SUBST(CELLSUBDIRS, ["ppe"])
+#	AC_CONFIG_SUBDIRS([cell/spe cell/ppe])
+	AC_CONFIG_SUBDIRS([cell/ppe])
+	AC_SUBST(HOSTDIRS, [mprelay])
+	AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+else
+#	AC_SUBST(HOSTDIRS, [lib])
+	AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
+	AC_SUBST(ARCH_BUILD_PATH, [.])
 fi
 
 # enable/disable distributed memory parallelism
@@ -78,14 +94,6 @@ if test "$ENABLE_DMP" = "1" ; then
 
 	# define needed for openmpi
 	AC_DEFINE(OMPI_SKIP_MPICXX)
-fi
-
-################################################################################
-# enable/disable host build
-################################################################################
-if test "$ENABLE_HOST" = "1" ; then
-#	AC_SUBST(HOSTDIRS, ["lib bin"])
-	AC_SUBST(HOSTDIRS, ["lib"])
 fi
 
 ################################################################################

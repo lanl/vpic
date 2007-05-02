@@ -1,5 +1,3 @@
-#ifdef USE_CELL_SPUS
-
 /****************************************************************************
  *
  * Copyright (c) 2000, Kevin James Bowers
@@ -41,6 +39,9 @@
 // (?) Timeouts in spu_halt, spu_boot (spin wait)
 
 #include <pipelines.h>
+
+#ifdef USE_CELL_SPUS
+
 #include <pthread.h>
 #include <libspe2.h>
 

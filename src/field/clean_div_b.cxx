@@ -1,4 +1,5 @@
 #include <field.h>
+#include <stdio.h>
 
 #ifndef V4_ACCELERATION
 #define CLEAN_DIV_B_PIPELINE (pipeline_func_t)clean_div_b_pipeline

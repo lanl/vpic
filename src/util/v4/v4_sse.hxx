@@ -139,11 +139,31 @@ namespace v4 {
   }
 
   inline void swap( v4 &a, v4 &b ) { 
-    __m128 t = a.v, u = b.v;
-    a.v = u;
-    b.v = t;
+    __m128 t = a.v; a.v = b.v; b.v = t;
   }
 
+# if 0
+  inline void transpose( v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a0v = a.v;                         // a0v =  0  1  2  3
+    __m128 b0v = b.v;                         // b0v =  4  5  6  7
+    __m128 c_v = c.v;                         // c_v =  8  9 10 11
+    __m128 d_v = d.v;                         // d_v = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    __m128 a_v = _mm_unpacklo_ps( a0v, c_v ); // a_v =  0  8  1  9
+    __m128 b_v = _mm_unpacklo_ps( b0v, d_v ); // b_v =  4 12  5 13
+    c_v        = _mm_unpackhi_ps( a0v, c_v ); // c_v =  2 10  3 11
+    d_v        = _mm_unpackhi_ps( b0v, d_v ); // d_v =  6 14  7 15
+
+    // Step 2: Interleave even and odd rows
+
+    a.v        = _mm_unpacklo_ps( a_v, b_v ); // a_v =  0  4  8 12
+    b.v        = _mm_unpackhi_ps( a_v, b_v ); // b_v =  1  5  9 13
+    c.v        = _mm_unpacklo_ps( c_v, d_v ); // c_v =  2  6 10 14
+    d.v        = _mm_unpackhi_ps( c_v, d_v ); // d_v =  3  7 11 15
+  }
+# else
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
     __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t;
 
@@ -164,6 +184,7 @@ namespace v4 {
 
     a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
   }
+# endif
 
   // v4 memory manipulation functions
   
@@ -201,7 +222,7 @@ namespace v4 {
     a.i[2] = ((const int *)a2)[0];
     a.i[3] = ((const int *)a3)[0];
   }
-  
+
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
@@ -218,7 +239,32 @@ namespace v4 {
     a.v = a_v;
     b.v = b_v;
   }
-  
+
+# if 0
+  inline void load_4x3_tr( const void * ALIGNED(16) pa,
+                           const void * ALIGNED(16) pb,
+                           const void * ALIGNED(16) pc,
+                           const void * ALIGNED(16) pd,
+                           v4 &a, v4 &b, v4 &c ) {
+    __m128 a0v = _mm_load_ps( (const float * ALIGNED(16))pa ); // a0v =  0  1  2  x
+    __m128 b0v = _mm_load_ps( (const float * ALIGNED(16))pb ); // b0v =  4  5  6  x
+    __m128 c_v = _mm_load_ps( (const float * ALIGNED(16))pc ); // c_v =  8  9 10  x
+    __m128 d_v = _mm_load_ps( (const float * ALIGNED(16))pd ); // d_v = 12 13 14  x
+
+    // Step 1: Interleave top and bottom half
+
+    __m128 a_v = _mm_unpacklo_ps( a0v, c_v ); // a_v =  0  8  1  9
+    __m128 b_v = _mm_unpacklo_ps( b0v, d_v ); // b_v =  4 12  5 13
+    c_v        = _mm_unpackhi_ps( a0v, c_v ); // c_v =  2 10  x  x
+    d_v        = _mm_unpackhi_ps( b0v, d_v ); // d_v =  6 14  x  x
+
+    // Step 2: Interleave even and odd rows
+
+    a.v        = _mm_unpacklo_ps( a_v, b_v ); // a_v =  0  4  8 12
+    b.v        = _mm_unpackhi_ps( a_v, b_v ); // b_v =  1  5  9 13
+    c.v        = _mm_unpacklo_ps( c_v, d_v ); // c_v =  2  6 10 14
+  }
+# else
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -238,7 +284,34 @@ namespace v4 {
     b.v = _mm_shuffle_ps(b_v,t,0xdd);                    // b0 b1 b2 b3 -> b
     c.v = _mm_shuffle_ps(c_v,u,0x88);                    // c0 c1 c2 c3 -> c
   }
+# endif
 
+# if 0
+  inline void load_4x4_tr( const void * ALIGNED(16) pa,
+                           const void * ALIGNED(16) pb,
+                           const void * ALIGNED(16) pc,
+                           const void * ALIGNED(16) pd,
+                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a0v = _mm_load_ps( (const float * ALIGNED(16))pa ); // a0v =  0  1  2  3
+    __m128 b0v = _mm_load_ps( (const float * ALIGNED(16))pb ); // b0v =  4  5  6  7
+    __m128 c_v = _mm_load_ps( (const float * ALIGNED(16))pc ); // c_v =  8  9 10 11
+    __m128 d_v = _mm_load_ps( (const float * ALIGNED(16))pd ); // d_v = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    __m128 a_v = _mm_unpacklo_ps( a0v, c_v ); // a_v =  0  8  1  9
+    __m128 b_v = _mm_unpacklo_ps( b0v, d_v ); // b_v =  4 12  5 13
+    c_v        = _mm_unpackhi_ps( a0v, c_v ); // c_v =  2 10  3 11
+    d_v        = _mm_unpackhi_ps( b0v, d_v ); // d_v =  6 14  7 15
+
+    // Step 2: Interleave even and odd rows
+
+    a.v        = _mm_unpacklo_ps( a_v, b_v ); // a_v =  0  4  8 12
+    b.v        = _mm_unpackhi_ps( a_v, b_v ); // b_v =  1  5  9 13
+    c.v        = _mm_unpacklo_ps( c_v, d_v ); // c_v =  2  6 10 14
+    d.v        = _mm_unpackhi_ps( c_v, d_v ); // d_v =  3  7 11 15
+  }
+# else
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -260,6 +333,7 @@ namespace v4 {
     c.v = _mm_shuffle_ps(c_v,u,0x88);                    // c0 c1 c2 c3 -> c
     d.v = _mm_shuffle_ps(d_v,u,0xdd);                    // d0 d1 d2 d3 -> d
   }
+# endif
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 ) {
@@ -296,7 +370,31 @@ namespace v4 {
     ((int * ALIGNED(16))a2)[2] = c.i[2];
     ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
-  
+
+# if 0
+  inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
+                            void * ALIGNED(16) pa, void * ALIGNED(16) pb,
+                            void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {
+    __m128 a0v = a.v;                         // a0v =  0  1  2  3
+    __m128 b0v = b.v;                         // b0v =  4  5  6  7
+    __m128 c_v = c.v;                         // c_v =  8  9 10 11
+    __m128 d_v = d.v;                         // d_v = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    __m128 a_v = _mm_unpacklo_ps( a0v, c_v ); // a_v =  0  8  1  9
+    __m128 b_v = _mm_unpacklo_ps( b0v, d_v ); // b_v =  4 12  5 13
+    c_v        = _mm_unpackhi_ps( a0v, c_v ); // c_v =  2 10  3 11
+    d_v        = _mm_unpackhi_ps( b0v, d_v ); // d_v =  6 14  7 15
+
+    // Step 2: Interleave even and odd rows
+
+    _mm_store_ps( (float * ALIGNED(16))pa, _mm_unpacklo_ps( a_v, b_v ) );
+    _mm_store_ps( (float * ALIGNED(16))pb, _mm_unpackhi_ps( a_v, b_v ) );
+    _mm_store_ps( (float * ALIGNED(16))pc, _mm_unpacklo_ps( c_v, d_v ) );
+    _mm_store_ps( (float * ALIGNED(16))pd, _mm_unpackhi_ps( c_v, d_v ) );
+  }
+# else
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
@@ -314,6 +412,7 @@ namespace v4 {
     _mm_storeh_pi( (__m64 * ALIGNED(16))a3,   t); // a3 b3 .. .. -> a3
     _mm_storeh_pi(((__m64 * ALIGNED(16))a3)+1,u); // a3 b3 c3 d3 -> a3
   }
+# endif
 
   //////////////
   // v4int class

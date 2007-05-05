@@ -16,8 +16,6 @@
 #define ALIGNED(n)
 #endif
 
-// FIXME: CHECK SPU_CMPEQ WITH VEC_FLOAT4 ZEROS!
-
 namespace v4 {
 
   const vec_uchar16 _packe   = {  0, 1, 2, 3,    8, 9,10,11,
@@ -28,7 +26,6 @@ namespace v4 {
                                   4, 5, 6, 7,   20,21,22,23 };
   const vec_uchar16 _unpackh = {  8, 9,10,11,   24,25,26,27,
                                  12,13,14,15,   28,29,30,31 };
-
 
   class v4;
   class v4int;

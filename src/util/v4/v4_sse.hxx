@@ -143,6 +143,9 @@ namespace v4 {
   }
 
 # if 0
+  // This shuffleless variant appeasr to run 2% slower on flash64 (AMD
+  // Opteron 64 at 2.4 GHz) and about about 2% faster on my home system
+  // (Pentium 4 at 1.7 GHz).  Keeping the shuffled variant intact.
   inline void transpose( v4 &a, v4 &b, v4 &c, v4 &d ) {
     __m128 a0v = a.v;                         // a0v =  0  1  2  3
     __m128 b0v = b.v;                         // b0v =  4  5  6  7
@@ -241,6 +244,8 @@ namespace v4 {
   }
 
 # if 0
+  // No inner loop code in V-PIC uses this.  Expect similar behavior as
+  // load_4x4_tr.  Keeping shuffled version intact.
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
                            const void * ALIGNED(16) pb,
                            const void * ALIGNED(16) pc,
@@ -287,6 +292,12 @@ namespace v4 {
 # endif
 
 # if 0
+  // This shuffleless variant appears to make no different in performance
+  // on my home system (Pentium 4 at 1.7 Ghz) but dropped performance about
+  // 20% (!) on flash64 (AMD Opteron 64 at 2.4 GHz).  This surprised me as
+  // everything about this variant suggests it should be much faster.
+  // AMD must really prefer doing 128-bit loads as two 64-bit loads??
+  // Keeping the shuffled variant intact.
   inline void load_4x4_tr( const void * ALIGNED(16) pa,
                            const void * ALIGNED(16) pb,
                            const void * ALIGNED(16) pc,
@@ -372,6 +383,12 @@ namespace v4 {
   }
 
 # if 0
+  // This shuffleless variant appears to make no difference in performance
+  // on my home system (Pentium 4 at 1.7 Ghz) but dropped performance about
+  // 4% on flash64 (AMD Opteron 64 at 2.4 GHz).  This surprised me as
+  // everything about this variant suggests it should be much faster.
+  // AMD must really prefer doing 128-bit loads as two 64-bit loads??
+  // Keeping the shuffled variant intact.
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) pa, void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc, void * ALIGNED(16) pd ) {

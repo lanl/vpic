@@ -59,7 +59,7 @@ using namespace v4;
     if( any(a!=v4##type ai) ||                                          \
         any(b!=v4##type bi) ||                                          \
         any(c!=v4##type cf) )                                           \
-      printf( ""#type"_binary_"#name": FAIL\n" );			\
+      printf( ""#type"_binary_"#name": FAIL "#ai#bi#cf" (%.10e %.10e %.10e %.10e)\n", (double)c(0), (double)c(1), (double)c(2), (double)c(3) ); \
     else                                                                \
       printf( ""#type"_binary_"#name": pass\n" );			\
   }

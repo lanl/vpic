@@ -351,18 +351,12 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     // Strangely, using ii(n) twice instead of extracting once and
     // saving in temporary is much faster.  Must be a register
     // pressure effect on gcc as gcc never seems to use more than 80
-    // registers.  XLC uses 128 registers but takes over 6X longer to
-    // execute (why does XLC hate this loop so ... Kevin sad).
+    // registers.
 
     fi0 = PTR_INTERPOLATOR(ii(0)); cache_lock( interpolator_cache, fi0 );
     fi1 = PTR_INTERPOLATOR(ii(1)); cache_lock( interpolator_cache, fi1 );
     fi2 = PTR_INTERPOLATOR(ii(2)); cache_lock( interpolator_cache, fi2 );
     fi3 = PTR_INTERPOLATOR(ii(3));
-
-    ja0 = PTR_ACCUMULATOR(ii(0));  cache_lock( accumulator_cache, ja0 );
-    ja1 = PTR_ACCUMULATOR(ii(1));  cache_lock( accumulator_cache, ja1 );
-    ja2 = PTR_ACCUMULATOR(ii(2));  cache_lock( accumulator_cache, ja2 );
-    ja3 = PTR_ACCUMULATOR(ii(3));
 
     load_4x4_tr( &fi0->ex,  &fi1->ex,  &fi2->ex,  &fi3->ex,  ex, v0, v1, v2  );
     load_4x4_tr( &fi0->ey,  &fi1->ey,  &fi2->ey,  &fi3->ey,  ey, v3, v4, v5  );
@@ -446,11 +440,7 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     a1##X -= ccc;           /* a1 = qa ddx [ (1+dyh)(1-dzh) - ddy*ddz/3 ] */ \
     a2##X -= ccc;           /* a2 = qa ddx [ (1-dyh)(1+dzh) - ddy*ddz/3 ] */ \
     a3##X += ccc;           /* a3 = qa ddx [ (1+dyh)(1+dzh) + ddy*ddz/3 ] */ \
-    transpose(a0##X,a1##X,a2##X,a3##X);                                 \
-    increment_4x1(ja0->j##X,a0##X);                                     \
-    increment_4x1(ja1->j##X,a1##X);                                     \
-    increment_4x1(ja2->j##X,a2##X);                                     \
-    increment_4x1(ja3->j##X,a3##X);
+    transpose(a0##X,a1##X,a2##X,a3##X)
 
     ACCUMULATE_J( x,y,z );
     ACCUMULATE_J( y,z,x );
@@ -458,12 +448,28 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 
 #   undef ACCUMULATE_J
 
-    cache_unlock( accumulator_cache, ja0 );
-    cache_unlock( accumulator_cache, ja1 );
-    cache_unlock( accumulator_cache, ja2 );
+    ja0 = PTR_ACCUMULATOR(ii(0));
+    increment_4x1( ja0->jx, a0x );
+    increment_4x1( ja0->jy, a0y );
+    increment_4x1( ja0->jz, a0z );
+
+    ja1 = PTR_ACCUMULATOR(ii(1));
+    increment_4x1( ja1->jx, a1x );
+    increment_4x1( ja1->jy, a1y );
+    increment_4x1( ja1->jz, a1z );
+
+    ja2 = PTR_ACCUMULATOR(ii(2));
+    increment_4x1( ja2->jx, a2x );
+    increment_4x1( ja2->jy, a2y );
+    increment_4x1( ja2->jz, a2z );
+
+    ja3 = PTR_ACCUMULATOR(ii(3));
+    increment_4x1( ja3->jx, a3x );
+    increment_4x1( ja3->jy, a3y );
+    increment_4x1( ja3->jz, a3z );
 
     // Update position and accumulate outbnd
-    
+  
 #   define MOVE_OUTBND(N)                                      \
     if( outbnd(N) ) {                                          \
       pm->dispx = ddx(N);                                      \
@@ -477,7 +483,7 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     MOVE_OUTBND(1);
     MOVE_OUTBND(2);
     MOVE_OUTBND(3);
-    
+
 #   undef MOVE_OUTBND
     
   }

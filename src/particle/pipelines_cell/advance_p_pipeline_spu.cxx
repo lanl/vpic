@@ -71,7 +71,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_TYPE           0             /* r/o */
 #define CACHELINE_LOG2SIZE   7             /* 1 per line - 128 byte lines */
 #define CACHE_LOG2NWAY       2             /* 4 way */
-#define CACHE_LOG2NSETS      6             /* 128 lines per way */
+#define CACHE_LOG2NSETS      7             /* 128 lines per way */
 #define CACHE_SET_TAGID(set) (9+(set)&0x7) /* tags 9:16 */
 #include <cache-api.h>
 
@@ -297,94 +297,108 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
   const v4float two_fifteenths(2./15.);
   const v4float neg_one(-1.);
 
-  v4float dx, dy, dz; v4int   ii;
-  v4float ux, uy, uz; v4float q;
+  v4float dx, dy, dz; v4int   ii; // particle position
+  v4float ux, uy, uz; v4float q;  // particle momentum and charge
 
-  v4float ex, v0, v1, v2;
-  v4float ey, v3, v4, v5;
-  v4float ez, v6, v7, v8;
-  v4float bx, v9;
-  v4float by, v10;
-  v4float bz, v11;
-  v4float hax, hay, haz;
-  v4float cbx, cby, cbz;
+  v4float ex0,  dexdy,  dexdz, d2exdydz; // ex interp coeff
+  v4float ey0,  deydz,  deydx, d2eydzdx; // ey interp coeff
+  v4float ez0,  dezdx,  dezdy, d2ezdxdy; // ez interp coeff
+  v4float cbx0, dcbxdx, cby0,  dcbydy;   // bx and by interp coeff
+  v4float cbz0, dcbzdz, v12,   v13;      // bz interp coeff and scratch
 
-  v4float ux0, uy0, uz0;
-  v4float v12, cbs, ths, v15, v16, v17;
-  v4float wx0, wy0, wz0;
-  v4float uxh, uyh, uzh;
+  v4float hax, hay, haz; // half particle electric field acceleration
+  v4float cbx, cby, cbz; // particle magnetic field
 
-  v4float rgamma;
-  v4float ddx, ddy, ddz;
-  v4float dxh, dyh, dzh;
-  v4float dx1, dy1, dz1;
-  v4int   outbnd;
+  v4float ux0, uy0, uz0; // pre Boris rotation momentum
+  v4float v14, cbs, ths, v15, v16, v17; // Boris rotation scalars
+  v4float wx0, wy0, wz0; // intermediate Boris rotation momentum
+  v4float uxh, uyh, uzh; // new particle momentum
+
+  v4float rgamma;        // new inverse gamma
+  v4float ddx, ddy, ddz; // cell-normalized particle displacment
+  v4float dxh, dyh, dzh; // intermediate position relative to starting cell
+  v4float dx1, dy1, dz1; // new position relative to starting cell
+  v4int   outbnd;        // Boolean (true if particle exited cell)
 
   v4float qa, ccc;
   v4float a0x, a1x, a2x, a3x, a4x;
   v4float a0y, a1y, a2y, a3y, a4y;
   v4float a0z, a1z, a2z, a3z, a4z;
 
-  const interpolator_t * ALIGNED(128) fi0;
-  const interpolator_t * ALIGNED(128) fi1;
-  const interpolator_t * ALIGNED(128) fi2;
-  const interpolator_t * ALIGNED(128) fi3;
-
-  accumulator_t * ALIGNED(64) ja0;
-  accumulator_t * ALIGNED(64) ja1;
-  accumulator_t * ALIGNED(64) ja2;
-  accumulator_t * ALIGNED(64) ja3;
-
-  int nm = 0;
+  const interpolator_t * ALIGNED(128) fi;
+  accumulator_t * ALIGNED(64) ja;
+  int nm = 0, ii0, ii1, ii2, ii3;
 
   // Process the particle quads for this pipeline
 
   for( ; nq; nq--, p+=4, idx+=4 ) {
 
-    // Load the next particle quad
+    // Load the particle quad positions
 
     load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx, dx, dy, dz, ii );
+
+    // Interpolate fields
+
+    ii0 = ii(0);
+    fi  = PTR_INTERPOLATOR(ii0);
+    load_4x1( &fi->ex,  ex0  );
+    load_4x1( &fi->ey,  ey0  );
+    load_4x1( &fi->ez,  ez0  );
+    load_4x1( &fi->cbx, cbx0 );
+    load_4x1( &fi->cbz, cbz0 );
+
+    ii1 = ii(1);
+    fi  = PTR_INTERPOLATOR(ii1);
+    load_4x1( &fi->ex,  dexdy  );
+    load_4x1( &fi->ey,  deydz  );
+    load_4x1( &fi->ez,  dezdx  );
+    load_4x1( &fi->cbx, dcbxdx );
+    load_4x1( &fi->cbz, dcbzdz );
+
+    ii2 = ii(2);
+    fi  = PTR_INTERPOLATOR(ii2);
+    load_4x1( &fi->ex,  dexdz );
+    load_4x1( &fi->ey,  deydx );
+    load_4x1( &fi->ez,  dezdy );
+    load_4x1( &fi->cbx, cby0  );
+    load_4x1( &fi->cbz, v12   );
+
+    ii3 = ii(3);
+    fi  = PTR_INTERPOLATOR(ii3);
+    load_4x1( &fi->ex,  d2exdydz );
+    load_4x1( &fi->ey,  d2eydzdx );
+    load_4x1( &fi->ez,  d2ezdxdy );
+    load_4x1( &fi->cbx, dcbydy   );
+    load_4x1( &fi->cbz, v13      );
+
+    transpose( ex0, dexdy, dexdz, d2exdydz );
+    hax = qdt_2mc*fma( fma( d2exdydz, dy, dexdz ), dz, fma( dexdy, dy, ex0 ) );
+
+    transpose( ey0, deydz, deydx, d2eydzdx );
+    hay = qdt_2mc*fma( fma( d2eydzdx, dz, deydx ), dx, fma( deydz, dz, ey0 ) );
+
+    transpose( ez0, dezdx, dezdy, d2ezdxdy );
+    haz = qdt_2mc*fma( fma( d2ezdxdy, dx, dezdy ), dy, fma( dezdx, dx, ez0 ) );
+
+    transpose( cbx0, dcbxdx, cby0, dcbydy );
+    cbx = fma( dcbxdx, dx, cbx0 );
+    cby = fma( dcbydy, dy, cby0 );
+
+    transpose( cbz0, dcbzdz, v12, v13 ); // FIXME: Could be optimized a bit
+    cbz = fma( dcbzdz, dz, cbz0 );
+
+    // Update momentum.  Note: Could eliminate a dependency in v14 calc
+    // if willing to play extra fast and loose with numerics (saves
+    // about a spu clock per particle).
+
     load_4x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux, ux, uy, uz, q  );
-
-    // Interpolate fields and cache the accumulator
-
-    // Strangely, using ii(n) twice instead of extracting once and
-    // saving in temporary is much faster.  Must be a register
-    // pressure effect on gcc as gcc never seems to use more than 80
-    // registers.
-
-    fi0 = PTR_INTERPOLATOR(ii(0)); cache_lock( interpolator_cache, fi0 );
-    fi1 = PTR_INTERPOLATOR(ii(1)); cache_lock( interpolator_cache, fi1 );
-    fi2 = PTR_INTERPOLATOR(ii(2)); cache_lock( interpolator_cache, fi2 );
-    fi3 = PTR_INTERPOLATOR(ii(3));
-
-    load_4x4_tr( &fi0->ex,  &fi1->ex,  &fi2->ex,  &fi3->ex,  ex, v0, v1, v2  );
-    load_4x4_tr( &fi0->ey,  &fi1->ey,  &fi2->ey,  &fi3->ey,  ey, v3, v4, v5  );
-    load_4x4_tr( &fi0->ez,  &fi1->ez,  &fi2->ez,  &fi3->ez,  ez, v6, v7, v8  );
-    load_4x4_tr( &fi0->cbx, &fi1->cbx, &fi2->cbx, &fi3->cbx, bx, v9, by, v10 );
-    load_4x2_tr( &fi0->cbz, &fi1->cbz, &fi2->cbz, &fi3->cbz, bz, v11 );
-
-    cache_unlock( interpolator_cache, fi0 );
-    cache_unlock( interpolator_cache, fi1 );
-    cache_unlock( interpolator_cache, fi2 );
-
-    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, ex ) );
-    hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, ey ) );
-    haz = qdt_2mc*fma( fma( v8, dx, v7 ), dy, fma( v6, dx, ez ) );
-
-    cbx = fma( v9,  dx, bx );
-    cby = fma( v10, dy, by );
-    cbz = fma( v11, dz, bz );
-
-    // Update momentum
-
     ux0 = ux + hax;
     uy0 = uy + hay;
     uz0 = uz + haz;
-    v12 = qdt_2mc*rsqrt( one + fma( ux0,ux0, fma( uy0,uy0, uz0*uz0 ) ) );
+    v14 = qdt_2mc*rsqrt( one + fma( ux0,ux0, fma( uy0,uy0, uz0*uz0 ) ) );
     cbs = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) ); // |cB|^2
-    ths = (v12*v12)*cbs;                           // |theta|^2 = |wc dt/2|^2
-    v15 = v12*fma( fma( two_fifteenths, ths, one_third ), ths, one );
+    ths = (v14*v14)*cbs;                           // |theta|^2 = |wc dt/2|^2
+    v15 = v14*fma( fma( two_fifteenths, ths, one_third ), ths, one );
     v16 = v15*rcp( fma( v15*v15, cbs, one ) );
     v17 = v16 + v16;
     wx0 = fma( fms( uy0,cbz, uz0*cby ), v15, ux0 );
@@ -398,18 +412,18 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     // Update the position of inbnd particles
 
     rgamma = rsqrt( one + fma( uxh,uxh, fma( uyh,uyh, uzh*uzh ) ) );
-    ddx = (uxh*cdt_dx)*rgamma;
-    ddy = (uyh*cdt_dy)*rgamma;
-    ddz = (uzh*cdt_dz)*rgamma; // ddx,ddy,ddz are normalized displacement
-    dxh = dx  + ddx;
-    dyh = dy  + ddy;
-    dzh = dz  + ddz;           // Half step position
-    dx1 = dxh + ddx;
-    dy1 = dyh + ddy;
-    dz1 = dzh + ddz;           // New particle position
+    ddx    = (uxh*cdt_dx)*rgamma;
+    ddy    = (uyh*cdt_dy)*rgamma;
+    ddz    = (uzh*cdt_dz)*rgamma; // ddx,ddy,ddz are normalized displacement
+    dxh    = dx  + ddx;
+    dyh    = dy  + ddy;
+    dzh    = dz  + ddz;           // Half step position
+    dx1    = dxh + ddx;
+    dy1    = dyh + ddy;
+    dz1    = dzh + ddz;           // New particle position
     outbnd = (dx1>one) | (dx1<neg_one) |
              (dy1>one) | (dy1<neg_one) |
-             (dz1>one) | (dz1<neg_one);  
+             (dz1>one) | (dz1<neg_one);
     store_4x4_tr( merge(outbnd,dx,dx1), // Do not update outbnd particles
                   merge(outbnd,dy,dy1),
                   merge(outbnd,dz,dz1),
@@ -448,28 +462,28 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 
 #   undef ACCUMULATE_J
 
-    ja0 = PTR_ACCUMULATOR(ii(0));
-    increment_4x1( ja0->jx, a0x );
-    increment_4x1( ja0->jy, a0y );
-    increment_4x1( ja0->jz, a0z );
+    ja = PTR_ACCUMULATOR(ii0);
+    increment_4x1( ja->jx, a0x );
+    increment_4x1( ja->jy, a0y );
+    increment_4x1( ja->jz, a0z );
 
-    ja1 = PTR_ACCUMULATOR(ii(1));
-    increment_4x1( ja1->jx, a1x );
-    increment_4x1( ja1->jy, a1y );
-    increment_4x1( ja1->jz, a1z );
+    ja = PTR_ACCUMULATOR(ii1);
+    increment_4x1( ja->jx, a1x );
+    increment_4x1( ja->jy, a1y );
+    increment_4x1( ja->jz, a1z );
 
-    ja2 = PTR_ACCUMULATOR(ii(2));
-    increment_4x1( ja2->jx, a2x );
-    increment_4x1( ja2->jy, a2y );
-    increment_4x1( ja2->jz, a2z );
+    ja = PTR_ACCUMULATOR(ii2);
+    increment_4x1( ja->jx, a2x );
+    increment_4x1( ja->jy, a2y );
+    increment_4x1( ja->jz, a2z );
 
-    ja3 = PTR_ACCUMULATOR(ii(3));
-    increment_4x1( ja3->jx, a3x );
-    increment_4x1( ja3->jy, a3y );
-    increment_4x1( ja3->jz, a3z );
+    ja = PTR_ACCUMULATOR(ii3);
+    increment_4x1( ja->jx, a3x );
+    increment_4x1( ja->jy, a3y );
+    increment_4x1( ja->jz, a3z );
 
     // Update position and accumulate outbnd
-  
+
 #   define MOVE_OUTBND(N)                                      \
     if( outbnd(N) ) {                                          \
       pm->dispx = ddx(N);                                      \

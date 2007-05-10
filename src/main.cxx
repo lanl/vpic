@@ -22,7 +22,7 @@ main( int argc,
   // after MPI is initialized.  So we start up the pipeline
   // dispatchers _before_ starting up MPI.
 
-  PSTYLE.boot( PIPELINE_BOOT_REQUEST );
+  PSTYLE.boot( PIPELINE_BOOT_REQUEST, 1 );
 
 # ifdef CELL_PPU_BUILD
   // FIXME: n_pipeline rationalization throughout code.  Also, need to
@@ -31,7 +31,7 @@ main( int argc,
   // processor and PPU (hopefully there is) or if there are multiple
   // PPU's per MPI process.  It may make some subtle differences in
   // PPU threading model and SPU dispatcher.
-  spu.boot( 8 );
+  spu.boot( 8, 0 );
 # endif
 
   mp_init(argc, argv);

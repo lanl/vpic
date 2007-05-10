@@ -67,22 +67,23 @@ static pipeline_state_t Pipeline[ MAX_PIPELINE ];
 static volatile int Done[ MAX_PIPELINE ];
 static int Id = 0;
 static int Busy = 0;
+static int Dispatch_To_Host = 0;
 
 /****************************************************************************
  *
- * Threader notes:
- * - Only one instance of Threader can run at time (i.e. the
+ * Thread dispatcher notes:
+ * - Only one instance of thread dispatcher can exist at time (i.e. the
  *   application can't spawn two threads and have each thread create its
- *   own threader).  Otherwise bad things could happen.
- * - Threader assumes pipelines always return (otherwise a
+ *   own thread dispatcher).  Otherwise bad things could happen.
+ * - The dispatcher assumes pipelines always return (otherwise a
  *   possible deadlock exists in parallel_execute and thread_halt _will_
  *   deadlock).
- * - Threader intends that only host will call parallel_execute.
- *   (Original version of threader was less strict and most of that
+ * - The dispatcher intends that only host will call parallel_execute.
+ *   (Original version of the dispatcher was less strict and most of that
  *   infrastructure is still present though.)
  * - Calls to thread_boot should always be paired with calls to
  *   thread_halt (this insures good housekeeping). To reallocate the
- *   number of pipelines available to the program, the threader should
+ *   number of pipelines available to the program, the dispatcher should
  *   be halted and then re-booted with the new desired number of
  *   pipelines.
  * - Internal: thread.n_pipeline = 0 -> Global variables need to be
@@ -93,22 +94,37 @@ static int Busy = 0;
 
 /****************************************************************************
  *
- * Function: thread_boot(num_pipe)
+ * Function: thread_boot( n_pipeline, dispatch_to_host )
  *
- * Initialize the threader to have num_pipe threads in addition to the
- * host thread.  The underlying thread library may create extra
- * management threads.  This routine does not require you to have the
- * requested number of physical processors in your system (the host
- * and pipeline threads will be multitasked on physical processors in
- * that case)
+ * Initialize the thread dispatcher to use n_pipeline threads.
+ * The underlying thread library may create extra management threads.
+ * This routine does not require you to have the requested number of
+ * physical processors in your system (the host and/or pipeline threads
+ * will be multitasked on physical processors in that case).
  *
- * Arguments: num_pipe (int) - The desired number of pipelines.
+ * If the boolean dispatch_to_host is true, then the host thread
+ * (i.e. the caller of this function) will be treated as a pipeline
+ * thread.  Thus, n_pipeline-1 pipeline threads will be created.
+ * thread_dispatch will execute the workload given to pipelines
+ * 0:n_pipeline-2 on the n_pipeline-1 pipeline threads and the workload
+ * given to pipeline n_pipeline-1 on the host thread.
+ *
+ * If the boolean dispatch_to_host is false, then the host thread
+ * will _not_ be treaded as a pipeline thread.  Thus, n_pipeline
+ * pipeline threads will be created.  thread_dispatch will execute all
+ * n_pipeline workloads on the n_pipeline threads (and the host thread
+ * will presumably do other things while the pipeline threads are
+ * executing).
+ *
+ * Arguments: n_pipeline (int) - The desired number of pipelines.
+ *            dispatch_to_host (int) - Should the dispatch function
+ *              dispatch tasks to the host thread 
  *
  * Returns: (void)
  *
  * Throws: Throws an error if
- *         * if num_pipe is out of bounds. num_pipe should satisfy
- *           1 <= numproc <= THREADER_MAX_NUM_PROCESSORS
+ *         * if n_pipeline is out of bounds. n_pipeline should satisfy
+ *           1 <= n_pipeline <= MAX_PIPELINE
  *         * if the dispatcher was already initialized.
  *         * if something strange happened during global
  *           initialization or pipeline creation.
@@ -116,8 +132,8 @@ static int Busy = 0;
  * Dependencies: pthread_self, pthread_cond_init, pthread_mutex_init
  *               pthread_create
  *
- * Globals read/altered: thread.n_pipeline (rw), Host (rw),
- *                       Pipeline (rw)
+ * Globals read/altered: thread.n_pipeline (rw), Host (rw), Id (rw),
+ *                       Pipeline (rw), Busy (rw), Dispatch_To_Host (rw)
  *
  * Notes:
  * - This should only be called once by at most one thread in a program.
@@ -128,23 +144,27 @@ static int Busy = 0;
  ***************************************************************************/
 
 static void
-thread_boot( int num_pipe ) {
+thread_boot( int n_pipeline,
+             int dispatch_to_host ) {
   int i;
 
-  // Check if arguments are valid and Threader isn't already initialized
+  // Check if arguments are valid and dispatcher isn't already initialized
 
   if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
-  if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
+
+  if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
 
   // Initialize some global variables. Note: thread.n_pipeline = 0 here 
 
-  Host = pthread_self();
-  Id = 0;
+  Id               = 0;
+  Busy             = 0;
+  Dispatch_To_Host = ( dispatch_to_host ? 0 : 1 );
+  Host             = pthread_self();
 
   // Initialize all the pipelines
 
-  for( i=0; i<num_pipe; i++ ) {
+  for( i=0; i<n_pipeline-Dispatch_To_Host; i++ ) {
 
     // Initialize the pipeline state. Note: PIPELINE_ACK will be
     // cleared once the thread control function pipeline_mgr starts
@@ -180,8 +200,7 @@ thread_boot( int num_pipe ) {
 
   }
 
-  thread.n_pipeline = num_pipe;
-  Busy = 0;
+  thread.n_pipeline = n_pipeline;
 }
 
 /****************************************************************************
@@ -199,13 +218,13 @@ thread_boot( int num_pipe ) {
  *         - The caller is not the host thread
  *         - Errors occurred terminating pipeline threads
  *         - Errors occurred freeing pipeline resources
- *         - Errors occurred freeing threader resources
+ *         - Errors occurred freeing dispatcher resources
  *
  * Dependencies: pthread_mutex_lock, pthread_mutex_unlock, pthread_join
  *               pthread_cond_signal, pthread_mutex_destroy,
  *               pthread_cond_destroy
  *
- * Globals read/altered: thread.n_pipeline (r), Pipeline (rw)
+ * Globals read/altered: thread.n_pipeline (r), Busy (r), Pipeline (rw)
  *
  * Notes:
  * - This function will spin forever if a thread is executing a
@@ -222,12 +241,15 @@ thread_halt( void ) {
   // terminate
 
   if( !thread.n_pipeline ) ERROR(( "Boot the thread dispatcher first!" ));
+
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may halt the thread dispatcher!" ));
 
+  if( Busy ) ERROR(( "Pipelines are busy!" ));
+
   // Terminate the threads
 
-  for( id=0; id<thread.n_pipeline; id++ ) {
+  for( id=0; id<thread.n_pipeline-Dispatch_To_Host; id++ ) {
 
     // Signal the thread to terminate. Note: If the thread is
     // executing a pipeline which doesn't return, this function will
@@ -256,15 +278,14 @@ thread_halt( void ) {
   // results if the mutexes were destroyed before all the pipelines
   // were terminated.
 
-  for( id=0; id<thread.n_pipeline; id++ )
+  for( id=0; id<thread.n_pipeline-Dispatch_To_Host; id++ )
     if( pthread_mutex_destroy( &Pipeline[id].mutex ) ||
         pthread_cond_destroy( &Pipeline[id].wake ) )
       ERROR(( "Unable to destroy pipeline resources!" ));
 
   // Finish up
 
-  thread.n_pipeline = Id = 0;
-  Busy = 0;
+  thread.n_pipeline = 0;
 }
 
 /****************************************************************************
@@ -292,7 +313,8 @@ thread_halt( void ) {
  * Dependencies: pthread_mutex_unlock, pthread_self, pthread_mutex_trylock,
  *               pthread_equal, pthread_mutex_lock, pthread_cond_signal
  *
- * Globals read/altered: thread.n_pipeline (r), Pipeline (rw)
+ * Globals read/altered: thread.n_pipeline (r), Id, Dispatch_To_Host,
+ *                       Pipeline (rw)
  *
  * Notes:
  * - Only the host may call this.
@@ -325,6 +347,9 @@ parallel_execute( pipeline_func_t func,
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call parallel_execute" ));
 
+  if( thread.n_pipeline-Dispatch_To_Host<=0 )
+    ERROR(( "No threads available for parallel execution!" ));
+
   // If pipelines are potentially available to execute tasks, loop
   // until we dispatch the task to a pipeline (or we detect
   // thread_halt is running)
@@ -333,11 +358,11 @@ parallel_execute( pipeline_func_t func,
 
     // Get an id of a pipeline to query.
 
-    id = Id; if( (++Id) >= thread.n_pipeline ) Id = 0;
+    id = Id; if( (++Id) >= thread.n_pipeline-Dispatch_To_Host ) Id = 0;
 
     if( !pthread_mutex_trylock( &Pipeline[id].mutex ) ) {
       
-      // If the thready isn't executing, see if the task can be
+      // If the thread isn't executing, see if the job can be
       // dispatched to this pipeline.  Note: host now has control over
       // the thread's state.
       
@@ -403,7 +428,7 @@ parallel_execute( pipeline_func_t func,
  *
  ***************************************************************************/
 
-void *
+static void *
 pipeline_mgr( void *_pipeline ) {
   pipeline_state_t *pipeline = _pipeline;
 
@@ -464,7 +489,7 @@ static void
 thread_dispatch( pipeline_func_t func,
                  void * args,
                  int sz_args ) {
-  int rank;
+  int id;
 
   if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
 
@@ -472,22 +497,27 @@ thread_dispatch( pipeline_func_t func,
     ERROR(( "Only the host may call thread_dispatch" ));
 
   if( Busy ) ERROR(( "Pipelines are busy!" ));
+  Busy = 1;
 
-  for( rank=0; rank<thread.n_pipeline; rank++ ) {
-    Done[rank] = 0;
+  for( id=0; id<thread.n_pipeline-Dispatch_To_Host; id++ ) {
+    Done[id] = 0;
     parallel_execute( func,
-                      ((char *)args) + rank*sz_args,
-                      rank,
+                      ((char *)args) + id*sz_args,
+                      id,
                       thread.n_pipeline,
-                      &Done[rank] );
+                      &Done[id] );
   }
 
-  Busy = 1;
+  if( Dispatch_To_Host ) {
+    Done[id] = 0;
+    if( func ) func( ((char *)args) + id*sz_args, id, thread.n_pipeline );
+    Done[id] = 1;
+  }
 }
                  
 static void
 thread_wait( void ) {
-  int rank;
+  int id;
 
   if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
 
@@ -496,10 +526,10 @@ thread_wait( void ) {
 
   if( !Busy ) ERROR(( "Pipelines are not busy!" ));
 
-  rank = 0;
-  while( rank<thread.n_pipeline ) {
-    if( Done[rank] ) rank++;
-    else             nanodelay(5);
+  id = 0;
+  while( id<thread.n_pipeline ) {
+    if( Done[id] ) id++;
+    else           nanodelay(5);
   }
 
   Busy = 0;

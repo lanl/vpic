@@ -148,7 +148,8 @@ pipeline_dispatcher_t spu = {
  ***************************************************************************/
 
 static void
-spu_boot( int num_pipe ) {
+spu_boot( int num_pipe,
+          int dispatch_to_host ) {
   int i;
 
   // Check if arguments are valid and dispatcher isn't already initialized
@@ -156,6 +157,8 @@ spu_boot( int num_pipe ) {
   if( spu.n_pipeline != 0 ) ERROR(( "Halt the spu dispatcher first!" ));
   if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested" ));
+  if( dispatch_to_host )
+    ERROR(( "SPU pipelines cannot be dispatched to the host" ));
 
   // Initialize some global variables. Note: spu.n_pipeline = 0 here
 
@@ -439,7 +442,7 @@ parallel_execute( spe_program_handle_t * pipeline,
  *
  ***************************************************************************/
 
-void *
+static void *
 spu_control_thread( void *_this_control_thread ) {
   spu_control_state_t *this_control_thread = _this_control_thread;
   unsigned int entry;
@@ -564,6 +567,4 @@ spu_wait( void ) {
 
   Busy = 0;
 }
-
-#endif // CELL_PPU_BUILD
 

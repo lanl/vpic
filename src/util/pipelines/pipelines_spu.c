@@ -74,22 +74,6 @@ static volatile int Done[ MAX_PIPELINE ];
 static int Id = 0;
 static int Busy = 0;
 
-static void spu_boot( int num_pipe );
-static void spu_halt( void );
-static void spu_dispatch( spe_program_handle_t * pipeline,
-  void * args, int size );
-static void spu_wait( void );
-
-typedef void (*dispatcher_func_t)( pipeline_func_t, void *, int );
-
-pipeline_dispatcher_t spu = {
-  0,            // n_pipeline
-  spu_boot,     // boot
-  spu_halt,     // halt
-  (dispatcher_func_t)spu_dispatch, // dispatch
-  spu_wait      // wait
-};
-
 /****************************************************************************
  *
  * SPU pipeline dispatcher notes:
@@ -568,3 +552,14 @@ spu_wait( void ) {
   Busy = 0;
 }
 
+typedef void (*dispatcher_func_t)( pipeline_func_t, void *, int );
+
+pipeline_dispatcher_t spu = {
+  0,            // n_pipeline
+  spu_boot,     // boot
+  spu_halt,     // halt
+  (dispatcher_func_t)spu_dispatch, // dispatch
+  spu_wait      // wait
+};
+
+#endif /* CELL_PPU_BUILD */

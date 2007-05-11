@@ -164,8 +164,10 @@ struct AAISPolicy {
 	inline void mp_abort(int reason, mp_handle h) {
 		P2PConnection & p2p = P2PConnection::instance();
 //		std::cerr << "WRAPPER: mp_abort called" << std::endl;
-		p2p.post(P2PTag::abort);
+		MPRequest request(P2PTag::data, 1, 0);
+		p2p.post(P2PTag::abort, request);
 		p2p.send(&reason, 1, P2PTag::data);
+		p2p.abort(reason);
 	} // mp_abort
 
 	inline void mp_barrier(mp_handle h) {

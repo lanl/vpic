@@ -198,11 +198,6 @@ typedef const char *error_code;
   ((error_code)(__FILE__"("EXPAND_AND_STRINGIFY(__LINE__)"): "s))
 #define NO_ERROR ((error_code)NULL)
 
-// Opaque data type so users do not have to see message passing
-// internals moved from mp.h.
-
-typedef void * mp_handle; // FIXME: This really doesn't belong here.
-
 BEGIN_C_DECLS
 
 // In util.c

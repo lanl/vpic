@@ -11,6 +11,7 @@
 #define mp_hxx
 
 #include <util_base.h>
+#include <mp_handle.h>
 
 BEGIN_C_DECLS
 

@@ -24,12 +24,12 @@ OPT_LEVEL=-1
 # CPUMODEL - specify a particular cpu model (this affects optimization)
 # supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CPUMODEL=pentiumM
+CPUMODEL=opteron
 
 ################################################################################
 # EXTENSION - executable extension
 ################################################################################
-EXTENSION=pm
+EXTENSION=op
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
@@ -58,8 +58,8 @@ ENABLE_SIMD=1
 
 # to use mpicc from openmpi
 MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g;s,-Wl[^ ]*,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################
 # ENABLE_HOST - enable host build (0|1)[1]
@@ -107,16 +107,20 @@ PCXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-
 # PPU_MPI_LDFLAGS - configure MPI link flags
 # PPU_MPI_LIBS - configure MPI library names
 ################################################################################
-PPU_MPI_CPPFLAGS="-I/opt/openmpi/1.2/ppc32/include/openmpi -I/opt/openmpi/1.2/ppc32/include -pthread"
-PPU_MPI_LDFLAGS="-pthread -L/opt/openmpi/1.2/ppc32/lib -Wl,--export-dynamic"
-PPU_MPI_LIBS="-lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lm -ldl"
+#PPU_MPI_CPPFLAGS="-I/opt/openmpi/1.2/ppc32/include/openmpi -I/opt/openmpi/1.2/ppc32/include -pthread"
+#PPU_MPI_LDFLAGS="-pthread -L/opt/openmpi/1.2/ppc32/lib -Wl,--export-dynamic"
+#PPU_MPI_LIBS="-lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lm -ldl"
+
+PPU_MPI_CPPFLAGS=`powerpc-mpicc --showme:compile`
+PPU_MPI_LDFLAGS=`powerpc-mpicc --showme:link | sed 's,-l[^ ]*,,g;s,-Wl[^ ]*,,g'`
+PPU_MPI_LIBS=`powerpc-mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################
 # LIBSPE2 - libspe2 library
 ################################################################################
-LIBSPE2 "/opt/ibm/cell-sdk/prototype/sysroot/usr"
+LIBSPE2="/opt/ibm/cell-sdk/prototype/sysroot/usr"
 
 ################################################################################
 # IBM_SIMDMATH - simdmath library
 ################################################################################
-IBM_SIMDMATH "/opt/cell/toolchain-3.3/sysroot/usr/spu"
+IBM_SIMDMATH="/opt/cell/toolchain-3.3/sysroot/usr/spu"

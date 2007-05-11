@@ -1,124 +1,204 @@
 /*------------------------------------------------------------------------------
 ------------------------------------------------------------------------------*/
 
-#include <iostream>
+#include <sstream>
+#include <string>
 #include <P2PConnection.hxx>
-
-struct Buffer {
-	int rank;
-	int size;
-}; // struct buffer
 
 int main(int argc, char *argv[]) {
 
-	// get an instance of the manager
-	P2PConnection & p2p = P2PConnection::instance();		
+	MPBuffer<float> send_buffer[max_buffers];
+	MPBuffer<float> recv_buffer[max_buffers];
+	MPRequest request;
+	double dbuf[5];
+	int ibuf_send[5];
+	int * ibuf_recv(NULL);
+	int64_t lbuf_send[5];
+	int64_t * lbuf_recv(NULL);
 
 	// initialize everything
-	p2p.init(argc, argv);
+	ConnectionManager::instance().init(argc, argv);
 
-	int rank, size;
-	Buffer * msg;
+	// get an instance of the p2p connection
+	P2PConnection & p2p = P2PConnection::instance();
 
-	rank = p2p.rank();
-	size = p2p.size();
+	int rank = p2p.global_id();
+	int size = p2p.global_size();
 
-	MPI_Request * sreq = new MPI_Request[size];
-	MPI_Request * rreq = new MPI_Request[size];
-	msg = new Buffer[size];
+	// initialize integer arrays
+	ibuf_recv = new int[5*size];
+	lbuf_recv = new int64_t[5*size];
 
-	// send to other ranks
-	for(int i(0); i<size; i++) {
+	int count = 2*sizeof(float);
+
+	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			// send a message to every other accelerator
-			// through the host relay
-			msg[i].rank = rank;
-			msg[i].size = size;
-			p2p.request(P2PTag::isend, P2PTag::data, 8, i);
-			p2p.isend(reinterpret_cast<char *>(&msg[i]), 8,
-				P2PTag::data, sreq[i]);
+			request.set(0, count, i, i);
+			send_buffer[i].data()[0] = static_cast<float>(rank);
+			send_buffer[i].data()[1] = static_cast<float>(size);
+			p2p.post(P2PTag::irecv, request);
+			p2p.irecv(reinterpret_cast<char *>(recv_buffer[i].data()),
+				request.count, request.tag, request.id);
+		} // if
+	} // for
+	
+	for(size_t i(0); i<size; i++) {
+		if(i != rank) {
+			request.set(0, count, i, i);
+			send_buffer[i].data()[0] = static_cast<float>(rank);
+			send_buffer[i].data()[1] = static_cast<float>(size);
+
+			// request that host do a blocking send
+			// but do a non-blocking point-to-point send
+			// so that we can keep working
+			p2p.post(P2PTag::send, request);
+			p2p.isend(reinterpret_cast<char *>(send_buffer[i].data()),
+				request.count, request.tag, request.id);
+		} // if
+	} // for
+	
+	for(size_t i(0); i<size; i++) {
+		if(i != rank) {
+			p2p.wait_send(i);
 		} // if
 	} // for
 
-	// receive from other ranks
-	for(int i(0); i<size; i++) {
+	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			// receive a message from every other accelerator
-			// through the host relay
-			p2p.request(P2PTag::irecv, P2PTag::data, 8, i);
-			p2p.irecv(reinterpret_cast<char *>(&msg[i]), 8,
-				P2PTag::data, rreq[i]);
+			request.set(0, count, i, i);
+			p2p.post(P2PTag::wait_recv, request);
+			p2p.wait_recv(i);
 		} // if
 	} // for
 
-	// wait on messages
-	MPI_Status status;
-	for(int i(0); i<size; i++) {
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
+
+	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			p2p.wait(sreq[i], status);
-			p2p.wait(rreq[i], status);
+			std::cout << recv_buffer[i].data()[0] <<
+				" " << recv_buffer[i].data()[1] << std::endl;
 		} // if
 	} // for
 
-	// do a barrier
-	std::cout << "rank " << rank << " reached barrier" << std::endl;
-	p2p.request(P2PTag::barrier);
-	p2p.sync();
+	// do all reduce max on doubles
+	for(size_t i(0); i<5; i++) {
+		dbuf[i] = static_cast<double>(rank*10 + i);
+	} // for
+	request.set(0, 5, rank);
+	p2p.post(P2PTag::allreduce_max_double, request);
+	p2p.send(dbuf, request.count, request.tag);
+	p2p.recv(dbuf, request.count, request.tag, request.id);
 
-	// do all reduce max	
-	double val = static_cast<double>(rank);
-	p2p.request(P2PTag::allreduce_max_double, P2PTag::data, 1);
-	p2p.send(&val, 1);
-	p2p.recv(&val, 1);
-	std::cout << "all reduce max " << val << std::endl;
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
 
-	// do all reduce sum	
-	val = static_cast<double>(rank);
-	p2p.request(P2PTag::allreduce_sum_double, P2PTag::data, 1);
-	p2p.send(&val, 1);
-	p2p.recv(&val, 1);
-	std::cout << "all reduce sum " << val << std::endl;
-
-	// do all gather
-	//int * gather = new int[size*10];
-	int * gather = (int *)malloc(size*10*sizeof(int));
-	for(size_t i(0); i<10; i++) { gather[i] = 10*rank + i; }
-	p2p.request(P2PTag::allgather_int, P2PTag::data, 10);
-	p2p.send(gather, 10);
-	p2p.recv(gather, size*10);
-
-	if(rank == 0) {
-		for(int r(0); r<size; r++) {
-			std::cout << "gathered";
-
-			for(size_t i(0); i<10; i++) {
-				std::cout << " " << gather[r*10 + i]; 
-			} // for
-			std::cout << std::endl;
+	{
+		std::ostringstream ostr;
+		ostr << dbuf[0];
+		for(size_t i(1); i<5; i++) {
+			ostr << " " << dbuf[i];
 		} // for
-	} // if
+		std::cout << "allreduce max double: " << ostr.str() << std::endl;
+	} // scope
 
-	// print results
-	for(int i(0); i<size; i++) {
-		if(i != rank) {
-			std::cout << "rank " << rank << " got message " << msg[i].rank <<
-				" " << msg[i].size << " from " << i << std::endl;
-		} // if
+	// do all reduce sum on doubles
+	request.set(0, 5, rank);
+	p2p.post(P2PTag::allreduce_sum_double, request);
+	p2p.send(dbuf, request.count, request.tag);
+	p2p.recv(dbuf, request.count, request.tag, request.id);
+
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
+
+	{
+		std::ostringstream ostr;
+		ostr << dbuf[0];
+		for(size_t i(1); i<5; i++) {
+			ostr << " " << dbuf[i];
+		} // for
+		std::cout << "allreduce sum double: " << ostr.str() << std::endl;
+	} // scope
+
+	// do all reduce sum on integers
+	for(size_t i(0); i<5; i++) {
+		ibuf_send[i] = rank*10 + i;
 	} // for
+	request.set(0, 5, rank);
+	p2p.post(P2PTag::allreduce_sum_int, request);
+	p2p.send(ibuf_send, request.count, request.tag);
+	p2p.recv(ibuf_recv, request.count, request.tag, request.id);
 
-	/*
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
+
+	{
+		std::ostringstream ostr;
+		ostr << ibuf_recv[0];
+		for(size_t i(1); i<5; i++) {
+			ostr << " " << ibuf_recv[i];
+		} // for
+		std::cout << "allreduce max integer: " << ostr.str() << std::endl;
+	} // scope
+
+	// do all gather on integers
+	for(size_t i(0); i<5; i++) {
+		ibuf_send[i] = rank*10 + i;
+	} // for
+	request.set(0, 5, rank);
+	p2p.post(P2PTag::allgather_int, request);
+	p2p.send(ibuf_send, request.count, request.tag);
+	p2p.recv(ibuf_recv, request.count*size, request.tag, request.id);
+
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
+
+	{
+		std::ostringstream ostr;
+		ostr << ibuf_recv[0];
+		for(size_t i(1); i<5*size; i++) {
+			ostr << " " << ibuf_recv[i];
+		} // for
+		std::cout << "allgather integer: " << ostr.str() << std::endl;
+	} // scope
+
+	// do all gather on int64_t
+	for(size_t i(0); i<5; i++) {
+		lbuf_send[i] = rank*10 + i;
+	} // for
+	request.set(0, 5, rank);
+	p2p.post(P2PTag::allgather_int64, request);
+	p2p.send(lbuf_send, request.count, request.tag);
+	p2p.recv(lbuf_recv, request.count*size, request.tag, request.id);
+
+	p2p.post(P2PTag::barrier);
+	p2p.barrier();
+
+	{
+		std::ostringstream ostr;
+		ostr << lbuf_recv[0];
+		for(size_t i(1); i<5*size; i++) {
+			ostr << " " << lbuf_recv[i];
+		} // for
+		std::cout << "allgather int64: " << ostr.str() << std::endl;
+	} // scope
+
+/*
+	// test abort
 	int reason = 0;
-	p2p.request(P2PTag::abort);
-	p2p.send(&reason, 1);
-	*/
+	p2p.post(P2PTag::abort);
+	p2p.send(&reason, 1, 0);
+*/
 
-	// finalize
-	p2p.finalize();
+	// ask relay to stop
+	p2p.post(P2PTag::end);
 
-	// cleanup
-	delete[] sreq;
-	delete[] rreq;
-	delete[] msg;
+	// finalize communication
+	ConnectionManager::instance().finalize();
+
+	delete[] ibuf_recv;
+	delete[] lbuf_recv;
 
 	return 0;
+
 } // main

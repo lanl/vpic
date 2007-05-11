@@ -12,8 +12,6 @@
 #ifndef P2PConnection_hxx
 #define P2PConnection_hxx
 
-#include <MPICommunicationPolicy.hxx>
-
 /*!
 	\class P2PConnection P2PConnection.h
 	\brief  provides...
@@ -47,10 +45,12 @@ template<class CommunicationPolicy> class P2PConnection_T
 
 	}; // class P2PConnection_T
 
-#if defined SERVER_BUILD
-	typedef P2PConnection_T<MPICommunicationPolicy<0> > P2PConnection;
+#include <P2PPolicyMPI.hxx>
+
+#if defined HOST_BUILD
+	typedef P2PConnection_T<P2PPolicyMPI<0> > P2PConnection;
 #else
-	typedef P2PConnection_T<MPICommunicationPolicy<1> > P2PConnection;
+	typedef P2PConnection_T<P2PPolicyMPI<1> > P2PConnection;
 #endif // BUILD
 
 #endif // P2PConnection_hxx

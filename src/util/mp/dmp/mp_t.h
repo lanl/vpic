@@ -1,8 +1,8 @@
 #ifndef mp_t_h
 #define mp_t_h
 
-#include <util_base.h>
 #include <mpi.h>
+#include <util_base.h>
 
 #define BEGIN_TURNSTYLE do {                                          \
    int _rank, _size, _baton = 0;                                      \

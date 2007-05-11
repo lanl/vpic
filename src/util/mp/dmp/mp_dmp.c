@@ -9,8 +9,6 @@
  */
 
 #include <mp_dmp.h>
-#include <mp_t.h>
-#include <mpi.h>
 
 // BJA: We're getting crashbugs from excessive realloc on some
 // problems, so this multiplier will help reduce the number of such

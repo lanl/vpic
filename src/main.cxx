@@ -10,29 +10,48 @@
 
 #include <vpic.hxx>
 
-#ifndef PIPELINE_BOOT_REQUEST
-#define PIPELINE_BOOT_REQUEST 1
-#endif
-
 int
 main( int argc,
       char **argv ) {
 
+# if defined(CELL_PPU_BUILD)
+
+  // Allow processing of standard pipeline workloads on the 2 PPUs.
+  // For more efficient handling, we use this thread (which is
+  // running on one of the two PPU cores) and a second thread created
+  // (which will running on the other PPU core) for processing
+  // standard pipeline workloads.
+
+  thread.boot( 2,   // Total number of PPUs for processing pipeline workloads
+               1 ); // This PPU thread is one of the threads
+
+# if defined(USE_CELL_SPUS)
+
+  // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
+
+  spu.boot( 8,   // Total number of SPUs for processing pipeline workloads
+            0 ); // This PPU thread physically cannot process SPU workloads!
+
+# endif
+
+# else
+
+  // Strip threads-per-process arguments from the argument list
+
+  int m, n, tpp = 1;
+  for( m=n=0; n<argc; n++ )
+    if( strncmp( argv[n], "-tpp=", 5 )==0 ) tpp = atoi( argv[n]+5 );
+    else                                    argv[m++] = argv[n];
+  argv[m] = NULL; // ANSI - argv is NULL terminated
+  argc = m;
+
+  thread.boot( tpp, 1 );
+
+# endif
+
   // Note: Some MPIs will bind threads to cores if threads are booted
   // after MPI is initialized.  So we start up the pipeline
   // dispatchers _before_ starting up MPI.
-
-  PSTYLE.boot( PIPELINE_BOOT_REQUEST, 1 );
-
-# ifdef CELL_PPU_BUILD
-  // FIXME: n_pipeline rationalization throughout code.  Also, need to
-  // discuss MPI processor model for RoadRunner with Ben to determine
-  // if each there is a one-to-one correspondence with an MPI
-  // processor and PPU (hopefully there is) or if there are multiple
-  // PPU's per MPI process.  It may make some subtle differences in
-  // PPU threading model and SPU dispatcher.
-  spu.boot( 8, 0 );
-# endif
 
   mp_init(argc, argv);
 
@@ -58,10 +77,13 @@ main( int argc,
 
   mp_finalize();
 
-  PSTYLE.halt();
-
-# ifdef CELL_PPU_BUILD
+# if defined(CELL_PPU_BUILD)
+  thread.halt();
+# if defined(USE_CELL_SPUS)
   spu.halt();
+# endif
+# else
+  thread.halt();
 # endif
 
   return 0;

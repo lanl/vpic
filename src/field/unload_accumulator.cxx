@@ -1,19 +1,9 @@
-#include <field.h>
-
-#ifndef V4_ACCELERATION
-#define UNLOAD_ACCUMULATOR_PIPELINE (pipeline_func_t)unload_accumulator_pipeline
-#else
-#define UNLOAD_ACCUMULATOR_PIPELINE (pipeline_func_t)unload_accumulator_pipeline_v4
-#endif
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct unload_accumulator_pipeline_args {
-  field_t             * ALIGNED(16)  f;
-  const accumulator_t * ALIGNED(128) a;
-  const grid_t        *              g;
-} unload_accumulator_pipeline_args_t;
 
 static void
 unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
@@ -85,7 +75,9 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -208,7 +200,6 @@ unload_accumulator( field_t             * ALIGNED(16)  f,
   args->a = a;
   args->g = g;
 
-  PSTYLE.dispatch( UNLOAD_ACCUMULATOR_PIPELINE, args, 0 );
-  unload_accumulator_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( unload_accumulator, args, 0 );
+  WAIT_PIPELINES();
 }

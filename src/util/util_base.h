@@ -84,10 +84,15 @@
 //
 // align should be a power of two.
 
-#define DECLARE_ALIGNED_ARRAY(type,align,name,count)                        \
-  char _aa_##name[(count)*sizeof(type)+(align)];                            \
-  type * ALIGNED(align) const name = (type * ALIGNED(align))                \
+#if 0 // C99 has (dubious) issues with this
+#define DECLARE_ALIGNED_ARRAY(type,align,name,count)                    \
+  char _aa_##name[(count)*sizeof(type)+(align)];                        \
+  type * ALIGNED(align) const name = (type * ALIGNED(align))            \
     ( ( (size_t)_aa_##name + (align) - 1 ) & (~((align)-1)) )
+#else // Sigh ... this is technically not portable
+#define DECLARE_ALIGNED_ARRAY(type,align,name,count)    \
+  type name[count] __attribute__ ((aligned (align)))
+#endif
 
 // PAD(s,a) computes the amount of bytes necessary to add to "s" bytes
 // to make "s" evenly divisible by "a" (a power of two).  Note: PAD is

@@ -1,19 +1,7 @@
 // Note: This is virtually identical to compute_div_e
 
-#include <field.h>
-
-// FIXME: This is probably not worth vectorizing.  Namely, this
-// operation is not executed very often and, in either horizontal or
-// vertical SIMD, would require predominantly scalar gather / scatter
-// operations to assemble the desired vectors.
-
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define COMPUTE_RHOB_PIPELINE (pipeline_func_t)compute_rhob_pipeline
-#else
-#define COMPUTE_RHOB_PIPELINE (pipeline_func_t)compute_rhob_pipeline_v4
-#endif
+#define IN_field_pipeline
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
@@ -22,12 +10,6 @@
     py*( m[f0->ematy].epsy*f0->ey - m[fy->ematy].epsy*fy->ey ) +  \
     pz*( m[f0->ematz].epsz*f0->ez - m[fz->ematz].epsz*fz->ez ) -  \
     f0->rhof )
-
-typedef struct compute_rhob_pipeline_args {
-  field_t                      * ALIGNED(16) f;
-  const material_coefficient_t * ALIGNED(16) m;
-  const grid_t                 *             g;
-} compute_rhob_pipeline_args_t;
 
 static void
 compute_rhob_pipeline( compute_rhob_pipeline_args_t * args,
@@ -79,8 +61,14 @@ compute_rhob_pipeline( compute_rhob_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
-#error "V4 version not implemented"
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+// FIXME: This is probably not worth vectorizing.  Namely, this
+// operation is not executed very often and, in either horizontal or
+// vertical SIMD, would require predominantly scalar gather / scatter
+// operations to assemble the desired vectors.
+#error "V4 version not hooked up yet!"
 #endif
 
 void
@@ -121,8 +109,7 @@ compute_rhob( field_t                      * ALIGNED(16) f,
   args->m = m;
   args->g = g;
   
-  PSTYLE.dispatch( COMPUTE_RHOB_PIPELINE, args, 0 );
-  compute_rhob_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( compute_rhob, args, 0 );
 
   // Have the host work on the exterior of the local domain
 
@@ -219,9 +206,7 @@ compute_rhob( field_t                      * ALIGNED(16) f,
 
   // Finish up setting the interior
 
-  // FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE
-
-  PSTYLE.wait();
+  WAIT_PIPELINES(); // FIXME: CHECK EXACTLY HOW LATE THIS CAN BE DONE
 
   local_adjust_rhob(f,g);
 }

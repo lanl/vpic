@@ -1,19 +1,9 @@
-#include <field.h>
-
-#ifndef V4_ACCELERATION
-#define LOAD_INTERPOLATOR_PIPELINE (pipeline_func_t)load_interpolator_pipeline
-#else
-#define LOAD_INTERPOLATOR_PIPELINE (pipeline_func_t)load_interpolator_pipeline_v4
-#endif
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define fi(x,y,z) fi[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 #define f(x,y,z)  f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct load_interpolator_pipeline_args {
-  interpolator_t * ALIGNED(128) fi;
-  const field_t  * ALIGNED(16)  f;
-  const grid_t   *              g;
-} load_interpolator_pipeline_args_t;
 
 static void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
@@ -121,7 +111,9 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -312,7 +304,6 @@ load_interpolator( interpolator_t * ALIGNED(128) fi,
   args->f  = f;
   args->g  = g;
 
-  PSTYLE.dispatch( LOAD_INTERPOLATOR_PIPELINE, args, 0 );  
-  load_interpolator_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( load_interpolator, args, 0 );
+  WAIT_PIPELINES();
 }

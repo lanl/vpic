@@ -1,22 +1,12 @@
-#include <field.h>
-#include <stdio.h>
-
-#ifndef V4_ACCELERATION
-#define CLEAN_DIV_B_PIPELINE (pipeline_func_t)clean_div_b_pipeline
-#else
-#define CLEAN_DIV_B_PIPELINE (pipeline_func_t)clean_div_b_pipeline_v4
-#endif
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
 #define MARDER_CBX() f0->cbx += px*( f0->div_b_err - fx->div_b_err )
 #define MARDER_CBY() f0->cby += py*( f0->div_b_err - fy->div_b_err )
 #define MARDER_CBZ() f0->cbz += pz*( f0->div_b_err - fz->div_b_err )
-
-typedef struct clean_div_b_pipeline_args {
-  field_t      * ALIGNED(16) f;
-  const grid_t *             g;
-} clean_div_b_pipeline_args_t;
 
 static void
 clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
@@ -75,7 +65,9 @@ clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -219,8 +211,7 @@ clean_div_b( field_t      * ALIGNED(16) f,
   args->f = f;
   args->g = g;
 
-  PSTYLE.dispatch( CLEAN_DIV_B_PIPELINE, args, 0 );
-  clean_div_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( clean_div_b, args, 0 );
   
   // Begin setting derr ghosts
   begin_remote_ghost_div_b( f, g );
@@ -346,7 +337,7 @@ clean_div_b( field_t      * ALIGNED(16) f,
 
   // Wait for pipelines to finish up cleaning div_b in interior
   
-  PSTYLE.wait();
+  WAIT_PIPELINES();
   
   local_adjust_norm_b(f,g);
 }

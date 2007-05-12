@@ -1,3 +1,5 @@
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+
 /****************************************************************************
  *
  * Copyright (c) 2000, Kevin James Bowers
@@ -39,9 +41,6 @@
 // (?) Timeouts in spu_halt, spu_boot (spin wait)
 
 #include <pipelines.h>
-
-#ifdef CELL_PPU_BUILD
-
 #include <pthread.h>
 #include <libspe2.h>
 
@@ -562,4 +561,4 @@ pipeline_dispatcher_t spu = {
   spu_wait      // wait
 };
 
-#endif /* CELL_PPU_BUILD */
+#endif

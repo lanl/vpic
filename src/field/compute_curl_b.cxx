@@ -1,15 +1,9 @@
 // Note: This is similar to advance_e_pipeline
 
-#include <field.h>
-
-// See note and advance_e
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define COMPUTE_CURL_B_PIPELINE (pipeline_func_t)compute_curl_b_pipeline
-#else
-#define COMPUTE_CURL_B_PIPELINE (pipeline_func_t)compute_curl_b_pipeline_v4
-#endif
+#define IN_field_pipeline
+// See note in advance_e
+// #define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
@@ -25,12 +19,6 @@
   f0->tcaz = px*(f0->cby*m[f0->fmaty].rmuy-fx->cby*m[fx->fmaty].rmuy) -   \
              py*(f0->cbx*m[f0->fmatx].rmux-fy->cbx*m[fy->fmatx].rmux)
 
-typedef struct compute_curl_b_pipeline_args {
-  field_t                      * ALIGNED(16) f;
-  const material_coefficient_t * ALIGNED(16) m;
-  const grid_t                 *             g;
-} compute_curl_b_pipeline_args_t;
-         
 static void
 compute_curl_b_pipeline( compute_curl_b_pipeline_args_t * args,
                          int pipeline_rank,
@@ -83,7 +71,9 @@ compute_curl_b_pipeline( compute_curl_b_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -271,8 +261,7 @@ compute_curl_b( field_t                      * ALIGNED(16) f,
   args->m = m;
   args->g = g;
 
-  PSTYLE.dispatch( COMPUTE_CURL_B_PIPELINE, args, 0 );
-  compute_curl_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( compute_curl_b, args, 0 );
   
   // Do left over interior ex
   for( z=2; z<=nz; z++ ) {
@@ -310,7 +299,7 @@ compute_curl_b( field_t                      * ALIGNED(16) f,
     }
   }
 
-  PSTYLE.wait();
+  WAIT_PIPELINES();
   
   /***************************************************************************
    * Finish tangential B ghost setup

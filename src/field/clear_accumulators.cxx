@@ -1,20 +1,9 @@
-#include <field.h>
+// Any compiler worth its salt will have an optimized memset
+#define IN_field_pipeline
+#include <field_pipelines.h>
 
-// Any compiler worth its salt has highly optimized version for the
-// target platform
-
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define CLEAR_ACCUMULATORS_PIPELINE (pipeline_func_t)clear_accumulators_pipeline
-#else
-#define CLEAR_ACCUMULATORS_PIPELINE (pipeline_func_t)clear_accumulators_pipeline_v4
-#endif
-
-typedef struct clear_accumulators_pipeline_args {
-  accumulator_t * ALIGNED(128) a;       // Base of all the accumulators
-  int                          n_voxel;
-} clear_accumulators_pipeline_args_t;
+// FIXME: THE CLEAR FUNCTION MUST TAKE INTO ACCOUNT THAT IT MAKE NEED TO
+// RUN HERE ON A DIFFERENT NUMBER OF THREADS THAN THERE ARE ACCUMULATORS!
 
 static void
 clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
@@ -25,8 +14,10 @@ clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
           args->n_voxel*sizeof(accumulator_t) );
 }
 
-#ifdef V4_ACCELERATION
-#error "V4 version not implemented"
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+#error "V4 version not hooked up yet!"
 #endif
 
 void
@@ -40,7 +31,6 @@ clear_accumulators( accumulator_t * ALIGNED(128) a,
   args->a       = a;
   args->n_voxel = (g->nx+2)*(g->ny+2)*(g->nz+2);
 
-  PSTYLE.dispatch( CLEAR_ACCUMULATORS_PIPELINE, args, 0 );
-  clear_accumulators_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( clear_accumulators, args, 0 );
+  WAIT_PIPELINES();
 }

@@ -1,7 +1,6 @@
 // Note: This is similar to compute_curl_b
 
-#include <field.h>
-
+#define IN_field_pipeline
 // FIXME: Ben noticed that the pcomm unit test was failing under
 // USE_V4_PORTABLE.  Subsequently testing by me confirmed this on my
 // desktop and confirmed that it was not occurring under V4_SSE or no
@@ -16,14 +15,8 @@
 // future, I'll probably rethink how material properties are specified
 // to use less indirection in inner loops like this to be more v4 (and
 // thus cell) friendly.
-
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define ADVANCE_E_PIPELINE (pipeline_func_t)advance_e_pipeline
-#else
-#define ADVANCE_E_PIPELINE (pipeline_func_t)advance_e_pipeline_v4
-#endif
+// #define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
@@ -45,12 +38,6 @@
     damp*f0->tcaz;                                                          \
   f0->ez = m[f0->ematz].decayz*f0->ez +                                     \
            m[f0->ematz].drivez*( f0->tcaz - cj*f0->jfz )
-
-typedef struct advance_e_pipeline_args {
-  field_t                      * ALIGNED(16) f;
-  const material_coefficient_t * ALIGNED(16) m;
-  const grid_t                 *             g;
-} advance_e_pipeline_args_t;
 
 static void
 advance_e_pipeline( advance_e_pipeline_args_t * args,
@@ -106,7 +93,9 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -329,8 +318,7 @@ advance_e( field_t                      * ALIGNED(16) f,
   args->m = m;
   args->g = g;
 
-  PSTYLE.dispatch( ADVANCE_E_PIPELINE, args, 0 );
-  advance_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( advance_e, args, 0 );
   
   // Do left over interior ex
   for( z=2; z<=nz; z++ ) {
@@ -368,7 +356,7 @@ advance_e( field_t                      * ALIGNED(16) f,
     }
   }
 
-  PSTYLE.wait();
+  WAIT_PIPELINES();
   
   /***************************************************************************
    * Finish tangential B ghost setup

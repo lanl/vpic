@@ -5,6 +5,8 @@
 
 enum { MAX_PIPELINE = 16 };
 
+#if !defined(CELL_SPU_BUILD)
+
 // A pipeline function takes a pointer to arguments for the pipeline
 // and a integer which gives the rank of the pipeline and the total
 // number of pipelines dispatched.
@@ -72,17 +74,10 @@ typedef struct pipeline_dispatcher {
 
 BEGIN_C_DECLS
 
-// Temporary hack to allow compile time reconfiguration of which
-// pipeline dispatcher to use by default.
-   
-#ifndef PSTYLE
-#define PSTYLE serial
-#endif
-
-extern pipeline_dispatcher_t serial;
+extern pipeline_dispatcher_t serial; // For debugging purposes
 extern pipeline_dispatcher_t thread;
 
-#ifdef CELL_PPU_BUILD
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 
 extern pipeline_dispatcher_t spu;
 
@@ -131,4 +126,6 @@ extern pipeline_dispatcher_t spu;
 
 END_C_DECLS
 
-#endif /* _pipelines_h_ */
+#endif
+
+#endif // _pipelines_h_ 

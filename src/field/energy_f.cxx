@@ -1,27 +1,7 @@
-#include <field.h>
-
-// FIXME: This is probably not worth vectorizing.  Namely, it is not
-// called often enough, it uses V4 unfriendly mixed precision
-// arithmetic, horizontal implementations are almost entirely vector
-// gather operations, efficient vertical implementations will have
-// different round-off behavior from its scalar counterpart, etc.
-
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define ENERGY_F_PIPELINE (pipeline_func_t)energy_f_pipeline
-#else
-#define ENERGY_F_PIPELINE (pipeline_func_t)energy_f_pipeline_v4
-#endif
+#define IN_field_pipeline
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct energy_f_pipeline_args {
-  const field_t                * ALIGNED(16) f;
-  const material_coefficient_t * ALIGNED(16) m;
-  const grid_t                 *             g;
-  double en[MAX_PIPELINE+1][6];
-} energy_f_pipeline_args_t;
 
 static void
 energy_f_pipeline( energy_f_pipeline_args_t * args,
@@ -103,8 +83,15 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
   args->en[pipeline_rank][5] = en_bz;
 }
 
-#ifdef V4_ACCELERATION
-#error "V4 version not implemented"
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+// FIXME: This is probably not worth vectorizing.  Namely, it is not
+// called often enough, it uses V4 unfriendly mixed precision
+// arithmetic, horizontal implementations are almost entirely vector
+// gather operations, efficient vertical implementations will have
+// different round-off behavior from its scalar counterpart, etc.
+#error "V4 version not hooked up yet!"
 #endif
 
 void
@@ -172,13 +159,12 @@ energy_f( double                       *             global,
   args->m = m;
   args->g = g;
 
-  PSTYLE.dispatch( ENERGY_F_PIPELINE, args, 0 );
-  energy_f_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( energy_f, args, 0 );
+  WAIT_PIPELINES();
 
   // Reduce results from each pipelines
   
-  for( p=1; p<=PSTYLE.n_pipeline; p++ ) {
+  for( p=1; p<=N_PIPELINE; p++ ) {
     args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
     args->en[0][2] += args->en[p][2]; args->en[0][3] += args->en[p][3];
     args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];

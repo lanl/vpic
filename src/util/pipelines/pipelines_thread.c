@@ -159,7 +159,7 @@ thread_boot( int n_pipeline,
 
   Id               = 0;
   Busy             = 0;
-  Dispatch_To_Host = ( dispatch_to_host ? 0 : 1 );
+  Dispatch_To_Host = ( dispatch_to_host ? 1 : 0 );
   Host             = pthread_self();
 
   // Initialize all the pipelines

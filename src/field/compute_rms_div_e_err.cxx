@@ -1,5 +1,3 @@
-#include <field.h>
-
 // FIXME: This is probably not worth vectorizing.  Namely, this
 // operation is not executed very often, uses mixed precision
 // arithmetic (making it V4 unfriendly), does not have a V4 friendly
@@ -7,21 +5,10 @@
 // SIMD variant would have slightly different round-off properties of
 // the scalar and would require vector scalar gathering.
 
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define COMPUTE_RMS_DIV_E_ERR_PIPELINE (pipeline_func_t)compute_rms_div_e_err_pipeline
-#else
-#define COMPUTE_RMS_DIV_E_ERR_PIPELINE (pipeline_func_t)compute_rms_div_e_err_pipeline_v4
-#endif
+#define IN_field_pipeline
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct compute_rms_div_e_err_pipeline_args {
-  field_t      * ALIGNED(16) f;
-  const grid_t *             g;
-  double err[MAX_PIPELINE+1];
-} compute_rms_div_e_err_pipeline_args_t;
 
 static void
 compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
@@ -63,8 +50,10 @@ compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
   args->err[pipeline_rank] = err;
 }
 
-#ifdef V4_ACCELERATION
-#error "V4 version not implemented"
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+#error "V4 version not hooked up yet!"
 #endif
 
 double
@@ -97,8 +86,7 @@ compute_rms_div_e_err( field_t      * ALIGNED(16) f,
 
   args->f = f;
   args->g = g;
-  PSTYLE.dispatch( COMPUTE_RMS_DIV_E_ERR_PIPELINE, args, 0 );
-  compute_rms_div_e_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( compute_rms_div_e_err, args, 0 );
 
   // Have the host accumulator the exterior of the local domain
 
@@ -167,9 +155,9 @@ compute_rms_div_e_err( field_t      * ALIGNED(16) f,
   
   // Reduce the results from the host and pipelines
 
-  PSTYLE.wait();
+  WAIT_PIPELINES();
 
-  for( p=0; p<=PSTYLE.n_pipeline; p++ ) err += args->err[p];
+  for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
 
   // Reduce the results from all nodes
 

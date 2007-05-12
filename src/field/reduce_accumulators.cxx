@@ -1,17 +1,13 @@
-#include <field.h>
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
-#ifndef V4_ACCELERATION
-#define REDUCE_ACCUMULATORS_PIPELINE (pipeline_func_t)reduce_accumulators_pipeline
-#else
-#define REDUCE_ACCUMULATORS_PIPELINE (pipeline_func_t)reduce_accumulators_pipeline_v4
-#endif
+// FIXME: THIS NEEDS TO REDUCE THE ACTUAL NUMBER OF ACCUMULATORS PRESENT
+// AS THE NUMBER OF PIPELINES EXECUTED HERE MAY NOT MATCH THE NUMBER OF
+// ACCUMULATORS USED DURING OTHER OPERATIONS (E.G. 8 SPU PIPELINES AND
+// 2 PPU PIPELINES!)
 
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct reduce_accumulators_pipeline_args {
-  accumulator_t * ALIGNED(128) a;
-  const grid_t  *              g;
-} reduce_accumulators_pipeline_args_t;
 
 static void
 reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
@@ -65,7 +61,9 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
   }
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -157,7 +155,6 @@ reduce_accumulators( accumulator_t * ALIGNED(128) a,
   args->a = a;
   args->g = g;
 
-  PSTYLE.dispatch( REDUCE_ACCUMULATORS_PIPELINE, args, 0 );
-  reduce_accumulators_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( reduce_accumulators, args, 0 );
+  WAIT_PIPELINES();
 }

@@ -170,13 +170,21 @@ new_accumulators( const grid_t * g ) {
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
-  // FIXME: n_accumulator copies can be problematic
-  // with multiple pipeline styles simultaneously.
-
   // FIXME: accumulators should be spaced by round-up-even n_voxel
   // to keep 128-byte alignment of individual accumulators!
 
-  req = (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*(size_t)(1+PSTYLE.n_pipeline)*sizeof(accumulator_t);
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+  // FIXME: USE_CELL_SPUS is not enabled in the pipelines yet
+  // THE MISMATCH HERE NEEDS TO BE ADDRESSED.
+  req = 1 + thread.n_pipeline;
+# if 0
+  req = 1 + spu.n_pipeline;
+# endif
+# else
+  req = 1 + thread.n_pipeline;
+# endif
+
+  req *= (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*sizeof(accumulator_t);
   a = (accumulator_t * ALIGNED(128))malloc_aligned( req, 128 );
   if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );

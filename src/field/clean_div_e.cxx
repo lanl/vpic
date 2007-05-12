@@ -1,15 +1,5 @@
-#include <field.h>
-
-// FIXME: This is at the very edge of being worthwhile to vectorize.
-// For now, it is not.
-
-#undef V4_ACCELERATION
-
-#ifndef V4_ACCELERATION
-#define CLEAN_DIV_E_PIPELINE (pipeline_func_t)clean_div_e_pipeline
-#else
-#define CLEAN_DIV_E_PIPELINE (pipeline_func_t)clean_div_e_pipeline_v4
-#endif
+#define IN_field_pipeline
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
@@ -21,12 +11,6 @@
 
 #define MARDER_EZ() \
     f0->ez += m[f0->ematz].drivez*pz*(fz->div_e_err-f0->div_e_err)
-
-typedef struct clean_div_e_pipeline_args {
-  field_t                      * ALIGNED(16) f;
-  const material_coefficient_t * ALIGNED(16) m;
-  const grid_t                 *             g;
-} clean_div_e_pipeline_args_t;
 
 static void
 clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
@@ -86,8 +70,12 @@ clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
-#error "V4 version not implemented"
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+// FIXME: This is at the very edge of being worthwhile to vectorize.
+// For now, it is not.
+#error "V4 version not hooked up yet!"
 #endif
 
 void
@@ -128,8 +116,7 @@ clean_div_e( field_t                      * ALIGNED(16) f,
   args->m = m;
   args->g = g;
 
-  PSTYLE.dispatch( CLEAN_DIV_E_PIPELINE, args, 0 );
-  clean_div_e_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( clean_div_e, args, 0 );
   
   // Do left over field components on the host
 
@@ -196,7 +183,7 @@ clean_div_e( field_t                      * ALIGNED(16) f,
     }
   }
 
-  PSTYLE.wait(); // FIXME: FINISH EVEN LATER??
+  WAIT_PIPELINES(); // FIXME: FINISH EVEN LATER??
 
   local_adjust_tang_e(f,g);
 }

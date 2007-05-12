@@ -1,17 +1,8 @@
-#include <field.h>
-
-#ifndef V4_ACCELERATION
-#define COMPUTE_DIV_B_ERR_PIPELINE (pipeline_func_t)compute_div_b_err_pipeline
-#else
-#define COMPUTE_DIV_B_ERR_PIPELINE (pipeline_func_t)compute_div_b_err_pipeline_v4
-#endif
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-
-typedef struct compute_div_b_err_pipeline_args {
-  field_t      * ALIGNED(16) f;
-  const grid_t *             g;
-} compute_div_b_err_pipeline_args_t;
 
 static void
 compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
@@ -64,7 +55,9 @@ compute_div_b_err_pipeline( compute_div_b_err_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -110,7 +103,7 @@ compute_div_b_err_pipeline_v4( compute_div_b_err_pipeline_args_t * args,
 
   // Process bulk of voxels 4 at a time
 
-# define LOAD_STENCIL()    \
+# define LOAD_STENCIL() \
   f0 = &f(x,  y,  z  ); \
   fx = &f(x+1,y,  z  ); \
   fy = &f(x,  y+1,z  ); \
@@ -180,7 +173,6 @@ compute_div_b_err( field_t      * ALIGNED(16) f,
   args->f = f;
   args->g = g;
 
-  PSTYLE.dispatch( COMPUTE_DIV_B_ERR_PIPELINE, args, 0 );
-  compute_div_b_err_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
+  EXEC_PIPELINES( compute_div_b_err, args, 0 );
+  WAIT_PIPELINES();
 }

@@ -1,4 +1,5 @@
 #define IN_particle_pipeline
+#define V4_PIPELINE
 #include <particle_pipelines.h>
 
 static void
@@ -46,7 +47,9 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
   args->en[pipeline_rank] = en;
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -140,23 +143,11 @@ energy_p( const particle_t     * ALIGNED(128) p0,
   args->qdt_2mc = 0.5*q_m*g->dt/g->cvac;
   args->np      = np;
 
-# ifdef CELL_PPU_BUILD
-  spu.dispatch( SPU_PIPELINE( energy_p_pipeline_spu ), args, 0 );
-  energy_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
-  spu.wait();
-# else
-# ifndef V4_ACCELERATION
-# define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline
-# else
-# define ENERGY_P_PIPELINE (pipeline_func_t)energy_p_pipeline_v4
-# endif
-  PSTYLE.dispatch( ENERGY_P_PIPELINE, args, 0 );
-  energy_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
-# endif
+  EXEC_PIPELINES( energy_p, args, 0 );
+  WAIT_PIPELINES();
 
   local = 0;
-  for( rank=0; rank<=PSTYLE.n_pipeline; rank++ )
+  for( rank=0; rank<=N_PIPELINE; rank++ )
     local += en[rank];
   mp_allsum_d( &local, &global, 1, g->mp );
   return (double)g->cvac*(double)g->cvac*global/(double)q_m;

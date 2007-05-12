@@ -2,6 +2,7 @@
 // ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES
 
 #define IN_particle_pipeline
+#define V4_PIPELINE
 #include <particle_pipelines.h>
 
 static void
@@ -179,7 +180,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
 
@@ -410,7 +413,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
   args->a0       = a0;
   args->f0       = f0;
   args->seg      = seg;
-# ifdef CELL_PPU_BUILD
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
   args->neighbor = g->neighbor;
   args->rangel   = g->rangel;
   args->rangeh   = g->rangeh;
@@ -440,27 +443,15 @@ advance_p( particle_t           * ALIGNED(128) p0,
   // However, it is worth reconsidering this at some point in the
   // future.
 
-# ifdef CELL_PPU_BUILD
-  spu.dispatch( SPU_PIPELINE( advance_p_pipeline_spu ), args, 0 );
-  advance_p_pipeline( args, spu.n_pipeline, spu.n_pipeline );
-  spu.wait();
-# else
-# ifndef V4_ACCELERATION
-# define ADVANCE_P_PIPELINE (pipeline_func_t)advance_p_pipeline
-# else
-# define ADVANCE_P_PIPELINE (pipeline_func_t)advance_p_pipeline_v4
-# endif
-  PSTYLE.dispatch( ADVANCE_P_PIPELINE, args, 0 );
-  advance_p_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
-  PSTYLE.wait();
-# endif
+  EXEC_PIPELINES( advance_p, args, 0 );
+  WAIT_PIPELINES();
 
   // FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
   // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
   // MOVERS TO ELIMINATE HOLES FROM THE PIPELINING.
 
   nm = 0;
-  for( rank=0; rank<=PSTYLE.n_pipeline; rank++ ) {
+  for( rank=0; rank<=N_PIPELINE; rank++ ) {
     if( args->seg[rank].n_ignored )
       WARNING(( "Pipeline %i ran out of storage for %i movers",
                 rank, args->seg[rank].n_ignored ));

@@ -1,10 +1,6 @@
-#include <field.h>
-
-#ifndef V4_ACCELERATION
-#define ADVANCE_B_PIPELINE (pipeline_func_t)advance_b_pipeline
-#else
-#define ADVANCE_B_PIPELINE (pipeline_func_t)advance_b_pipeline_v4
-#endif
+#define IN_field_pipeline
+#define V4_PIPELINE
+#include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
  
@@ -17,12 +13,6 @@
 #define UPDATE_CBX() f0->cbx -= ( py*( fy->ez-f0->ez ) - pz*( fz->ey-f0->ey ) )
 #define UPDATE_CBY() f0->cby -= ( pz*( fz->ex-f0->ex ) - px*( fx->ez-f0->ez ) )
 #define UPDATE_CBZ() f0->cbz -= ( px*( fx->ey-f0->ey ) - py*( fy->ex-f0->ex ) )
-
-typedef struct advance_b_pipeline_args {
-  field_t      * ALIGNED(16) f;
-  const grid_t *             g;
-  float frac;
-} advance_b_pipeline_args_t;
 
 static void
 advance_b_pipeline( advance_b_pipeline_args_t * args,
@@ -76,7 +66,9 @@ advance_b_pipeline( advance_b_pipeline_args_t * args,
 
 }
 
-#ifdef V4_ACCELERATION
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#error "SPU version not hooked up yet!"
+#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;
  
@@ -207,8 +199,7 @@ advance_b( field_t      * ALIGNED(16) f,
   args->g    = g;
   args->frac = frac;
 
-  PSTYLE.dispatch( ADVANCE_B_PIPELINE, args, 0 );
-  advance_b_pipeline( args, PSTYLE.n_pipeline, PSTYLE.n_pipeline );
+  EXEC_PIPELINES( advance_b, args, 0 );
   
   // While the pipelines are busy, do surface fields
   
@@ -257,5 +248,5 @@ advance_b( field_t      * ALIGNED(16) f,
 
   local_adjust_norm_b(f,g);
   
-  PSTYLE.wait();
+  WAIT_PIPELINES(); // FIXME: Check how late this can be done!
 }

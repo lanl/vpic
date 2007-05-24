@@ -51,6 +51,12 @@ CCS_WITH_CPUMODEL
 CCS_WITH_EXTENSION
 CCS_WITH_OPT_LEVEL
 
+
+################################################################################
+# extra flags
+################################################################################
+CCS_EXTRA_FLAGS
+
 ################################################################################
 # C/C++ configuration
 ################################################################################
@@ -88,13 +94,13 @@ if test "$ENABLE_DMP" = "1" ; then
 	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $MPI_LDFLAGS"
 	EXTRA_LIBS="$EXTRA_LIBS $MPI_LIBS"
 
-	AC_SUBST(EXTRA_CPPFLAGS)
-	AC_SUBST(EXTRA_LDFLAGS)
-	AC_SUBST(EXTRA_LIBS)
-
 	# define needed for openmpi
 	AC_DEFINE(OMPI_SKIP_MPICXX)
 fi
+
+AC_SUBST(EXTRA_CPPFLAGS)
+AC_SUBST(EXTRA_LDFLAGS)
+AC_SUBST(EXTRA_LIBS)
 
 ################################################################################
 # start output

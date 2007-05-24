@@ -15,6 +15,11 @@ CXXFLAGS="-DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
 #CXXFLAGS="-DUSE_V4_SSE -D_XOPEN_SOURCE=600"
 
 ################################################################################
+# EXTRA_LIBS - additional libraries
+################################################################################
+EXTRA_LIBS="-lpthread"
+
+################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
 # warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
@@ -58,8 +63,8 @@ ENABLE_SIMD=1
 
 # to use mpicc from openmpi
 MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-[lW][^ ]*,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################
 # ENABLE_HOST - enable host build (0|1)[1]

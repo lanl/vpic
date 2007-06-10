@@ -616,7 +616,7 @@ main( uint64_t spu_id,
     }                                                                   \
     if( nm_block[buffer] ) {                                            \
       mfc_put( pm_block[buffer],                                        \
-               seg->pm + seg->nm*sizeof(particle_t),                    \
+               seg->pm + seg->nm*sizeof(particle_mover_t),              \
                nm_block[buffer]*sizeof(particle_mover_t),               \
                3*(buffer)+2, 0, 0 );                                    \
       seg->nm += nm_block[buffer];                                      \

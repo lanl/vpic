@@ -1,0 +1,66 @@
+#!/bin/sh
+
+PPU_CC=/opt/cell/bin/ppu-gcc
+PPU_CXX=/opt/cell/bin/ppu-g++
+PPU_LD=/opt/cell/bin/ppu-g++
+#PPU_CC=/opt/ibmcmp/xlc/8.2/bin/ppugxlc
+#PPU_CXX=/opt/ibmcmp/xlc/8.2/bin/ppugxlc++
+#PPU_LD=/opt/ibmcmp/xlc/8.2/bin/ppugxlc++
+PPU_CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -fno-strict-aliasing -ffast-math -fno-unsafe-math-optimizations -DCELL_PPU_BUILD -DUSE_CELL_SPUS"
+PPU_CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -fno-strict-aliasing -ffast-math -fno-unsafe-math-optimizations -DCELL_PPU_BUILD -DUSE_CELL_SPUS"
+PPU_LDFLAGS=$PPU_CXXFLAGS
+
+SPU_CC=/opt/cell/bin/spu-gcc
+SPU_CXX=/opt/cell/bin/spu-g++
+SPU_LD=/opt/cell/bin/spu-gcc
+#SPU_CC=/opt/ibmcmp/xlc/8.2/bin/spugxlc++
+#SPU_CXX=/opt/ibmcmp/xlc/8.2/bin/spugxlc++
+#SPU_LD=/opt/ibmcmp/xlc/8.2/bin/spugxlc++
+SPU_EM=/opt/cell/bin/ppu-embedspu
+SPU_TIMING=/opt/ibm/cell-sdk/prototype/bin/spu_timing
+SPU_CFLAGS="-Werror       -pedantic -std=c99 -D_XOPEN_SOURCE=600 -O2 -Wstrict-aliasing=2 -ffast-math -fno-unsafe-math-optimizations -DCELL_SPU_BUILD -DUSE_CELL_SPUS"
+SPU_CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -O2 -Wstrict-aliasing=2 -ffast-math -fno-unsafe-math-optimizations -fno-exceptions -DCELL_SPU_BUILD -DUSE_CELL_SPUS -DUSE_V4_SPU -Wno-long-long"
+SPU_LDFLAGS=$SPU_CFLAGS
+
+# Notes:
+# - strict aliasing optimizations makes a noticable performance difference under gcc on the SPUs.
+#   strict aliasing is turned on with extra checking of code for SPU compiles.  However, v4 c++
+#   builds may be flaky in this mode due to gcc compiler bugs and linguistic issues with SPU
+#   instrinsics.
+# - IBM's cache-4way.h does not compile if -Wall is set in the CFLAGS under gcc.
+# - IBM's spu-instrinsics.h does not compile unless -Wno-long-long is set in CXXFLAGS under gcc
+# - Could not get anything to build under spugxlc (directory problems in IBM's setup?)
+# - spugxlc++ currently miscompiles V4 based version
+
+VPIC=$HOME/src/vpic/src
+INCLUDE="-I. -I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include"
+
+set -x
+
+rm -f *.o *.spu_obj *.spu_exe *.spu_asm *.spu_asm.timing advance_p *~
+
+# C++ V4 based 
+#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -c $VPIC/particle/pipelines_cell/advance_p_pipeline_spu.cxx  -o advance_p_pipeline_spu.spu_obj
+#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -S -fverbose-asm $VPIC/particle/pipelines_cell/advance_p_pipeline_spu.cxx -o advance_p_pipeline_spu.spu_asm
+
+# C SPU intrinsic based
+$SPU_CC $SPU_CFLAGS $INCLUDE -c advance_p_pipeline_spu.c  -o advance_p_pipeline_spu.spu_obj
+$SPU_CC $SPU_CFLAGS $INCLUDE -S -fverbose-asm advance_p_pipeline_spu.c  -o advance_p_pipeline_spu.spu_asm
+
+# C SPU intrinsic based (Experimental! Unrolled 2, caching disabled!)
+#$SPU_CC $SPU_CFLAGS $INCLUDE -c advance_p_pipeline_spu_2.c  -o advance_p_pipeline_spu.spu_obj
+#$SPU_CC $SPU_CFLAGS $INCLUDE -S -fverbose-asm advance_p_pipeline_spu_2.c  -o advance_p_pipeline_spu.spu_asm
+
+# C SPU intrinsic based (Experimental! Unrolled 4, caching disabled!)
+#$SPU_CC $SPU_CFLAGS $INCLUDE -c advance_p_pipeline_spu_4.c  -o advance_p_pipeline_spu.spu_obj
+#$SPU_CC $SPU_CFLAGS $INCLUDE -S -fverbose-asm advance_p_pipeline_spu_4.c  -o advance_p_pipeline_spu.spu_asm
+
+$SPU_TIMING advance_p_pipeline_spu.spu_asm
+$SPU_LD $SPU_LDFLAGS advance_p_pipeline_spu.spu_obj -o advance_p_pipeline_spu.spu_exe
+$SPU_EM advance_p_pipeline_spu advance_p_pipeline_spu.spu_exe advance_p_pipeline_spu.o
+
+$PPU_CC $PPU_CFLAGS $INCLUDE -c $VPIC/util/pipelines/pipelines_spu.c -o pipelines_spu.o
+$PPU_CC $PPU_CFLAGS $INCLUDE -c $VPIC/util/util.c -o util.o
+$PPU_CC $PPU_CFLAGS $INCLUDE -c advance_p.c       -o advance_p.o
+$PPU_LD $PPU_LDFLAGS *.o -o advance_p -lspe2
+

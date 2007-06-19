@@ -13,9 +13,12 @@
 #define MPRelay_hxx
 
 #include <cstdlib>
+#include <cstdio>
 #include <vector>
 #include <P2PConnection.hxx>
 #include <DMPConnection.hxx>
+#include <MPData.hxx>
+#include <FileIO.hxx>
 
 /*!
 	\class MPRelay MPRelay.h
@@ -53,6 +56,10 @@ class MPRelay
 		std::vector<int> pending_recv_;
 		std::vector<int> pending_send_;
 
+		FileIO fileIO_;
+		MPBuffer<char, filename_size> filename_;
+		MPBuffer<char, io_buffer_size> io_buffer_;
+
 	}; // class MPRelay
 
 void MPRelay::start()
@@ -61,6 +68,7 @@ void MPRelay::start()
 		DMPConnection & dmp = DMPConnection::instance();
 
 		bool relay(true);
+		int filesize;
 		MPRequest_T<MP_HOST> request;
 
 		while(relay) {
@@ -255,6 +263,41 @@ void MPRelay::start()
 					p2p.recv(&reason, 1, request.tag, request.id);
 					dmp.abort(reason);
 					p2p.abort(reason);
+					break;
+
+				case P2PTag::io_open_read:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_read);
+					filesize = fileIO_.size();
+					p2p.send(&filesize, 1, request.tag);
+					break;
+
+				case P2PTag::io_open_write:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_write);
+					break;
+
+				case P2PTag::io_open_write_append:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_write_append);
+					break;
+
+				case P2PTag::io_read:
+					fileIO_.read(io_buffer_.data(), request.count);
+					p2p.send(io_buffer_.data(), request.count, request.tag);
+					break;
+
+				case P2PTag::io_write:
+					p2p.recv(io_buffer_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.write(io_buffer_.data(), request.count);
+					break;
+
+				case P2PTag::io_close:
+					fileIO_.close();
 					break;
 
 				case P2PTag::end:

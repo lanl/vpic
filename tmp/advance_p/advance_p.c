@@ -1,13 +1,18 @@
 #define IN_particle_pipeline
 #include <particle_pipelines.h>
 #include <libspe2.h>
+#include <sys/time.h>
+#include <time.h>
 
 extern spe_program_handle_t advance_p_pipeline_spu;
+
+#define ITERATIONS 50
 
 int
 main( int argc,
       char ** argv ) {
   int NP, NM, NS;
+//  int i;
 
   DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
   DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
@@ -63,13 +68,33 @@ main( int argc,
 
   MESSAGE(( "Dispatching" ));
 
+#if 1
+  struct timeval start;
+  struct timeval stop;
+
+  gettimeofday(&start, 0);
+#endif
+
+ // for(i=0; i<ITERATIONS; i++) {
   spu.dispatch( SPU_PIPELINE(advance_p_pipeline_spu), args, 0 );
 
-  MESSAGE(( "Waiting" ));
+//  MESSAGE(( "Waiting" ));
 
   spu.wait();
 
-  MESSAGE(( "Halting" ));
+//  MESSAGE(( "Halting" ));
+
+  //} // for
+
+#if 1
+  gettimeofday(&stop, 0);
+
+  double sec = (double)(stop.tv_sec - start.tv_sec);
+  double usec = (double)(stop.tv_usec - start.tv_usec);
+  double seconds = sec + usec/1000000.0;
+
+  MESSAGE(("seconds: %lf\n", seconds));
+#endif
 
   spu.halt();
 

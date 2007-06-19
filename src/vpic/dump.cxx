@@ -10,6 +10,7 @@
 
 #include <vpic.hxx>
 #include <stdio.h>  // For fopen, fclose, fwrite, fprintf
+#include <FileIO.hxx>
 
 /*****************************************************************************
  * ASCII dump IO
@@ -18,6 +19,7 @@
 void
 vpic_simulation::dump_energies( const char *fname,
                                 int append ) {
+  /*
   double en_f[6], en_p;
   FILE *handle = NULL;
   int rank = mp_rank(grid->mp);
@@ -54,12 +56,54 @@ vpic_simulation::dump_energies( const char *fname,
     fprintf( handle, "\n" );
     fclose(handle);
   }
+  */
+  double en_f[6], en_p;
+  int rank = mp_rank(grid->mp);
+  species_t *sp;
+  FileIO fileIO;
+  FileIOStatus status;
+  
+  if( fname==NULL ) ERROR(("Invalid file name"));
+
+  if( rank==0 ) {
+    status =
+  	  fileIO.open(fname, append ? io_write_append : io_write);
+
+    // Do not return on a NULL handle to prevent a deadlock
+    if( status==fail ) ERROR(("Could not open \"%s\".",fname));
+    else { 
+      if( append==0 ) {
+        fileIO.print( "%% Layout\n%% step ex ey ez bx by bz" );
+        LIST_FOR_EACH(sp,species_list) fileIO.print( " \"%s\"",
+	      sp->name );
+        fileIO.print( "\n" );
+        fileIO.print( "%% timestep = %e\n", grid->dt );
+      }
+    fileIO.print( "%i", step );
+	}
+  }
+  
+  energy_f( en_f, field, material_coefficient, grid );
+  if( rank==0 && status!=fail ) fileIO.print( " %e %e %e %e %e %e",
+                                         en_f[0], en_f[1], en_f[2],
+                                         en_f[3], en_f[4], en_f[5] );
+  
+  LIST_FOR_EACH(sp,species_list) {
+    en_p = energy_p( sp->p, sp->np, sp->q_m, interpolator, grid );
+    if( rank==0 && status!=fail ) fileIO.print( " %e", en_p );
+  }
+  
+  if( rank==0 && status!=fail ) {
+    fileIO.print( "\n" );
+	fileIO.close();
+  }
 }
 
 // Note: dump_species/materials assume that names do not contain any \n!
 
 void
 vpic_simulation::dump_species( const char *fname ) {
+  /*
   FILE *handle;
   species_t *sp;
   if( mp_rank(grid->mp)==0 ) {
@@ -77,10 +121,32 @@ vpic_simulation::dump_species( const char *fname ) {
       fprintf( handle, "%s\n%i\n%e\n", sp->name, sp->id, sp->q_m );
     fclose(handle);
   }
+  */
+  species_t *sp;
+  FileIO fileIO;
+  if( mp_rank(grid->mp)==0 ) {
+    if( fname==NULL ) {
+      ERROR(("Invalid file name"));
+      return;
+    }
+    MESSAGE(("Dumping species to \"%s\"",fname));
+
+    FileIOStatus status = fileIO.open(fname, io_write);
+
+    if(status==fail) {
+      ERROR(("Could not open \"%s\".",fname));
+      return;
+	}
+
+    LIST_FOR_EACH(sp,species_list)
+      fileIO.print( "%s\n%i\n%e\n", sp->name, sp->id, sp->q_m );
+	fileIO.close();
+  }
 }
 
 void
 vpic_simulation::dump_materials( const char *fname ) {
+  /*
   FILE *handle;
   material_t *m;
 
@@ -103,6 +169,29 @@ vpic_simulation::dump_materials( const char *fname ) {
                m->sigmax, m->sigmay, m->sigmaz );
     fclose(handle);
   }
+  */
+  FileIO fileIO;
+  material_t *m;
+
+  if( mp_rank(grid->mp)==0 ) {
+    if( fname==NULL ) {
+      ERROR(("Invalid file name"));
+      return;
+    }
+    MESSAGE(("Dumping materials to \"%s\"",fname));
+    FileIOStatus status = fileIO.open(fname, io_write);
+	if( status==fail ) {
+	  ERROR(("Could not open \"%s\".",fname));
+	  return;
+	}
+    LIST_FOR_EACH(m,material_list)
+      fileIO.print( "%s\n%i\n%e %e %e\n%e %e %e\n%e %e %e\n",
+               m->name, m->id,
+               m->epsx,   m->epsy,   m->epsz,
+               m->mux,    m->muy,    m->muz,
+               m->sigmax, m->sigmay, m->sigmaz );
+    fileIO.close();
+  }
 }
 
 /*****************************************************************************
@@ -117,48 +206,48 @@ enum dump_types {
   restart_dump = 4
 };
 
-#define WRITE_HEADER_V0(dump_type,sp_id,q_m,file) BEGIN_PRIMITIVE {      \
+#define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO) BEGIN_PRIMITIVE {      \
   /* Binary compatibility information */                                 \
-  WRITE( char,      CHAR_BIT,               file );                      \
-  WRITE( char,      sizeof(short int),      file );                      \
-  WRITE( char,      sizeof(int),            file );                      \
-  WRITE( char,      sizeof(float),          file );                      \
-  WRITE( char,      sizeof(double),         file );                      \
-  WRITE( short int, 0xcafe,                 file );                      \
-  WRITE( int,       0xdeadbeef,             file );                      \
-  WRITE( float,     1.0,                    file );                      \
-  WRITE( double,    1.0,                    file );                      \
+  WRITE( char,      CHAR_BIT,               fileIO );                      \
+  WRITE( char,      sizeof(short int),      fileIO );                      \
+  WRITE( char,      sizeof(int),            fileIO );                      \
+  WRITE( char,      sizeof(float),          fileIO );                      \
+  WRITE( char,      sizeof(double),         fileIO );                      \
+  WRITE( short int, 0xcafe,                 fileIO );                      \
+  WRITE( int,       0xdeadbeef,             fileIO );                      \
+  WRITE( float,     1.0,                    fileIO );                      \
+  WRITE( double,    1.0,                    fileIO );                      \
   /* Dump type and header format version */                              \
-  WRITE( int,       0 /* Version */,        file );                      \
-  WRITE( int,       dump_type,              file );                      \
+  WRITE( int,       0 /* Version */,        fileIO );                      \
+  WRITE( int,       dump_type,              fileIO );                      \
   /* High level information */                                           \
-  WRITE( int,       step,                   file );                      \
-  WRITE( int,       grid->nx,               file );                      \
-  WRITE( int,       grid->ny,               file );                      \
-  WRITE( int,       grid->nz,               file );                      \
-  WRITE( float,     grid->dt,               file );                      \
-  WRITE( float,     grid->dx,               file );                      \
-  WRITE( float,     grid->dy,               file );                      \
-  WRITE( float,     grid->dz,               file );                      \
-  WRITE( float,     grid->x0,               file );                      \
-  WRITE( float,     grid->y0,               file );                      \
-  WRITE( float,     grid->z0,               file );                      \
-  WRITE( float,     grid->cvac,             file );                      \
-  WRITE( float,     grid->eps0,             file );                      \
-  WRITE( float,     grid->damp,             file );                      \
-  WRITE( int,       mp_rank(grid->mp),      file );                      \
-  WRITE( int,       mp_nproc(grid->mp),     file );                      \
+  WRITE( int,       step,                   fileIO );                      \
+  WRITE( int,       grid->nx,               fileIO );                      \
+  WRITE( int,       grid->ny,               fileIO );                      \
+  WRITE( int,       grid->nz,               fileIO );                      \
+  WRITE( float,     grid->dt,               fileIO );                      \
+  WRITE( float,     grid->dx,               fileIO );                      \
+  WRITE( float,     grid->dy,               fileIO );                      \
+  WRITE( float,     grid->dz,               fileIO );                      \
+  WRITE( float,     grid->x0,               fileIO );                      \
+  WRITE( float,     grid->y0,               fileIO );                      \
+  WRITE( float,     grid->z0,               fileIO );                      \
+  WRITE( float,     grid->cvac,             fileIO );                      \
+  WRITE( float,     grid->eps0,             fileIO );                      \
+  WRITE( float,     grid->damp,             fileIO );                      \
+  WRITE( int,       mp_rank(grid->mp),      fileIO );                      \
+  WRITE( int,       mp_nproc(grid->mp),     fileIO );                      \
   /* Species parameters */                                               \
-  WRITE( int,       sp_id,                  file );                      \
-  WRITE( float,     q_m,                    file );                      \
+  WRITE( int,       sp_id,                  fileIO );                      \
+  WRITE( float,     q_m,                    fileIO );                      \
 } END_PRIMITIVE
 
 // Note dim _MUST_ be a pointer to an int
 
-#define WRITE_ARRAY_HEADER(p,ndim,dim,file) BEGIN_PRIMITIVE {    \
-  WRITE( int, sizeof(p[0]), file );                              \
-  WRITE( int, ndim,         file );                              \
-  fwrite( dim, sizeof(int), ndim, file );                        \
+#define WRITE_ARRAY_HEADER(p,ndim,dim,fileIO) BEGIN_PRIMITIVE {    \
+  WRITE( int, sizeof(p[0]), fileIO );                              \
+  WRITE( int, ndim,         fileIO );                              \
+  fileIO.write( dim, ndim );                        \
 } END_PRIMITIVE
 
 // The WRITE macro copies the output "value" into a temporary variable
@@ -174,18 +263,18 @@ enum dump_types {
 // created so that the type cast __WRITE_tmp = (type)(value)
 // automatically does the underlying conversion in C++
 
-#define WRITE(type,value,file) BEGIN_PRIMITIVE { \
+#define WRITE(type,value,fileIO) BEGIN_PRIMITIVE { \
   type __WRITE_tmp = (type)(value);              \
-  fwrite( &__WRITE_tmp, sizeof(type), 1, file ); \
+  fileIO.write( &__WRITE_tmp, 1 ); \
 } END_PRIMITIVE
 
 // Note: strlen does not include the terminating NULL
-#define WRITE_STRING(string,file) BEGIN_PRIMITIVE {       \
+#define WRITE_STRING(string,fileIO) BEGIN_PRIMITIVE {       \
   int __WRITE_STRING_len = 0;                             \
   if( string!=NULL ) __WRITE_STRING_len = strlen(string); \
-  fwrite( &__WRITE_STRING_len, sizeof(int), 1, file );    \
+  fileIO.write( &__WRITE_STRING_len, 1 );    \
   if( __WRITE_STRING_len>0 )                              \
-    fwrite( string, 1, __WRITE_STRING_len, file );        \
+    fileIO.write( string, __WRITE_STRING_len );        \
 } END_PRIMITIVE
 
 #define READ(type,value,file) BEGIN_PRIMITIVE { \
@@ -196,6 +285,7 @@ enum dump_types {
 
 void
 vpic_simulation::dump_grid( const char *fbase ) {
+  /*
   char fname[256];
   FILE *handle;
   int dim[4];
@@ -234,10 +324,50 @@ vpic_simulation::dump_grid( const char *fbase ) {
   WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, handle );
   fwrite( grid->neighbor, sizeof(grid->neighbor[0]), dim[0]*dim[1]*dim[2]*dim[3], handle );
   fclose(handle);
+  */
+  char fname[256];
+  FileIO fileIO;
+  int dim[4];
+
+  if( fbase==NULL ) {
+    ERROR(("Invalid filename"));
+    return;
+  }
+
+  if( mp_rank(grid->mp)==0 ) MESSAGE(("Dumping grid to \"%s\"",fbase));
+
+  sprintf( fname, "%s.%i", fbase, mp_rank(grid->mp) );
+  FileIOStatus status = fileIO.open(fname, io_write);
+  if( status==fail ) {
+    ERROR(("Could not open \"%s\".",fname));
+	return;
+  }
+
+  WRITE_HEADER_V0( grid_dump, invalid_species_id, 0, fileIO );
+
+  dim[0] = 3;
+  dim[1] = 3;
+  dim[2] = 3;
+  WRITE_ARRAY_HEADER( grid->bc, 3, dim, fileIO );
+  fileIO.write( grid->bc, dim[0]*dim[1]*dim[2] );
+
+  dim[0] = mp_nproc(grid->mp)+1;
+  WRITE_ARRAY_HEADER( grid->range, 1, dim, fileIO );
+  fileIO.write( grid->range, dim[0] );
+
+
+  dim[0] = 6;
+  dim[1] = grid->nx+2;
+  dim[2] = grid->ny+2;
+  dim[3] = grid->nz+2;
+  WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, fileIO );
+  fileIO.write( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
+  fileIO.close();
 }
 
 void
 vpic_simulation::dump_fields( const char *fbase, int ftag ) {
+  /*
   char fname[256];
   FILE *handle;
   int dim[3];
@@ -268,12 +398,44 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   fwrite( field, sizeof(field[0]), dim[0]*dim[1]*dim[2], handle );
 
   fclose( handle ); 
+  */
+  char fname[256];
+  FileIO fileIO;
+  int dim[3];
+
+  synchronize_rhob( field, grid );
+
+  if( fbase==NULL ) {
+    ERROR(("Invalid filename"));
+    return;
+  }
+
+  if( mp_rank(grid->mp)==0 ) MESSAGE(("Dumping fields to \"%s\"",fbase));
+
+  if( ftag ) sprintf( fname, "%s.%i.%i", fbase, step, mp_rank(grid->mp) );
+  else       sprintf( fname, "%s.%i", fbase, mp_rank(grid->mp) );
+
+  FileIOStatus status = fileIO.open(fname, io_write);
+  if( status==fail ) {
+    ERROR(("Could not open \"%s\".",fname));
+	return;
+  }
+
+  WRITE_HEADER_V0( field_dump, invalid_species_id, 0, fileIO );
+
+  dim[0] = grid->nx+2;
+  dim[1] = grid->ny+2;
+  dim[2] = grid->nz+2;
+  WRITE_ARRAY_HEADER( field, 3, dim, fileIO );
+  fileIO.write( field, dim[0]*dim[1]*dim[2] );
+  fileIO.close();
 }
 
 void
 vpic_simulation::dump_hydro( const char *sp_name,
                              const char *fbase,
                              int ftag ) {
+  /*
   species_t *sp;
   char fname[256];
   FILE *handle;
@@ -321,12 +483,60 @@ vpic_simulation::dump_hydro( const char *sp_name,
   fwrite( hydro, sizeof(hydro[0]), dim[0]*dim[1]*dim[2], handle );
 
   fclose( handle );
+  */
+  species_t *sp;
+  char fname[256];
+  FileIO fileIO;
+  int dim[3];
+
+  // FIXME: Potential deadlocks on error returns
+
+  if( sp_name==NULL ) {
+    ERROR(("Invalid species name"));
+    return;
+  }
+
+  sp = find_species_name(sp_name,species_list);
+  if( sp==NULL ) {
+    ERROR(("Invalid species \"%s\".",sp_name));
+    return;
+  }
+
+  clear_hydro( hydro, grid );
+  accumulate_hydro_p( hydro, sp->p, sp->np, sp->q_m, interpolator, grid );
+  synchronize_hydro( hydro, grid );
+
+  if( fbase==NULL ) {
+    ERROR(("Invalid filename"));
+    return;
+  }
+
+  if( mp_rank(grid->mp)==0 )
+    MESSAGE(("Dumping \"%s\" hydro fields to \"%s\"",sp->name,fbase));
+
+  if( ftag ) sprintf( fname, "%s.%i.%i", fbase, step, mp_rank(grid->mp) );
+  else       sprintf( fname, "%s.%i", fbase, mp_rank(grid->mp) );
+  FileIOStatus status = fileIO.open(fname, io_write);
+  if( status==fail) {
+    ERROR(("Could not open \"%s\".",fname));
+	return;
+  }
+  
+  WRITE_HEADER_V0(hydro_dump,sp->id,sp->q_m,fileIO);
+
+  dim[0] = grid->nx+2;
+  dim[1] = grid->ny+2;
+  dim[2] = grid->nz+2;
+  WRITE_ARRAY_HEADER( hydro, 3, dim, fileIO );
+  fileIO.write( hydro, dim[0]*dim[1]*dim[2] );
+  fileIO.close();
 }
 
 void
 vpic_simulation::dump_particles( const char *sp_name,
                                  const char *fbase,
                                  int ftag ) {
+  /*
   species_t *sp;
   char fname[256];
   FILE *handle;
@@ -397,6 +607,77 @@ vpic_simulation::dump_particles( const char *sp_name,
   fclose( handle );
   // BJA: Make p_buf a static buffer to avoid too frequent malloc/free
   // free_aligned( p_buf );
+  */
+  species_t *sp;
+  char fname[256];
+  FileIO fileIO;
+  int dim[1], buf_start, n_buf;
+  static particle_t * ALIGNED(128) p_buf=NULL;
+# define PBUF_SIZE 32768 // 1MB of particles
+  
+  // FIXME: Potential deadlocks on error returns
+
+  if( sp_name==NULL ) {
+    ERROR(("Invalid species name"));
+    return;
+  }
+
+  sp = find_species_name(sp_name,species_list);
+  if( sp==NULL ) {
+    ERROR(("Invalid species name \"%s\".",sp_name));
+    return;
+  }
+
+  if( fbase==NULL ) {
+    ERROR(("Invalid filename"));
+    return;
+  }
+
+  if ( !p_buf ) {
+    p_buf = (particle_t * ALIGNED(128))
+      malloc_aligned(PBUF_SIZE*sizeof(p_buf[0]), 128);
+    if( p_buf==NULL ) {
+      ERROR(("Failed to allocate particle buffer."));
+      return;
+    }
+  }
+
+  if( mp_rank(grid->mp)==0 )
+    MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
+
+  if( ftag ) sprintf( fname, "%s.%i.%i", fbase, step, mp_rank(grid->mp) );
+  else       sprintf( fname, "%s.%i", fbase, mp_rank(grid->mp) );
+  FileIOStatus status = fileIO.open(fname, io_write);
+  if( status==fail ) {
+    ERROR(("Could not open \"%s\".",fname));
+	free_aligned( p_buf );
+	return;
+  }
+  
+  WRITE_HEADER_V0( particle_dump, sp->id, sp->q_m, fileIO );
+
+  dim[0] = sp->np;
+  WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
+
+  // Copy a PBUF_SIZE hunk of the particle list into the particle
+  // buffer, timecenter it and write it out. This is done this way to
+  // guarantee the particle list unchanged while not requiring too
+  // much memory.
+
+  // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
+  // LARGE.
+
+  for( buf_start=0; buf_start<sp->np; buf_start += PBUF_SIZE ) {
+    n_buf = PBUF_SIZE;
+    if( buf_start+n_buf > sp->np ) n_buf = sp->np - buf_start;
+    memcpy( p_buf, &sp->p[buf_start], n_buf*sizeof(p_buf[0]) );
+    center_p( p_buf, n_buf, sp->q_m, interpolator, grid );
+    fileIO.write( p_buf, n_buf );
+  }
+
+  fileIO.close();
+  // BJA: Make p_buf a static buffer to avoid too frequent malloc/free
+  // free_aligned( p_buf );
 }
 
 // FIXME: dump_restart and restart would be much cleaner if the
@@ -409,6 +690,7 @@ vpic_simulation::dump_particles( const char *sp_name,
 void
 vpic_simulation::dump_restart( const char *fbase,
                                int ftag ) {
+#if 0
   char fname[256];
   FILE *handle;
   int dim[4];
@@ -562,6 +844,161 @@ vpic_simulation::dump_restart( const char *fbase,
   // make turnstiles work.
 
   // mp_barrier( grid->mp );
+#endif
+  char fname[256];
+  FileIO fileIO;
+  int dim[4];
+  char *state;
+  material_t *m;
+  species_t *sp;
+
+  if( fbase==NULL ) {
+    ERROR(("Invalid filename"));
+    return;
+  }
+
+  if( mp_rank(grid->mp)==0 ) MESSAGE(("Dumping restart to \"%s\"",fbase));
+
+  if( ftag ) sprintf( fname, "%s.%i.%i", fbase, step, mp_rank(grid->mp) );
+  else       sprintf( fname, "%s.%i", fbase, mp_rank(grid->mp) );
+  FileIOStatus status = fileIO.open(fname, io_write);
+  if( status==fail ) {
+    ERROR(("Could not open \"%s\".",fname));
+	return;
+  }
+
+  WRITE_HEADER_V0( restart_dump, invalid_species_id, 0, fileIO );
+
+  /************************************************
+   * Restart saved directly initialized variables *
+   ************************************************/
+
+  // variables not already saved above
+
+  WRITE( int, num_step,             fileIO );
+  WRITE( int, status_interval,      fileIO );
+  WRITE( int, clean_div_e_interval, fileIO );
+  WRITE( int, clean_div_b_interval, fileIO );
+  WRITE( int, sync_shared_interval, fileIO );
+  WRITE( double, quota,             fileIO );
+  WRITE( int, restart_interval,     fileIO ); 
+  WRITE( int, hydro_interval,       fileIO ); 
+  WRITE( int, field_interval,       fileIO ); 
+  WRITE( int, particle_interval,    fileIO ); 
+
+
+  /**********************************************
+   * Restart saved helper initialized variables *
+   **********************************************/
+
+  // random number generator
+
+  dim[0] = mt_getsize(rng);
+  state = (char *)malloc(dim[0]);
+  if( state==NULL ) {
+    ERROR(("Could not allocate random number generator state"));
+    return;
+  }
+  mt_getstate(rng,state,dim[0]);
+  WRITE_ARRAY_HEADER( state, 1, dim, fileIO );
+  fileIO.write( state, dim[0] );
+  free(state);
+
+  // materials
+
+  WRITE( int, num_materials(material_list), fileIO );
+  LIST_FOR_EACH(m,material_list) {
+    WRITE_STRING( m->name, fileIO );
+    WRITE( short int, m->id,     fileIO );
+    WRITE( float,     m->epsx,   fileIO );
+    WRITE( float,     m->epsy,   fileIO );
+    WRITE( float,     m->epsz,   fileIO );
+    WRITE( float,     m->mux,    fileIO );
+    WRITE( float,     m->muy,    fileIO );
+    WRITE( float,     m->muz,    fileIO );
+    WRITE( float,     m->sigmax, fileIO );
+    WRITE( float,     m->sigmay, fileIO );
+    WRITE( float,     m->sigmaz, fileIO );
+  }
+
+  // grid variables not already saved above
+
+  dim[0] = 3;
+  dim[1] = 3;
+  dim[2] = 3;
+  WRITE_ARRAY_HEADER( grid->bc, 3, dim, fileIO );
+  fileIO.write( grid->bc, dim[0]*dim[1]*dim[2] );
+
+
+  dim[0] = mp_nproc(grid->mp)+1;
+  WRITE_ARRAY_HEADER( grid->range, 1, dim, fileIO );
+  fileIO.write( grid->range, dim[0] );
+
+  dim[0] = 6;
+  dim[1] = grid->nx+2;
+  dim[2] = grid->ny+2;
+  dim[3] = grid->nz+2;
+  WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, fileIO );
+  fileIO.write( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
+
+  // fields
+
+  dim[0] = grid->nx+2;
+  dim[1] = grid->ny+2;
+  dim[2] = grid->nz+2;
+  WRITE_ARRAY_HEADER( field, 3, dim, fileIO );
+  fileIO.write( field, dim[0]*dim[1]*dim[2] );
+
+  // species
+
+  WRITE( int, num_species(species_list), fileIO );
+  LIST_FOR_EACH(sp,species_list) {
+    WRITE_STRING( sp->name,          fileIO );
+    WRITE( int,   sp->id,            fileIO );
+    WRITE( int,   sp->max_np,        fileIO );
+    WRITE( int,   sp->max_nm,        fileIO );
+    WRITE( float, sp->q_m,           fileIO );
+    WRITE( int,   sp->sort_interval, fileIO );
+    dim[0] = sp->np;
+    WRITE_ARRAY_HEADER( sp->p, 1, dim, fileIO );
+    if ( dim[0]>0 ) fileIO.write( sp->p, dim[0] ); 
+  }
+
+  // custom boundary condition data
+
+  WRITE( int,        grid->nb,       fileIO );
+  if( grid->nb>0 ) fileIO.write( grid->boundary, grid->nb );
+
+  /****************************************
+   * Restart-saved internal use variables *
+   ****************************************/
+
+  WRITE( double, p_time, fileIO );
+  WRITE( double, g_time, fileIO );
+  WRITE( double, u_time, fileIO );
+  WRITE( double, f_time, fileIO );
+
+  /****************************************
+   * Restart-saved user defined variables *
+   ****************************************/
+
+  dim[0] = USER_GLOBAL_SIZE;
+  WRITE_ARRAY_HEADER( user_global, 1, dim, fileIO );
+  fileIO.write( user_global, dim[0] );
+
+  fileIO.close();
+
+  // Synchronize here in case to prevent ranks who immediately
+  // terminate after a restart dump from disrupting ranks still in the
+  // process of dumping
+
+  // BJA - New modality of job termination involves putting a barrier
+  // in the termination section of the input deck and removing it
+  // here.  Aside from requiring fewer barriers, this is needed to
+  // make turnstiles work.
+
+  // mp_barrier( grid->mp );
+
 
 }
 

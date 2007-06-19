@@ -21,7 +21,7 @@ SPU_CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -fno-str
 SPU_CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -Wstrict-aliasing=2 -D_XOPEN_SOURCE=600 -O2 -fno-strict-aliasing -ffast-math -fno-unsafe-math-optimizations -fno-exceptions -DUSE_CELL_SPUS -DUSE_V4_SPU"
 SPU_LDFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -fno-strict-aliasing -ffast-math -fno-unsafe-math-optimizations -DUSE_CELL_SPUS"
 
-VPIC=$HOME/src/vpic/src
+VPIC=$HOME/devel/vpic/src
 INCLUDE="-I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include"
 
 set -x

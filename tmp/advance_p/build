@@ -32,8 +32,8 @@ SPU_LDFLAGS=$SPU_CFLAGS
 # - Could not get anything to build under spugxlc (directory problems in IBM's setup?)
 # - spugxlc++ currently miscompiles V4 based version
 
-VPIC=$HOME/src/vpic/src
-INCLUDE="-I. -I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include"
+VPIC=$HOME/devel/vpic/src
+INCLUDE="-I. -I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include -I/opt/ibm/cell-sdk/prototype/src/include/spu"
 
 set -x
 

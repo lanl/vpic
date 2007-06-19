@@ -21,6 +21,8 @@ AddModule(mtrand,src/util/mtrand,mtrand)
 /*AddModule(mp_old,src/util/mp_old,mp)*/
 AddModule(mp,src/util/mp,mp)
 AddModule(aais,src/util/mp/aais,)
+AddModule(p2p,src/util/mp/relay/p2p,)
+AddModule(io,src/io,)
 AddModule(dmp,src/util/mp/dmp,mp_dmp)
 AddModule(pipelines,src/util/pipelines,pipelines_serial pipelines_thread)
 AddModule(v4,src/util/v4,)

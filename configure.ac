@@ -86,7 +86,9 @@ fi
 # enable/disable distributed memory parallelism
 # this is also used for the openmpi host/cell interface
 if test "$ENABLE_DMP" = "1" ; then
-	CCS_WITH_MPI
+	# this does auto-detection of mpi libraries using
+	# the C compiler and possibly the openmpi mpicc program
+	CCS_WITH_MPI(C)
 
 	AC_SUBST(PARALLEL, [parallel])
 

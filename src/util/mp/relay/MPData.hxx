@@ -12,11 +12,21 @@
 #ifndef MPData_h
 #define MPData_h
 
-// max number of buffers that can be handled
-static const int max_buffers(27);
+static const uint64_t max_buffers(27);
 
-// default buffer size
-static const int default_buffer_size(4096);
+static const uint64_t default_buffer_size(4096);
+
+static const uint64_t filename_size(256);
+
+static const uint64_t io_line_size(256);
+
+// this should change to a -D compile option
+//static const uint64_t io_buffer_size(2048);
+//static const uint64_t io_buffer_size(1024);
+static const uint64_t io_buffer_size(64);
+//static const uint64_t io_buffer_size(32);
+//static const uint64_t io_buffer_size(16);
+//static const uint64_t io_buffer_size(8);
 
 // state of a relay request
 enum MPState {
@@ -85,32 +95,32 @@ template<> struct MPRequest_T<MP_ACCEL> {
 int request_count() { return sizeof(MPRequest_T<MP_ACCEL>)/sizeof(int); }
 
 // message passing buffer
-template<typename T> class MPBuffer
+template<typename T, int BS = default_buffer_size> class MPBuffer
 	{
 	public:
 
 		MPBuffer()
-			: count_(default_buffer_size),
-			data_(new T[default_buffer_size]) {}
+			: size_(BS),
+			data_(new T[BS]) {}
 		~MPBuffer()
-			{ count_ = 0; delete[] data_; }
+			{ size_ = 0; delete[] data_; }
 
-		int count() { return count_; }
+		int size() { return size_; }
 		T * data() { return data_; }
 
-		void resize(int count) {
-			if(count > count_) {
+		void resize(int size) {
+			if(size > size_) {
 				T * tmp = data_;
-				data_ = new T[count];
-				memcpy(data_, tmp, count_*sizeof(T));
-				count_ = count;
+				data_ = new T[size];
+				memcpy(data_, tmp, size_*sizeof(T));
+				size_ = size;
 				delete[] tmp;
 			} // if
 		} // resize
 
 	private:
 
-		int count_;
+		int size_;
 		T * data_;
 
 }; // class MPBuffer

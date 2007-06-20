@@ -9,7 +9,7 @@
  */
 
 #include <vpic.hxx>
-#include <stdio.h>  // For fopen, fclose, fwrite, fprintf
+//#include <stdio.h>  // For fopen, fclose, fwrite, fprintf
 #include <FileIO.hxx>
 
 /*****************************************************************************
@@ -61,7 +61,7 @@ vpic_simulation::dump_energies( const char *fname,
   int rank = mp_rank(grid->mp);
   species_t *sp;
   FileIO fileIO;
-  FileIOStatus status;
+  FileIOStatus status(fail);
   
   if( fname==NULL ) ERROR(("Invalid file name"));
 

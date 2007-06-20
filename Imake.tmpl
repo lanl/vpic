@@ -107,7 +107,7 @@ libvpic.EXTENSION.a:	$(MODULE_OBJS)
 		$(RANLIB) ./libvpic.EXTENSION.a
 
 build.EXTENSION:	libvpic.EXTENSION.a
-		echo "#!/bin/sh" > build.EXTENSION
+		echo "#!/bin/bash" > build.EXTENSION
 		echo export INPUT_DECK_DIR='`pwd`' >> build.EXTENSION
 		echo "pushd . >& /dev/null" >> build.EXTENSION
 		echo cd $(PWD) >> build.EXTENSION 

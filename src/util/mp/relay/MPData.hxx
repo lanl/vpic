@@ -9,8 +9,8 @@
 	vim: set ts=3 :
 */
 
-#ifndef MPData_h
-#define MPData_h
+#ifndef MPData_hxx
+#define MPData_hxx
 
 static const uint64_t max_buffers(27);
 
@@ -21,9 +21,10 @@ static const uint64_t filename_size(256);
 static const uint64_t io_line_size(256);
 
 // this should change to a -D compile option
+static const uint64_t io_buffer_size(4096);
 //static const uint64_t io_buffer_size(2048);
 //static const uint64_t io_buffer_size(1024);
-static const uint64_t io_buffer_size(64);
+//static const uint64_t io_buffer_size(64);
 //static const uint64_t io_buffer_size(32);
 //static const uint64_t io_buffer_size(16);
 //static const uint64_t io_buffer_size(8);
@@ -92,7 +93,9 @@ template<> struct MPRequest_T<MP_ACCEL> {
 
 // this is a kluge that avoids defining an MPI_TYPE for
 // the MPRequest_T data structure
-int request_count() { return sizeof(MPRequest_T<MP_ACCEL>)/sizeof(int); }
+inline int request_count() {
+	return sizeof(MPRequest_T<MP_ACCEL>)/sizeof(int);
+} // request_count
 
 // message passing buffer
 template<typename T, int BS = default_buffer_size> class MPBuffer
@@ -125,4 +128,4 @@ template<typename T, int BS = default_buffer_size> class MPBuffer
 
 }; // class MPBuffer
 
-#endif // MPData_h
+#endif // MPData_hxx

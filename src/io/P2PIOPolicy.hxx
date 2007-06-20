@@ -12,6 +12,7 @@
 #ifndef P2PIOPolicy_hxx
 #define P2PIOPolicy_hxx
 
+#include <cstdarg>
 #include <FileIOData.hxx>
 #include <P2PConnection.hxx>
 #include <MPData.hxx>

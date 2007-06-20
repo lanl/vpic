@@ -37,11 +37,11 @@ template<int ROLE> class P2PPolicyMPI
 			{ return ConnectionManager::instance().global_size(); }
 
 		// host side poll
-		int poll(MPRequest_T<ROLE> & request);
+		inline int poll(MPRequest_T<ROLE> & request);
 
 		// accelerator side request
-		int post(int p2ptag);
-		int post(int p2ptag, MPRequest_T<ROLE> & request);
+		inline int post(int p2ptag);
+		inline int post(int p2ptag, MPRequest_T<ROLE> & request);
 
 		// send and recv methods
 		template<typename T> int send(T * buffer, int count, int tag);
@@ -52,9 +52,9 @@ template<int ROLE> class P2PPolicyMPI
 		template<typename T> int irecv(T * buffer, int count,
 			int tag, int id);
 
-		int wait_send(int id);
-		int wait_recv(int id);
-		int barrier();
+		inline int wait_send(int id);
+		inline int wait_recv(int id);
+		inline int barrier();
 
 		// return elements handled in status
 		// dummy is a hack for broken ppu-g++
@@ -78,7 +78,7 @@ template<int ROLE> class P2PPolicyMPI
 
 	}; // class P2PPolicyMPI
 
-template<>
+template<> inline
 int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
@@ -101,7 +101,7 @@ int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 		return tag;
 	} // P2PPolicyMPI<>::poll
 
-template<>
+template<> inline
 int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag)
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
@@ -110,7 +110,7 @@ int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag)
 			mgr.peer_p2p_rank(), p2ptag, mgr.p2p_comm());
 	} // MPICommunicatorPolicy<>::request
 
-template<>
+template<> inline
 int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag,
 	MPRequest_T<MP_ACCEL> & request)
 	{
@@ -155,19 +155,19 @@ int P2PPolicyMPI<ROLE>::irecv(T * buffer, int count, int tag, int id)
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm(), &recv_request_[id]);
 	} // MPICommunicatorPolicy<>::isend
 
-template<>
+template<> inline
 int P2PPolicyMPI<MP_ACCEL>::wait_send(int id)
 	{
 		return MPI_Wait(&send_request_[id], &status_[id]);
 	} // P2PPolicyMPI<>::wait
 
-template<>
+template<> inline
 int P2PPolicyMPI<MP_ACCEL>::wait_recv(int id)
 	{
 		return MPI_Wait(&recv_request_[id], &status_[id]);
 	} // P2PPolicyMPI<>::wait
 
-template<int ROLE>
+template<int ROLE> inline
 int P2PPolicyMPI<ROLE>::barrier()
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();

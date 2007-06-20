@@ -71,9 +71,9 @@ template<int ROLE> class ConnectionManager_T
 		MPI_Comm dmp_comm_;
 
 		// Borrowed from Paul Henning
-		void initialize_communicators();
+		inline void initialize_communicators();
 
-		void propagate_dmp_rank();
+		inline void propagate_dmp_rank();
 
 	}; // class ConnectionManager_T
 
@@ -100,7 +100,7 @@ void ConnectionManager_T<ROLE>::finalize()
 	} // ConnectionManager_T<>::finalize
 
 // Borrowed from Paul Henning
-template<int ROLE>
+template<int ROLE> inline
 void ConnectionManager_T<ROLE>::initialize_communicators()
 	{
 		// no static assertions yet
@@ -190,7 +190,7 @@ void ConnectionManager_T<ROLE>::initialize_communicators()
 		delete role_type[1];
 	} // ConnectionManager_T<>::initialize_communicators
 
-template<>
+template<> inline
 void ConnectionManager_T<MP_HOST>::propagate_dmp_rank()
 	{
 		MPI_Comm_rank(dmp_comm_, &dmp_rank_);
@@ -203,7 +203,7 @@ void ConnectionManager_T<MP_HOST>::propagate_dmp_rank()
 		MPI_Send(info, 2, MPI_INT, peer_p2p_rank_, 0, p2p_comm_);
 	} // ConnectionManager_T<>::propagate_dmp_rank
 
-template<>
+template<> inline
 void ConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
 	{
 		// receive from host

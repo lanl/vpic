@@ -35,19 +35,22 @@ template<class ReadWritePolicy> class FileIO_T
 
 	}; // class FileIO_T
 
-#include <StandardIOPolicy.hxx>
-#include <P2PIOPolicy.hxx>
 
 #if defined USE_AAIS_MP
 
 #if defined HOST_BUILD
+#include <StandardIOPolicy.hxx>
+
 typedef FileIO_T<StandardIOPolicy> FileIO;
 #else
+#include <P2PIOPolicy.hxx>
+
 typedef FileIO_T<P2PIOPolicy<true> > FileIOSwapped;
 typedef FileIO_T<P2PIOPolicy<false> > FileIO;
 #endif // BUILD
 
 #else
+#include <StandardIOPolicy.hxx>
 typedef FileIO_T<StandardIOPolicy> FileIO;
 #endif // MP Implementation
 

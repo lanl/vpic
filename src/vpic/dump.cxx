@@ -198,6 +198,7 @@ vpic_simulation::dump_materials( const char *fname ) {
  * Binary dump IO
  *****************************************************************************/
 
+/*
 enum dump_types {
   grid_dump = 0,
   field_dump = 1,
@@ -205,6 +206,15 @@ enum dump_types {
   particle_dump = 3,
   restart_dump = 4
 };
+*/
+
+namespace dump_type {
+  const int grid_dump = 0;
+  const int field_dump = 1;
+  const int hydro_dump = 2;
+  const int particle_dump = 3;
+  const int restart_dump = 4;
+} // namespace
 
 #define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO) BEGIN_PRIMITIVE {      \
   /* Binary compatibility information */                                 \
@@ -343,7 +353,7 @@ vpic_simulation::dump_grid( const char *fbase ) {
 	return;
   }
 
-  WRITE_HEADER_V0( grid_dump, invalid_species_id, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::grid_dump, invalid_species_id, 0, fileIO );
 
   dim[0] = 3;
   dim[1] = 3;
@@ -421,7 +431,7 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
 	return;
   }
 
-  WRITE_HEADER_V0( field_dump, invalid_species_id, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::field_dump, invalid_species_id, 0, fileIO );
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
@@ -522,7 +532,7 @@ vpic_simulation::dump_hydro( const char *sp_name,
 	return;
   }
   
-  WRITE_HEADER_V0(hydro_dump,sp->id,sp->q_m,fileIO);
+  WRITE_HEADER_V0(dump_type::hydro_dump,sp->id,sp->q_m,fileIO);
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
@@ -654,7 +664,7 @@ vpic_simulation::dump_particles( const char *sp_name,
 	return;
   }
   
-  WRITE_HEADER_V0( particle_dump, sp->id, sp->q_m, fileIO );
+  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q_m, fileIO );
 
   dim[0] = sp->np;
   WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
@@ -867,7 +877,7 @@ vpic_simulation::dump_restart( const char *fbase,
 	return;
   }
 
-  WRITE_HEADER_V0( restart_dump, invalid_species_id, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::restart_dump, invalid_species_id, 0, fileIO );
 
   /************************************************
    * Restart saved directly initialized variables *
@@ -1050,7 +1060,7 @@ vpic_simulation::restart( const char *fbase ) {
 
   // Dump type and header version
   READ(int,n,handle); ABORT(n!=0           );
-  READ(int,n,handle); ABORT(n!=restart_dump);
+  READ(int,n,handle); ABORT(n!=dump_type::restart_dump);
 
   // High level information
   READ(int,  step,      handle); ABORT(step<0       );

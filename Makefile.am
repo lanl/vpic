@@ -22,6 +22,7 @@ copy-extension-lib:
 copy-samples:
 	@(if [ ! -d @abs_top_builddir@/sample ] ; then \
 		cp -r @abs_top_srcdir@/sample @abs_top_builddir@ ; \
+		rm -rf @abs_top_builddir@/sample/.svn ; \
 	fi)
 
 clean-build-script:

@@ -48,7 +48,7 @@ begin_initialization {
                                       
   int load_particles = 1;             // Flag to turn on particle load
   int rng_seed       = 1;             // Random number seed increent
-  int num_step       = 256;           // Number of time steps; set this to whatever you need
+  num_step       = 256;               // Number of time steps; set this to whatever you need
 
   // 125^3 = 1.95e6 voxels per domain, which is torturously slow on Coyote with 64 ppc (takes ~30
   //                                   min to load), but comparable to what we plan to run on RR.  

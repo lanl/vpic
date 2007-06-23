@@ -1,8 +1,7 @@
 // Note: This is similar to advance_e_pipeline
 
 #define IN_field_pipeline
-// See note in advance_e
-// #define V4_PIPELINE
+#define V4_PIPELINE
 #include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
@@ -101,6 +100,8 @@ compute_curl_b_pipeline_v4( compute_curl_b_pipeline_args_t * args,
   const v4float vpy(py);
   const v4float vpz(pz);
 
+  v4float dummy;
+
   v4float f0_cbx,  f0_cby,  f0_cbz;
   v4float f0_tcax, f0_tcay, f0_tcaz;
   v4float          fx_cby,  fx_cbz;
@@ -149,16 +150,10 @@ compute_curl_b_pipeline_v4( compute_curl_b_pipeline_args_t * args,
   for( ; n_voxel>3; n_voxel-=4 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
 
-    load_4x1_tr( &f00->cbx,   &f01->cbx,   &f02->cbx,   &f03->cbx,                                 f0_cbx );
-    load_4x2_tr( &f00->cby,   &f01->cby,   &f02->cby,   &f03->cby,   f0_cby,   f0_cbz                     );
-
-    load_4x2_tr( &fx0->cby,   &fx1->cby,   &fx2->cby,   &fx3->cby,   fx_cby,   fx_cbz                     );
-
-    load_4x1_tr( &fy0->cbx,   &fy1->cbx,   &fy2->cbx,   &fy3->cbx,                                 fy_cbx );
-    load_4x1_tr( &fy0->cbz,   &fy1->cbz,   &fy2->cbz,   &fy3->cbz,             fy_cbz                     );
-
-    load_4x1_tr( &fz0->cbx,   &fz1->cbx,   &fz2->cbx,   &fz3->cbx,                                 fy_cbx );
-    load_4x1_tr( &fz0->cby,   &fz1->cby,   &fz2->cby,   &fz3->cby,   fz_cby                               );
+    load_4x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
+    load_4x3_tr( &fx0->cbx, &fx1->cbx, &fx2->cbx, &fx3->cbx, dummy,  fx_cby, fx_cbz );
+    load_4x3_tr( &fy0->cbx, &fy1->cbx, &fy2->cbx, &fy3->cbx, fy_cbx, dummy,  fy_cbz );
+    load_4x2_tr( &fz0->cbx, &fz1->cbx, &fz2->cbx, &fz3->cbx, fz_cbx, fz_cby  /**/   );
 
 #   define LOAD_RMU( V, D ) load_4x1_tr( &m[f##V##0->fmat##D].rmu##D, \
                                          &m[f##V##1->fmat##D].rmu##D, \
@@ -186,8 +181,7 @@ compute_curl_b_pipeline_v4( compute_curl_b_pipeline_args_t * args,
     f0_tcaz = fms( vpx,fnms( fx_cby,m_fx_rmuy, f0_cby_rmuy ),
                    vpy*fnms( fy_cbx,m_fy_rmux, f0_cbx_rmux ) );
 
-    store_4x2_tr(               f0_tcax, f0_tcay, &f00->tcax,  &f01->tcax,  &f02->tcax,  &f03->tcax );
-    store_4x1_tr( f0_tcaz,                        &f00->tcaz,  &f01->tcaz,  &f02->tcaz,  &f03->tcaz );
+    store_4x3_tr( f0_tcax, f0_tcay, f0_tcaz, &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax );
   }
 
 # undef NEXT_STENCIL

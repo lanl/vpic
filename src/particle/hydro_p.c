@@ -127,18 +127,18 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
 
     // Accumulate the hydro fields
 #   define ACCUM_HYDRO(wn)           \
-    h->rho += wn;    /* wn = q/V */  \
     h->jx  += wn*vx;                 \
     h->jy  += wn*vy;                 \
     h->jz  += wn*vz;                 \
+    h->rho += wn;    /* wn = q/V */  \
     wn *= mc_q;      /* wn = mc/V */ \
     dx = wn*ux;      /* dx = px/V */ \
     dy = wn*uy;                      \
     dz = wn*uz;                      \
-    h->ke  += wn*ke_mc;              \
     h->px  += dx;                    \
     h->py  += dy;                    \
     h->pz  += dz;                    \
+    h->ke  += wn*ke_mc;              \
     h->txx += dx*vx;                 \
     h->tyy += dy*vy;                 \
     h->tzz += dz*vz;                 \

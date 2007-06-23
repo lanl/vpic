@@ -460,14 +460,14 @@ local_adjust_hydro( hydro_t      * ALIGNED(16) hydro,
       face = (i+j+k)<0 ? 1 : n##X+1;            \
       X##_NODE_LOOP(face) {                     \
         h = &hydro(x,y,z);                      \
-        h->rho *= 2;                            \
         h->jx  *= 2;                            \
         h->jy  *= 2;                            \
         h->jz  *= 2;                            \
-        h->ke  *= 2;                            \
+        h->rho *= 2;                            \
         h->px  *= 2;                            \
         h->py  *= 2;                            \
         h->pz  *= 2;                            \
+        h->ke  *= 2;                            \
         h->txx *= 2;                            \
         h->tyy *= 2;                            \
         h->tzz *= 2;                            \

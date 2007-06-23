@@ -142,10 +142,8 @@ clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
   for( ; n_voxel>3; n_voxel-=4 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
 
-    load_4x1_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx );
-    load_4x2_tr( &f00->cby, &f01->cby, &f02->cby, &f03->cby, f0_cby, f0_cbz );
+    load_4x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
 
-    load_4x1_tr( &f00->div_b_err, &f01->div_b_err, &f02->div_b_err, &f03->div_b_err, f0_div_b_err );
     load_4x1_tr( &fx0->div_b_err, &fx1->div_b_err, &fx2->div_b_err, &fx3->div_b_err, fx_div_b_err );
     load_4x1_tr( &fy0->div_b_err, &fy1->div_b_err, &fy2->div_b_err, &fy3->div_b_err, fy_div_b_err );
     load_4x1_tr( &fz0->div_b_err, &fz1->div_b_err, &fz2->div_b_err, &fz3->div_b_err, fz_div_b_err );
@@ -154,8 +152,7 @@ clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
     f0_cby = fma( f0_div_b_err-fy_div_b_err, py, f0_cby );
     f0_cbz = fma( f0_div_b_err-fz_div_b_err, pz, f0_cbz );
 
-    store_4x1_tr( f0_cbx,         &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
-    store_4x2_tr( f0_cby, f0_cbz, &f00->cby, &f01->cby, &f02->cby, &f03->cby );
+    store_4x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 
 # undef NEXT_STENCIL

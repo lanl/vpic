@@ -783,14 +783,14 @@ synchronize_hydro( hydro_t      * ALIGNED(16) hydro,
       face = (i+j+k)<0 ? 1 : n##X+1;                    \
       X##_NODE_LOOP(face) {                             \
         h = &hydro(x,y,z);                              \
-        (*(p++)) = h->rho;                              \
         (*(p++)) = h->jx;                               \
         (*(p++)) = h->jy;                               \
         (*(p++)) = h->jz;                               \
-        (*(p++)) = h->ke;                               \
+        (*(p++)) = h->rho;                              \
         (*(p++)) = h->px;                               \
         (*(p++)) = h->py;                               \
         (*(p++)) = h->pz;                               \
+        (*(p++)) = h->ke;                               \
         (*(p++)) = h->txx;                              \
         (*(p++)) = h->tyy;                              \
         (*(p++)) = h->tzz;                              \
@@ -814,14 +814,14 @@ synchronize_hydro( hydro_t      * ALIGNED(16) hydro,
       face = (i+j+k)<0 ? n##X+1 : 1; /* Twice weighted sum */   \
       X##_NODE_LOOP(face) {                                     \
         h = &hydro(x,y,z);                                      \
-        h->rho = lw*h->rho + rw*(*(p++));                       \
         h->jx  = lw*h->jx  + rw*(*(p++));                       \
         h->jy  = lw*h->jy  + rw*(*(p++));                       \
         h->jz  = lw*h->jz  + rw*(*(p++));                       \
-        h->ke  = lw*h->ke  + rw*(*(p++));                       \
+        h->rho = lw*h->rho + rw*(*(p++));                       \
         h->px  = lw*h->px  + rw*(*(p++));                       \
         h->py  = lw*h->py  + rw*(*(p++));                       \
         h->pz  = lw*h->pz  + rw*(*(p++));                       \
+        h->ke  = lw*h->ke  + rw*(*(p++));                       \
         h->txx = lw*h->txx + rw*(*(p++));                       \
         h->tyy = lw*h->tyy + rw*(*(p++));                       \
         h->tzz = lw*h->tzz + rw*(*(p++));                       \

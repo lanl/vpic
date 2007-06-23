@@ -144,15 +144,12 @@
 // neighbor processors or used to enforce bonundary conditions.
 
 typedef struct field {
-  float ex, ey, ez;                // Electric field
-  float cbx, cby, cbz;             // Magnetic field
-  float tcax, tcay, tcaz;          // TCA fields
-  float jfx, jfy, jfz;             // Free current
-  material_id ematx, ematy, ematz; // Material at edge centers
-  material_id fmatx, fmaty, fmatz; // Material at face centers
-  material_id nmat, cmat;          // Material at cell centers and nodes
-  float rhof, rhob;                // Free and bound charge density
-  float div_e_err, div_b_err;      // Divergence errors
+  float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
+  float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
+  float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
+  float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
+  material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
+  material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
 # if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
   float _pad[12];                  // 128-byte align (next power of two)
 # else
@@ -166,16 +163,14 @@ typedef struct field {
 // h(nx+1,:,:)) are not used.
 
 typedef struct hydro {
-  float rho;           // Charge density         => < q f >
-  float jx, jy, jz;    // Current density        => < q v_i f >
-  float ke;            // Kinetic energy density => < m c^2 (gamma-1) f >
-  float px, py, pz;    // Momentum density       => < p_i f >
-  float txx, tyy, tzz; // Stress diagonal        => < p_i v_j f >, i==j
-  float tyz, tzx, txy; // Stress off-diagonal    => < p_i v_j f >, i!=j
+  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
+  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
+  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
 # if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
-  float _pad[2];       // 64-byte align (next power of two)
+  float _pad[2];         // 64-byte align (next power of two)
 # else
-  float _pad[2];       // 16-byte align
+  float _pad[2];         // 16-byte align
 # endif
 } hydro_t;
 

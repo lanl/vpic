@@ -125,6 +125,8 @@ unload_accumulator_pipeline_v4( unload_accumulator_pipeline_args_t * args,
 
   for( ; n_voxel; n_voxel-- ) {
 
+    // FIXME: THIS MAY HAVE A BETTER V4 IMPLEMENTATION
+
     load_4x1_tr( &f0->jfx, &fy->jfx, &fz->jfx, &fyz->jfx, jfx ); load_4x1( pa,   ajfx );
     load_4x1_tr( &f0->jfy, &fz->jfy, &fx->jfy, &fzx->jfy, jfy ); load_4x1( pa+4, ajfy );
     load_4x1_tr( &f0->jfz, &fx->jfz, &fy->jfz, &fxy->jfz, jfz ); load_4x1( pa+8, ajfz );

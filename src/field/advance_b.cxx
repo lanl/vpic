@@ -8,7 +8,7 @@
 // below as
 //   f0->cbx = ( f0->cbx + py*( blah ) ) - pz*( blah )
 // even with explicit parenthesis are in there!  Oh my ...
-// -fno-unsafe-math-optimizations must not be used
+// -fno-unsafe-math-optimizations must be used
 
 #define UPDATE_CBX() f0->cbx -= ( py*( fy->ez-f0->ez ) - pz*( fz->ey-f0->ey ) )
 #define UPDATE_CBY() f0->cby -= ( pz*( fz->ex-f0->ex ) - px*( fx->ez-f0->ez ) )
@@ -139,20 +139,18 @@ advance_b_pipeline_v4( advance_b_pipeline_args_t * args,
   for( ; n_voxel>3; n_voxel-=4 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
 
-    load_4x4_tr(  &f00->ex,  &f01->ex,  &f02->ex,  &f03->ex,  f0_ex,  f0_ey,  f0_ez,
-                  /**/                                        f0_cbx                 );
-    load_4x2_tr(  &f00->cby, &f01->cby, &f02->cby, &f03->cby,         f0_cby, f0_cbz );
+    load_4x3_tr(  &f00->ex,  &f01->ex,  &f02->ex,  &f03->ex,  f0_ex,  f0_ey,  f0_ez  );
+    load_4x3_tr(  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
 
-    load_4x3_tr(  &fx0->ex,  &fx1->ex,  &fx2->ex,  &fx3->ex,  dummy, fx_ey, fx_ez );
-    load_4x3_tr(  &fy0->ex,  &fy1->ex,  &fy2->ex,  &fy3->ex,  fy_ex, dummy, fy_ez );
-    load_4x2_tr(  &fz0->ex,  &fz1->ex,  &fz2->ex,  &fz3->ex,  fz_ex, fz_ey  /**/  );
+    load_4x3_tr(  &fx0->ex,  &fx1->ex,  &fx2->ex,  &fx3->ex,  dummy,  fx_ey,  fx_ez  );
+    load_4x3_tr(  &fy0->ex,  &fy1->ex,  &fy2->ex,  &fy3->ex,  fy_ex,  dummy,  fy_ez  );
+    load_4x2_tr(  &fz0->ex,  &fz1->ex,  &fz2->ex,  &fz3->ex,  fz_ex,  fz_ey   /**/   );
 
     f0_cbx -= fms( vpy,( fy_ez-f0_ez ),  vpz*( fz_ey-f0_ey ) );
     f0_cby -= fms( vpz,( fz_ex-f0_ex ),  vpx*( fx_ez-f0_ez ) );
     f0_cbz -= fms( vpx,( fx_ey-f0_ey ),  vpy*( fy_ex-f0_ex ) );
 
-    store_4x1_tr( f0_cbx,         &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
-    store_4x2_tr( f0_cby, f0_cbz, &f00->cby, &f01->cby, &f02->cby, &f03->cby );
+    store_4x3_tr( f0_cbx, f0_cby, f0_cbz, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 
 # undef NEXT_STENCIL

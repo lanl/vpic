@@ -47,26 +47,27 @@ struct array_header {
   int dim;
 };
 
+/* FIXME: REALLY SHOULD GET THIS FIELD.H */
+
 typedef struct field {
-  float ex, ey, ez;                /* Electric field */
-  float cbx, cby, cbz;             /* Magnetic field */
-  float tcax, tcay, tcaz;          /* TCA fields */
-  float jfx, jfy, jfz;             /* Free current */
-  material_id ematx, ematy, ematz; /* Material at edge centers */
-  material_id fmatx, fmaty, fmatz; /* Material at face centers */
-  material_id nmat, cmat;          /* Material at cell centers and nodes */
-  float rhof, rhob;                /* Free and bound charge density */
-  float div_e_err, div_b_err;      /* Divergence errors */
+  float ex,   ey,   ez,   div_e_err;     /* Electric field and div e error */
+  float cbx,  cby,  cbz,  div_b_err;     /* Magnetic field and div b error */
+  float tcax, tcay, tcaz, rhob;          /* TCA fields and bound charge density */
+  float jfx,  jfy,  jfz,  rhof;          /* Free current and charge density */
+  material_id ematx, ematy, ematz, nmat; /* Material at edge centers and nodes*/
+  material_id fmatx, fmaty, fmatz, cmat; /* Material at face and cell centers */
+  /* FIXME: SHOULD CELL PADDING BE HERE? */
 } field_t;
 
 typedef struct hydro {
-  float rho;           /* Charge density         => < q f > */
   float jx, jy, jz;    /* Current density        => < q v_i f > */
-  float ke;            /* Kinetic energy density => < m c^2 (gamma-1) f > */
+  float rho;           /* Charge density         => < q f > */
   float px, py, pz;    /* Momentum density       => < p_i f > */
+  float ke;            /* Kinetic energy density => < m c^2 (gamma-1) f > */
   float txx, tyy, tzz; /* Stress diagonal        => < p_i v_j f >, i==j */
   float tyz, tzx, txy; /* Stress off-diagonal    => < p_i v_j f >, i!=j */
   float pad0, pad1;    /* 16-byte align the structure */
+  /* FIXME: SHOULD CELL PADDING BE HERE? */
 } hydro_t;
 
 void ierror( char *msg ); 

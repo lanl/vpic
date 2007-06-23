@@ -168,32 +168,33 @@ data = fread(handle,[20,nc],'single');
 ex        = reshape( data(1, :), shape );
 ey        = reshape( data(2, :), shape );
 ez        = reshape( data(3, :), shape );
-bx        = reshape( data(4, :), shape ) / cvac;
-by        = reshape( data(5, :), shape ) / cvac;
-bz        = reshape( data(6, :), shape ) / cvac;
-tcax      = reshape( data(7, :), shape );
-tcay      = reshape( data(8, :), shape );
-tcaz      = reshape( data(9, :), shape );
-jfx       = reshape( data(10,:), shape );
-jfy       = reshape( data(11,:), shape );
-jfz       = reshape( data(12,:), shape );
-% 13-16 are material data and handled below
-rhof      = reshape( data(17, :), shape );
-rhob      = reshape( data(18, :), shape );
-div_e_err = reshape( data(19, :), shape );
-div_b_err = reshape( data(20, :), shape ) / cvac;
+div_e_err = reshape( data(4, :), shape );
+bx        = reshape( data(5, :), shape ) / cvac;
+by        = reshape( data(6, :), shape ) / cvac;
+bz        = reshape( data(7, :), shape ) / cvac;
+div_b_err = reshape( data(8, :), shape ) / cvac;
+tcax      = reshape( data(9, :), shape );
+tcay      = reshape( data(10,:), shape );
+tcaz      = reshape( data(11,:), shape );
+rhob      = reshape( data(12,:), shape );
+jfx       = reshape( data(13,:), shape );
+jfy       = reshape( data(14,:), shape );
+jfz       = reshape( data(15,:), shape );
+rhof      = reshape( data(16,:), shape );
+
+% Handle material data
 
 fseek(handle,data_start,'bof'); % Seek back to field data
-fread(handle,12,'single');      % Line up with material data
+fread(handle,16,'single');      % Line up with material data
 
 data = fread(handle,[8,nc],'8*uint16',64);
 ematx = reshape( data(1,:), shape );
 ematy = reshape( data(2,:), shape );
 ematz = reshape( data(3,:), shape );
-fmatx = reshape( data(4,:), shape );
-fmaty = reshape( data(5,:), shape );
-fmatz = reshape( data(6,:), shape );
-nmat  = reshape( data(7,:), shape );
+nmat  = reshape( data(4,:), shape );
+fmatx = reshape( data(5,:), shape );
+fmaty = reshape( data(6,:), shape );
+fmatz = reshape( data(7,:), shape );
 cmat  = reshape( data(8,:), shape );
 
 clear data
@@ -228,19 +229,20 @@ div_b_err = permute( div_b_err(2:nx+1,2:ny+1,2:nz+1), order );
 ematx = ematx(2:nx+1,2:ny+2,2:nz+2);
 ematy = ematy(2:nx+2,2:ny+1,2:nz+2);
 ematz = ematz(2:nx+2,2:ny+2,2:nz+1);
+nmat  = nmat(2:nx+2,2:ny+2,2:nz+2);
 fmatx = fmatx(2:nx+2,2:ny+1,2:nz+1);
 fmaty = fmaty(2:nx+1,2:ny+2,2:nz+1);
 fmatz = fmatz(2:nx+1,2:ny+1,2:nz+2);
-nmat  = nmat(2:nx+2,2:ny+2,2:nz+2);
 cmat  = cmat(2:nx+1,2:ny+1,2:nz+1);
 
+% FIXME: PREALLOCATE material??
 material(1:2:2*nx+1,1:2:2*ny+1,1:2:2*nz+1) = nmat;  clear nmat
-material(2:2:2*nx,  2:2:2*ny,  2:2:2*nz  ) = cmat;  clear cmat
 material(2:2:2*nx,  1:2:2*ny+1,1:2:2*nz+1) = ematx; clear ematx
 material(1:2:2*nx+1,2:2:2*ny,1:2:2*nz+1  ) = ematy; clear ematy
 material(1:2:2*nx+1,1:2:2*ny+1,2:2:2*nz  ) = ematz; clear ematz
 material(1:2:2*nx+1,2:2:2*ny,  2:2:2*nz  ) = fmatx; clear fmatx
 material(2:2:2*nx,  1:2:2*ny+1,2:2:2*nz  ) = fmaty; clear fmaty
 material(2:2:2*nx,  2:2:2*ny,  1:2:2*nz+1) = fmatz; clear fmatz
+material(2:2:2*nx,  2:2:2*ny,  2:2:2*nz  ) = cmat;  clear cmat
 
 material = permute( material, order );

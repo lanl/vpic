@@ -45,14 +45,14 @@ end
 ; obtain hydro array data from single- or multi-processor vpic-3 run
 ;
 function load_hydro_array, topology
-  hydrostruct = { rho:0.0, $  ; Charge density         => < q f > 
-		  jx:0.0,  $  ; Current density        => < q v_i f >
+  hydrostruct = { jx:0.0,  $  ; Current density        => < q v_i f >
 		  jy:0.0,  $  
 		  jz:0.0,  $  
-		  ke:0.0,  $  ; Kinetic energy density => < m c^2 (gamma-1) f > 
+		  rho:0.0, $  ; Charge density         => < q f > 
 		  px:0.0,  $  ; Momentum density       => < p_i f > 
 		  py:0.0,  $
 		  pz:0.0,  $
+		  ke:0.0,  $  ; Kinetic energy density => < m c^2 (gamma-1) f > 
 		  txx:0.0, $  ; Stress diagonal        => < p_i v_j f >, i==j
 		  tyy:0.0, $
 		  tzz:0.0, $
@@ -61,6 +61,7 @@ function load_hydro_array, topology
 		  txy:0.0, $
 		  pad0:0.0,$  ; 16-byte align the structure
 		  pad1:0.0 }
+; FIXME: CELL W/ SPU ALIGNMENT ISSUES?
   return, load_generic_mesh_data(topology, hydrostruct, '*hydro*')
 end
 
@@ -72,27 +73,28 @@ function load_field_array, topology
   fieldstruct = { ex:0.0,      $
 		  ey:0.0,      $
 		  ez:0.0,      $
+		  div_e_err:0.0, $
 		  cbx:0.0,     $
 		  cby:0.0,     $
 		  cbz:0.0,     $
+		  div_b_err:0.0, $
 		  tcax:0.0,    $
 		  tcay:0.0,    $
 		  tcaz:0.0,    $
+		  rhob:0.0,    $
 		  jfx:0.0,     $
 		  jfy:0.0,     $
 		  jfz:0.0,     $
+		  rhof:0.0,    $
 		  ematx:0,     $
 		  ematy:0,     $
 		  ematz:0,     $
+		  nmat:0,      $
 		  fmatx:0,     $
 		  fmaty:0,     $
 		  fmatz:0,     $
-		  nmat:0,      $
-		  cmat:0,      $
-		  rhof:0.0,    $
-		  rhob:0.0,    $
-		  div_e_err:0.0, $
-		  div_b_err:0.0 }
+		  cmat:0 }
+; FIXME: CELL W/ SPU ALIGNMENT ISSUES?
   return, load_generic_mesh_data(topology, fieldstruct, 'fields*')
 end
 

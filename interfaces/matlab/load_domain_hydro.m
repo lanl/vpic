@@ -161,14 +161,14 @@ shape = [nx+2 ny+2 nz+2];
 nc = prod(shape);
 data = fread(handle,[16,nc],'single');
 
-rho = reshape( data(1, :), shape );
-jx  = reshape( data(2, :), shape );
-jy  = reshape( data(3, :), shape );
-jz  = reshape( data(4, :), shape );
-ke  = reshape( data(5, :), shape );
-px  = reshape( data(6, :), shape );
-py  = reshape( data(7, :), shape );
-pz  = reshape( data(8, :), shape );
+jx  = reshape( data(1, :), shape );
+jy  = reshape( data(2, :), shape );
+jz  = reshape( data(3, :), shape );
+rho = reshape( data(4, :), shape );
+px  = reshape( data(5, :), shape );
+py  = reshape( data(6, :), shape );
+pz  = reshape( data(7, :), shape );
+ke  = reshape( data(8, :), shape );
 txx = reshape( data(9, :), shape );
 tyy = reshape( data(10,:), shape );
 tzz = reshape( data(11,:), shape );
@@ -180,14 +180,14 @@ clear data
 fclose(handle);
 
 % Throw out ghost data and permute into order
-rho = permute( rho(2:nx+2,2:ny+2,2:nz+2), order );
 jx  = permute( jx( 2:nx+2,2:ny+2,2:nz+2), order );
 jy  = permute( jy( 2:nx+2,2:ny+2,2:nz+2), order );
 jz  = permute( jz( 2:nx+2,2:ny+2,2:nz+2), order );
-ke  = permute( ke( 2:nx+2,2:ny+2,2:nz+2), order );
+rho = permute( rho(2:nx+2,2:ny+2,2:nz+2), order );
 px  = permute( px( 2:nx+2,2:ny+2,2:nz+2), order );
 py  = permute( py( 2:nx+2,2:ny+2,2:nz+2), order );
 pz  = permute( pz( 2:nx+2,2:ny+2,2:nz+2), order );
+ke  = permute( ke( 2:nx+2,2:ny+2,2:nz+2), order );
 txx = permute( txx(2:nx+2,2:ny+2,2:nz+2), order );
 tyy = permute( tyy(2:nx+2,2:ny+2,2:nz+2), order );
 tzz = permute( tzz(2:nx+2,2:ny+2,2:nz+2), order );

@@ -11,6 +11,8 @@
 #include <field.h>
 #include <pipelines.h>
 
+// FIXME: ALIGNMENT ADJUSTS FOR CELL W/ SPU BUILDS
+
 field_t * ALIGNED(16)
 new_field( const grid_t * g ) {
   field_t * ALIGNED(16) f;
@@ -41,7 +43,7 @@ clear_field( field_t      * ALIGNED(16) f,
              const grid_t *             g ) {
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
-  // FIXME: SPU THIS
+  // FIXME: SPU THIS?
   memset( f, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(field_t) );
 }
 
@@ -93,6 +95,8 @@ clear_rhof( field_t      * ALIGNED(16) f,
   }
 }
 
+// FIXME: clear_jf_and_rhof CALL??
+
 /*****************************************************************************/
 
 hydro_t * ALIGNED(16)
@@ -123,6 +127,7 @@ clear_hydro( hydro_t * ALIGNED(16) h,
              const grid_t * g ) {
   if( h==NULL ) ERROR(("Bad hydro"));
   if( g==NULL ) ERROR(("Bad grid"));
+  // FIXME: SPU THIS?
   memset( h, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(hydro_t) );
 }
 
@@ -151,12 +156,12 @@ delete_interpolator( interpolator_t ** ALIGNED(128) fi ) {
   *fi = NULL;
 }
 
-// FIXME: SPU THIS?
 void
 clear_interpolator( interpolator_t * ALIGNED(128) fi,
                     const grid_t * g ) {
   if( fi==NULL ) ERROR(("Bad interpolator"));
   if( g==NULL  ) ERROR(("Bad grid"));
+  // FIXME: SPU THIS?
   memset( fi, 0, (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t) );
 }
 

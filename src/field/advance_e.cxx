@@ -17,8 +17,8 @@
 // thus cell) friendly.
 //
 // UPDATE: With the more v4 friendly field_t, this seems to be working
-// again on my new desktop (bullock.lanl.gov-64-bit core2 duo) under
-// gcc-4.1.2.
+// on my new desktop (bullock.lanl.gov dual 64-bit Intel core2 duo) and
+// flash64 (dual 64-bit AMD single core Operton) under gcc-4.1.2.
 #define V4_PIPELINE
 #include <field_pipelines.h>
 

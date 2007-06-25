@@ -16,7 +16,7 @@ AC_PROG_LIBTOOL
 # list targets for output and commands to run
 ################################################################################
 AC_CONFIG_FILES(Makefile \
-	build.script \
+	buildscript \
 	lib/Makefile \
 	mprelay/Makefile \
 	accelerator/Makefile \

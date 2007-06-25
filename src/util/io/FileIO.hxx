@@ -36,7 +36,7 @@ template<class ReadWritePolicy> class FileIO_T
 	}; // class FileIO_T
 
 
-#if defined USE_AAIS_MP
+#if defined USE_MPRELAY
 
 #if defined HOST_BUILD
 #include <StandardIOPolicy.hxx>

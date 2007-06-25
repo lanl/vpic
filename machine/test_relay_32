@@ -3,27 +3,20 @@
 ################################################################################
 
 ################################################################################
-# BUILDSTYLE = configure build type
-# ( standard | test_relay | hybrid_relay_cell )
 ################################################################################
-BUILDSTYLE=standard
+BUILDSTYLE=test_relay
 
 ################################################################################
 # CFLAGS - configure C compiler behavior
 ################################################################################
-CFLAGS="-DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
-#CFLAGS="-DUSE_V4_SSE -D_XOPEN_SOURCE=600"
+#CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
+CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-CXXFLAGS="-DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
-#CXXFLAGS="-DUSE_V4_SSE -D_XOPEN_SOURCE=600"
-
-################################################################################
-# EXTRA_LIBS - additional libraries
-################################################################################
-EXTRA_LIBS="-lpthread"
+#CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
+CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600 -DUSE_V4_SSE"
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
@@ -35,7 +28,7 @@ OPT_LEVEL=-1
 # CPUMODEL - specify a particular cpu model (this affects optimization)
 # supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CPUMODEL=pentiumM
+CPUMODEL=pentium-m
 
 ################################################################################
 # EXTENSION - executable extension
@@ -46,11 +39,6 @@ EXTENSION=pm
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
 ADDRESSING=32
-
-################################################################################
-# ENABLE_DMP - enable distributed memory parallelism (0|1)[0]
-################################################################################
-ENABLE_DMP=1
 
 ################################################################################
 # ENABLE_SIMD - enable vector processing (0|1)[0]
@@ -69,8 +57,8 @@ ENABLE_SIMD=1
 
 # to use mpicc from openmpi
 MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-[lW][^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################
 # ENABLE_HOST - enable host build (0|1)[1]
@@ -83,14 +71,24 @@ MPI_LIBS=`mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, 
 #ENABLE_CELL=1
 
 ################################################################################
+# PCC - PPU compiler
+################################################################################
+#PCC
+
+################################################################################
+# SCC - SPU compiler
+################################################################################
+#SCC
+
+################################################################################
 # PPU CFLAGS - configure C compiler behavior
 ################################################################################
-#PCFLAGS=""
+#PCFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
 
 ################################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-#PCXXFLAGS=""
+#PCXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
 
 ################################################################################
 # SPU CFLAGS - configure C compiler behavior
@@ -101,3 +99,23 @@ MPI_LIBS=`mpicc --showme:link | sed 's, -[^lW][^ ]*,,g;s,-pthread,,g' | sed 's, 
 # SPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
 #SCXXFLAGS=""
+
+################################################################################
+# Cell MPI configuration
+# PPU_MPI_CPPFLAGS - configure MPI preprocessor flags
+# PPU_MPI_LDFLAGS - configure MPI link flags
+# PPU_MPI_LIBS - configure MPI library names
+################################################################################
+#PPU_MPI_CPPFLAGS=`echo $MPI_CXX_CPPFLAGS_PPC64`
+#PPU_MPI_LDFLAGS=`echo $MPI_CXX_LDFLAGS_PPC64`
+#PPU_MPI_LIBS=`echo $MPI_CC_LDLIBS_PPC64`
+
+################################################################################
+# LIBSPE2 - libspe2 library
+################################################################################
+#LIBSPE2="/opt/ibm/cell-sdk/prototype/sysroot/usr"
+
+################################################################################
+# IBM_SIMDMATH - simdmath library
+################################################################################
+#IBM_SIMDMATH="/opt/cell/sysroot/usr/spu"

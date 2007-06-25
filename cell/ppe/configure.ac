@@ -18,7 +18,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	config/rules.mk \
 	lib/Makefile \
-	../../build.script)
+	../../buildscript)
 
 ################################################################################
 # append prefix with ppe

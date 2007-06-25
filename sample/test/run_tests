@@ -2,13 +2,13 @@
 EXT=$1
 BUILD=../../build.$EXT
 
-TEST=accel;   echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=cyclo;   echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=inbndj;  echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=interpe; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=outbndj; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=pcomm;   echo $TEST; $BUILD $TEST; mpirun -np 8 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=rngconv; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=rngseq;  echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
-TEST=v4;      echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT; rm ./$TEST.$EXT
+TEST=accel;   echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=cyclo;   echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=inbndj;  echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=interpe; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=outbndj; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=pcomm;   echo $TEST; $BUILD $TEST; mpirun -np 8 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=rngconv; echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=rngseq;  echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
+TEST=v4;      echo $TEST; $BUILD $TEST; mpirun -np 1 ./$TEST.$EXT -tpp=$2; rm ./$TEST.$EXT
 

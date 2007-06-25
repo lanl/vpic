@@ -25,7 +25,7 @@ center_p_pipeline( center_p_pipeline_args_t * args,
 
   // Determine which particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, n );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, first, n );
   p = args->p0 + first;
 
   // Process particles for this pipeline
@@ -103,7 +103,7 @@ center_p_pipeline_v4( center_p_pipeline_args_t * args,
 
   // Determine which particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
   p = args->p0 + itmp;
   nq >>= 2;
 

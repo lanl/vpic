@@ -67,7 +67,7 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
+  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 
@@ -157,7 +157,7 @@ advance_e_pipeline_v4( advance_e_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
+  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 

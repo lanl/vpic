@@ -24,7 +24,7 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
   
   // Process voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
+  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
   
@@ -50,7 +50,7 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
     en_ey += 0.25*( m[ f0->ematy].epsy* f0->ey * f0->ey +
                     m[ fz->ematy].epsy* fz->ey * fz->ey +
                     m[ fx->ematy].epsy* fx->ey * fx->ey + 
-                    m[fzx->ematy].epsy*fzx->ey *fzx->ey );                            
+                    m[fzx->ematy].epsy*fzx->ey *fzx->ey );
     en_ez += 0.25*( m[ f0->ematz].epsz* f0->ez * f0->ez +
                     m[ fx->ematz].epsz* fx->ez * fx->ez +
                     m[ fy->ematz].epsz* fy->ez * fy->ez + 

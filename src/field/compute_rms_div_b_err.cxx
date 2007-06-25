@@ -21,7 +21,7 @@ compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline
 
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz,
+  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
   

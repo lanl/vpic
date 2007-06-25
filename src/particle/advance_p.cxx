@@ -35,19 +35,19 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   
   particle_mover_t local_pm[1];
 
-  // Determine which particles this pipeline processes
+  // Determine which quads of particles quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, itmp, n );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, n );
   p = args->p0 + itmp;
 
   // Determine which movers are reserved for this pipeline
-  // Movers (16 bytes) are reserved for pipelines in multiples of 8
-  // such that the set of particle movers reserved for a pipeline is
-  // 128-bit aligned and a multiple of 128-bits in size.  The host is
-  // pipeline guaranteed to get enough movers to process its particles
-  // with this allocation.
+  // Movers (16 bytes) should be reserved for pipelines in at least
+  // multiples of 8 such that the set of particle movers reserved for
+  // a pipeline is 128-byte aligned and a multiple of 128-byte in
+  // size.  The host is guaranteed to get enough movers to process its
+  // particles with this allocation.
 
-  max_nm = args->max_nm - (args->np&3);
+  max_nm = args->max_nm - (args->np&15);
   if( max_nm<0 ) max_nm = 0;
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
   if( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
@@ -224,20 +224,20 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
-  // Determine which particle quads this pipeline processes
+  // Determine which quads of particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
   p = args->p0 + itmp;
-  nq >>= 2;
+  nq>>=2;
 
-  // Determine which movers are reserved for this pipeline
-  // Movers (16 bytes) are reserved for pipelines in multiples of 8
-  // such that the set of particle movers reserved for a pipeline is
-  // 128-bit aligned and a multiple of 128-bits in size.  The host is
-  // pipeline guaranteed to get enough movers to process its particles
-  // with this allocation.
+  // Determine which movers are reserved for this pipeline.
+  // Movers (16 bytes) should be reserved for pipelines in at least
+  // multiples of 8 such that the set of particle movers reserved for
+  // a pipeline is 128-byte aligned and a multiple of 128-byte in
+  // size.  The host is guaranteed to get enough movers to process its
+  // particles with this allocation.
 
-  max_nm = args->max_nm - (args->np&3);
+  max_nm = args->max_nm - (args->np&15);
   if( max_nm<0 ) max_nm = 0;
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
   if( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
@@ -435,7 +435,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
   // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,
   // it uses an entire accumulator.  Reserving an entirely accumulator
-  // for the host processor to handle at most 3 particles is wasteful
+  // for the host processor to handle at most 15 particles is wasteful
   // of memory.  It is anticipated that it may be useful at some point
   // in the future have pipelines accumulating currents while the host
   // processor is doing other more substantive work (e.g. accumulating

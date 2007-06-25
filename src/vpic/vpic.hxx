@@ -225,7 +225,8 @@ private:
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
     if( max_local_nm<=-1 ) {
       max_local_nm = 2*max_local_np/25;
-      if( max_local_nm<16 ) max_local_nm = 16;
+      if( max_local_nm<16*(MAX_PIPELINE+1) )
+        max_local_nm = 16*(MAX_PIPELINE+1);
     }
     return new_species( name, (float)q_m, (int)max_local_np, (int)max_local_nm,
 			(int)sort_interval, &species_list );

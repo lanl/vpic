@@ -35,7 +35,7 @@ clean_div_b_pipeline( clean_div_b_pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
+  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 
@@ -113,7 +113,7 @@ clean_div_b_pipeline_v4( clean_div_b_pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz,
+  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 

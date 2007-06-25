@@ -616,16 +616,17 @@ synchronize_hydro( hydro_t      * ALIGNED(16) hydro,
 // It is assumed that the pipelines will process voxels in FORTRAN
 // ordering (e.g. inner loop increments x-index).
 //
-// jobs are indexed from 0 to n_job-1.  jobs _always_ assign voxels in
-// complete bundles of 4 voxels to facillitate vector processing.  If
+// jobs are indexed from 0 to n_job-1.  jobs are _always_ assigned a
+// number of voxels that is an even multiple of the bundle size.  If
 // job is set to n_job, this function will compute the voxel index of
 // the first voxel in the final incomplete bundle and return the
 // number of voxels in the final incomplete bundle.
 
 int
-distribute_voxels( int x0,  int x1,    // range of x-indices (inclusive)
-                   int y0,  int y1,    // range of y-indices (inclusive)
-                   int z0,  int z1,    // range of z-indices (inclusive)
+distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
+                   int y0, int y1,     // range of y-indices (inclusive)
+                   int z0, int z1,     // range of z-indices (inclusive)
+                   int bundle,         // bundle size
                    int job, int n_job, // job ... on [0,n_job-1]
                    int * _x, int * _y, int * _z ); // first voxel to process
 

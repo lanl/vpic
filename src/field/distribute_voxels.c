@@ -1,9 +1,12 @@
 #include <field.h>
 
+// FIXME: MACROIZE THIS SO IT CAN BE USED IN BOTH PPU AND SPU CONTEXTS!
+
 int
 distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
                    int y0, int y1,     // range of y-indices (inclusive)
                    int z0, int z1,     // range of z-indices (inclusive)
+                   int bundle,         // number of voxels in a bundle
                    int job, int n_job, // job ... on [0,n_job-1]
                    int * _x, int * _y, int * _z ) {
   const int nvx = x1-x0+1; // Number of voxels along x to process
@@ -19,16 +22,16 @@ distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
     // The host processes the final incomplete bundle
 
     x  = n_voxel;
-    n_voxel &= 3;
+    n_voxel %= bundle;
     x -= n_voxel; 
 
   } else {
 
     // Pipelines process a roughly equal share of complete voxel bundles
 
-    double n_target = (double)( n_voxel>>2 ) / (double)n_job;
-    x               = 4*(int)( n_target*(double)( job     ) + 0.5 );
-    n_voxel         = 4*(int)( n_target*(double)( job + 1 ) + 0.5 ) - x;
+    double n_target = (double)( n_voxel/bundle ) / (double)n_job;
+    x               = bundle*(int)( n_target*(double)( job     ) + 0.5 );
+    n_voxel         = bundle*(int)( n_target*(double)( job + 1 ) + 0.5 ) - x;
 
   }
 

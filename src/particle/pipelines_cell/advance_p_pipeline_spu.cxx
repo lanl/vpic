@@ -543,16 +543,16 @@ main( uint64_t spu_id,
   pipeline_rank = envp & 0xffffffff;
   n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
 
-  // Determine which particle quads this pipeline processes
+  // Determine which quads of particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, next_idx, np );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
 
   // Determine which movers are reserved for this pipeline
-  // Movers (16 bytes) are reserved for pipelines in multiples of 8
-  // such that the set of particle movers reserved for a pipeline is
-  // 128-bit aligned and a multiple of 128-bits in size. 
+  // Movers (16 bytes) should be reserved for pipelines in at least
+  // multiples of 8 such that the set of particle movers reserved for a
+  // pipeline is 128-bit aligned and a multiple of 128-bits in size. 
 
-  args->max_nm -= args->np&3; // Insure host gets enough
+  args->max_nm -= args->np&15; // Insure host gets enough
   if( args->max_nm<0 ) args->max_nm = 0;
   DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline, itmp, seg->max_nm );
   seg->pm        = args->pm + itmp*sizeof(particle_mover_t);

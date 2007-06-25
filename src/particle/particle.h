@@ -29,11 +29,15 @@ typedef struct particle_mover {
   int32_t i;                 // Index of the particle to move
 } particle_mover_t;
 
+// FIXME: 16-byte align the injector.  The extra field should be a species
+// id.  This should fix all sorts of minor flaws in the injection and
+// emission routines.  However, the architectural handling of injectors
+// will need some additional thought!
+
 typedef struct particle_injector {
   float dx, dy, dz; int32_t i;
   float ux, uy, uz, q;
   float dispx, dispy, dispz;
-  // FIXME: consider 16-byte aligning this!
 } particle_injector_t;
 
 BEGIN_C_DECLS

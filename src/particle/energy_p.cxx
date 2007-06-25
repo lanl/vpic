@@ -23,7 +23,7 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
 
   // Determine which particles this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, n );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, first, n );
   p = args->p0 + first;
 
   // Process particles quads for this pipeline
@@ -79,7 +79,7 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
 
   // Determine which particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 4, pipeline_rank, n_pipeline, first, nq );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, first, nq );
   p = args->p0 + first;
   nq >>= 2;
 

@@ -358,6 +358,9 @@ end_remote_ghost_div_b( field_t      * ALIGNED(16) field,
  * overlappable so that a half advance_b can occur while communications are
  * occuring. The other synchronizations are less important to overlap as they
  * only occur in conjunction with infrequent operations.
+ * 
+ * FIXME: THIS COMMUNICATION PATTERN PROHIBITS CONCAVE LOCAL MESH
+ * CONNECTIVITIES.
  *
  * Note: These functions are lightly test the input arguments as these
  * functions are meant to be used externally.

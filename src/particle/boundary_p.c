@@ -14,11 +14,11 @@
 
 #define CUSTOM_PBC_MIN_INJECTORS 16
 
-// FIXME: ~1.3125 is fastest growth without causing heap fragmentation
-// out of place realloc.  Just below golden ratio is fastest growth
-// without causing heap fragment with free / malloc resize.
+// Note: Just above 1.3125 is fastest growth without causing heap
+// fragmentation out of place realloc.  Just below golden ratio is fastest
+// growth without causing heap fragment with free / malloc resize.
 
-#define CUSTOM_PBC_RESIZE_FACTOR 1.1
+#define CUSTOM_PBC_RESIZE_FACTOR 1.3125
 
 int
 boundary_p( particle_mover_t * ALIGNED(128) pm,
@@ -103,12 +103,10 @@ boundary_p( particle_mover_t * ALIGNED(128) pm,
       cmlist=(particle_injector_t *)malloc((size_t)cpb_size*sizeof(particle_injector_t)); 
       if ( !cmlist ) ERROR(("Could not alloate space for cpb injector array.")); 
     } else if ( nm>cpb_size ) { // Need to resize injector array 
-      particle_injector_t *cmlist_tmp; 
-      cpb_size=nm*CUSTOM_PBC_RESIZE_FACTOR;
-      // FIXME: Just free and malloc here!
-      cmlist_tmp=realloc( cmlist, (size_t)cpb_size*sizeof(particle_injector_t) ); 
-      if ( !cmlist_tmp ) ERROR(("Could not realloate space for cpb injector array.")); 
-      cmlist=cmlist_tmp; 
+      cpb_size = nm*CUSTOM_PBC_RESIZE_FACTOR;
+      free( cmlist );
+      cmlist = (particle_injector_t *)malloc( (size_t)cpb_size*sizeof(particle_injector_t) ); 
+      if ( !cmlist ) ERROR(("Could not alloate space for cpb injector array.")); 
     }
 
     cm = cmlist;

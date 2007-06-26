@@ -53,10 +53,6 @@ typedef struct pipeline_dispatcher {
   // array.  Use 0 if you want to pass the exact same arguments to
   // each pipeline.
   //
-  // request stores information for the host processor about
-  // completion of the request.  Use NULL if the host does not need to
-  // know about completion.
-  //
   // If the pipeline functions do not take arguments, use NULL for
   // args and 0 for the size_args.
                     
@@ -90,8 +86,8 @@ extern pipeline_dispatcher_t spu;
 //
 // - The spu pipeline (a spe_program_handle_t) must be encapsulated in 
 //   the SPU_PIPELINE macro for reasons of evil discussed below.
-// - args should be 16 byte aligned
-// - size should be a multiple of 16 (0 is permissible)
+// - args should be 16 byte aligned (ideally 128)
+// - size should be a multiple of 16 (ideally 128), 0 is permissible
 //
 // The spu pipeline itself sees:
 //

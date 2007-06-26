@@ -161,22 +161,15 @@ remove_p( particle_t   * ALIGNED(32)  r,
   int i, j, k;
   float *rhob;
   particle_t * ALIGNED(32) p;
+  particle_t s;
 
   if( r==NULL || p0==NULL || f==NULL || g==NULL || (r-p0)<0 || (r-p0)>=np )
     return 0;
 
   // Backfill the particle to remove
-  // FIXME: V4 acceleration this
   np--;
   p = p0 + np;
-  t = p->dx; p->dx = r->dx; r->dx = t;
-  t = p->dy; p->dy = r->dy; r->dy = t;
-  t = p->dz; p->dz = r->dz; r->dz = t;
-  i = p->i;  p->i  = r->i;  r->i  = i;
-  t = p->ux; p->ux = r->ux; r->ux = t;
-  t = p->uy; p->uy = r->uy; r->uy = t;
-  t = p->uz; p->uz = r->uz; r->uz = t;
-  t = p->q;  p->q  = r->q;  r->q  = t;
+  s = *p; *p = *r; *r = s;
 
   // Compute the trilinear weights
   t   = p->dx;                      // t  = x

@@ -616,9 +616,9 @@ synchronize_hydro( hydro_t      * ALIGNED(16) hydro,
 // It is assumed that the pipelines will process voxels in FORTRAN
 // ordering (e.g. inner loop increments x-index).
 //
-// jobs are indexed from 0 to n_job-1.  jobs are _always_ assigned a
-// number of voxels that is an even multiple of the bundle size.  If
-// job is set to n_job, this function will compute the voxel index of
+// jobs are indexed from 0 to n_job-1.  jobs are _always_ have the
+// number of voxels an integer multiple of the bundle size.  If job 
+// is set to n_job, this function will compute the voxel index of
 // the first voxel in the final incomplete bundle and return the
 // number of voxels in the final incomplete bundle.
 

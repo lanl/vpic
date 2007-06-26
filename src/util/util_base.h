@@ -193,7 +193,7 @@
   print_log( "Error at %s(%i):\n\t", __FILE__, __LINE__ ); \
   print_log args;					   \
   print_log( "\n" );                                       \
-  /* FIXME: SHOULD WAIT A FEW SECONDS HERE! */             \
+  nanodelay( 1000000000 );                                 \
   exit(1);                                                 \
 } END_PRIMITIVE
 

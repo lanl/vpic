@@ -26,6 +26,9 @@ template<int ROLE> class P2PPolicyMPI
 	{
 	public:
 
+		void init(int argc, char ** argv);
+		void finalize();
+
 		// topology information
 		inline int global_id()
 			{ return ConnectionManager::instance().global_id(); }
@@ -73,6 +76,18 @@ template<int ROLE> class P2PPolicyMPI
 	private:
 
 	}; // class P2PPolicyMPI
+
+template<int ROLE> inline
+void P2PPolicyMPI<ROLE>::init(int argc, char ** argv)
+	{
+		ConnectionManager::instance().init(argc, argv);
+	} // P2PPolicyMPI<>::init
+
+template<int ROLE> inline
+void P2PPolicyMPI<ROLE>::finalize()
+	{
+		ConnectionManager::instance().finalize();
+	} // P2PPolicyMPI<>::init
 
 template<> inline
 int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)

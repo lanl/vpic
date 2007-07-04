@@ -3,7 +3,6 @@
 
 #include <util_base.h>
 #include <mp_handle.h>
-#include <ConnectionManager.hxx>
 #include <P2PConnection.hxx>
 
 struct mp_t {
@@ -25,13 +24,13 @@ struct mp_t {
 struct AAISPolicy {
 
 	inline void mp_init(int argc, char ** argv) {
-		ConnectionManager::instance().init(argc, argv);
+		P2PConnection::instance().init(argc, argv);
 //		std::cerr << "WRAPPER: mp_init called" << std::endl;
 	} // mp_init
 
 	inline void mp_finalize() {
 		P2PConnection::instance().post(P2PTag::end);
-		ConnectionManager::instance().finalize();
+		P2PConnection::instance().finalize();
 //		std::cerr << "WRAPPER: mp_finalize called" << std::endl;
 	} // mp_finalize
 

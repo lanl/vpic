@@ -6,7 +6,7 @@
 int main(int argc, char *argv[]) {
 
 	// initialize everything
-	ConnectionManager::instance().init(argc, argv);
+	P2PConnection::instance().init(argc, argv);
 
 	// Relay object
 	MPRelay relay;
@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 	relay.start();
 
 	// finalize
-	ConnectionManager::instance().finalize();
+	P2PConnection::instance().finalize();
 
 	return 0;
 } // main

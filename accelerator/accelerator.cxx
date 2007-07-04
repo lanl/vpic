@@ -16,11 +16,12 @@ int main(int argc, char *argv[]) {
 	int64_t lbuf_send[5];
 	int64_t * lbuf_recv(NULL);
 
-	// initialize everything
-	ConnectionManager::instance().init(argc, argv);
-
 	// get an instance of the p2p connection
 	P2PConnection & p2p = P2PConnection::instance();
+
+	// initialize everything
+	p2p.init(argc, argv);
+
 
 	int rank = p2p.global_id();
 	int size = p2p.global_size();
@@ -194,7 +195,7 @@ int main(int argc, char *argv[]) {
 	p2p.post(P2PTag::end);
 
 	// finalize communication
-	ConnectionManager::instance().finalize();
+	p2p.finalize();
 
 	delete[] ibuf_recv;
 	delete[] lbuf_recv;

@@ -16,6 +16,7 @@ struct P2PTag {
 
 	enum {
 		end,
+		request,
 		data,
 		send,
 		recv,

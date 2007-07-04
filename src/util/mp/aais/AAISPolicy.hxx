@@ -137,8 +137,8 @@ struct AAISPolicy {
 //		std::cerr << "WRAPPER: mp_elapsed called" << std::endl;
 		double time = p2p.wtime() - mp->elapsed_ref;
 
-		MPRequest request(P2PTag::data, 1, 0);
-		p2p.post(P2PTag::allreduce_max_double, request);
+		MPRequest request(P2PTag::allreduce_max_double, P2PTag::data, 1, 0);
+		p2p.post(request);
 		p2p.send(&time, request.count, request.tag);
 		p2p.recv(&time, request.count, request.tag, request.id);
 
@@ -164,8 +164,8 @@ struct AAISPolicy {
 	inline void mp_abort(int reason, mp_handle h) {
 		P2PConnection & p2p = P2PConnection::instance();
 //		std::cerr << "WRAPPER: mp_abort called" << std::endl;
-		MPRequest request(P2PTag::data, 1, 0);
-		p2p.post(P2PTag::abort, request);
+		MPRequest request(P2PTag::abort, P2PTag::data, 1, 0);
+		p2p.post(request);
 		p2p.send(&reason, 1, P2PTag::data);
 		p2p.abort(reason);
 	} // mp_abort
@@ -292,8 +292,8 @@ struct AAISPolicy {
 			" with tag " << tag << std::endl;
 		*/
 
-		MPRequest request(tag, size, rbuf, sender);
-		p2p.post(P2PTag::irecv, request);
+		MPRequest request(P2PTag::irecv, tag, size, rbuf, sender);
+		p2p.post(request);
 
 		switch(p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size,
 			tag, rbuf)) {
@@ -343,8 +343,8 @@ struct AAISPolicy {
 			" with tag " << tag << std::endl;
 		*/
 
-		MPRequest request(tag, size, sbuf, receiver);
-		p2p.post(P2PTag::send, request); // this is not a typo
+		MPRequest request(P2PTag::send, tag, size, sbuf, receiver);
+		p2p.post(request); // this is not a typo
 
 		switch(p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size,
 			tag, sbuf)) {
@@ -448,8 +448,8 @@ struct AAISPolicy {
 			return ERROR_CODE("Overlapping local and global");
 		} // if
 
-		MPRequest request(P2PTag::data, n, 0);
-		p2p.post(P2PTag::allreduce_sum_double, request);
+		MPRequest request(P2PTag::allreduce_sum_double, P2PTag::data, n, 0);
+		p2p.post(request);
 		p2p.send(local, request.count, request.tag);
 		p2p.recv(global, request.count, request.tag, request.id);
 
@@ -470,8 +470,8 @@ struct AAISPolicy {
 			return ERROR_CODE("Overlapping local and global");
 		} // if
 
-		MPRequest request(P2PTag::data, n, 0);
-		p2p.post(P2PTag::allreduce_sum_int, request);
+		MPRequest request(P2PTag::allreduce_sum_int, P2PTag::data, n, 0);
+		p2p.post(request);
 		p2p.send(local, request.count, request.tag);
 		p2p.recv(global, request.count, request.tag, request.id);
 
@@ -490,8 +490,8 @@ struct AAISPolicy {
 		if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
 		if(n<1) { return ERROR_CODE("Bad n"); }
 
-		MPRequest request(P2PTag::data, n, 0);
-		p2p.post(P2PTag::allgather_int, request);
+		MPRequest request(P2PTag::allgather_int, P2PTag::data, n, 0);
+		p2p.post(request);
 		p2p.send(sbuf, request.count, request.tag);
 		p2p.recv(rbuf, request.count*p2p.global_size(),
 			request.tag, request.id);
@@ -511,8 +511,8 @@ struct AAISPolicy {
 		if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
 		if(n<1) { return ERROR_CODE("Bad n"); }
 
-		MPRequest request(P2PTag::data, n, 0);
-		p2p.post(P2PTag::allgather_int64, request);
+		MPRequest request(P2PTag::allgather_int64, P2PTag::data, n, 0);
+		p2p.post(request);
 		p2p.send(sbuf, request.count, request.tag);
 		p2p.recv(rbuf, request.count*p2p.global_size(),
 			request.tag, request.id);
@@ -528,8 +528,8 @@ struct AAISPolicy {
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 
-		MPRequest request(P2PTag::data, n, 0, dst);
-		p2p.post(P2PTag::send, request);
+		MPRequest request(P2PTag::send, P2PTag::data, n, 0, dst);
+		p2p.post(request);
 		switch(p2p.send(buf, request.count, request.tag)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
@@ -554,8 +554,8 @@ struct AAISPolicy {
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 
-		MPRequest request(P2PTag::data, n, 0, src);
-		p2p.post(P2PTag::recv, request);
+		MPRequest request(P2PTag::recv, P2PTag::data, n, 0, src);
+		p2p.post(request);
 		switch(p2p.recv(buf, request.count, request.tag, request.id)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;

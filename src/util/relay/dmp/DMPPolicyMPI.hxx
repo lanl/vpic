@@ -26,10 +26,6 @@ class DMPPolicyMPI
 	public:
 
 		// topology information
-		inline int local_id()
-			{ return ConnectionManager::instance().local_id(); }
-		inline int local_size()
-			{ return ConnectionManager::instance().local_size(); }
 		inline int global_id()
 			{ return ConnectionManager::instance().global_id(); }
 		inline int global_size()

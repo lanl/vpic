@@ -1226,6 +1226,8 @@ vpic_simulation::restart( const char *fbase ) {
       last_sp->next = sp;
       last_sp = sp;
     }
+    
+	sp->copy=NULL;  /* sort_p will allocate space for index array */
   }
 
   // custom boundary condition data

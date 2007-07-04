@@ -81,7 +81,8 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 		P2PConnection & p2p = P2PConnection::instance();
 
 		// this sends the string terminator as well
-		MPRequest request(P2PTag::data, strlen(filename)+1);
+		size_t msg_size = strlen(filename)+1;
+		MPRequest request;
 
 		// re-initialize some values
 		buffer_offset_ = 0;
@@ -95,15 +96,19 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 		switch(mode) {
 
 			case io_read:
-				p2p.post(P2PTag::io_open_read, request);
+				request.set(P2PTag::io_open_read, P2PTag::data, msg_size);
+				p2p.post(request);
 				break;
 
 			case io_write:
-				p2p.post(P2PTag::io_open_write, request);
+				request.set(P2PTag::io_open_write, P2PTag::data, msg_size);
+				p2p.post(request);
 				break;
 
 			case io_write_append:
-				p2p.post(P2PTag::io_open_write_append, request);
+				request.set(P2PTag::io_open_write_append,
+					P2PTag::data, msg_size);
+				p2p.post(request);
 				break;
 
 			default:
@@ -138,8 +143,6 @@ void P2PIOPolicy<swapped>::close()
 	{
 		// force write if current block hasn't been written
 		if(buffer_offset_ > 0) {
-			request_[current_].set(P2PTag::data,
-				buffer_offset_, current_);
 			flush();
 		} // if
 
@@ -261,7 +264,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				bdata_offset += copy_bytes;
 				bytes -= copy_bytes;
 
-				request_[current_].set(P2PTag::data,
+				request_[current_].set(P2PTag::io_write, P2PTag::data,
 					buffer_offset_ + copy_bytes, current_);
 				send_write_block(current_);
 				current_^=1;
@@ -291,9 +294,9 @@ void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)
 		P2PConnection & p2p = P2PConnection::instance();
 
 		if(read_blocks_.quot > 0) {
-			request_[buffer].set(P2PTag::data,
+			request_[buffer].set(P2PTag::io_read, P2PTag::data,
 				io_buffer_[buffer].size(), buffer);
-			p2p.post(P2PTag::io_read, request_[buffer]);
+			p2p.post(request_[buffer]);
 			p2p.irecv(io_buffer_[buffer].data(), request_[buffer].count,
 				request_[buffer].tag, request_[buffer].id);
 			pending_[buffer] = true;
@@ -302,8 +305,9 @@ void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)
 			read_blocks_.quot--;
 		}
 		else if(read_blocks_.rem > 0) {
-			request_[buffer].set(P2PTag::data, read_blocks_.rem, buffer);
-			p2p.post(P2PTag::io_read, request_[buffer]);
+			request_[buffer].set(P2PTag::io_read, P2PTag::data,
+				read_blocks_.rem, buffer);
+			p2p.post(request_[buffer]);
 			p2p.irecv(io_buffer_[buffer].data(), request_[buffer].count,
 				request_[buffer].tag, request_[buffer].id);
 			pending_[buffer] = true;
@@ -326,7 +330,7 @@ void P2PIOPolicy<swapped>::send_write_block(uint32_t buffer)
 	{
 		P2PConnection & p2p = P2PConnection::instance();
 
-		p2p.post(P2PTag::io_write, request_[buffer]);
+		p2p.post(request_[buffer]);
 		p2p.isend(io_buffer_[buffer].data(), request_[buffer].count,
 			request_[buffer].tag, request_[buffer].id);
 		pending_[buffer] = true;
@@ -338,12 +342,14 @@ void P2PIOPolicy<swapped>::wait_write_block(uint32_t buffer)
 		P2PConnection & p2p = P2PConnection::instance();
 		p2p.wait_send(request_[buffer].id);
 		pending_[buffer] = false;
-	} // P2PIOPolicy<>::send_write_block
+	} // P2PIOPolicy<>::wait_write_block
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::flush()
 	{
 		// request remote write
+		request_[current_].set(P2PTag::io_write, P2PTag::data,
+			buffer_offset_, current_);
 		send_write_block(current_);
 		current_ ^= 1;
 

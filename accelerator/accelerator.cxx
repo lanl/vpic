@@ -33,10 +33,10 @@ int main(int argc, char *argv[]) {
 
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			request.set(0, count, i, i);
+			request.set(P2PTag::irecv, 0, count, i, i);
 			send_buffer[i].data()[0] = static_cast<float>(rank);
 			send_buffer[i].data()[1] = static_cast<float>(size);
-			p2p.post(P2PTag::irecv, request);
+			p2p.post(request);
 			p2p.irecv(reinterpret_cast<char *>(recv_buffer[i].data()),
 				request.count, request.tag, request.id);
 		} // if
@@ -44,14 +44,14 @@ int main(int argc, char *argv[]) {
 	
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			request.set(0, count, i, i);
+			request.set(P2PTag::send, 0, count, i, i);
 			send_buffer[i].data()[0] = static_cast<float>(rank);
 			send_buffer[i].data()[1] = static_cast<float>(size);
 
 			// request that host do a blocking send
 			// but do a non-blocking point-to-point send
 			// so that we can keep working
-			p2p.post(P2PTag::send, request);
+			p2p.post(request);
 			p2p.isend(reinterpret_cast<char *>(send_buffer[i].data()),
 				request.count, request.tag, request.id);
 		} // if
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
-			request.set(0, count, i, i);
-			p2p.post(P2PTag::wait_recv, request);
+			request.set(P2PTag::wait_recv, 0, count, i, i);
+			p2p.post(request);
 			p2p.wait_recv(i);
 		} // if
 	} // for
@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
 	for(size_t i(0); i<5; i++) {
 		dbuf[i] = static_cast<double>(rank*10 + i);
 	} // for
-	request.set(0, 5, rank);
-	p2p.post(P2PTag::allreduce_max_double, request);
+	request.set(P2PTag::allreduce_max_double, 0, 5, rank);
+	p2p.post(request);
 	p2p.send(dbuf, request.count, request.tag);
 	p2p.recv(dbuf, request.count, request.tag, request.id);
 
@@ -103,8 +103,8 @@ int main(int argc, char *argv[]) {
 	} // scope
 
 	// do all reduce sum on doubles
-	request.set(0, 5, rank);
-	p2p.post(P2PTag::allreduce_sum_double, request);
+	request.set(P2PTag::allreduce_sum_double, 0, 5, rank);
+	p2p.post(request);
 	p2p.send(dbuf, request.count, request.tag);
 	p2p.recv(dbuf, request.count, request.tag, request.id);
 
@@ -124,8 +124,8 @@ int main(int argc, char *argv[]) {
 	for(size_t i(0); i<5; i++) {
 		ibuf_send[i] = rank*10 + i;
 	} // for
-	request.set(0, 5, rank);
-	p2p.post(P2PTag::allreduce_sum_int, request);
+	request.set(P2PTag::allreduce_sum_int, 0, 5, rank);
+	p2p.post(request);
 	p2p.send(ibuf_send, request.count, request.tag);
 	p2p.recv(ibuf_recv, request.count, request.tag, request.id);
 
@@ -145,8 +145,8 @@ int main(int argc, char *argv[]) {
 	for(size_t i(0); i<5; i++) {
 		ibuf_send[i] = rank*10 + i;
 	} // for
-	request.set(0, 5, rank);
-	p2p.post(P2PTag::allgather_int, request);
+	request.set(P2PTag::allgather_int, 0, 5, rank);
+	p2p.post(request);
 	p2p.send(ibuf_send, request.count, request.tag);
 	p2p.recv(ibuf_recv, request.count*size, request.tag, request.id);
 
@@ -166,8 +166,8 @@ int main(int argc, char *argv[]) {
 	for(size_t i(0); i<5; i++) {
 		lbuf_send[i] = rank*10 + i;
 	} // for
-	request.set(0, 5, rank);
-	p2p.post(P2PTag::allgather_int64, request);
+	request.set(P2PTag::allgather_int64, 0, 5, rank);
+	p2p.post(request);
 	p2p.send(lbuf_send, request.count, request.tag);
 	p2p.recv(lbuf_recv, request.count*size, request.tag, request.id);
 

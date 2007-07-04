@@ -27,10 +27,6 @@ template<int ROLE> class P2PPolicyMPI
 	public:
 
 		// topology information
-		inline int local_id()
-			{ return ConnectionManager::instance().local_id(); }
-		inline int local_size()
-			{ return ConnectionManager::instance().local_size(); }
 		inline int global_id()
 			{ return ConnectionManager::instance().global_id(); }
 		inline int global_size()
@@ -41,7 +37,7 @@ template<int ROLE> class P2PPolicyMPI
 
 		// accelerator side request
 		inline int post(int p2ptag);
-		inline int post(int p2ptag, MPRequest_T<ROLE> & request);
+		inline int post(MPRequest_T<ROLE> & request);
 
 		// send and recv methods
 		template<typename T> int send(T * buffer, int count, int tag);
@@ -85,19 +81,20 @@ int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 		MPI_Status status;
 		int tag, flag;
 
-		MPI_Iprobe(mgr.peer_p2p_rank(), MPI_ANY_TAG, mgr.p2p_comm(),
+		MPI_Iprobe(mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm(),
 			&flag, &status);
 
 		if(flag) {
-			tag = status.MPI_TAG;
-
 			MPI_Recv(&request, request_count(), MPI_INT, mgr.peer_p2p_rank(),
-				tag, mgr.p2p_comm(), &status);
+				P2PTag::request, mgr.p2p_comm(), &status);
+
+			tag = request.p2ptag;
 		}
 		else {
 			tag = -1;
 		} // if
 
+		//return tag;
 		return tag;
 	} // P2PPolicyMPI<>::poll
 
@@ -105,18 +102,17 @@ template<> inline
 int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag)
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
-		MPRequest_T<MP_ACCEL> request;
+		MPRequest_T<MP_ACCEL> request(p2ptag);
 		return MPI_Send(&request, request_count(), MPI_INT,
-			mgr.peer_p2p_rank(), p2ptag, mgr.p2p_comm());
+			mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm());
 	} // MPICommunicatorPolicy<>::request
 
 template<> inline
-int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag,
-	MPRequest_T<MP_ACCEL> & request)
+int P2PPolicyMPI<MP_ACCEL>::post(MPRequest_T<MP_ACCEL> & request)
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Send(&request, request_count(), MPI_INT,
-			mgr.peer_p2p_rank(), p2ptag, mgr.p2p_comm());
+			mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm());
 	} // MPICommunicatorPolicy<>::request
 
 template<int ROLE>
@@ -178,7 +174,6 @@ template<>
 template<typename T>
 int P2PPolicyMPI<MP_ACCEL>::get_count(int id, int & count, T * dummy)
 	{
-		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Get_count(&status_[id], Type2MPIType<T>::type(),
 			&count);
 	} // P2PPolicyMPI<>::get_count

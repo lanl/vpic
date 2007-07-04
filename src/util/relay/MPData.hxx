@@ -44,13 +44,14 @@ template<int ROLE> struct MPRequest_T {};
 
 template<> struct MPRequest_T<MP_HOST> {
 
-	MPRequest_T(int tag_ = 0, int count_ = 0, int id_ = 0, int peer_ = 0,
-		MPState state_ = pending)
-		: tag(tag_), count(count_), id(id_),
+	MPRequest_T(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
+		int id_ = 0, int peer_ = 0, MPState state_ = pending)
+		: p2ptag(p2ptag_), tag(tag_), count(count_), id(id_),
 		peer(peer_), state(state_) {}
 
-	void set(int tag_ = 0, int count_ = 0, int id_ = 0,
-		int peer_ = 0, MPState state_ = pending) {
+	void set(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
+		int id_ = 0, int peer_ = 0, MPState state_ = pending) {
+		p2ptag = p2ptag_;
 		tag = tag_;
 		count = count_;
 		id = id_;
@@ -58,6 +59,7 @@ template<> struct MPRequest_T<MP_HOST> {
 		state = state_;
 	} // set
 
+	int p2ptag;
 	int tag;
 	int count;
 	int id;
@@ -68,16 +70,20 @@ template<> struct MPRequest_T<MP_HOST> {
 
 template<> struct MPRequest_T<MP_ACCEL> {
 
-	MPRequest_T(int tag_ = 0, int count_ = 0, int id_ = 0, int peer_ = 0)
-		: tag(tag_), count(count_), id(id_), peer(peer_) {}
+	MPRequest_T(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
+		int id_ = 0, int peer_ = 0)
+		: p2ptag(p2ptag_), tag(tag_), count(count_), id(id_), peer(peer_) {}
 
-	void set(int tag_ = 0, int count_ = 0, int id_ = 0, int peer_ = 0) {
+	void set(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
+		int id_ = 0, int peer_ = 0) {
+		p2ptag = p2ptag_;
 		tag = tag_;
 		count = count_;
 		id = id_;
 		peer = peer_;
 	} // set
 
+	int p2ptag;
 	int tag;
 	int count;
 	int id;

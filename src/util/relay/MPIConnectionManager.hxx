@@ -1,5 +1,5 @@
 /*
-	Definition of ConnectionManager class
+	Definition of MPIConnectionManager class
 
 	Author: Benjamin Karl Bergen
 
@@ -9,8 +9,8 @@
 
 	vim: set ts=3 :
 */
-#ifndef ConnectionManager_hxx
-#define ConnectionManager_hxx
+#ifndef MPIConnectionManager_hxx
+#define MPIConnectionManager_hxx
 
 #include <mpi.h>
 #include <assert.h>
@@ -18,15 +18,15 @@
 #include <MPData.hxx>
 
 /*!
-	\struct ConnectionManager_T ConnectionManager_T.h
+	\struct MPIConnectionManager_T MPIConnectionManager_T.h
 	\brief  provides...
 */
-template<int ROLE> class ConnectionManager_T
+template<int ROLE> class MPIConnectionManager_T
 	{
 	public:
 
-		static ConnectionManager_T & instance() {
-			static ConnectionManager_T mpi;
+		static MPIConnectionManager_T & instance() {
+			static MPIConnectionManager_T mpi;
 			return mpi;
 		} // instance
 
@@ -49,14 +49,14 @@ template<int ROLE> class ConnectionManager_T
 
 	private:
 
-		ConnectionManager_T()
+		MPIConnectionManager_T()
 			: world_rank_(-1), world_size_(-1), peer_world_rank_(-1),
 			p2p_rank_(-1), p2p_size_(-1), peer_p2p_rank_(-1),
 			dmp_rank_(-1), dmp_size_(-1), p2p_comm_(NULL) {}
 
-		ConnectionManager_T(const ConnectionManager_T & mpi) {}
+		MPIConnectionManager_T(const MPIConnectionManager_T & mpi) {}
 
-		~ConnectionManager_T() {}
+		~MPIConnectionManager_T() {}
 
 		int world_rank_;
 		int world_size_;
@@ -75,10 +75,10 @@ template<int ROLE> class ConnectionManager_T
 
 		inline void propagate_dmp_rank();
 
-	}; // class ConnectionManager_T
+	}; // class MPIConnectionManager_T
 
 template<int ROLE>
-void ConnectionManager_T<ROLE>::init(int argc, char ** argv)
+void MPIConnectionManager_T<ROLE>::init(int argc, char ** argv)
 	{
 		// initialize mpi
 		MPI_Init(&argc, &argv);
@@ -91,17 +91,17 @@ void ConnectionManager_T<ROLE>::init(int argc, char ** argv)
 
 		// setup communicators
 		initialize_communicators();
-	} // ConnectionManager_T<>::initialize
+	} // MPIConnectionManager_T<>::initialize
 
 template<int ROLE>
-void ConnectionManager_T<ROLE>::finalize()
+void MPIConnectionManager_T<ROLE>::finalize()
 	{
 		MPI_Finalize();
-	} // ConnectionManager_T<>::finalize
+	} // MPIConnectionManager_T<>::finalize
 
 // Borrowed from Paul Henning
 template<int ROLE> inline
-void ConnectionManager_T<ROLE>::initialize_communicators()
+void MPIConnectionManager_T<ROLE>::initialize_communicators()
 	{
 		// no static assertions yet
 		assert(ROLE == 0 || ROLE == 1);
@@ -188,10 +188,10 @@ void ConnectionManager_T<ROLE>::initialize_communicators()
 		delete rank_role;
 		delete role_type[0];
 		delete role_type[1];
-	} // ConnectionManager_T<>::initialize_communicators
+	} // MPIConnectionManager_T<>::initialize_communicators
 
 template<> inline
-void ConnectionManager_T<MP_HOST>::propagate_dmp_rank()
+void MPIConnectionManager_T<MP_HOST>::propagate_dmp_rank()
 	{
 		MPI_Comm_rank(dmp_comm_, &dmp_rank_);
 		MPI_Comm_size(dmp_comm_, &dmp_size_);
@@ -201,10 +201,10 @@ void ConnectionManager_T<MP_HOST>::propagate_dmp_rank()
 		info[0] = dmp_rank_;
 		info[1] = dmp_size_;
 		MPI_Send(info, 2, MPI_INT, peer_p2p_rank_, 0, p2p_comm_);
-	} // ConnectionManager_T<>::propagate_dmp_rank
+	} // MPIConnectionManager_T<>::propagate_dmp_rank
 
 template<> inline
-void ConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
+void MPIConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
 	{
 		// receive from host
 		int info[2];
@@ -213,12 +213,12 @@ void ConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
 			p2p_comm_, &status);
 		dmp_rank_ = info[0];
 		dmp_size_ = info[1];
-	} // ConnectionManager_T<>::propagate_dmp_rank
+	} // MPIConnectionManager_T<>::propagate_dmp_rank
 
 #if defined HOST_BUILD
-	typedef ConnectionManager_T<MP_HOST> ConnectionManager;
+	typedef MPIConnectionManager_T<MP_HOST> MPIConnectionManager;
 #else
-	typedef ConnectionManager_T<MP_ACCEL> ConnectionManager;
+	typedef MPIConnectionManager_T<MP_ACCEL> MPIConnectionManager;
 #endif // build type
 
-#endif // ConnectionManager_hxx
+#endif // MPIConnectionManager_hxx

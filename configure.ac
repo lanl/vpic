@@ -80,13 +80,19 @@ case "$buildstyle" in
 		AC_SUBST(ARCH_BUILD_PATH, [.])
 		AC_DEFINE(USE_MPRELAY, [1])
 	;;
-	hybrid_relay_cell)
+	hybrid_relay_cell_openmpi | hybrid_relay_cell_dacs)
 		AC_SUBST(CELLDIR, [cell])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
 		AC_CONFIG_SUBDIRS([cell/ppe])
 		AC_SUBST(HOSTDIRS, [mprelay])
 		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
 		AC_DEFINE(USE_MPRELAY, [1])
+	;;
+esac
+
+case "$buildstyle" in
+	hybrid_relay_cell_dacs)
+		CCS_WITH_DACS([hybrid])
 	;;
 esac
 

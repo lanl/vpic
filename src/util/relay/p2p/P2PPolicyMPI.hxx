@@ -13,7 +13,7 @@
 #define P2PPolicyMPI_hxx
 
 #include <mpi.h>
-#include <MPIConnectionManager.hxx>
+#include <ConnectionManager.hxx>
 #include <P2PTag.hxx>
 #include <MPData.hxx>
 #include <Type2MPIType.hxx>
@@ -26,14 +26,11 @@ template<int ROLE> class P2PPolicyMPI
 	{
 	public:
 
-		void init(int argc, char ** argv);
-		void finalize();
-
 		// topology information
 		inline int global_id()
-			{ return MPIConnectionManager::instance().global_id(); }
+			{ return ConnectionManager::instance().global_id(); }
 		inline int global_size()
-			{ return MPIConnectionManager::instance().global_size(); }
+			{ return ConnectionManager::instance().global_size(); }
 
 		// host side poll
 		inline int poll(MPRequest_T<ROLE> & request);
@@ -77,24 +74,12 @@ template<int ROLE> class P2PPolicyMPI
 
 	}; // class P2PPolicyMPI
 
-template<int ROLE> inline
-void P2PPolicyMPI<ROLE>::init(int argc, char ** argv)
-	{
-		MPIConnectionManager::instance().init(argc, argv);
-	} // P2PPolicyMPI<>::init
-
-template<int ROLE> inline
-void P2PPolicyMPI<ROLE>::finalize()
-	{
-		MPIConnectionManager::instance().finalize();
-	} // P2PPolicyMPI<>::init
-
 template<> inline
 int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		MPI_Status status;
-		int tag, flag;
+		int flag;
 
 		MPI_Iprobe(mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm(),
 			&flag, &status);
@@ -103,20 +88,17 @@ int P2PPolicyMPI<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 			MPI_Recv(&request, request_count(), MPI_INT, mgr.peer_p2p_rank(),
 				P2PTag::request, mgr.p2p_comm(), &status);
 
-			tag = request.p2ptag;
+			return request.p2ptag;
 		}
 		else {
-			tag = -1;
+			return P2PTag::pending;
 		} // if
-
-		//return tag;
-		return tag;
 	} // P2PPolicyMPI<>::poll
 
 template<> inline
 int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		MPRequest_T<MP_ACCEL> request(p2ptag);
 		return MPI_Send(&request, request_count(), MPI_INT,
 			mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm());
@@ -125,7 +107,7 @@ int P2PPolicyMPI<MP_ACCEL>::post(int p2ptag)
 template<> inline
 int P2PPolicyMPI<MP_ACCEL>::post(MPRequest_T<MP_ACCEL> & request)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Send(&request, request_count(), MPI_INT,
 			mgr.peer_p2p_rank(), P2PTag::request, mgr.p2p_comm());
 	} // MPICommunicatorPolicy<>::request
@@ -134,7 +116,7 @@ template<int ROLE>
 template<typename T>
 int P2PPolicyMPI<ROLE>::send(T * buffer, int count, int tag)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Send(buffer, count, Type2MPIType<T>::type(),
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm());
 	} // MPICommunicatorPolicy<>::isend
@@ -143,7 +125,7 @@ template<int ROLE>
 template<typename T>
 int P2PPolicyMPI<ROLE>::recv(T * buffer, int count, int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Recv(buffer, count, Type2MPIType<T>::type(),
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm(), &status_[id]);
 	} // MPICommunicatorPolicy<>::isend
@@ -152,7 +134,7 @@ template<int ROLE>
 template<typename T>
 int P2PPolicyMPI<ROLE>::isend(T * buffer, int count, int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Isend(buffer, count, Type2MPIType<T>::type(),
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm(), &send_request_[id]);
 	} // MPICommunicatorPolicy<>::isend
@@ -161,7 +143,7 @@ template<int ROLE>
 template<typename T>
 int P2PPolicyMPI<ROLE>::irecv(T * buffer, int count, int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Irecv(buffer, count, Type2MPIType<T>::type(),
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm(), &recv_request_[id]);
 	} // MPICommunicatorPolicy<>::isend
@@ -181,7 +163,7 @@ int P2PPolicyMPI<MP_ACCEL>::wait_recv(int id)
 template<int ROLE> inline
 int P2PPolicyMPI<ROLE>::barrier()
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Barrier(mgr.p2p_comm());
 	} // P2PPolicyMPI<>::wait
 
@@ -196,7 +178,7 @@ int P2PPolicyMPI<MP_ACCEL>::get_count(int id, int & count, T * dummy)
 template<int ROLE>
 int P2PPolicyMPI<ROLE>::abort(int reason)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Abort(mgr.p2p_comm(), reason);
 	} // P2PPolicyMPI<>::wait
 

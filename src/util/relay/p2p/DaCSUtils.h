@@ -1,0 +1,209 @@
+#ifndef DaCSUtils_h
+#define DaCSUtils_h
+
+#include <cstdlib>
+
+#if defined(cplusplus__)
+	#include <iostream>
+	#if defined HOST_BUILD
+		#define DACS_PRINT_ERR(a) std::cerr << "HOST " << (a) << std::endl
+	#else
+		#define DACS_PRINT_ERR(a) std::cerr << "ACCEL " << (a) << std::endl
+	#endif // BUILD
+#else
+	#include <stdio.h>
+	#if defined HOST_BUILD
+		#define DACS_PRINT_ERR(a) printf("HOST %s\n", (a))
+	#else
+		#define DACS_PRINT_ERR(a) printf("ACCEL %s\n", (a))
+	#endif // BUIL
+#endif // cplusplus__
+
+inline void output_swap_type(DACS_BYTE_SWAP_T type) {
+	switch(type) {
+		case DACS_BYTE_SWAP_DISABLE:
+			DACS_PRINT_ERR("DACS_BYTE_SWAP_DISABLE");
+			break;
+		case DACS_BYTE_SWAP_HALF_WORD:
+			DACS_PRINT_ERR("DACS_BYTE_SWAP_WORD");
+			break;
+		case DACS_BYTE_SWAP_WORD:
+			DACS_PRINT_ERR("DACS_BYTE_SWAP_WORD");
+			break;
+		case DACS_BYTE_SWAP_DOUBLE_WORD:
+			DACS_PRINT_ERR("DACS_BYTE_SWAP_DOUBLE_WORD");
+			break;
+		default:
+			DACS_PRINT_ERR("Unknown Swap Type");
+			break;
+	} // switch
+} // output_swap_type
+
+inline void process_dacs_errcode(DACS_ERR_T errcode) {
+	
+	switch(errcode) {
+		case DACS_ERR_NO_ERROR:
+		case DACS_ERR_PROC_FINISHED:
+			return;
+		case DACS_ERR_TEST_BUSY:
+			DACS_PRINT_ERR("DACS_ERR_TEST_BUSY");
+			break;
+		case DACS_ERR_PROC_RUNNING:
+			DACS_PRINT_ERR("DACS_ERR_PROC_RUNNING");
+			break;
+		case DACS_LAST_STATUS:
+			DACS_PRINT_ERR("DACS_LAST_STATUS");
+			break;
+		case DACS_ERR_FIRST_ERROR:
+			DACS_PRINT_ERR("DACS_ERR_FIRST_ERROR");
+			break;
+		case DACS_ERR_GENERIC:
+			DACS_PRINT_ERR("DACS_ERR_GENERIC");
+			break;
+		case DACS_ERR_OUT_OF_MEM:
+			DACS_PRINT_ERR("DACS_ERR_OUT_OF_MEM");
+			break;
+		case DACS_ERR_BAD_INPUT:
+			DACS_PRINT_ERR("DACS_ERR_BAD_INPUT");
+			break;
+		case DACS_ERR_NO_PERM:
+			DACS_PRINT_ERR("DACS_ERR_NO_PERM");
+			break;
+		case DACS_ERR_BUF_OVERFLOW:
+			DACS_PRINT_ERR("DACS_ERR_BUF_OVERFLOW");
+			break;
+		case DACS_ERR_NOT_ALIGNED:
+			DACS_PRINT_ERR("DACS_ERR_NOT_ALIGNED");
+			break;
+		case DACS_ERR_INVALID_DST:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_DST");
+			break;
+		case DACS_ERR_TEST_NONRESERVED_TAG:
+			DACS_PRINT_ERR("DACS_ERR_TEST_NONRESERVED_TAG");
+			break;
+		case DACS_ERR_TEST_INVALID_TAG:
+			DACS_PRINT_ERR("DACS_ERR_TEST_INVALID_TAG");
+			break;
+		case DACS_ERR_STILL_RUNNING:
+			DACS_PRINT_ERR("DACS_ERR_STILL_RUNNING");
+			break;
+		case DACS_ERR_RECV_BUFFER_OVERFLOW:
+			DACS_PRINT_ERR("DACS_ERR_RECV_BUFFER_OVERFLOW");
+			break;
+		case DACS_ERR_NO_PROCESSES:
+			DACS_PRINT_ERR("DACS_ERR_NO_PROCESSES");
+			break;
+		case DACS_ERR_INVALID_PROC_ID:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_PROC_ID");
+			break;
+		case DACS_ERR_DEFAULT_GROUP:
+			DACS_PRINT_ERR("DACS_ERR_DEFAULT_GROUP");
+			break;
+		case DACS_ERR_INVALID_TAG_TYPE:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_TAG_TYPE");
+			break;
+		case DACS_ERR_RELEASE_WRONG_TYPE:
+			DACS_PRINT_ERR("DACS_ERR_RELEASE_WRONG_TYPE");
+			break;
+		case DACS_ERR_NO_TAGS:
+			DACS_PRINT_ERR("DACS_ERR_NO_TAGS");
+			break;
+		case DACS_ERR_NOT_IN_WINDOW:
+			DACS_PRINT_ERR("DACS_ERR_NOT_IN_WINDOW");
+			break;
+		case DACS_ERR_DACS_NOT_INITIALIZED:
+			DACS_PRINT_ERR("DACS_ERR_DACS_NOT_INITIALIZED");
+			break;
+		case DACS_ERR_INVALID_DE:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_DE");
+			break;
+		case DACS_ERR_RESERVED:
+			DACS_PRINT_ERR("DACS_ERR_RESERVED");
+			break;
+		case DACS_ERR_NOT_RESERVED:
+			DACS_PRINT_ERR("DACS_ERR_NOT_RESERVED");
+			break;
+		case DACS_ERR_INSUFFICIENT_RESOURCES:
+			DACS_PRINT_ERR("DACS_ERR_INSUFFICIENT_RESOURCES");
+			break;
+		case DACS_ERR_INVALID_HANDLE:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_HANDLE");
+			break;
+		case DACS_ERR_PROC_FAILED:
+			DACS_PRINT_ERR("DACS_ERR_PROC_FAILED");
+			break;
+		case DACS_ERR_ALREADY_FINISHED:
+			DACS_PRINT_ERR("DACS_ERR_ALREADY_FINISHED");
+			break;
+		case DACS_ERR_INVALID_INDEX:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_INDEX");
+			break;
+		case DACS_ERR_INVALID_ARGV:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_ARGV");
+			break;
+		case DACS_ERR_INVALID_ENV:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_ENV");
+			break;
+		case DACS_ERR_NO_PARENT:
+			DACS_PRINT_ERR("DACS_ERR_NO_PARENT");
+			break;
+		case DACS_ERR_INIT_FAILURE1:
+			DACS_PRINT_ERR("DACS_ERR_INIT_FAILURE1");
+			break;
+		case DACS_ERR_INIT_FAILURE2:
+			DACS_PRINT_ERR("DACS_ERR_INIT_FAILURE2");
+			break;
+		case DACS_ERR_MUTEX_BUSY:
+			DACS_PRINT_ERR("DACS_ERR_MUTEX_BUSY");
+			break;
+		case DACS_ERR_TAG_OUT_OF_RANGE:
+			DACS_PRINT_ERR("DACS_ERR_TAG_OUT_OF_RANGE");
+			break;
+		case DACS_ERR_OWN_MAILBOX:
+			DACS_PRINT_ERR("DACS_ERR_OWN_MAILBOX");
+			break;
+		case DACS_ERR_INVALID_MUTEX:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_MUTEX");
+			break;
+		case DACS_ERR_INVALID_BARRIER:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_BARRIER");
+			break;
+		case DACS_ERR_BYTESWAP_MISMATCH:
+			DACS_PRINT_ERR("DACS_ERR_BYTESWAP_MISMATCH");
+			break;
+		case DACS_ERR_NOT_SUPPORTED_YET:
+			DACS_PRINT_ERR("DACS_ERR_NOT_SUPPORTED_YET");
+			break;
+		case DACS_ERR_VERSION_MISMATCH:
+			DACS_PRINT_ERR("DACS_ERR_VERSION_MISMATCH");
+			break;
+		case DACS_ERR_DACS_INITIALIZED:
+			DACS_PRINT_ERR("DACS_ERR_DACS_INITIALIZED");
+			break;
+		case DACS_ERR_WAIT_TIMEOUT:
+			DACS_PRINT_ERR("DACS_ERR_WAIT_TIMEOUT");
+			break;
+		case DACS_ERR_INVALID_TAG:
+			DACS_PRINT_ERR("DACS_ERR_INVALID_TAG");
+			break;
+		case DACS_ERR_BUFFER_NOT_DWORD_ALIGNED:
+			DACS_PRINT_ERR("DACS_ERR_BUFFER_NOT_DWORD_ALIGNED");
+			break;
+		case DACS_ERR_ALREADY_INITIALIZED:
+			DACS_PRINT_ERR("DACS_ERR_ALREADY_INITIALIZED");
+			break;
+		case DACS_ERR_EVENT_LISTENER_FAILURE:
+			DACS_PRINT_ERR("DACS_ERR_EVENT_LISTENER_FAILURE");
+			break;
+		case DACS_ERR_DACSD_FAILURE:
+			DACS_PRINT_ERR("DACS_ERR_DACSD_FAILURE");
+			break;
+		default:
+			DACS_PRINT_ERR("Unknown Error");
+			break;
+	} // switch
+
+	exit(1);
+} // process_dacs_errcode
+
+#endif // DaCSUtils_h

@@ -45,12 +45,21 @@ template<class CommunicationPolicy> class P2PConnection_T
 
 	}; // class P2PConnection_T
 
-#include <P2PPolicyMPI.hxx>
 
-#if defined HOST_BUILD
-	typedef P2PConnection_T<P2PPolicyMPI<0> > P2PConnection;
+#if defined USE_DACS_P2P
+	#include <P2PPolicyDaCS.hxx>
+	#if defined HOST_BUILD
+		typedef P2PConnection_T<P2PPolicyDaCS<0> > P2PConnection;
+	#else
+		typedef P2PConnection_T<P2PPolicyDaCS<1> > P2PConnection;
+	#endif // BUILD
 #else
-	typedef P2PConnection_T<P2PPolicyMPI<1> > P2PConnection;
-#endif // BUILD
+	#include <P2PPolicyMPI.hxx>
+	#if defined HOST_BUILD
+		typedef P2PConnection_T<P2PPolicyMPI<0> > P2PConnection;
+	#else
+		typedef P2PConnection_T<P2PPolicyMPI<1> > P2PConnection;
+	#endif // BUILD
+#endif // USE_DACS_P2P
 
 #endif // P2PConnection_hxx

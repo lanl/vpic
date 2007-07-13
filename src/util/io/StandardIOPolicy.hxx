@@ -15,6 +15,7 @@
 #include <FileIOData.hxx>
 #include <string>
 #include <cstdarg>
+#include <cstdio>
 
 /*!
 	\class StandardIOPolicy StandardIOPolicy.h

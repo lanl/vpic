@@ -59,6 +59,15 @@ template<> struct MPRequest_T<MP_HOST> {
 		state = state_;
 	} // set
 
+	/*
+	int p2ptag __attribute__ ((aligned (16)));
+	int tag __attribute__ ((aligned (16)));
+	int count __attribute__ ((aligned (16)));
+	int id __attribute__ ((aligned (16)));
+	int peer __attribute__ ((aligned (16)));
+	MPState state __attribute__ ((aligned (16)));
+	*/
+
 	int p2ptag;
 	int tag;
 	int count;
@@ -66,7 +75,7 @@ template<> struct MPRequest_T<MP_HOST> {
 	int peer;
 	MPState state;
 
-}; // struct MPRequest_T
+} __attribute__ ((aligned (16))); // struct MPRequest_T
 
 template<> struct MPRequest_T<MP_ACCEL> {
 
@@ -83,13 +92,20 @@ template<> struct MPRequest_T<MP_ACCEL> {
 		peer = peer_;
 	} // set
 
+	/*
+	int p2ptag __attribute__ ((aligned (16)));
+	int tag __attribute__ ((aligned (16)));
+	int count __attribute__ ((aligned (16)));
+	int id __attribute__ ((aligned (16)));
+	int peer __attribute__ ((aligned (16)));
+	*/
 	int p2ptag;
 	int tag;
 	int count;
 	int id;
 	int peer;
 
-}; // struct MPRequest_T
+} __attribute__ ((aligned (16))); // struct MPRequest_T
 
 #if defined HOST_BUILD
 	typedef MPRequest_T<MP_HOST> MPRequest;
@@ -97,10 +113,31 @@ template<> struct MPRequest_T<MP_ACCEL> {
 	typedef MPRequest_T<MP_ACCEL> MPRequest;
 #endif // BUILD
 
+// print request information to stdout
+template<int ROLE>
+std::ostream & operator << (std::ostream & stream,
+	const MPRequest_T<ROLE> & request)
+	{
+		stream <<
+			"p2ptag: " << request.p2ptag <<
+			" tag: " << request.tag <<
+			" count: " << request.count <<
+			" id: " << request.id <<
+			" peer: " << request.peer << std::endl;
+
+		return stream;
+	} // operator <<
+
 // this is a kluge that avoids defining an MPI_TYPE for
 // the MPRequest_T data structure
 inline int request_count() {
+#if defined USE_DACS_P2P
+	// DaCS needs the size in bytes
+	return sizeof(MPRequest_T<MP_ACCEL>);
+#else
+	// MPI needs the size in elements
 	return sizeof(MPRequest_T<MP_ACCEL>)/sizeof(int);
+#endif // USE_DACS_P2P
 } // request_count
 
 // message passing buffer

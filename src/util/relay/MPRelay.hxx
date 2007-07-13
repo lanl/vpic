@@ -75,6 +75,11 @@ void MPRelay::start()
 			switch(p2p.poll(request)) {
 
 				case P2PTag::send:
+///*
+					std::cout << "send request" << std::endl;
+					std::cout << request;
+//*/
+
 					// resize buffer if necessary
 					cbuf_send_[request.id].resize(request.count);
 
@@ -88,6 +93,11 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::recv:
+///*
+					std::cout << "recv request" << std::endl;
+					std::cout << request;
+//*/
+
 					// resize buffer if necessary
 					cbuf_recv_[request.id].resize(request.count);
 
@@ -104,6 +114,11 @@ void MPRelay::start()
 					// in case the host process is ever required to
 					// do real work.
 				case P2PTag::isend:
+///*
+					std::cout << "isend request" << std::endl;
+					std::cout << request;
+//*/
+
 					// resize buffer if necessary
 					cbuf_send_[request.id].resize(request.count);
 
@@ -120,6 +135,11 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::irecv:
+///*
+					std::cout << "irecv request" << std::endl;
+					std::cout << request;
+//*/
+
 					// resize buffer if necessary
 					cbuf_recv_[request.id].resize(request.count);
 
@@ -304,7 +324,7 @@ void MPRelay::start()
 					relay = false;
 					break;
 
-				default:
+				case P2PTag::pending:
 					// check for finished send communications
 					for(std::vector<int>::iterator ita = pending_send_.begin();
 						ita != pending_send_.end();) {
@@ -344,6 +364,11 @@ void MPRelay::start()
 							++ita;
 						} // if
 					} // for
+					break;
+
+				default:
+					std::cerr << "ERROR: Unknown Tag" << std::endl;
+					exit(1);
 					break;
 
 			} // switch

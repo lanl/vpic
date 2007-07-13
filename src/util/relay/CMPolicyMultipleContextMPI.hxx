@@ -1,5 +1,5 @@
 /*
-	Definition of MPIConnectionManager class
+	Definition of CMPolicyMultipleContextMPI class
 
 	Author: Benjamin Karl Bergen
 
@@ -9,8 +9,8 @@
 
 	vim: set ts=3 :
 */
-#ifndef MPIConnectionManager_hxx
-#define MPIConnectionManager_hxx
+#ifndef CMPolicyMultipleContextMPI_hxx
+#define CMPolicyMultipleContextMPI_hxx
 
 #include <mpi.h>
 #include <assert.h>
@@ -18,15 +18,15 @@
 #include <MPData.hxx>
 
 /*!
-	\struct MPIConnectionManager_T MPIConnectionManager_T.h
+	\struct CMPolicyMultipleContextMPI_T CMPolicyMultipleContextMPI_T.h
 	\brief  provides...
 */
-template<int ROLE> class MPIConnectionManager_T
+template<int ROLE> class CMPolicyMultipleContextMPI_T
 	{
 	public:
 
-		static MPIConnectionManager_T & instance() {
-			static MPIConnectionManager_T mpi;
+		static CMPolicyMultipleContextMPI_T & instance() {
+			static CMPolicyMultipleContextMPI_T mpi;
 			return mpi;
 		} // instance
 
@@ -49,14 +49,13 @@ template<int ROLE> class MPIConnectionManager_T
 
 	private:
 
-		MPIConnectionManager_T()
+		CMPolicyMultipleContextMPI_T()
 			: world_rank_(-1), world_size_(-1), peer_world_rank_(-1),
 			p2p_rank_(-1), p2p_size_(-1), peer_p2p_rank_(-1),
 			dmp_rank_(-1), dmp_size_(-1), p2p_comm_(NULL) {}
-
-		MPIConnectionManager_T(const MPIConnectionManager_T & mpi) {}
-
-		~MPIConnectionManager_T() {}
+		CMPolicyMultipleContextMPI_T(const CMPolicyMultipleContextMPI_T & mpi)
+			{}
+		~CMPolicyMultipleContextMPI_T() {}
 
 		int world_rank_;
 		int world_size_;
@@ -75,10 +74,10 @@ template<int ROLE> class MPIConnectionManager_T
 
 		inline void propagate_dmp_rank();
 
-	}; // class MPIConnectionManager_T
+	}; // class CMPolicyMultipleContextMPI_T
 
 template<int ROLE>
-void MPIConnectionManager_T<ROLE>::init(int argc, char ** argv)
+void CMPolicyMultipleContextMPI_T<ROLE>::init(int argc, char ** argv)
 	{
 		// initialize mpi
 		MPI_Init(&argc, &argv);
@@ -91,17 +90,17 @@ void MPIConnectionManager_T<ROLE>::init(int argc, char ** argv)
 
 		// setup communicators
 		initialize_communicators();
-	} // MPIConnectionManager_T<>::initialize
+	} // CMPolicyMultipleContextMPI_T<>::initialize
 
 template<int ROLE>
-void MPIConnectionManager_T<ROLE>::finalize()
+void CMPolicyMultipleContextMPI_T<ROLE>::finalize()
 	{
 		MPI_Finalize();
-	} // MPIConnectionManager_T<>::finalize
+	} // CMPolicyMultipleContextMPI_T<>::finalize
 
 // Borrowed from Paul Henning
 template<int ROLE> inline
-void MPIConnectionManager_T<ROLE>::initialize_communicators()
+void CMPolicyMultipleContextMPI_T<ROLE>::initialize_communicators()
 	{
 		// no static assertions yet
 		assert(ROLE == 0 || ROLE == 1);
@@ -188,10 +187,10 @@ void MPIConnectionManager_T<ROLE>::initialize_communicators()
 		delete rank_role;
 		delete role_type[0];
 		delete role_type[1];
-	} // MPIConnectionManager_T<>::initialize_communicators
+	} // CMPolicyMultipleContextMPI_T<>::initialize_communicators
 
 template<> inline
-void MPIConnectionManager_T<MP_HOST>::propagate_dmp_rank()
+void CMPolicyMultipleContextMPI_T<MP_HOST>::propagate_dmp_rank()
 	{
 		MPI_Comm_rank(dmp_comm_, &dmp_rank_);
 		MPI_Comm_size(dmp_comm_, &dmp_size_);
@@ -201,10 +200,10 @@ void MPIConnectionManager_T<MP_HOST>::propagate_dmp_rank()
 		info[0] = dmp_rank_;
 		info[1] = dmp_size_;
 		MPI_Send(info, 2, MPI_INT, peer_p2p_rank_, 0, p2p_comm_);
-	} // MPIConnectionManager_T<>::propagate_dmp_rank
+	} // CMPolicyMultipleContextMPI_T<>::propagate_dmp_rank
 
 template<> inline
-void MPIConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
+void CMPolicyMultipleContextMPI_T<MP_ACCEL>::propagate_dmp_rank()
 	{
 		// receive from host
 		int info[2];
@@ -213,12 +212,12 @@ void MPIConnectionManager_T<MP_ACCEL>::propagate_dmp_rank()
 			p2p_comm_, &status);
 		dmp_rank_ = info[0];
 		dmp_size_ = info[1];
-	} // MPIConnectionManager_T<>::propagate_dmp_rank
+	} // CMPolicyMultipleContextMPI_T<>::propagate_dmp_rank
 
 #if defined HOST_BUILD
-	typedef MPIConnectionManager_T<MP_HOST> MPIConnectionManager;
+	typedef CMPolicyMultipleContextMPI_T<MP_HOST> CMPolicyMultipleContextMPI;
 #else
-	typedef MPIConnectionManager_T<MP_ACCEL> MPIConnectionManager;
+	typedef CMPolicyMultipleContextMPI_T<MP_ACCEL> CMPolicyMultipleContextMPI;
 #endif // build type
 
-#endif // MPIConnectionManager_hxx
+#endif // CMPolicyMultipleContextMPI_hxx

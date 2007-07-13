@@ -3,6 +3,7 @@
 
 #include <util_base.h>
 #include <mp_handle.h>
+#include <ConnectionManager.hxx>
 #include <P2PConnection.hxx>
 
 struct mp_t {
@@ -24,13 +25,13 @@ struct mp_t {
 struct AAISPolicy {
 
 	inline void mp_init(int argc, char ** argv) {
-		P2PConnection::instance().init(argc, argv);
+		ConnectionManager::instance().init(argc, argv);
 //		std::cerr << "WRAPPER: mp_init called" << std::endl;
 	} // mp_init
 
 	inline void mp_finalize() {
 		P2PConnection::instance().post(P2PTag::end);
-		P2PConnection::instance().finalize();
+		ConnectionManager::instance().finalize();
 //		std::cerr << "WRAPPER: mp_finalize called" << std::endl;
 	} // mp_finalize
 
@@ -294,6 +295,14 @@ struct AAISPolicy {
 		MPRequest request(P2PTag::irecv, tag, size, rbuf, sender);
 		p2p.post(request);
 
+		
+		int errcode =
+			p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size, tag, rbuf);
+		return NO_ERROR;
+
+		// NEED TO DEAL WITH ERRORS!!!
+
+		/*
 		switch(p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size,
 			tag, rbuf)) {
 			case MPI_SUCCESS:
@@ -315,6 +324,7 @@ struct AAISPolicy {
 		} // switch
 
 		return ERROR_CODE("Unknown MPI error");
+		*/
 	} // mp_begin_recv
 
 	inline error_code mp_begin_send(int sbuf, int size, int receiver,
@@ -345,6 +355,11 @@ struct AAISPolicy {
 		MPRequest request(P2PTag::send, tag, size, sbuf, receiver);
 		p2p.post(request); // this is not a typo
 
+		int errcode = p2p.isend(static_cast<char *>(mp->sbuf[sbuf]),
+			size, tag, sbuf);
+		return NO_ERROR;
+
+		/*
 		switch(p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size,
 			tag, sbuf)) {
 			case MPI_SUCCESS:
@@ -365,6 +380,7 @@ struct AAISPolicy {
 		} // switch
 
 		return ERROR_CODE("Unknown MPI error");
+		*/
 	} // mp_begin_send
 
 	inline error_code mp_end_recv(int rbuf, mp_handle h) {
@@ -378,6 +394,9 @@ struct AAISPolicy {
 
 		//std::cout << "WRAPPER: begin wait " << p2p.rank() << std::endl;
 
+		int errcode = p2p.wait_recv(rbuf);
+
+/*
 		switch(p2p.wait_recv(rbuf)) {
 			case MPI_SUCCESS:
 		//std::cout << "WRAPPER: end wait" << std::endl;
@@ -389,9 +408,11 @@ struct AAISPolicy {
 			default:
 				return ERROR_CODE("MPI_Wait - Unknown MPI error");
 		} // switch
+*/
 
-		///*
-		//std::cout << "WRAPPER: begin get count" << std::endl;
+		errcode = p2p.get_count<char>(rbuf, size);
+
+/*
 		switch(p2p.get_count<char>(rbuf, size)) {
 			case MPI_SUCCESS:
 		//std::cout << "WRAPPER: end get count" << std::endl;
@@ -407,7 +428,7 @@ struct AAISPolicy {
 		if(mp->rreq_size[rbuf] != size) {
 			return ERROR_CODE("Sizes do not match");
 		} // if
-		//*/
+*/
 
 		return NO_ERROR;
 	} // mp_end_recv
@@ -420,6 +441,10 @@ struct AAISPolicy {
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf<0 || sbuf>=max_buffers) { return ERROR_CODE("Bad send_buf"); }
 
+		int errcode = p2p.wait_send(sbuf);
+		return NO_ERROR;
+
+/*
 		switch(p2p.wait_send(sbuf)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
@@ -432,6 +457,7 @@ struct AAISPolicy {
 		} // switch
 
 		return ERROR_CODE("Unknown MPI error");
+*/
 	} // mp_end_send
 
 	inline error_code mp_allsum_d(double *local, double *global,
@@ -529,6 +555,11 @@ struct AAISPolicy {
 
 		MPRequest request(P2PTag::send, P2PTag::data, n, 0, dst);
 		p2p.post(request);
+
+		int errcode = p2p.send(buf, request.count, request.tag);
+		return NO_ERROR;
+
+/*
 		switch(p2p.send(buf, request.count, request.tag)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
@@ -544,6 +575,7 @@ struct AAISPolicy {
 		} // switch
 
 		return ERROR_CODE("Unknown MPI error");
+*/
 	} // mp_send_i
 
 	error_code mp_recv_i(int *buf, int n, int src, mp_handle h) {
@@ -555,6 +587,11 @@ struct AAISPolicy {
 
 		MPRequest request(P2PTag::recv, P2PTag::data, n, 0, src);
 		p2p.post(request);
+
+		int errcode = p2p.recv(buf, request.count, request.tag, request.id);
+		return NO_ERROR;
+
+/*
 		switch(p2p.recv(buf, request.count, request.tag, request.id)) {
 			case MPI_SUCCESS:
 				return NO_ERROR;
@@ -570,6 +607,7 @@ struct AAISPolicy {
 		} // switch
 
 		return ERROR_CODE("Unknown MPI error");
+*/
 	} // mp_recv_i
 
 }; // struct AAISPolicy

@@ -14,7 +14,7 @@
 
 #include <mpi.h>
 #include <MPData.hxx>
-#include <MPIConnectionManager.hxx>
+#include <ConnectionManager.hxx>
 #include <Type2MPIType.hxx>
 
 /*!
@@ -27,9 +27,9 @@ class DMPPolicyMPI
 
 		// topology information
 		inline int global_id()
-			{ return MPIConnectionManager::instance().global_id(); }
+			{ return ConnectionManager::instance().global_id(); }
 		inline int global_size()
-			{ return MPIConnectionManager::instance().global_size(); }
+			{ return ConnectionManager::instance().global_size(); }
 
 		template<typename T> int send(T * buffer, int count,
 			int dst, int tag);
@@ -70,7 +70,7 @@ class DMPPolicyMPI
 template<typename T>
 int DMPPolicyMPI::send(T * buffer, int count, int dst, int tag)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Send(buffer, count, Type2MPIType<T>::type(),
 			dst, tag, mgr.dmp_comm());
 	} // DMPPolicyMPI::send
@@ -79,7 +79,7 @@ template<typename T>
 int DMPPolicyMPI::recv(T * buffer, int count, int src,
 	int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Recv(buffer, count, Type2MPIType<T>::type(),
 			src, tag, mgr.dmp_comm(), &recv_status_[id]);
 	} // DMPPolicyMPI::irecv
@@ -88,7 +88,7 @@ template<typename T>
 int DMPPolicyMPI::isend(T * buffer, int count, int dst,
 	int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Isend(buffer, count, Type2MPIType<T>::type(),
 			dst, tag, mgr.dmp_comm(), &send_request_[id]);
 	} // DMPPolicyMPI::send
@@ -97,7 +97,7 @@ template<typename T>
 int DMPPolicyMPI::irecv(T * buffer, int count, int src,
 	int tag, int id)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Irecv(buffer, count, Type2MPIType<T>::type(),
 			src, tag, mgr.dmp_comm(), &recv_request_[id]);
 	} // DMPPolicyMPI::irecv
@@ -142,14 +142,14 @@ int DMPPolicyMPI::wait_send(MPRequest_T<MP_HOST> & request)
 
 int DMPPolicyMPI::barrier()
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Barrier(mgr.dmp_comm());
 	} // DMPPolicyMPI::test
 
 template<typename T>
 int  DMPPolicyMPI::allreduce_max(T * src, T * dest, int count)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Allreduce(src, dest, count, Type2MPIType<T>::type(),
 			MPI_MAX, mgr.dmp_comm());
 	} // DMPPolicyMPI::allreduce_max
@@ -157,7 +157,7 @@ int  DMPPolicyMPI::allreduce_max(T * src, T * dest, int count)
 template<typename T>
 int  DMPPolicyMPI::allreduce_sum(T * src, T * dest, int count)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Allreduce(src, dest, count, Type2MPIType<T>::type(),
 			MPI_SUM, mgr.dmp_comm());
 	} // DMPPolicyMPI::allreduce_max
@@ -165,14 +165,14 @@ int  DMPPolicyMPI::allreduce_sum(T * src, T * dest, int count)
 template<typename T>
 int  DMPPolicyMPI::allgather(T * src, T * dest, int count)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Allgather(src, count, Type2MPIType<T>::type(),
 			dest, count, Type2MPIType<T>::type(), mgr.dmp_comm());
 	} // DMPPolicyMPI::allreduce_max
 
 int DMPPolicyMPI::abort(int reason)
 	{
-		MPIConnectionManager & mgr = MPIConnectionManager::instance();
+		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Abort(mgr.dmp_comm(), reason);
 	} // DMPPolicyMPI::test
 

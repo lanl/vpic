@@ -18,6 +18,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	config/rules.mk \
 	lib/Makefile \
+	accelerator/Makefile \
 	../../buildscript)
 
 ################################################################################
@@ -46,13 +47,9 @@ echo "host directory $host_ac_directory"
 CCS_WITH_MACHINE("$host_ac_directory/machine")
 
 ################################################################################
-# enable options
-################################################################################
-CCS_ENABLE_DMP
-
-################################################################################
 # with options
 ################################################################################
+CCS_WITH_BUILDSTYLE
 CCS_WITH_PPU_COMPILER
 CCS_WITH_TOOLCHAIN
 CCS_WITH_LIBSPE2
@@ -74,36 +71,39 @@ CCS_TUNE_PCXX
 EXTRA_CPPFLAGS="$LIBSPE2_CPPFLAGS $TOOLCHAIN_CPPFLAGS"
 EXTRA_LDFLAGS="$LIBSPE2_LDFLAGS"
 EXTRA_LIBS="$LIBSPE2_LIBS"
+
+case "$buildstyle" in
+	hybrid_relay_cell_openmpi)
+		CCS_WITH_PPU_MPI
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
+
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPI_P2P, [1])
+
+		# define needed for openmpi
+		AC_DEFINE(OMPI_SKIP_MPICXX)
+	;;
+	hybrid_relay_cell_dacs)
+		CCS_WITH_PPU_DACS(hybrid)
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_DACS_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_DACS_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_DACS_LIBS"
+
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_DACS_P2P, [1])
+	;;
+esac
+
 AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)
 AC_SUBST(EXTRA_LIBS)
 
-################################################################################
-# enable/disable distributed memory parallelism
-################################################################################
-if test "$ENABLE_DMP" = "1" ; then
-	CCS_WITH_PPU_MPI
-
-	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
-	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
-	EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
-
-	AC_SUBST(EXTRA_CPPFLAGS)
-	AC_SUBST(EXTRA_LDFLAGS)
-	AC_SUBST(EXTRA_LIBS)
-
-	# define needed for openmpi
-	AC_DEFINE(OMPI_SKIP_MPICXX)
-fi
-
-################################################################################
-# enable/disable hosted cell build
-################################################################################
-#if test "$ENABLE_HOST" = "1" ; then
-#	AC_SUBST(PPEDIRS, ["bin"])
-AC_SUBST(PPEDIRS, [lib])
-#AC_SUBST(PPEDIRS, ["bin"])
-#fi
+# This could change when cell is really added
+AC_SUBST(PPEDIRS, ["lib accelerator"])
 
 ################################################################################
 # start output

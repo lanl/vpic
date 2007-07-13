@@ -1,12 +1,13 @@
 /*------------------------------------------------------------------------------
 ------------------------------------------------------------------------------*/
 
+#include <ConnectionManager.hxx>
 #include <MPRelay.hxx>
 
 int main(int argc, char *argv[]) {
 
 	// initialize everything
-	P2PConnection::instance().init(argc, argv);
+	ConnectionManager::instance().init(argc, argv);
 
 	// Relay object
 	MPRelay relay;
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
 	relay.start();
 
 	// finalize
-	P2PConnection::instance().finalize();
+	ConnectionManager::instance().finalize();
 
 	return 0;
 } // main

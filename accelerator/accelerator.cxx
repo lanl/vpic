@@ -3,28 +3,30 @@
 
 #include <sstream>
 #include <string>
+#include <ConnectionManager.hxx>
 #include <P2PConnection.hxx>
 
 int main(int argc, char *argv[]) {
 
 	MPBuffer<float> send_buffer[max_buffers];
 	MPBuffer<float> recv_buffer[max_buffers];
-	MPRequest request;
+	MPRequest request __attribute__ ((aligned (16)));
 	double dbuf[5];
 	int ibuf_send[5];
 	int * ibuf_recv(NULL);
 	int64_t lbuf_send[5];
 	int64_t * lbuf_recv(NULL);
 
+	// initialize everything
+	ConnectionManager::instance().init(argc, argv);
+
 	// get an instance of the p2p connection
 	P2PConnection & p2p = P2PConnection::instance();
 
-	// initialize everything
-	p2p.init(argc, argv);
-
-
 	int rank = p2p.global_id();
 	int size = p2p.global_size();
+
+	std::cout << "rank " << rank << " size " << size << std::endl;
 
 	// initialize integer arrays
 	ibuf_recv = new int[5*size];
@@ -35,6 +37,7 @@ int main(int argc, char *argv[]) {
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
 			request.set(P2PTag::irecv, 0, count, i, i);
+			std::cout << "HOST " << request;
 			send_buffer[i].data()[0] = static_cast<float>(rank);
 			send_buffer[i].data()[1] = static_cast<float>(size);
 			p2p.post(request);
@@ -103,6 +106,7 @@ int main(int argc, char *argv[]) {
 		std::cout << "allreduce max double: " << ostr.str() << std::endl;
 	} // scope
 
+#if 1
 	// do all reduce sum on doubles
 	request.set(P2PTag::allreduce_sum_double, 0, 5, rank);
 	p2p.post(request);
@@ -191,11 +195,13 @@ int main(int argc, char *argv[]) {
 	p2p.send(&reason, 1, 0);
 */
 
+#endif // 0
+
 	// ask relay to stop
 	p2p.post(P2PTag::end);
 
 	// finalize communication
-	p2p.finalize();
+	ConnectionManager::instance().finalize();
 
 	delete[] ibuf_recv;
 	delete[] lbuf_recv;

@@ -14,6 +14,8 @@ AM_INIT_AUTOMAKE
 ################################################################################
 AC_CONFIG_FILES(Makefile bin/Makefile)
 
+AC_CONFIG_COMMANDS(setup, [make setup])
+
 ################################################################################
 # append prefix with spe
 ################################################################################
@@ -28,6 +30,11 @@ AC_SUBST(HOST_BUILDDIR, [$host_build_directory])
 AC_SUBST(SPE_BUILDDIR, [$host_build_directory/cell/spe])
 AC_SUBST(HOST_ACDIR, [$host_ac_directory])
 AC_SUBST(SPE_ACDIR, [$host_ac_directory/cell/spe])
+
+################################################################################
+# machine file specification
+################################################################################
+CCS_WITH_MACHINE("$host_ac_directory/machine")
 
 ################################################################################
 # with options

@@ -65,6 +65,11 @@ CCS_SIMD_ISA
 CCS_TUNE_CXX
 CCS_TUNE_CC
 
+# initialize these to empty
+EXTRA_CPPFLAGS=""
+EXTRA_LDFLAGS=""
+EXTRA_LIBS=""
+
 ################################################################################
 # determine build style
 ################################################################################
@@ -80,21 +85,35 @@ case "$buildstyle" in
 		AC_SUBST(ARCH_BUILD_PATH, [.])
 		AC_DEFINE(USE_MPRELAY, [1])
 	;;
-	hybrid_relay_cell_openmpi | hybrid_relay_cell_dacs)
+	hybrid_relay_cell_openmpi)
 		AC_SUBST(CELLDIR, [cell])
-		AC_SUBST(CELLSUBDIRS, ["ppe"])
-		AC_CONFIG_SUBDIRS([cell/ppe])
+		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, [mprelay])
 		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
 		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPI_P2P, [1])
+	;;
+	hybrid_relay_cell_dacs)
+		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
+		AC_SUBST(HOSTDIRS, [mprelay])
+		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_DACS_P2P, [1])
+
+		CCS_WITH_DACS(hybrid)
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $DACS_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $DACS_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $DACS_LIBS"
 	;;
 esac
 
-case "$buildstyle" in
-	hybrid_relay_cell_dacs)
-		CCS_WITH_DACS([hybrid])
-	;;
-esac
+# this is done here because autoconf barfs if this
+# is declared more than once
+if test "$enable_cell" = "1" ; then
+	AC_CONFIG_SUBDIRS([cell/spe cell/ppe])
+fi
 
 # this does auto-detection of mpi libraries using
 # the C compiler and possibly the openmpi mpicc program
@@ -106,6 +125,16 @@ EXTRA_LIBS="$EXTRA_LIBS $MPI_LIBS"
 
 # define needed for openmpi
 AC_DEFINE(OMPI_SKIP_MPICXX)
+
+# this does auto-detection of DaCS hybid libraries
+# if they are needed
+#if test "$buildstyle" = "hybrid_relay_cell_dacs" ; then
+#	CCS_WITH_DACS(hybrid)
+
+#	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $DACS_CPPFLAGS"
+#	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $DACS_LDFLAGS"
+#	EXTRA_LIBS="$EXTRA_LIBS $DACS_LIBS"
+#fi
 
 AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)

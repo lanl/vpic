@@ -4,8 +4,10 @@
 #include <particle_pipelines.h>
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
+
+#ifdef IN_HARNESS
 #include <profile.h>
-//#include <stdio.h>
+#endif
 
 // DMA tag usage:
 //  0: 2 - Particle buffer 0 (read, write, mover write)
@@ -634,8 +636,10 @@ main( uint64_t spu_id,
 
   int np, next_idx, itmp;
 
+# ifdef IN_HARNESS
   prof_clear();
   prof_start();
+# endif
 
   // Get the pipeline arguments from the dispatcher
 
@@ -774,7 +778,10 @@ main( uint64_t spu_id,
   mfc_write_tag_mask( (1<<31) );
   mfc_read_tag_status_all();
   
+# ifdef IN_HARNESS
   prof_stop();
+# endif
+
   return 0;
 }
 

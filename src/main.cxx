@@ -14,18 +14,7 @@ int
 main( int argc,
       char **argv ) {
 
-# if defined(CELL_PPU_BUILD)
-
-  // Allow processing of standard pipeline workloads on the 2 PPUs.
-  // For more efficient handling, we use this thread (which is
-  // running on one of the two PPU cores) and a second thread created
-  // (which will running on the other PPU core) for processing
-  // standard pipeline workloads.
-
-  thread.boot( 2,   // Total number of PPUs for processing pipeline workloads
-               1 ); // This PPU thread is one of the threads
-
-# if defined(USE_CELL_SPUS)
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
 
@@ -33,8 +22,6 @@ main( int argc,
             0 ); // This PPU thread physically cannot process SPU workloads!
 
 # endif
-
-# else
 
   // Strip threads-per-process arguments from the argument list
 
@@ -46,8 +33,6 @@ main( int argc,
   argc = m;
 
   thread.boot( tpp, 1 );
-
-# endif
 
   // Note: Some MPIs will bind threads to cores if threads are booted
   // after MPI is initialized.  So we start up the pipeline
@@ -77,13 +62,10 @@ main( int argc,
 
   mp_finalize();
 
-# if defined(CELL_PPU_BUILD)
   thread.halt();
-# if defined(USE_CELL_SPUS)
+
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
   spu.halt();
-# endif
-# else
-  thread.halt();
 # endif
 
   return 0;

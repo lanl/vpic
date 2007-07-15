@@ -1,11 +1,13 @@
-#define IN_particle_pipeline
-#include <particle_pipelines.h>
-
 #ifdef CELL_SPU_BUILD
 
+#define IN_particle_pipeline
+#include <particle_pipelines.h>
+#include <v4c_spu.h>
 #include <spu_mfcio.h>
+
+#ifdef IN_HARNESS
 #include <profile.h>
-//#include <stdio.h>
+#endif
 
 // DMA tag usage:
 //  0: 2 - Particle buffer 0 (read, write, mover write)
@@ -16,8 +18,6 @@
 // 26:29 - Neighbor cache
 // 30:30 - Pipeline input arguments
 // 31:31 - Pipeline return values
-
-using namespace v4;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pipeline Input / Output arguments
@@ -48,13 +48,9 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 // addresses, set up the cache lines to use 128-byte aligned lines
 // 128-bytes in size.
 
-// Note: XLC cannot do caches this large!  However, XLC either hates
-// this loop or completely miscompiles it (it was over 4X slower than
-// on GCC).
-
-// Interpolator cache: 512 cached interpolators (64Kb).  Roughly four
-// second nearest neighborhoods (125 voxels) around the current
-// particle can exist within the cache.
+// Interpolator cache: 512 cached interpolators (64Kb). Roughly four
+// second nearest neighborhoods (125 voxels) around a particle can exist
+// within the cache.
 
 #undef CACHE_NAME
 #undef CACHED_TYPE
@@ -107,8 +103,8 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
                                      (v)*sizeof(accumulator_t) )
 
 // Neighbor cache: 2048 cached cell adjacencies (16K).  Roughly three
-// complete second nearest neighborhoods of voxel adjacencies can
-// exist within the cache.
+// second nearest neighborhoods of voxel adjacencies can exist within the
+// cache.
 
 #undef CACHE_NAME
 #undef CACHED_TYPE
@@ -139,21 +135,21 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 
 // move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
 // depositing particle current as it goes. If the particle was moved
-// sucessfully (particle mover is no longer in use) returns 0. If the
-// particle interacted with something this routine could not handle,
-// this routine returns 1 (particle mover is still in use). On a
-// successful move, the particle position is updated and m->dispx,
-// m->dispy and m->dispz are zerod. On a partial move, the particle
+// sucessfully (particle mover is no longer in use), this returns 0.
+// If the particle interacted with something this routine could not
+// handle, this routine returns 1 (particle mover is still in use).
+// On a successful move, the particle position is updated and dispx,
+// dispy and dispz are zerod.  On a partial move, the particle
 // position is updated to the point where the particle interacted and
-// m->dispx, m->dispy, m->dispz contains the remaining particle
-// displacement. The displacements are the physical displacments
-// normalized current cell cell size.
+// dispx, dispy, dispz contain the remaining particle displacement.
+// The displacements are the physical displacments normalized current
+// cell size.
 //
 // Because move_p is internal use only and frequently called, it does
-// not check its input arguments. Higher level routines are
-// responsible for insuring valid arguments.
+// not check its input arguments.  Callers are responsible for
+// insuring valid arguments.
 
-int
+static int
 move_p_spu( particle_t       * ALIGNED(32) p,
             particle_mover_t * ALIGNED(16) pm ) {
   float s_midx, s_midy, s_midz;
@@ -164,7 +160,7 @@ move_p_spu( particle_t       * ALIGNED(32) p,
   int64_t neighbor;
   float * ALIGNED(16) a;
 
-  // FIXME: THIS CAN BE HORIZONAL V4 ACCELERATED (AT LEAST PARTIALLY)!
+  // FIXME: THIS CAN BE PARTIALLY HORIZONTAL SIMD ACCELERATED
 
   for(;;) {
     s_midx = p->dx;
@@ -214,7 +210,7 @@ move_p_spu( particle_t       * ALIGNED(32) p,
     // current quadrant in a time-step
 
     v5 = p->q*s_dispx*s_dispy*s_dispz*(1./3.);
-    a = (float * ALIGNED(16))PTR_ACCUMULATOR(p->i); // No need to lock
+    a = (float * ALIGNED(64))PTR_ACCUMULATOR(p->i); // No need to lock
 
 #   define ACCUMULATE_J(X,Y,Z,offset)                                   \
     v4  = p->q*s_disp##X; /* v2 = q ux                            */    \
@@ -266,6 +262,8 @@ move_p_spu( particle_t       * ALIGNED(32) p,
     // the particle is guaranteed to be +/-1 _exactly_ for the
     // particle.
 
+    // FIXME: WOULD SWITCHING ON TYPE BE FASTER ON THE SPUS?
+
     v0 = s_dir[type];
     neighbor = NEIGHBOR( p->i, ((v0>0)?3:0) + type );
     if( neighbor<args->rangel || neighbor>args->rangeh ) { // Hit a boundary
@@ -282,52 +280,62 @@ move_p_spu( particle_t       * ALIGNED(32) p,
   return 0; // Never get here ... avoid compiler warning
 }
 
-static int // Return number of movers used
-advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
+// FIXME: Using restricted pointers makes this worse(!) on gcc??
+// FIXME: Branch hints makes this worse(!) on gcc?? (No change on xlc.)
+
+static int                             // Return number of movers used
+advance_p_pipeline_spu( particle_t       * ALIGNED(128) p, // Particle array
                         particle_mover_t * ALIGNED(16)  pm, // Mover array
-                        int idx,   // Index of first particle
-                        int nq ) { // Number of particle quads
+                        int idx,       // Index of first particle
+                        int nq ) {     // Number of particle quads
+  USING_V4C;
 
-  const v4float qdt_2mc( args->qdt_2mc );
-  const v4float cdt_dx(  args->cdt_dx  );
-  const v4float cdt_dy(  args->cdt_dy  );
-  const v4float cdt_dz(  args->cdt_dz  );
-  const v4float one(1.);
-  const v4float one_third(1./3.);
-  const v4float two_fifteenths(2./15.);
-  const v4float neg_one(-1.);
+  const vec_float4 qdt_2mc        = VEC_FLOAT4( args->qdt_2mc );
+  const vec_float4 cdt_dx         = VEC_FLOAT4( args->cdt_dx  );
+  const vec_float4 cdt_dy         = VEC_FLOAT4( args->cdt_dy  );
+  const vec_float4 cdt_dz         = VEC_FLOAT4( args->cdt_dz  );
+  const vec_float4 one            = VEC_FLOAT4(  1.           );
+  const vec_float4 one_third      = VEC_FLOAT4(  1./3.        );
+  const vec_float4 one_half       = VEC_FLOAT4(  1./2.        );
+  const vec_float4 two_fifteenths = VEC_FLOAT4(  2./15.       );
+  const vec_float4 neg_one        = VEC_FLOAT4( -1.           );
 
-  v4float dx, dy, dz; v4int   ii; // particle position
-  v4float ux, uy, uz; v4float q;  // particle momentum and charge
+  vec_float4 p0r, p1r, p2r, p3r;       // transposed position
+  vec_float4 p0u, p1u, p2u, p3u;       // transposed momentum
 
-  v4float ex0,  dexdy,  dexdz, d2exdydz; // ex interp coeff
-  v4float ey0,  deydz,  deydx, d2eydzdx; // ey interp coeff
-  v4float ez0,  dezdx,  dezdy, d2ezdxdy; // ez interp coeff
-  v4float cbx0, dcbxdx, cby0,  dcbydy;   // bx and by interp coeff
-  v4float cbz0, dcbzdz, v12,   v13;      // bz interp coeff and scratch
+  vec_float4 dx, dy, dz; vec_int4 i;   // particle position
+  vec_float4 ux, uy, uz, q;            // particle momentum and charge
 
-  v4float hax, hay, haz; // half particle electric field acceleration
-  v4float cbx, cby, cbz; // particle magnetic field
+  vec_float4 ex0,  dexdy,  dexdz, d2exdydz; // ex interp coeff
+  vec_float4 ey0,  deydz,  deydx, d2eydzdx; // ey interp coeff
+  vec_float4 ez0,  dezdx,  dezdy, d2ezdxdy; // ez interp coeff
+  vec_float4 cbx0, dcbxdx, cby0,  dcbydy; // bx and by interp coeff
+  vec_float4 cbz0, dcbzdz, v12,   v13; // bz interp coeff and scratch
 
-  v4float ux0, uy0, uz0; // pre Boris rotation momentum
-  v4float v14, cbs, ths, v15, v16, v17; // Boris rotation scalars
-  v4float wx0, wy0, wz0; // intermediate Boris rotation momentum
-  v4float uxh, uyh, uzh; // new particle momentum
+  vec_float4 hax, hay, haz;            // half particle electric field accel
+  vec_float4 cbx, cby, cbz;            // particle magnetic field
 
-  v4float rgamma;        // new inverse gamma
-  v4float ddx, ddy, ddz; // cell-normalized particle displacment
-  v4float dxh, dyh, dzh; // intermediate position relative to starting cell
-  v4float dx1, dy1, dz1; // new position relative to starting cell
-  v4int   outbnd;        // Boolean (true if particle exited cell)
+  vec_float4 ux0, uy0, uz0;            // pre Boris rotation momentum
+  vec_float4 v14, cbs, ths, v15, v16, v17; // Boris rotation scalars
+  vec_float4 wx0, wy0, wz0;            // intermediate Boris rotation momentum
+  vec_float4 uxh, uyh, uzh;            // new particle momentum
 
-  v4float qa, ccc;
-  v4float a0x, a1x, a2x, a3x, a4x;
-  v4float a0y, a1y, a2y, a3y, a4y;
-  v4float a0z, a1z, a2z, a3z, a4z;
+  vec_float4 rgamma;                   // new inverse gamma
+  vec_float4 ddx, ddy, ddz;            // cell-normalized particle displacment
+  vec_float4 dxh, dyh, dzh;            // half-step position rel to start cell
+  vec_float4 dx1, dy1, dz1;            // new position rel to start cell
+  vec_uint4  outbnd;                   // Boolean (true if particle left cell)
+
+  vec_float4 qa, ccc;
+  vec_float4 a0x, a1x, a2x, a3x, a4x;
+  vec_float4 a0y, a1y, a2y, a3y, a4y;
+  vec_float4 a0z, a1z, a2z, a3z, a4z;
+
+  int i0, i1, i2, i3;
 
   const interpolator_t * ALIGNED(128) fi;
   accumulator_t * ALIGNED(64) ja;
-  int nm = 0, ii0, ii1, ii2, ii3;
+  int nm = 0;
 
   // Process the particle quads for this pipeline
 
@@ -335,126 +343,158 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 
     // Load the particle quad positions
 
-    load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx, dx, dy, dz, ii );
+    LOAD_4x1( &p[0].dx, p0r );
+    LOAD_4x1( &p[1].dx, p1r );
+    LOAD_4x1( &p[2].dx, p2r );
+    LOAD_4x1( &p[3].dx, p3r );
+    TRANSPOSE( p0r, p1r, p2r, p3r );
+    dx = p0r;
+    dy = p1r;
+    dz = p2r;
+    i  = (vec_int4)p3r;
 
     // Interpolate fields
 
-    ii0 = ii(0);
-    fi  = PTR_INTERPOLATOR(ii0);
-    load_4x1( &fi->ex,  ex0  );
-    load_4x1( &fi->ey,  ey0  );
-    load_4x1( &fi->ez,  ez0  );
-    load_4x1( &fi->cbx, cbx0 );
-    load_4x1( &fi->cbz, cbz0 );
+    i0 = EXTRACT( i, 0 );
+    fi = PTR_INTERPOLATOR(i0);
+    LOAD_4x1( &fi->ex,  ex0  );
+    LOAD_4x1( &fi->ey,  ey0  );
+    LOAD_4x1( &fi->ez,  ez0  );
+    LOAD_4x1( &fi->cbx, cbx0 );
+    LOAD_4x1( &fi->cbz, cbz0 );
 
-    ii1 = ii(1);
-    fi  = PTR_INTERPOLATOR(ii1);
-    load_4x1( &fi->ex,  dexdy  );
-    load_4x1( &fi->ey,  deydz  );
-    load_4x1( &fi->ez,  dezdx  );
-    load_4x1( &fi->cbx, dcbxdx );
-    load_4x1( &fi->cbz, dcbzdz );
+    i1 = EXTRACT( i, 1 );
+    fi = PTR_INTERPOLATOR(i1);
+    LOAD_4x1( &fi->ex,  dexdy  );
+    LOAD_4x1( &fi->ey,  deydz  );
+    LOAD_4x1( &fi->ez,  dezdx  );
+    LOAD_4x1( &fi->cbx, dcbxdx );
+    LOAD_4x1( &fi->cbz, dcbzdz );
 
-    ii2 = ii(2);
-    fi  = PTR_INTERPOLATOR(ii2);
-    load_4x1( &fi->ex,  dexdz );
-    load_4x1( &fi->ey,  deydx );
-    load_4x1( &fi->ez,  dezdy );
-    load_4x1( &fi->cbx, cby0  );
-    load_4x1( &fi->cbz, v12   );
+    i2 = EXTRACT( i, 2 );
+    fi = PTR_INTERPOLATOR(i2);
+    LOAD_4x1( &fi->ex,  dexdz );
+    LOAD_4x1( &fi->ey,  deydx );
+    LOAD_4x1( &fi->ez,  dezdy );
+    LOAD_4x1( &fi->cbx, cby0  );
+    LOAD_4x1( &fi->cbz, v12   );
 
-    ii3 = ii(3);
-    fi  = PTR_INTERPOLATOR(ii3);
-    load_4x1( &fi->ex,  d2exdydz );
-    load_4x1( &fi->ey,  d2eydzdx );
-    load_4x1( &fi->ez,  d2ezdxdy );
-    load_4x1( &fi->cbx, dcbydy   );
-    load_4x1( &fi->cbz, v13      );
+    i3 = EXTRACT( i, 3 );
+    fi = PTR_INTERPOLATOR(i3);
+    LOAD_4x1( &fi->ex,  d2exdydz );
+    LOAD_4x1( &fi->ey,  d2eydzdx );
+    LOAD_4x1( &fi->ez,  d2ezdxdy );
+    LOAD_4x1( &fi->cbx, dcbydy   );
+    LOAD_4x1( &fi->cbz, v13      );
 
-    transpose( ex0, dexdy, dexdz, d2exdydz );
-    hax = qdt_2mc*fma( fma( d2exdydz, dy, dexdz ), dz, fma( dexdy, dy, ex0 ) );
+    TRANSPOSE( ex0, dexdy, dexdz, d2exdydz );
+    hax = MUL( qdt_2mc, FMA( FMA( d2exdydz, dy, dexdz ), dz,
+                             FMA( dexdy,    dy, ex0   ) ) );
 
-    transpose( ey0, deydz, deydx, d2eydzdx );
-    hay = qdt_2mc*fma( fma( d2eydzdx, dz, deydx ), dx, fma( deydz, dz, ey0 ) );
+    TRANSPOSE( ey0, deydz, deydx, d2eydzdx );
+    hay = MUL( qdt_2mc, FMA( FMA( d2eydzdx, dz, deydx ), dx,
+                             FMA( deydz,    dz, ey0 ) ) );
 
-    transpose( ez0, dezdx, dezdy, d2ezdxdy );
-    haz = qdt_2mc*fma( fma( d2ezdxdy, dx, dezdy ), dy, fma( dezdx, dx, ez0 ) );
+    TRANSPOSE( ez0, dezdx, dezdy, d2ezdxdy );
+    haz = MUL( qdt_2mc, FMA( FMA( d2ezdxdy, dx, dezdy ), dy,
+                             FMA( dezdx,    dx, ez0 ) ) );
 
-    transpose( cbx0, dcbxdx, cby0, dcbydy );
-    cbx = fma( dcbxdx, dx, cbx0 );
-    cby = fma( dcbydy, dy, cby0 );
+    TRANSPOSE( cbx0, dcbxdx, cby0, dcbydy );
+    cbx = FMA( dcbxdx, dx, cbx0 );
+    cby = FMA( dcbydy, dy, cby0 );
 
-    transpose( cbz0, dcbzdz, v12, v13 ); // FIXME: Could be optimized a bit
-    cbz = fma( dcbzdz, dz, cbz0 );
+    HALF_TRANSPOSE( cbz0, dcbzdz, v12, v13 );
+    cbz = FMA( dcbzdz, dz, cbz0 );
 
     // Update momentum.  Note: Could eliminate a dependency in v14 calc
-    // if willing to play extra fast and loose with numerics (saves
-    // about a spu clock per particle).
+    // if willing to play fast and loose with numerics (saves about a spu
+    // clock per particle).
 
-    load_4x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux, ux, uy, uz, q  );
-    ux0 = ux + hax;
-    uy0 = uy + hay;
-    uz0 = uz + haz;
-    v14 = qdt_2mc*rsqrt( one + fma( ux0,ux0, fma( uy0,uy0, uz0*uz0 ) ) );
-    cbs = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) ); // |cB|^2
-    ths = (v14*v14)*cbs;                           // |theta|^2 = |wc dt/2|^2
-    v15 = v14*fma( fma( two_fifteenths, ths, one_third ), ths, one );
-    v16 = v15*rcp( fma( v15*v15, cbs, one ) );
-    v17 = v16 + v16;
-    wx0 = fma( fms( uy0,cbz, uz0*cby ), v15, ux0 );
-    wy0 = fma( fms( uz0,cbx, ux0*cbz ), v15, uy0 );
-    wz0 = fma( fms( ux0,cby, uy0*cbx ), v15, uz0 );
-    uxh = fma( fms( wy0,cbz, wz0*cby ), v17, ux0 ) + hax;
-    uyh = fma( fms( wz0,cbx, wx0*cbz ), v17, uy0 ) + hay;
-    uzh = fma( fms( wx0,cby, wy0*cbx ), v17, uz0 ) + haz;
-    store_4x4_tr( uxh, uyh, uzh,  q, &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux );
+    LOAD_4x1( &p[0].ux, p0u );
+    LOAD_4x1( &p[1].ux, p1u );
+    LOAD_4x1( &p[2].ux, p2u );
+    LOAD_4x1( &p[3].ux, p3u );
+    TRANSPOSE( p0u, p1u, p2u, p3u );
+    ux  = p0u;
+    uy  = p1u;
+    uz  = p2u;
+    q   = p3u;
+    ux0 = ADD( ux, hax );
+    uy0 = ADD( uy, hay );
+    uz0 = ADD( uz, haz );
+    v14 = MUL( qdt_2mc, RSQRT( ADD( one, FMA( ux0,ux0, FMA( uy0,uy0, MUL(uz0,uz0) ) ) ) ) );
+    cbs = FMA( cbx,cbx, FMA( cby,cby, MUL(cbz,cbz) ) ); // |cB|^2
+    ths = MUL( MUL( v14,v14 ), cbs );  // |theta|^2 = |wc dt/2|^2
+    v15 = MUL( v14, FMA( FMA( two_fifteenths, ths, one_third ), ths, one ) );
+    v16 = MUL( v15, RCP( FMA( MUL(v15,v15), cbs, one ) ) );
+    v17 = ADD( v16, v16 );
+    wx0 =      FMA( FMS( uy0,cbz, MUL(uz0,cby) ), v15, ux0 );
+    wy0 =      FMA( FMS( uz0,cbx, MUL(ux0,cbz) ), v15, uy0 );
+    wz0 =      FMA( FMS( ux0,cby, MUL(uy0,cbx) ), v15, uz0 );
+    uxh = ADD( FMA( FMS( wy0,cbz, MUL(wz0,cby) ), v17, ux0 ), hax );
+    uyh = ADD( FMA( FMS( wz0,cbx, MUL(wx0,cbz) ), v17, uy0 ), hay );
+    uzh = ADD( FMA( FMS( wx0,cby, MUL(wy0,cbx) ), v17, uz0 ), haz );
+    p0u = uxh;
+    p1u = uyh;
+    p2u = uzh;
+    /* p3u is unchanged */
+    TRANSPOSE( p0u, p1u, p2u, p3u );
+    STORE_4x1( p0u, &p[0].ux );
+    STORE_4x1( p1u, &p[1].ux );
+    STORE_4x1( p2u, &p[2].ux );
+    STORE_4x1( p3u, &p[3].ux );
     
     // Update the position of inbnd particles
 
-    rgamma = rsqrt( one + fma( uxh,uxh, fma( uyh,uyh, uzh*uzh ) ) );
-    ddx    = (uxh*cdt_dx)*rgamma;
-    ddy    = (uyh*cdt_dy)*rgamma;
-    ddz    = (uzh*cdt_dz)*rgamma; // ddx,ddy,ddz are normalized displacement
-    dxh    = dx  + ddx;
-    dyh    = dy  + ddy;
-    dzh    = dz  + ddz;           // Half step position
-    dx1    = dxh + ddx;
-    dy1    = dyh + ddy;
-    dz1    = dzh + ddz;           // New particle position
-    outbnd = (dx1>one) | (dx1<neg_one) |
-             (dy1>one) | (dy1<neg_one) |
-             (dz1>one) | (dz1<neg_one);
-    store_4x4_tr( merge(outbnd,dx,dx1), // Do not update outbnd particles
-                  merge(outbnd,dy,dy1),
-                  merge(outbnd,dz,dz1),
-                  ii,
-                  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx );
-
+    rgamma = RSQRT( ADD( one, FMA( uxh,uxh, FMA( uyh,uyh, MUL(uzh,uzh) ) ) ) );
+    ddx    = MUL( MUL( uxh, cdt_dx ), rgamma );
+    ddy    = MUL( MUL( uyh, cdt_dy ), rgamma );
+    ddz    = MUL( MUL( uzh, cdt_dz ), rgamma ); // voxel normalized movement
+    dxh    = ADD( dx,  ddx );
+    dyh    = ADD( dy,  ddy );
+    dzh    = ADD( dz,  ddz );          // Half step position
+    dx1    = ADD( dxh, ddx );
+    dy1    = ADD( dyh, ddy );
+    dz1    = ADD( dzh, ddz );          // New particle position
+    outbnd = OR( OR( OR( CMPLT(dx1,neg_one), CMPGT(dx1,one) ),
+                     OR( CMPLT(dy1,neg_one), CMPGT(dy1,one) ) ),
+                     OR( CMPLT(dz1,neg_one), CMPGT(dz1,one) ) );
+    p0r    = MERGE( outbnd, dx, dx1 ); // Do not update outbnd particles
+    p1r    = MERGE( outbnd, dy, dy1 );
+    p2r    = MERGE( outbnd, dz, dz1 );
+    /* p3r is unchanged */
+    TRANSPOSE( p0r, p1r, p2r, p3r );
+    STORE_4x1( p0r, &p[0].dx );
+    STORE_4x1( p1r, &p[1].dx );
+    STORE_4x1( p2r, &p[2].dx );
+    STORE_4x1( p3r, &p[3].dx );
+   
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
 
-    qa  = czero(outbnd,q);          // Do not accumulate outbnd particles
-    /**/                            // The half step position is not the
-    /**/                            // streak midpoint for them!
-    ccc = qa*ddx*ddy*ddz*one_third; // Charge conservation correction
+    qa  = CZERO( outbnd, q );          // Do not accumulate outbnd particles
+    /**/                               // The half step position is not the
+    /**/                               // streak midpoint for them!
+    ccc = MUL( MUL( one_third, qa ), MUL( ddx, MUL( ddy, ddz ) ) );
+    /**/                               // Charge conservation correction
 
-#   define ACCUMULATE_J(X,Y,Z)                                          \
-    a4##X  = qa*dd##X;      /* a4 = qa ddx                                */ \
-    a1##X  = a4##X*d##Y##h; /* a1 = qa ddx dyh                            */ \
-    a0##X  = a4##X-a1##X;   /* a0 = qa ddx (1-dyh)                        */ \
-    a1##X += a4##X;         /* a1 = qa ddx (1+dyh)                        */ \
-    a4##X  = one+d##Z##h;   /* a4 = 1+dzh                                 */ \
-    a2##X  = a0##X*a4##X;   /* a2 = qa ddx (1-dyh)(1+dzh)                 */ \
-    a3##X  = a1##X*a4##X;   /* a3 = qa ddx (1+dyh)(1+dzh)                 */ \
-    a4##X  = one-d##Z##h;   /* a4 = 1-dzh                                 */ \
-    a0##X *= a4##X;         /* a0 = qa ddx (1-dyh)(1-dzh)                 */ \
-    a1##X *= a4##X;         /* a1 = qa ddx (1+dyh)(1-dzh)                 */ \
-    a0##X += ccc;           /* a0 = qa ddx [ (1-dyh)(1-dzh) + ddy*ddz/3 ] */ \
-    a1##X -= ccc;           /* a1 = qa ddx [ (1+dyh)(1-dzh) - ddy*ddz/3 ] */ \
-    a2##X -= ccc;           /* a2 = qa ddx [ (1-dyh)(1+dzh) - ddy*ddz/3 ] */ \
-    a3##X += ccc;           /* a3 = qa ddx [ (1+dyh)(1+dzh) + ddy*ddz/3 ] */ \
-    transpose(a0##X,a1##X,a2##X,a3##X)
+#   define ACCUMULATE_J(X,Y,Z)                                               \
+    a4##X = MUL(qa,   dd##X);   /* a4 = qa ddx                            */ \
+    a1##X = MUL(a4##X,d##Y##h); /* a1 = qa ddx dyh                        */ \
+    a0##X = SUB(a4##X,a1##X);   /* a0 = qa ddx (1-dyh)                    */ \
+    a1##X = ADD(a1##X,a4##X);   /* a1 = qa ddx (1+dyh)                    */ \
+    a4##X = ADD(one,  d##Z##h); /* a4 = 1+dzh                             */ \
+    a2##X = MUL(a0##X,a4##X);   /* a2 = qa ddx (1-dyh)(1+dzh)             */ \
+    a3##X = MUL(a1##X,a4##X);   /* a3 = qa ddx (1+dyh)(1+dzh)             */ \
+    a4##X = SUB(one,  d##Z##h); /* a4 = 1-dzh                             */ \
+    a0##X = MUL(a0##X,a4##X);   /* a0 = qa ddx (1-dyh)(1-dzh)             */ \
+    a1##X = MUL(a1##X,a4##X);   /* a1 = qa ddx (1+dyh)(1-dzh)             */ \
+    a0##X = ADD(a0##X,ccc);     /* a0 = qa ddx [(1-dyh)(1-dzh)+ddy*ddz/3] */ \
+    a1##X = SUB(a1##X,ccc);     /* a1 = qa ddx [(1+dyh)(1-dzh)-ddy*ddz/3] */ \
+    a2##X = SUB(a2##X,ccc);     /* a2 = qa ddx [(1-dyh)(1+dzh)-ddy*ddz/3] */ \
+    a3##X = ADD(a3##X,ccc);     /* a3 = qa ddx [(1+dyh)(1+dzh)+ddy*ddz/3] */ \
+    TRANSPOSE(a0##X,a1##X,a2##X,a3##X)
 
     ACCUMULATE_J( x,y,z );
     ACCUMULATE_J( y,z,x );
@@ -462,35 +502,35 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 
 #   undef ACCUMULATE_J
 
-    ja = PTR_ACCUMULATOR(ii0);
-    increment_4x1( ja->jx, a0x );
-    increment_4x1( ja->jy, a0y );
-    increment_4x1( ja->jz, a0z );
+    ja = PTR_ACCUMULATOR(i0);
+    INCREMENT_4x1( ja->jx, a0x );
+    INCREMENT_4x1( ja->jy, a0y );
+    INCREMENT_4x1( ja->jz, a0z );
 
-    ja = PTR_ACCUMULATOR(ii1);
-    increment_4x1( ja->jx, a1x );
-    increment_4x1( ja->jy, a1y );
-    increment_4x1( ja->jz, a1z );
+    ja = PTR_ACCUMULATOR(i1);
+    INCREMENT_4x1( ja->jx, a1x );
+    INCREMENT_4x1( ja->jy, a1y );
+    INCREMENT_4x1( ja->jz, a1z );
 
-    ja = PTR_ACCUMULATOR(ii2);
-    increment_4x1( ja->jx, a2x );
-    increment_4x1( ja->jy, a2y );
-    increment_4x1( ja->jz, a2z );
+    ja = PTR_ACCUMULATOR(i2);
+    INCREMENT_4x1( ja->jx, a2x );
+    INCREMENT_4x1( ja->jy, a2y );
+    INCREMENT_4x1( ja->jz, a2z );
 
-    ja = PTR_ACCUMULATOR(ii3);
-    increment_4x1( ja->jx, a3x );
-    increment_4x1( ja->jy, a3y );
-    increment_4x1( ja->jz, a3z );
+    ja = PTR_ACCUMULATOR(i3);
+    INCREMENT_4x1( ja->jx, a3x );
+    INCREMENT_4x1( ja->jy, a3y );
+    INCREMENT_4x1( ja->jz, a3z );
 
     // Update position and accumulate outbnd
 
-#   define MOVE_OUTBND(N)                                      \
-    if( outbnd(N) ) {                                          \
-      pm->dispx = ddx(N);                                      \
-      pm->dispy = ddy(N);                                      \
-      pm->dispz = ddz(N);                                      \
-      pm->i     = idx + N;                                     \
-      if( move_p_spu( p+N, pm ) ) pm++, nm++;                  \
+#   define MOVE_OUTBND( N )                   \
+    if( EXTRACT( outbnd, N ) ) {              \
+      pm->dispx = EXTRACT( ddx, N );          \
+      pm->dispy = EXTRACT( ddy, N );          \
+      pm->dispz = EXTRACT( ddz, N );          \
+      pm->i     = idx + N;                    \
+      if( move_p_spu( p+N, pm ) ) pm++, nm++; \
     }
 
     MOVE_OUTBND(0);
@@ -528,8 +568,10 @@ main( uint64_t spu_id,
 
   int np, next_idx, itmp;
 
+# ifdef IN_HARNESS
   prof_clear();
   prof_start();
+# endif
 
   // Get the pipeline arguments from the dispatcher
 
@@ -543,14 +585,14 @@ main( uint64_t spu_id,
   pipeline_rank = envp & 0xffffffff;
   n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
 
-  // Determine which quads of particle quads this pipeline processes
+  // Determine which particle quads this pipeline processes
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
 
   // Determine which movers are reserved for this pipeline
-  // Movers (16 bytes) should be reserved for pipelines in at least
-  // multiples of 8 such that the set of particle movers reserved for a
-  // pipeline is 128-bit aligned and a multiple of 128-bits in size. 
+  // Movers (16 bytes) are reserved for pipelines in multiples of 8
+  // such that the set of particle movers reserved for a pipeline is
+  // 128-bit aligned and a multiple of 128-bits in size. 
 
   args->max_nm -= args->np&15; // Insure host gets enough
   if( args->max_nm<0 ) args->max_nm = 0;
@@ -666,7 +708,10 @@ main( uint64_t spu_id,
   mfc_write_tag_mask( (1<<31) );
   mfc_read_tag_status_all();
   
+# ifdef IN_HARNESS
   prof_stop();
+# endif
+
   return 0;
 }
 

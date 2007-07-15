@@ -32,16 +32,16 @@ SPU_LDFLAGS=$SPU_CFLAGS
 # - Could not get anything to build under spugxlc (directory problems in IBM's setup?)
 # - spugxlc++ currently miscompiles V4 based version
 
-VPIC=$HOME/devel/vpic/src
-INCLUDE="-I. -I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include -I/opt/ibm/cell-sdk/prototype/src/include/spu"
+VPIC=$HOME/src/vpic/src
+INCLUDE="-DIN_HARNESS -I. -I$VPIC -I$VPIC/util -I$VPIC/util/mtrand -I$VPIC/util/mp -I$VPIC/util/mp/dmp -I$VPIC/util/pipelines -I$VPIC/util/v4 -I$VPIC/grid -I$VPIC/material -I$VPIC/field -I$VPIC/particle -I$VPIC/species -I$VPIC/emitter -I$VPIC/boundary -I$VPIC/vpic -I/opt/ibm/cell-sdk/prototype/sysroot/usr/spu/include -I/opt/ibm/cell-sdk/prototype/src/include/spu"
 
 set -x
 
 rm -f *.o *.spu_obj *.spu_exe *.spu_asm *.spu_asm.timing advance_p *~
 
 # C++ V4 based 
-#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -c $VPIC/particle/pipelines_cell/advance_p_pipeline_spu.cxx  -o advance_p_pipeline_spu.spu_obj
-#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -S -fverbose-asm $VPIC/particle/pipelines_cell/advance_p_pipeline_spu.cxx -o advance_p_pipeline_spu.spu_asm
+#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -c advance_p_pipeline_spu.cxx  -o advance_p_pipeline_spu.spu_obj
+#$SPU_CXX $SPU_CXXFLAGS $INCLUDE -S -fverbose-asm advance_p_pipeline_spu.cxx -o advance_p_pipeline_spu.spu_asm
 
 # C SPU intrinsic based
 $SPU_CC $SPU_CFLAGS $INCLUDE -c advance_p_pipeline_spu.c  -o advance_p_pipeline_spu.spu_obj

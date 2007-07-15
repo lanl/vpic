@@ -3,6 +3,7 @@
 
 #define IN_particle_pipeline
 #define V4_PIPELINE
+#define SPU_PIPELINE
 #include <particle_pipelines.h>
 
 static void

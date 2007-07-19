@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "rank " << rank << " size " << size << std::endl;
 
+#if 1
 	// initialize integer arrays
 	ibuf_recv = new int[5*size];
 	lbuf_recv = new int64_t[5*size];
@@ -106,7 +107,6 @@ int main(int argc, char *argv[]) {
 		std::cout << "allreduce max double: " << ostr.str() << std::endl;
 	} // scope
 
-#if 1
 	// do all reduce sum on doubles
 	request.set(P2PTag::allreduce_sum_double, 0, 5, rank);
 	p2p.post(request);

@@ -182,7 +182,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 }
 
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
-#error "SPU version not hooked up yet!"
+
+extern spe_program_handle_t advance_p_pipeline_spu;
+
 #elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 
 using namespace v4;

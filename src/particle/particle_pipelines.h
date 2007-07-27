@@ -16,6 +16,8 @@
 
 # if defined(CELL_PPU_BUILD) 
 
+#include <libspe2.h>
+
     // Use SPU dispatcher on the SPU pipeline
 
 #   define EXEC_PIPELINES(name,args,sz_args)                          \

@@ -14,16 +14,19 @@ setup-host:
 	$(call symlinks, "@abs_top_srcdir@/src", '.*\.h+?x+?')
 
 copy-build-script:
-	@(cp buildscript build.@EXTENSION@ ; chmod 755 build.@EXTENSION@)
+	@(cp buildscript build.@LIB_EXTENSION@ ; chmod 755 build.@LIB_EXTENSION@)
 
 copy-extension-lib:
-	@(cp @ARCH_BUILD_PATH@/lib/.libs/libvpic.a @abs_top_builddir@/libvpic.@EXTENSION@.a)
+	@(cp @ARCH_LIB_BUILD_PATH@/lib/.libs/libvpic.a \
+	@abs_top_builddir@/libvpic.@LIB_EXTENSION@.a)
 
 copy-accelerator-exe:
-	@(cp @ARCH_BUILD_PATH@/accelerator/accelerator @abs_top_builddir@/accelerator.@EXTENSION@)
+	@(cp @ARCH_ACCEL_BUILD_PATH@/accelerator/accelerator \
+	@abs_top_builddir@/accelerator.@ACCEL_EXTENSION@)
 
 copy-mprelay-exe:
-	@(cp @ARCH_BUILD_PATH@/mprelay/mprelay @abs_top_builddir@/mprelay.@EXTENSION@)
+	@(cp @ARCH_MPRELAY_BUILD_PATH@/mprelay/mprelay \
+	@abs_top_builddir@/mprelay.@MPRELAY_EXTENSION@)
 
 copy-samples:
 	@(if [ ! -d @abs_top_builddir@/sample ] ; then \
@@ -32,16 +35,16 @@ copy-samples:
 	fi)
 
 clean-build-script:
-	@(rm -rf @abs_top_builddir@/build.@EXTENSION@)
+	@(rm -rf @abs_top_builddir@/build.@LIB_EXTENSION@)
 
 clean-extension-lib:
-	@(rm -rf @abs_top_builddir@/libvpic.@EXTENSION@.a)
+	@(rm -rf @abs_top_builddir@/libvpic.@LIB_EXTENSION@.a)
 
 clean-accelerator-exe:
-	@(rm -rf @abs_top_builddir@/accelerator.@EXTENSION@)
+	@(rm -rf @abs_top_builddir@/accelerator.@ACCEL_EXTENSION@)
 
 clean-mprelay-exe:
-	@(rm -rf @abs_top_builddir@/mprelay.@EXTENSION@)
+	@(rm -rf @abs_top_builddir@/mprelay.@MPRELAY_EXTENSION@)
 
 clean-samples:
 	@(rm -rf @abs_top_builddir@/sample)

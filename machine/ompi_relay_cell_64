@@ -10,7 +10,7 @@ BUILDSTYLE=ompi_relay_cell
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
 # warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
-OPT_LEVEL=-1
+OPT_LEVEL=3
 
 ################################################################################
 # EXTENSION - executable extension

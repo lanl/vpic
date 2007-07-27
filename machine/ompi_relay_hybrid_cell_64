@@ -9,20 +9,18 @@ BUILDSTYLE=ompi_relay_hybrid_cell
 ################################################################################
 # CFLAGS - configure C compiler behavior
 ################################################################################
-#CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
+CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-#CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600 -DUSE_V4_SSE"
+CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
 # warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
-OPT_LEVEL=-1
+OPT_LEVEL=3
 
 ################################################################################
 # CPUMODEL - specify a particular cpu model (this affects optimization)
@@ -33,7 +31,7 @@ CPUMODEL=opteron
 ################################################################################
 # EXTENSION - executable extension
 ################################################################################
-EXTENSION=ppu
+EXTENSION=op
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
@@ -63,7 +61,8 @@ MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *
 ################################################################################
 # PPU CFLAGS - configure C compiler behavior
 ################################################################################
-PCFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
+#PCFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600"
+PCFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
 
 ################################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior

@@ -80,23 +80,33 @@ case "$buildstyle" in
 	;;
 
 	standard_cell)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(ARCH_BUILD_PATH, ["cell/ppe"])
 	;;
 
 	ompi_relay)
 		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
-		AC_SUBST(ARCH_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
+		LIB_EXTENSION="$EXTENSION"
+		ACCEL_EXTENSION="$EXTENSION"
+		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
 	;;
 
 	ompi_relay_cell)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="ppu"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
@@ -104,9 +114,14 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_cell_ppe)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="ppu"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
@@ -114,10 +129,15 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_hybrid_cell)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, [mprelay])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(HOSTDIRS, ["mprelay"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
@@ -125,10 +145,15 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_hybrid_cell_ppe)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
-		AC_SUBST(HOSTDIRS, [mprelay])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(HOSTDIRS, ["mprelay"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
@@ -136,10 +161,15 @@ case "$buildstyle" in
 	;;
 
 	dacs_relay_hybrid_cell)
-		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, [mprelay])
-		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(HOSTDIRS, ["mprelay"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
@@ -153,6 +183,10 @@ case "$buildstyle" in
 	;;
 
 esac
+
+AC_SUBST(LIB_EXTENSION)
+AC_SUBST(ACCEL_EXTENSION)
+AC_SUBST(MPRELAY_EXTENSION)
 
 # this is done here because autoconf barfs if this
 # is declared more than once

@@ -18,6 +18,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	config/rules.mk \
 	lib/Makefile \
+	mprelay/Makefile \
 	accelerator/Makefile \
 	../../buildscript)
 
@@ -51,11 +52,12 @@ CCS_WITH_MACHINE("$host_ac_directory/machine")
 ################################################################################
 CCS_WITH_BUILDSTYLE
 CCS_WITH_PPU_COMPILER
-CCS_WITH_TOOLCHAIN
+CCS_WITH_OPT_LEVEL
 CCS_WITH_LIBSPE2
 CCS_WITH_ADDRESSING
 CCS_WITH_CELL_INSTDIR
 CCS_WITH_EXTENSION
+CCS_WITH_SPU_MODULES
 
 ################################################################################
 # C/C++ configuration
@@ -73,37 +75,118 @@ EXTRA_LDFLAGS="$LIBSPE2_LDFLAGS"
 EXTRA_LIBS="$LIBSPE2_LIBS"
 
 case "$buildstyle" in
-	hybrid_relay_cell_openmpi)
+
+	standard_cell)
 		CCS_WITH_PPU_MPI
+
+		AC_SUBST(PPEDIRS, ["lib"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
 		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
 
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_MPI_P2P, [1])
+		AC_DEFINE(CELL_PPU_BUILD)
+		AC_DEFINE(USE_CELL_SPUS)
+
+		# define needed for openmpi
+		AC_DEFINE(OMPI_SKIP_MPICXX)
+
+		for file in "$SPU_MODULES" ; do
+			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
+			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
+		done
+	;;
+
+	ompi_relay_cell)
+		CCS_WITH_PPU_MPI
+
+		AC_SUBST(PPEDIRS, ["lib mprelay accelerator"])
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
+
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
+
+		AC_DEFINE(CELL_PPU_BUILD)
+		AC_DEFINE(USE_CELL_SPUS)
+
+		# define needed for openmpi
+		AC_DEFINE(OMPI_SKIP_MPICXX)
+
+		for file in "$SPU_MODULES" ; do
+			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
+			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
+		done
+	;;
+
+	ompi_relay_hybrid_cell)
+		CCS_WITH_PPU_MPI
+
+		AC_SUBST(PPEDIRS, ["lib accelerator"])
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
+
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
+
+		AC_DEFINE(CELL_PPU_BUILD)
+		AC_DEFINE(USE_CELL_SPUS)
+
+		# define needed for openmpi
+		AC_DEFINE(OMPI_SKIP_MPICXX)
+
+		for file in "$SPU_MODULES" ; do
+			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
+			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
+		done
+	;;
+
+	ompi_relay_hybrid_cell_ppe)
+		CCS_WITH_PPU_MPI
+
+		AC_SUBST(PPEDIRS, ["lib accelerator"])
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
+
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
+
+		AC_DEFINE(CELL_PPU_BUILD)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
 	;;
-	hybrid_relay_cell_dacs)
+
+	dacs_relay_hybrid_cell)
 		CCS_WITH_PPU_DACS(hybrid)
+
+		AC_SUBST(PPEDIRS, ["lib accelerator"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_DACS_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_DACS_LDFLAGS"
 		EXTRA_LIBS="$EXTRA_LIBS $PPU_DACS_LIBS"
 
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_DACS_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_DACS_P2P)
+
+		AC_DEFINE(CELL_PPU_BUILD)
+		AC_DEFINE(USE_SPU_PIPELINE)
 	;;
+
 esac
 
 AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)
 AC_SUBST(EXTRA_LIBS)
 
-# This could change when cell is really added
-AC_SUBST(PPEDIRS, ["lib accelerator"])
+AC_SUBST(EXTRA_O_FILES)
+AC_SUBST(EXTRA_LO_FILES)
 
 ################################################################################
 # start output

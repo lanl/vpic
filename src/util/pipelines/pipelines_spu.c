@@ -1,4 +1,5 @@
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+//#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+#if defined(CELL_PPU_BUILD) && defined(SPU_ADVANCE_P)
 
 /****************************************************************************
  *
@@ -339,6 +340,8 @@ parallel_execute( spe_program_handle_t * pipeline,
 
   // Determine that the spu dispatcher is initialized and that caller
   // is the host spu.
+
+  MESSAGE(("entered parallel_execute"));
 
   if( spu.n_pipeline==0 )
     ERROR(( "Boot the spu dispatcher first!" ));

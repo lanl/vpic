@@ -6,9 +6,9 @@ SUBDIRS = ${CELLDIR} ${HOSTDIRS}
 
 setup: setup-host copy-samples
 
-all-local: copy-build-script copy-extension-lib copy-accelerator-exe
+all-local: copy-build-script copy-extension-lib @COPY_LOCAL@
 
-clean-local: clean-build-script clean-extension-lib clean-accelerator-exe
+clean-local: clean-build-script clean-extension-lib @CLEAN_LOCAL@
 
 setup-host:
 	$(call symlinks, "@abs_top_srcdir@/src", '.*\.h+?x+?')
@@ -21,6 +21,9 @@ copy-extension-lib:
 
 copy-accelerator-exe:
 	@(cp @ARCH_BUILD_PATH@/accelerator/accelerator @abs_top_builddir@/accelerator.@EXTENSION@)
+
+copy-mprelay-exe:
+	@(cp @ARCH_BUILD_PATH@/mprelay/mprelay @abs_top_builddir@/mprelay.@EXTENSION@)
 
 copy-samples:
 	@(if [ ! -d @abs_top_builddir@/sample ] ; then \
@@ -36,6 +39,9 @@ clean-extension-lib:
 
 clean-accelerator-exe:
 	@(rm -rf @abs_top_builddir@/accelerator.@EXTENSION@)
+
+clean-mprelay-exe:
+	@(rm -rf @abs_top_builddir@/mprelay.@EXTENSION@)
 
 clean-samples:
 	@(rm -rf @abs_top_builddir@/sample)

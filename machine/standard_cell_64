@@ -4,31 +4,13 @@
 
 ################################################################################
 ################################################################################
-BUILDSTYLE=hybrid_relay_cell_ompi
-
-################################################################################
-# CFLAGS - configure C compiler behavior
-################################################################################
-#CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
-
-################################################################################
-# CXXFLAGS - configure C++ compiler behavior
-################################################################################
-#CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600 -DUSE_V4_SSE"
+BUILDSTYLE=standard_cell
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
 # warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
 OPT_LEVEL=-1
-
-################################################################################
-# CPUMODEL - specify a particular cpu model (this affects optimization)
-# supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
-################################################################################
-CPUMODEL=opteron
 
 ################################################################################
 # EXTENSION - executable extension
@@ -39,46 +21,6 @@ EXTENSION=ppu
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
 ADDRESSING=64
-
-################################################################################
-# ENABLE_SIMD - enable vector processing (0|1)[0]
-################################################################################
-ENABLE_SIMD=1
-
-################################################################################
-# MPI configuration
-# MPI_CPPFLAGS - configure MPI preprocessor flags
-# MPI_LDFLAGS - configure MPI link flags
-# MPI_LIBS - configure MPI library names
-################################################################################
-#MPI_CPPFLAGS=""
-#MPI_LDFLAGS=""
-#MPI_LIBS=""
-
-# to use mpicc from openmpi
-MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
-
-################################################################################
-# ENABLE_HOST - enable host build (0|1)[1]
-################################################################################
-#ENABLE_HOST
-
-################################################################################
-# ENABLE_CELL - enable IBM Cell build (0|1)[0]
-################################################################################
-#ENABLE_CELL=1
-
-################################################################################
-# PCC - PPU compiler
-################################################################################
-#PCC
-
-################################################################################
-# SCC - SPU compiler
-################################################################################
-#SCC
 
 ################################################################################
 # PPU CFLAGS - configure C compiler behavior
@@ -99,6 +41,11 @@ SCFLAGS="-D_XOPEN_SOURCE=600 -DUSE_V4_SPU -DCELL_SPU_BUILD -DUSE_CELL_SPUS"
 # SPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
 SCXXFLAGS="-D_XOPEN_SOURCE=600 -DUSE_V4_SPU -DCELL_SPU_BUILD -DUSE_CELL_SPUS"
+
+################################################################################
+# SPU_MODULES - spe programs to link
+################################################################################
+SPU_MODULES="advance_p_pipeline_spu"
 
 ################################################################################
 # Cell MPI configuration

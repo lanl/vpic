@@ -75,10 +75,10 @@ void MPRelay::start()
 			switch(p2p.poll(request)) {
 
 				case P2PTag::send:
-///*
+/*
 					std::cout << "send request" << std::endl;
 					std::cout << request;
-//*/
+*/
 
 					// resize buffer if necessary
 					cbuf_send_[request.id].resize(request.count);
@@ -93,10 +93,10 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::recv:
-///*
+/*
 					std::cout << "recv request" << std::endl;
 					std::cout << request;
-//*/
+*/
 
 					// resize buffer if necessary
 					cbuf_recv_[request.id].resize(request.count);
@@ -114,10 +114,10 @@ void MPRelay::start()
 					// in case the host process is ever required to
 					// do real work.
 				case P2PTag::isend:
-///*
+/*
 					std::cout << "isend request" << std::endl;
 					std::cout << request;
-//*/
+*/
 
 					// resize buffer if necessary
 					cbuf_send_[request.id].resize(request.count);
@@ -135,10 +135,10 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::irecv:
-///*
+/*
 					std::cout << "irecv request" << std::endl;
 					std::cout << request;
-//*/
+*/
 
 					// resize buffer if necessary
 					cbuf_recv_[request.id].resize(request.count);

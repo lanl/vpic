@@ -21,7 +21,6 @@ AC_CONFIG_FILES(Makefile \
 	mprelay/Makefile \
 	accelerator/Makefile \
 	cell/Makefile)
-#	bin/Makefile \
 AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
@@ -74,30 +73,75 @@ EXTRA_LIBS=""
 # determine build style
 ################################################################################
 case "$buildstyle" in
+
 	standard)
-		echo "standard build"
 		AC_SUBST(HOSTDIRS, ["lib"])
-		AC_SUBST(ARCH_BUILD_PATH, [.])
+		AC_SUBST(ARCH_BUILD_PATH, ["."])
 	;;
-	test_relay)
-		echo "test_relay build"
-		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
-		AC_SUBST(ARCH_BUILD_PATH, [.])
-		AC_DEFINE(USE_MPRELAY, [1])
-	;;
-	hybrid_relay_cell_openmpi)
+
+	standard_cell)
 		AC_SUBST(CELLDIR, [cell])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, [mprelay])
 		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+	;;
+
+	ompi_relay)
+		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
+		AC_SUBST(ARCH_BUILD_PATH, ["."])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
+		AC_DEFINE(USE_MPRELAY, [1])
+	;;
+
+	ompi_relay_cell)
+		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
+		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
 		AC_DEFINE(USE_MPI_P2P, [1])
 	;;
-	hybrid_relay_cell_dacs)
+
+	ompi_relay_cell_ppe)
+		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLSUBDIRS, ["ppe"])
+		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPI_P2P, [1])
+	;;
+
+	ompi_relay_hybrid_cell)
 		AC_SUBST(CELLDIR, [cell])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, [mprelay])
 		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPI_P2P, [1])
+	;;
+
+	ompi_relay_hybrid_cell_ppe)
+		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLSUBDIRS, ["ppe"])
+		AC_SUBST(HOSTDIRS, [mprelay])
+		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
+		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPI_P2P, [1])
+	;;
+
+	dacs_relay_hybrid_cell)
+		AC_SUBST(CELLDIR, [cell])
+		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
+		AC_SUBST(HOSTDIRS, [mprelay])
+		AC_SUBST(ARCH_BUILD_PATH, [cell/ppe])
+		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
+		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY, [1])
 		AC_DEFINE(USE_DACS_P2P, [1])
 
@@ -107,6 +151,7 @@ case "$buildstyle" in
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $DACS_LDFLAGS"
 		EXTRA_LIBS="$EXTRA_LIBS $DACS_LIBS"
 	;;
+
 esac
 
 # this is done here because autoconf barfs if this
@@ -125,16 +170,6 @@ EXTRA_LIBS="$EXTRA_LIBS $MPI_LIBS"
 
 # define needed for openmpi
 AC_DEFINE(OMPI_SKIP_MPICXX)
-
-# this does auto-detection of DaCS hybid libraries
-# if they are needed
-#if test "$buildstyle" = "hybrid_relay_cell_dacs" ; then
-#	CCS_WITH_DACS(hybrid)
-
-#	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $DACS_CPPFLAGS"
-#	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $DACS_LDFLAGS"
-#	EXTRA_LIBS="$EXTRA_LIBS $DACS_LIBS"
-#fi
 
 AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)

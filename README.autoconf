@@ -2,79 +2,81 @@
 # Autoconf build system README
 ################################################################################
 
-# Contact
-Since I can't think of everything that may cause problems, please feel free
-to call me.  I can be reached this week at +49 221 8025985.  I should be back
-home Today (March 13) by 9am your time).
-
 # Bootstrap
 To build the buildsystem run (from the top-level directory):
 
 % config/bootstrap
 
-This will run the appropriate programs to create the build system.  I had to
-make a couple of changes to get this working:
-
-1) changed src/grid/structors.c to src/grid/gstructors.c
-2) changed src/field/structors.c to src/field/fstructors.c
-3) changed src/particle/structors.c to src/particle/pstructors.c
-
-This was done to avoid object file conflicts.  This is not normally a problem
-when using autoconf.  However, I have written a script to create the
-Makefile.am input file for automake in the "lib" directory.  This avoids
-having to edit this file when new modules are added to the VPIC library.  The
-script is in the "config" directory, and is called lib.am.  The disadvantage
-to this is that anything under the "src" directory is assumed to be part of
-the library.  If you would like to make the modules in the library static,
-change the "cofig/bootstrap" script to not call "lib.am" and edit the
-Makefile.am file manually.  For the time being, the current approach seems to
-work.  WARNING, if you do decide to make this static, you will need to do the
-same thing in "cell/ppe".
-
-One possible problem that you may see has to do with cross-compiling for the
-PPE and SPEs.  The autotools require a recognizeable platform to work.
-Unfortunately, IBM does not use a standard naming scheme for the current
-toolchain.  To fix this, run (as root):
-
-% for file in `ls ppu-*` ; do link=`echo $file | sed 's,ppu,powerpc,g'` ; ln -s $file $link ; done
-
-This will create links that automake's config.sub program will recognize.  For
-the SPE build, you may need to edit the system config.sub program to directly
-recognize the prefix "spu-".  I did not have to do this for Ubuntu, so don't
-worry about it unless something fails during the configuration.
+This will run the appropriate programs to create the build system.
 
 # Configuration
+The autoconf buildsystem mimics the current Imake setup, allowing the user to
+specify a machine file.  There are several examples in the machine directory.
+To configure a standard, 64-bit VPIC build that uses SSE and basic optimization
+try:
+
+% ./configure --with-machine=standard_64
+
 The build system supports out-of-tree builds.  This is convenient for making
-several different configurations in separate directories.  As an example,
-to configure a cell-enabled build, you might do the following:
+several different configurations in separate directories.  As an example, try
+something like:
 
-(in top-level directory)
-% mkdir -p build/cell
-% cd build/cell
-% ../../configure --enable-cell
+(in top-level VPIC directory)
+% mkdir -p build/standard_64
+% cd build/standard_64
+% ../../configure --with-machine=standard_64
 
-This will produce a lot of output and should create a build system for
-building a cross-compiled version of the VPIC library (using my MPI stubs)
-that will run on the cell or on a simulator.  To build everything just do:
+# Build
+Either of these configure options will produce some output, and will create
+the files needed to build VPIC.  To compile, try:
 
+(from wherever you ran configure)
 % make
 
-In this case, the executable will be in "top-level/build/cell/cell/ppe/bin".
-The executable is called "example".  For the simulator, you could copy this file
-into "/tmp", and use the callthru program on the simulator:
+If you tried the out-of-tree build in the second example above, you should
+have built libvpic.op.a in the current directory, build/standard_64.  The
+build system automatically copies the samples directory into your build tree.
+So, after building the library, try:
 
-% cp top-level/build/cell/cell/ppe/bin/example /tmp
+% cd sample/test
+% ../../build.op pcomm
+% mpirun -np 8 ./pcomm.op
 
-on the simulator:
+# Supported Build Styles
+To make it easier to select various combinations of build components, the
+build system supports the notion of a build style.  The build style can be
+specified in the machine file using BUILDSTYLE=buildstyle_choice or from the
+command-line like: ./configure --with-buildstyle=buildstyle_choice.  The
+Currently supported styles are:
 
-% callthru source /tmp/example > example
-% chmod 755 example
-% ./example 10 10
+standard
+    (normal distributed memory VPIC, this is the default)
 
-This will print some messages showing initialization and the message queue
-being called.
+standard_cell
+    (VPIC for IBM Cell with SPU pipelines enabled)
 
-# Normal Build
-To build for an Opteron etc...:
+ompi_relay
+    (VPIC with relay using openmpi for point-to-point communication)
 
-% ./configure --enable-host
+ompi_relay_cell
+    (VPIC for IBM Cell with SPU pipelines enabled and relay using openmpi
+    for point-to-point communication)
+
+ompi_relay_cell_ppe
+    (VPIC for IBM Cell with SPU pipelines DISABLED and relay using openmpi
+    for point-to-point communication)
+
+ompi_relay_hybrid_cell
+    (hybrid VPIC with Opteron relay using openmpi for point-to-point
+    communication and IBM Cell main with SPU pipelines enabled)
+
+ompi_relay_hybrid_cell_ppe
+    (hybrid VPIC with Opteron relay using openmpi for point-to-point
+    communication and IBM Cell main with SPU pipelines DISABLED)
+
+dacs_relay_hybrid_cell
+    (hybrid VPIC with Opteron relay using DaCS for point-to-point
+    communication and IBM Cell main with SPU pipelines enabled)
+
+Obviously, there are some logical combinations missing.  These will be added
+as they can be tested.

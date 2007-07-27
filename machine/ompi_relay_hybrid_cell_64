@@ -4,7 +4,7 @@
 
 ################################################################################
 ################################################################################
-BUILDSTYLE=hybrid_relay_cell_ompi
+BUILDSTYLE=ompi_relay_hybrid_cell
 
 ################################################################################
 # CFLAGS - configure C compiler behavior
@@ -41,34 +41,14 @@ EXTENSION=ppu
 ADDRESSING=64
 
 ################################################################################
-# ENABLE_SIMD - enable vector processing (0|1)[0]
-################################################################################
-ENABLE_SIMD=1
-
-################################################################################
 # MPI configuration
 # MPI_CPPFLAGS - configure MPI preprocessor flags
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
 ################################################################################
-#MPI_CPPFLAGS=""
-#MPI_LDFLAGS=""
-#MPI_LIBS=""
-
-# to use mpicc from openmpi
 MPI_CPPFLAGS=`mpicc --showme:compile`
 MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
 MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
-
-################################################################################
-# ENABLE_HOST - enable host build (0|1)[1]
-################################################################################
-#ENABLE_HOST
-
-################################################################################
-# ENABLE_CELL - enable IBM Cell build (0|1)[0]
-################################################################################
-#ENABLE_CELL=1
 
 ################################################################################
 # PCC - PPU compiler
@@ -99,6 +79,11 @@ SCFLAGS="-D_XOPEN_SOURCE=600 -DUSE_V4_SPU -DCELL_SPU_BUILD -DUSE_CELL_SPUS"
 # SPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
 SCXXFLAGS="-D_XOPEN_SOURCE=600 -DUSE_V4_SPU -DCELL_SPU_BUILD -DUSE_CELL_SPUS"
+
+################################################################################
+# SPU_MODULES - spe programs to link
+################################################################################
+SPU_MODULES="advance_p_pipeline_spu"
 
 ################################################################################
 # Cell MPI configuration

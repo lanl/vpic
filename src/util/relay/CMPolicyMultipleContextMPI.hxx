@@ -47,7 +47,7 @@ template<int ROLE> class CMPolicyMultipleContextMPI_T
 		inline MPI_Comm p2p_comm() { return p2p_comm_; }
 		inline MPI_Comm dmp_comm() { return dmp_comm_; }
 
-	private:
+	protected:
 
 		CMPolicyMultipleContextMPI_T()
 			: world_rank_(-1), world_size_(-1), peer_world_rank_(-1),
@@ -56,6 +56,8 @@ template<int ROLE> class CMPolicyMultipleContextMPI_T
 		CMPolicyMultipleContextMPI_T(const CMPolicyMultipleContextMPI_T & mpi)
 			{}
 		~CMPolicyMultipleContextMPI_T() {}
+
+	private:
 
 		int world_rank_;
 		int world_size_;

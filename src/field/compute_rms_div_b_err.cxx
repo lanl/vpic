@@ -43,7 +43,7 @@ compute_rms_div_b_err_pipeline( compute_rms_div_b_err_pipeline_args_t * args,
   args->err[pipeline_rank] = err;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
 #error "SPU version not hooked up yet!"
 #elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 // FIXME: This is probably not worth vectorizing.  Namely, this

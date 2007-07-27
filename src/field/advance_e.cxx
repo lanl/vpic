@@ -97,7 +97,7 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
 #error "SPU version not hooked up yet!"
 #elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
 

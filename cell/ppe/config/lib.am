@@ -43,7 +43,7 @@ done
 echo
 echo "libvpic_la_LDFLAGS = @VERSION_INFORMATION@ \\"
 echo "	@EXTRA_LDFLAGS@"
-echo "libvpic_la_DEPENDENCIES = libadvance_p_pipeline_spu.o"
-echo "libvpic_la_LIBADD = libadvance_p_pipeline_spu.lo @EXTRA_LIBS@"
+echo "libvpic_la_DEPENDENCIES = @EXTRA_O_FILES@"
+echo "libvpic_la_LIBADD = @EXTRA_LO_FILES@ @EXTRA_LIBS@"
 echo
 echo "include @top_builddir@/config/rules.mk"

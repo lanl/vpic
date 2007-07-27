@@ -14,7 +14,8 @@ int
 main( int argc,
       char **argv ) {
 
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+//# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+# if defined(CELL_PPU_BUILD) && defined(SPU_PIPELINE ) && defined(SPU_ADVANCE_P)
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
 
@@ -64,7 +65,8 @@ main( int argc,
 
   thread.halt();
 
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+//# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+# if defined(CELL_PPU_BUILD) && defined(SPU_PIPELINE ) && defined(SPU_ADVANCE_P)
   spu.halt();
 # endif
 

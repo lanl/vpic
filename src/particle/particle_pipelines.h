@@ -9,10 +9,10 @@
 
 #if defined(CELL_SPU_BUILD) // SPUs cannot dispatch pipelines
 
-#elif defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE ) // Use SPU dispatcher on the SPU pipeline
+#elif defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE ) // Use SPU dispatcher on the SPU pipeline
 
 #define EXEC_PIPELINES(name,args,sz_args)                               \
-  spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args );     \
+  spu.dispatch( USE_SPU_PIPELINE(name##_pipeline_spu), args, sz_args );     \
   name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 #define WAIT_PIPELINES() spu.wait()
 #define N_PIPELINE       spu.n_pipeline

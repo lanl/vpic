@@ -1,69 +1,50 @@
+#autoconf#######################################################################
+# test machine configuration file
 ################################################################################
-# SPE configure.ac
-################################################################################
-AC_INIT(VPIC_SPE, 3.1.2.1, bergen@lanl.gov)
-AC_CONFIG_AUX_DIR(config)
 
 ################################################################################
-# automake and libtool initialization
+# BUILDSTYLE - build style
 ################################################################################
-AM_INIT_AUTOMAKE
+BUILDSTYLE=ompi_relay
 
 ################################################################################
-# list targets for output
+# CFLAGS - configure C compiler behavior
 ################################################################################
-AC_CONFIG_FILES(Makefile bin/Makefile)
-
-AC_CONFIG_COMMANDS(setup, [make setup])
+CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
 
 ################################################################################
-# append prefix with spe
+# CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-prefix=$prefix/spe
+CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600 -DUSE_V4_SSE"
 
 ################################################################################
-# set absolute paths
+# OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
+# warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
 ################################################################################
-host_build_directory=`(cd ../..; pwd)`
-host_ac_directory=`(cd $srcdir/../..; pwd)`
-AC_SUBST(HOST_BUILDDIR, [$host_build_directory])
-AC_SUBST(SPE_BUILDDIR, [$host_build_directory/cell/spe])
-AC_SUBST(HOST_ACDIR, [$host_ac_directory])
-AC_SUBST(SPE_ACDIR, [$host_ac_directory/cell/spe])
+OPT_LEVEL=-1
 
 ################################################################################
-# machine file specification
+# CPUMODEL - specify a particular cpu model (this affects optimization)
+# supported models: opteron, athlon64, pentium4, prescott, nocona, pentiumM
 ################################################################################
-CCS_WITH_MACHINE("$host_ac_directory/machine")
+CPUMODEL=opteron
 
 ################################################################################
-# with options
+# EXTENSION - executable extension
 ################################################################################
-CCS_WITH_SPU_COMPILER
-CCS_WITH_OPT_LEVEL
-CCS_WITH_IBM_SIMDMATH
-CCS_WITH_ADDRESSING
-CCS_WITH_LIBMISC_SPU
+EXTENSION=op
 
 ################################################################################
-# C/C++ configuration
+# ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
-AC_PROG_CC
-CCS_TUNE_SCC
-AC_PROG_CXX
-CCS_TUNE_SCXX
+ADDRESSING=64
 
 ################################################################################
-# Flags
+# MPI configuration
+# MPI_CPPFLAGS - configure MPI preprocessor flags
+# MPI_LDFLAGS - configure MPI link flags
+# MPI_LIBS - configure MPI library names
 ################################################################################
-EXTRA_CPPFLAGS="$IBM_SIMDMATH_CPPFLAGS $LIBMISC_SPU_CPPFLAGS"
-AC_SUBST(EXTRA_CPPFLAGS)
-EXTRA_LDFLAGS="$IBM_SIMDMATH_LDFLAGS $LIBMISC_SPU_LDFLAGS"
-AC_SUBST(EXTRA_LDFLAGS)
-EXTRA_LIBS="$IBM_SIMDMATH_LIBS $LIBMISC_SPU_LIBS"
-AC_SUBST(EXTRA_LIBS)
-
-################################################################################
-# start output
-################################################################################
-AC_OUTPUT
+MPI_CPPFLAGS=`mpicc --showme:compile`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`

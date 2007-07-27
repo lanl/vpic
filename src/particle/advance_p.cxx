@@ -3,7 +3,7 @@
 
 #define IN_particle_pipeline
 #define V4_PIPELINE
-#define SPU_PIPELINE
+#define USE_SPU_PIPELINE
 #include <particle_pipelines.h>
 
 static void
@@ -181,7 +181,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
 
 extern spe_program_handle_t advance_p_pipeline_spu;
 

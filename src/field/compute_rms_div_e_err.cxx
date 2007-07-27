@@ -1,10 +1,3 @@
-// FIXME: This is probably not worth vectorizing.  Namely, this
-// operation is not executed very often, uses mixed precision
-// arithmetic (making it V4 unfriendly), does not have a V4 friendly
-// horizontal SIMD implementation and the best way to do a vertical
-// SIMD variant would have slightly different round-off properties of
-// the scalar and would require vector scalar gathering.
-
 #define IN_field_pipeline
 #include <field_pipelines.h>
 
@@ -50,10 +43,22 @@ compute_rms_div_e_err_pipeline( compute_rms_div_e_err_pipeline_args_t * args,
   args->err[pipeline_rank] = err;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
 #error "SPU version not hooked up yet!"
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
+// FIXME: This is probably not worth vectorizing.  Namely, this
+// operation is not executed very often, uses mixed precision
+// arithmetic (making it V4 unfriendly), does not have a V4 friendly
+// horizontal SIMD implementation and the best way to do a vertical
+// SIMD variant would have slightly different round-off properties of
+// the scalar and would require vector scalar gathering.
+
 #error "V4 version not hooked up yet!"
+
 #endif
 
 double

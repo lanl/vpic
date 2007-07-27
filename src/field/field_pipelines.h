@@ -7,31 +7,54 @@
 
 #include <field.h>
 
-#if defined(CELL_SPU_BUILD) // SPUs cannot dispatch pipelines
+#define FOR_SPU ( defined(CELL_SPU_BUILD)       || \
+                  ( defined(CELL_PPU_BUILD)   &&   \
+                    defined(USE_CELL_SPUS)    &&   \
+                    defined(HAS_SPU_PIPELINE) ) )
 
-#elif defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE) // Use the SPU dispatcher on the SPU pipeline
+#if FOR_SPU
 
-#define EXEC_PIPELINES(name,args,sz_args)                               \
-  spu.dispatch( USE_SPU_PIPELINE(name##_pipeline_spu), args, sz_args );     \
-  name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
-#define WAIT_PIPELINES() spu.wait()
-#define N_PIPELINE spu.n_pipeline
+# if defined(CELL_PPU_BUILD)
 
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE) // Use the thread dispatcher on the v4 pipeline
+    // Use the SPU dispatcher on the SPU pipeline
 
-#define EXEC_PIPELINES(name,args,sz_args)                                \
+#   define EXEC_PIPELINES(name,args,sz_args)                          \
+    spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args ); \
+    name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
+
+#   define WAIT_PIPELINES() spu.wait()
+
+#   define N_PIPELINE       spu.n_pipeline
+
+# else
+
+    // SPUs cannot dispatch pipelines
+
+# endif
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
+  // Use the thread dispatcher on the v4 pipeline
+
+# define EXEC_PIPELINES(name,args,sz_args)                               \
   thread.dispatch( (pipeline_func_t)name##_pipeline_v4, args, sz_args ); \
   name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
-#define WAIT_PIPELINES() thread.wait()
-#define N_PIPELINE thread.n_pipeline
 
-#else // Use the thread dispatcher on the scalar pipeline
+# define WAIT_PIPELINES() thread.wait()
 
-#define EXEC_PIPELINES(name,args,sz_args)                             \
+# define N_PIPELINE thread.n_pipeline
+
+#else
+
+  // Use the thread dispatcher on the scalar pipeline
+
+# define EXEC_PIPELINES(name,args,sz_args)                            \
   thread.dispatch( (pipeline_func_t)name##_pipeline, args, sz_args ); \
   name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
-#define WAIT_PIPELINES() thread.wait()
-#define N_PIPELINE thread.n_pipeline
+
+# define WAIT_PIPELINES() thread.wait()
+
+# define N_PIPELINE       thread.n_pipeline
 
 #endif
 
@@ -136,5 +159,7 @@ typedef struct clean_div_b_pipeline_args {
   field_t      * ALIGNED(16) f;
   const grid_t *             g;
 } clean_div_b_pipeline_args_t;
+
+#undef FOR_SPU
 
 #endif // _field_pipelines_h_

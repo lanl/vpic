@@ -83,15 +83,21 @@ energy_f_pipeline( energy_f_pipeline_args_t * args,
   args->en[pipeline_rank][5] = en_bz;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
 #error "SPU version not hooked up yet!"
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
 // FIXME: This is probably not worth vectorizing.  Namely, it is not
 // called often enough, it uses V4 unfriendly mixed precision
 // arithmetic, horizontal implementations are almost entirely vector
 // gather operations, efficient vertical implementations will have
 // different round-off behavior from its scalar counterpart, etc.
+
 #error "V4 version not hooked up yet!"
+
 #endif
 
 void

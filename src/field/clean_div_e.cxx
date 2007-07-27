@@ -70,12 +70,18 @@ clean_div_e_pipeline( clean_div_e_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
 #error "SPU version not hooked up yet!"
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
 // FIXME: This is at the very edge of being worthwhile to vectorize.
 // For now, it is not.
+
 #error "V4 version not hooked up yet!"
+
 #endif
 
 void

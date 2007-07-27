@@ -61,14 +61,20 @@ compute_div_e_err_pipeline( compute_div_e_err_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
 #error "SPU version not hooked up yet!"
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
 // FIXME: This is probably not worth vectorizing.  Namely, this
 // operation is not executed very often and, in either horizontal or
 // vertical SIMD, would require predominantly scalar gather / scatter
 // operations to assemble the desired vectors.
+
 #error "V4 version not hooked up yet!"
+
 #endif
 
 void

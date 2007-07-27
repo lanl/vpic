@@ -19,7 +19,7 @@
 // UPDATE: With the more v4 friendly field_t, this seems to be working
 // on my new desktop (bullock.lanl.gov dual 64-bit Intel core2 duo) and
 // flash64 (dual 64-bit AMD single core Operton) under gcc-4.1.2.
-#define V4_PIPELINE
+#define HAS_V4_PIPELINE
 #include <field_pipelines.h>
 
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
@@ -97,9 +97,12 @@ advance_e_pipeline( advance_e_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
 #error "SPU version not hooked up yet!"
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
 

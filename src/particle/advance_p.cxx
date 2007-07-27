@@ -2,8 +2,8 @@
 // ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES
 
 #define IN_particle_pipeline
-#define V4_PIPELINE
-#define USE_SPU_PIPELINE
+#define HAS_V4_PIPELINE
+#define HAS_SPU_PIPELINE
 #include <particle_pipelines.h>
 
 static void
@@ -181,11 +181,12 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && defined(USE_SPU_PIPELINE)
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
 
 extern spe_program_handle_t advance_p_pipeline_spu;
 
-#elif defined(V4_ACCELERATION) && defined(V4_PIPELINE)
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
 
@@ -416,13 +417,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
   args->a0       = a0;
   args->f0       = f0;
   args->seg      = seg;
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  args->neighbor = g->neighbor;
-  args->rangel   = g->rangel;
-  args->rangeh   = g->rangeh;
-# else
   args->g        = g;
-# endif
 
   args->qdt_2mc  = 0.5*q_m*g->dt/g->cvac;
   args->cdt_dx   = g->cvac*g->dt/g->dx;
@@ -434,6 +429,13 @@ advance_p( particle_t           * ALIGNED(128) p0,
   args->nx       = g->nx;
   args->ny       = g->ny;
   args->nz       = g->nz;
+
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+     defined(HAS_SPU_PIPELINE)
+  args->neighbor = g->neighbor;
+  args->rangel   = g->rangel;
+  args->rangeh   = g->rangeh;
+# endif
 
   // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,

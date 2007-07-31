@@ -106,6 +106,7 @@ case "$buildstyle" in
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
 	;;
 
 	ompi_relay_cell)

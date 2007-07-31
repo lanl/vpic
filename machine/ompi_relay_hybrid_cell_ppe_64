@@ -10,13 +10,13 @@ BUILDSTYLE=ompi_relay_hybrid_cell_ppe
 # CFLAGS - configure C compiler behavior
 ################################################################################
 #CFLAGS="-Werror -Wall -pedantic -std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600"
+CFLAGS="-std=c99 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
 #CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -DUSE_V4_PORTABLE -D_XOPEN_SOURCE=600 -DUSE_AAIS_MP"
-CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing -D_XOPEN_SOURCE=600 -DUSE_V4_SSE"
+CXXFLAGS="-std=c++98 -Wno-long-long -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
@@ -33,7 +33,7 @@ CPUMODEL=opteron
 ################################################################################
 # EXTENSION - executable extension
 ################################################################################
-EXTENSION=ppu
+EXTENSION=op
 
 ################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]

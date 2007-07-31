@@ -76,13 +76,23 @@ case "$buildstyle" in
 
 	standard)
 		AC_SUBST(HOSTDIRS, ["lib"])
-		AC_SUBST(ARCH_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
+		LIB_EXTENSION="$EXTENSION"
+		ACCEL_EXTENSION="$EXTENSION"
+		MPRELAY_EXTENSION="$EXTENSION"
 	;;
 
 	standard_cell)
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(ARCH_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="ppu"
 	;;
 
 	ompi_relay)
@@ -95,7 +105,7 @@ case "$buildstyle" in
 		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
+		AC_DEFINE(USE_MPRELAY)
 	;;
 
 	ompi_relay_cell)
@@ -109,8 +119,8 @@ case "$buildstyle" in
 		MPRELAY_EXTENSION="ppu"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_MPI_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
 	;;
 
 	ompi_relay_cell_ppe)
@@ -124,8 +134,8 @@ case "$buildstyle" in
 		MPRELAY_EXTENSION="ppu"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_MPI_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
 	;;
 
 	ompi_relay_hybrid_cell)
@@ -133,15 +143,15 @@ case "$buildstyle" in
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
-		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
 		LIB_EXTENSION="ppu"
 		ACCEL_EXTENSION="ppu"
 		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_MPI_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
 	;;
 
 	ompi_relay_hybrid_cell_ppe)
@@ -149,15 +159,15 @@ case "$buildstyle" in
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
 		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
-		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
 		LIB_EXTENSION="ppu"
 		ACCEL_EXTENSION="ppu"
 		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_MPI_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_MPI_P2P)
 	;;
 
 	dacs_relay_hybrid_cell)
@@ -165,15 +175,15 @@ case "$buildstyle" in
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
-		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["."])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["/."])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
 		LIB_EXTENSION="ppu"
 		ACCEL_EXTENSION="ppu"
 		MPRELAY_EXTENSION="$EXTENSION"
 		AC_SUBST(COPY_LOCAL, ["copy-mprelay-exe copy-accelerator-exe"])
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
-		AC_DEFINE(USE_MPRELAY, [1])
-		AC_DEFINE(USE_DACS_P2P, [1])
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_DACS_P2P)
 
 		CCS_WITH_DACS(hybrid)
 

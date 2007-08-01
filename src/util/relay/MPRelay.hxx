@@ -50,11 +50,13 @@ class MPRelay
 		MPBuffer<double> dbuf_send_;
 		MPBuffer<double> dbuf_recv_;
 
-		MPRequest_T<MP_HOST> recv_request_[max_buffers];
-		MPRequest_T<MP_HOST> send_request_[max_buffers];
+		MPRequest_T<MP_HOST> dmp_recv_request_[max_buffers];
+		MPRequest_T<MP_HOST> dmp_send_request_[max_buffers];
+		MPRequest_T<MP_HOST> p2p_send_request_[max_buffers];
 
-		std::vector<int> pending_recv_;
-		std::vector<int> pending_send_;
+		std::vector<int> pending_dmp_recv_;
+		std::vector<int> pending_dmp_send_;
+		std::vector<int> pending_p2p_send_;
 
 		FileIO fileIO_;
 		MPBuffer<char, filename_size> filename_;
@@ -123,7 +125,7 @@ void MPRelay::start()
 					cbuf_send_[request.id].resize(request.count);
 
 					// save request
-					send_request_[request.id] = request;
+					dmp_send_request_[request.id] = request;
 
 					// blocking receive from point-to-point peer
 					p2p.recv(cbuf_send_[request.id].data(), request.count,
@@ -132,6 +134,10 @@ void MPRelay::start()
 					// non-blocking send to dmp peer
 					dmp.isend(cbuf_send_[request.id].data(), request.count,
 						request.peer, request.tag, request.id);
+
+					// keep track of pending sends
+					dmp_send_request_[request.id].state = pending;
+					pending_dmp_send_.push_back(request.id);
 					break;
 
 				case P2PTag::irecv:
@@ -144,45 +150,61 @@ void MPRelay::start()
 					cbuf_recv_[request.id].resize(request.count);
 
 					// save request
-					recv_request_[request.id] = request;
+					dmp_recv_request_[request.id] = request;
 
 					// non-blocking receive to dmp peer
 					dmp.irecv(cbuf_recv_[request.id].data(), request.count,
 						request.peer, request.tag, request.id);
 
-					// keep track of pending receive
-					pending_recv_.push_back(request.id);
+					// keep track of pending receives
+					dmp_recv_request_[request.id].state = pending;
+					pending_dmp_recv_.push_back(request.id);
 					break;
 
 				case P2PTag::wait_recv:
-					if(recv_request_[request.id].state == pending) {
+					if(dmp_recv_request_[request.id].state == pending) {
 						// block on irecv if it hasn't finished
-						dmp.wait_recv(recv_request_[request.id]);
+						dmp.wait_recv(dmp_recv_request_[request.id]);
 
-						// blocking send to point-to-point peer
+						/*
 						p2p.send(
-							cbuf_recv_[recv_request_[request.id].id].data(),
-							recv_request_[request.id].count,
-							recv_request_[request.id].tag);
+							cbuf_recv_[dmp_recv_request_[request.id].id].data(),
+							dmp_recv_request_[request.id].count,
+							dmp_recv_request_[request.id].tag);
+						*/
+						if(p2p_send_request_[request.id].state == pending) {
+							p2p.wait_send(request.id);
+						} // if
 
-						// remove from pending receives
+						p2p_send_request_[request.id] =
+							dmp_recv_request_[request.id];
+
+						p2p.isend(
+							cbuf_recv_[p2p_send_request_[request.id].id].data(),
+							p2p_send_request_[request.id].count,
+							p2p_send_request_[request.id].tag,
+							p2p_send_request_[request.id].id);
+						p2p_send_request_[request.id].state = pending;
+						pending_p2p_send_.push_back(request.id);
+
+						// remove from pending dmp receives
 						std::vector<int>::iterator ita =
-							std::find(pending_recv_.begin(),
-							pending_recv_.end(), request.id);
-						pending_recv_.erase(ita);
+							std::find(pending_dmp_recv_.begin(),
+							pending_dmp_recv_.end(), request.id);
+						pending_dmp_recv_.erase(ita);
 					}
 					break;
 
 				case P2PTag::wait_send:
-					if(send_request_[request.id].state == pending) {
+					if(dmp_send_request_[request.id].state == pending) {
 						// block on isend if it hasn't finished
-						dmp.wait_send(send_request_[request.id]);
+						dmp.wait_send(dmp_send_request_[request.id]);
 
 						// remove from pending sends
 						std::vector<int>::iterator ita =
-							std::find(pending_send_.begin(),
-							pending_send_.end(), request.id);
-						pending_send_.erase(ita);
+							std::find(pending_dmp_send_.begin(),
+							pending_dmp_send_.end(), request.id);
+						pending_dmp_send_.erase(ita);
 					}
 					break;
 
@@ -326,41 +348,55 @@ void MPRelay::start()
 
 				case P2PTag::pending:
 					// check for finished send communications
-					for(std::vector<int>::iterator ita = pending_send_.begin();
-						ita != pending_send_.end();) {
+					for(std::vector<int>::iterator ita =
+						pending_dmp_send_.begin();
+						ita != pending_dmp_send_.end();) {
 
 						// test for completion
-						dmp.test_send(send_request_[*ita]);
+						dmp.test_send(dmp_send_request_[*ita]);
 
-						if(send_request_[*ita].state == complete) {
-							// remove from pending
-							ita = pending_recv_.erase(ita);
+						if(dmp_send_request_[*ita].state == complete) {
+							ita = pending_dmp_send_.erase(ita);
 						}
 						else {
-							// advance iterator
 							++ita;
 						} // if
 					} // for
 
 					// check for finished recv communications
-					for(std::vector<int>::iterator ita = pending_recv_.begin();
-						ita != pending_recv_.end();) {
+					for(std::vector<int>::iterator ita =
+						pending_dmp_recv_.begin();
+						ita != pending_dmp_recv_.end();) {
 
 						// test for completion
-						dmp.test_recv(recv_request_[*ita]);
+						dmp.test_recv(dmp_recv_request_[*ita]);
 
-						if(recv_request_[*ita].state == complete) {
+						if(dmp_recv_request_[*ita].state == complete) {
 							// forward to accelerator
 							p2p.send(
-								cbuf_recv_[recv_request_[*ita].id].data(),
-								recv_request_[*ita].count,
-								recv_request_[*ita].tag);
+								cbuf_recv_[dmp_recv_request_[*ita].id].data(),
+								dmp_recv_request_[*ita].count,
+								dmp_recv_request_[*ita].tag);
 
 							// remove from pending
-							ita = pending_recv_.erase(ita);
+							ita = pending_dmp_recv_.erase(ita);
 						}
 						else {
-							// advance iterator
+							++ita;
+						} // if
+					} // for
+
+					for(std::vector<int>::iterator ita =
+						pending_p2p_send_.begin();
+						ita != pending_p2p_send_.end();) {
+
+						// test for completion
+						p2p.test_send(p2p_send_request_[*ita]);
+
+						if(p2p_send_request_[*ita].state == complete) {
+							ita = pending_p2p_send_.erase(ita);
+						}
+						else {
 							++ita;
 						} // if
 					} // for

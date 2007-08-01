@@ -287,7 +287,7 @@ struct AAISPolicy {
 		mp->rreq_size[rbuf] = size;
 
 		/*
-		std::cerr << "WRAPPER: p2p.irecv rank " << p2p.rank() <<
+		std::cerr << "WRAPPER: p2p.irecv rank " << p2p.global_id() <<
 			" size " << size << " from " << sender <<
 			" with tag " << tag << std::endl;
 		*/
@@ -347,13 +347,13 @@ struct AAISPolicy {
 		mp->sreq_size[sbuf] = size;
 
 		/*
-		std::cerr << "WRAPPER: p2p.isend rank " << p2p.rank() <<
+		std::cerr << "WRAPPER: p2p.isend rank " << p2p.global_id() <<
 			" size " << size << " to " << receiver <<
 			" with tag " << tag << std::endl;
 		*/
 
-		MPRequest request(P2PTag::send, tag, size, sbuf, receiver);
-		p2p.post(request); // this is not a typo
+		MPRequest request(P2PTag::isend, tag, size, sbuf, receiver);
+		p2p.post(request);
 
 		int errcode = p2p.isend(static_cast<char *>(mp->sbuf[sbuf]),
 			size, tag, sbuf);
@@ -393,6 +393,9 @@ struct AAISPolicy {
 		if(rbuf<0 || rbuf>=max_buffers) { return ERROR_CODE("Bad recv_buf"); }
 
 		//std::cout << "WRAPPER: begin wait " << p2p.rank() << std::endl;
+
+		MPRequest request(P2PTag::wait_recv, 0, 0, rbuf);
+		p2p.post(request);
 
 		int errcode = p2p.wait_recv(rbuf);
 
@@ -440,6 +443,9 @@ struct AAISPolicy {
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
 		if(sbuf<0 || sbuf>=max_buffers) { return ERROR_CODE("Bad send_buf"); }
+
+		MPRequest request(P2PTag::wait_send, 0, 0, sbuf);
+		p2p.post(request);
 
 		int errcode = p2p.wait_send(sbuf);
 		return NO_ERROR;

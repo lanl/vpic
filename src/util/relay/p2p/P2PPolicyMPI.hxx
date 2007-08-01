@@ -48,6 +48,7 @@ template<int ROLE> class P2PPolicyMPI
 		template<typename T> int irecv(T * buffer, int count,
 			int tag, int id);
 
+		inline int test_send(MPRequest_T<MP_HOST> & request);
 		inline int wait_send(int id);
 		inline int wait_recv(int id);
 		inline int barrier();
@@ -146,26 +147,40 @@ int P2PPolicyMPI<ROLE>::irecv(T * buffer, int count, int tag, int id)
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Irecv(buffer, count, Type2MPIType<T>::type(),
 			mgr.peer_p2p_rank(), tag, mgr.p2p_comm(), &recv_request_[id]);
-	} // MPICommunicatorPolicy<>::isend
+	} // MPICommunicatorPolicy<>::irecv
 
 template<> inline
-int P2PPolicyMPI<MP_ACCEL>::wait_send(int id)
+int P2PPolicyMPI<MP_HOST>::test_send(MPRequest_T<MP_HOST> & request)
+	{
+		int flag;
+		MPI_Status status; // FIXME
+		int err = MPI_Test(&send_request_[request.id], &flag, &status);
+
+		if(flag) {
+			request.state = complete;
+		} // if
+
+		return err;
+	} // P2PPolicyMPI<>::test_send
+
+template<int ROLE> inline
+int P2PPolicyMPI<ROLE>::wait_send(int id)
 	{
 		return MPI_Wait(&send_request_[id], &status_[id]);
-	} // P2PPolicyMPI<>::wait
+	} // P2PPolicyMPI<>::wait_send
 
 template<> inline
 int P2PPolicyMPI<MP_ACCEL>::wait_recv(int id)
 	{
 		return MPI_Wait(&recv_request_[id], &status_[id]);
-	} // P2PPolicyMPI<>::wait
+	} // P2PPolicyMPI<>::wait_recv
 
 template<int ROLE> inline
 int P2PPolicyMPI<ROLE>::barrier()
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Barrier(mgr.p2p_comm());
-	} // P2PPolicyMPI<>::wait
+	} // P2PPolicyMPI<>::barrier
 
 template<>
 template<typename T>
@@ -180,6 +195,6 @@ int P2PPolicyMPI<ROLE>::abort(int reason)
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Abort(mgr.p2p_comm(), reason);
-	} // P2PPolicyMPI<>::wait
+	} // P2PPolicyMPI<>::abort
 
 #endif // P2PPolicyMPI_hxx

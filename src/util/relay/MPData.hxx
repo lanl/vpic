@@ -14,7 +14,8 @@
 
 static const uint64_t max_buffers(27);
 
-static const uint64_t default_buffer_size(4096);
+//static const uint64_t default_buffer_size(4096);
+static const uint64_t default_buffer_size(51200);
 
 static const uint64_t filename_size(256);
 
@@ -31,6 +32,7 @@ static const uint64_t io_buffer_size(4096);
 
 // state of a relay request
 enum MPState {
+	unitialized,
 	pending,
 	complete,
 	error
@@ -45,12 +47,12 @@ template<int ROLE> struct MPRequest_T {};
 template<> struct MPRequest_T<MP_HOST> {
 
 	MPRequest_T(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
-		int id_ = 0, int peer_ = 0, MPState state_ = pending)
+		int id_ = 0, int peer_ = 0, MPState state_ = unitialized)
 		: p2ptag(p2ptag_), tag(tag_), count(count_), id(id_),
 		peer(peer_), state(state_) {}
 
 	void set(int p2ptag_ = 0, int tag_ = 0, int count_ = 0,
-		int id_ = 0, int peer_ = 0, MPState state_ = pending) {
+		int id_ = 0, int peer_ = 0, MPState state_ = unitialized) {
 		p2ptag = p2ptag_;
 		tag = tag_;
 		count = count_;

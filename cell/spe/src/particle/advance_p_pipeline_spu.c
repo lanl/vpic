@@ -4,8 +4,10 @@
 #include <particle_pipelines.h>
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
+
+#ifdef IN_HARNESS
 #include <profile.h>
-//#include <stdio.h>
+#endif
 
 // DMA tag usage:
 //  0: 2 - Particle buffer 0 (read, write, mover write)
@@ -131,7 +133,6 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 ///////////////////////////////////////////////////////////////////////////////
 // Computational kernel
 
-#if 0
 // move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
 // depositing particle current as it goes. If the particle was moved
 // sucessfully (particle mover is no longer in use), this returns 0.
@@ -278,7 +279,6 @@ move_p_spu( particle_t       * ALIGNED(32) p,
   }
   return 0; // Never get here ... avoid compiler warning
 }
-#endif
 
 // FIXME: Using restricted pointers makes this worse(!) on gcc??
 // FIXME: Branch hints makes this worse(!) on gcc?? (No change on xlc.)
@@ -522,7 +522,6 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p, // Particle array
     INCREMENT_4x1( ja->jy, a3y );
     INCREMENT_4x1( ja->jz, a3z );
 
-#   if 0
     // Update position and accumulate outbnd
 
 #   define MOVE_OUTBND( N )                   \
@@ -540,7 +539,6 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p, // Particle array
     MOVE_OUTBND(3);
 
 #   undef MOVE_OUTBND
-#   endif
     
   }
 
@@ -570,8 +568,10 @@ main( uint64_t spu_id,
 
   int np, next_idx, itmp;
 
+# ifdef IN_HARNESS
   prof_clear();
   prof_start();
+# endif
 
   // Get the pipeline arguments from the dispatcher
 
@@ -708,7 +708,10 @@ main( uint64_t spu_id,
   mfc_write_tag_mask( (1<<31) );
   mfc_read_tag_status_all();
   
+# ifdef IN_HARNESS
   prof_stop();
+# endif
+
   return 0;
 }
 

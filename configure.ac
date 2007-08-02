@@ -87,7 +87,7 @@ case "$buildstyle" in
 	standard_cell)
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
 		LIB_EXTENSION="ppu"

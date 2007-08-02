@@ -18,8 +18,14 @@ main( int argc,
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
 
+  /*
   spu.boot( 8,   // Total number of SPUs for processing pipeline workloads
             0 ); // This PPU thread physically cannot process SPU workloads!
+  */
+  ///*
+  spu.boot( 1,   // Total number of SPUs for processing pipeline workloads
+            0 ); // This PPU thread physically cannot process SPU workloads!
+  //*/
 
 # endif
 

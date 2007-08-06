@@ -10,8 +10,8 @@ struct DMPPolicy {
 		return mp_init_dmp(argc, argv);
 	} // mp_finalize
 
-	inline void mp_finalize() {
-		return mp_finalize_dmp();
+	inline void mp_finalize( mp_handle h ) {
+		return mp_finalize_dmp(h);
 	} // mp_finalize
 
 	inline mp_handle new_mp(void) {

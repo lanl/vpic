@@ -24,7 +24,7 @@ void mp_init_dmp(int argc, char ** argv) {
 }
 
 // Adding for clean termination 
-void mp_finalize_dmp() {
+void mp_finalize_dmp( mp_handle h ) {
   MPI_Finalize(); 
 }
 

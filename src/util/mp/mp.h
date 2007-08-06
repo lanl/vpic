@@ -12,8 +12,8 @@ static inline void mp_init(int argc, char ** argv) {
 	mp_init_cxx(argc, argv);
 } // mp_finalize
 
-static inline void mp_finalize() {
-	mp_finalize_cxx();
+static inline void mp_finalize( mp_handle h ) {
+	mp_finalize_cxx(h);
 } // mp_finalize
 
 static inline mp_handle new_mp(void) {

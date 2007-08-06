@@ -10,7 +10,7 @@
 BEGIN_C_DECLS
 
 void mp_init_dmp(int argc, char ** argv); 
-void mp_finalize_dmp(); 
+void mp_finalize_dmp( mp_handle h ); 
 
 mp_handle new_mp_dmp(void);
 void delete_mp_dmp( mp_handle *h );

@@ -16,8 +16,8 @@ extern "C" void mp_init_cxx(int argc, char ** argv) {
 } // mp_init
 
 // Adding for clean termination
-extern "C" void mp_finalize_cxx() {
-	MPWrapper::instance().mp_finalize();
+extern "C" void mp_finalize_cxx( mp_handle h ) {
+	MPWrapper::instance().mp_finalize(h);
 } // mp_finalize
 
 extern "C" mp_handle new_mp_cxx(void) {

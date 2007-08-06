@@ -29,7 +29,7 @@ struct AAISPolicy {
 //		std::cerr << "WRAPPER: mp_init called" << std::endl;
 	} // mp_init
 
-	inline void mp_finalize() {
+	inline void mp_finalize(mp_handle h) {
 		P2PConnection::instance().post(P2PTag::end);
 		ConnectionManager::instance().finalize();
 //		std::cerr << "WRAPPER: mp_finalize called" << std::endl;

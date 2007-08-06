@@ -18,7 +18,7 @@ BEGIN_C_DECLS
 void mp_init_cxx(int argc, char ** argv);
 
 // Adding for clean termination
-void mp_finalize_cxx();
+void mp_finalize_cxx( mp_handle h );
 
 mp_handle new_mp_cxx(void);
 

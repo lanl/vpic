@@ -14,7 +14,7 @@ AM_INIT_AUTOMAKE
 ################################################################################
 AC_CONFIG_FILES(Makefile bin/Makefile)
 
-AC_CONFIG_COMMANDS(setup, [make setup])
+#AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
 # append prefix with spe

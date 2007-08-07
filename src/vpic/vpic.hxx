@@ -38,6 +38,10 @@ public:
     mp_barrier(grid->mp);
   }
 
+  inline void * grid_mp(void) {
+  	return (void *)grid->mp;
+  }
+
 private:
 
   // Directly initialized by user; saved in a restart dump

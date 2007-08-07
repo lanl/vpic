@@ -66,7 +66,7 @@ main( int argc,
   if( simulation.rank()==0 ) 
     MESSAGE(( "Maximum number of time steps reached.  Job has completed." )); 
 
-  mp_finalize();
+  mp_finalize( simulation.grid_mp() );
 
   thread.halt();
 

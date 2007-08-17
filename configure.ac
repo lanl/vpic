@@ -95,6 +95,17 @@ case "$buildstyle" in
 		MPRELAY_EXTENSION="ppu"
 	;;
 
+	standard_cell_ppe)
+		AC_SUBST(CELLDIR, ["cell"])
+		AC_SUBST(CELLSUBDIRS, ["ppe"])
+		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
+		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
+		LIB_EXTENSION="ppu"
+		ACCEL_EXTENSION="ppu"
+		MPRELAY_EXTENSION="ppu"
+	;;
+
 	ompi_relay)
 		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])

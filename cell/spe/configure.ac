@@ -43,7 +43,7 @@ CCS_WITH_SPU_COMPILER
 CCS_WITH_OPT_LEVEL
 CCS_WITH_IBM_SIMDMATH
 CCS_WITH_ADDRESSING
-CCS_WITH_LIBMISC_SPU
+#CCS_WITH_LIBMISC_SPU
 
 ################################################################################
 # C/C++ configuration

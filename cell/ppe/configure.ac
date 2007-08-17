@@ -81,8 +81,8 @@ case "$buildstyle" in
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
 		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
 
-		#AC_DEFINE(CELL_PPU_BUILD)
-		#AC_DEFINE(USE_CELL_SPUS)
+		AC_DEFINE(CELL_PPU_BUILD)
+		AC_DEFINE(USE_CELL_SPUS)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -91,6 +91,21 @@ case "$buildstyle" in
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
 			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
 		done
+	;;
+
+	standard_cell_ppe)
+		CCS_WITH_PPU_MPI
+
+		AC_SUBST(PPEDIRS, ["lib"])
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
+
+		AC_DEFINE(CELL_PPU_BUILD)
+
+		# define needed for openmpi
+		AC_DEFINE(OMPI_SKIP_MPICXX)
 	;;
 
 	ompi_relay_cell)

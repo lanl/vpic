@@ -51,6 +51,7 @@ template<int ROLE> class P2PPolicyDaCS
 		template<typename T> int irecv(T * buffer, int count,
 			int tag, int id);
 
+		inline int test_send(MPRequest_T<MP_HOST> & request);
 		inline int wait_send(int id);
 		inline int wait_recv(int id);
 		inline int barrier();
@@ -270,7 +271,16 @@ int P2PPolicyDaCS<ROLE>::irecv(T * buffer, int count, int tag, int id)
 	} // MPICommunicatorPolicy<>::irecv
 
 template<> inline
-int P2PPolicyDaCS<MP_ACCEL>::wait_send(int id)
+int P2PPolicyDaCS<MP_HOST>::test_send(MPRequest_T<MP_HOST> & request)
+	{
+		errcode_ = dacs_test(send_tag_[request.id]);
+		process_dacs_errcode(errcode_);
+
+		return 0;
+	} // P2PPolicyDaCS<>::test_send
+
+template<int ROLE> inline
+int P2PPolicyDaCS<ROLE>::wait_send(int id)
 	{
 		errcode_ = dacs_wait(send_tag_[id]);
 		process_dacs_errcode(errcode_);

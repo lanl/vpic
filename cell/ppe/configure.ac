@@ -83,6 +83,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
+		AM_CONDITIONAL(USE_CELL_SPUS, true)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -103,6 +104,7 @@ case "$buildstyle" in
 		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
 
 		AC_DEFINE(CELL_PPU_BUILD)
+		AM_CONDITIONAL(USE_CELL_SPUS, false)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -122,6 +124,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
+		AM_CONDITIONAL(USE_CELL_SPUS, true)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -146,6 +149,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
+		AM_CONDITIONAL(USE_CELL_SPUS, true)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -169,6 +173,7 @@ case "$buildstyle" in
 		AC_DEFINE(USE_MPI_P2P)
 
 		AC_DEFINE(CELL_PPU_BUILD)
+		AM_CONDITIONAL(USE_CELL_SPUS, false)
 
 		# define needed for openmpi
 		AC_DEFINE(OMPI_SKIP_MPICXX)
@@ -188,6 +193,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
+		AM_CONDITIONAL(USE_CELL_SPUS, true)
 	;;
 
 esac

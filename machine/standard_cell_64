@@ -36,22 +36,22 @@ ADDRESSING=64
 ################################################################################
 # PPU CFLAGS - configure C compiler behavior
 ################################################################################
-PCFLAGS="-DCELL_PPU_BUILD         -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600                -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+PCFLAGS="-m64 -Wall -Werror -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-PCXXFLAGS="-DCELL_PPU_BUILD         -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+PCXXFLAGS="-m64 -Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # SPU CFLAGS - configure C compiler behavior
 ################################################################################
-SCFLAGS="-DCELL_SPU_BUILD -Werror       -pedantic -std=c99 -D_XOPEN_SOURCE=600                -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+SCFLAGS="-DCELL_SPU_BUILD -Werror -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # SPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-SCXXFLAGS="-DCELL_SPU_BUILD -Werror       -pedantic -std=c++98 -D_XOPEN_SOURCE=600                -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+SCXXFLAGS="-DCELL_SPU_BUILD -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # SPU_MODULES - spe programs to link

@@ -1,3 +1,5 @@
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+
 /****************************************************************************
  *
  * Copyright (c) 2000, Kevin James Bowers
@@ -41,8 +43,6 @@
 #include <pipelines.h>
 #include <pthread.h>
 #include <libspe2.h>
-
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 
 static void *
 spu_control_thread( void *_id );

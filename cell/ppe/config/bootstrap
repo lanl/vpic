@@ -3,8 +3,8 @@
 # Create build system using GNU autotools
 #
 
-#echo "generating Makefile.am for PPU VPIC library"
-#config/lib.am > lib/Makefile.am
+echo "generating Makefile.am for PPU VPIC library"
+config/create_lib_am > lib/Makefile.am
 
 echo "calling libtoolize..."
 libtoolize -f --automake

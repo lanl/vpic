@@ -9,6 +9,18 @@ To build the buildsystem run (from the top-level directory):
 
 This will run the appropriate programs to create the build system.
 
+The bootstrap system now uses the files vpic_header_list, vpic_source_list, and
+vpic_extra_source_list to create the Makefile.am input files for automake
+whenever the build system is recreated.  This means that when new files are
+added to the project, they must be added to the correct list in the config
+directory or they will not be included in the build.
+
+The vpic_extra_source_list can be used to specify files that are conditional.
+These are then selected at configuration using the AM_CONDITIONAL macro.
+Currently these are all cell specific.  Adding a more general capability is
+possible, but will require some more investigation into the inner workings
+of automake.
+
 # Configuration
 The autoconf buildsystem mimics the current Imake setup, allowing the user to
 specify a machine file.  There are several examples in the machine directory.

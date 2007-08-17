@@ -1,20 +1,23 @@
 #include <v4.h>
-#include <stdio.h>
 
 #ifndef V4_ACCELERATION
-#error "Specify which V4 to use"
-#endif
 
-#ifndef DECLARE_ALLGNED_ARRAY
-#if 1
+//#error "Specify which V4 to use"
+
+#else
+
+#include <stdio.h>
+
+//#ifndef DECLARE_ALIGNED_ARRAY
+#if 0
 #define DECLARE_ALIGNED_ARRAY(type,align,name,count)                        \
   char _aa_##name[(count)*sizeof(type)+(align)];                            \
   type * ALIGNED(align) const name = (type * ALIGNED(align))                \
     ( ( (size_t)_aa_##name + (align) - 1 ) & (~((align)-1)) )
 #else
+#undef DECLARE_ALIGNED_ARRAY
 #define DECLARE_ALIGNED_ARRAY(type,align,name,count)                    \
   type name[count] __attribute__((__aligned__(align)))
-#endif
 #endif
 
 using namespace v4;
@@ -841,4 +844,6 @@ int main( unsigned long long id ) {
 
   return 0;
 }
+
+#endif
 

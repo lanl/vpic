@@ -12,9 +12,8 @@ AM_INIT_AUTOMAKE
 ################################################################################
 # list targets for output
 ################################################################################
-AC_CONFIG_FILES(Makefile bin/Makefile)
-
-#AC_CONFIG_COMMANDS(setup, [make setup])
+AC_CONFIG_FILES(Makefile bin/Makefile config/rules.mk)
+AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
 # append prefix with spe
@@ -44,6 +43,14 @@ CCS_WITH_OPT_LEVEL
 CCS_WITH_IBM_SIMDMATH
 CCS_WITH_ADDRESSING
 CCS_WITH_LIBMISC_SPU
+
+CCS_PROG_SPU_TIMING
+
+if test "$HAS_SPU_TIMING" = "yes" ; then
+	AM_CONDITIONAL(HAS_SPU_TIMING, true)
+else
+	AM_CONDITIONAL(HAS_SPU_TIMING, false)
+fi
 
 ################################################################################
 # C/C++ configuration

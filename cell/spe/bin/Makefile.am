@@ -2,6 +2,9 @@
 # SPE bin directory Makefile.am
 ################################################################################
 
+clean-local:
+	@(rm -rf *.timing *.asm; rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
+
 bin_PROGRAMS = advance_p_pipeline_spu
 
 INCLUDES = -I@top_srcdir@/src/include -I@HOST_ACDIR@/src/include \

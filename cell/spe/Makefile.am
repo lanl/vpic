@@ -5,4 +5,4 @@
 SUBDIRS = bin
 
 setup:
-	rm -rf `find @HOST_ACDIR@/src -name "*.timing"`
+	@(rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)

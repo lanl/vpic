@@ -3,7 +3,7 @@
 ################################################################################
 
 clean-local:
-	@(rm -rf *.timing *.asm; rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
+	@(rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
 
 bin_PROGRAMS = advance_p_pipeline_spu
 

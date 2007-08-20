@@ -3,17 +3,8 @@
 ################################################################################
 
 # Notes:
-# - SPU: IBM's SPU cache-4way.h is not compatible with -Wall flag
 # - PPU: C++98 does not support long long but mpi.h uses it.  Thus, the C++
 #   build needs a -Wno-long-long.
-# - FIXME: The PPU attempts to compile advance_p_pipeline_spu.  It does not
-#   due to the way advance_p_pipeline_spu is written.  However, the PPU
-#   build compiles about having nothing to compile.  Thus, the PPU builds
-#   are currently not compatible with -Werror.  In general, having the build
-#   infrastructure indescriminately compiling everything it finds under source
-#   is problematic.
-# - FIXME: SPU: I think the SPU flags need a -fno-exceptions flag
-# - FIXME: test_v4.cxx really should not be compiled by the build.
 # - FIXME: Separating OPT_LEVEL from the {S,P}C[XX]FLAGS is may ruin
 #   carefully setup optimizations flags as, unfortunately, the order of
 #   the flags matters.
@@ -36,12 +27,12 @@ ADDRESSING=64
 ################################################################################
 # PPU CFLAGS - configure C compiler behavior
 ################################################################################
-PCFLAGS="-m64 -Wall -Werror -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+PCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
 
 ################################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-PCXXFLAGS="-m64 -Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long"
 
 ################################################################################
 # Cell MPI configuration

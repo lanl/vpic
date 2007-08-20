@@ -106,6 +106,12 @@
 
 #define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) ) 
 
+// POW2_CEIL rounds "u" up to the nearest power of two "a".  If u is
+// zero or a power of two, its value is unchanged.  "a" should be safe
+// against multiple dereferencing and the same type as "u".
+
+#define POW2_CEIL(u,a) ( ((u)+(a)-1) & ~((a)-1) )
+
 // Workload distribution macros
 
 // Let items be enumerated 0,1, ... "N"-1 and pipelines be

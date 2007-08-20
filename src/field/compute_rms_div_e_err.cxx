@@ -93,7 +93,7 @@ compute_rms_div_e_err( field_t      * ALIGNED(16) f,
   args->g = g;
   EXEC_PIPELINES( compute_rms_div_e_err, args, 0 );
 
-  // Have the host accumulator the exterior of the local domain
+  // Have the host accumulate the exterior of the local domain
 
   nx = g->nx;
   ny = g->ny;

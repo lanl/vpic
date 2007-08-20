@@ -193,7 +193,8 @@ typedef struct interpolator {
 # endif
 } interpolator_t;
 
-// Accumulator arrays shall be a (nx+2)x(ny+2)x(nz+2)x(1+n_pipeline)
+// Accumulator arrays shall be a
+//   POW2_CEIL((nx+2)x(ny+2)x(nz+2),2)x(1+n_pipeline)
 // allocation indexed FORTRAN style.  That is, the accumulator array
 // is a 4d array.  a(:,:,:,0) is the accumulator used by the host
 // processor.  a(:,:,:,1:n_pipeline) are the accumulators used by

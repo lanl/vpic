@@ -16,13 +16,15 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
   accumulator_t * ALIGNED(128) a = args->a;
   const grid_t  *              g = args->g;
 
-  float * ALIGNED(16) pa, * ALIGNED(16) paa;
-  int p, x, y, z, n_voxel;
+  const accumulator_t * ALIGNED(16) sa;
+  accumulator_t       * ALIGNED(16) da;
+  int n, x, y, z, n_voxel;
 
   const int nx = g->nx;
   const int ny = g->ny;
   const int nz = g->nz;
-  const int stride = 12*(nx+2)*(ny+2)*(nz+2);
+  const int na = args->na;
+  const int stride = POW2_CEIL((nx+2)*(ny+2)*(nz+2),2);
 
   // Process voxels assigned to this pipeline
 
@@ -30,33 +32,25 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 
-  pa = &a(x,y,z).jx[0];
+  da = &a(x,y,z);
 
   for( ; n_voxel; n_voxel-- ) {
 
-    paa = pa + stride;
-    for( p=0; p<n_pipeline; p++ ) {
-      pa[0]  += paa[0];
-      pa[1]  += paa[1];
-      pa[2]  += paa[2];
-      pa[3]  += paa[3];
-      pa[4]  += paa[4];
-      pa[5]  += paa[5];
-      pa[6]  += paa[6];
-      pa[7]  += paa[7];
-      pa[8]  += paa[8];
-      pa[9]  += paa[9];
-      pa[10] += paa[10];
-      pa[11] += paa[11];
-      paa    += stride;
+    sa = da + stride;
+    for( n=1; n<na; n++ ) {
+      da->jx[0] += sa->jx[0]; da->jx[1] += sa->jx[1]; da->jx[2] += sa->jx[2]; da->jx[3] += sa->jx[3];
+      da->jy[0] += sa->jy[0]; da->jy[1] += sa->jy[1]; da->jy[2] += sa->jy[2]; da->jy[3] += sa->jy[3];
+      da->jz[0] += sa->jz[0]; da->jz[1] += sa->jz[1]; da->jz[2] += sa->jz[2]; da->jz[3] += sa->jz[3];
+      sa += stride;
     }
-    pa += 12;
+
+    da++;
 
     x++;
     if( x>nx ) {
       x=1, y++;
       if( y>ny ) y=1, z++;
-      pa = &a(x,y,z).jx[0];
+      da = &a(x,y,z);
     }
   }
 }
@@ -77,13 +71,15 @@ reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
   accumulator_t * ALIGNED(128) a = args->a;
   const grid_t  *              g = args->g;
 
-  float * ALIGNED(16) pa, * ALIGNED(16) paa;
-  int p, x, y, z, n_voxel;
+  const accumulator_t * ALIGNED(16) sa;
+  accumulator_t       * ALIGNED(16) da;
+  int n, x, y, z, n_voxel;
 
   const int nx = g->nx;
   const int ny = g->ny;
   const int nz = g->nz;
-  const int stride = 12*(nx+2)*(ny+2)*(nz+2);
+  const int na = args->na;
+  const int stride = POW2_CEIL((nx+2)*(ny+2)*(nz+2),2);
 
   v4float vjxx, vjyy, vjzz;
   v4float vjx,  vjy,  vjz;
@@ -94,29 +90,26 @@ reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
 
-  pa = &a(x,y,z).jx[0];
+  da = &a(x,y,z);
 
   for( ; n_voxel; n_voxel-- ) {
 
     // More evil than usual---Duff inspired V4 accelerated loop.
-    // As n_pipeline is generally compile time determined, this will
-    // reduce down to the desired branchless assembly at compile
-    // compile.
 
-    load_4x1( pa,   vjx );
-    load_4x1( pa+4, vjy );
-    load_4x1( pa+8, vjz );
-    paa = pa + stride;
-    p   = n_pipeline;
+    load_4x1( da->jx, vjx );
+    load_4x1( da->jy, vjy );
+    load_4x1( da->jz, vjz );
+    sa = da + stride;
+    n = na - 1;
 
-#   define REDUCE_ACCUM()                 \
-    load_4x1( paa,   vjxx ); vjx += vjxx; \
-    load_4x1( paa+4, vjyy ); vjy += vjyy; \
-    load_4x1( paa+8, vjzz ); vjz += vjzz; \
-    paa += stride
+#   define REDUCE_ACCUM()                  \
+    load_4x1( sa->jx, vjxx ); vjx += vjxx; \
+    load_4x1( sa->jy, vjyy ); vjy += vjyy; \
+    load_4x1( sa->jz, vjzz ); vjz += vjzz; \
+    sa += stride
 
-    switch( p ) {
-    default: for(;p>8;p--) { REDUCE_ACCUM(); }
+    switch( n ) {
+    default: for(;n>8;n--) { REDUCE_ACCUM(); }
     case 8:  REDUCE_ACCUM();
     case 7:  REDUCE_ACCUM();
     case 6:  REDUCE_ACCUM();
@@ -130,17 +123,17 @@ reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
 
 #   undef REDUCE_ACCUM
 
-    store_4x1( vjx, pa   );
-    store_4x1( vjy, pa+4 );
-    store_4x1( vjz, pa+8 );
+    store_4x1( vjx, da->jx );
+    store_4x1( vjy, da->jy );
+    store_4x1( vjz, da->jz );
 
-    pa += 12;
+    da++;
 
     x++;
     if( x>nx ) {
       x=1, y++;
       if( y>ny ) y=1, z++;
-      pa = &a(x,y,z).jx[0];
+      da = &a(x,y,z);
     }
   }
 }
@@ -151,13 +144,23 @@ void
 reduce_accumulators( accumulator_t * ALIGNED(128) a,
                      const grid_t  *              g ) {
   reduce_accumulators_pipeline_args_t args[1];
+  int na;
   
   if( a==NULL ) ERROR(("Bad accumulator"));
   if( g==NULL ) ERROR(("Bad grid"));
-  
-  args->a = a;
-  args->g = g;
+
+  /**/                       na = serial.n_pipeline;
+  if( na<thread.n_pipeline ) na = thread.n_pipeline;
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+  if( na<spu.n_pipeline    ) na = spu.n_pipeline;
+# endif
+  na++; /* na = 1 + max( {serial,thread,spu}.n_pipeline ) */
+
+  args->a  = a;
+  args->g  = g;
+  args->na = na;
 
   EXEC_PIPELINES( reduce_accumulators, args, 0 );
   WAIT_PIPELINES();
 }
+

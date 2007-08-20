@@ -124,7 +124,7 @@ begin_initialization {
 
   failed = 0;
   for( int n=0; n<8; n++ ) {
-    if( fabs(drho[n] + divj[n])>1e-6 ) {
+    if( fabs(drho[n] + divj[n])>1.75e-6 ) {
       failed++;
       sim_log( n << " " <<
              drho[n] << " " <<

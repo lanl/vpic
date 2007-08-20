@@ -142,7 +142,7 @@ new_interpolator( const grid_t * g ) {
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Invalid grid resolution."));
   
   req = (g->nx+2)*(g->ny+2)*(g->nz+2)*sizeof(interpolator_t);
-  fi = (interpolator_t * ALIGNED(128))malloc_aligned( req, 16 );
+  fi = (interpolator_t * ALIGNED(128))malloc_aligned( req, 128 );
   if( fi==NULL ) ERROR(("Failed to allocate interpolator."));
   clear_interpolator(fi,g);
 
@@ -175,21 +175,14 @@ new_accumulators( const grid_t * g ) {
   if( g==NULL ) ERROR(("Bad grid."));
   if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
   
-  // FIXME: accumulators should be spaced by round-up-even n_voxel
-  // to keep 128-byte alignment of individual accumulators!
-
+  /**/                        req = serial.n_pipeline;
+  if( req<thread.n_pipeline ) req = thread.n_pipeline;
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  // FIXME: USE_CELL_SPUS is not enabled in the pipelines yet
-  // THE MISMATCH HERE NEEDS TO BE ADDRESSED.
-  req = 1 + thread.n_pipeline;
-# if 0
-  req = 1 + spu.n_pipeline;
+  if( req<spu.n_pipeline    ) req = spu.n_pipeline;
 # endif
-# else
-  req = 1 + thread.n_pipeline;
-# endif
+  req++; /* req = 1 + max( {serial,thread,spu}.n_pipeline ) */
 
-  req *= (size_t)(g->nx+2)*(size_t)(g->ny+2)*(size_t)(g->nz+2)*sizeof(accumulator_t);
+  req *= POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2)*sizeof(accumulator_t);
   a = (accumulator_t * ALIGNED(128))malloc_aligned( req, 128 );
   if( a==NULL ) ERROR(("Failed to allocate accumulator."));
   clear_accumulators( a, g );

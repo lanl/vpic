@@ -13,25 +13,29 @@
 int
 main( int argc,
       char **argv ) {
+  int m, n;
 
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
 
-  /*
-  spu.boot( 8,   // Total number of SPUs for processing pipeline workloads
+  // Strip threads-per-process arguments from the argument list
+
+  int spp = 8;
+  for( m=n=0; n<argc; n++ )
+    if( strncmp( argv[n], "-spp=", 5 )==0 ) spp = atoi( argv[n]+5 );
+    else                                    argv[m++] = argv[n];
+  argv[m] = NULL; // ANSI - argv is NULL terminated
+  argc = m;
+
+  spu.boot( spp, // Total number of SPUs for processing pipeline workloads
             0 ); // This PPU thread physically cannot process SPU workloads!
-  */
-  ///*
-  spu.boot( 1,   // Total number of SPUs for processing pipeline workloads
-            0 ); // This PPU thread physically cannot process SPU workloads!
-  //*/
 
 # endif
 
   // Strip threads-per-process arguments from the argument list
 
-  int m, n, tpp = 1;
+  int tpp = 1;
   for( m=n=0; n<argc; n++ )
     if( strncmp( argv[n], "-tpp=", 5 )==0 ) tpp = atoi( argv[n]+5 );
     else                                    argv[m++] = argv[n];
@@ -39,6 +43,7 @@ main( int argc,
   argc = m;
 
   thread.boot( tpp, 1 );
+  serial.boot( tpp, 1 );
 
   // Note: Some MPIs will bind threads to cores if threads are booted
   // after MPI is initialized.  So we start up the pipeline
@@ -68,6 +73,7 @@ main( int argc,
 
   mp_finalize( simulation.grid_mp() );
 
+  serial.halt();
   thread.halt();
 
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
@@ -76,3 +82,4 @@ main( int argc,
 
   return 0;
 }
+

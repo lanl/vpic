@@ -60,7 +60,8 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   // The host gets the first accumulator array
 
   if( pipeline_rank!=n_pipeline )
-    a0 += (1+pipeline_rank)*(args->nx+2)*(args->ny+2)*(args->nz+2);
+    a0 += (1+pipeline_rank)*
+          POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
 
   // Process particles for this pipeline
 
@@ -86,7 +87,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     ux  += hax;                               // Half advance E
     uy  += hay;
     uz  += haz;
-    v0   = qdt_2mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz)));
+    v0   = qdt_2mc/sqrtf(one + (ux*ux + (uy*uy + uz*uz)));
     /**/                                      // Boris - scalars
     v1   = cbx*cbx + (cby*cby + cbz*cbz);
     v2   = (v0*v0)*v1;
@@ -105,7 +106,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     p->ux = ux;                               // Store momentum
     p->uy = uy;
     p->uz = uz;
-    v0   = one/(float)sqrt(one + (ux*ux+ (uy*uy + uz*uz)));
+    v0   = one/sqrtf(one + (ux*ux+ (uy*uy + uz*uz)));
     /**/                                      // Get norm displacement
     ux  *= cdt_dx;
     uy  *= cdt_dy;
@@ -171,8 +172,8 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
         if( nm<max_nm ) pm[nm++] = local_pm[0];
         else            itmp++;                 // Unlikely
       }
-    } 
-       
+    }
+
   }
 
   args->seg[pipeline_rank].pm        = pm;
@@ -252,7 +253,8 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   // Determine which accumulator array to use
   // The host gets the first accumulator array
 
-  a0 += (1+pipeline_rank)*(args->nx+2)*(args->ny+2)*(args->nz+2);
+  a0 += (1+pipeline_rank)*
+        POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
 
   // Process the particle quads for this pipeline
 

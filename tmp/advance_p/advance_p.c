@@ -44,7 +44,7 @@ main( int argc,
 
   args->p0       = malloc_aligned( NP*sizeof(particle_t),       128 );
   args->pm       = malloc_aligned( NM*sizeof(particle_mover_t), 128 );
-  args->a0       = malloc_aligned( NV*sizeof(accumulator_t),    128 );
+  args->a0       = malloc_aligned( POW2_CEIL(NV,2)*(1+spu.n_pipeline)*sizeof(accumulator_t),    128 );
   args->f0       = malloc_aligned( NV*sizeof(interpolator_t),   128 );
   args->seg      = seg;
   args->neighbor = malloc_aligned( NV*6*sizeof(int64_t),        128 );

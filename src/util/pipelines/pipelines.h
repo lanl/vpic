@@ -3,9 +3,16 @@
 
 #include <util_base.h>
 
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+// FIXME: Should CELL_SPU_BUILDs include this (and if so, under what
+// conditions)?
+#include <libspe2.h> // For spe_program_handle_t
+#endif
+
 enum { MAX_PIPELINE = 16 };
 
 #if !defined(CELL_SPU_BUILD)
+// FIXME: Should all these really be protected from a CELL_SPU_BUILD?
 
 // A pipeline function takes a pointer to arguments for the pipeline
 // and a integer which gives the rank of the pipeline and the total
@@ -68,6 +75,7 @@ typedef struct pipeline_dispatcher {
 
 } pipeline_dispatcher_t;
 
+
 BEGIN_C_DECLS
 
 extern pipeline_dispatcher_t serial; // For debugging purposes
@@ -122,6 +130,6 @@ extern pipeline_dispatcher_t spu;
 
 END_C_DECLS
 
-#endif
+#endif // !CELL_SPU_BUILD
 
 #endif // _pipelines_h_ 

@@ -44,6 +44,8 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 ///////////////////////////////////////////////////////////////////////////////
 // External memory caches
 
+// #define CACHE_STATS
+
 // Since DMA transfers seem optimized for 128-bytes at aligned
 // addresses, set up the cache lines to use 128-byte aligned lines
 // 128-bytes in size.
@@ -60,7 +62,6 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
-#undef CACHE_STATS
 
 #define CACHE_NAME           interpolator_cache
 #define CACHED_TYPE          interpolator_t
@@ -87,7 +88,6 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
-#undef CACHE_STATS
 
 #define CACHE_NAME           accumulator_cache
 #define CACHED_TYPE          accumulator_t
@@ -114,7 +114,6 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
-#undef CACHE_STATS
 
 #define CACHE_NAME           neighbor_cache
 #define CACHED_TYPE          int64_t
@@ -149,7 +148,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 // not check its input arguments.  Callers are responsible for
 // insuring valid arguments.
 
-int
+static int
 move_p_spu( particle_t       * ALIGNED(32) p,
             particle_mover_t * ALIGNED(16) pm ) {
   float s_midx, s_midy, s_midz;
@@ -603,8 +602,8 @@ main( uint64_t spu_id,
 
   // Determine which accumulator array is reserved for this pipeline
 
-  args->a0 += (1+pipeline_rank)*(args->nx+2)*(args->ny+2)*(args->nz+2)*
-    sizeof(accumulator_t);
+  args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
+    POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
   
   // Process the particles assigned to this pipeline with triple buffering
 

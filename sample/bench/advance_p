@@ -54,15 +54,12 @@ begin_initialization {
   repeat(2)
     advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                accumulator, interpolator, grid );
-  barrier();
 
   // Do the benchmark
   double overhead = time00();
-  repeat(n_step) {
+  repeat(n_step)
     advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                accumulator, interpolator, grid );
-    barrier();
-  }
   double elapsed = time00() - overhead;
 
   sim_log( (double)local_np*(double)nproc()*(double)n_step/elapsed/1e6 );

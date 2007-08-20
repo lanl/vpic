@@ -84,12 +84,13 @@ typedef struct load_interpolator_pipeline_args {
 
 typedef struct clear_accumulators_pipeline_args {
   accumulator_t * ALIGNED(128) a;       // Base of all the accumulators
-  int                          n_voxel;
+  int                          n_voxel; // Total number of voxels
 } clear_accumulators_pipeline_args_t;
 
 typedef struct reduce_accumulators_pipeline_args {
   accumulator_t * ALIGNED(128) a;
   const grid_t  *              g;
+  int na;                               // Number of accumulators
 } reduce_accumulators_pipeline_args_t;
 
 typedef struct unload_accumulator_pipeline_args {

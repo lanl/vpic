@@ -16,8 +16,8 @@
 #define USING_V4C                                               \
    const vec_uchar16 _unpackl = {  0, 1, 2, 3,   16,17,18,19,   \
                                    4, 5, 6, 7,   20,21,22,23 }; \
-   const vec_uchar16 _unpackh = {  0, 1, 2, 3,   16,17,18,19,   \
-                                   4, 5, 6, 7,   20,21,22,23 }; \
+   const vec_uchar16 _unpackh = {  8, 9,10,11,   24,25,26,27,   \
+                                  12,13,14,15,   28,29,30,31 }; \
    vec_float4 _a, _b, _c, _d
 
 /* FIXME: THIS MACRO IS NOT ROBUST! 
@@ -83,26 +83,32 @@
 
 /* Compute an estimate of the rsqrt (12-bit accurate) */
 /* Perform Newton-Raphson refinement (one step should give 24-bit) */
-/* FIXME: CHECK NUMERICS.  MIGHT WANT TO USE ADDITIONAL REFINEMENT. */
-
+/* FIXME: CHECK NUMERICS.  MIGHT WANT TO USE ADDITIONAL REFINEMENT.
+    _b = spu_madd( spu_nmsub( spu_mul( _b, _b ), _a, one ), \
+                   spu_mul( _b, one_half ),                 \
+                   _b ),                                    \
+*/
 /* FIXME: THIS MACRO IS NOT ROBUST!
-   MUST DECLARE vec_float4 _a, _b and one_half = 0.5 to use. */
-#define RSQRT( a )                                      \
-  ( _a = (a),                                           \
-    _b = spu_rsqrte( _a ),                              \
-    spu_madd( spu_nmsub( spu_mul( _b, _b ), _a, one ),  \
-              spu_mul( _b, one_half ),                  \
+   MUST DECLARE vec_float4 _a, _b and one_half = 0.5 to use.  */
+
+#define RSQRT( a )                                          \
+  ( _a = (a),                                               \
+    _b = spu_rsqrte( _a ),                                  \
+    spu_madd( spu_nmsub( spu_mul( _b, _b ), _a, one ),      \
+              spu_mul( _b, one_half ),                      \
               _b ) )
 
 /* Compute an estimate of the reciprocal of a (12-bit accurate) */
 /* Perform Newton-Raphson refinement (one step should give 24-bit) */
-/* FIXME: CHECK NUMERICS ... MAY WANT TO USE ADDITIONAL REFINEMNT. */
+/* FIXME: CHECK NUMERICS ... MAY WANT TO USE ADDITIONAL REFINEMNT.
+    _b = spu_madd( spu_nmsub( _b, _a, one ), _b, _b ),    \
+*/
 
 /* FIXME: THIS MACRO IS NOT ROBUST! 
    MUST DECLARE vec_float4 _a, _b and one = 1 to use. */
-#define RCP( a )                                        \
-  ( _a = (a),                                           \
-    _b = spu_re( _a ),                                  \
+#define RCP( a )                                          \
+  ( _a = (a),                                             \
+    _b = spu_re( _a ),                                    \
     spu_madd( spu_nmsub( _b, _a, one ), _b, _b ) )
 
 #endif // CELL_SPU_BUILD 

@@ -44,9 +44,9 @@ ADDRESSING=64
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
 ################################################################################
-MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
+MPI_CPPFLAGS=`mpecc -mpilog --showme:compile`
+MPI_LDFLAGS=`mpecc -mpilog --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LIBS=`mpecc -mpilog --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################
 # PPU CFLAGS - configure C compiler behavior
@@ -64,6 +64,9 @@ PCXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long
 # PPU_MPI_LDFLAGS - configure MPI link flags
 # PPU_MPI_LIBS - configure MPI library names
 ################################################################################
-PPU_MPI_CPPFLAGS=`echo $MPI_CXX_CPPFLAGS_PPC64`
-PPU_MPI_LDFLAGS=`echo $MPI_CXX_LDFLAGS_PPC64`
-PPU_MPI_LIBS=`echo $MPI_CC_LDLIBS_PPC64`
+PPU_MPI_CPPFLAGS=`echo $MPE_CPPFLAGS_PPC64`
+PPU_MPI_CPPFLAGS+=`echo $MPI_CXX_CPPFLAGS_PPC64`
+PPU_MPI_LDFLAGS=`echo $MPE_LDFLAGS_PPC64`
+PPU_MPI_LDFLAGS+=`echo $MPI_CXX_LDFLAGS_PPC64`
+PPU_MPI_LIBS="-llmpe -lmpe"
+PPU_MPI_LIBS+=`echo $MPI_CC_LDLIBS_PPC64`

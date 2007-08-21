@@ -3,8 +3,9 @@
 ################################################################################
 
 ################################################################################
+# BUILDSTYLE - build style
 ################################################################################
-BUILDSTYLE=ompi_relay_hybrid_cell_ppe
+BUILDSTYLE=standard
 
 ################################################################################
 # CFLAGS - configure C compiler behavior
@@ -44,26 +45,6 @@ ADDRESSING=64
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
 ################################################################################
-MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
-MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
-
-################################################################################
-# PPU CFLAGS - configure C compiler behavior
-################################################################################
-PCFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -m64"
-
-################################################################################
-# PPU CXXFLAGS - configure C++ compiler behavior
-################################################################################
-PCXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -m64 -DUSE_V4_PORTABLE"
-
-################################################################################
-# Cell MPI configuration
-# PPU_MPI_CPPFLAGS - configure MPI preprocessor flags
-# PPU_MPI_LDFLAGS - configure MPI link flags
-# PPU_MPI_LIBS - configure MPI library names
-################################################################################
-PPU_MPI_CPPFLAGS=`echo $MPI_CXX_CPPFLAGS_PPC64`
-PPU_MPI_LDFLAGS=`echo $MPI_CXX_LDFLAGS_PPC64`
-PPU_MPI_LIBS=`echo $MPI_CC_LDLIBS_PPC64`
+MPI_CPPFLAGS=`mpecc -mpilog --showme:compile`
+MPI_LDFLAGS=`mpecc -mpilog --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LIBS=`mpecc -mpilog --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`

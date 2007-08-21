@@ -68,6 +68,6 @@ PPU_MPI_LIBS=`echo $MPI_CC_LDLIBS_PPC64`
 LIBSPE2="/opt/cell/sysroot/usr"
 
 ################################################################################
-# IBM_SIMDMATH - simdmath library
+# SPULIBS - miscellaneous SPE libraries
 ################################################################################
-IBM_SIMDMATH="/opt/cell/sysroot/usr/spu"
+SPULIBS="/opt/cell/sysroot/opt/cell/sdk/usr/spu"

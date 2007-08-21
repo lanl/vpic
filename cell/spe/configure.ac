@@ -39,11 +39,13 @@ CCS_WITH_MACHINE("$host_ac_directory/machine")
 # with options
 ################################################################################
 CCS_WITH_SPU_COMPILER
-CCS_WITH_OPT_LEVEL
-CCS_WITH_IBM_SIMDMATH
 CCS_WITH_ADDRESSING
-CCS_WITH_LIBMISC_SPU
+#CCS_WITH_LIBMISC_SPU
+CCS_WITH_SPULIBS
 
+################################################################################
+# spu timing
+################################################################################
 CCS_PROG_SPU_TIMING
 
 if test "$HAS_SPU_TIMING" = "yes" ; then
@@ -56,9 +58,7 @@ fi
 # C/C++ configuration
 ################################################################################
 AC_PROG_CC
-CCS_TUNE_SCC
 AC_PROG_CXX
-CCS_TUNE_SCXX
 
 ################################################################################
 # SPU defines

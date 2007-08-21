@@ -62,6 +62,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           interpolator_cache
 #define CACHED_TYPE          interpolator_t
@@ -70,10 +71,10 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_LOG2NWAY       2             /* 4 way */
 #define CACHE_LOG2NSETS      7             /* 128 lines per way */
 #define CACHE_SET_TAGID(set) (9+(set)&0x7) /* tags 9:16 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->f0
+#include "cache-api.h"
 
 #define PTR_INTERPOLATOR(v) cache_rw( interpolator_cache,               \
-                                      args->f0 +                        \
                                       (v)*sizeof(interpolator_t) )
 
 // Accumulator cache: 512 cached accumulators (32Kb).  Roughly four
@@ -88,6 +89,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           accumulator_cache
 #define CACHED_TYPE          accumulator_t
@@ -96,10 +98,10 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_LOG2NWAY       2              /* 4 way */
 #define CACHE_LOG2NSETS      6              /* 64 lines per way */
 #define CACHE_SET_TAGID(set) (17+(set)&0x7) /* tags 17:25 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->a0
+#include "cache-api.h"
 
 #define PTR_ACCUMULATOR(v) cache_rw( accumulator_cache,                 \
-                                     args->a0 +                         \
                                      (v)*sizeof(accumulator_t) )
 
 // Neighbor cache: 2048 cached cell adjacencies (16K).  Roughly three
@@ -114,6 +116,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           neighbor_cache
 #define CACHED_TYPE          int64_t
@@ -122,10 +125,10 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_LOG2NWAY       2              /* 4 way */
 #define CACHE_LOG2NSETS      5              /* 32 lines per way */
 #define CACHE_SET_TAGID(set) (25+(set)&0x3) /* tags 25:29 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->neighbor
+#include "cache-api.h"
 
 #define NEIGHBOR(v,face) cache_rd( neighbor_cache,                      \
-                                   args->neighbor +                     \
                                    6*sizeof(int64_t)*(v) +              \
                                    (face)*sizeof(int64_t) )
 
@@ -337,6 +340,7 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p, // Particle array
   int nm = 0;
 
   // Process the particle quads for this pipeline
+
 
   for( ; nq; nq--, p+=4, idx+=4 ) {
 
@@ -582,7 +586,7 @@ main( uint64_t spu_id,
   mfc_read_tag_status_all();
 
   pipeline_rank = envp & 0xffffffff;
-  n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
+  n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline in a SPU pipe
 
   // Determine which particle quads this pipeline processes
 
@@ -591,7 +595,7 @@ main( uint64_t spu_id,
   // Determine which movers are reserved for this pipeline
   // Movers (16 bytes) are reserved for pipelines in multiples of 8
   // such that the set of particle movers reserved for a pipeline is
-  // 128-bit aligned and a multiple of 128-bits in size. 
+  // 128-byte aligned and a multiple of 128-bytes in size. 
 
   args->max_nm -= args->np&15; // Insure host gets enough
   if( args->max_nm<0 ) args->max_nm = 0;
@@ -604,7 +608,7 @@ main( uint64_t spu_id,
 
   args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
     POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
-  
+
   // Process the particles assigned to this pipeline with triple buffering
 
 # define BEGIN_GET_PBLOCK(buffer) do {                          \

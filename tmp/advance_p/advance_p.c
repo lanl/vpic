@@ -1,4 +1,5 @@
 #define IN_particle_pipeline
+#define HAS_SPU_PIPELINE
 #include <particle_pipelines.h>
 #include <libspe2.h>
 #include <sys/time.h>
@@ -47,9 +48,7 @@ main( int argc,
   args->a0       = malloc_aligned( POW2_CEIL(NV,2)*(1+spu.n_pipeline)*sizeof(accumulator_t),    128 );
   args->f0       = malloc_aligned( NV*sizeof(interpolator_t),   128 );
   args->seg      = seg;
-  args->neighbor = malloc_aligned( NV*6*sizeof(int64_t),        128 );
-  args->rangel   = 0;
-  args->rangeh   = NV-1;
+  args->g        = NULL;
   args->qdt_2mc  = 0;
   args->cdt_dx   = 0;
   args->cdt_dy   = 0;
@@ -59,6 +58,9 @@ main( int argc,
   args->nx       = NX;
   args->ny       = NY;
   args->nz       = NZ;
+  args->neighbor = malloc_aligned( NV*6*sizeof(int64_t),        128 );
+  args->rangel   = 0;
+  args->rangeh   = NV-1;
 
   memset( args->p0, 0, NP*sizeof(args->p0[0]) );
   memset( args->pm, 0, NM*sizeof(args->pm[0]) );

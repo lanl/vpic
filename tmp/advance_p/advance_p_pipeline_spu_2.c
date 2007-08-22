@@ -1,6 +1,7 @@
 #ifdef CELL_SPU_BUILD
 
 #define IN_particle_pipeline
+#define HAS_SPU_PIPELINE
 #include <particle_pipelines.h>
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
@@ -63,6 +64,7 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           interpolator_cache
 #define CACHED_TYPE          interpolator_t
@@ -71,10 +73,10 @@ DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
 #define CACHE_LOG2NWAY       2             /* 4 way */
 #define CACHE_LOG2NSETS      7             /* 128 lines per way */
 #define CACHE_SET_TAGID(set) (9+(set)&0x7) /* tags 9:16 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->f0
+#include "cache-api.h"
 
 #define PTR_INTERPOLATOR(v) cache_rw( interpolator_cache,               \
-                                      args->f0 +                        \
                                       (v)*sizeof(interpolator_t) )
 
 #else
@@ -96,6 +98,7 @@ DECLARE_ALIGNED_ARRAY( interpolator_t, 128, interpolator_cache, 1 );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           accumulator_cache
 #define CACHED_TYPE          accumulator_t
@@ -104,10 +107,10 @@ DECLARE_ALIGNED_ARRAY( interpolator_t, 128, interpolator_cache, 1 );
 #define CACHE_LOG2NWAY       2              /* 4 way */
 #define CACHE_LOG2NSETS      6              /* 64 lines per way */
 #define CACHE_SET_TAGID(set) (17+(set)&0x7) /* tags 17:25 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->a0
+#include "cache-api.h"
 
 #define PTR_ACCUMULATOR(v) cache_rw( accumulator_cache,                 \
-                                     args->a0 +                         \
                                      (v)*sizeof(accumulator_t) )
 
 #else
@@ -127,6 +130,7 @@ DECLARE_ALIGNED_ARRAY( accumulator_t, 128, accumulator_cache, 1 );
 #undef CACHE_LOG2NSETS
 #undef CACHE_SET_TAGID
 #undef CACHE_READ_X4
+#undef CACHE_BASE_EA
 
 #define CACHE_NAME           neighbor_cache
 #define CACHED_TYPE          int64_t
@@ -135,10 +139,10 @@ DECLARE_ALIGNED_ARRAY( accumulator_t, 128, accumulator_cache, 1 );
 #define CACHE_LOG2NWAY       2              /* 4 way */
 #define CACHE_LOG2NSETS      5              /* 32 lines per way */
 #define CACHE_SET_TAGID(set) (25+(set)&0x3) /* tags 25:29 */
-#include <cache-api.h>
+#define CACHE_BASE_EA        args->neighbor
+#include "cache-api.h"
 
 #define NEIGHBOR(v,face) cache_rd( neighbor_cache,                      \
-                                   args->neighbor +                     \
                                    6*sizeof(int64_t)*(v) +              \
                                    (face)*sizeof(int64_t) )
 

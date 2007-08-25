@@ -45,11 +45,9 @@ CCS_WITH_MACHINE("$host_ac_directory/machine")
 # with options
 ################################################################################
 CCS_WITH_BUILDSTYLE
-CCS_WITH_PPU_COMPILER
-CCS_WITH_OPT_LEVEL
-CCS_WITH_LIBSPE2
 CCS_WITH_ADDRESSING
-CCS_WITH_CELL_INSTDIR
+CCS_WITH_PPU_COMPILER
+CCS_WITH_LIBSPE2
 CCS_WITH_SPU_MODULES
 
 ################################################################################

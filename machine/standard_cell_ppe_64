@@ -5,16 +5,6 @@
 BUILDSTYLE=standard_cell_ppe
 
 ################################################################################
-# OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
-# warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
-################################################################################
-# - FIXME: Separating OPT_LEVEL from the {S,P}C[XX]FLAGS is may ruin
-#   carefully setup optimizations flags as, unfortunately, the order of
-#   the flags matters.
-
-OPT_LEVEL=0
-
-################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
 

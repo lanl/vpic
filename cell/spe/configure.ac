@@ -40,7 +40,6 @@ CCS_WITH_MACHINE("$host_ac_directory/machine")
 ################################################################################
 CCS_WITH_SPU_COMPILER
 CCS_WITH_ADDRESSING
-#CCS_WITH_LIBMISC_SPU
 CCS_WITH_SPULIBS
 
 ################################################################################

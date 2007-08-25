@@ -6,6 +6,8 @@
 #include <ConnectionManager.hxx>
 #include <P2PConnection.hxx>
 
+static const double RESIZE_FACTOR = 1.1;
+
 struct mp_t {
 	int rank;
 	int nproc;
@@ -120,14 +122,14 @@ struct AAISPolicy {
 	inline void * ALIGNED(16) mp_recv_buffer(int tag, mp_handle h) {
 		mp_t * mp = static_cast<mp_t *>(h);
 //		std::cerr << "WRAPPER: mp_recv_buffer called" << std::endl;
-		if(!mp || tag<0 || tag>=max_buffers) { return NULL; }
+		if(!mp || tag<0 || uint64_t(tag)>=max_buffers) { return NULL; }
 		return mp->rbuf[tag];
 	} // mp_recv_buffer
 
 	inline void * ALIGNED(16) mp_send_buffer(int tag, mp_handle h) {
 		mp_t * mp = static_cast<mp_t *>(h);
 //		std::cerr << "WRAPPER: mp_send_buffer called" << std::endl;
-		if(!mp || tag<0 || tag>=max_buffers) { return NULL; }
+		if(!mp || tag<0 || uint64_t(tag)>=max_buffers) { return NULL; }
 		return mp->sbuf[tag];
 	} // mp_send_buffer
 
@@ -177,15 +179,13 @@ struct AAISPolicy {
 		p2p.barrier();
 	} // mp_barrier
 
-	static const double RESIZE_FACTOR = 1.1;
-
 	inline error_code mp_size_recv_buffer(int tag, int size, mp_handle h) {
 		mp_t *mp = (mp_t *)h;
 		char * ALIGNED(16) rbuf;
 
 		// Check input arguments
 		if( mp==NULL            ) return ERROR_CODE("Bad handle");
-		if( tag<0 || tag>=max_buffers ) return ERROR_CODE("Bad tag");
+		if( tag<0 || uint64_t(tag)>=max_buffers ) return ERROR_CODE("Bad tag");
 		if( size<=0               ) return ERROR_CODE("Bad size");
 
 		// If no buffer allocated for this tag
@@ -230,7 +230,7 @@ struct AAISPolicy {
 
 		// Check input arguments
 		if( mp==NULL              ) return ERROR_CODE("Bad handle");
-		if( tag<0 || tag>=max_buffers ) return ERROR_CODE("Bad tag");
+		if( tag<0 || uint64_t(tag)>=max_buffers ) return ERROR_CODE("Bad tag");
 		if( size<=0               ) return ERROR_CODE("Bad size");
 
 		// If no buffer allocated for this tag
@@ -276,7 +276,8 @@ struct AAISPolicy {
 //		std::cerr << "WRAPPER: mp_begin_recv called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-		if(rbuf<0 || rbuf>=max_buffers) { return ERROR_CODE("Bad recv_buf"); }
+		if(rbuf<0 || uint64_t(rbuf)>=max_buffers)
+			{ return ERROR_CODE("Bad recv_buf"); }
 		if(size<=0) { return ERROR_CODE("Bad msg_size"); }
 		if(sender<0 || sender>=mp->nproc) { return ERROR_CODE("Bad sender"); }
 		if(mp->rbuf[rbuf]==NULL) { return ERROR_CODE("NULL recv_buf"); }
@@ -296,8 +297,12 @@ struct AAISPolicy {
 		p2p.post(request);
 
 		
+		/*
+		!!!FIXME!!!
 		int errcode =
 			p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size, tag, rbuf);
+		*/
+		p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size, tag, rbuf);
 		return NO_ERROR;
 
 		// NEED TO DEAL WITH ERRORS!!!
@@ -334,7 +339,8 @@ struct AAISPolicy {
 //		std::cerr << "WRAPPER: mp_begin_send called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-		if(sbuf<0 || sbuf>=max_buffers) { return ERROR_CODE("Bad send_buf"); }
+		if(sbuf<0 || uint64_t(sbuf)>=max_buffers)
+			{ return ERROR_CODE("Bad send_buf"); }
 		if(size<=0) { return ERROR_CODE("Bad msg_size"); }
 		if(receiver<0 || receiver>=mp->nproc) {
 			return ERROR_CODE("Bad receiver");
@@ -355,8 +361,12 @@ struct AAISPolicy {
 		MPRequest request(P2PTag::isend, tag, size, sbuf, receiver);
 		p2p.post(request);
 
+		/*
+		!!!FIXME!!!
 		int errcode = p2p.isend(static_cast<char *>(mp->sbuf[sbuf]),
 			size, tag, sbuf);
+		*/
+		p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size, tag, sbuf);
 		return NO_ERROR;
 
 		/*
@@ -390,7 +400,8 @@ struct AAISPolicy {
 		//std::cerr << "WRAPPER: mp_end_recv called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-		if(rbuf<0 || rbuf>=max_buffers) { return ERROR_CODE("Bad recv_buf"); }
+		if(rbuf<0 || uint64_t(rbuf)>=max_buffers)
+			{ return ERROR_CODE("Bad recv_buf"); }
 
 		//std::cout << "WRAPPER: begin wait " << p2p.rank() << std::endl;
 
@@ -442,12 +453,17 @@ struct AAISPolicy {
 		//std::cerr << "WRAPPER: mp_end_send called" << std::endl;
 
 		if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-		if(sbuf<0 || sbuf>=max_buffers) { return ERROR_CODE("Bad send_buf"); }
+		if(sbuf<0 || uint64_t(sbuf)>=max_buffers)
+			{ return ERROR_CODE("Bad send_buf"); }
 
 		MPRequest request(P2PTag::wait_send, 0, 0, sbuf);
 		p2p.post(request);
 
+/*
+	FIXME
 		int errcode = p2p.wait_send(sbuf);
+*/
+		p2p.wait_send(sbuf);
 		return NO_ERROR;
 
 /*
@@ -562,7 +578,11 @@ struct AAISPolicy {
 		MPRequest request(P2PTag::send, P2PTag::data, n, 0, dst);
 		p2p.post(request);
 
+		/*
+		FIXME
 		int errcode = p2p.send(buf, request.count, request.tag);
+		*/
+		p2p.send(buf, request.count, request.tag);
 		return NO_ERROR;
 
 /*
@@ -594,7 +614,11 @@ struct AAISPolicy {
 		MPRequest request(P2PTag::recv, P2PTag::data, n, 0, src);
 		p2p.post(request);
 
+		/*
+		FIXME
 		int errcode = p2p.recv(buf, request.count, request.tag, request.id);
+		*/
+		p2p.recv(buf, request.count, request.tag, request.id);
 		return NO_ERROR;
 
 /*

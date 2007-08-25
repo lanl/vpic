@@ -23,8 +23,8 @@ int main(int argc, char *argv[]) {
 	// get an instance of the p2p connection
 	P2PConnection & p2p = P2PConnection::instance();
 
-	int rank = p2p.global_id();
-	int size = p2p.global_size();
+	size_t rank = p2p.global_id();
+	size_t size = p2p.global_size();
 
 	std::cout << "rank " << rank << " size " << size << std::endl;
 

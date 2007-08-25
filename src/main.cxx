@@ -10,12 +10,24 @@
 
 #include <vpic.hxx>
 
+# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+#include <fenv.h>
+
+#ifndef PPE_ROUNDING_MODE
+#define PPE_ROUNDING_MODE FE_TONEAREST
+#endif
+
+# endif
+
 int
 main( int argc,
       char **argv ) {
   int m, n;
 
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+
+  // set PPU rounding mode
+  fesetround(PPE_ROUNDING_MODE);
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
 

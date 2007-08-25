@@ -47,7 +47,6 @@ CCS_WITH_BUILDSTYLE
 CCS_WITH_ADDRESSING
 CCS_WITH_CPUMODEL
 CCS_WITH_EXTENSION
-CCS_WITH_OPT_LEVEL
 
 
 ################################################################################

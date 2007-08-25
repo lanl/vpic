@@ -5,16 +5,6 @@
 BUILDSTYLE=standard_cell
 
 ################################################################################
-# OPT_LEVEL - enable automatic optimization level (3|2|1|0|-1|-2)[0]
-# warning: a value other than 0 will override options to CFLAGS and CXXFLAGS
-################################################################################
-# - FIXME: Separating OPT_LEVEL from the {S,P}C[XX]FLAGS is may ruin
-#   carefully setup optimizations flags as, unfortunately, the order of
-#   the flags matters.  So just set this to 0.
-
-OPT_LEVEL=0
-
-################################################################################
 # ADDRESSING - configure pointer size (32|64)[32]
 ################################################################################
 
@@ -31,8 +21,11 @@ PCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-
 ################################################################################
 # - C++98 does not support long long but mpi.h uses it.  Thus, the C++
 #   build needs a -Wno-long-long.
+#
+# - added PPE_ROUNDING_MODE.  This defaults to FE_TONEAREST
 
-PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long"
+PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long -DPPE_ROUNDING_MODE=FE_TONEAREST"
+#PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long -DPPE_ROUNDING_MODE=FE_TOWARDZERO"
 
 ################################################################################
 # SPU CFLAGS - configure C compiler behavior

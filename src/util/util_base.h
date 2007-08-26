@@ -165,6 +165,14 @@
 #define LIST_FIND_FIRST(node,list,cond) \
   for((node)=(list); (node)!=NULL; (node)=(node)->next) if(cond) break
 
+// Given an integer data type "type", MASK_BIT_RANGE returns a bit
+// field of that type for which bits [f,l] inclusive are 1 and all
+// other bits are zero.  Note that: 0<=f<=l<CHAR_BIT*sizeof(type) and
+// f must be safe agaisnt multiple dereferencing.
+
+#define MASK_BIT_RANGE(type,f,l) \
+  ( ( ( (type)1 << ( (l) - (f) + 1 ) ) - 1 ) << (f) )
+
 // The following macros give a provide a simple logging capabilty. Due
 // to the way they work, usage needs double parenthesis. That is:
 //

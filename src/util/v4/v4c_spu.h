@@ -52,7 +52,9 @@
 
 /* FIXME: THIS MACRO MAY HAVE A POTENTIAL STRICT ALIASING ISSUE (PROBABLY
    UNAVOIDABLE THE WAY SIMD WORKS ON GCC AND XLC) */
-#define LOAD_4x1( p, v )      (v) = *((const vec_float4 *)(p))
+#define LOAD_4x1( p, v )       (v) = *((const vec_float4 *)(p))
+#define LOAD_INT_4x1( p, v )   (v) = *((const vec_int4   *)(p))
+#define LOAD_UINT_4x1( p, v )  (v) = *((const vec_uint4  *)(p))
 
 /* FIXME: THIS MACRO MAY HAVE A POTENTIAL STRICT ALIASING ISSUE (PROBABLY
    UNAVOIDABLE THE WAY SIMD WORKS ON GCC AND XLC) */
@@ -68,18 +70,32 @@
    of spu_mul but xlc does not.  Sigh ... */
 
 #define VEC_FLOAT4( a )  spu_splats( (float)(a) )
+#define VEC_UINT4( a )   spu_splats( (unsigned int)(a) )
+#define VEC_INT4( a )    spu_splats( (int)(a) )
+
 #define EXTRACT( v, n )  spu_extract( (v), (n) )
+#define GATHER( a )      spu_extract( spu_gather( (a) ), 0 )
+
 #define ADD( a, b )      spu_add(   (a), (b) )
 #define SUB( a, b )      spu_sub(   (a), (b) )
 #define MUL( a, b )      spu_mul(   (a), (b) )
+
 #define FMA(  a, b, c )  spu_madd(  (a), (b), (c) )
 #define FMS(  a, b, c )  spu_msub(  (a), (b), (c) )
 #define FNMS( a, b, c )  spu_nmsub( (a), (b), (c) )
+
 #define MERGE( c, t, f ) spu_sel(   (f), (t), (c) )
 #define CZERO( c, a )    spu_andc(  (a), (vec_float4)(c) ) /* USE typeof?? */
+#define NOTCZERO( c, a ) spu_and(   (a), (vec_float4)(c) ) /* USE typeof?? */
+
 #define CMPGT( a, b )    spu_cmpgt( (a), (b) )
 #define CMPLT( a, b )    spu_cmpgt( (b), (a) )
-#define OR( a, b )       spu_or(    (a), (b) )
+#define CMPEQ( a, b )    spu_cmpeq( (b), (a) )
+
+#define AND( a, b )      spu_and( (a), (b) )
+#define OR( a, b )       spu_or(  (a), (b) )
+#define XOR( a, b )      spu_xor( (a), (b) )
+#define NOT( a )         spu_xor( spu_splats( 0xffffffff ), (a) )
 
 /* Compute an estimate of the rsqrt (12-bit accurate) */
 /* Perform Newton-Raphson refinement (one step should give 24-bit) */

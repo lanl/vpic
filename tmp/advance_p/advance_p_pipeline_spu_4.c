@@ -1,5 +1,3 @@
-#ifdef CELL_SPU_BUILD
-
 #define IN_particle_pipeline
 #define HAS_SPU_PIPELINE
 #include <particle_pipelines.h>
@@ -31,91 +29,32 @@ int n_pipeline;
 ///////////////////////////////////////////////////////////////////////////////
 // Pipeline buffers
 
-// NP_BLOCK_TARGET is such that a 16Kb of particle data is located in
+// NP_BLOCK=512 is such that a 16Kb of particle data is located in
 // a particle block (the maximum amount of data that can be moved in a
 // single DMA transfer).  Triple buffering requires 3 such particle
 // blocks.  So local particle storage takes up 48Kb.  Each local
 // particle has a mover associated with it such that a SPU pipeline
 // cannot run out movers during particle processing.  This costs 24Kb.
 
-#define NP_BLOCK_TARGET 512
-DECLARE_ALIGNED_ARRAY( particle_t,       128, local_p,  3*NP_BLOCK_TARGET );
-DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, local_pm, 3*NP_BLOCK_TARGET );
+#define NP_BLOCK 512
+
+DECLARE_ALIGNED_ARRAY( particle_t,       128, p_stream, 3*NP_BLOCK );
+DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, m_stream, 3*NP_BLOCK );
 
 ///////////////////////////////////////////////////////////////////////////////
-// External memory caches
+// External memory caches - IBM's protocol
+
+// FIXME: MAKE THE NEIGHBOR ARRAY 8xNUMBER_LOCAL_VOXELS WHEN BUILDING
+// ON A SPU FOR ALIGNMENT.  EITHER USE ENTRIES 6:7 TO STORE THE GLOBAL
+// VOXEL ID FOR THAT VOXEL OR USE ENTRIES 6:7 TO STORE SOME VOLUMETRIC
+// DATA FOR THAT VOXEL.  THEN THE PROTOCOL CAN BE FUSED WITH THE IA
+// CACHE PROTOCOL BELOW MORE EFFICIENTLY!
 
 // #define CACHE_STATS
 
 // Since DMA transfers seem optimized for 128-bytes at aligned
 // addresses, set up the cache lines to use 128-byte aligned lines
 // 128-bytes in size.
-
-// Interpolator cache: 512 cached interpolators (64Kb). Roughly four
-// second nearest neighborhoods (125 voxels) around a particle can exist
-// within the cache.
-
-#if 0
-#undef CACHE_NAME
-#undef CACHED_TYPE
-#undef CACHE_TYPE
-#undef CACHELINE_LOG2SIZE
-#undef CACHE_LOG2NWAY
-#undef CACHE_LOG2NSETS
-#undef CACHE_SET_TAGID
-#undef CACHE_READ_X4
-#undef CACHE_BASE_EA
-
-#define CACHE_NAME           interpolator_cache
-#define CACHED_TYPE          interpolator_t
-#define CACHE_TYPE           0             /* r/o */
-#define CACHELINE_LOG2SIZE   7             /* 1 per line - 128 byte lines */
-#define CACHE_LOG2NWAY       2             /* 4 way */
-#define CACHE_LOG2NSETS      7             /* 128 lines per way */
-#define CACHE_SET_TAGID(set) (9+(set)&0x7) /* tags 9:16 */
-#define CACHE_BASE_EA        args->f0
-#include "cache-api.h"
-
-#define PTR_INTERPOLATOR(v) cache_rw( interpolator_cache,               \
-                                      (v)*sizeof(interpolator_t) )
-
-#else
-DECLARE_ALIGNED_ARRAY( interpolator_t, 128, interpolator_cache, 1 );
-#define PTR_INTERPOLATOR(v) interpolator_cache
-#endif
-
-#if 0
-// Accumulator cache: 512 cached accumulators (32Kb).  Roughly four
-// second nearest neighborhood of accumulators can exist within the
-// cache.
-
-#undef CACHE_NAME
-#undef CACHED_TYPE
-#undef CACHE_TYPE
-#undef CACHELINE_LOG2SIZE
-#undef CACHE_LOG2NWAY
-#undef CACHE_LOG2NSETS
-#undef CACHE_SET_TAGID
-#undef CACHE_READ_X4
-#undef CACHE_BASE_EA
-
-#define CACHE_NAME           accumulator_cache
-#define CACHED_TYPE          accumulator_t
-#define CACHE_TYPE           1              /* r/w */
-#define CACHELINE_LOG2SIZE   7              /* 2 per line - 128 byte lines */
-#define CACHE_LOG2NWAY       2              /* 4 way */
-#define CACHE_LOG2NSETS      6              /* 64 lines per way */
-#define CACHE_SET_TAGID(set) (17+(set)&0x7) /* tags 17:25 */
-#define CACHE_BASE_EA        args->f0
-#include "cache-api.h"
-
-#define PTR_ACCUMULATOR(v) cache_rw( accumulator_cache,                 \
-                                     (v)*sizeof(accumulator_t) )
-
-#else
-DECLARE_ALIGNED_ARRAY( accumulator_t, 128, accumulator_cache, 1 );
-#define PTR_ACCUMULATOR(v) accumulator_cache
-#endif
 
 // Neighbor cache: 2048 cached cell adjacencies (16K).  Roughly three
 // second nearest neighborhoods of voxel adjacencies can exist within the
@@ -144,6 +83,333 @@ DECLARE_ALIGNED_ARRAY( accumulator_t, 128, accumulator_cache, 1 );
 #define NEIGHBOR(v,face) cache_rd( neighbor_cache,                      \
                                    6*sizeof(int64_t)*(v) +              \
                                    (face)*sizeof(int64_t) )
+
+///////////////////////////////////////////////////////////////////////////////
+// External memory caches - custom protocol
+
+// IA_CACHE_N_LINE gives the number of voxels to cache locally.  This must be
+// a power of two no less than NP_BLOCK.
+
+#define IA_CACHE_N_LINE 512
+
+// Storage for locally cached interpolators and accumulators.  Since
+// particle blocks are no more than N_CACHE_N_LINE in size, there is enough
+// room in the cache to accomodate the worst case situation of every particle
+// in a particle block being in different voxels.
+
+DECLARE_ALIGNED_ARRAY( interpolator_t, 128, i_cache, IA_CACHE_N_LINE );
+DECLARE_ALIGNED_ARRAY( accumulator_t,  128, a_cache, IA_CACHE_N_LINE );
+
+// The cache tags. ia_cache_addr gives the external address (actually
+// a local voxel index) of the interpolator and accumulator data that
+// is cached there.  It is 0xffffffff if there is cache line is empty.
+// ia_cache_next gives the cache line that will be replaced after this
+// one.  ia_cache_prev gives the cache line that will be replaced
+// immediately before this one.
+
+DECLARE_ALIGNED_ARRAY( uint32_t, 128, ia_cache_addr, IA_CACHE_N_LINE );
+DECLARE_ALIGNED_ARRAY( uint32_t, 128, ia_cache_prev, IA_CACHE_N_LINE );
+DECLARE_ALIGNED_ARRAY( uint32_t, 128, ia_cache_next, IA_CACHE_N_LINE );
+
+// The cache hash table.  This provides a hash table that maps keys
+// (addresses / voxel index) to values (cache lines).  IA_CACHE_N_HASH
+// must be a power of two larger than IA_CACHE_N_LINE.  IA_CACHE_HASH
+// hashes an external "address" (actually a voxel index) into a hash
+// table index.  ia_cache_key and ia_cache_val give the key-value
+// pairs in the hash table.
+
+#define IA_CACHE_N_HASH 2048
+
+DECLARE_ALIGNED_ARRAY( uint32_t, 128, ia_cache_key, IA_CACHE_N_HASH );
+DECLARE_ALIGNED_ARRAY( uint32_t, 128, ia_cache_val, IA_CACHE_N_HASH );
+
+#define IA_CACHE_GOLDEN     ((uint32_t)2654435761)
+#define IA_CACHE_HASH(addr) (((addr)*IA_CACHE_GOLDEN)&(IA_CACHE_N_HASH-1))
+
+// Cache miscelleanous.  ia_lru gives the least recently used cache
+// line.  {I,A}_CACHE_[FIRST,LAST]_DMA_CHANNEL gives the [FIRST,LAST]f
+// DMA channels that {interpolator, accumulator} operations should
+// use.  There should be a power of two number of DMA channels
+// assigned to each type of operation.  a_writeback provides a buffer
+// to hold data about pending writeback operations.
+
+uint32_t ia_cache_lru;
+
+#define I_CACHE_DMA_CHANNEL_FIRST 9
+#define I_CACHE_DMA_CHANNEL_LAST  16
+#define A_CACHE_DMA_CHANNEL_FIRST 17
+#define A_CACHE_DMA_CHANNEL_LAST  25
+
+#define I_CACHE_DMA_CHANNEL(addr) ( I_CACHE_DMA_CHANNEL_FIRST + \
+    ( (addr) & ( I_CACHE_DMA_CHANNEL_LAST - I_CACHE_DMA_CHANNEL_FIRST ) ) )
+
+#define A_CACHE_DMA_CHANNEL(addr) ( A_CACHE_DMA_CHANNEL_FIRST + \
+    ( (addr) & ( A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST ) ) )
+
+DECLARE_ALIGNED_ARRAY( accumulator_t, 128, a_cache_writeback,
+                       A_CACHE_DMA_CHANNEL_LAST -
+                       A_CACHE_DMA_CHANNEL_FIRST + 1 );
+
+// ia_cache_init initializes the interpolator/accumulator cache data
+// structures.
+
+static void
+ia_cache_init( void ) {
+  uint32_t hash;
+  uint32_t line;
+
+  // Set up the cache tags
+
+  //memset( ia_cache_addr, 0xff, sizeof(uint32_t)*IA_CACHE_N_LINE );
+
+  for( line=0; line<IA_CACHE_N_LINE; line++ ) {
+    ia_cache_addr[line] = 0xffffffff;
+    ia_cache_prev[line] = line-1;
+    ia_cache_next[line] = line+1;
+  }
+  ia_cache_prev[0                ] = IA_CACHE_N_LINE - 1;
+  ia_cache_next[IA_CACHE_N_LINE-1] = 0;
+
+  // Set up the hash table
+
+  //memset( ia_cache_key,  0xff, sizeof(uint32_t)*IA_CACHE_N_HASH );
+  //memset( ia_cache_val,  0xff, sizeof(uint32_t)*IA_CACHE_N_HASH );
+
+  for( hash=0; hash<IA_CACHE_N_HASH; hash++ ) {
+    ia_cache_key[hash] = 0xffffffff;
+    ia_cache_val[hash] = 0xffffffff;
+  }
+
+  // Set up misc structures
+
+  ia_cache_lru = 0;
+}
+
+// ia_cache_fetch will start fetching the data at "addr" into the
+// cache.  The cache line which will store the data is returned.  The
+// data is not be guaranteed to be available until ia_cache_wait is
+// called.  WARNING: This routine may silently overwrite cached data
+// if used naively.  Read the guarantee that "ia_cache_wait" provides
+// _carefully_.
+// 
+// The user has the option of providing the hash of the ia_cache_fetch
+// in case it they can use vector instructions to produce the
+// hash faster.
+
+#define ia_cache_fetch( addr ) _ia_cache_fetch( addr, IA_CACHE_HASH( addr ) )
+
+static uint32_t
+_ia_cache_fetch( uint32_t addr,
+                 uint32_t hash_addr ) {
+  uint32_t old_addr;
+  uint32_t hash_i, hash_j, hash_k;
+  uint32_t line, prev, next;
+
+  // Lookup addr in the cache - O(1)
+
+  hash_i = hash_addr;
+  while( unlikely( ia_cache_key[hash_i]!=addr & /* YES! A BIT AND */
+                   ia_cache_key[hash_i]!=0xffffffff ) )
+    hash_i = ( hash_i + 1 ) & ( IA_CACHE_N_HASH - 1 );
+  line = ia_cache_val[hash_i];
+
+  if( likely( line!=0xffffffff ) ) { // Cache hit
+    
+    // Mark this cache line as the most recently used
+    
+    if( unlikely( ia_cache_next[line]!=ia_cache_lru ) ) {
+      if( unlikely( line==ia_cache_lru ) )
+        ia_cache_lru = ia_cache_next[ia_cache_lru];
+      else {
+
+        // Remove this cache line from the cache line replacement
+        // sequence.  Then insert this cache line just before the
+        // least recently used line in the replacement sequence.
+      
+        next = ia_cache_next[line];
+        prev = ia_cache_prev[line];
+        ia_cache_next[prev] = next;
+        ia_cache_prev[next] = prev;
+           
+        next = ia_cache_lru;
+        prev = ia_cache_prev[next];
+        ia_cache_next[line] = next;
+        ia_cache_next[line] = prev;
+        ia_cache_next[prev] = line;
+        ia_cache_prev[next] = line;
+
+      }
+    }
+    
+  } else { // Cache miss ... Unlikely
+    
+    // We will fill the least recently used line with the data at addr
+
+    line = ia_cache_lru;
+
+    // Read in the new interpolator for this line
+
+    mfc_get( &i_cache[line], args->f0+sizeof(interpolator_t)*addr,
+             sizeof(interpolator_t), I_CACHE_DMA_CHANNEL(addr), 0, 0 );
+
+    // This accumulator DMA operation is _very_ tricky.  The
+    // accumulator cache read must have a fence to insure that
+    // previous accumulator cache writes have completed before the
+    // read. Note that accumulator cache writes to a channel do not
+    // need a fence because there will never be two cache writes to
+    // the same address without at least one intervening cache read.
+    // (Think about it.)  It is desirable to use more than one DMA
+    // channel in cache operations but fenced DMA operations only
+    // apply to a single DMA channel.  Thus, to make the fence
+    // effective such that all writes to a particular address complete
+    // before a read of that address, all writes and the reads to that
+    // address must use the same DMA channel.  Given the cache is
+    // fully associative (there is no relation between the a cache
+    // line and the address of the data it holds), cache line
+    // information is not useful to determine which DMA channel to use
+    // for the writes or reads.  Thus, the address of the transaction
+    // must be used to to determine the DMA channel.
+
+    // This brings up a second complexity.  When writing back the old
+    // contents of a cache line being replaced, the write is
+    // immediately followed by read to that same cache line.  However,
+    // because the DMA channel for these transactions is determined by
+    // the addresses of these operations, these operations may use
+    // different DMA channels.  So that these operations do not
+    // collide (i.e. the read of the new data replaces the old data
+    // before the old data is written), it is necessary to copy the
+    // data into a writeback buffer.
+
+    // This brings up a third complexity.  So that a writeback on does
+    // not clobber a previous writeback on a given DMA channel, we
+    // need to wait until the channel used for the writeback is free.
+
+    // Flush out the old accumulator as necessary.
+   
+    old_addr = ia_cache_addr[line];
+
+    if( likely( old_addr!=0xffffffff ) ) {
+
+      uint32_t channel = A_CACHE_DMA_CHANNEL(old_addr);     
+
+      // Wait for the writeback channel to become free
+
+      mfc_write_tag_mask( 1<< channel );
+      mfc_read_tag_status_all();
+
+      // Buffer the data to writeback
+
+      a_cache_writeback[channel] = a_cache[line];
+
+      // Writeback the data
+
+      mfc_put( &a_cache_writeback[channel],
+               args->a0+sizeof(accumulator_t)*old_addr,
+               sizeof(accumulator_t), channel, 0, 0 );
+
+    }
+
+    // Read in the new accumulator for this line
+
+    mfc_getf( &a_cache[line], args->a0+sizeof(accumulator_t)*addr,
+              sizeof(accumulator_t), A_CACHE_DMA_CHANNEL(addr), 0, 0 );
+
+    // Update the least recently used line.  The new least recently
+    // used line is the one that follows this line in the cache line
+    // replacement sequence.
+
+    ia_cache_lru = ia_cache_next[line];
+
+    // Update the cache tag
+    
+    ia_cache_addr[line] = addr;
+
+    // If we had to flush previously cached data, remove the map of
+    // old_addr to line - O(1).  Note that if we had a write back, we
+    // are guaranteed that old_addr _is_ in the hash table.
+
+    if( likely( old_addr!=0xffffffff ) ) {
+
+      hash_i = IA_CACHE_HASH(old_addr);
+      while( unlikely( ia_cache_key[hash_i]!=old_addr ) )
+        hash_i = ( hash_i + 1 ) & ( IA_CACHE_N_HASH - 1 );     
+
+      hash_j = hash_i;
+      for(;;) {
+        hash_j = ( hash_j + 1 ) & ( IA_CACHE_N_HASH - 1 );
+        if( likely( ia_cache_key[hash_j]==0xffffffff ) ) break;
+        hash_k = IA_CACHE_HASH( ia_cache_key[hash_j] );
+        if( ( hash_j>hash_i & ( hash_k<=hash_i | hash_k>hash_j ) ) |
+            ( hash_j<hash_i & ( hash_k<=hash_i & hash_k>hash_j ) ) ) { /* YES! BIT OPS! */
+          ia_cache_key[hash_i] = ia_cache_key[hash_j];
+          ia_cache_val[hash_i] = ia_cache_val[hash_j];
+          hash_i = hash_j;
+        }
+      }
+
+      ia_cache_key[hash_i] = 0xffffffff;
+      ia_cache_val[hash_i] = 0xffffffff;
+
+    }
+
+    // Map addr to line - O(1).  Note that we are guaranteed that addr
+    // _is_ _not_ in the hash table; if addr was in the hash table,
+    // this would not have been a cache miss.
+
+    hash_i = hash_addr;
+    while( unlikely( ia_cache_key[hash_i]!=0xffffffff  ) )
+      hash_i = ( hash_i + 1 ) & ( IA_CACHE_N_HASH - 1 );
+    ia_cache_key[hash_i] = addr;
+    ia_cache_val[hash_i] = line;
+  
+  }
+
+  return line;
+}
+
+// ia_cache_wait completes all pending cache operations.  After
+// ia_cache_wait returns, the cache is _guaranteed_ to contain at
+// least the previous IA_CACHE_N_LINE fetches of data.  Even more
+// specifically, after ia_cache_wait returns, the cache is
+// _guaranteed_ to contain the data for the previous IA_CACHE_N_LINE
+// unique addresses fetched.  For example, if you have a cache with
+// 128 lines and perform 129 fetches before calling ia_cache_wait, you
+// _are_ guaranteed that the data needed for the last 128 fetches is
+// in the cache.  You are _not_ guaranteed that the data for the first
+// fetch is in the cache unless the were no more than 128 unique
+// addresses in the fetches.
+
+static __inline void
+ia_cache_wait( void ) {
+  mfc_write_tag_mask( MASK_BIT_RANGE( uint32_t,
+                                      I_CACHE_DMA_CHANNEL_FIRST,
+                                      I_CACHE_DMA_CHANNEL_LAST ) |
+                      MASK_BIT_RANGE( uint32_t,
+                                      A_CACHE_DMA_CHANNEL_FIRST,
+                                      A_CACHE_DMA_CHANNEL_LAST ) );
+  mfc_read_tag_status_all();
+}
+
+// ia_cache_writeback writes back all the accumulators stored in the
+// cache to memory.  FIXME: COULD THIS BE MORE EFFICIENT IN ITS USE OF
+// DMA CHANNELS?  AND IS THE PARANOIA NECESSARY?
+
+static int
+ia_cache_writeback( void ) {
+  uint32_t addr;
+  uint32_t line;
+  
+  ia_cache_wait(); // Paranoid?
+
+  for( line=0; line<IA_CACHE_N_LINE; line++ ) {
+    addr = ia_cache_addr[line];
+    if( addr==0xffffffff ) continue; // Unlikely??
+    mfc_put( &a_cache[line], args->a0+sizeof(accumulator_t)*addr,
+             sizeof(accumulator_t), A_CACHE_DMA_CHANNEL(addr), 0, 0 );
+  }
+
+  ia_cache_wait(); // Paranoid?
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Computational kernel
@@ -282,9 +548,10 @@ move_p_spu( particle_t       * ALIGNED(32) p,
 
     v0 = s_dir[type];
     neighbor = NEIGHBOR( p->i, ((v0>0)?3:0) + type );
-    if( neighbor<args->rangel || neighbor>args->rangeh ) { // Hit a boundary
-      (&(p->dx))[type] = v0;                               // Put on boundary
-      if( neighbor!=reflect_particles ) return 1;          // Cannot handle it
+    // YES! BIT OR
+    if( neighbor<args->rangel | neighbor>args->rangeh ) { // Hit a boundary
+      (&(p->dx))[type] = v0;                              // Put on boundary
+      if( neighbor!=reflect_particles ) return 1;         // Cannot handle it
       (&(p->ux))[type] = -(&(p->ux))[type];
       (&(pm->dispx))[type] = -(&(pm->dispx))[type];
     } else {
@@ -295,16 +562,17 @@ move_p_spu( particle_t       * ALIGNED(32) p,
   }
   return 0; // Never get here ... avoid compiler warning
 }
+
 #endif
 
 // FIXME: Using restricted pointers makes this worse(!) on gcc??
 // FIXME: Branch hints makes this worse(!) on gcc?? (No change on xlc.)
 
-static int                             // Return number of movers used
-advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
-                        particle_mover_t * ALIGNED(16)  pm, // Mover array
-                        int idx,       // Index of first particle
-                        int nqq ) {    // Number of quad particle quads
+static int                         // Return number of movers used
+advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Particle array
+                        particle_mover_t * __restrict ALIGNED(16)  pm, // Mover array
+                        int idx,   // Index of first particle
+                        int np ) { // Number of quad particle quads
   USING_V4C;
 
   const vec_float4 qdt_2mc        = VEC_FLOAT4( args->qdt_2mc );
@@ -317,11 +585,16 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
   const vec_float4 two_fifteenths = VEC_FLOAT4(  2./15.       );
   const vec_float4 neg_one        = VEC_FLOAT4( -1.           );
 
+  const vec_uint4  v_i_cache      = VEC_UINT4( i_cache        );
+  const vec_uint4  v_a_cache      = VEC_UINT4( a_cache        );
+
   vec_float4 p0r, p1r, p2r, p3r;             vec_float4 p4r, p5r, p6r, p7r;           vec_float4 p8r, p9r, p10r, p11r;         vec_float4 p12r, p13r, p14r, p15r;
   vec_float4 p0u, p1u, p2u, p3u;             vec_float4 p4u, p5u, p6u, p7u;           vec_float4 p8u, p9u, p10u, p11u;         vec_float4 p12u, p13u, p14u, p15u;
 
-  vec_float4 dx,   dy,   dz;   vec_int4 i;                                            vec_float4 dx_1, dy_1, dz_1; vec_int4 i_1;
-  vec_float4 dx_2, dy_2, dz_2; vec_int4 i_2;                                          vec_float4 dx_3, dy_3, dz_3; vec_int4 i_3;
+  vec_float4 dx,   dy,   dz;   vec_uint4 i;                                           vec_float4 dx_1, dy_1, dz_1; vec_uint4 i_1;
+  vec_float4 dx_2, dy_2, dz_2; vec_uint4 i_2;                                         vec_float4 dx_3, dy_3, dz_3; vec_uint4 i_3;
+
+  vec_uint4 vp;                              vec_uint4 vp_1;                          vec_uint4 vp_2;                            vec_uint4   vp_3;
 
   vec_float4 ux,   uy,   uz,   q;            vec_float4 ux_1, uy_1, uz_1, q_1;        vec_float4 ux_2, uy_2, uz_2, q_2;        vec_float4 ux_3, uy_3, uz_3, q_3;           
 
@@ -349,6 +622,7 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
   vec_float4 dxh,   dyh,   dzh;              vec_float4 dxh_1, dyh_1, dzh_1;          vec_float4 dxh_2, dyh_2, dzh_2;            vec_float4 dxh_3, dyh_3, dzh_3;
   vec_float4 dx1,   dy1,   dz1;              vec_float4 dx1_1, dy1_1, dz1_1;          vec_float4 dx1_2, dy1_2, dz1_2;            vec_float4 dx1_3, dy1_3, dz1_3;
   vec_uint4  outbnd;                         vec_uint4  outbnd_1;                     vec_uint4  outbnd_2;                       vec_uint4  outbnd_3; 
+  uint32_t  gather;                          uint32_t  gather_1;                      uint32_t  gather_2;                        uint32_t  gather_3;
 
   vec_float4 qa,   ccc;                      vec_float4 qa_1, ccc_1;                  vec_float4 qa_2, ccc_2;                    vec_float4 qa_3, ccc_3;
 
@@ -359,54 +633,66 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
   vec_float4 a0z,   a1z,   a2z,   a3z,   a4z;                                         vec_float4 a0z_1, a1z_1, a2z_1, a3z_1, a4z_1;
   vec_float4 a0z_2, a1z_2, a2z_2, a3z_2, a4z_2;                                       vec_float4 a0z_3, a1z_3, a2z_3, a3z_3, a4z_3;
 
-  int i0,   i1,   i2,   i3;                  int i0_1, i1_1, i2_1, i3_1;              int i0_2, i1_2, i2_2, i3_2;                int i0_3, i1_3, i2_3, i3_3;
+  const interpolator_t * __restrict ALIGNED(128) fi;
+  accumulator_t        * __restrict ALIGNED(64)  ja;
 
-  const interpolator_t * ALIGNED(128) fi;
-  accumulator_t * ALIGNED(64) ja;
-  int nm = 0;
+  int n, nm;
+
+  DECLARE_ALIGNED_ARRAY( uint32_t, 128, line, NP_BLOCK );
+
+  // Prefetch interpolator and accumulator data for this block
+
+  for( n=0; n<np; n++ ) line[n] = ia_cache_fetch( p[n].i )<<6; // FIXME: UGLY!
+  ia_cache_wait();
 
   // Process the particle quads for this pipeline
 
-  for( ; nqq; nqq--, p+=16, idx+=16 ) {
+  for( n=nm=0; n<np; n+=16 ) {
 
     // Load the particle quad positions
 
-    LOAD_4x1( &p[0].dx,  p0r );              LOAD_4x1( &p[4].dx,  p4r  );             LOAD_4x1( &p[8].dx,  p8r );              LOAD_4x1( &p[12].dx, p12r );
-    LOAD_4x1( &p[1].dx,  p1r );              LOAD_4x1( &p[5].dx,  p5r  );             LOAD_4x1( &p[9].dx,  p9r );              LOAD_4x1( &p[13].dx, p13r );
-    LOAD_4x1( &p[2].dx,  p2r );              LOAD_4x1( &p[6].dx,  p6r  );             LOAD_4x1( &p[10].dx, p10r );             LOAD_4x1( &p[14].dx, p14r );
-    LOAD_4x1( &p[3].dx,  p3r );              LOAD_4x1( &p[7].dx,  p7r  );             LOAD_4x1( &p[11].dx, p11r );             LOAD_4x1( &p[15].dx, p15r );
+    LOAD_4x1( &p[n+ 0].dx,  p0r );           LOAD_4x1( &p[n+ 4].dx,  p4r  );          LOAD_4x1( &p[n+ 8].dx,  p8r );           LOAD_4x1( &p[n+12].dx, p12r );
+    LOAD_4x1( &p[n+ 1].dx,  p1r );           LOAD_4x1( &p[n+ 5].dx,  p5r  );          LOAD_4x1( &p[n+ 9].dx,  p9r );           LOAD_4x1( &p[n+13].dx, p13r );
+    LOAD_4x1( &p[n +2].dx,  p2r );           LOAD_4x1( &p[n+ 6].dx,  p6r  );          LOAD_4x1( &p[n+10].dx, p10r );           LOAD_4x1( &p[n+14].dx, p14r );
+    LOAD_4x1( &p[n +3].dx,  p3r );           LOAD_4x1( &p[n+ 7].dx,  p7r  );          LOAD_4x1( &p[n+11].dx, p11r );           LOAD_4x1( &p[n+15].dx, p15r );
     TRANSPOSE( p0r,  p1r,  p2r,  p3r  );     TRANSPOSE( p4r,  p5r,  p6r,  p7r  );     TRANSPOSE( p8r,  p9r,  p10r, p11r );     TRANSPOSE( p12r, p13r, p14r, p15r );
     dx   = p0r;                              dx_1 = p4r;                              dx_2 = p8r;                              dx_3 = p12r;
     dy   = p1r;                              dy_1 = p5r;                              dy_2 = p9r;                              dy_3 = p13r;
     dz   = p2r;                              dz_1 = p6r;                              dz_2 = p10r;                             dz_3 = p14r;
-    i    = (vec_int4)p3r;                    i_1  = (vec_int4)p7r;                    i_2  = (vec_int4)p11r;                   i_3  = (vec_int4)p15r;
+    LOAD_UINT_4x1( &line[n   ], i   );       LOAD_UINT_4x1( &line[n+ 4], i_1 );       LOAD_UINT_4x1( &line[n+ 8], i_2 );       LOAD_UINT_4x1( &line[n+12], i_3 );
 
     // Interpolate fields
 
-#   define LOAD_INTERPOLATOR(ii,a,b,c,d,e) \
-    fi = PTR_INTERPOLATOR(ii);             \
-    LOAD_4x1( &fi->ex,  a );               \
-    LOAD_4x1( &fi->ey,  b );               \
-    LOAD_4x1( &fi->ez,  c );               \
-    LOAD_4x1( &fi->cbx, d );               \
+#   define LOAD_INTERPOLATOR(VP,I,a,b,c,d,e)    \
+    fi = (const interpolator_t *)EXTRACT(VP,I); \
+    LOAD_4x1( &fi->ex,  a );                    \
+    LOAD_4x1( &fi->ey,  b );                    \
+    LOAD_4x1( &fi->ez,  c );                    \
+    LOAD_4x1( &fi->cbx, d );                    \
     LOAD_4x1( &fi->cbz, e )
-   
-    i0   = EXTRACT( i,   0 );                i0_1 = EXTRACT( i_1, 0 );                i0_2 = EXTRACT( i_2, 0 );                i0_3 = EXTRACT( i_3, 0 );
-    LOAD_INTERPOLATOR(i0,   ex0,        ey0,        ez0,        cbx0,     cbz0    );  LOAD_INTERPOLATOR(i0_1, ex0_1,      ey0_1,      ez0_1,      cbx0_1,   cbz0_1  );
-    LOAD_INTERPOLATOR(i0_2, ex0_2,      ey0_2,      ez0_2,      cbx0_2,   cbz0_2  );  LOAD_INTERPOLATOR(i0_3, ex0_3,      ey0_3,      ez0_3,      cbx0_3,   cbz0_3  );
+     
+    vp   = ADD( v_i_cache, ADD(i,  i  ) );   vp_1 = ADD( v_i_cache, ADD(i_1,i_1) );   vp_2 = ADD( v_i_cache, ADD(i_2,i_2) );   vp_3 = ADD( v_i_cache, ADD(i_3,i_3) );
 
-    i1   = EXTRACT( i,   1 );                i1_1 = EXTRACT( i_1, 1 );                i1_2 = EXTRACT( i_2, 1 );                i1_3 = EXTRACT( i_3, 1 );
-    LOAD_INTERPOLATOR(i1,   dexdy,      deydz,      dezdx,      dcbxdx,   dcbzdz  );  LOAD_INTERPOLATOR(i1_1, dexdy_1,    deydz_1,    dezdx_1,    dcbxdx_1, dcbzdz_1);
-    LOAD_INTERPOLATOR(i1_2, dexdy_2,    deydz_2,    dezdx_2,    dcbxdx_2, dcbzdz_2);  LOAD_INTERPOLATOR(i1_3, dexdy_3,    deydz_3,    dezdx_3,    dcbxdx_3, dcbzdz_3);
+    LOAD_INTERPOLATOR( vp,   0, ex0,        ey0,        ez0,        cbx0,     cbz0     ); 
+    LOAD_INTERPOLATOR( vp,   1, dexdy,      deydz,      dezdx,      dcbxdx,   dcbzdz   );
+    LOAD_INTERPOLATOR( vp,   2, dexdz,      deydx,      dezdy,      cby0,     v12      );
+    LOAD_INTERPOLATOR( vp,   3, d2exdydz,   d2eydzdx,   d2ezdxdy,   dcbydy,   v13      );
 
-    i2   = EXTRACT( i,   2 );                i2_1 = EXTRACT( i_1, 2 );                i2_2 = EXTRACT( i_2, 2 );                i2_3 = EXTRACT( i_3, 2 );
-    LOAD_INTERPOLATOR(i2,   dexdz,      deydx,      dezdy,      cby0,     v12     );  LOAD_INTERPOLATOR(i2_1, dexdz_1,    deydx_1,    dezdy_1,    cby0_1,   v12_1   );
-    LOAD_INTERPOLATOR(i2_2, dexdz_2,    deydx_2,    dezdy_2,    cby0_2,   v12_2   );  LOAD_INTERPOLATOR(i2_3, dexdz_3,    deydx_3,    dezdy_3,    cby0_3,   v12_3   );
+    LOAD_INTERPOLATOR( vp_1, 0, ex0_1,      ey0_1,      ez0_1,      cbx0_1,   cbz0_1   );
+    LOAD_INTERPOLATOR( vp_1, 1, dexdy_1,    deydz_1,    dezdx_1,    dcbxdx_1, dcbzdz_1 );
+    LOAD_INTERPOLATOR( vp_1, 2, dexdz_1,    deydx_1,    dezdy_1,    cby0_1,   v12_1    );
+    LOAD_INTERPOLATOR( vp_1, 3, d2exdydz_1, d2eydzdx_1, d2ezdxdy_1, dcbydy_1, v13_1    );
 
-    i3   = EXTRACT( i,   3 );                i3_1 = EXTRACT( i_1, 3 );                i3_2 = EXTRACT( i_2, 3 );                i3_3 = EXTRACT( i_3, 3 );
-    LOAD_INTERPOLATOR(i3,   d2exdydz,   d2eydzdx,   d2ezdxdy,   dcbydy,   v13     );  LOAD_INTERPOLATOR(i3_1, d2exdydz_1, d2eydzdx_1, d2ezdxdy_1, dcbydy_1, v13_1   );
-    LOAD_INTERPOLATOR(i3_2, d2exdydz_2, d2eydzdx_2, d2ezdxdy_2, dcbydy_2, v13_2   );  LOAD_INTERPOLATOR(i3_3, d2exdydz_3, d2eydzdx_3, d2ezdxdy_3, dcbydy_3, v13_3   );
-    
+    LOAD_INTERPOLATOR( vp_2, 0, ex0_2,      ey0_2,      ez0_2,      cbx0_2,   cbz0_2   ); 
+    LOAD_INTERPOLATOR( vp_2, 1, dexdy_2,    deydz_2,    dezdx_2,    dcbxdx_2, dcbzdz_2 );
+    LOAD_INTERPOLATOR( vp_2, 2, dexdz_2,    deydx_2,    dezdy_2,    cby0_2,   v12_2    );
+    LOAD_INTERPOLATOR( vp_2, 3, d2exdydz_2, d2eydzdx_2, d2ezdxdy_2, dcbydy_2, v13_2    );
+
+    LOAD_INTERPOLATOR( vp_3, 0, ex0_3,      ey0_3,      ez0_3,      cbx0_3,   cbz0_3   );
+    LOAD_INTERPOLATOR( vp_3, 1, dexdy_3,    deydz_3,    dezdx_3,    dcbxdx_3, dcbzdz_3 );
+    LOAD_INTERPOLATOR( vp_3, 2, dexdz_3,    deydx_3,    dezdy_3,    cby0_3,   v12_3    );
+    LOAD_INTERPOLATOR( vp_3, 3, d2exdydz_3, d2eydzdx_3, d2ezdxdy_3, dcbydy_3, v13_3    );
+
     TRANSPOSE( ex0,   dexdy,   dexdz,   d2exdydz   );                                 TRANSPOSE( ex0_1, dexdy_1, dexdz_1, d2exdydz_1 );
     TRANSPOSE( ex0_2, dexdy_2, dexdz_2, d2exdydz_2 );                                 TRANSPOSE( ex0_3, dexdy_3, dexdz_3, d2exdydz_3 );
     hax   = MUL( qdt_2mc, FMA( FMA( d2exdydz,   dy,   dexdz   ), dz,   FMA( dexdy,   dy,   ex0   ) ) );
@@ -441,10 +727,10 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     // if willing to play fast and loose with numerics (saves about a spu
     // clock per particle).
 
-    LOAD_4x1( &p[0].ux,  p0u  );             LOAD_4x1( &p[4].ux,  p4u  );             LOAD_4x1( &p[8].ux,  p8u  );             LOAD_4x1( &p[12].ux, p12u );
-    LOAD_4x1( &p[1].ux,  p1u  );             LOAD_4x1( &p[5].ux,  p5u  );             LOAD_4x1( &p[9].ux,  p9u  );             LOAD_4x1( &p[13].ux, p13u );
-    LOAD_4x1( &p[2].ux,  p2u  );             LOAD_4x1( &p[6].ux,  p6u  );             LOAD_4x1( &p[10].ux, p10u );             LOAD_4x1( &p[14].ux, p14u );
-    LOAD_4x1( &p[3].ux,  p3u  );             LOAD_4x1( &p[7].ux,  p7u  );             LOAD_4x1( &p[11].ux, p11u );             LOAD_4x1( &p[15].ux, p15u );
+    LOAD_4x1( &p[n+ 0].ux,  p0u );           LOAD_4x1( &p[n+ 4].ux,  p4u );           LOAD_4x1( &p[n+ 8].ux,  p8u );           LOAD_4x1( &p[n+12].ux, p12u );
+    LOAD_4x1( &p[n+ 1].ux,  p1u );           LOAD_4x1( &p[n+ 5].ux,  p5u );           LOAD_4x1( &p[n+ 9].ux,  p9u );           LOAD_4x1( &p[n+13].ux, p13u );
+    LOAD_4x1( &p[n+ 2].ux,  p2u );           LOAD_4x1( &p[n+ 6].ux,  p6u );           LOAD_4x1( &p[n+10].ux, p10u );           LOAD_4x1( &p[n+14].ux, p14u );
+    LOAD_4x1( &p[n+ 3].ux,  p3u );           LOAD_4x1( &p[n+ 7].ux,  p7u );           LOAD_4x1( &p[n+11].ux, p11u );           LOAD_4x1( &p[n+15].ux, p15u );
     TRANSPOSE( p0u, p1u, p2u, p3u );         TRANSPOSE( p4u, p5u, p6u, p7u );         TRANSPOSE( p8u, p9u, p10u, p11u );       TRANSPOSE( p12u, p13u, p14u, p15u );
     ux    = p0u;                             ux_1  = p4u;                             ux_2  = p8u;                             ux_3  = p12u;
     uy    = p1u;                             uy_1  = p5u;                             uy_2  = p9u;                             uy_3  = p13u;
@@ -483,10 +769,10 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     p2u  = uzh;                              p6u  = uzh_1;                            p10u = uzh_2;                            p14u = uzh_3;
     /* p3u  is unchanged */                  /* p7u  is unchanged */                  /* p11u is unchanged */                  /* p15u is unchanged */
     TRANSPOSE( p0u,  p1u,  p2u,  p3u  );     TRANSPOSE( p4u,  p5u,  p6u,  p7u  );     TRANSPOSE( p8u,  p9u,  p10u, p11u );     TRANSPOSE( p12u, p13u, p14u, p15u );
-    STORE_4x1( p0u,  &p[0].ux  );            STORE_4x1( p4u,  &p[4].ux  );            STORE_4x1( p8u,  &p[8].ux  );            STORE_4x1( p12u, &p[12].ux );
-    STORE_4x1( p1u,  &p[1].ux  );            STORE_4x1( p5u,  &p[5].ux  );            STORE_4x1( p9u,  &p[9].ux  );            STORE_4x1( p13u, &p[13].ux );
-    STORE_4x1( p2u,  &p[2].ux  );            STORE_4x1( p6u,  &p[6].ux  );            STORE_4x1( p10u, &p[10].ux );            STORE_4x1( p14u, &p[14].ux );
-    STORE_4x1( p3u,  &p[3].ux  );            STORE_4x1( p7u,  &p[7].ux  );            STORE_4x1( p11u, &p[11].ux );            STORE_4x1( p15u, &p[15].ux );
+    STORE_4x1(  p0u, &p[n+ 0].ux );          STORE_4x1(  p4u, &p[n+ 4].ux );          STORE_4x1(  p8u, &p[n+ 8].ux );          STORE_4x1( p12u, &p[n+12].ux );
+    STORE_4x1(  p1u, &p[n+ 1].ux );          STORE_4x1(  p5u, &p[n+ 5].ux );          STORE_4x1(  p9u, &p[n+ 9].ux );          STORE_4x1( p13u, &p[n+13].ux );
+    STORE_4x1(  p2u, &p[n+ 2].ux );          STORE_4x1(  p6u, &p[n+ 6].ux );          STORE_4x1( p10u, &p[n+10].ux );          STORE_4x1( p14u, &p[n+14].ux );
+    STORE_4x1(  p3u, &p[n+ 3].ux );          STORE_4x1(  p7u, &p[n+ 7].ux );          STORE_4x1( p11u, &p[n+11].ux );          STORE_4x1( p15u, &p[n+15].ux );
     
     // Update the position of inbnd particles
 
@@ -510,16 +796,32 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
     outbnd_1 = OR( OR( OR( CMPLT(dx1_1,neg_one), CMPGT(dx1_1,one) ), OR( CMPLT(dy1_1,neg_one), CMPGT(dy1_1,one) ) ), OR( CMPLT(dz1_1,neg_one), CMPGT(dz1_1,one) ) );
     outbnd_2 = OR( OR( OR( CMPLT(dx1_2,neg_one), CMPGT(dx1_2,one) ), OR( CMPLT(dy1_2,neg_one), CMPGT(dy1_2,one) ) ), OR( CMPLT(dz1_2,neg_one), CMPGT(dz1_2,one) ) );
     outbnd_3 = OR( OR( OR( CMPLT(dx1_3,neg_one), CMPGT(dx1_3,one) ), OR( CMPLT(dy1_3,neg_one), CMPGT(dy1_3,one) ) ), OR( CMPLT(dz1_3,neg_one), CMPGT(dz1_3,one) ) );
+
+#   define TEST_OUTBND(Q,E,o)                       \
+    if( unlikely( ( gather##Q & (1<<E) ) != 0 ) ) { \
+       pm[nm].dispx = EXTRACT( ddx##Q, E );         \
+       pm[nm].dispx = EXTRACT( ddy##Q, E );         \
+       pm[nm].dispx = EXTRACT( ddz##Q, E );         \
+       pm[nm].i     = n + o;                        \
+       nm++;                                        \
+     }
+    gather   = GATHER( outbnd   );           gather_1 = GATHER( outbnd_1 );           gather_2 = GATHER( outbnd_2 );           gather_3 = GATHER( outbnd_3 );
+    if( unlikely( gather  !=0 ) ) { TEST_OUTBND(,  0, 0); TEST_OUTBND(,  1, 1); TEST_OUTBND(,  2, 2); TEST_OUTBND(,  3, 3); }
+    if( unlikely( gather_1!=0 ) ) { TEST_OUTBND(_1,0, 4); TEST_OUTBND(_1,1, 5); TEST_OUTBND(_1,2, 6); TEST_OUTBND(_1,3, 7); }
+    if( unlikely( gather_2!=0 ) ) { TEST_OUTBND(_2,0, 8); TEST_OUTBND(_2,1, 9); TEST_OUTBND(_2,2,10); TEST_OUTBND(_2,3,11); }
+    if( unlikely( gather_3!=0 ) ) { TEST_OUTBND(_3,0,12); TEST_OUTBND(_3,1,13); TEST_OUTBND(_3,2,14); TEST_OUTBND(_3,3,14); }
+#   undef TEST_OUTBND
+
     p0r      = MERGE(outbnd,  dx,  dx1  );   p4r      = MERGE(outbnd_1,dx_1,dx1_1);   p8r      = MERGE(outbnd_2,dx_2,dx1_2);   p12r     = MERGE(outbnd_3,dx_3,dx1_3);
     p1r      = MERGE(outbnd,  dy,  dy1  );   p5r      = MERGE(outbnd_1,dy_1,dy1_1);   p9r      = MERGE(outbnd_2,dy_2,dy1_2);   p13r     = MERGE(outbnd_3,dy_3,dy1_3);
     p2r      = MERGE(outbnd,  dz,  dz1  );   p6r      = MERGE(outbnd_1,dz_1,dz1_1);   p10r     = MERGE(outbnd_2,dz_2,dz1_2);   p14r     = MERGE(outbnd_3,dz_3,dz1_3);
     /* p3r  is unchanged */                  /* p7r  is unchanged */                  /* p11r is unchanged */                  /* p15r is unchanged */
     TRANSPOSE( p0r,  p1r,  p2r,  p3r  );     TRANSPOSE( p4r,  p5r,  p6r,  p7r  );     TRANSPOSE( p8r,  p9r,  p10r, p11r );     TRANSPOSE( p12r, p13r, p14r, p15r );
-    STORE_4x1( p0r,  &p[0].dx  );            STORE_4x1( p4r,  &p[4].dx  );            STORE_4x1( p8r,  &p[8].dx  );            STORE_4x1( p12r, &p[12].dx );
-    STORE_4x1( p1r,  &p[1].dx  );            STORE_4x1( p5r,  &p[5].dx  );            STORE_4x1( p9r,  &p[9].dx  );            STORE_4x1( p13r, &p[13].dx );
-    STORE_4x1( p2r,  &p[2].dx  );            STORE_4x1( p6r,  &p[6].dx  );            STORE_4x1( p10r, &p[10].dx );            STORE_4x1( p14r, &p[14].dx );
-    STORE_4x1( p3r,  &p[3].dx  );            STORE_4x1( p7r,  &p[7].dx  );            STORE_4x1( p11r, &p[11].dx );            STORE_4x1( p15r, &p[15].dx );
-   
+    STORE_4x1(  p0r, &p[n+ 0].dx );          STORE_4x1(  p4r, &p[n+ 4].dx );          STORE_4x1(  p8r, &p[n+ 8].dx );          STORE_4x1( p12r, &p[n+12].dx );
+    STORE_4x1(  p1r, &p[n+ 1].dx );          STORE_4x1(  p5r, &p[n+ 5].dx );          STORE_4x1(  p9r, &p[n+ 9].dx );          STORE_4x1( p13r, &p[n+13].dx );
+    STORE_4x1(  p2r, &p[n+ 2].dx );          STORE_4x1(  p6r, &p[n+ 6].dx );          STORE_4x1( p10r, &p[n+10].dx );          STORE_4x1( p14r, &p[n+14].dx );
+    STORE_4x1(  p3r, &p[n+ 3].dx );          STORE_4x1(  p7r, &p[n+ 7].dx );          STORE_4x1( p11r, &p[n+11].dx );          STORE_4x1( p15r, &p[n+15].dx );
+
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
@@ -552,66 +854,52 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 
 #   undef ACCUMULATE_J
 
-#   define INCREMENT_ACCUMULATOR(ii,x,y,z) \
-    ja = PTR_ACCUMULATOR(ii);              \
-    INCREMENT_4x1( ja->jx, x );            \
-    INCREMENT_4x1( ja->jy, y );            \
-    INCREMENT_4x1( ja->jz, z )
+#   define INCREMENT_ACCUMULATOR(VP,I,x,y,z) \
+    ja = (accumulator_t *)EXTRACT(VP,I);     \
+    INCREMENT_4x1( &ja->jx[0], x );          \
+    INCREMENT_4x1( &ja->jy[0], y );          \
+    INCREMENT_4x1( &ja->jz[0], z )
 
-    INCREMENT_ACCUMULATOR(i0,  a0x,  a0y,  a0z  );
-    INCREMENT_ACCUMULATOR(i1,  a1x,  a1y,  a1z  );
-    INCREMENT_ACCUMULATOR(i2,  a2x,  a2y,  a2z  );
-    INCREMENT_ACCUMULATOR(i3,  a3x,  a3y,  a3z  );
+    vp   = ADD( v_a_cache, i   );            vp_1 = ADD( v_a_cache, i_1 );            vp_2 = ADD( v_a_cache, i_2 );            vp_3 = ADD( v_a_cache, i_3 );
 
-    INCREMENT_ACCUMULATOR(i0_1,a0x_1,a0y_1,a0z_1);
-    INCREMENT_ACCUMULATOR(i1_1,a1x_1,a1y_1,a1z_1);
-    INCREMENT_ACCUMULATOR(i2_1,a2x_1,a2y_1,a2z_1);
-    INCREMENT_ACCUMULATOR(i3_1,a3x_1,a3y_1,a3z_1);
+    INCREMENT_ACCUMULATOR( vp,   0,  a0x,    a0y,    a0z   );
+    INCREMENT_ACCUMULATOR( vp,   1,  a1x,    a1y,    a1z   );
+    INCREMENT_ACCUMULATOR( vp,   2,  a2x,    a2y,    a2z   );
+    INCREMENT_ACCUMULATOR( vp,   3,  a3x,    a3y,    a3z   );
 
-    INCREMENT_ACCUMULATOR(i0_2,a0x_2,a0y_2,a0z_2);
-    INCREMENT_ACCUMULATOR(i1_2,a1x_2,a1y_2,a1z_2);
-    INCREMENT_ACCUMULATOR(i2_2,a2x_2,a2y_2,a2z_2);
-    INCREMENT_ACCUMULATOR(i3_2,a3x_2,a3y_2,a3z_2);
+    INCREMENT_ACCUMULATOR( vp_1, 0,  a0x_1,  a0y_1,  a0z_1 );
+    INCREMENT_ACCUMULATOR( vp_1, 1,  a1x_1,  a1y_1,  a1z_1 );
+    INCREMENT_ACCUMULATOR( vp_1, 2,  a2x_1,  a2y_1,  a2z_1 );
+    INCREMENT_ACCUMULATOR( vp_1, 3,  a3x_1,  a3y_1,  a3z_1 );
 
-    INCREMENT_ACCUMULATOR(i0_3,a0x_3,a0y_3,a0z_3);
-    INCREMENT_ACCUMULATOR(i1_3,a1x_3,a1y_3,a1z_3);
-    INCREMENT_ACCUMULATOR(i2_3,a2x_3,a2y_3,a2z_3);
-    INCREMENT_ACCUMULATOR(i3_3,a3x_3,a3y_3,a3z_3);
+    INCREMENT_ACCUMULATOR( vp_2, 0,  a0x_2,  a0y_2,  a0z_2 );
+    INCREMENT_ACCUMULATOR( vp_2, 1,  a1x_2,  a1y_2,  a1z_2 );
+    INCREMENT_ACCUMULATOR( vp_2, 2,  a2x_2,  a2y_2,  a2z_2 );
+    INCREMENT_ACCUMULATOR( vp_2, 3,  a3x_2,  a3y_2,  a3z_2 );
 
-    // Update position and accumulate outbnd
-
-#   if 0
-#   define MOVE_OUTBND( N )                   \
-    if( unlikely( EXTRACT( outbnd, N ) ) ) {  \
-      pm->dispx = EXTRACT( ddx, N );          \
-      pm->dispy = EXTRACT( ddy, N );          \
-      pm->dispz = EXTRACT( ddz, N );          \
-      pm->i     = idx+N;                      \
-      if( unlikely( move_p_spu( p+N, pm ) ) ) pm++, nm++; \
-    }
-#   define MOVE_OUTBND_( N )                                                                                     \
-                                                                     if( unlikely( EXTRACT( outbnd_, N ) ) ) {   \
-                                                                       pm->dispx = EXTRACT( ddx_, N );           \
-                                                                       pm->dispy = EXTRACT( ddy_, N );           \
-                                                                       pm->dispz = EXTRACT( ddz_, N );           \
-                                                                       pm->i     = idx+4+N;                      \
-                                                                       if( unlikely( move_p_spu( p+4+N, pm ) ) ) pm++, nm++; \
-                                                                     }
-
-    MOVE_OUTBND(0);
-    MOVE_OUTBND(1);
-    MOVE_OUTBND(2);
-    MOVE_OUTBND(3);
-    /**/                                                             MOVE_OUTBND_(0);
-    /**/                                                             MOVE_OUTBND_(1);
-    /**/                                                             MOVE_OUTBND_(2);
-    /**/                                                             MOVE_OUTBND_(3);
-
-#   undef MOVE_OUTBND
-#   undef MOVE_OUTBND_
-#   endif
+    INCREMENT_ACCUMULATOR( vp_3, 0,  a0x_3,  a0y_3,  a0z_3 );
+    INCREMENT_ACCUMULATOR( vp_3, 1,  a1x_3,  a1y_3,  a1z_3 );
+    INCREMENT_ACCUMULATOR( vp_3, 2,  a2x_3,  a2y_3,  a2z_3 );
+    INCREMENT_ACCUMULATOR( vp_3, 3,  a3x_3,  a3y_3,  a3z_3 ); 
 
   }
+
+# if 0
+
+  // Process movers
+
+  new_nm = 0;;
+  for( m=0; m<nm; m++ ) {
+    n = pm[m].i;
+    if( unlikely( move_p( &p[n], &pm[m] ) ) ) {
+      COPY_4X1( &pm[new_nm], &pm[m] );
+      pm[new_nm].i = idx + n;
+      new_nm++;
+    }
+  }
+  nm = new_nm;
+
+# endif
 
   return nm;
 }
@@ -619,8 +907,7 @@ advance_p_pipeline_spu( particle_t       * ALIGNED(128) p,  // Particle array
 ///////////////////////////////////////////////////////////////////////////////
 // main (workload distribution and data buffering)
 
-// FIXME: util functionality is not compiled for the spu
-// FIXME: UNIQUE EXTENSIONS FOR SPU OBJS AND EXECS!
+// FIXME: Some util functionality is not compiled for the spu
 
 int
 main( uint64_t spu_id,
@@ -630,7 +917,7 @@ main( uint64_t spu_id,
   int idx[3];
   int np_block[3];
 
-  particle_mover_t * ALIGNED(128) pm_block[3];
+  particle_mover_t * ALIGNED(128) m_block[3];
   int nm_block[3];
 
   int buffer;
@@ -678,18 +965,18 @@ main( uint64_t spu_id,
     POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
   
   // Process the particles assigned to this pipeline with triple buffering
-
+  
 # define BEGIN_GET_PBLOCK(buffer) do {                          \
                                                                 \
     /* Determine the start and size of the block */             \
     idx[buffer]      = next_idx;                                \
-    np_block[buffer] = NP_BLOCK_TARGET;                         \
-    if( np_block[buffer]>np ) np_block[buffer] = np;            \
+    np_block[buffer] = NP_BLOCK;                                \
+    if( unlikely( np_block[buffer]>np ) ) np_block[buffer] = np; \
     next_idx += np_block[buffer];                               \
     np       -= np_block[buffer];                               \
                                                                 \
     /* If we have a block, start reading it into the buffer */  \
-    if( np_block[buffer] )                                      \
+    if( likely( np_block[buffer]!=0 ) )                         \
       mfc_get( p_block[buffer],                                 \
                args->p0 + idx[buffer]*sizeof(particle_t),       \
                np_block[buffer]*sizeof(particle_t),             \
@@ -698,23 +985,23 @@ main( uint64_t spu_id,
   
 # define END_GET_PBLOCK(buffer) do {                                    \
     /* If we have a block, stop reading it into the buffer */           \
-    if( np_block[buffer] ) {                                            \
-      mfc_write_tag_mask( (np_block[buffer]?1:0)<<(3*(buffer)+0) );     \
+    if( likely( np_block[buffer]!=0 ) ) {                               \
+      mfc_write_tag_mask( 1<<(3*(buffer)+0) );                          \
       mfc_read_tag_status_all();                                        \
     }                                                                   \
   } while(0)
   
 # define PROCESS_PBLOCK(buffer)                                         \
   nm_block[buffer] = advance_p_pipeline_spu( p_block[buffer],           \
-                                             pm_block[buffer],          \
+                                             m_block[buffer],           \
                                              idx[buffer],               \
-                                             np_block[buffer]>>4 )
+                                             np_block[buffer] )
 
   // FIXME: mfc list for this??
 # define BEGIN_PUT_PBLOCK(buffer) do {                                  \
                                                                         \
     /* If we have a block, begin writing the buffer into the block */   \
-    if( np_block[buffer] )                                              \
+    if( likely( np_block[buffer]!=0 ) )                                 \
       mfc_put( p_block[buffer],                                         \
                args->p0 + idx[buffer]*sizeof(particle_t),               \
                np_block[buffer]*sizeof(particle_t),                     \
@@ -723,12 +1010,12 @@ main( uint64_t spu_id,
     /* Begin writing the movers corresponding to this block */          \
     /* Ignore movers that would overflow the mover segment */           \
     itmp = seg->nm + nm_block[buffer] - seg->max_nm;                    \
-    if( itmp > 0 ) {                                                    \
+    if( unlikely( itmp > 0 ) ) {                                        \
       seg->n_ignored += itmp;                                           \
       nm_block[buffer] = seg->max_nm - seg->nm;                         \
     }                                                                   \
-    if( nm_block[buffer] ) {                                            \
-      mfc_put( pm_block[buffer],                                        \
+    if( likely( nm_block[buffer]!=0 ) ) { /* Unlikely in cold bench */  \
+      mfc_put( m_block[buffer],                                         \
                seg->pm + seg->nm*sizeof(particle_mover_t),              \
                nm_block[buffer]*sizeof(particle_mover_t),               \
                3*(buffer)+2, 0, 0 );                                    \
@@ -738,24 +1025,30 @@ main( uint64_t spu_id,
   } while(0)
 
 # define END_PUT_PBLOCK(buffer) do {                                    \
-    if( np_block[buffer] || nm_block[buffer] ) {                        \
-      mfc_write_tag_mask( (np_block[buffer]?1:0)<<(3*(buffer)+1) |      \
-                          (nm_block[buffer]?1:0)<<(3*(buffer)+2) );     \
+    uint32_t mask = 0;                                                  \
+    if( likely( np_block[buffer]!=0 ) ) mask |= 1 << (3*(buffer)+1);    \
+    if( likely( nm_block[buffer]!=0 ) ) mask |= 1 << (3*(buffer)+2);    \
+    /* above is unlikely on cold bench */                               \
+    if( likely( mask!=0 ) ) {                                           \
+      mfc_write_tag_mask( mask );                                       \
       mfc_read_tag_status_all();                                        \
     }                                                                   \
     np_block[buffer] = 0;                                               \
     nm_block[buffer] = 0;                                               \
   } while(0)
 
-  p_block[0]  = local_p;                      np_block[0] = 0;
-  p_block[1]  = local_p  + NP_BLOCK_TARGET;   np_block[1] = 0;
-  p_block[2]  = local_p  + NP_BLOCK_TARGET*2; np_block[2] = 0;
+  p_block[0] = p_stream;              np_block[0] = 0;
+  p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
+  p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
 
-  pm_block[0] = local_pm;                     nm_block[0] = 0;
-  pm_block[1] = local_pm + NP_BLOCK_TARGET;   nm_block[1] = 0;
-  pm_block[2] = local_pm + NP_BLOCK_TARGET*2; nm_block[2] = 0;
+  m_block[0] = m_stream;              nm_block[0] = 0;
+  m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
+  m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
+
+  ia_cache_init();
 
   BEGIN_GET_PBLOCK(0);
+  // BEGIN_PUT_PBLOCK( 2 );
   for( buffer=0; np_block[buffer]>0; buffer=next[buffer] ) {
     BEGIN_GET_PBLOCK( next[buffer] );
     END_GET_PBLOCK( buffer );
@@ -765,12 +1058,9 @@ main( uint64_t spu_id,
   }
   END_PUT_PBLOCK( prev[buffer] );
 
-  // Flush the caches. Only accumulator_cache needs to be flushed as
-  // the other caches are read-only.
+  // Writeback all the cached accumulators
 
-# if 0
-  cache_flush( accumulator_cache );
-# endif
+  ia_cache_writeback();
 
   // Write the pipeline return values back
 
@@ -788,4 +1078,3 @@ main( uint64_t spu_id,
   return 0;
 }
 
-#endif // CELL_SPU_BUILD

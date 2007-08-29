@@ -18,8 +18,8 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   const grid_t   *              g  = args->g;
 
 # if HAS_SPU_INTERPOLATOR
-  const uint64_t * ALIGNED(128) nb = args->g->neighbor;
-  const uint64_t * ALIGNED(16)  pnb;
+  const int64_t * ALIGNED(128) nb = args->g->neighbor;
+  const int64_t * ALIGNED(16)  pnb;
 # endif
 
   interpolator_t * ALIGNED(16) pi;
@@ -161,8 +161,8 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   const grid_t   *              g  = args->g;
 
 # if HAS_SPU_INTERPOLATOR
-  const uint64_t * ALIGNED(128) nb = args->g->neighbor;
-  const uint64_t * ALIGNED(16) pnb;
+  const int64_t * ALIGNED(128) nb = args->g->neighbor;
+  const int64_t * ALIGNED(16) pnb;
 # endif
 
   interpolator_t * ALIGNED(16) pi;

@@ -188,7 +188,7 @@ typedef struct interpolator {
   float cbz, dcbzdz;
 # if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
   float _pad[2];
-  uint64_t neighbor[6]; // 128-byte align.  Use padding for neighbor data
+  int64_t neighbor[6]; // 128-byte align.  Use padding for neighbor data
 # else
   float _pad[2];  // 16-byte align
 # endif

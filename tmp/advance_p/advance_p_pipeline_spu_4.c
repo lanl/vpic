@@ -79,15 +79,18 @@ DECLARE_ALIGNED_ARRAY( uint32_t, 128, voxel_cache_next, VOXEL_CACHE_N_LINE );
 // VOXEL_CACHE_N_LINE.  VOXEL_CACHE_HASH hashes an external "address"
 // (actually a voxel index) into a hash table index.  voxel_cache_key
 // and voxel_cache_val give the key-value pairs in the hash table.
+//
+// For the time being, use modular hashing.  Given the large
+// overprovisioning of hash table entries coupled with the
+// quasi-streamed voxels, it should not be too bad with collisions
+// while having a blazing fast performance in the common case.
 
 #define VOXEL_CACHE_N_HASH 4096
 
 DECLARE_ALIGNED_ARRAY( uint32_t, 128, voxel_cache_key, VOXEL_CACHE_N_HASH );
 DECLARE_ALIGNED_ARRAY( uint32_t, 128, voxel_cache_val, VOXEL_CACHE_N_HASH );
 
-#define VOXEL_CACHE_GOLDEN ((uint32_t)2654435761U)
-#define VOXEL_CACHE_HASH(addr) \
-  (((addr)*VOXEL_CACHE_GOLDEN)&(VOXEL_CACHE_N_HASH-1))
+#define VOXEL_CACHE_HASH(addr) ((addr)&(VOXEL_CACHE_N_HASH-1))
 
 // Cache miscelleanous.  voxel_lru gives the least recently used cache
 // line.  {I,A}_CACHE_[FIRST,LAST]_DMA_CHANNEL gives the [FIRST,LAST]
@@ -168,9 +171,9 @@ _voxel_cache_fetch( uint32_t addr,
     // Mark this cache line as the most recently used
     
     if( unlikely( voxel_cache_next[line]!=voxel_cache_lru ) ) {
-      if( unlikely( line==voxel_cache_lru ) )
+      if( unlikely( line==voxel_cache_lru ) ) {
         voxel_cache_lru = voxel_cache_next[voxel_cache_lru];
-      else {
+      } else {
 
         // Remove this cache line from the cache line replacement
         // sequence.  Then insert this cache line just before the
@@ -184,7 +187,7 @@ _voxel_cache_fetch( uint32_t addr,
         next = voxel_cache_lru;
         prev = voxel_cache_prev[next];
         voxel_cache_next[line] = next;
-        voxel_cache_next[line] = prev;
+        voxel_cache_prev[line] = prev;
         voxel_cache_next[prev] = line;
         voxel_cache_prev[next] = line;
 
@@ -241,10 +244,10 @@ _voxel_cache_fetch( uint32_t addr,
     if( likely( old_addr!=0xffffffff ) ) {
 
       uint32_t channel = A_CACHE_DMA_CHANNEL(old_addr);     
-
+      
       // Wait for the writeback channel to become free
 
-      mfc_write_tag_mask( 1<< channel );
+      mfc_write_tag_mask( 1 << channel );
       mfc_read_tag_status_all();
 
       // Buffer the data to writeback
@@ -382,8 +385,8 @@ voxel_cache_writeback( void ) {
 // insuring valid arguments.
 
 static __inline int
-move_p_spu( particle_t       * ALIGNED(32) p,
-            particle_mover_t * ALIGNED(16) pm ) {
+move_p_spu( particle_t       * __restrict ALIGNED(32) p,
+            particle_mover_t * __restrict ALIGNED(16) pm ) {
   float s_midx, s_midy, s_midz;
   float s_dispx, s_dispy, s_dispz;
   float s_dir[3];
@@ -584,7 +587,6 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
   DECLARE_ALIGNED_ARRAY( uint32_t, 128, line, NP_BLOCK );
 
   // Prefetch interpolator and accumulator data for this block
-
   for( n=0; n<np; n++ ) line[n] = voxel_cache_fetch( p[n].i ) << 6; // FIXME: UGLY!
   voxel_cache_wait();
 
@@ -725,8 +727,8 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
 #   define TEST_OUTBND(Q,E,o)                       \
     if( unlikely( ( gather##Q & (1<<E) ) != 0 ) ) { \
        pm[nm].dispx = EXTRACT( ddx##Q, E );         \
-       pm[nm].dispx = EXTRACT( ddy##Q, E );         \
-       pm[nm].dispx = EXTRACT( ddz##Q, E );         \
+       pm[nm].dispy = EXTRACT( ddy##Q, E );         \
+       pm[nm].dispz = EXTRACT( ddz##Q, E );         \
        pm[nm].i     = n + o;                        \
        nm++;                                        \
      }
@@ -736,7 +738,7 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
     if( unlikely( gather  !=0 ) ) { TEST_OUTBND(,  0, 0); TEST_OUTBND(,  1, 1); TEST_OUTBND(,  2, 2); TEST_OUTBND(,  3, 3); }
     if( unlikely( gather_1!=0 ) ) { TEST_OUTBND(_1,0, 4); TEST_OUTBND(_1,1, 5); TEST_OUTBND(_1,2, 6); TEST_OUTBND(_1,3, 7); }
     if( unlikely( gather_2!=0 ) ) { TEST_OUTBND(_2,0, 8); TEST_OUTBND(_2,1, 9); TEST_OUTBND(_2,2,10); TEST_OUTBND(_2,3,11); }
-    if( unlikely( gather_3!=0 ) ) { TEST_OUTBND(_3,0,12); TEST_OUTBND(_3,1,13); TEST_OUTBND(_3,2,14); TEST_OUTBND(_3,3,14); }
+    if( unlikely( gather_3!=0 ) ) { TEST_OUTBND(_3,0,12); TEST_OUTBND(_3,1,13); TEST_OUTBND(_3,2,14); TEST_OUTBND(_3,3,15); }
 
 #   undef TEST_OUTBND
 

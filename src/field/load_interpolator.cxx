@@ -119,8 +119,6 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->cbz    = half*( w1 + w0 );
     pi->dcbzdz = half*( w1 - w0 );
 
-    pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
-
 #   if HAS_SPU_INTERPOLATOR
     pi->neighbor[0] = pnb[0];
     pi->neighbor[1] = pnb[1];
@@ -130,6 +128,8 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->neighbor[5] = pnb[5];
     pnb += 6;
 #   endif
+
+    pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
 
     x++;
     if( x>nx ) {
@@ -171,7 +171,6 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   const field_t * ALIGNED(16) pfx,  * ALIGNED(16) pfy,  * ALIGNED(16) pfz;
   const field_t * ALIGNED(16) pfyz, * ALIGNED(16) pfzx, * ALIGNED(16) pfxy;
   int x, y, z, n_voxel;
-
 
   const int nx = g->nx;
   const int ny = g->ny;
@@ -259,14 +258,14 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     w1  =                       v4float(pfz->cbz);   // [ w1 -w1 d/c d/c ]
     store_4x1( half*( w1 + w0 ), &pi->cbz ); // Note: Padding after bz coeff!
 
-    pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
-
 #   if HAS_SPU_INTERPOLATOR
     copy_4x1( pi->neighbor,   pnb   );
     copy_4x1( pi->neighbor+2, pnb+2 );
     copy_4x1( pi->neighbor+4, pnb+4 );
     pnb += 6;
 #   endif
+
+    pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
 
     x++;
     if( x>nx ) {

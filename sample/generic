@@ -28,10 +28,10 @@ begin_globals {
 begin_initialization {
   
   // System of units
-  double ec          = 1; 
+//  double ec          = 1; 
   double c           = 1; 
-  double me          = 1; 
-  double eps0        = 1;             // "natural" simulation units: wpe = 1
+//  double me          = 1; 
+//  double eps0        = 1;             // "natural" simulation units: wpe = 1
   double uthe        = 0.1;           // normalized thermal momenta; typically less than unity
   double debye       = uthe/c;        // Debye length 
   double delta       = 1;             // Plasma skin depth 

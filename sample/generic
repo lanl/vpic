@@ -221,7 +221,7 @@ begin_initialization {
   // - Call user diagnostics
   // - (periodically) Print a status message
 
-}; 
+}
 
 
 begin_diagnostics {
@@ -339,14 +339,13 @@ begin_diagnostics {
   }
 # endif 
 
-}; 
+}
 
 begin_field_injection { 
-};
+}
 
 begin_particle_injection {
-};
+}
 
 begin_current_injection {
-};
-
+}

@@ -91,7 +91,7 @@
     ( ( (size_t)_aa_##name + (align) - 1 ) & (~((align)-1)) )
 #else // Sigh ... this is technically not portable
 #define DECLARE_ALIGNED_ARRAY(type,align,name,count)    \
-  type name[count] __attribute__ ((aligned (align)))
+  type name[(count)] __attribute__ ((aligned (align)))
 #endif
 
 // PAD(s,a) computes the amount of bytes necessary to add to "s" bytes

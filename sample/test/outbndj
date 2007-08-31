@@ -78,6 +78,7 @@ begin_initialization {
           drho(x,y,z) = field(x,y,z).rhof;
 
     // Move the particles and extract the currents
+    load_interpolator( interpolator, field, grid );
     clear_accumulators( accumulator, grid );
     advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                accumulator, interpolator, grid );

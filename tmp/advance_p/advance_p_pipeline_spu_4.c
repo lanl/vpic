@@ -13,15 +13,22 @@
 #define unlikely(_c)    __builtin_expect((_c), 0)
 #endif
 
+// Note: Because there are typically 2 accumulator DMA 
+// transfers (writeback and read) for every 1 interpolator
+// DMA transfer (read) and accumulator DMA channel
+// usage is more restrictive than interpolator channel
+// usage, we use a little more than double the number
+// of DMA channels for interpolator usage.
+
 // DMA tag usage:
 //  0: 2 - Particle buffer 0 (read, write, mover write)
 //  3: 5 - Particle buffer 1 (read, write, mover write)
 //  6: 8 - Particle buffer 2 (read, write, mover write)
-//  9:16 - Interpolator cache
-// 17:25 - Accumulator cache
-// 26:29 - Unused presently
-// 30:30 - Pipeline input arguments
-// 31:31 - Pipeline return values
+//  9:24 - Accumulator cache DMA transfers (16 channels)
+// 25:31 - Interpolator cache DMA transfers (7 channels)
+
+//  0:31 - (Reused) Accumulator write back
+// 31:31 - (Reused) Pipeline input and return values
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pipeline Input / Output arguments
@@ -95,22 +102,24 @@ DECLARE_ALIGNED_ARRAY( uint32_t, 128, voxel_cache_val, VOXEL_CACHE_N_HASH );
 // Cache miscelleanous.  voxel_lru gives the least recently used cache
 // line.  {I,A}_CACHE_[FIRST,LAST]_DMA_CHANNEL gives the [FIRST,LAST]
 // DMA channels that {interpolator, accumulator} operations should
-// use.  There should be a power of two number of DMA channels
-// assigned to each type of operation.  a_writeback provides a buffer
-// to hold data about pending writeback operations.
+// use.  There should be a power of two number of accumulator DMA
+// channels.  A_CACHE_DMA_CHANNEL(addr) maps external addresses to
+// the DMA_CHANNELS that shoud be used to fill requests to that
+// address.  a_writeback provides a buffer to hold accumulators
+// pending writeback operations.  There can be an arbitrary number of
+// interpolator DMA channels. i_cache_dma_channel gives the channel
+// to use for the next interpolator operation.
 
 uint32_t voxel_cache_lru;
 
-#define I_CACHE_DMA_CHANNEL_FIRST 9
-#define I_CACHE_DMA_CHANNEL_LAST  16
-#define A_CACHE_DMA_CHANNEL_FIRST 17
-#define A_CACHE_DMA_CHANNEL_LAST  25
-
-#define I_CACHE_DMA_CHANNEL(addr) ( I_CACHE_DMA_CHANNEL_FIRST + \
-    ( (addr) & ( I_CACHE_DMA_CHANNEL_LAST - I_CACHE_DMA_CHANNEL_FIRST ) ) )
-
+#define A_CACHE_DMA_CHANNEL_FIRST 9
+#define A_CACHE_DMA_CHANNEL_LAST  24
 #define A_CACHE_DMA_CHANNEL(addr) ( A_CACHE_DMA_CHANNEL_FIRST + \
     ( (addr) & ( A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST ) ) )
+
+#define I_CACHE_DMA_CHANNEL_FIRST 25
+#define I_CACHE_DMA_CHANNEL_LAST  31
+uint32_t i_cache_dma_channel;
 
 DECLARE_ALIGNED_ARRAY( accumulator_t, 128, a_cache_writeback,
                        A_CACHE_DMA_CHANNEL_LAST -
@@ -135,6 +144,8 @@ voxel_cache_init( void ) {
   voxel_cache_next[VOXEL_CACHE_N_LINE-1] = 0;
 
   voxel_cache_lru = 0;
+
+  i_cache_dma_channel = I_CACHE_DMA_CHANNEL_FIRST;
 }
 
 // voxel_cache_fetch will start fetching the data at "addr" into the
@@ -161,8 +172,8 @@ _voxel_cache_fetch( uint32_t addr,
   // Lookup addr in the cache - O(1)
 
   hash_i = hash_addr;
-  while( unlikely( voxel_cache_key[hash_i]!=addr & /* YES! A BIT AND */
-                   voxel_cache_key[hash_i]!=0xffffffff ) )
+  while( unlikely( (voxel_cache_key[hash_i]!=addr      ) & // YES! A BIT AND 
+                   (voxel_cache_key[hash_i]!=0xffffffff) ) )
     hash_i = ( hash_i + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );
   line = voxel_cache_val[hash_i];
 
@@ -195,7 +206,7 @@ _voxel_cache_fetch( uint32_t addr,
     }
     
   } else { // Cache miss ... Unlikely
-    
+
     // We will fill the least recently used line with the data at addr
 
     line = voxel_cache_lru;
@@ -203,7 +214,12 @@ _voxel_cache_fetch( uint32_t addr,
     // Read in the new interpolator for this line
 
     mfc_get( &i_cache[line], args->f0+sizeof(interpolator_t)*addr,
-             sizeof(interpolator_t), I_CACHE_DMA_CHANNEL(addr), 0, 0 );
+             sizeof(interpolator_t), i_cache_dma_channel, 0, 0 );
+
+    i_cache_dma_channel++;
+    if( i_cache_dma_channel>I_CACHE_DMA_CHANNEL_LAST )
+      i_cache_dma_channel = I_CACHE_DMA_CHANNEL_FIRST;
+    // FIXME: USE BRANCH PRED HERE?
 
     // This accumulator DMA operation is _very_ tricky.  The
     // accumulator cache read must have a fence to insure that
@@ -252,11 +268,11 @@ _voxel_cache_fetch( uint32_t addr,
 
       // Buffer the data to writeback
 
-      a_cache_writeback[channel] = a_cache[line];
+      a_cache_writeback[channel-A_CACHE_DMA_CHANNEL_FIRST] = a_cache[line];
 
       // Writeback the data
 
-      mfc_put( &a_cache_writeback[channel],
+      mfc_put( &a_cache_writeback[channel-A_CACHE_DMA_CHANNEL_FIRST],
                args->a0+sizeof(accumulator_t)*old_addr,
                sizeof(accumulator_t), channel, 0, 0 );
 
@@ -292,8 +308,8 @@ _voxel_cache_fetch( uint32_t addr,
         hash_j = ( hash_j + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );
         if( likely( voxel_cache_key[hash_j]==0xffffffff ) ) break;
         hash_k = VOXEL_CACHE_HASH( voxel_cache_key[hash_j] );
-        if( ( hash_j>hash_i & ( hash_k<=hash_i | hash_k>hash_j ) ) |
-            ( hash_j<hash_i & ( hash_k<=hash_i & hash_k>hash_j ) ) ) {
+        if( ( (hash_j>hash_i) & ( (hash_k<=hash_i) | (hash_k>hash_j) ) ) |
+            ( (hash_j<hash_i) & ( (hash_k<=hash_i) & (hash_k>hash_j) ) ) ) {
           // YES! BIT OPS!
           voxel_cache_key[hash_i] = voxel_cache_key[hash_j];
           voxel_cache_val[hash_i] = voxel_cache_val[hash_j];
@@ -345,24 +361,36 @@ voxel_cache_wait( void ) {
 }
 
 // voxel_cache_writeback writes back all the accumulators stored in
-// the cache to memory.  FIXME: COULD THIS BE MORE EFFICIENT IN ITS
-// USE OF DMA CHANNELS?  AND IS THE PARANOIA NECESSARY?
+// the cache to memory.  FIXME: IS THE PARANOIA NECESSARY?
 
-static __inline int
+static __inline void
 voxel_cache_writeback( void ) {
   uint32_t addr;
   uint32_t line;
+  uint32_t channel;
   
-  voxel_cache_wait(); // Paranoid?
+  // Wait for all DMA channels to become clear to begin
+  // writing out the cache accumulators
 
+  mfc_write_tag_mask(0xffffffff);
+  mfc_read_tag_status_all(); // Paranoid?
+
+  // Blast out all cached accumulators
+
+  channel = 0;
   for( line=0; line<VOXEL_CACHE_N_LINE; line++ ) {
     addr = voxel_cache_addr[line];
-    if( addr==0xffffffff ) continue; // Unlikely??
-    mfc_put( &a_cache[line], args->a0+sizeof(accumulator_t)*addr,
-             sizeof(accumulator_t), A_CACHE_DMA_CHANNEL(addr), 0, 0 );
+    if( likely( addr!=0xffffffff ) ) {
+      mfc_put( &a_cache[line], args->a0+sizeof(accumulator_t)*addr,
+               sizeof(accumulator_t), channel, 0, 0 );
+      channel = (channel + 1) & 0x1f;
+    }
   }
 
-  voxel_cache_wait(); // Paranoid?
+  // Wait for all transfers to complete
+
+  mfc_write_tag_mask(0xffffffff);
+  mfc_read_tag_status_all(); // Paranoid?
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -398,7 +426,6 @@ move_p_spu( particle_t       * __restrict ALIGNED(32) p,
   // FIXME: THIS CAN BE PARTIALLY HORIZONTAL SIMD ACCELERATED
 
   for(;;) {
-
     line = voxel_cache_fetch( p->i );
 
     s_midx = p->dx;
@@ -505,8 +532,8 @@ move_p_spu( particle_t       * __restrict ALIGNED(32) p,
 
     v0 = s_dir[type];
     neighbor = i_cache[line].neighbor[ ((v0>0)?3:0) + type ];
-    if( unlikely( neighbor<args->rangel |         // YES! BIT OR
-                  neighbor>args->rangeh ) ) {     // Hit a boundary
+    if( unlikely( (neighbor<args->rangel) |       // YES! BIT OR
+                  (neighbor>args->rangeh) ) ) {   // Hit a boundary
       (&(p->dx))[type] = v0;                      // Put on boundary
       if( neighbor!=reflect_particles ) return 1; // Cannot handle it
       (&(p->ux))[type] = -(&(p->ux))[type];
@@ -860,8 +887,8 @@ main( uint64_t spu_id,
   mfc_get( args,
            argp,
            sizeof(*args),
-           30, 0, 0 );
-  mfc_write_tag_mask( (1<<30) );
+           31, 0, 0 );
+  mfc_write_tag_mask( (1<<31) );
   mfc_read_tag_status_all();
 
   pipeline_rank = envp & 0xffffffff;

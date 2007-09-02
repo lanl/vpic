@@ -13,19 +13,25 @@ ADDRESSING=64
 ###############################################################################
 # PPU CFLAGS - configure C compiler behavior
 ###############################################################################
+# - FIXME: SHOULD -maltivec BE HERE?
 
-PCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing"
+PCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -Wstrict-aliasing=2 -maltivec"
 
 ###############################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior
 ###############################################################################
+# - USE_V4_ALTIVEC requires a processor architecture that supports AltiVec
+#   Thus we need to define -maltivec or an equivalent.
+# - V4 optimizations can trigger compiler bugs related to strict aliasing
+#   optimizations---use -fno-strict-aliasing when using USE_V4_ALTIVEC.
+# - PPE_ROUNDING_MODE defaults to FE_TONEAREST
 # - C++98 does not support long long but mpi.h uses it.  Thus, the C++
 #   build needs a -Wno-long-long.
-#
-# - added PPE_ROUNDING_MODE.  This defaults to FE_TONEAREST
 
-PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long -DPPE_ROUNDING_MODE=FE_TONEAREST"
-#PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -Wno-long-long -DPPE_ROUNDING_MODE=FE_TOWARDZERO"
+PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -DUSE_V4_ALTIVEC -maltivec -fno-strict-aliasing -DPPE_ROUNDING_MODE=FE_TONEAREST -Wno-long-long"
+
+# No V4 AltiVec build
+#PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -Wstrict-aliasing=2 -maltivec -DPPE_ROUNDING_MODE=FE_TONEAREST -Wno-long-long"
 
 ###############################################################################
 # SPU CFLAGS - configure C compiler behavior
@@ -36,9 +42,16 @@ SCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-
 ###############################################################################
 # SPU CXXFLAGS - configure C++ compiler behavior
 ###############################################################################
-# FIXME: -fno-rtti??
+# - V4 optimizations can trigger compiler bugs related to strict aliasing
+#   optimizations---use -fno-strict-aliasing when using USE_V4_SPU.
+# - try / catch style exception handling and rtti is bad idea on the SPUs as
+#   the infrastructure for such blows away the SPU local store---us
+#   -fno-exceptions and -fno-rtti on the SPUs.
 
-SCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fno-exceptions"
+SCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -DUSE_V4_SPU -fno-strict-aliasing -fno-exceptions -fno-rtti"
+
+# No V4 SPU build
+#SCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -Wstrict-aliasing=2 -fno-exceptions -fno-rtti"
 
 ###############################################################################
 # SPU_MODULES - spe programs to link

@@ -27,6 +27,10 @@ main( int argc,
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 
   // set PPU rounding mode
+  // FIXME: IS THIS SAFE (I.E. DO LIBRARIES LIKE LIBM EXPECT US TO CHANGE
+  // THIS GLOBALLY?)
+  // FIXME: ALTIVEC ROUNDING MODE SHOULD BE SET TO MATCH IF USING
+  // ALTIVEC!
   fesetround(PPE_ROUNDING_MODE);
 
   // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
@@ -47,7 +51,11 @@ main( int argc,
 
   // Strip threads-per-process arguments from the argument list
 
+# if defined(CELL_PPU_BUILD)
+  int tpp = 2;
+# else
   int tpp = 1;
+# endif
   for( m=n=0; n<argc; n++ )
     if( strncmp( argv[n], "-tpp=", 5 )==0 ) tpp = atoi( argv[n]+5 );
     else                                    argv[m++] = argv[n];

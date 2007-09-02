@@ -149,9 +149,9 @@ advance_b_pipeline_v4( advance_b_pipeline_args_t * args,
     load_4x3_tr(  &fy0->ex,  &fy1->ex,  &fy2->ex,  &fy3->ex,  fy_ex,  dummy,  fy_ez  );
     load_4x2_tr(  &fz0->ex,  &fz1->ex,  &fz2->ex,  &fz3->ex,  fz_ex,  fz_ey   /**/   );
 
-    f0_cbx -= fms( vpy,( fy_ez-f0_ez ),  vpz*( fz_ey-f0_ey ) );
-    f0_cby -= fms( vpz,( fz_ex-f0_ex ),  vpx*( fx_ez-f0_ez ) );
-    f0_cbz -= fms( vpx,( fx_ey-f0_ey ),  vpy*( fy_ex-f0_ex ) );
+    f0_cbx += fnms( vpy,( fy_ez-f0_ez ),  vpz*( fz_ey-f0_ey ) );
+    f0_cby += fnms( vpz,( fz_ex-f0_ex ),  vpx*( fx_ez-f0_ez ) );
+    f0_cbz += fnms( vpx,( fx_ey-f0_ey ),  vpy*( fy_ex-f0_ex ) );
 
     store_4x3_tr( f0_cbx, f0_cby, f0_cbz, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }

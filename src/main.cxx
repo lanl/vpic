@@ -44,6 +44,7 @@ main( int argc,
   argv[m] = NULL; // ANSI - argv is NULL terminated
   argc = m;
 
+MESSAGE(("Using %d SPEs\n", spp));
   spu.boot( spp, // Total number of SPUs for processing pipeline workloads
             0 ); // This PPU thread physically cannot process SPU workloads!
 
@@ -84,7 +85,7 @@ main( int argc,
 
   // Let all processors finish up
   
-  simulation.barrier();
+  simulation.finalize();
   
   // Issue a termination message when we exit cleanly.
   

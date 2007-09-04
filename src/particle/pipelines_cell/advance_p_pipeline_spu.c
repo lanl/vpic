@@ -867,6 +867,7 @@ main( uint64_t spu_id,
   particle_t       * ALIGNED(128) p_block[3];
   int idx[3];
   int np_block[3];
+  uint32_t msg;
 
   particle_mover_t * ALIGNED(128) m_block[3];
   int nm_block[3];
@@ -877,45 +878,51 @@ main( uint64_t spu_id,
 
   int np, next_idx, itmp;
 
+  do {
+    msg = spu_read_in_mbox();
+
+    switch(msg) {
+	  case READ_ARGS_AND_ADVANCE:
 # ifdef IN_HARNESS
-  prof_clear();
-  prof_start();
+        prof_clear();
+        prof_start();
 # endif
 
-  // Get the pipeline arguments from the dispatcher
+        // Get the pipeline arguments from the dispatcher
 
-  mfc_get( args,
-           argp,
-           sizeof(*args),
-           31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
+        mfc_get( args,
+          argp,
+          sizeof(*args),
+          31, 0, 0 );
+        mfc_write_tag_mask( (1<<31) );
+        mfc_read_tag_status_all();
 
-  pipeline_rank = envp & 0xffffffff;
-  n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
+        pipeline_rank = envp & 0xffffffff;
+        n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
 
-  // Determine which particle quads this pipeline processes
+        // Determine which particle quads this pipeline processes
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
+        DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
 
-  // Determine which movers are reserved for this pipeline
-  // Movers (16 bytes) are reserved for pipelines in multiples of 8
-  // such that the set of particle movers reserved for a pipeline is
-  // 128-bit aligned and a multiple of 128-bits in size. 
+        // Determine which movers are reserved for this pipeline
+        // Movers (16 bytes) are reserved for pipelines in multiples of 8
+        // such that the set of particle movers reserved for a pipeline is
+        // 128-bit aligned and a multiple of 128-bits in size. 
 
-  args->max_nm -= args->np&15; // Insure host gets enough
-  if( args->max_nm<0 ) args->max_nm = 0;
-  DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline, itmp, seg->max_nm );
-  seg->pm        = args->pm + itmp*sizeof(particle_mover_t);
-  seg->nm        = 0;
-  seg->n_ignored = 0;
+        args->max_nm -= args->np&15; // Insure host gets enough
+        if( args->max_nm<0 ) args->max_nm = 0;
+        DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline,
+		  itmp, seg->max_nm );
+        seg->pm        = args->pm + itmp*sizeof(particle_mover_t);
+        seg->nm        = 0;
+        seg->n_ignored = 0;
 
-  // Determine which accumulator array is reserved for this pipeline
+        // Determine which accumulator array is reserved for this pipeline
 
-  args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
-    POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
+        args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
+          POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
   
-  // Process the particles assigned to this pipeline with triple buffering
+        // Process the particles assigned to this pipeline with triple buffering
   
 # define BEGIN_GET_PBLOCK(buffer) do {                          \
                                                                 \
@@ -988,43 +995,54 @@ main( uint64_t spu_id,
     nm_block[buffer] = 0;                                               \
   } while(0)
 
-  p_block[0] = p_stream;              np_block[0] = 0;
-  p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
-  p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
+        p_block[0] = p_stream;              np_block[0] = 0;
+        p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
+        p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
 
-  m_block[0] = m_stream;              nm_block[0] = 0;
-  m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
-  m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
+        m_block[0] = m_stream;              nm_block[0] = 0;
+        m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
+        m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
 
-  voxel_cache_init();
+        voxel_cache_init();
 
-  BEGIN_GET_PBLOCK(0);
-  // BEGIN_PUT_PBLOCK( 2 );
-  for( buffer=0; np_block[buffer]>0; buffer=next[buffer] ) {
-    BEGIN_GET_PBLOCK( next[buffer] );
-    END_GET_PBLOCK( buffer );
-    PROCESS_PBLOCK( buffer );
-    BEGIN_PUT_PBLOCK( buffer );
-    END_PUT_PBLOCK( prev[buffer] );
-  }
-  END_PUT_PBLOCK( prev[buffer] );
+        BEGIN_GET_PBLOCK(0);
+        // BEGIN_PUT_PBLOCK( 2 );
+        for( buffer=0; np_block[buffer]>0; buffer=next[buffer] ) {
+          BEGIN_GET_PBLOCK( next[buffer] );
+          END_GET_PBLOCK( buffer );
+          PROCESS_PBLOCK( buffer );
+          BEGIN_PUT_PBLOCK( buffer );
+          END_PUT_PBLOCK( prev[buffer] );
+        }
+        END_PUT_PBLOCK( prev[buffer] );
 
-  // Writeback all the cached accumulators
+        // Writeback all the cached accumulators
 
-  voxel_cache_writeback();
+        voxel_cache_writeback();
 
-  // Write the pipeline return values back
+        // Write the pipeline return values back
 
-  mfc_put( seg,
-           args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
-           sizeof(particle_mover_seg_t),
-           31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
+        mfc_put( seg,
+          args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
+          sizeof(particle_mover_seg_t),
+          31, 0, 0 );
+        mfc_write_tag_mask( (1<<31) );
+        mfc_read_tag_status_all();
   
 # ifdef IN_HARNESS
-  prof_stop();
+        prof_stop();
 # endif
+
+        // signal PPE that we are done with this iteration
+
+		spu_write_out_mbox( ADVANCE_COMPLETE );
+
+		break;
+
+      default:
+	    break;
+    }
+  } while(msg != END_EVENT_LOOP);
 
   return 0;
 }

@@ -73,6 +73,14 @@ typedef struct pipeline_dispatcher {
   void
   (*wait)( void );
 
+  // signal SPEs using mailboxes
+  void
+  (*signal)(uint32_t signal);
+
+  // synchronize on signal from SPEs using mailboxes
+  void
+  (*sync)(uint32_t signal);
+
 } pipeline_dispatcher_t;
 
 

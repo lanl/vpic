@@ -73,6 +73,8 @@ function check_autoconf {
 function configure_autoconf {
 	cwd="./"
 
+	config/bootstrap
+
 	if [[ $nargs > 1 ]] ; then
 		cwd=`pwd`
 

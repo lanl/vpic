@@ -14,15 +14,27 @@
 
 #if FOR_SPU
 
+    // signals for particle pipelines
+    #define READ_ARGS_AND_ADVANCE 0
+    #define ADVANCE_COMPLETE 1
+    #define END_EVENT_LOOP 3
+
 # if defined(CELL_PPU_BUILD) 
 
     // Use SPU dispatcher on the SPU pipeline
 
-#   define EXEC_PIPELINES(name,args,sz_args)                          \
-    spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args ); \
+#   define INIT_PIPELINES(name,args,sz_args) \
+    spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args );
+
+#   define EXEC_PIPELINES(name,args,sz_args) \
+	spu.signal(READ_ARGS_AND_ADVANCE); \
     name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 
-#   define WAIT_PIPELINES() spu.wait()
+#   define WAIT_PIPELINES() spu.sync(ADVANCE_COMPLETE)
+
+#   define FINALIZE_PIPELINES() \
+    spu.signal(END_EVENT_LOOP); \
+    spu.wait()
 
 #   define N_PIPELINE       spu.n_pipeline
 
@@ -36,11 +48,15 @@
 
   // Use thread dispatcher on the v4 pipeline
 
+# define INIT_PIPELINES(name,args,sz_args)
+
 # define EXEC_PIPELINES(name,args,sz_args)                               \
   thread.dispatch( (pipeline_func_t)name##_pipeline_v4, args, sz_args ); \
   name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
 
 # define WAIT_PIPELINES() thread.wait()
+
+# define FINALIZE_PIPELINES()
 
 # define N_PIPELINE       thread.n_pipeline
 
@@ -48,11 +64,15 @@
 
   // Use thread dispatcher on the scalar pipeline
 
+# define INIT_PIPELINES(name,args,sz_args)
+
 # define EXEC_PIPELINES(name,args,sz_args)                              \
   thread.dispatch( (pipeline_func_t)name##_pipeline, args, sz_args );   \
   name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
 
 # define WAIT_PIPELINES() thread.wait()
+
+# define FINALIZE_PIPELINES()
 
 # define N_PIPELINE       thread.n_pipeline
 

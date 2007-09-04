@@ -70,6 +70,13 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   LIST_FOR_EACH(sp, species_list)
     uncenter_p( sp->p, sp->np, sp->q_m, interpolator, grid );
 
+  // FIXME!!!
+  // start pipelines
+  // This is a hack to get us through the RR assessment.  At some
+  // point this will have to be re-worked to use overlays to allow
+  // for multple accelerated implementations
+  advance_p_initialize();
+
   if( rank==0 ) MESSAGE(("Initialization complete"));
 
   // Let the user to perform diagnostics on the initial condition

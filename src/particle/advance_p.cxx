@@ -396,6 +396,14 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
 DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
 
+void advance_p_initialize() {
+  INIT_PIPELINES( advance_p, args, 0 );
+}
+
+void advance_p_finalize() {
+  FINALIZE_PIPELINES();
+}
+
 int
 advance_p( particle_t           * ALIGNED(128) p0,
            const int                           np,

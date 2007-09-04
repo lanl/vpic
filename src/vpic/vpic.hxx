@@ -26,6 +26,7 @@ public:
   void restart( const char *filebase );
   void modify_runparams( const char *fname );
   int advance( void );
+  void finalize( void );
 
   // some helpers that need to be exposed to
   // remove direct MPI calls

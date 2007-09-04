@@ -48,6 +48,7 @@ src/util/mp/dmp/mp_dmp.c
 src/util/mp/mp.cxx
 src/util/mtrand/mtrand.c
 src/vpic/vpic.cxx
+src/vpic/finalize.cxx
 src/vpic/advance.cxx
 src/vpic/initialize.cxx
 src/vpic/misc.cxx

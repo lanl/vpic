@@ -531,6 +531,65 @@ spu_dispatch( spe_program_handle_t * pipeline,
   Busy = 1;
 }
                  
+/****************************************************************************
+ * Function: spu_signal(signal)
+ *
+ * Send a signal to the SPEs
+ *
+ * Arguments:
+ *   signal - 32-bit unsigned integer signal to send to SPEs
+ *
+ * Returns: nothing
+ *
+ ***************************************************************************/
+
+static void
+spu_signal( uint32_t signal ) {
+  int i;
+
+  if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
+
+  if( !pthread_equal( Host, pthread_self() ) )
+    ERROR(( "Only the host may call spu_dispatch" ));
+
+  for( i=0; i<spu.n_pipeline; i++ ) {
+    spe_in_mbox_write( SPU_Control_State[i].context, &signal,
+	  1, SPE_MBOX_ANY_NONBLOCKING); 
+  }
+}
+
+/****************************************************************************
+ * Function: spu_sync(signal)
+ *
+ * Have SPEs synchronize on mailbox signal
+ *
+ * Arguments:
+ *   signal - 32-bit unsigned integer signal to synchronize on
+ *
+ * Returns: nothing
+ *
+ ***************************************************************************/
+
+static void
+spu_sync( uint32_t signal) {
+  int i;
+  uint32_t msg;
+
+  if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
+
+  if( !pthread_equal( Host, pthread_self() ) )
+    ERROR(( "Only the host may call spu_dispatch" ));
+
+  for( i=0; i<spu.n_pipeline; i++ ) {
+	// block until we get a message from SPE
+    while( spe_out_mbox_status( SPU_Control_State[i].context ) <=0 );
+
+    spe_out_mbox_read( SPU_Control_State[i].context, &msg, 1 );
+
+	if( msg != signal ) ERROR(("Received wrong synchronization message!"));
+  }
+}
+
 static void
 spu_wait( void ) {
   int rank;
@@ -558,7 +617,9 @@ pipeline_dispatcher_t spu = {
   spu_boot,     // boot
   spu_halt,     // halt
   (dispatcher_func_t)spu_dispatch, // dispatch
-  spu_wait      // wait
+  spu_wait,     // wait
+  spu_signal,   // signal
+  spu_sync      // sync
 };
 
 #endif

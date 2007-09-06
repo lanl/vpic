@@ -18,6 +18,7 @@ AC_PROG_LIBTOOL
 AC_CONFIG_FILES(Makefile \
 	config/rules.mk \
 	lib/Makefile \
+	bin/Makefile \
 	mprelay/Makefile \
 	accelerator/Makefile \
 	../../buildscript)
@@ -73,7 +74,7 @@ case "$buildstyle" in
 	standard_cell)
 		CCS_WITH_PPU_MPI
 
-		AC_SUBST(PPEDIRS, ["lib"])
+		AC_SUBST(PPEDIRS, ["lib bin"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
@@ -95,7 +96,7 @@ case "$buildstyle" in
 	standard_cell_ppe)
 		CCS_WITH_PPU_MPI
 
-		AC_SUBST(PPEDIRS, ["lib"])
+		AC_SUBST(PPEDIRS, ["lib bin"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
@@ -111,7 +112,7 @@ case "$buildstyle" in
 	ompi_relay_cell)
 		CCS_WITH_PPU_MPI
 
-		AC_SUBST(PPEDIRS, ["lib mprelay accelerator"])
+		AC_SUBST(PPEDIRS, ["lib  bin mprelay accelerator"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
@@ -136,7 +137,7 @@ case "$buildstyle" in
 	ompi_relay_hybrid_cell)
 		CCS_WITH_PPU_MPI
 
-		AC_SUBST(PPEDIRS, ["lib accelerator"])
+		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
@@ -161,7 +162,7 @@ case "$buildstyle" in
 	ompi_relay_hybrid_cell_ppe)
 		CCS_WITH_PPU_MPI
 
-		AC_SUBST(PPEDIRS, ["lib accelerator"])
+		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_MPI_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_MPI_LDFLAGS"
@@ -180,7 +181,7 @@ case "$buildstyle" in
 	dacs_relay_hybrid_cell)
 		CCS_WITH_PPU_DACS(hybrid)
 
-		AC_SUBST(PPEDIRS, ["lib accelerator"])
+		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
 
 		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_DACS_CPPFLAGS"
 		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_DACS_LDFLAGS"

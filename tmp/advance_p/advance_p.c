@@ -70,6 +70,9 @@ main( int argc,
 
   MESSAGE(( "Dispatching" ));
 
+ // for(i=0; i<ITERATIONS; i++) {
+  spu.dispatch( SPU_PIPELINE(advance_p_pipeline_spu), args, 0 );
+
 #if 1
   struct timeval start;
   struct timeval stop;
@@ -77,16 +80,8 @@ main( int argc,
   gettimeofday(&start, 0);
 #endif
 
- // for(i=0; i<ITERATIONS; i++) {
-  spu.dispatch( SPU_PIPELINE(advance_p_pipeline_spu), args, 0 );
-
-//  MESSAGE(( "Waiting" ));
-
-  spu.wait();
-
-//  MESSAGE(( "Halting" ));
-
-  //} // for
+  spu.signal(READ_ARGS_AND_ADVANCE);
+  spu.sync(ADVANCE_COMPLETE);
 
 #if 1
   gettimeofday(&stop, 0);
@@ -97,6 +92,15 @@ main( int argc,
 
   MESSAGE(("seconds: %lf\n", seconds));
 #endif
+
+  spu.signal(END_EVENT_LOOP);
+//  MESSAGE(( "Waiting" ));
+
+  spu.wait();
+
+//  MESSAGE(( "Halting" ));
+
+  //} // for
 
   spu.halt();
 

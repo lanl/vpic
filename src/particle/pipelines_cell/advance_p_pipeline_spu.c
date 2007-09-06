@@ -637,13 +637,13 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
     outbnd_2 = OR( OR( OR( CMPLT(dx1_2,neg_one), CMPGT(dx1_2,one) ), OR( CMPLT(dy1_2,neg_one), CMPGT(dy1_2,one) ) ), OR( CMPLT(dz1_2,neg_one), CMPGT(dz1_2,one) ) );
     outbnd_3 = OR( OR( OR( CMPLT(dx1_3,neg_one), CMPGT(dx1_3,one) ), OR( CMPLT(dy1_3,neg_one), CMPGT(dy1_3,one) ) ), OR( CMPLT(dz1_3,neg_one), CMPGT(dz1_3,one) ) );
 
-#   define TEST_OUTBND(Q,E,o)                       \
-    if( UNLIKELY( ( gather##Q & (1<<E) ) != 0 ) ) { \
-       pm[nm].dispx = EXTRACT( ddx##Q, E );         \
-       pm[nm].dispy = EXTRACT( ddy##Q, E );         \
-       pm[nm].dispz = EXTRACT( ddz##Q, E );         \
-       pm[nm].i     = n + o;                        \
-       nm++;                                        \
+#   define TEST_OUTBND(Q,E,o)                           \
+    if( UNLIKELY( ( gather##Q & (1<<(3-E)) ) != 0 ) ) { \
+       pm[nm].dispx = EXTRACT( ddx##Q, E );             \
+       pm[nm].dispy = EXTRACT( ddy##Q, E );             \
+       pm[nm].dispz = EXTRACT( ddz##Q, E );             \
+       pm[nm].i     = n + o;                            \
+       nm++;                                            \
      }
 
     gather   = GATHER( outbnd   );                                                 gather_1 = GATHER( outbnd_1 );                                                 gather_2 = GATHER( outbnd_2 );                                                 gather_3 = GATHER( outbnd_3 );

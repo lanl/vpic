@@ -13,11 +13,16 @@
 
 /* All macros below are robust unless otherwise noted. */
 
-#define USING_V4C                                               \
-   const vec_uchar16 _unpackl = {  0, 1, 2, 3,   16,17,18,19,   \
-                                   4, 5, 6, 7,   20,21,22,23 }; \
-   const vec_uchar16 _unpackh = {  8, 9,10,11,   24,25,26,27,   \
-                                  12,13,14,15,   28,29,30,31 }; \
+#define USING_V4C                                                \
+   const vec_uchar16 _unpackl = {  0, 1, 2, 3,   16,17,18,19,    \
+                                   4, 5, 6, 7,   20,21,22,23 };  \
+   const vec_uchar16 _unpackh = {  8, 9,10,11,   24,25,26,27,    \
+                                  12,13,14,15,   28,29,30,31 };  \
+   const vec_uchar16 _splat[4] =                                 \
+     { {  0, 1, 2, 3,  0, 1, 2, 3,  0, 1, 2, 3,  0, 1, 2, 3 },   \
+       {  4, 5, 6, 7,  4, 5, 6, 7,  4, 5, 6, 7,  4, 5, 6, 7 },   \
+       {  8, 9,10,11,  8, 9,10,11,  8, 9,10,11,  8, 9,10,11 },   \
+       { 12,13,14,15, 12,13,14,15, 12,13,14,15, 12,13,14,15 } }; \
    vec_float4 _a, _b, _c, _d
 
 /* FIXME: THIS MACRO IS NOT ROBUST! 
@@ -73,33 +78,36 @@
 /* NOTE: gcc allows for example a*b to automagically become the right kind
    of spu_mul but xlc does not.  Sigh ... */
 
-#define VEC_FLOAT4( a )  spu_splats( (float)(a) )
-#define VEC_UINT4( a )   spu_splats( (unsigned int)(a) )
-#define VEC_INT4( a )    spu_splats( (int)(a) )
+#define VEC_FLOAT4( a )   spu_splats( (float)(a) )
+#define VEC_UINT4( a )    spu_splats( (unsigned int)(a) )
+#define VEC_INT4( a )     spu_splats( (int)(a) )
 
-#define EXTRACT( v, n )  spu_extract( (v), (n) )
-#define GATHER( a )      spu_extract( spu_gather( (a) ), 0 )
+#define EXTRACT( v, n )   spu_extract( (v), (n) )
+#define INSERT( s, v, n ) spu_insert( (s), (v), (n) )
+#define GATHER( a )       spu_extract( spu_gather( (a) ), 0 )
+#define SPLAT( a, n )     spu_shuffle( (a), (a), _splat[(n)] ) /* Not robust */
+#define PERM( a, b, p )   spu_shuffle( (a), (b), (p) )
 
-#define ADD( a, b )      spu_add(   (a), (b) )
-#define SUB( a, b )      spu_sub(   (a), (b) )
-#define MUL( a, b )      spu_mul(   (a), (b) )
+#define ADD( a, b )       spu_add(   (a), (b) )
+#define SUB( a, b )       spu_sub(   (a), (b) )
+#define MUL( a, b )       spu_mul(   (a), (b) )
 
-#define FMA(  a, b, c )  spu_madd(  (a), (b), (c) )
-#define FMS(  a, b, c )  spu_msub(  (a), (b), (c) )
-#define FNMS( a, b, c )  spu_nmsub( (a), (b), (c) )
+#define FMA(  a, b, c )   spu_madd(  (a), (b), (c) )
+#define FMS(  a, b, c )   spu_msub(  (a), (b), (c) )
+#define FNMS( a, b, c )   spu_nmsub( (a), (b), (c) )
 
-#define MERGE( c, t, f ) spu_sel(   (f), (t), (c) )
-#define CZERO( c, a )    spu_andc(  (a), (vec_float4)(c) ) /* USE typeof?? */
-#define NOTCZERO( c, a ) spu_and(   (a), (vec_float4)(c) ) /* USE typeof?? */
+#define MERGE( c, t, f )  spu_sel(   (f), (t), (c) )
+#define CZERO( c, a )     spu_andc(  (a), (vec_float4)(c) ) /* USE typeof?? */
+#define NOTCZERO( c, a )  spu_and(   (a), (vec_float4)(c) ) /* USE typeof?? */
 
-#define CMPGT( a, b )    spu_cmpgt( (a), (b) )
-#define CMPLT( a, b )    spu_cmpgt( (b), (a) )
-#define CMPEQ( a, b )    spu_cmpeq( (b), (a) )
+#define CMPGT( a, b )     spu_cmpgt( (a), (b) )
+#define CMPLT( a, b )     spu_cmpgt( (b), (a) )
+#define CMPEQ( a, b )     spu_cmpeq( (b), (a) )
 
-#define AND( a, b )      spu_and( (a), (b) )
-#define OR( a, b )       spu_or(  (a), (b) )
-#define XOR( a, b )      spu_xor( (a), (b) )
-#define NOT( a )         spu_xor( spu_splats( 0xffffffff ), (a) )
+#define AND( a, b )       spu_and( (a), (b) )
+#define OR( a, b )        spu_or(  (a), (b) )
+#define XOR( a, b )       spu_xor( (a), (b) )
+#define NOT( a )          spu_xor( spu_splats( 0xffffffff ), (a) )
 
 /* Compute an estimate of the rsqrt (12-bit accurate) */
 /* Perform Newton-Raphson refinement (one step should give 24-bit) */

@@ -8,24 +8,31 @@
 #include <profile.h>
 #endif
 
-#ifndef likely
-#define likely(_c)      __builtin_expect((_c), 1)
-#define unlikely(_c)    __builtin_expect((_c), 0)
+#ifndef LIKELY
+#define LIKELY(_c)   __builtin_expect((_c),1)
+#define UNLIKELY(_c) __builtin_expect((_c),0)
+#endif
+
+#if 0
+#include <stdio.h>
+#define INSPECT(v) printf( "%i: "#v " = %e %e %e %e\n", __LINE__, \
+                           EXTRACT(v,0), \
+                           EXTRACT(v,1), \
+                           EXTRACT(v,2), \
+                           EXTRACT(v,3) )
 #endif
 
 // Note: Because there are typically 2 accumulator DMA 
 // transfers (writeback and read) for every 1 interpolator
-// DMA transfer (read) and accumulator DMA channel
-// usage is more restrictive than interpolator channel
-// usage, we use a little more than double the number
-// of DMA channels for interpolator usage.
+// DMA transfer (read) and accumulator DMA channel,
+// we use more DMA channels for the accumulator.
 
 // DMA tag usage:
-//  0: 2 - Particle buffer 0 (read, write, mover write)
-//  3: 5 - Particle buffer 1 (read, write, mover write)
-//  6: 8 - Particle buffer 2 (read, write, mover write)
-//  9:24 - Accumulator cache DMA transfers (16 channels)
-// 25:31 - Interpolator cache DMA transfers (7 channels)
+//  0: 1 - Particle buffer 0 (read/write, mover write)
+//  2: 3 - Particle buffer 1 (read/write, mover write)
+//  4: 5 - Particle buffer 2 (read/write, mover write)
+//  6:21 - Accumulator cache DMA transfers (16 channels)
+// 22:31 - Interpolator cache DMA transfers (10 channels)
 
 //  0:31 - (Reused) Accumulator write back
 // 31:31 - (Reused) Pipeline input and return values
@@ -112,12 +119,12 @@ DECLARE_ALIGNED_ARRAY( uint32_t, 128, voxel_cache_val, VOXEL_CACHE_N_HASH );
 
 uint32_t voxel_cache_lru;
 
-#define A_CACHE_DMA_CHANNEL_FIRST 9
-#define A_CACHE_DMA_CHANNEL_LAST  24
+#define A_CACHE_DMA_CHANNEL_FIRST 6
+#define A_CACHE_DMA_CHANNEL_LAST  21
 #define A_CACHE_DMA_CHANNEL(addr) ( A_CACHE_DMA_CHANNEL_FIRST + \
     ( (addr) & ( A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST ) ) )
 
-#define I_CACHE_DMA_CHANNEL_FIRST 25
+#define I_CACHE_DMA_CHANNEL_FIRST 22
 #define I_CACHE_DMA_CHANNEL_LAST  31
 uint32_t i_cache_dma_channel;
 
@@ -164,7 +171,7 @@ voxel_cache_init( void ) {
 
 static __inline uint32_t
 _voxel_cache_fetch( uint32_t addr,
-                 uint32_t hash_addr ) {
+                    uint32_t hash_addr ) {
   uint32_t old_addr;
   uint32_t hash_i, hash_j, hash_k;
   uint32_t line, prev, next;
@@ -172,17 +179,17 @@ _voxel_cache_fetch( uint32_t addr,
   // Lookup addr in the cache - O(1)
 
   hash_i = hash_addr;
-  while( unlikely( (voxel_cache_key[hash_i]!=addr      ) & // YES! A BIT AND 
+  while( UNLIKELY( (voxel_cache_key[hash_i]!=addr      ) & // YES! A BIT AND 
                    (voxel_cache_key[hash_i]!=0xffffffff) ) )
     hash_i = ( hash_i + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );
   line = voxel_cache_val[hash_i];
 
-  if( likely( line!=0xffffffff ) ) { // Cache hit
+  if( LIKELY( line!=0xffffffff ) ) { // Cache hit
     
     // Mark this cache line as the most recently used
     
-    if( unlikely( voxel_cache_next[line]!=voxel_cache_lru ) ) {
-      if( unlikely( line==voxel_cache_lru ) ) {
+    if( UNLIKELY( voxel_cache_next[line]!=voxel_cache_lru ) ) {
+      if( UNLIKELY( line==voxel_cache_lru ) ) {
         voxel_cache_lru = voxel_cache_next[voxel_cache_lru];
       } else {
 
@@ -205,7 +212,7 @@ _voxel_cache_fetch( uint32_t addr,
       }
     }
     
-  } else { // Cache miss ... Unlikely
+  } else { // Cache miss
 
     // We will fill the least recently used line with the data at addr
 
@@ -257,7 +264,7 @@ _voxel_cache_fetch( uint32_t addr,
    
     old_addr = voxel_cache_addr[line];
 
-    if( likely( old_addr!=0xffffffff ) ) {
+    if( LIKELY( old_addr!=0xffffffff ) ) {
 
       uint32_t channel = A_CACHE_DMA_CHANNEL(old_addr);     
       
@@ -297,16 +304,16 @@ _voxel_cache_fetch( uint32_t addr,
     // old_addr to line - O(1).  Note that if we had a write back, we
     // are guaranteed that old_addr _is_ in the hash table.
 
-    if( likely( old_addr!=0xffffffff ) ) {
+    if( LIKELY( old_addr!=0xffffffff ) ) {
 
       hash_i = VOXEL_CACHE_HASH(old_addr);
-      while( unlikely( voxel_cache_key[hash_i]!=old_addr ) )
+      while( UNLIKELY( voxel_cache_key[hash_i]!=old_addr ) )
         hash_i = ( hash_i + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );     
 
       hash_j = hash_i;
       for(;;) {
         hash_j = ( hash_j + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );
-        if( likely( voxel_cache_key[hash_j]==0xffffffff ) ) break;
+        if( LIKELY( voxel_cache_key[hash_j]==0xffffffff ) ) break;
         hash_k = VOXEL_CACHE_HASH( voxel_cache_key[hash_j] );
         if( ( (hash_j>hash_i) & ( (hash_k<=hash_i) | (hash_k>hash_j) ) ) |
             ( (hash_j<hash_i) & ( (hash_k<=hash_i) & (hash_k>hash_j) ) ) ) {
@@ -327,7 +334,7 @@ _voxel_cache_fetch( uint32_t addr,
     // this would not have been a cache miss.
 
     hash_i = hash_addr;
-    while( unlikely( voxel_cache_key[hash_i]!=0xffffffff  ) )
+    while( UNLIKELY( voxel_cache_key[hash_i]!=0xffffffff  ) )
       hash_i = ( hash_i + 1 ) & ( VOXEL_CACHE_N_HASH - 1 );
     voxel_cache_key[hash_i] = addr;
     voxel_cache_val[hash_i] = line;
@@ -380,7 +387,7 @@ voxel_cache_writeback( void ) {
   channel = 0;
   for( line=0; line<VOXEL_CACHE_N_LINE; line++ ) {
     addr = voxel_cache_addr[line];
-    if( likely( addr!=0xffffffff ) ) {
+    if( LIKELY( addr!=0xffffffff ) ) {
       mfc_put( &a_cache[line], args->a0+sizeof(accumulator_t)*addr,
                sizeof(accumulator_t), channel, 0, 0 );
       channel = (channel + 1) & 0x1f;
@@ -396,161 +403,6 @@ voxel_cache_writeback( void ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Computational kernel
 
-// move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
-// depositing particle current as it goes. If the particle was moved
-// sucessfully (particle mover is no longer in use), this returns 0.
-// If the particle interacted with something this routine could not
-// handle, this routine returns 1 (particle mover is still in use).
-// On a successful move, the particle position is updated and dispx,
-// dispy and dispz are zerod.  On a partial move, the particle
-// position is updated to the point where the particle interacted and
-// dispx, dispy, dispz contain the remaining particle displacement.
-// The displacements are the physical displacments normalized current
-// cell size.
-//
-// Because move_p is internal use only and frequently called, it does
-// not check its input arguments.  Callers are responsible for
-// insuring valid arguments.
-
-static __inline int
-move_p_spu( particle_t       * __restrict ALIGNED(32) p,
-            particle_mover_t * __restrict ALIGNED(16) pm ) {
-  float s_midx, s_midy, s_midz;
-  float s_dispx, s_dispy, s_dispz;
-  float s_dir[3];
-  float v0, v1, v2, v3, v4, v5;
-  int type;
-  int64_t neighbor;
-  uint32_t line;
-
-  // FIXME: THIS CAN BE PARTIALLY HORIZONTAL SIMD ACCELERATED
-
-  for(;;) {
-    line = voxel_cache_fetch( p->i );
-
-    s_midx = p->dx;
-    s_midy = p->dy;
-    s_midz = p->dz;
-
-    s_dispx = pm->dispx;
-    s_dispy = pm->dispy;
-    s_dispz = pm->dispz;
-
-    s_dir[0] = (s_dispx>0) ? 1 : -1;
-    s_dir[1] = (s_dispy>0) ? 1 : -1;
-    s_dir[2] = (s_dispz>0) ? 1 : -1;
-    
-    // Compute the twice the fractional distance to each potential
-    // streak/cell face intersection.
-
-    v0 = (s_dispx==0) ? 3.4e38 : (s_dir[0]-s_midx)/s_dispx;
-    v1 = (s_dispy==0) ? 3.4e38 : (s_dir[1]-s_midy)/s_dispy;
-    v2 = (s_dispz==0) ? 3.4e38 : (s_dir[2]-s_midz)/s_dispz;
-
-    // Determine the fractional length and type of current streak. The
-    // streak ends on either the first face intersected by the
-    // particle track or at the end of the particle track.
-    // 
-    //   type 0,1 or 2 ... streak ends on a x,y or z-face respectively
-    //   type 3        ... streak ends at end of the particle track
-
-    /**/      v3=2,  type=3;
-    if(v0<v3) v3=v0, type=0;
-    if(v1<v3) v3=v1, type=1;
-    if(v2<v3) v3=v2, type=2;
-    v3 *= 0.5;
-
-    // Compute the midpoint and the normalized displacement of the streak
-
-    s_dispx *= v3;
-    s_dispy *= v3;
-    s_dispz *= v3;
-
-    s_midx += s_dispx;
-    s_midy += s_dispy;
-    s_midz += s_dispz;
-
-    // Accumulate the streak.  Note: accumulator values are 4 times
-    // the total physical charge that passed through the appropriate
-    // current quadrant in a time-step
-
-    v5 = p->q*s_dispx*s_dispy*s_dispz*(1./3.);
-
-    voxel_cache_wait();
-
-#   define ACCUMULATE_J(X,Y,Z)                                          \
-    v4  = p->q*s_disp##X; /* v2 = q ux                            */    \
-    v1  = v4*s_mid##Y;    /* v1 = q ux dy                         */    \
-    v0  = v4-v1;          /* v0 = q ux (1-dy)                     */    \
-    v1 += v4;             /* v1 = q ux (1+dy)                     */    \
-    v4  = 1+s_mid##Z;     /* v4 = 1+dz                            */    \
-    v2  = v0*v4;          /* v2 = q ux (1-dy)(1+dz)               */    \
-    v3  = v1*v4;          /* v3 = q ux (1+dy)(1+dz)               */    \
-    v4  = 1-s_mid##Z;     /* v4 = 1-dz                            */    \
-    v0 *= v4;             /* v0 = q ux (1-dy)(1-dz)               */    \
-    v1 *= v4;             /* v1 = q ux (1+dy)(1-dz)               */    \
-    v0 += v5;             /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */    \
-    v1 -= v5;             /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */    \
-    v2 -= v5;             /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */    \
-    v3 += v5;             /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */    \
-    a_cache[line].j##X[0] += v0;                                        \
-    a_cache[line].j##X[1] += v1;                                        \
-    a_cache[line].j##X[2] += v2;                                        \
-    a_cache[line].j##X[3] += v3
-
-    ACCUMULATE_J(x,y,z);
-    ACCUMULATE_J(y,z,x);
-    ACCUMULATE_J(z,x,y);
-
-#   undef ACCUMULATE_J
-
-    // Compute the remaining particle displacment
-
-    pm->dispx -= s_dispx;
-    pm->dispy -= s_dispy;
-    pm->dispz -= s_dispz;
-
-    // Compute the new particle offset
-
-    p->dx += s_dispx+s_dispx;
-    p->dy += s_dispy+s_dispy;
-    p->dz += s_dispz+s_dispz;
-
-    // If an end streak, return success (should be ~50% of the time)
-
-    if( type==3 ) return 0;
-
-    // Determine if the cell crossed into a local cell or if it hit a
-    // boundary.  Convert the coordinate system accordingly.  Note:
-    // Crossing into a local cell should happen the other ~50% of
-    // time; hitting a structure and parallel domain boundary should
-    // usually be a rare event.  Note: the entry / exit coordinate for
-    // the particle is guaranteed to be +/-1 _exactly_ for the
-    // particle.
-
-    // FIXME: WOULD SWITCHING ON TYPE BE FASTER ON THE SPUS?
-
-    v0 = s_dir[type];
-    neighbor = i_cache[line].neighbor[ ((v0>0)?3:0) + type ];
-    if( unlikely( (neighbor<args->rangel) |       // YES! BIT OR
-                  (neighbor>args->rangeh) ) ) {   // Hit a boundary
-      (&(p->dx))[type] = v0;                      // Put on boundary
-      if( neighbor!=reflect_particles ) return 1; // Cannot handle it
-      (&(p->ux))[type] = -(&(p->ux))[type];
-      (&(pm->dispx))[type] = -(&(pm->dispx))[type];
-    } else {
-      p->i = neighbor - args->rangel; // Compute local index of neighbor
-      /**/                            // Note: neighbor-args->rangel < 2^31 / 6
-      (&(p->dx))[type] = -v0;         // Convert coordinate system
-    }
-  }
-
-  return 0; // Never get here ... avoid compiler warning
-}
-
-// FIXME: Using restricted pointers makes this worse(!) on gcc??
-// FIXME: Branch hints makes this worse(!) on gcc?? (No change on xlc.)
-
 static __inline int                         // Return number of movers used
 advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Particle array
                         particle_mover_t * __restrict ALIGNED(16)  pm, // Mover array
@@ -558,23 +410,45 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
                         int np ) { // Number of quad particle quads
   USING_V4C;
 
+  const vec_uchar16 yzx_perm =
+    {  4, 5, 6, 7,  8, 9,10,11,  0, 1, 2, 3,  12,13,14,15 };
+  const vec_uchar16 zxy_perm =
+    {  8, 9,10,11,  0, 1, 2, 3,  4, 5, 6, 7,  12,13,14,15 };
+
   const vec_float4 qdt_2mc        = VEC_FLOAT4( args->qdt_2mc );
   const vec_float4 cdt_dx         = VEC_FLOAT4( args->cdt_dx  );
   const vec_float4 cdt_dy         = VEC_FLOAT4( args->cdt_dy  );
   const vec_float4 cdt_dz         = VEC_FLOAT4( args->cdt_dz  );
   const vec_float4 one            = VEC_FLOAT4(  1.           );
+  const vec_float4 two            = VEC_FLOAT4(  2.           );
   const vec_float4 one_third      = VEC_FLOAT4(  1./3.        );
   const vec_float4 one_half       = VEC_FLOAT4(  1./2.        );
   const vec_float4 two_fifteenths = VEC_FLOAT4(  2./15.       );
   const vec_float4 neg_one        = VEC_FLOAT4( -1.           );
+  const vec_float4 tiny           = { 1.e-37, 1.e-37, 1.e-37, 1.e-37 };
 
   const vec_uint4  v_i_cache      = VEC_UINT4( i_cache        );
   const vec_uint4  v_a_cache      = VEC_UINT4( a_cache        );
+  const vec_uint4  signs          = VEC_UINT4( 1<<31 );
+  const vec_uint4  element_3      = { 0,     0,     0,     0xffffffff };
+  const vec_uint4  sign[3]        = { { 1<<31, 0,     0,     0     },
+                                      { 0,     1<<31, 0,     0     },
+                                      { 0,     0,     1<<31, 0     } };
+
+  const int rangel = args->rangel;
+  const int rangeh = args->rangeh;
+  const int streak_type[16] = { 3 /* 0000 - Cannot happen */,
+    /**/          3 /* 0001 */, 2 /* 0010 */, 3 /* 0011 */,
+    1 /* 0100 */, 3 /* 0101 */, 1 /* 0110 */, 3 /* 0111 */,
+    0 /* 1000 */, 3 /* 1001 */, 0 /* 1010 */, 3 /* 1011 */,
+    0 /* 1100 */, 3 /* 1101 */, 0 /* 1110 */, 3 /* 1111 */ };
+
+  // Particle push variables
 
   vec_float4  p0r,  p1r,  p2r,  p3r;                                             vec_float4  p4r,  p5r,  p6r,  p7r;                                             vec_float4  p8r,  p9r, p10r, p11r;                                             vec_float4 p12r, p13r, p14r, p15r;
   vec_float4  p0u,  p1u,  p2u,  p3u;                                             vec_float4  p4u,  p5u,  p6u,  p7u;                                             vec_float4  p8u,  p9u, p10u, p11u;                                             vec_float4 p12u, p13u, p14u, p15u;
 
-  vec_uint4 vp;                                                                  vec_uint4 vp_1;                                                                vec_uint4 vp_2;                                                                vec_uint4   vp_3;
+  vec_uint4 vp;                                                                  vec_uint4 vp_1;                                                                vec_uint4 vp_2;                                                                vec_uint4 vp_3;
 
   vec_float4 dx,   dy,   dz;   vec_uint4 i;                                      vec_float4 dx_1, dy_1, dz_1; vec_uint4 i_1;                                    vec_float4 dx_2, dy_2, dz_2; vec_uint4 i_2;                                    vec_float4 dx_3, dy_3, dz_3; vec_uint4 i_3;
   vec_float4 ux,   uy,   uz,   q;                                                vec_float4 ux_1, uy_1, uz_1, q_1;                                              vec_float4 ux_2, uy_2, uz_2, q_2;                                              vec_float4 ux_3, uy_3, uz_3, q_3; 
@@ -609,12 +483,23 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
   const interpolator_t * __restrict ALIGNED(128) fi;
   accumulator_t        * __restrict ALIGNED(64)  ja;
 
-  int m, n, nm, new_nm;
+  int n, nm;
 
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, line, NP_BLOCK );
+  DECLARE_ALIGNED_ARRAY( uint32_t, 128, ln, NP_BLOCK );
+
+  // Particle mover variables
+
+  vec_float4 dr, r, u;                // Particle displ, position, momentum;
+  vec_float4 /*q,*/ q3;               // Particle charge and one third charge
+  vec_float4 sgn_dr, s;               // Movement direction, streak length
+  vec_float4 sdr, sr, sr_yzx, sr_zxy; // Streak displ, midpoint, perm midpoint
+  vec_float4 v0, v1, v2, v3, v4, v5;  // Vector temporaries
+  float f0;                           // Scalar temporaries
+
+  int m, new_nm, line, voxel, type, face, neighbor;
 
   // Prefetch interpolator and accumulator data for this block
-  for( n=0; n<np; n++ ) line[n] = voxel_cache_fetch( p[n].i ) << 6; // FIXME: UGLY!
+  for( n=0; n<np; n++ ) ln[n] = voxel_cache_fetch( p[n].i ) << 6; // FIXME: UGLY!
   voxel_cache_wait();
 
   // Process the particle quads for this pipeline
@@ -631,7 +516,7 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
     dx   =  p0r;                                                                   dx_1 =  p4r;                                                                   dx_2 =  p8r;                                                                   dx_3 = p12r;
     dy   =  p1r;                                                                   dy_1 =  p5r;                                                                   dy_2 =  p9r;                                                                   dy_3 = p13r;
     dz   =  p2r;                                                                   dz_1 =  p6r;                                                                   dz_2 = p10r;                                                                   dz_3 = p14r;
-    LOAD_UINT_4x1( &line[n   ], i   );                                             LOAD_UINT_4x1( &line[n+ 4], i_1 );                                             LOAD_UINT_4x1( &line[n+ 8], i_2 );                                             LOAD_UINT_4x1( &line[n+12], i_3 );
+    LOAD_UINT_4x1( &ln[n   ], i   );                                               LOAD_UINT_4x1( &ln[n+ 4], i_1 );                                               LOAD_UINT_4x1( &ln[n+ 8], i_2 );                                               LOAD_UINT_4x1( &ln[n+12], i_3 );
 
     // Interpolate fields
 
@@ -743,16 +628,17 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
     dxh      = ADD( dx,    ddx   );                                                dxh_1    = ADD( dx_1,  ddx_1 );                                                dxh_2    = ADD( dx_2,  ddx_2 );                                                dxh_3    = ADD( dx_3,  ddx_3 );
     dyh      = ADD( dy,    ddy   );                                                dyh_1    = ADD( dy_1,  ddy_1 );                                                dyh_2    = ADD( dy_2,  ddy_2 );                                                dyh_3    = ADD( dy_3,  ddy_3 );
     dzh      = ADD( dz,    ddz   );                                                dzh_1    = ADD( dz_1,  ddz_1 );                                                dzh_2    = ADD( dz_2,  ddz_2 );                                                dzh_3    = ADD( dz_3,  ddz_3 );
-    dx1      = ADD( dxh,   ddx   );                                                dx1_1    = ADD( dxh_1, ddx_1 );                                                dx1_2    = ADD( dxh_2, ddx_2 );                                                dx1_3    = ADD( dxh_3, ddx_3 );
-    dy1      = ADD( dyh,   ddy   );                                                dy1_1    = ADD( dyh_1, ddy_1 );                                                dy1_2    = ADD( dyh_2, ddy_2 );                                                dy1_3    = ADD( dyh_3, ddy_3 );
-    dz1      = ADD( dzh,   ddz   );                                                dz1_1    = ADD( dzh_1, ddz_1 );                                                dz1_2    = ADD( dzh_2, ddz_2 );                                                dz1_3    = ADD( dzh_3, ddz_3 );
+    dx1      = FMA( two, ddx,   dx   );                                            dx1_1    = FMA( two, ddx_1, dx_1 );                                            dx1_2    = FMA( two, ddx_2, dx_2 );                                            dx1_3    = FMA( two, ddx_3, dx_3 );
+    dy1      = FMA( two, ddy,   dy   );                                            dy1_1    = FMA( two, ddy_1, dy_1 );                                            dy1_2    = FMA( two, ddy_2, dy_2 );                                            dy1_3    = FMA( two, ddy_3, dy_3 );
+    dz1      = FMA( two, ddz,   dz   );                                            dz1_1    = FMA( two, ddz_1, dz_1 );                                            dz1_2    = FMA( two, ddz_2, dz_2 );                                            dz1_3    = FMA( two, ddz_3, dz_3 );
+
     outbnd   = OR( OR( OR( CMPLT(dx1,  neg_one), CMPGT(dx1,  one) ), OR( CMPLT(dy1,  neg_one), CMPGT(dy1,  one) ) ), OR( CMPLT(dz1,  neg_one), CMPGT(dz1,  one) ) );
     outbnd_1 = OR( OR( OR( CMPLT(dx1_1,neg_one), CMPGT(dx1_1,one) ), OR( CMPLT(dy1_1,neg_one), CMPGT(dy1_1,one) ) ), OR( CMPLT(dz1_1,neg_one), CMPGT(dz1_1,one) ) );
     outbnd_2 = OR( OR( OR( CMPLT(dx1_2,neg_one), CMPGT(dx1_2,one) ), OR( CMPLT(dy1_2,neg_one), CMPGT(dy1_2,one) ) ), OR( CMPLT(dz1_2,neg_one), CMPGT(dz1_2,one) ) );
     outbnd_3 = OR( OR( OR( CMPLT(dx1_3,neg_one), CMPGT(dx1_3,one) ), OR( CMPLT(dy1_3,neg_one), CMPGT(dy1_3,one) ) ), OR( CMPLT(dz1_3,neg_one), CMPGT(dz1_3,one) ) );
 
 #   define TEST_OUTBND(Q,E,o)                       \
-    if( unlikely( ( gather##Q & (1<<E) ) != 0 ) ) { \
+    if( UNLIKELY( ( gather##Q & (1<<E) ) != 0 ) ) { \
        pm[nm].dispx = EXTRACT( ddx##Q, E );         \
        pm[nm].dispy = EXTRACT( ddy##Q, E );         \
        pm[nm].dispz = EXTRACT( ddz##Q, E );         \
@@ -762,10 +648,10 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
 
     gather   = GATHER( outbnd   );                                                 gather_1 = GATHER( outbnd_1 );                                                 gather_2 = GATHER( outbnd_2 );                                                 gather_3 = GATHER( outbnd_3 );
 
-    if( unlikely( gather  !=0 ) ) { TEST_OUTBND(,  0, 0); TEST_OUTBND(,  1, 1); TEST_OUTBND(,  2, 2); TEST_OUTBND(,  3, 3); }
-    if( unlikely( gather_1!=0 ) ) { TEST_OUTBND(_1,0, 4); TEST_OUTBND(_1,1, 5); TEST_OUTBND(_1,2, 6); TEST_OUTBND(_1,3, 7); }
-    if( unlikely( gather_2!=0 ) ) { TEST_OUTBND(_2,0, 8); TEST_OUTBND(_2,1, 9); TEST_OUTBND(_2,2,10); TEST_OUTBND(_2,3,11); }
-    if( unlikely( gather_3!=0 ) ) { TEST_OUTBND(_3,0,12); TEST_OUTBND(_3,1,13); TEST_OUTBND(_3,2,14); TEST_OUTBND(_3,3,15); }
+    if( UNLIKELY( gather  !=0 ) ) { TEST_OUTBND(,  0, 0); TEST_OUTBND(,  1, 1); TEST_OUTBND(,  2, 2); TEST_OUTBND(,  3, 3); }
+    if( UNLIKELY( gather_1!=0 ) ) { TEST_OUTBND(_1,0, 4); TEST_OUTBND(_1,1, 5); TEST_OUTBND(_1,2, 6); TEST_OUTBND(_1,3, 7); }
+    if( UNLIKELY( gather_2!=0 ) ) { TEST_OUTBND(_2,0, 8); TEST_OUTBND(_2,1, 9); TEST_OUTBND(_2,2,10); TEST_OUTBND(_2,3,11); }
+    if( UNLIKELY( gather_3!=0 ) ) { TEST_OUTBND(_3,0,12); TEST_OUTBND(_3,1,13); TEST_OUTBND(_3,2,14); TEST_OUTBND(_3,3,15); }
 
 #   undef TEST_OUTBND
 
@@ -784,8 +670,7 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
     // passed through the appropriate current quadrant in a time-step
 
     qa    = CZERO( outbnd,   q   );                                                qa_1  = CZERO( outbnd_1, q_1 );                                                qa_2  = CZERO( outbnd_2, q_2 );                                                qa_3  = CZERO( outbnd_3, q_3 );
-    ccc   = MUL( MUL( one_third, qa   ), MUL( ddx,   MUL( ddy,   ddz   ) ) );      ccc_1 = MUL( MUL( one_third, qa_1 ), MUL( ddx_1, MUL( ddy_1, ddz_1 ) ) );
-    ccc_2 = MUL( MUL( one_third, qa_2 ), MUL( ddx_2, MUL( ddy_2, ddz_2 ) ) );      ccc_3 = MUL( MUL( one_third, qa_3 ), MUL( ddx_3, MUL( ddy_3, ddz_3 ) ) );
+    ccc   = MUL( MUL( one_third, qa   ), MUL( ddx,   MUL( ddy,   ddz   ) ) );      ccc_1 = MUL( MUL( one_third, qa_1 ), MUL( ddx_1, MUL( ddy_1, ddz_1 ) ) );      ccc_2 = MUL( MUL( one_third, qa_2 ), MUL( ddx_2, MUL( ddy_2, ddz_2 ) ) );      ccc_3 = MUL( MUL( one_third, qa_3 ), MUL( ddx_3, MUL( ddy_3, ddz_3 ) ) );
 
 #   define ACCUMULATE_J(X,Y,Z)                                                                                                                                                                                                                                                         \
     a4##X     = MUL(qa,       dd##X    );                                          a4##X##_1 = MUL(qa_1,     dd##X##_1);                                          a4##X##_2 = MUL(qa_2,     dd##X##_2);                                          a4##X##_3 = MUL(qa_3,     dd##X##_3); \
@@ -843,13 +728,179 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,  // Partic
   // Process movers
 
   new_nm = 0;
-
   for( m=0; m<nm; m++ ) {
-    n = pm[m].i;
-    if( unlikely( move_p_spu( &p[n], &pm[m] ) ) ) {
-      pm[new_nm++]   = pm[m];
-      pm[new_nm-1].i = idx + n;
+
+    // Load up the particle to move, its charge and how far to move it
+
+    LOAD_4x1( &pm[m].dispx, dr );
+    n = EXTRACT( (vec_int4)dr, 3 );
+    dr = CZERO( element_3, dr ); // dr = p_ddx, p_ddy, p_ddz, 0
+
+    LOAD_4x1( &p[n].dx, r );
+    voxel = EXTRACT( (vec_int4)r, 3 );
+    r = CZERO( element_3, r );   // r  = p_dx,  p_dy,  p_dz,  0
+
+    LOAD_4x1( &p[n].ux, u );     // u  = p_ux,  p_uy,  p_uz,  p_q
+    q  = SPLAT( u, 3 );          // q  = p_q,   p_q,   p_q,   p_q
+    q3 = MUL( one_third, q );    // q3 = p_q/3, p_q/3, p_q/3, p_q/3
+
+    for(;;) {
+
+      // At this point:
+      //   r     = current particle position in local voxel coordinates
+      //           (note the current voxel is on [-1,1]^3.
+      //   dr    = remaining particle displacment
+      //           (note: this is in voxel edge lengths!)
+      //   voxel = local voxel of particle
+      // Thus, in the local coordinate system, it is desired to move the
+      // particle through all points in the local coordinate system:
+      //   streak_r(s) = r + 2 disp s for s in [0,1]   
+
+      // Start fetching the voxel needed for this current accumulation
+      // and determine the fractional length and type of current
+      // streak made by the particle through this voxel.  The streak
+      // ends on either the first voxel face intersected by the
+      // particle track or at the end of the particle track.
+      //
+      // Note: a divide by zero cannot occur below due to the shift of
+      // the denominator by tiny.  Also, the shift by tiny is large
+      // enough that the divide will never overflow when dr is tiny.
+      // Likewise, due to speed of light limitations, generally dr
+      // cannot get much larger than 1 or so and the numerator can
+      // generally never be smaller than FLT_EPS/2.  Thus, likewise,
+      // the divide will never underflow either.
+
+      line   = voxel_cache_fetch( voxel );
+      sgn_dr = MERGE( signs, dr, one ); // sgn_dr = sgn p_ddx,     ..., 1
+
+      // WTF: COMPILER GENERATED DIVIDE OF 1/1 HERE = 0.9999999!
+      // SO DOES A RCP BASED DIVIDE.  FOR NOW, USE THE RCP DIVIDE ...
+      // BUT HOW TO ROBUSTLY DIVIDE HERE!
+      // v0 = SUB( sgn_dr, r ) /  FMA( two, dr, MERGE( signs, dr, tiny ) );
+      v0     = MUL( SUB( sgn_dr, r ),
+                    RCP( FMA( two, dr, MERGE( signs, dr, tiny ) ) ) );
+      /**/                 s = one;
+      v1 = SPLAT( v0, 0 ); s = MERGE( CMPLT( v1, s ), v1, s );
+      v1 = SPLAT( v0, 1 ); s = MERGE( CMPLT( v1, s ), v1, s );
+      v1 = SPLAT( v0, 2 ); s = MERGE( CMPLT( v1, s ), v1, s );
+      type = streak_type[ GATHER( CMPEQ( s, v0 ) ) ];
+
+      // At this point:
+      //   type = 0,1 or 2 ... streak ends on a x,y or z-face respectively
+      //          3        ... streak ends at end of the particle track
+      //   s    = SPLAT( normalized length of the current streak )
+      //   sgn_dr indicates the sign streak displacements.  This is
+      //     useful to determine whether or not the streak hit a face.
+
+      // Compute the streak midpoint the normalized displacement,
+      // update the particle position and remaining displacment,
+      // compute accumulator coefficients, finish up fetching the
+      // voxel needed for this streak and accumule the streak.  Note:
+      // accumulator values are 4 times the total physical charge that
+      // passed through the appropriate current quadrant in a
+      // timestep
+      
+      sdr = MUL( s, dr );       // sdr = ux,    uy,    uz,    0
+      sr  = ADD( r, sdr );      // sr  = dx,    dy,    dz,    0
+      dr  = SUB( dr, sdr );     // dr  = p_ddx',p_ddy',p_ddz',0
+      r   = FMA( two, sdr, r ); // r   = p_dx', p_dy', p_dz', 0
+
+      sr_yzx = PERM( sr, sr, yzx_perm ); // sr_yzx = dy, dz, dx, 0
+      sr_zxy = PERM( sr, sr, zxy_perm ); // sr_zxy = dz, dx, dy, 0
+      v5  = MUL( q3,
+            MUL( SPLAT(sdr,0),
+            MUL( SPLAT(sdr,1),
+                 SPLAT(sdr,2) ) ) ); // v5 = SPLATS(q ux uy uz/3)
+
+      v4  = MUL( q, sdr );      // v4  = q ux,      q uy,      q uz,      0
+      v1  = MUL( v4, sr_yzx );  // v1  = q ux dy,   q uy dz,   q uz dx,   0
+      v0  = SUB( v4, v1 );      // v0  = q ux(1-dy),q uy(1-dz),q uz(1-dx),0
+      v1  = ADD( v1, v4 );      // v1  = q ux(1+dy),q uy(1+dz),q uz(1+dx),0
+      v4  = ADD( one, sr_zxy ); // v4  = 1+dz,      1+dx,      1+dy,      1
+      v2  = MUL( v0, v4 );      // v2  = q ux(1-dy)(1+dz), ...,           0
+      v3  = MUL( v1, v4 );      // v3  = q ux(1+dy)(1+dz), ...,           0
+      v4  = SUB( one, sr_zxy ); // v4  = 1-dz,      1-dx,      1-dy,      1
+      v0  = MUL( v0, v4 );      // v0  = q ux(1-dy)(1-dz), ...,           0
+      v1  = MUL( v1, v4 );      // v1  = q ux(1+dy)(1-dz), ...,           0
+      v0  = ADD( v0, v5 );      // v0  = q ux[(1-dy)(1-dz)+uy uz/3], ..., +v5
+      v1  = SUB( v1, v5 );      // v1  = q ux[(1+dy)(1-dz)-uy uz/3], ..., -v5
+      v2  = SUB( v2, v5 );      // v2  = q ux[(1-dy)(1+dz)-uy uz/3], ..., -v5
+      v3  = ADD( v3, v5 );      // v3  = q ux[(1+dy)(1+dz)+uy uz/3], ..., +v5
+
+      TRANSPOSE( v0, v1, v2, v3 );
+
+      voxel_cache_wait();
+
+      INCREMENT_4x1( a_cache[line].jx, v0 );
+      INCREMENT_4x1( a_cache[line].jy, v1 );
+      INCREMENT_4x1( a_cache[line].jz, v2 );
+
+      // If streak ended at the end of the particle track, this mover was
+      // succesfully processed.  Should be just under ~50% of the time.
+      //
+      // FIXME: IS BRANCH PREDICTION USEFUL HERE?
+
+      if( type==3 ) break;
+
+      // Streak terminated on a voxel face.  Determine if the particle
+      // crossed into a local voxel or if it hit a boundary.  Convert
+      // the particle coordinates accordingly.  Note: Crossing into a
+      // local voxel should happen the most o the time once we get to
+      // this point; hitting a structure or parallel domain boundary
+      // should usually be a rare event.
+
+      f0 = EXTRACT( sgn_dr, type );
+      r  = INSERT( f0, r, type ); // Avoid roundoff fiascos---put the
+      /**/                        // particle _exactly_ on the
+      /**/                        // boundary.
+      
+      // Determine if the particle crossed into a local voxel or if it
+      // hit a boundary.  Convert the particle coordinates
+      // accordingly.  Note: Crossing into a local voxel should happen
+      // the other ~50% of time; hitting a structure and parallel
+      // domain boundary should usually be a rare event.  Note: the
+      // entry / exit coordinate for the particle is guaranteed to be
+      // +/-1 _exactly_ for the particle.
+
+      face = type;
+      if( f0>0 ) face += 3;
+      neighbor = i_cache[line].neighbor[face];
+
+      if( LIKELY( (neighbor>=rangel) &
+                  (neighbor<=rangeh) ) ) { // Yes, bit ops!
+        
+        // Crossed into a normal voxel
+        
+        voxel = neighbor - rangel;
+        r = XOR( r, (vec_float4)sign[type] ); // Convert coordinate system
+        
+      } else if( UNLIKELY( neighbor==reflect_particles ) ) {
+        
+        // Hit a reflecting boundary condition.  Reflect the particle
+        // momentum and remaining displacement and keep moving the
+        // particle.
+        
+        v0 = (vec_float4)sign[type];
+        dr = XOR( dr, v0 );
+        u  = XOR( u,  v0 );
+        STORE_4x1( u, &p[n].ux );
+        
+      } else {
+        
+        // Cannot handle the boundary condition here.  Save the
+        // remaining particle displacement into a mover for later
+        // processing.
+        
+        STORE_4x1( (vec_float4)INSERT( idx+n, (vec_int4)dr, 3 ),
+                   &pm[new_nm++].dispx );
+        break;
+        
+      }
     }
+
+    // Save the moved particle position
+
+    STORE_4x1( (vec_float4)INSERT( voxel, (vec_int4)r, 3 ), &p[n].dx );
   }
 
   return new_nm;
@@ -879,171 +930,169 @@ main( uint64_t spu_id,
   int np, next_idx, itmp;
 
   do {
+
     msg = spu_read_in_mbox();
 
     switch(msg) {
-	  case READ_ARGS_AND_ADVANCE:
-# ifdef IN_HARNESS
-        prof_clear();
-        prof_start();
-# endif
+    case READ_ARGS_AND_ADVANCE:
 
-        // Get the pipeline arguments from the dispatcher
+#     ifdef IN_HARNESS
+      prof_clear();
+      prof_start();
+#     endif
+      
+      // Get the pipeline arguments from the dispatcher
+      
+      mfc_get( args,
+               argp,
+               sizeof(*args),
+               31, 0, 0 );
+      mfc_write_tag_mask( (1<<31) );
+      mfc_read_tag_status_all();
+      
+      pipeline_rank = envp & 0xffffffff;
+      n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
+      
+      // Determine which particle quads this pipeline processes
+      
+      DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
+      
+      // Determine which movers are reserved for this pipeline Movers
+      // (16 bytes) are reserved for pipelines in multiples of 8 such
+      // that the set of particle movers reserved for a pipeline is
+      // 128-bit aligned and a multiple of 128-bits in size.
 
-        mfc_get( args,
-          argp,
-          sizeof(*args),
-          31, 0, 0 );
-        mfc_write_tag_mask( (1<<31) );
-        mfc_read_tag_status_all();
-
-        pipeline_rank = envp & 0xffffffff;
-        n_pipeline    = envp >> 32; // Note: pipeline_rank<n_pipeline
-
-        // Determine which particle quads this pipeline processes
-
-        DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
-
-        // Determine which movers are reserved for this pipeline
-        // Movers (16 bytes) are reserved for pipelines in multiples of 8
-        // such that the set of particle movers reserved for a pipeline is
-        // 128-bit aligned and a multiple of 128-bits in size. 
-
-        args->max_nm -= args->np&15; // Insure host gets enough
-        if( args->max_nm<0 ) args->max_nm = 0;
-        DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline,
+      args->max_nm -= args->np&15; // Insure host gets enough
+      if( args->max_nm<0 ) args->max_nm = 0;
+      DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline,
 		  itmp, seg->max_nm );
-        seg->pm        = args->pm + itmp*sizeof(particle_mover_t);
-        seg->nm        = 0;
-        seg->n_ignored = 0;
-
-        // Determine which accumulator array is reserved for this pipeline
-
-        args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
-          POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
-  
-        // Process the particles assigned to this pipeline with triple buffering
-  
-# define BEGIN_GET_PBLOCK(buffer) do {                          \
-                                                                \
-    /* Determine the start and size of the block */             \
-    idx[buffer]      = next_idx;                                \
-    np_block[buffer] = NP_BLOCK;                                \
-    if( unlikely( np_block[buffer]>np ) ) np_block[buffer] = np; \
-    next_idx += np_block[buffer];                               \
-    np       -= np_block[buffer];                               \
-                                                                \
-    /* If we have a block, start reading it into the buffer */  \
-    if( likely( np_block[buffer]!=0 ) )                         \
-      mfc_get( p_block[buffer],                                 \
-               args->p0 + idx[buffer]*sizeof(particle_t),       \
-               np_block[buffer]*sizeof(particle_t),             \
-               3*(buffer)+0, 0, 0 );                            \
-  } while(0)
-  
-# define END_GET_PBLOCK(buffer) do {                                    \
-    /* If we have a block, stop reading it into the buffer */           \
-    if( likely( np_block[buffer]!=0 ) ) {                               \
-      mfc_write_tag_mask( 1<<(3*(buffer)+0) );                          \
-      mfc_read_tag_status_all();                                        \
-    }                                                                   \
-  } while(0)
-  
-# define PROCESS_PBLOCK(buffer)                                         \
-  nm_block[buffer] = advance_p_pipeline_spu( p_block[buffer],           \
-                                             m_block[buffer],           \
-                                             idx[buffer],               \
-                                             np_block[buffer] )
-
-  // FIXME: mfc list for this??
-# define BEGIN_PUT_PBLOCK(buffer) do {                                  \
+      seg->pm        = args->pm + itmp*sizeof(particle_mover_t);
+      seg->nm        = 0;
+      seg->n_ignored = 0;
+      
+      // Determine which accumulator array is reserved for this pipeline
+      
+      args->a0 += sizeof(accumulator_t)*(1+pipeline_rank)*
+        POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
+      
+      // Process the particles assigned to this pipeline with triple buffering
+      
+#     define BEGIN_GET_PBLOCK(buffer) do {                              \
+        /* Determine the start and size of the block */                 \
+        idx[buffer]      = next_idx;                                    \
+        np_block[buffer] = NP_BLOCK;                                    \
+        if( UNLIKELY( np_block[buffer]>np ) ) np_block[buffer] = np;    \
+        next_idx += np_block[buffer];                                   \
+        np       -= np_block[buffer];                                   \
                                                                         \
-    /* If we have a block, begin writing the buffer into the block */   \
-    if( likely( np_block[buffer]!=0 ) )                                 \
-      mfc_put( p_block[buffer],                                         \
-               args->p0 + idx[buffer]*sizeof(particle_t),               \
-               np_block[buffer]*sizeof(particle_t),                     \
-               3*(buffer)+1, 0, 0 );                                    \
+        /* If we have a block, start reading it into the buffer */      \
+        if( LIKELY( np_block[buffer]!=0 ) )                             \
+          mfc_get( p_block[buffer],                                     \
+                   args->p0 + idx[buffer]*sizeof(particle_t),           \
+                   np_block[buffer]*sizeof(particle_t),                 \
+                   2*(buffer)+0, 0, 0 );                                \
+      } while(0)
+  
+#     define END_GET_PBLOCK(buffer) do {                                \
+        /* If we have a block, stop reading it into the buffer */       \
+        if( LIKELY( np_block[buffer]!=0 ) ) {                           \
+          mfc_write_tag_mask( 1<<(2*(buffer)+0) );                      \
+          mfc_read_tag_status_all();                                    \
+        }                                                               \
+      } while(0)
+  
+#     define PROCESS_PBLOCK(buffer)                                     \
+      nm_block[buffer] = advance_p_pipeline_spu( p_block[buffer],       \
+                                                 m_block[buffer],       \
+                                                 idx[buffer],           \
+                                                 np_block[buffer] )
+
+      // FIXME: mfc list for this??
+#     define BEGIN_PUT_PBLOCK(buffer) do {                              \
+        /* If we have a block, begin writing the buffer into the block */ \
+        if( LIKELY( np_block[buffer]!=0 ) )                             \
+          mfc_put( p_block[buffer],                                     \
+                   args->p0 + idx[buffer]*sizeof(particle_t),           \
+                   np_block[buffer]*sizeof(particle_t),                 \
+                   2*(buffer)+0, 0, 0 );                                \
                                                                         \
-    /* Begin writing the movers corresponding to this block */          \
-    /* Ignore movers that would overflow the mover segment */           \
-    itmp = seg->nm + nm_block[buffer] - seg->max_nm;                    \
-    if( unlikely( itmp > 0 ) ) {                                        \
-      seg->n_ignored += itmp;                                           \
-      nm_block[buffer] = seg->max_nm - seg->nm;                         \
-    }                                                                   \
-    if( likely( nm_block[buffer]!=0 ) ) { /* Unlikely in cold bench */  \
-      mfc_put( m_block[buffer],                                         \
-               seg->pm + seg->nm*sizeof(particle_mover_t),              \
-               nm_block[buffer]*sizeof(particle_mover_t),               \
-               3*(buffer)+2, 0, 0 );                                    \
-      seg->nm += nm_block[buffer];                                      \
-    }                                                                   \
-                                                                        \
-  } while(0)
+        /* Begin writing the movers corresponding to this block */      \
+        /* Ignore movers that would overflow the mover segment */       \
+        itmp = seg->nm + nm_block[buffer] - seg->max_nm;                \
+        if( UNLIKELY( itmp > 0 ) ) {                                    \
+          seg->n_ignored += itmp;                                       \
+          nm_block[buffer] = seg->max_nm - seg->nm;                     \
+        }                                                               \
+        if( LIKELY( nm_block[buffer]!=0 ) ) { /* unlikely in cold bench */ \
+          mfc_put( m_block[buffer],                                     \
+                   seg->pm + seg->nm*sizeof(particle_mover_t),          \
+                   nm_block[buffer]*sizeof(particle_mover_t),           \
+                   2*(buffer)+1, 0, 0 );                                \
+          seg->nm += nm_block[buffer];                                  \
+        }                                                               \
+      } while(0)
 
-# define END_PUT_PBLOCK(buffer) do {                                    \
-    uint32_t mask = 0;                                                  \
-    if( likely( np_block[buffer]!=0 ) ) mask |= 1 << (3*(buffer)+1);    \
-    if( likely( nm_block[buffer]!=0 ) ) mask |= 1 << (3*(buffer)+2);    \
-    /* above is unlikely on cold bench */                               \
-    if( likely( mask!=0 ) ) {                                           \
-      mfc_write_tag_mask( mask );                                       \
-      mfc_read_tag_status_all();                                        \
-    }                                                                   \
-    np_block[buffer] = 0;                                               \
-    nm_block[buffer] = 0;                                               \
-  } while(0)
-
-        p_block[0] = p_stream;              np_block[0] = 0;
-        p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
-        p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
-
-        m_block[0] = m_stream;              nm_block[0] = 0;
-        m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
-        m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
-
-        voxel_cache_init();
-
-        BEGIN_GET_PBLOCK(0);
-        // BEGIN_PUT_PBLOCK( 2 );
-        for( buffer=0; np_block[buffer]>0; buffer=next[buffer] ) {
-          BEGIN_GET_PBLOCK( next[buffer] );
-          END_GET_PBLOCK( buffer );
-          PROCESS_PBLOCK( buffer );
-          BEGIN_PUT_PBLOCK( buffer );
-          END_PUT_PBLOCK( prev[buffer] );
-        }
+#    define END_PUT_PBLOCK(buffer) do {                                 \
+        uint32_t mask = 0;                                              \
+        if( LIKELY( np_block[buffer]!=0 ) ) mask |= 1 << (2*(buffer)+0); \
+        if( LIKELY( nm_block[buffer]!=0 ) ) mask |= 1 << (2*(buffer)+1); \
+        /* above is unlikely on cold bench */                           \
+        if( LIKELY( mask!=0 ) ) {                                       \
+          mfc_write_tag_mask( mask );                                   \
+          mfc_read_tag_status_all();                                    \
+        }                                                               \
+        np_block[buffer] = 0;                                           \
+        nm_block[buffer] = 0;                                           \
+      } while(0)
+      
+      p_block[0] = p_stream;              np_block[0] = 0;
+      p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
+      p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
+      
+      m_block[0] = m_stream;              nm_block[0] = 0;
+      m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
+      m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
+      
+      voxel_cache_init();
+      
+      BEGIN_GET_PBLOCK(0);
+      // BEGIN_PUT_PBLOCK( 2 );
+      for( buffer=0; np_block[buffer]>0; buffer=next[buffer] ) {
+        BEGIN_GET_PBLOCK( next[buffer] );
+        END_GET_PBLOCK( buffer );
+        PROCESS_PBLOCK( buffer );
+        BEGIN_PUT_PBLOCK( buffer );
         END_PUT_PBLOCK( prev[buffer] );
+      }
+      END_PUT_PBLOCK( prev[buffer] );
+      
+      // Writeback all the cached accumulators
+      
+      voxel_cache_writeback();
+      
+      // Write the pipeline return values back
+      
+      mfc_put( seg,
+               args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
+               sizeof(particle_mover_seg_t),
+               31, 0, 0 );
+      mfc_write_tag_mask( (1<<31) );
+      mfc_read_tag_status_all();
+      
+#     ifdef IN_HARNESS
+      prof_stop();
+#     endif
 
-        // Writeback all the cached accumulators
+      // signal PPE that we are done with this iteration
+      
+      spu_write_out_mbox( ADVANCE_COMPLETE );
+      break;
 
-        voxel_cache_writeback();
-
-        // Write the pipeline return values back
-
-        mfc_put( seg,
-          args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
-          sizeof(particle_mover_seg_t),
-          31, 0, 0 );
-        mfc_write_tag_mask( (1<<31) );
-        mfc_read_tag_status_all();
-  
-# ifdef IN_HARNESS
-        prof_stop();
-# endif
-
-        // signal PPE that we are done with this iteration
-
-		spu_write_out_mbox( ADVANCE_COMPLETE );
-
-		break;
-
-      default:
-	    break;
+    default:
+      break;
     }
-  } while(msg != END_EVENT_LOOP);
-
+  } while( msg!=END_EVENT_LOOP );
+  
   return 0;
 }
 

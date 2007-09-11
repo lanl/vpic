@@ -138,6 +138,10 @@ double mp_time00_dmp( mp_handle h ) {
   return MPI_Wtime() - mp->time00_ref;
 }
 
+double mp_wtime_dmp(void) {
+  return MPI_Wtime();
+}
+
 error_code mp_size_recv_buffer_dmp( int tag, int size, mp_handle h ) {
   mp_t *mp = (mp_t *)h;
   char * ALIGNED(16) rbuf;

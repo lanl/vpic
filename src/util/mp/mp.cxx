@@ -64,6 +64,10 @@ extern "C" double mp_time00_cxx( mp_handle h ) {
 	return MPWrapper::instance().mp_time00(h);
 } // mp_time00
 
+extern "C" double mp_wtime_cxx(void) {
+	return MPWrapper::instance().mp_wtime();
+} // mp_wtime
+
 extern "C" error_code mp_size_recv_buffer_cxx( int tag, int size,
 	mp_handle h ) {
 	return MPWrapper::instance().mp_size_recv_buffer(tag, size, h);

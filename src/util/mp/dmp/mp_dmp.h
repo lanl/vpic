@@ -23,6 +23,7 @@ void * ALIGNED(16) mp_send_buffer_dmp( int sbuf, mp_handle h );
 
 double mp_elapsed_dmp( mp_handle h );
 double mp_time00_dmp( mp_handle h );
+double mp_wtime_dmp(void);
 
 void mp_abort_dmp( int reason, mp_handle h );
 void mp_barrier_dmp( mp_handle h );

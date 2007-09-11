@@ -81,10 +81,15 @@ MESSAGE(("Using %d SPEs\n", spp));
 
   if ( argc==4 ) simulation.modify_runparams( argv[3] );  
 
+  double start = mp_wtime();
+
   while( simulation.advance() ); 
 
+  double stop = mp_wtime();
+  MESSAGE(("simulation time: %lf\n", stop-start));
+
   // Let all processors finish up
-  
+
   simulation.finalize();
   
   // Issue a termination message when we exit cleanly.

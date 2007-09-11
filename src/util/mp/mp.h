@@ -56,6 +56,10 @@ static inline double mp_time00( mp_handle h ) {
 	return mp_time00_cxx(h);
 } // mp_time00
 
+static inline double mp_wtime(void) {
+	return mp_wtime_cxx();
+} // mp_wtime
+
 static inline error_code mp_size_recv_buffer( int rbuf, int size,
 	mp_handle h ) {
 	return mp_size_recv_buffer_cxx(rbuf, size, h);

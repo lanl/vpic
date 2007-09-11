@@ -44,6 +44,8 @@ double mp_elapsed_cxx( mp_handle h );
 // to stop watch returns a measure of the overhead
 double mp_time00_cxx( mp_handle h );
 
+double mp_wtime_cxx(void);
+
 error_code mp_size_recv_buffer_cxx( int tag, int size, mp_handle h );
 
 error_code mp_size_send_buffer_cxx( int tag, int size, mp_handle h );

@@ -36,6 +36,7 @@ vpic_simulation::vpic_simulation() {
   species_lookup = NULL;
   emitter_list = NULL;
   p_time = 0;
+  s_time = 0;
   g_time = 0;
   f_time = 0;
   u_time = 0;
@@ -72,6 +73,7 @@ vpic_simulation::~vpic_simulation() {
   delete_species_lookup( &species_lookup );
   delete_emitter_list( &emitter_list );
   p_time = 0;
+  s_time = 0;
   g_time = 0;
   f_time = 0;
   u_time = 0;

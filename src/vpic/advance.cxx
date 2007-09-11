@@ -14,7 +14,7 @@ int vpic_simulation::advance(void) {
   int rank;
   species_t *sp;
   emitter_t *emitter;
-  double overhead, err;
+  double overhead, err, sort_overhead;
 
   // Determine if we are done ... see note below why this is done here
 
@@ -33,7 +33,9 @@ int vpic_simulation::advance(void) {
   LIST_FOR_EACH(sp,species_list) {
     if( sp->sort_interval>0 && step%sp->sort_interval==0 ) {
       if( rank==0 ) MESSAGE(("Performance sorting \"%s\".",sp->name));
+	  sort_overhead = mp_wtime();
       sort_p( sp, grid );
+	  s_time += mp_wtime() - sort_overhead;
     } 
     sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                         accumulator, interpolator, grid );
@@ -181,8 +183,8 @@ int vpic_simulation::advance(void) {
 
   if( status_interval>0 && step%status_interval==0 ) {
     if(rank==0)
-      MESSAGE(("Completed step %i of %i (p=%.2e,g=%.2e,f=%.2e,u=%.2e)",
-               step, num_step, p_time, g_time, f_time, u_time));
+      MESSAGE(("Completed step %i of %i (p=%.2e,s=%.2e,g=%.2e,f=%.2e,u=%.2e)",
+               step, num_step, p_time, s_time, g_time, f_time, u_time));
     p_time = g_time = f_time = u_time = 0;
   }
 

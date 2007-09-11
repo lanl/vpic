@@ -81,6 +81,7 @@ private:
   // Internal use only variables; restart saved
 
   double p_time; // Time spent pushing particles since last status update
+  double s_time; // Time spent performance sorting particles
   double g_time; // Time spent processing guard list since last status update
   double f_time; // Time spent processing fields since last status update
   double u_time; // Time spent in user functions since last status update

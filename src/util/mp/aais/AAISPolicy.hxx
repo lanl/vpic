@@ -163,6 +163,11 @@ struct AAISPolicy {
 		return(p2p.wtime() - mp->time00_ref);
 	} // mp_time00
 
+	inline double mp_wtime() {
+		P2PConnection & p2p = P2PConnection::instance();
+		return p2p.wtime();
+	} // mp_wtime
+
 	inline void mp_abort(int reason, mp_handle h) {
 		P2PConnection & p2p = P2PConnection::instance();
 //		std::cerr << "WRAPPER: mp_abort called" << std::endl;

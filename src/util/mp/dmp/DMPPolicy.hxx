@@ -46,6 +46,10 @@ struct DMPPolicy {
 		return mp_time00_dmp(h);
 	} // mp_time00
 
+	inline double mp_wtime() {
+		return mp_wtime_dmp();
+	} // mp_wtime
+
 	inline void mp_abort( int reason, mp_handle h ) {
 		return mp_abort_dmp(reason, h);
 	} // mp_abort

@@ -2,6 +2,8 @@
 # Makefile utilities
 ################################################################################
 
+# THIS FILE IS NO LONGER USED IN THE BUILD SYSTEM
+
 ################################################################################
 # Function to make symbolic links
 # arg1 - search directory

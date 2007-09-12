@@ -3,8 +3,7 @@
 ################################################################################
 
 # rule to copy SPE executable to the current directory
-# and create an embedded, archived image to which
-# the PPE executable can link
+# and create an embedded image that can be linked with library
 emb-%.o: @SPE_BUILDDIR@/bin/%
 	echo "void lotrickdummy() {}" > dummy.c
 	$(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ dummy.c
@@ -12,4 +11,13 @@ emb-%.o: @SPE_BUILDDIR@/bin/%
 	rm dummy.c
 	cp @SPE_BUILDDIR@/bin/$* .
 	${PEMB} ${PEMBFLAGS} $* $* emb-$*.o
+	rm $*
+
+# rule to copy SPE executable to the current directory
+# and create an embedded, archived image to which
+# the PPE executable can link
+lib-%.o: @SPE_BUILDDIR@/bin/%
+	cp @SPE_BUILDDIR@/bin/$* .
+	${PEMB} ${PEMBFLAGS} $* $* $*-emb.o
+	${PAR} -qcs $@ $*-emb.o
 	rm $*

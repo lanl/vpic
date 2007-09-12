@@ -5,6 +5,14 @@
 
 cwd=`pwd`
 
+# create include dir with links
+(cd src ; rm -rf include ; mkdir include ; cd include; \
+	for file in `cat ../../config/vpic_header_list` ; do \
+		link=`echo $file | sed 's,src,..,g'`
+		ln -s $link .
+	done
+)
+
 echo "calling SPE bootstrap"
 (cd cell/spe; config/bootstrap $cwd)
 echo

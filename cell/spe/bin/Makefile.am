@@ -5,7 +5,7 @@
 clean-local:
 	@(rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
 
-bin_PROGRAMS = advance_p_pipeline_spu
+bin_PROGRAMS = advance_p_pipeline_spu simple
 
 INCLUDES = -I@top_srcdir@/src/include -I@HOST_ACDIR@/src/include \
 	@EXTRA_CPPFLAGS@
@@ -14,6 +14,18 @@ advance_p_pipeline_spu_SOURCES = \
 	@HOST_ACDIR@/src/particle/pipelines_cell/advance_p_pipeline_spu.c
 advance_p_pipeline_spu_LDFLAGS = @EXTRA_LDFLAGS@
 advance_p_pipeline_spu_LDADD = @EXTRA_LIBS@
+
+simple_SOURCES = \
+	@top_srcdir@/src/simple/simple.c \
+	@top_srcdir@/src/simple/seg1.c \
+	@top_srcdir@/src/simple/seg2.c
+
+#EXTRA_simple_SOURCES = \
+#	@top_srcdir@/src/simple/seg1.c \
+#	@top_srcdir@/src/simple/seg2.c
+
+simple_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/simple/simple.ld
+simple_LDADD = @EXTRA_LIBS@
 
 if HAS_SPU_TIMING
 advance_p_pipeline_spu_DEPENDENCIES = \

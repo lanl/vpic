@@ -84,9 +84,6 @@ case "$buildstyle" in
 		AC_DEFINE(USE_CELL_SPUS)
 		AM_CONDITIONAL(USE_CELL_SPUS, true)
 
-		# define needed for openmpi
-		AC_DEFINE(OMPI_SKIP_MPICXX)
-
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
 			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
@@ -104,9 +101,6 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AM_CONDITIONAL(USE_CELL_SPUS, false)
-
-		# define needed for openmpi
-		AC_DEFINE(OMPI_SKIP_MPICXX)
 	;;
 
 	ompi_relay_cell)
@@ -124,9 +118,6 @@ case "$buildstyle" in
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
 		AM_CONDITIONAL(USE_CELL_SPUS, true)
-
-		# define needed for openmpi
-		AC_DEFINE(OMPI_SKIP_MPICXX)
 
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
@@ -150,9 +141,6 @@ case "$buildstyle" in
 		AC_DEFINE(USE_CELL_SPUS)
 		AM_CONDITIONAL(USE_CELL_SPUS, true)
 
-		# define needed for openmpi
-		AC_DEFINE(OMPI_SKIP_MPICXX)
-
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
 			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
@@ -173,9 +161,6 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AM_CONDITIONAL(USE_CELL_SPUS, false)
-
-		# define needed for openmpi
-		AC_DEFINE(OMPI_SKIP_MPICXX)
 	;;
 
 	dacs_relay_hybrid_cell)
@@ -195,7 +180,26 @@ case "$buildstyle" in
 		AM_CONDITIONAL(USE_CELL_SPUS, true)
 	;;
 
+	dacs_relay_hybrid_cell_ppe)
+		CCS_WITH_PPU_DACS(hybrid)
+
+		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
+
+		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_DACS_CPPFLAGS"
+		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_DACS_LDFLAGS"
+		EXTRA_LIBS="$EXTRA_LIBS $PPU_DACS_LIBS"
+
+		AC_DEFINE(USE_MPRELAY)
+		AC_DEFINE(USE_DACS_P2P)
+
+		AC_DEFINE(CELL_PPU_BUILD)
+		AM_CONDITIONAL(USE_CELL_SPUS, false)
+	;;
+
 esac
+
+# define needed for openmpi
+AC_DEFINE(OMPI_SKIP_MPICXX)
 
 AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)

@@ -18,12 +18,8 @@ advance_p_pipeline_spu_LDADD = @EXTRA_LIBS@
 simple_SOURCES = \
 	@top_srcdir@/src/simple/simple.c \
 	@top_srcdir@/src/simple/seg1.c \
-	@top_srcdir@/src/simple/seg2.c
-
-#EXTRA_simple_SOURCES = \
-#	@top_srcdir@/src/simple/seg1.c \
-#	@top_srcdir@/src/simple/seg2.c
-
+	@top_srcdir@/src/simple/seg2.c \
+	@top_srcdir@/src/overlay_manager/overlay_manager.S
 simple_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/simple/simple.ld
 simple_LDADD = @EXTRA_LIBS@
 

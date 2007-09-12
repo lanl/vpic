@@ -8,6 +8,7 @@ AC_CONFIG_AUX_DIR(config)
 # automake and libtool initialization
 ################################################################################
 AM_INIT_AUTOMAKE
+AM_PROG_AS
 
 ################################################################################
 # list targets for output

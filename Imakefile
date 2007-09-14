@@ -35,7 +35,7 @@ AddModule(particle,src/particle,advance_p center_p uncenter_p energy_p boundary_
 AddModule(species,src/species,species)
 AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
 AddModule(boundary,src/boundary,maxwellian_reflux absorb_tally link)
-AddModule(vpic,src/vpic,advance dump initialize misc vpic)
+AddModule(vpic,src/vpic,advance dump finalize initialize misc vpic)
 
 /* Additional directories to clean */
 

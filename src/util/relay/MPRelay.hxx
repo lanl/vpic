@@ -20,6 +20,10 @@
 #include <MPData.hxx>
 #include <FileIO.hxx>
 
+// constant to determine how often to
+// check pending messages
+const size_t HANDLE_PENDING(20);
+
 /*!
 	\class MPRelay MPRelay.h
 	\brief  provides...
@@ -71,6 +75,7 @@ void MPRelay::start()
 
 		bool relay(true);
 		int filesize;
+		size_t pending_count(0);
 		MPRequest_T<MP_HOST> request;
 
 		while(relay) {
@@ -347,59 +352,64 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::pending:
-					// check for finished send communications
-					for(std::vector<int>::iterator ita =
-						pending_dmp_send_.begin();
-						ita != pending_dmp_send_.end();) {
+					if(pending_count++ == HANDLE_PENDING) {
+						// reset counter
+						pending_count = 0;
 
-						// test for completion
-						dmp.test_send(dmp_send_request_[*ita]);
+						// check for finished send communications
+						for(std::vector<int>::iterator ita =
+							pending_dmp_send_.begin();
+							ita != pending_dmp_send_.end();) {
 
-						if(dmp_send_request_[*ita].state == complete) {
-							ita = pending_dmp_send_.erase(ita);
-						}
-						else {
-							++ita;
-						} // if
-					} // for
+							// test for completion
+							dmp.test_send(dmp_send_request_[*ita]);
 
-					// check for finished recv communications
-					for(std::vector<int>::iterator ita =
-						pending_dmp_recv_.begin();
-						ita != pending_dmp_recv_.end();) {
+							if(dmp_send_request_[*ita].state == complete) {
+								ita = pending_dmp_send_.erase(ita);
+							}
+							else {
+								++ita;
+							} // if
+						} // for
 
-						// test for completion
-						dmp.test_recv(dmp_recv_request_[*ita]);
+						// check for finished recv communications
+						for(std::vector<int>::iterator ita =
+							pending_dmp_recv_.begin();
+							ita != pending_dmp_recv_.end();) {
 
-						if(dmp_recv_request_[*ita].state == complete) {
-							// forward to accelerator
-							p2p.send(
-								cbuf_recv_[dmp_recv_request_[*ita].id].data(),
-								dmp_recv_request_[*ita].count,
-								dmp_recv_request_[*ita].tag);
+							// test for completion
+							dmp.test_recv(dmp_recv_request_[*ita]);
 
-							// remove from pending
-							ita = pending_dmp_recv_.erase(ita);
-						}
-						else {
-							++ita;
-						} // if
-					} // for
+							if(dmp_recv_request_[*ita].state == complete) {
+								// forward to accelerator
+								p2p.send(
+									cbuf_recv_[dmp_recv_request_[*ita].id].data(),
+									dmp_recv_request_[*ita].count,
+									dmp_recv_request_[*ita].tag);
 
-					for(std::vector<int>::iterator ita =
-						pending_p2p_send_.begin();
-						ita != pending_p2p_send_.end();) {
+								// remove from pending
+								ita = pending_dmp_recv_.erase(ita);
+							}
+							else {
+								++ita;
+							} // if
+						} // for
 
-						// test for completion
-						p2p.test_send(p2p_send_request_[*ita]);
+						for(std::vector<int>::iterator ita =
+							pending_p2p_send_.begin();
+							ita != pending_p2p_send_.end();) {
 
-						if(p2p_send_request_[*ita].state == complete) {
-							ita = pending_p2p_send_.erase(ita);
-						}
-						else {
-							++ita;
-						} // if
-					} // for
+							// test for completion
+							p2p.test_send(p2p_send_request_[*ita]);
+
+							if(p2p_send_request_[*ita].state == complete) {
+								ita = pending_p2p_send_.erase(ita);
+							}
+							else {
+								++ita;
+							} // if
+						} // for
+					} // if
 					break;
 
 				default:

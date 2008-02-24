@@ -5,7 +5,7 @@
 clean-local:
 	@(rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
 
-bin_PROGRAMS = advance_p_pipeline_spu simple
+bin_PROGRAMS = advance_p_pipeline_spu simple root_segment
 
 INCLUDES = -I@top_srcdir@/src/include -I@HOST_ACDIR@/src/include \
 	@EXTRA_CPPFLAGS@
@@ -22,6 +22,15 @@ simple_SOURCES = \
 	@top_srcdir@/src/overlay_manager/overlay_manager.S
 simple_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/simple/simple.ld
 simple_LDADD = @EXTRA_LIBS@
+
+# Note: this is currently setup for debugging!!!
+root_segment_SOURCES = \
+	@top_srcdir@/src/root_segment/root_segment.c \
+	@top_srcdir@/src/simple/seg1.c \
+	@top_srcdir@/src/simple/seg2.c \
+	@top_srcdir@/src/overlay_manager/overlay_manager.S
+root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/root_segment/root_segment.ld
+root_segment_LDADD = @EXTRA_LIBS@
 
 if HAS_SPU_TIMING
 advance_p_pipeline_spu_DEPENDENCIES = \

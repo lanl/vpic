@@ -1,0 +1,3 @@
+#! /usr/bin/env bash
+
+spu-ld --verbose | tail --lines +5 | grep -v "=" > $1

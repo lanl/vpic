@@ -14,10 +14,7 @@
 
 #if FOR_SPU
 
-    // signals for particle pipelines
-    #define READ_ARGS_AND_ADVANCE 0
-    #define ADVANCE_COMPLETE 1
-    #define END_EVENT_LOOP 3
+    #include <spe_events.h>
 
 # if defined(CELL_PPU_BUILD) 
 
@@ -27,10 +24,10 @@
     spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args );
 
 #   define EXEC_PIPELINES(name,args,sz_args) \
-	spu.signal(READ_ARGS_AND_ADVANCE); \
+	spu.signal(READ_ARGS_AND_ADVANCE_PARTICLES); \
     name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 
-#   define WAIT_PIPELINES() spu.sync(ADVANCE_COMPLETE)
+#   define WAIT_PIPELINES() spu.sync(PARTICLE_ADVANCE_COMPLETE)
 
 #   define FINALIZE_PIPELINES() \
     spu.signal(END_EVENT_LOOP); \

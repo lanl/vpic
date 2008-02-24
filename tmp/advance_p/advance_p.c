@@ -80,8 +80,8 @@ main( int argc,
   gettimeofday(&start, 0);
 #endif
 
-  spu.signal(READ_ARGS_AND_ADVANCE);
-  spu.sync(ADVANCE_COMPLETE);
+  spu.signal(READ_ARGS_AND_ADVANCE_PARTICLES);
+  spu.sync(PARTICLE_ADVANCE_COMPLETE);
 
 #if 1
   gettimeofday(&stop, 0);

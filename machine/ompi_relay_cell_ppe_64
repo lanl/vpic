@@ -1,0 +1,44 @@
+#autoconf#######################################################################
+# Cell only, openmpi relay, 64-bit machine file
+################################################################################
+
+################################################################################
+# BUILDSTYLE
+################################################################################
+
+BUILDSTYLE=ompi_relay_cell_ppe
+
+################################################################################
+# EXTENSION - executable extension
+################################################################################
+
+EXTENSION=ppu
+
+################################################################################
+# ADDRESSING - configure pointer size (32|64)[32]
+################################################################################
+
+ADDRESSING=64
+
+################################################################################
+# PPU CFLAGS - configure C compiler behavior
+################################################################################
+
+PCFLAGS="  -Wall -Werror -pedantic -std=c99   -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -Wstrict-aliasing=2 -maltivec"
+
+################################################################################
+# PPU CXXFLAGS - configure C++ compiler behavior
+################################################################################
+
+PCXXFLAGS="-Wall -Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -DUSE_V4_ALTIVEC -maltivec -fno-strict-aliasing -DPPE_ROUNDING_MODE=FE_TONEAREST -Wno-long-long"
+
+################################################################################
+# Cell MPI configuration
+# PPU_MPI_CPPFLAGS - configure MPI preprocessor flags
+# PPU_MPI_LDFLAGS - configure MPI link flags
+# PPU_MPI_LIBS - configure MPI library names
+################################################################################
+
+PPU_MPI_CPPFLAGS=`echo $MPI_CXX_CPPFLAGS_PPC64`
+PPU_MPI_LDFLAGS=`echo $MPI_CXX_LDFLAGS_PPC64`
+PPU_MPI_LIBS=`echo $MPI_CC_LDLIBS_PPC64`

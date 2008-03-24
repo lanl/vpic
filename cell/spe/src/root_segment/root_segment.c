@@ -66,7 +66,7 @@ int main (uint64_t spu_id, uint64_t argp, uint64_t envp) {
 		msg = spu_read_in_mbox();
 
 		switch(msg) {
-			case READ_ARGS:
+			case READ_GLOBAL_ARGS:
 				//mfc_get(args, argp, sizeof(*args), 31, 0, 0);
 				//mfc_write_tag_mask((1<<31));
 				//mfc_read_tag_status_all();

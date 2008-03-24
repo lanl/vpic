@@ -32,6 +32,7 @@ src/util/v4/v4_sse.hxx
 src/util/v4/v4_altivec.hxx
 src/util/util.h
 src/util/util_base.h
+src/util/pipelines/pipeline_control.h
 src/util/pipelines/pipelines.h
 src/util/spe_events.h
 src/util/mp/mp.h

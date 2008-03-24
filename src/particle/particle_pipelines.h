@@ -6,6 +6,10 @@
 #endif
 
 #include <particle.h>
+#include <pipeline_control.h>
+
+/*
+FIXME: Remove this when everything is working
 
 #define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
                   ( defined(CELL_PPU_BUILD)    &&   \
@@ -74,6 +78,7 @@
 # define N_PIPELINE       thread.n_pipeline
 
 #endif
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // advance_p_pipeline interface

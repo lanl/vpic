@@ -82,7 +82,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
-		AM_CONDITIONAL(USE_CELL_SPUS, true)
+        use_cell_spus=true
 
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
@@ -100,7 +100,7 @@ case "$buildstyle" in
 		EXTRA_LIBS="$EXTRA_LIBS $PPU_MPI_LIBS"
 
 		AC_DEFINE(CELL_PPU_BUILD)
-		AM_CONDITIONAL(USE_CELL_SPUS, false)
+        use_cell_spus=false
 	;;
 
 	ompi_relay_cell)
@@ -117,7 +117,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
-		AM_CONDITIONAL(USE_CELL_SPUS, true)
+        use_cell_spus=true
 
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
@@ -139,7 +139,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
-		AM_CONDITIONAL(USE_CELL_SPUS, true)
+        use_cell_spus=true
 
 		for file in "$SPU_MODULES" ; do
 			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
@@ -160,7 +160,7 @@ case "$buildstyle" in
 		AC_DEFINE(USE_MPI_P2P)
 
 		AC_DEFINE(CELL_PPU_BUILD)
-		AM_CONDITIONAL(USE_CELL_SPUS, false)
+        use_cell_spus=true
 	;;
 
 	dacs_relay_hybrid_cell)
@@ -177,7 +177,7 @@ case "$buildstyle" in
 
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
-		AM_CONDITIONAL(USE_CELL_SPUS, true)
+        use_cell_spus=true
 	;;
 
 	dacs_relay_hybrid_cell_ppe)
@@ -193,10 +193,12 @@ case "$buildstyle" in
 		AC_DEFINE(USE_DACS_P2P)
 
 		AC_DEFINE(CELL_PPU_BUILD)
-		AM_CONDITIONAL(USE_CELL_SPUS, false)
+        use_cell_spus=false
 	;;
 
 esac
+
+AM_CONDITIONAL(USE_CELL_SPUS, $use_cell_spus)
 
 # define needed for openmpi
 AC_DEFINE(OMPI_SKIP_MPICXX)

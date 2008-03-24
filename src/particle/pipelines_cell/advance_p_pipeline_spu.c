@@ -1085,7 +1085,7 @@ main( uint64_t spu_id,
 
       // signal PPE that we are done with this iteration
       
-      spu_write_out_mbox( PARTICLE_ADVANCE_COMPLETE );
+      spu_write_out_mbox( UPDATE_COMPLETE );
       break;
 
     default:

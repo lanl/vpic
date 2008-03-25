@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
 	MPBuffer<float> recv_buffer[max_buffers];
 	MPRequest request __attribute__ ((aligned (16)));
 	double dbuf[5];
+	double wtime(0);
 	int ibuf_send[5];
 	int * ibuf_recv(NULL);
 	int64_t lbuf_send[5];
@@ -28,13 +29,16 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "rank " << rank << " size " << size << std::endl;
 
-#if 1
+	request.set(P2PTag::wtime, 0, 1);
+	p2p.post(request);
+	p2p.recv(&wtime, request.count, request.tag, request.id);
+	std::cout << "wtime " << wtime << std::endl;
+
 	// initialize integer arrays
 	ibuf_recv = new int[5*size];
 	lbuf_recv = new int64_t[5*size];
 
-	//int count = 2*sizeof(float);
-	int count = send_buffer[0].size()*sizeof(float);
+	int count = 2*sizeof(float);
 
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
@@ -44,10 +48,10 @@ int main(int argc, char *argv[]) {
 
 			p2p.post(request);
 			p2p.isend(reinterpret_cast<char *>(send_buffer[i].data()),
-				request.count, request.tag, request.id);
+			request.count, request.tag, request.id);
 		} // if
 	} // for
-	
+
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
 			request.set(P2PTag::irecv, 0, count, i, i);
@@ -55,10 +59,10 @@ int main(int argc, char *argv[]) {
 
 			p2p.post(request);
 			p2p.irecv(reinterpret_cast<char *>(recv_buffer[i].data()),
-				request.count, request.tag, request.id);
+			request.count, request.tag, request.id);
 		} // if
 	} // for
-	
+
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
 			request.set(P2PTag::wait_recv, 0, count, i, i);
@@ -75,15 +79,10 @@ int main(int argc, char *argv[]) {
 		} // if
 	} // for
 
-	for(size_t i(0); i<size; i++) {
-		if(i != rank) {
-			p2p.wait_send(i);
-		} // if
-	} // for
-
 	p2p.post(P2PTag::barrier);
 	p2p.barrier();
 
+#if 1
 	for(size_t i(0); i<size; i++) {
 		if(i != rank) {
 			std::cout << recv_buffer[i].data()[0] <<
@@ -201,6 +200,11 @@ int main(int argc, char *argv[]) {
 */
 
 #endif // 0
+
+	request.set(P2PTag::wtime, 0, 1);
+	p2p.post(request);
+	p2p.recv(&wtime, request.count, request.tag, request.id);
+	std::cout << "wtime " << wtime << std::endl;
 
 	// ask relay to stop
 	p2p.post(P2PTag::end);

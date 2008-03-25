@@ -34,6 +34,7 @@ class CMPolicyDaCS
 
 		inline de_id_t peer_de() { return peer_de_; }
 		inline dacs_process_id_t peer_pid() { return peer_pid_; }
+		inline dacs_group_t group() { return group_; }
 
 	protected:
 
@@ -49,22 +50,29 @@ class CMPolicyDaCS
 		int size_;
 
 		DACS_ERR_T errcode_;
-		de_id_t de_;
 		de_id_t peer_de_;
 		dacs_process_id_t peer_pid_;
+		dacs_group_t group_;
 
 	}; // class CMPolicyDaCS
 
 void CMPolicyDaCS::init(int argc, char ** argv)
 	{
-		errcode_ = dacs_runtime_init(NULL, NULL, &de_);	
-		process_dacs_errcode(errcode_);
+		// initialize runtime environment
+		errcode_ = dacs_runtime_init(NULL, NULL);	
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		std::cerr << "accelerator process initialized" << std::endl;
+		// this process must accept the HE offer of group membership
+		// execution will block until the HE has made the offer and
+		// all members have accepted
+		errcode_ = dacs_group_accept(peer_de(), peer_pid(), &group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		dacs_tag_t tag;
-		errcode_ = dacs_tag_reserve(&tag, peer_de_, peer_pid_);
-		process_dacs_errcode(errcode_);
+		// this gets the MPI rank and size information from
+		// the HE process
+		dacs_wid_t wid;
+		errcode_ = dacs_wid_reserve(&wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		int data[2] __attribute__ ((aligned (16)));
 
@@ -75,30 +83,31 @@ void CMPolicyDaCS::init(int argc, char ** argv)
 		*/
 
 		errcode_ = dacs_recv(data, 2*sizeof(int), peer_de_,
-			peer_pid_, tag, DACS_BYTE_SWAP_WORD);
-		std::cerr << "accelerator called dacs_recv " << std::endl;
-		process_dacs_errcode(errcode_);
+			peer_pid_, 0, wid, DACS_BYTE_SWAP_WORD);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		errcode_ = dacs_wait(tag);
-		std::cerr << "accelerator called dacs_wait" << std::endl;
-		process_dacs_errcode(errcode_);
+		errcode_ = dacs_wait(wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		errcode_ = dacs_tag_release(&tag);
-		std::cerr << "accelerator called dacs_tag_release" << std::endl;
-		process_dacs_errcode(errcode_);
+		errcode_ = dacs_wid_release(&wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		id_ = data[0];
 		size_ = data[1];
-
-		std::cerr << "accel rank " << id_ << " size " << size_ << std::endl;
 
 		//free(mem);
 	} // CMPolicyDaCS::init
 
 void CMPolicyDaCS::finalize()
 	{
+		// this process must request permission to leave the
+		// group before the group can be destroyed on the
+		// HE process
+		errcode_ = dacs_group_leave(&group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
 		errcode_ = dacs_runtime_exit();
-		process_dacs_errcode(errcode_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 	} // CMPolicyDaCS::finalize
 
 #endif // CMPolicyDaCS_hxx

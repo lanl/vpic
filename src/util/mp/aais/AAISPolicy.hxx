@@ -52,7 +52,8 @@ struct AAISPolicy {
 //			mp->rank << std::endl;
 
 		// get wtime from point-to-point connection
-		mp->elapsed_ref = p2p.wtime();
+		//mp->elapsed_ref = p2p.wtime();
+		mp->elapsed_ref = mp_wtime();
 		mp->time00_ref = 0;
 		mp->time00_toggle = 0;
 
@@ -137,7 +138,8 @@ struct AAISPolicy {
 		mp_t * mp = static_cast<mp_t *>(h);
 		P2PConnection & p2p = P2PConnection::instance();
 //		std::cerr << "WRAPPER: mp_elapsed called" << std::endl;
-		double time = p2p.wtime() - mp->elapsed_ref;
+		//double time = p2p.wtime() - mp->elapsed_ref;
+		double time = mp_wtime() - mp->elapsed_ref;
 
 		MPRequest request(P2PTag::allreduce_max_double, P2PTag::data, 1, 0);
 		p2p.post(request);
@@ -149,7 +151,7 @@ struct AAISPolicy {
 
 	inline double mp_time00(mp_handle h) {
 		mp_t * mp = static_cast<mp_t *>(h);
-		P2PConnection & p2p = P2PConnection::instance();
+		//P2PConnection & p2p = P2PConnection::instance();
 //		std::cerr << "WRAPPER: mp_time00 called" << std::endl;
 		
 		if(!mp) { return -1; }
@@ -157,15 +159,23 @@ struct AAISPolicy {
 		mp->time00_toggle ^= 1;
 
 		if(mp->time00_toggle) {
-			mp->time00_ref = p2p.wtime();
+			//mp->time00_ref = p2p.wtime();
+			mp->time00_ref = mp_wtime();
 		} // if
 
-		return(p2p.wtime() - mp->time00_ref);
+		//return(p2p.wtime() - mp->time00_ref);
+		return(mp_wtime() - mp->time00_ref);
 	} // mp_time00
 
 	inline double mp_wtime() {
 		P2PConnection & p2p = P2PConnection::instance();
-		return p2p.wtime();
+		double wtime;
+		//std::cout << "requesting wtime " << std::endl;
+		MPRequest request(P2PTag::wtime, P2PTag::data, 1, 0);
+		p2p.post(request);
+		p2p.recv(&wtime, request.count, request.tag, request.id);
+		//std::cout << "received wtime " << std::endl;
+		return wtime;
 	} // mp_wtime
 
 	inline void mp_abort(int reason, mp_handle h) {

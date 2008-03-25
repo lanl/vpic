@@ -35,6 +35,7 @@ class CMPolicyMPIDaCS
 
 		inline de_id_t peer_de() { return peer_de_; }
 		inline dacs_process_id_t peer_pid() { return peer_pid_; }
+		inline dacs_group_t group() { return group_; }
 
 		inline MPI_Comm dmp_comm() { return MPI_COMM_WORLD; }
 
@@ -51,9 +52,9 @@ class CMPolicyMPIDaCS
 		int size_;
 
 		DACS_ERR_T errcode_;
-		de_id_t de_;
 		de_id_t peer_de_;
 		dacs_process_id_t peer_pid_;
+		dacs_group_t group_;
 
 	}; // class CMPolicyMPIDaCS
 
@@ -72,42 +73,53 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
 		// DaCS initialization
-		errcode_ = dacs_runtime_init(NULL, NULL, &de_);	
-		process_dacs_errcode(errcode_);
+		errcode_ = dacs_runtime_init(NULL, NULL);	
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		std::cerr << "host process initialized" << std::endl;
 
-///* THIS WILL CHANGE WITH THE NEXT DACS VERSION
-		errcode_ = dacs_topology_get_child(de_, 0, &peer_de_);
-		process_dacs_errcode(errcode_);
+		// create a group for this process and its child
+		errcode_ = dacs_group_init(&group_, 0);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		DACS_DE_TYPE_T type;
-		errcode_ = dacs_topology_get_type(peer_de_, &type);
-		process_dacs_errcode(errcode_);
+		// add this process to group
+		errcode_ = dacs_group_add_member(DACS_DE_SELF,
+			DACS_PID_SELF, group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+		
+		// check for available children and try to reserve one
+		uint32_t children;
+		errcode_ = dacs_get_num_avail_children(DACS_DE_CBE, &children);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+		assert(children>0);
+		std::cerr << "children " << children << std::endl;
+		children = 1;
 
-		if(type == DACS_DE_CELL_BLADE) {
-			std::cerr << "encountered blade" << std::endl;
-			de_id_t blade_de = peer_de_;
-			errcode_ = dacs_topology_get_child(blade_de, 0, &peer_de_);
-			process_dacs_errcode(errcode_);
+		errcode_ = dacs_reserve_children(DACS_DE_CBE, &children, &peer_de_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-			errcode_ = dacs_topology_get_type(peer_de_, &type);
-			process_dacs_errcode(errcode_);
-			assert(type == DACS_DE_CBE);
-		} // if
-//*/ THIS WILL CHANGE WITH THE NEXT DACS VERSION
-
-		errcode_ = dacs_topology_reserve(peer_de_);
-		process_dacs_errcode(errcode_);
-
+#if 0
 		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
-			DACS_PROC_SYSTEMX_FILE, &peer_pid_);	
-		std::cerr << "host called dacs_de_start " << argv[1] << " " << errcode_ << std::endl;
+			DACS_PROC_LOCAL_FILE, &peer_pid_);	
+#endif
+		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
+			DACS_PROC_REMOTE_FILE, &peer_pid_);	
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		dacs_tag_t tag;
-		errcode_ = dacs_tag_reserve(&tag, peer_de_, peer_pid_);
-		std::cerr << "host called dacs_tag_reserve " << errcode_ << std::endl;
-		process_dacs_errcode(errcode_);
+		// add the new child process to the group
+		errcode_ = dacs_group_add_member(peer_de_, peer_pid_, group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
+		// need to call this to finalize the group
+		// after this, no new members can be added
+		// this call block until all children have
+		// accepted their invitations
+		errcode_ = dacs_group_close(group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
+		dacs_wid_t wid;
+		errcode_ = dacs_wid_reserve(&wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		int data[2] __attribute__ ((aligned (16)));
 
@@ -119,30 +131,29 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 
 		data[0] = rank_;
 		data[1] = size_;
-		errcode_ = dacs_send(peer_de_, peer_pid_, data,
-			2*sizeof(int), tag, DACS_BYTE_SWAP_WORD);
+		errcode_ = dacs_send(data, 2*sizeof(int),
+			peer_de_, peer_pid_, 0, wid, DACS_BYTE_SWAP_WORD);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		std::cerr << "host called dacs_send " << errcode_ << std::endl;
-		sleep(2);
-		process_dacs_errcode(errcode_);
+		errcode_ = dacs_wait(wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		errcode_ = dacs_wait(tag);
-		std::cerr << "host called dacs_wait " << errcode_ << std::endl;
-		sleep(2);
-		process_dacs_errcode(errcode_);
-
-		errcode_ = dacs_tag_release(&tag);
-		std::cerr << "host called dacs_tag_release" << std::endl;
-		process_dacs_errcode(errcode_);
+		errcode_ = dacs_wid_release(&wid);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		//free(mem);
 	} // CMPolicyMPIDaCS::init
 
 void CMPolicyMPIDaCS::finalize()
 	{
+		// destroy the group, this will implicitly remove
+		// this process from the group
+		errcode_ = dacs_group_destroy(&group_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
 		// DaCS finalization
 		errcode_ = dacs_runtime_exit();
-		process_dacs_errcode(errcode_);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// MPI finalization
 		MPI_Finalize();

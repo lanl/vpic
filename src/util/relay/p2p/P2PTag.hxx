@@ -27,6 +27,7 @@ struct P2PTag {
 		wait_recv,
 		abort,
 		barrier,
+		wtime,
 		allreduce_max_double,
 		allreduce_sum_double,
 		allreduce_sum_int,

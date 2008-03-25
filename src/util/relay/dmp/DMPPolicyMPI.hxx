@@ -46,6 +46,8 @@ class DMPPolicyMPI
 		int wait_send(MPRequest_T<MP_HOST> & request);
 		int barrier();
 
+		double wtime();
+
 		template<typename T> int allreduce_max(T * src, T * dest,
 			int count);
 		template<typename T> int allreduce_sum(T * src, T * dest,
@@ -113,7 +115,7 @@ int DMPPolicyMPI::test_recv(MPRequest_T<MP_HOST> & request)
 		} // if
 
 		return err;
-	} // DMPPolicyMPI::test
+	} // DMPPolicyMPI::test_recv
 
 int DMPPolicyMPI::test_send(MPRequest_T<MP_HOST> & request)
 	{
@@ -126,25 +128,30 @@ int DMPPolicyMPI::test_send(MPRequest_T<MP_HOST> & request)
 		} // if
 
 		return err;
-	} // DMPPolicyMPI::test
+	} // DMPPolicyMPI::test_send
 
 int DMPPolicyMPI::wait_recv(MPRequest_T<MP_HOST> & request)
 	{
 		MPI_Status status; // FIXME
 		return MPI_Wait(&recv_request_[request.id], &status);
-	} // DMPPolicyMPI::test
+	} // DMPPolicyMPI::wait_recv
 
 int DMPPolicyMPI::wait_send(MPRequest_T<MP_HOST> & request)
 	{
 		MPI_Status status; // FIXME
 		return MPI_Wait(&send_request_[request.id], &status);
-	} // DMPPolicyMPI::test
+	} // DMPPolicyMPI::wait_send
 
 int DMPPolicyMPI::barrier()
 	{
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Barrier(mgr.dmp_comm());
-	} // DMPPolicyMPI::test
+	} // DMPPolicyMPI::barrier
+
+double DMPPolicyMPI::wtime()
+	{
+		return MPI_Wtime();
+	} // DMPPolicyMPI::wtime
 
 template<typename T>
 int  DMPPolicyMPI::allreduce_max(T * src, T * dest, int count)

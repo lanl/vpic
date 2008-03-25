@@ -20,10 +20,6 @@
 #include <MPData.hxx>
 #include <FileIO.hxx>
 
-// constant to determine how often to
-// check pending messages
-const size_t HANDLE_PENDING(20);
-
 /*!
 	\class MPRelay MPRelay.h
 	\brief  provides...
@@ -75,7 +71,7 @@ void MPRelay::start()
 
 		bool relay(true);
 		int filesize;
-		size_t pending_count(0);
+		double wtime;
 		MPRequest_T<MP_HOST> request;
 
 		while(relay) {
@@ -171,12 +167,6 @@ void MPRelay::start()
 						// block on irecv if it hasn't finished
 						dmp.wait_recv(dmp_recv_request_[request.id]);
 
-						/*
-						p2p.send(
-							cbuf_recv_[dmp_recv_request_[request.id].id].data(),
-							dmp_recv_request_[request.id].count,
-							dmp_recv_request_[request.id].tag);
-						*/
 						if(p2p_send_request_[request.id].state == pending) {
 							p2p.wait_send(request.id);
 						} // if
@@ -216,6 +206,14 @@ void MPRelay::start()
 				case P2PTag::barrier:
 					dmp.barrier();
 					p2p.barrier();
+					break;
+
+				case P2PTag::wtime:
+					//std::cout << "wtime requested from dmp: count " <<
+					//	request.count << " tag " << request.tag << std::endl;
+					wtime = dmp.wtime();
+					//std::cout << "wtime " << wtime << std::endl;
+					p2p.send(&wtime, request.count, request.tag);
 					break;
 
 				case P2PTag::allreduce_max_double:
@@ -352,64 +350,59 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::pending:
-					if(pending_count++ == HANDLE_PENDING) {
-						// reset counter
-						pending_count = 0;
+					// check for finished send communications
+					for(std::vector<int>::iterator ita =
+						pending_dmp_send_.begin();
+						ita != pending_dmp_send_.end();) {
 
-						// check for finished send communications
-						for(std::vector<int>::iterator ita =
-							pending_dmp_send_.begin();
-							ita != pending_dmp_send_.end();) {
+						// test for completion
+						dmp.test_send(dmp_send_request_[*ita]);
 
-							// test for completion
-							dmp.test_send(dmp_send_request_[*ita]);
+						if(dmp_send_request_[*ita].state == complete) {
+							ita = pending_dmp_send_.erase(ita);
+						}
+						else {
+							++ita;
+						} // if
+					} // for
 
-							if(dmp_send_request_[*ita].state == complete) {
-								ita = pending_dmp_send_.erase(ita);
-							}
-							else {
-								++ita;
-							} // if
-						} // for
+					// check for finished recv communications
+					for(std::vector<int>::iterator ita =
+						pending_dmp_recv_.begin();
+						ita != pending_dmp_recv_.end();) {
 
-						// check for finished recv communications
-						for(std::vector<int>::iterator ita =
-							pending_dmp_recv_.begin();
-							ita != pending_dmp_recv_.end();) {
+						// test for completion
+						dmp.test_recv(dmp_recv_request_[*ita]);
 
-							// test for completion
-							dmp.test_recv(dmp_recv_request_[*ita]);
+						if(dmp_recv_request_[*ita].state == complete) {
+							// forward to accelerator
+							p2p.send(
+								cbuf_recv_[dmp_recv_request_[*ita].id].data(),
+								dmp_recv_request_[*ita].count,
+								dmp_recv_request_[*ita].tag);
 
-							if(dmp_recv_request_[*ita].state == complete) {
-								// forward to accelerator
-								p2p.send(
-									cbuf_recv_[dmp_recv_request_[*ita].id].data(),
-									dmp_recv_request_[*ita].count,
-									dmp_recv_request_[*ita].tag);
+							// remove from pending
+							ita = pending_dmp_recv_.erase(ita);
+						}
+						else {
+							++ita;
+						} // if
+					} // for
 
-								// remove from pending
-								ita = pending_dmp_recv_.erase(ita);
-							}
-							else {
-								++ita;
-							} // if
-						} // for
+					for(std::vector<int>::iterator ita =
+						pending_p2p_send_.begin();
+						ita != pending_p2p_send_.end();) {
 
-						for(std::vector<int>::iterator ita =
-							pending_p2p_send_.begin();
-							ita != pending_p2p_send_.end();) {
+						// test for completion
+						p2p.test_send(p2p_send_request_[*ita]);
 
-							// test for completion
-							p2p.test_send(p2p_send_request_[*ita]);
-
-							if(p2p_send_request_[*ita].state == complete) {
-								ita = pending_p2p_send_.erase(ita);
-							}
-							else {
-								++ita;
-							} // if
-						} // for
-					} // if
+						if(p2p_send_request_[*ita].state == complete) {
+							ita = pending_p2p_send_.erase(ita);
+						}
+						else {
+							++ita;
+						} // if
+					} // for
 					break;
 
 				default:

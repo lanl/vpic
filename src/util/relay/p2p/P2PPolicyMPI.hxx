@@ -58,8 +58,6 @@ template<int ROLE> class P2PPolicyMPI
 		template<typename T> int get_count(int id, int & count,
 			T * dummy = NULL);
 
-		double wtime() { return MPI_Wtime(); }
-
 		int abort(int reason);
 
 	protected:

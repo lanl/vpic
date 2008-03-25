@@ -178,6 +178,11 @@ case "$buildstyle" in
 		AC_DEFINE(CELL_PPU_BUILD)
 		AC_DEFINE(USE_CELL_SPUS)
         use_cell_spus=true
+
+		for file in "$SPU_MODULES" ; do
+			EXTRA_O_FILES=${EXTRA_O_FILES}`echo emb-$file.o`
+			EXTRA_LO_FILES=${EXTRA_LO_FILES}`echo emb-$file.lo`
+		done
 	;;
 
 	dacs_relay_hybrid_cell_ppe)

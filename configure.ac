@@ -186,7 +186,7 @@ case "$buildstyle" in
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
-		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["/."])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
 		LIB_EXTENSION="ppu"
 		ACCEL_EXTENSION="ppu"
@@ -208,7 +208,7 @@ case "$buildstyle" in
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
-		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["/."])
+		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
 		LIB_EXTENSION="ppu"
 		ACCEL_EXTENSION="ppu"

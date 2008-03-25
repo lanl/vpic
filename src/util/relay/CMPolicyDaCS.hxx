@@ -59,7 +59,8 @@ class CMPolicyDaCS
 void CMPolicyDaCS::init(int argc, char ** argv)
 	{
 		// initialize runtime environment
-		errcode_ = dacs_runtime_init(NULL, NULL);	
+		//errcode_ = dacs_runtime_init(NULL, NULL);	
+		errcode_ = dacs_init(DACS_INIT_SINGLE_THREADED);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// this process must accept the HE offer of group membership
@@ -106,7 +107,8 @@ void CMPolicyDaCS::finalize()
 		errcode_ = dacs_group_leave(&group_);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		errcode_ = dacs_runtime_exit();
+		//errcode_ = dacs_runtime_exit();
+		errcode_ = dacs_exit();
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 	} // CMPolicyDaCS::finalize
 

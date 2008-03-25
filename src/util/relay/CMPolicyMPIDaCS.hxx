@@ -73,7 +73,8 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
 		// DaCS initialization
-		errcode_ = dacs_runtime_init(NULL, NULL);	
+		//errcode_ = dacs_runtime_init(NULL, NULL);	
+		errcode_ = dacs_init(DACS_INIT_SINGLE_THREADED);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		std::cerr << "host process initialized" << std::endl;
@@ -152,7 +153,8 @@ void CMPolicyMPIDaCS::finalize()
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// DaCS finalization
-		errcode_ = dacs_runtime_exit();
+		//errcode_ = dacs_runtime_exit();
+		errcode_ = dacs_exit();
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// MPI finalization

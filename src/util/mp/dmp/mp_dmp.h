@@ -2,6 +2,9 @@
 #define _mp_dmp_h_
 
 #include <mp_handle.h>
+
+#if !defined(USE_MPRELAY)
+
 #include <mp_t.h>
 
 // Note: mp module assumes homogeneous cluster (in particular,
@@ -51,5 +54,7 @@ error_code mp_send_i_dmp( int *buf, int n, int dst, mp_handle h );
 error_code mp_recv_i_dmp( int *buf, int n, int src, mp_handle h );
 
 END_C_DECLS
+
+#endif // USE_MPRELAY
 
 #endif // _mp_dmp_h_

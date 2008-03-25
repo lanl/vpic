@@ -53,10 +53,8 @@ inline void process_dacs_errcode(DACS_ERR_T errcode,
 	switch(errcode) {
 		case DACS_SUCCESS:
 		case DACS_STS_PROC_FINISHED:
-			return;
 		case DACS_WID_BUSY:
-			DACS_PRINT_ERR("DACS_WID_BUSY", file, line);
-			break;
+			return;
 		case DACS_STS_PROC_RUNNING:
 			DACS_PRINT_ERR("DACS_STS_PROC_RUNNING", file, line);
 			break;

@@ -10,6 +10,8 @@
 
 #include <mp_dmp.h>
 
+#if !defined(USE_MPRELAY)
+
 // BJA: We're getting crashbugs from excessive realloc on some
 // problems, so this multiplier will help reduce the number of such
 // send/receive buffer resizes, though at a modest cost of excess
@@ -451,4 +453,4 @@ error_code mp_recv_i_dmp( int *buf, int n, int src, mp_handle h ) {
   return ERROR_CODE("Unknown MPI error");
 }
 
-
+#endif // USE_MPRELAY

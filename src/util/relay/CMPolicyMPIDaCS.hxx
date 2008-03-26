@@ -99,12 +99,13 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		errcode_ = dacs_reserve_children(DACS_DE_CBE, &children, &peer_de_);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-#if 0
+#if 1
 		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
 			DACS_PROC_LOCAL_FILE, &peer_pid_);	
-#endif
+#else
 		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
 			DACS_PROC_REMOTE_FILE, &peer_pid_);	
+#endif
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// add the new child process to the group

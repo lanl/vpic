@@ -1,0 +1,72 @@
+################################################################################
+# README for building and running VPIC on the ASDS development system
+################################################################################
+
+Here are the basic steps for building and running on the ASDS system
+in Rochester, MN:
+
+1) Get a login node:
+
+% qsub -I -lnodes=rla001
+# possible nodes seem to be rla00{1,2,3,4,5,6,7,8,9,10,11,12}
+# if you want to log into an individual Opteron or Cell, append "a" (Opteron),
+# "b", or "c" (Cell 0 or 1 respectivley)
+
+2) Set up environment
+
+% source bashrc_asds
+# see the cut-and-paste section below
+
+3) Build VPIC:
+
+# from top-level source directory
+% config/bootstrap
+
+# I usually do out-of-tree builds
+% mkdir -p build/asds_64
+% cd build/asds_64
+
+# configure
+% ../../configure --with-machine=asds_64
+
+# build the relay and library
+% make
+
+# build a deck (assuming your input deck is named "testdeck")
+% ./bulid.ppu testdeck
+
+4) Run VPIC:
+
+# MAKE SURE THAT THE DECK YOU ARE USING IS CONFIGURED FOR THE NUMBER
+# OF MPI RANKS THAT YOU ARE USING - this is based on personal experience ;-)
+% mpirun -np 4 --mca mpi_paffinity_alone 1 --host rla00x ./mprelay.op /full/path/to/your/build/directory/testdeck.ppu
+
+I haven't tried running on more than one Triblade yet.
+
+################################################################################
+# BEGIN_BASHRC
+#
+# Environment: bash setup
+# SAVEME AS "bashrc_asds"
+#
+# I hope that this is complete.  It should, at least, be close.
+################################################################################
+if [ -f /etc/bashrc ] ; then
+	. /etc/bashrc
+fi
+
+# add toolchain and MPI to path
+export PATH=$PATH:/opt/cell/toolchain/bin:/usr/local/openmpi/bin
+
+# add toolchain and DaCS man pages
+export MANPATH=$MANPATH:/opt/cell/toolchain/man:/usr/share/man
+
+# add sdk and sysroot to LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cell/sdk/prototype/usr/lib64:/opt/cell/sysroot/opt/cell/sdk/prototype/usr/lib64
+
+# add LD_LIBRARY_PATH to DaCS start environment.  Note that
+# "LD_LIBRARY_PATH" (without "$") is not a mistake
+export DACS_START_ENV_LIST=LD_LIBRARY_PATH
+################################################################################
+#END_BASHRC
+################################################################################

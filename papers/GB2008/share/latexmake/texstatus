@@ -1,0 +1,54 @@
+#! /usr/bin/perl
+
+# This script returns latex status information required by the
+# latexmake makefile
+# Brendt Wohlberg
+# Most recent modification: 21 February 2003
+
+$basename = $ARGV[0];
+$operation = $ARGV[1];
+
+if ($operation eq 'aux') {
+  $auxname = "$basename.aux";
+  open(AUX, "< $auxname") or exit(2);
+  while ($line = <AUX>) {
+    $citation{$1} = 1 if ($line =~ /\\citation\{([^\}]+)\}/);
+    $bibcite{$1} = 1  if ($line =~ /\\bibcite\{([^\}]+)\}/);
+  }
+  close(AUX);
+  @bothkeys = (keys %citation, keys %bibcite);
+  foreach $k (@bothkeys) {
+    exit(0) if (!((defined $citation{$k}) && (defined $bibcite{$k})));
+  }
+  exit(1);
+} elsif ($operation eq 'log') {
+  $logname = "$basename.log";
+  open(LOG, "< $logname") or exit(2);
+  while ($line = <LOG>) {
+    exit(0) if (($line =~ /Warning: There were undefined references/) ||
+		($line =~ /Warning: Label\(s\) may have changed/));
+  }
+  close(LOG);
+  exit(1);
+} elsif ($operation eq 'psopt') {
+  $texname = "$basename.tex";
+  open(TEX, "< $texname") or exit(1);
+  while ($line = <TEX>) {
+    if ($line =~ /\\documentclass\s*\[([^\]]+)\]/) {
+      $optstring = $1;
+      last;
+    }
+  }
+  close(TEX);
+  $landscape = 0;
+  @options = split /,/, $optstring;
+  foreach $opt (@options) {
+    $landscape = 1 if ($opt eq 'landscape');
+    $paper = $1 if ($opt =~ /(\w+)paper/);
+  }
+  print "-t landscape " if $landscape;
+  print "-t $paper " if (defined $paper);
+exit(0);
+} else {
+  die "Usage: texstatus basename {aux|log|psopt}\n";
+}

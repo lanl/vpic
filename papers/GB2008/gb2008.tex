@@ -24,11 +24,11 @@
 % add to document dimensions
 % fudge if we need to add more space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\addtolength{\topmargin}{-2cm}
-%\addtolength{\textheight}{3cm}
-%\addtolength{\oddsidemargin}{-2.25cm}
-%\addtolength{\evensidemargin}{-2.25cm}
-%\addtolength{\textwidth}{4.5cm}
+\addtolength{\topmargin}{-2cm}
+\addtolength{\textheight}{3cm}
+\addtolength{\oddsidemargin}{-2.25cm}
+\addtolength{\evensidemargin}{-2.25cm}
+\addtolength{\textwidth}{4.5cm}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % article information
@@ -84,7 +84,7 @@ In this paper, we demonstrate the unprecedented performance and scalability of V
 
 \begin{figure}
     \begin{center}
-    \scalebox{0.2}{\input{system.pstex_t}}
+    \scalebox{0.3}{\input{system.pstex_t}}
     \caption{RoadRunner System Overview}
     \label{fig:system}
     \end{center}
@@ -94,7 +94,15 @@ The RoadRunner supercopmuter, shown in figure \ref{fig:system}, is a hybrid, pet
 
 Using a top-down description, the planned system will be comprised of 18 \emph{Connected Units (CUs)}, using eight, second-stage, 288-port Voltaire Ifiniband $4x$ DDR switches.  This allows for twelve links per CU to each of the eight switches.  Each CU will be made up of 180 \emph{Triblade}, compute nodes and 12 I/O nodes connected by a first-stage, 288-port Voltaire Infiniband $4x$ DDR switch.  This configuration allows for 192 ports \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed, fat-tree network topology.
 
-A Triblade compute node actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PIC-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.
+%\begin{figure}
+%    \begin{center}
+%    \scalebox{0.2}{\input{triblade.pstex_t}}
+%    \caption{Triblade Compute Node}
+%    \label{fig:triblade}
+%    \end{center}
+%\end{figure}
+
+A Triblade compute node, figure \ref{fig:triblade}, actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PIC-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % biliography

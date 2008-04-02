@@ -1,0 +1,147 @@
+Note: The complete BibTeX citations for various references are at the end of this email for the publisher's convenience.  The replies to the author queries are addressed below and two additional minor changes are necessary.
+
+Corrections for 021891PHP
+=========================
+
+(1) Line 398 cite the incorrect reference.  The reference it should cite was somehow omitted during the submission process.  Correcting requires the following minor updates:
+- Lines 429 and 567:                Ref 18 should become new Ref 19.
+- Lines 480, 569 and Fig 1 caption: Ref 19 should become new Ref 20.
+- Lines 481 and 572:                Ref 20 should become new Ref 21.
+- Lines 490, 573 and Fig 2 caption: Ref 21 should become new Ref 22.
+- Lines 506, 575 and Fig 3 caption: Ref 22 should become new Ref 23
+- Lines 506, 577 and Fig 3 caption: Ref 23 should become new Ref 24
+- Between line 566 and 567: The omitted reference (should become new Ref 18) is: J. L. Vay, Phys. Rev. Let. 98, 130405 (2007).
+
+(2) On line 420, the name "cell" should be capitalized.
+
+Reply to author queries for 021891PHP
+=====================================
+
+(1) The complete author list for Ref 3 is:
+
+K. J. Bowers, E. Chow, H. Xu, R. O. Dror, M. P. Eastwood, B. A. Gregersen, J. L. Klepeis, I. Kolossvary, M. A. Moraes, F. D. Sacerdoti, J. K. Salmon, Y. Shan and D. E. Shaw
+
+The complete author list for Ref 7 is:
+
+M. E. Jones, D. Winske, S. R. Goldman, R. A. Kopp, V. G. Rogatchev, S. A. Bel'kov, P. D. Gasparyan, G. V. Dolgoleva, N. V. Zhidkov, N. V. Ivanov, Y. K. Kochubej, G. F. Nasyrov, V. A. Pavlovskii, V. V. Smirnov and Y. A. Romanov
+
+(2) SC'06 is short for Supercomputing 2006.  According the BibTeX citation downloaded from the publisher's website, the title of that book is as originally given.  The location was Tampa, FL.
+
+(3) Page numbers requested are below.
+Ref 18 (new Ref 19) pages: 589-604.
+Ref 20 (new Ref 21) pages: 035002.
+Ref 21 (new Ref 22) pages: 265004.
+Ref 22 (new Ref 23) pages: 056706.
+Ref 23 (new Ref 24) pages: 094502.
+
+(4) Ref 19 (new Ref 20) is current; it has been submitted to PRL but not yet published.
+
+(5) The units in the Table 1 time column are correct.  If the journal feels it would be better to use the same unit for all entries in this column, using 10 000 ns instead of 10 us in the first data row is fine.
+
+Complete citations for various references mentioned above
+=========================================================
+
+These are given in BiBTeX format.
+
+% Ref 3
+
+@InProceedings{Bowers_et_al_2006,
+  author =    {K.~J.~Bowers and E.~Chow and H.~Xu and R.~O.~Dror and M.~P.~Eastwood and B.~A.~Gregersen and J.~L.~Klepeis and I.~Kolossvary and M.~A.~Moraes and F.~D.~Sacerdoti and J.~K.~Salmon and Y.~Shan and D.~E.~Shaw},
+  title =     {Scalable Algorithms for Molecular Dynamics Simulations on Commodity Clusters},
+  booktitle = {SC '06: Proc.~2006 ACM/IEEE Conf.~on Supercomputing},
+  year =      {2006},
+  month =     {November},
+  location =  {Tampa, FL},
+  publisher = {ACM},
+  address =   {New York, NY}
+}
+
+% Ref 7
+
+@Article{Jones_et_al_1996,
+  author =  {M.~E.~Jones and D.~Winske and S.~R.~Goldman and R.~A.~Kopp and V.~G.~Rogatchev and S.~A.~Bel'kov and P.~D.~Gasparyan and G.~V.~Dolgoleva and N.~V.~Zhidkov and N.~V.~Ivanov and Y.~K.~Kochubej and G.~F.~Nasyrov and V.~A.~Pavlovskii and V.~V.~Smirnov and Y.~A.~Romanov},
+  title =   {Modeling ion interpenetration, stagnation, and thermalization in colliding plasmas},
+  journal = {Phys.~Plasmas},
+  year =    {1996},
+  volume =  {3},
+  number =  {3},
+  pages =   {1096-1108},
+  month =   {March}
+}
+
+% New Ref 18:
+
+@Article{Vay_2007,
+  author =  {J.~L.~Vay},
+  title =   {Noninvariance of Space- and Time-Scale Ranges under a Lorentz Transformation and the Implications for the Study of Relativistic Interactions},
+  journal = {Phys.~Rev.~Lett.},
+  year =    {2007},
+  volume =  {98},
+  number =  {130405},
+  month =   {30 March}
+}
+
+% Ref 18 (new Ref 19):
+
+@Article{Kahle_et_al_2005,
+  author =  {J.~A.~Kahle and M.~N.~Day and H.~P.~Hofstee and C.~R.~Johns and T.~R.~Maeurer and D.~Shippy},
+  title =   {Introduction to the Cell multiprocessor},
+  journal = {IBM J.~Res.~Dev.},
+  year =    {2005},
+  volume =  {49},
+  number =  {4/5},
+  pages =   {589-604},
+  month =   {July/September}
+}
+
+% Ref 20 (new Ref 21):
+
+@Article{Bowers_Li_PRL_2007,
+  author =  {K.~J.~Bowers and H.~Li},
+  title =   {Spectral energy transfer and dissipation of magnetic energy from fluid to kinetic scales},
+  journal = {Phys.~Rev.~Lett.},
+  year =    {2007},
+  volume =  {98},
+  number =  {3},
+  pages =   {035002},
+  month =   {19 January}
+}
+
+% Ref 21 (new Ref 22):
+
+@Article{Yin_et_al_Phys_Plasmas_2007_SRS,
+  author =  {L.~Yin and B.~J.~Albright and K.~J.~Bowers and W.~Daughton and H.~A.~Rose},
+  title =   {Saturation of backward stimulated scattering of a laser beam in the kinetic regime},
+  journal = {Phys.~Rev.~Lett.},
+  year =    {2007},
+  volume =  {99},
+  number =  {26},
+  pages =   {265004},
+  month =   {28 December}
+}
+
+% Ref 22 (new Ref 23):
+
+@Article{Yin_et_al_Phys_Plasmas_2007_BOA,
+  author =  {L.~Yin and B.~J.~Albright and B.~M.~Hegelich and K.~J.~Bowers and K.~A.~Flippo and T.~J.~T.~Kwan and J.~C.~Fern\'{a}ndez},
+  title =   {Monoenergetic and GeV ion acceleration from the laser break-out afterburner using ultrathin targets},
+  journal = {Phys.~Plasmas},
+  year =    {2007},
+  volume =  {14},
+  number =  {5},
+  pages =   {056706},
+  month =   {10 April}
+}
+
+% Ref 23 (new Ref 24):
+
+@Article{Albright_et_al_Phys_Plasmas_2007,
+  author =  {B.~J.~Albright and L.~Yin and K.~J.~Bowers and B.~M.~Hegelich and K.~A.~Flippo and T.~J.~T.~Kwan and J.~C.~Fern\'{a}ndez},
+  title =   {Relativistic Buneman Instability in the Laser Breakout Afterburner},
+  journal = {Phys.~Plasmas},
+  year =    {2007},
+  volume =  {14},
+  number =  {9},
+  pages =   {094502},
+  month =   {18 September}
+}

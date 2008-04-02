@@ -75,11 +75,32 @@ In this paper, we demonstrate the unprecedented performance and scalability of V
 \section*{Introduction}
 \note{Place holder}
 
+\cite{Bowers_et_al_Phys_Plasmas_2007}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% architecture
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{RoadRunner system architecture}
+
+\begin{figure}
+    \begin{center}
+    \scalebox{0.2}{\input{system.pstex_t}}
+    \caption{RoadRunner System Overview}
+    \label{fig:system}
+    \end{center}
+\end{figure}
+
+The RoadRunner supercopmuter, shown in figure \ref{fig:system}, is a hybrid, petascale system to be deployed at Los Alamos National Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous cluster that utilizes a combination of 6,912 1.8 GHz, dual-socket, dual-core AMD Opteron \emph{host} processors with 12,960 3.2 GHz, IBM Cell \emph{extended Double-Precision (eDP)} \emph{accelerator} processors.  Each Cell eDP chip is capable of performing 102.4 Gflop/s \textbf{double-precision}, for a total theoretical peak performance of ~1.3 Pflop/s.  The RoadRunner supercomputer will be the first machine to acheive a sustained petaflop on the LINPACK benchmarks used in ranking the fastest computers in the world for the TOP500 list.\note{add TOP500 citation}
+
+Using a top-down description, the planned system will be comprised of 18 \emph{Connected Units (CUs)}, using eight, second-stage, 288-port Voltaire Ifiniband $4x$ DDR switches.  This allows for twelve links per CU to each of the eight switches.  Each CU will be made up of 180 \emph{Triblade}, compute nodes and 12 I/O nodes connected by a first-stage, 288-port Voltaire Infiniband $4x$ DDR switch.  This configuration allows for 192 ports \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed, fat-tree network topology.
+
+A Triblade compute node actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PIC-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % biliography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\bibliographystyle{plain}
-%\bibliography{bib/gb2008}
+\bibliographystyle{plain}
+\bibliography{bib/vpic}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % end document

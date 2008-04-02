@@ -24,11 +24,11 @@
 % add to document dimensions
 % fudge if we need to add more space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\addtolength{\topmargin}{-2cm}
-\addtolength{\textheight}{3cm}
-\addtolength{\oddsidemargin}{-2.25cm}
-\addtolength{\evensidemargin}{-2.25cm}
-\addtolength{\textwidth}{4.5cm}
+%\addtolength{\topmargin}{-2cm}
+%\addtolength{\textheight}{3cm}
+%\addtolength{\oddsidemargin}{-2.25cm}
+%\addtolength{\evensidemargin}{-2.25cm}
+%\addtolength{\textwidth}{4.5cm}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % article information
@@ -66,8 +66,13 @@ L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications),
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 \note{Place holder abstract.  If we keep any of this we might not want to mention Livermore ;-)}
-In this paper, we demonstrate the unprecedented performance and scalability of VPIC, a three-dimensional, relativistic, kinectic plasma simulation code on the heterogeneous, IBM RoadRunner supercomputer at Los Alamos National Laboratory.  Simulations of Laser-Plasma Interactions (LPI) with up to one trillion particles, which achieve a sustained performance of ~0.4 Pflop/s, are detailed.  This work will enable significant breakthroughs in our understanding of plasma reflectivity in Inertial Confinement Fusion (ICF) at the National Ignition Facility (NIF), located in Livermore, California.
+In this paper, we demonstrate the unprecedented performance and scalability of VPIC, a three-dimensional, relativistic, kinetic plasma simulation code on the heterogeneous, IBM RoadRunner supercomputer at Los Alamos National Laboratory.  Simulations of Laser-Plasma Interactions (LPI) with up to one trillion particles, which achieve a sustained performance of ~0.4 Pflop/s, are detailed.  This work will enable significant breakthroughs in our understanding of plasma reflectivity in Inertial Confinement Fusion (ICF) at the National Ignition Facility (NIF), located in Livermore, California.
 \end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% add break after title page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % introduction
@@ -90,25 +95,37 @@ In this paper, we demonstrate the unprecedented performance and scalability of V
     \end{center}
 \end{figure}
 
-The RoadRunner supercopmuter, shown in figure \ref{fig:system}, is a hybrid, petascale system to be deployed at Los Alamos National Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous cluster that utilizes a combination of 6,912 1.8 GHz, dual-socket, dual-core AMD Opteron \emph{host} processors with 12,960 3.2 GHz, IBM Cell \emph{extended Double-Precision (eDP)} \emph{accelerator} processors.  Each Cell eDP chip is capable of performing 102.4 Gflop/s \textbf{double-precision}, for a total theoretical peak performance of ~1.3 Pflop/s.  The RoadRunner supercomputer will be the first machine to acheive a sustained petaflop on the LINPACK benchmarks used in ranking the fastest computers in the world for the TOP500 list.\note{add TOP500 citation}
+The RoadRunner supercomputer, shown in figure \ref{fig:system}, is a hybrid, petascale system to be deployed at Los Alamos National Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous cluster-of-clusters that utilizes a combination of 6,912 1.8 GHz, dual-socket, dual-core AMD Opteron \emph{host} processors with 12,960 3.2 GHz, IBM Cell \emph{extended Double-Precision (eDP)} \emph{accelerator} processors.  Each Cell eDP chip is capable of performing 102.4 Gflop/s \textbf{double-precision}, for a total theoretical peak performance of $\sim1.3$ Pflop/s\footnote{The Opteron base system has a theoretical peak performance of $\sim50$ Tflop/s.}.  The RoadRunner supercomputer will be the first machine to achieve a sustained petaflop on the LINPACK benchmark used in ranking the fastest supercomputers in the world for the TOP500 list \cite{top500}.
 
-Using a top-down description, the planned system will be comprised of 18 \emph{Connected Units (CUs)}, using eight, second-stage, 288-port Voltaire Ifiniband $4x$ DDR switches.  This allows for twelve links per CU to each of the eight switches.  Each CU will be made up of 180 \emph{Triblade}, compute nodes and 12 I/O nodes connected by a first-stage, 288-port Voltaire Infiniband $4x$ DDR switch.  This configuration allows for 192 ports \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed, fat-tree network topology.
+\subsection*{Connected Unit}
 
-%\begin{figure}
-%    \begin{center}
-%    \scalebox{0.2}{\input{triblade.pstex_t}}
-%    \caption{Triblade Compute Node}
-%    \label{fig:triblade}
-%    \end{center}
-%\end{figure}
+A Connected Unit (CU) is made up of 180 \emph{Triblade}, compute nodes and 12 I/O nodes linked by a first-stage, 288-port Voltaire Infiniband $4x$ DDR switch.  Using a top-down description, the system is comprised of 18 CUs, using eight, second-stage, 288-port Voltaire Infiniband $4x$ DDR switches.  This allows for twelve links per CU to each of the eight switches, with 192 ports \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed, fat-tree network topology.
 
-A Triblade compute node, figure \ref{fig:triblade}, actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PIC-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.
+A Connected Unit is a powerful cluster in its own right, with a theoretical peak performance of $\sim74$ Tflop/s.  A single CU of RoadRunner would rank in the top 20 on the current (November 2007) TOP500 list.
+
+\begin{figure}
+    \begin{center}
+    \scalebox{0.2}{\input{triblade.pstex_t}}
+    \caption{Triblade Compute Node}
+    \label{fig:triblade}
+    \end{center}
+\end{figure}
+
+\subsection*{Triblade}
+
+A Triblade compute node, figure \ref{fig:triblade}, actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PCI-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.
+
+In aggregate, each Triblade has 32GB RAM, with 16GB on the LS21 blade and 16GB each per QS22 blade, so that each logical processor in a compute node has 4GB RAM.
+
+\note{3 address spaces: Opteron, PPE, SPE LS}
+\note{Diskless $\rightarrow$ remote I/O}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % biliography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plain}
-\bibliography{bib/vpic}
+\bibliography{bib/gb2008,bib/vpic}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % end document

@@ -33,7 +33,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % article information
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{400 TFlop/s Trillion-Particle Particle-in-Cell Modeling of Laser Plasma Interactions on Roadrunner}
+\title{0.4 PFlop/s Trillion-Particle Particle-in-Cell Modeling of Laser Plasma Interactions on Roadrunner}
 \author{%
 B. Albright\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{balbright@lanl.gov}} \and%
 %
@@ -65,15 +65,7 @@ L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications),
 % abstract
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
-We demonstate the outstanding performance and scalability of the VPIC kinetic plasma modeling code
-on the heterogeneous IBM Roadrunner supercomputer at Los Alamos National Laboratory.  VPIC is a  
-three-dimensional, relativistic, electromagnetic, particle-in-cell code that self-consistently evolves 
-a kinetic plasma.  VPIC simulations of laser plasma interacion (LPI) have been conducted at unprecedented 
-fidelity and scale---one trillion simulation macroparticles on 125 million computational cells--to 
-accurately model the plasma environment inside a laser-driven hohlraum in an inertial confinement fusion 
-experiment.   Sustained performance of approximately 0.4~Pflop/s was achieved.  This capability opens up
-the exciting possibility of using VPIC to model, in a first-principles manner, a problem that threatens the
-success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
+We demonstrate the outstanding performance and scalability of the VPIC kinetic plasma modeling code on the heterogeneous IBM Roadrunner supercomputer at Los Alamos National Laboratory.  VPIC is a three-dimensional, relativistic, electromagnetic, particle-in-cell code that self-consistently evolves a kinetic plasma.  VPIC simulations of laser plasma interaction (LPI) have been conducted at unprecedented fidelity and scale---one trillion simulation macro particles on 125 million computational cells--to accurately model the plasma environment inside a laser-driven hohlraum in an inertial confinement fusion experiment.   Sustained performance of approximately 0.4~Pflop/s was achieved.  This capability opens up the exciting possibility of using VPIC to model, in a first-principles manner, a problem that threatens the success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -140,10 +132,20 @@ In aggregate, each Triblade has 32GB RAM, with 16GB on the LS21 blade and 16GB e
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{The VPIC Particle-In-Cell Code}
 
+VPIC is a three-dimensional, relativistic, electromagnetic, particle-in-cell code that has been highly optimized to minimize data movement, a major issue that must be addressed in order to acheive high levels of performance on modern computing architectures.  Additionally, the data layouts and computational algorithms used by VPIC have been designed to take advantage of the short-vector, SIMD execution pipelines that are available on many modern processors.  VPIC also uses an asymmptotically optimal sorting algorithm to rearrange particle data at a compile-time configuralble rate to maintain good spatial locality of memory access.  These characteristics, combined with VPIC's effective use of single-precision floating-point computation -- a factor of two increase in the theoretical peak attainable on some architectures, and a factor of two decrease in data movement --, make it one of the highest performing particle-in-cell applications in existence.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Moving the code to RoadRunner
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Adapting VPIC to RoadRunner}
+
+\begin{figure}
+    \begin{center}
+    \scalebox{0.4}{\input{relay.pstex_t}}
+    \caption{MP Relay}
+    \label{fig:relay}
+    \end{center}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Performance and Scalability

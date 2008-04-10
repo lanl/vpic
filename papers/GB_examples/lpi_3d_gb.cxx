@@ -71,6 +71,17 @@ begin_initialization {
   double Lz                = 6.0 * 1e-4;                 
 
 # if 1
+  // Smaller problem for 48 core CU
+  Lx /= 270;                                // 1/270 of the targeted problem on full RR 
+  double nx                = 63;
+  double ny                = 84;
+  double nz                = 84; 
+  double topology_x        = 3;
+  double topology_y        = 4;
+  double topology_z        = 4;           // 48 proc
+#endif 
+
+# if 0
   // Smaller problem for 720 core CU
   Lx /= 18;                                // 1/18 of the targeted problem on full RR 
   double nx                = 110;

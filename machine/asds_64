@@ -54,11 +54,19 @@ MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *
 # PPU CFLAGS - configure C compiler behavior
 ################################################################################
 
+# KJB-FIXME: CONSIDER ADDING -Wstrict-aliasing=2
+# KJB-FIXME: CONSIDER DROPPING -fomit-frame-pointer (don't think it does anything on Power)
+# KJB-FIXME: CONSIDER ADDING -maltivec
+
 PCFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer"
 
 ################################################################################
 # PPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
+
+# KJB-FIXME: DEFINITELY DROP -DUSE_V4_PORTABLE AND POSSIBLY REPLACE WITH -DUSE_V4_ALTIVEC -maltivec
+# KJB-FIXME: CONSIDER ADDING -DPPE_ROUNDING_MODE=FE_TONEAREST
+# KJB-FIXME: CONSIDER DROPPING -fomit-frame-pointer (don't think it does anything on Power)
 
 PCXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -DUSE_V4_PORTABLE"
 
@@ -78,6 +86,9 @@ SCFLAGS="-Werror -pedantic -std=c99 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-
 ################################################################################
 # SPU CXXFLAGS - configure C++ compiler behavior
 ################################################################################
+
+# KJB-FIXME: CONSIDER ADDING -DUSE_V4_SPU
+# KJB-FIXME: CONSIDER ADDING -fno-rtti
 
 SCXXFLAGS="-Werror -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fno-exceptions"
 

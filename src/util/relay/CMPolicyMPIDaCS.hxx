@@ -99,11 +99,16 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		errcode_ = dacs_reserve_children(DACS_DE_CBE, &children, &peer_de_);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
+
+        // get args to pass on to child
+        const char ** args = argc > 2 ?
+            const_cast<const char **>(&argv[2]) : NULL;
+
 #if 1
-		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
+		errcode_ = dacs_de_start(peer_de_, argv[1], args, NULL,
 			DACS_PROC_LOCAL_FILE, &peer_pid_);	
 #else
-		errcode_ = dacs_de_start(peer_de_, argv[1], NULL, NULL,
+		errcode_ = dacs_de_start(peer_de_, argv[1], args, NULL,
 			DACS_PROC_REMOTE_FILE, &peer_pid_);	
 #endif
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);

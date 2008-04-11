@@ -934,7 +934,7 @@ main( uint64_t spu_id,
     msg = spu_read_in_mbox();
 
     switch(msg) {
-    case READ_ARGS_AND_ADVANCE_PARTICLES:
+    case READ_ARGS_AND_ADVANCE:
 
 #     ifdef IN_HARNESS
       prof_clear();
@@ -1085,7 +1085,7 @@ main( uint64_t spu_id,
 
       // signal PPE that we are done with this iteration
       
-      spu_write_out_mbox( UPDATE_COMPLETE );
+      spu_write_out_mbox( ADVANCE_COMPLETE );
       break;
 
     default:

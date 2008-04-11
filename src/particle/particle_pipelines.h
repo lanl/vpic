@@ -8,9 +8,6 @@
 #include <particle.h>
 #include <pipeline_control.h>
 
-/*
-FIXME: Remove this when everything is working
-
 #define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
                   ( defined(CELL_PPU_BUILD)    &&   \
                      defined(USE_CELL_SPUS)    &&   \
@@ -18,7 +15,10 @@ FIXME: Remove this when everything is working
 
 #if FOR_SPU
 
-    #include <spe_events.h>
+//    #include <spe_events.h>
+    #define READ_ARGS_AND_ADVANCE 0
+    #define ADVANCE_COMPLETE 1
+    #define END_EVENT_LOOP 3
 
 # if defined(CELL_PPU_BUILD) 
 
@@ -78,7 +78,6 @@ FIXME: Remove this when everything is working
 # define N_PIPELINE       thread.n_pipeline
 
 #endif
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // advance_p_pipeline interface

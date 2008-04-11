@@ -187,10 +187,12 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
 extern spe_program_handle_t advance_p_pipeline_spu;
 
+#if 0
 static void
 advance_p_pipeline_signal() {
     spu.signal(READ_ARGS_AND_ADVANCE_PARTICLES);
 }
+#endif
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 

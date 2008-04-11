@@ -114,6 +114,14 @@ In total, each Triblade has 32 GB RAM, with 16 GB RAM on the LS21 blade and 16 G
 
 \subsection*{Cell Broadband Engine Architecture (CBEA)}
 
+\begin{figure}
+    \begin{center}
+    \scalebox{0.5}{\includegraphics{cell}}
+    \caption{Cell Broadband Engine}
+    \label{image:cell}
+    \end{center}
+\end{figure}
+
 The \emph{Cell Broadband Engine (Cell BE)}, developed jointly by Sony Computer Entertainment, Toshiba, and IBM, is an (8+1)-way, 90nm SOI, heterogeneous parallel processor that incorporates eight \emph{synergistic processing elements (SPEs)} and one \emph{power processing element (PPE)} connected via an \emph{Element Interconnect Bus (EIB)}.  The EIB also connects a memory controller (MIC) and two off-chip I/O interfaces.  This processor is used in the Sony Playstation 3 gaming console, and is currently offered in products from IBM (QS21 blade) and Mercury Computer Systems (CAB PCI-e card and DCBB2 blade) \cite{mercury}.
 
 The PPE is a modestly provisioned general purpose processor capable of running the Linux OS, and which serves as a controller for the eight SPEs.  It supports two execution threads and has a theoretical peak performance of 6.4 Gflop/s double precision at 3.2 GHz.

@@ -6,7 +6,7 @@
 #endif
 
 #include <particle.h>
-#include <pipeline_control.h>
+//#include <pipeline_control.h>
 
 #define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
                   ( defined(CELL_PPU_BUILD)    &&   \

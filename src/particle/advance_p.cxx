@@ -190,7 +190,7 @@ extern spe_program_handle_t advance_p_pipeline_spu;
 #if 0
 static void
 advance_p_pipeline_signal() {
-    spu.signal(READ_ARGS_AND_ADVANCE_PARTICLES);
+    spu.signal(READ_ARGS_AND_ADVANCE);
 }
 #endif
 

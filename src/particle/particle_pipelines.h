@@ -28,10 +28,10 @@
     spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args );
 
 #   define EXEC_PIPELINES(name,args,sz_args) \
-	spu.signal(READ_ARGS_AND_ADVANCE_PARTICLES); \
+	spu.signal(READ_ARGS_AND_ADVANCE); \
     name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 
-#   define WAIT_PIPELINES() spu.sync(PARTICLE_ADVANCE_COMPLETE)
+#   define WAIT_PIPELINES() spu.sync(ADVANCE_COMPLETE)
 
 #   define FINALIZE_PIPELINES() \
     spu.signal(END_EVENT_LOOP); \

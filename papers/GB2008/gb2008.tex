@@ -288,42 +288,44 @@ chip that is used in RoadRunner.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Laser Plasma Interaction in Inertial Confinement Fusion Experiments}
 
-The National Ignition Facility (NIF) at Lawrence Livermore National Laboratory
-is a multi-billion dollar laser facility designed for the purpose of achieving
-thermonuclear fusion ignition in a laser-driven capsule.  In NIF inertial confinement 
-fusion (ICF) experiments, 192 laser beams carring an aggregate 1.8~MJ of 
-energy are directed over a period of 10-20~ns onto the inner walls of a hohlraum, 
-or a cylindrical radiation bottle made of high-$Z$ material such as gold or uranium.  
-The walls heat up rapidly and radiate x-rays, which are absorbed by a tiny capsule
-of deuterium-tritium ``fuel'' surrounded by a plastic or Be ablator.  This capsule
-compresses to density of order hundreds of g/cc and plasma temperatures in excess 
-of 10~keV, conditions under which fusion ignition can occur.  
+The multi-billion dollar National Ignition Facility (NIF) at 
+Lawrence Livermore National Laboratory
+is designed to reach conditions for ignition of thermonuclear fusion in a 
+laser-driven inertial confinement fusion (ICF) capsule.  Achieving fusion ignition 
+will be one of the landmark achievements in science and engineering and will
+have a host of potential applications, including fusion energy research, 
+high energy density physics, and laboratory astrophysics.  
+In NIF ICF experiments, which commence in 2010, 192 laser beams with aggregate 
+energy 1.8~MJ are directed onto the inner walls of a hohlraum, 
+a roughly centimeter-sized cylindrical radiation ``bottle'' made of high-$Z$ material 
+such as gold or uranium.  The walls heat up and radiate x-rays, which are absorbed 
+by a tiny capsule
+of cryogenic deuterium-tritium (DT) ``fuel'' surrounded by a plastic or beryllium 
+ablator.  The capsule compresses to plasma density of order hundreds of g/cc and 
+temperature in excess of 10~keV, conditions under which the DT fuel can ignite. 
 
+Laser-plasma instabilities (LPI) jeopardize the success of fusion ignition on 
+the NIF.  LPI occur as the laser travels through the plasma medium inside the hohlraum 
+and scatters from (and amplifies) density irregularities.  This leads to 
+parametric instabilities that scatter the laser light, reflect some of the laser 
+energy out of the hohlraum, and create hot electrons that pre-heat the capsule 
+and possibly prevent it from achieving sufficient density for fusion ignition 
+to occur.  Laser-plasma instabilities (LPI) are a major concern, as they constitute 
+half of the margin for uncertainty in ICF experimental design.\cite{}   The most 
+pernicious LPI are stimulated Raman scattering (SRS) and stimulated Brillouin 
+scattering (SBS), where the laser light scatters off electron or ion density 
+fluctuations (waves), respectively.  
 
-Laser-plasma instabilities (LPI) jeopardizes the success of fusion ignition on 
-the NIF.  LPI occur as the laser travels through hohlraum and scatters off (and amplifies)
-density irregularities in the plasma medium.  This leads to parametric instabilities 
-that scatter the laser light, reflect some of the laser energy out of the hohlraum, 
-and create hot electrons that can pre-heat the capsule (thus preventing 
-it from achieving high enough density for fusion ignition to occur).  Laser-plasma 
-instabilities (LPI) are a major concern, as they represent half of the margin for 
-uncertainty in ICF experimental design.   The most pernicious LPI are stimulated 
-Raman scattering (SRS) and stimulated Brillouin scattering (SBS), where the laser 
-light scatters off electron or ion density fluctuations (waves), respectively.  
-Under NIF hohlraum conditions, LPI evolve until they reach a complex, highly nonlinear 
-phase that involves nonlinear wave-wave coupling, wave-particle interaction, and 
-trapping of plasma electrons and ions in plasma waves.  Understanding these LPI 
-processes requires high-resolution kinetic plasma simulations. 
-
-In NIF laser beams, random phase plates are used to break the beam into a collection 
+In NIF laser beams, random phase plates are used to break each beam into a collection 
 of smaller laser ``speckles'' or hot spots.  The geometry of the speckles depends
-on the properties of the beam, including wavelength and $f$/\#, and the properties of the 
+on the properties of the beam, including wavelength and diffraction ($f$/\#), and the 
 random phase plate.  With VPIC running on the full Roadrunner platform, we have the 
 opportunity for the first time to simulate \abinitio\ LPI within a solitary laser 
-speckle under NIF-like conditions and fully resolve the kinetic wave-particle dynamics.  
-This provides us a unique opportunity for understanding LPI in a solitary speckle 
-that will translate into improved predictive modeling of NIF experiments as well 
-as risk mitigation for NIF ignition. 
+speckle under NIF-like conditions and \textit{fully resolve} the kinetic 
+wave-particle dynamics.  
+This provides us a unique opportunity for understanding LPI 
+that will translate into improved predictive modeling of ICF experiments and
+mitigation of risk for NIF ignition. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Science method
@@ -333,91 +335,87 @@ as risk mitigation for NIF ignition.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Plasma Physics Simulations}
 
-Recent experimental~\cite{} and modeling~\cite{} work show that LPI
+Under the range of laser and plasma conditions in ICF experiments, LPI evolve until 
+they reach a complex, highly nonlinear state involving wave-wave coupling, 
+wave-particle interaction, and trapping of plasma particles in waves.  Under the 
+conditions of highest concern for ignition, wave-particle interactions dominate the 
+nonlinearity. 
+Understanding LPI under these conditions requires high-resolution kinetic plasma 
+simulations, as afforded by the use of VPIC on Roadrunner, that capture all of the
+wave-particle physics.  These simulations must resolve very complex particle orbits and
+complicated structures in phase space and therefore require the use of many simulation 
+macroparticles (as many as thousands of particles/cell of each species) to reach 
+convergence of the dynamics.~\cite{}  
+
+Recent experimental~\cite{} and modeling~\cite{} work shows that LPI
 in a solitary laser speckle is represented well by a diffraction-limited laser beam.  
-In our simulations, we launch a Gaussian diffraction-limited laser beam from the left
-boundary into a plasma of dimension $35 \times 6 \times 6$~$\mu$m.  The $f/4$ beam is 
-of wavelength 351~nm and peak intensity $I_0 = 10^{17}$~W/cm$^2$ at best focus, located 
-at the center of the simulation volume.  The plasma has density 
-$n_e = 0.14 n_{\mathrm{cr}}$ and the simulation volume spans two Rayleigh lengths in the
-longitudinal direction and three times the Gaussian width of the laser at the entrance
-plane.  The electron and ion temperatures are $T_e = 4$~keV and $T_i = 1$~keV respectively, 
-which lead to $k \lde = 0.34$, where $k$ is the wavenumber of the most unstable electron 
-density fluctuation and $\lde = (k_B T_e / 4 \pi n_e e^2)^{1/2}$ is the Debye length.  
-(Here $e$ is electronic charge and $k_B$, Boltzmann's constant).    
-The simulation time is $10000~\wpe$ ($\wpe = (4 \pi n_e e^2 / m_e)^{1/2}$; $m_e$ is electron mass),
-which translates to $1.3 \times 10^5$ time steps. 
+In our three-dimensional VPIC simulations, we launch a Gaussian diffraction-limited 
+laser beam from the left simulation boundary into a plasma volume of dimension 
+$35 \times 6 \times 6$~$\mu$m; the simulation boundaries absorb
+electromagnetic waves and reflect particles.  
+The $f/4$ beam is linearly polarized, of wavelength 
+$\lambda_0 = 351$~nm,  
+and has peak intensity ranging from $I_0 = 10^{15} - 10^{17}$~W/cm$^2$ at best 
+focus, located at the center of the simulation volume.  The plasma is underdense 
+with electron density $n_e = 0.14 n_{\mathrm{cr}}$; here 
+$n_{\mathrm{cr}} = c m_e / 2 \lambda_0 e^2$ represents the critical 
+density of the medium, $c$ is the speed of light in vacuum, $m_e$ is the electron
+mass, and $e$ is the electronic charge in statcoulombs.  
+We have chosen the simulation volume to span two Rayleigh lengths in the
+the direction of laser propagation and three times the Gaussian width of the laser 
+at the entrance plane.  The electron and ion temperatures are 
+$T_e = 4$~keV and $T_i = 1$~keV respectively, which match hohlraum plasma conditions 
+when the drive lasers are at highest intensity.  The hohlraum is filled with a plasma
+comprising hydrogen, helium, and (possibly) trace amounts of krypton and xenon. 
 
-The simulation is divided evenly into cells with dimension $1.3 \times 1.7 \times 1.7$~Debye 
-lengths.  This ensures 15 cells in the longitudinal ($x$) direction for resolving the 
-most unstable electron density fluctuations and ample resolution (several tens of cells) 
-for the transverse modes that develop.  
+The key dimensionless number characterizing LPI is $k \lde = 0.34$, where $k$ is 
+the wavenumber of the most unstable SRS electron density fluctuation and 
+$\lde = (k_B T_e / 4 \pi n_e e^2)^{1/2}$ is the Debye length ($k_B$ is Boltzmann's 
+constant), the length scale above which 
+the plasma dynamics are dominated by collective motion of the plasma as opposed to 
+binary interactions among particles.  
+The simulation time is $10000~\wpe^{-1}$ ($\wpe = (4 \pi n_e e^2 / m_e)^{1/2}$, which 
+translates to $1.3 \times 10^5$ time steps.  This provides ample time for growth of the
+first ``bursts'' of SRS as well as development of ion density structures (SBS).  
+The simulation volume is divided evenly into cells with dimension 
+$1.3 \times 1.7 \times 1.7$~Debye lengths, which ensures 15 cells in the longitudinal 
+($x$) direction for resolving the most unstable electron density fluctuations and ample 
+resolution (several tens of cells) for the transverse modes that develop.  
 
-nppc = ?  multiple ion species. 
+We have chosen this problem in order to resolve two outstanding questions in LPI 
+physics:  (1) What is the role is of trapped particles in the nonlinear evolution of
+SRS?  (2) What is the effect of adding trace amounts of high-$Z$ dopants to the 
+hohlraum plasma environment?  
 
+\textbf{Problem 1}
+We verify 
+recent work by the authors~\cite{} that shows both SRS and SBS saturate via nonlinear 
+wave-particle trapping that bends electrostatic wavefronts and de-tunes the parametric 
+coupling, followed by transverse filamentation and break-up of wave fronts.  
+On Roadrunner, we run, for the first time, calculations of 1.1 trillion ($10^{12}$) 
+simulation macroparticles, nearly a factor of six larger than the next largest PIC 
+simulations of plasma~\cite{} (also with VPIC), to verify that the nonlinear processes 
+we identify are indeed the ones that govern LPI saturation.  
 
-[scratch]
+\textbf{Problem 2}
+We study the effects of adding high-$Z$ plasma components to the gas fill, a 
+proposed LPI mitigation scheme~\cite{} and a problem arising for understanding of 
+LPI near the hohlraum boundary (where gold and uranium plasma mix with the low-$Z$ gas) 
+and ablator edge.  VPIC allows use of an aribitrary number of different plasma species, 
+so it is ideal for these studies.  In this work, we use concentrations krypton and 
+xenon of noble gases in addition to the hydrogen and helium gas fill.  To compare 
+with small-scale laboratory experiments of LPI, we use a more diffracted beam ($f/3$) 
+at higher intensity ($I_0 = 10^{17}$~W/cm$^2$). This problem requires very large numbers
+of macroparticles/cell to resolve the ion kinetics; projected scaling of this problem 
+on the full Roadrunner system approaches 400 TFlop/s.  
 
-The simulation volume is chosen so that it spans two Rayleigh
-lengths in the longitudinal direction (which captures the region of highest gain for 
-the instability).  
-
-Comparable value of k lambda debye = 0.34 for LPI in NIF experiments.  
-
-Image of filamentation. 
-
-
-%[Text cribbed from elsewhere] 
-% and VPIC kinetic 
-%particle-in-cell simulations on Roadrunner offer an opportunity to simulate 
-%\abinitio\  the underlying kinetic physics in the kinetic regime.  
-%
-%
-% and understanding the nonlinear evolution of LPI is a problem of longstanding 
-%interest in fundamental plasma physics, as well as a subject of intense practical interest, 
-%as control of these instabilities is 
-%vital to the success of 
-%inertial confinement fusion (ICF) experiments at the National Ignition Facility (NIF). To 
-%accomplish this, we must understand the physics governing instability onset and satura- 
-%tion. Kinetic particle-in-cell (PIC) simulations, validated by laboratory experiments, are 
-%the best tool for evolving our understanding of LPI physics in the kinetic regime, where 
-%nonlinear trapping of particles in the wave fields is important. 
-%
-%Study of nonlinear particle-trapping using 3D PIC simulations is challenging—typically, 
-%billions of simulation particles and hundreds of million computational cells are required. 
-%A highly optimized, state-of-the-art 3D PIC simulation code VPIC [1] has been devel- 
-%oped at LANL and has been applied successfully in several settings in basic and applied 
-%plasma science, including LPI, fast-ion generation by short-pulse laser, and magnetic re- 
-%connection. As a result of over four years of development, the investigators have exten- 
-%sive experience running VPIC on LANL high-performance computing clusters and have 
-%prosecuted simulations as large as 172 billion particles [2] on Redtail, the base system 
-%of Roadrunner, the largest plasma PIC simulation to data. VPIC has been ported to the 
-%Roadrunner hybrid platform, which will enable 3D VPIC simulations of up to 1 trillion 
-%particles. Simulations of this size will allow us to model the particle trapping accurately 
-%when the laser intensity is at a threshold value for the instability onset. 
-%
-%Understanding the behavior of laser-plasma interaction in solitary laser speckles, or 
-%“hot spots,” is important for the success of ICF experiments on the NIF because these 
-%speckles comprise the fundamental “building blocks” of a NIF laser beam. In other words, 
-%if LPI behavior in a single speckle can be understood, then one can meaningfully improve 
-%predictivity of ICF fusion experiments and potentially find parameter regimes where LPI 
-%effects are minimized. 
-%
-%An important, fundamental parameter governing the LPI behavior is k?D , where k is 
-%the LW wavenumber—in essence, the reciprocal wavelength of the most unstable mode— 
-%and ?D is the Debye length, the fundamental screening length in a plasma. VPIC models 
-%plasma dynamics all the way down to the Debye length scale, so it is capable of truly 
-%\abinitio\  calculations of LPI physics in NIF regimes. For small k?D , LW intensity tends 
-%to localize in regions of plasma with low density (higher index of refraction), where the 
-%enhanced ponderomotive force expels plasma from the low-density regions and leads 
-%to long-wavelength plasma density modulation. As k?D increases, the ponderomotive 
-%modulational instability becomes weaker than the electron trapped particle modulation 
-%instability (TPMI). For k?D = 0.33 ? 0.46, TPMI requires a perpendicular component for 
-%the fluctuating Langmuir wave vector [3] and its nonlinear development filaments and 
-%self-focuses the LW. 
-%
-%[end text cribbed from elsewhere]
-%
+The early Roadrunner deployment lacks a high-performance file system, so our primary 
+diagnostic for both studies is the integrated Poynting flux (scattered laser power) 
+leaving the simulation volume, a quantity sampled every 16 time steps, that we compute 
+and output with negligible computational, communications, or I/O overhead.  Based 
+on a large body of verification and validation studies 
+for VPIC LPI simulation~\cite{}, we have high confidence that single-precision studies 
+are more than adequate. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

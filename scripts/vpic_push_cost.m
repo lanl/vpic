@@ -1,4 +1,4 @@
-function flop = vpic_push_cost( vt, vd, cell, dt )
+function [ flop, ld, st ] = vpic_warm_cost( vt, vd, cell, dt )
 
 % Compute the expected number of flops used to push a particle from a
 % given distribution with given simulation parameters in VPIC.
@@ -7,10 +7,6 @@ function flop = vpic_push_cost( vt, vd, cell, dt )
 % resulting spatial distribution is then analyzed to compute the probability a
 % particle will cross a given number of boundaries.  Results are generally
 % accurate to 3 sig figs (increase N if you want more).
-%
-% Flop model: 246 flop + 105 flop per boundary crossed
-%
-% Determined by op counting the inner loop.
 %
 % Particles are assumed uniformly distributed in space.
 % Particles are assumed to have a drifting Maxwellian distribution.
@@ -31,6 +27,18 @@ function flop = vpic_push_cost( vt, vd, cell, dt )
 
 N = 10000000;
 x = rand( N, 3 ) + ( repmat( vd, N, 1 ) + randn( N, 3 )*vt' )*diag( dt./cell );
-n = sum( x<0 | x>1, 2 );
-i = 0:max(n);
-flop = 246 + 105*sum( i.*hist( n, i, 1 ) );
+n = sum( x<0 | x>1, 2 ); % Number of boundaries crossed
+
+i = 0:max(n); % Range of number of boundaries crossed
+
+j = i+1;      % A boundary crossing particle takes number of boundaries
+             % crossed plus 1 non-common case moves ...
+j(1) = 0;     % except for particles that don't cross any boundaries; these
+             % take no non-common case moves
+
+m = sum( j.*hist( n, i, 1 ) );
+             % Expected number of non-common case moves per particle
+
+flop = 246 + 168*m; % Determined by OP counting
+ld   = 160 +  48*m; % Determined by OP counting
+st   =  80 +  48*m; % Determined by OP counting

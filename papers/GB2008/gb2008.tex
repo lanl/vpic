@@ -150,9 +150,11 @@ is a hybrid, petascale system to be deployed at Los Alamos National
 Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous
 cluster-of-clusters that utilizes a combination of 6,912, 1.8 GHz,
 dual-socket, dual-core AMD Opteron \emph{host} processors with 12,960,
-3.2 GHz, IBM \emph{PowerXCell 8I accelerator} chips.  Each PowerXCell 8I 
-chip is capable of
-performing 102.4 Gflop/s \textbf{double-precision}, for a total
+3.2 GHz, IBM \emph{PowerXCell 8I accelerator} chips also known as the
+Cell \emph{extended Double Precision (eDP)} processor (throughout the
+rest of this paper we will refer to this chip as the Cell eDP processor).
+Each Cell eDP processor is capable of performing 102.4 Gflop/s
+double-precision (204.8 GFlop/s single-precision), for a total
 theoretical peak performance of $\sim$1.3 Pflop/s\footnote{The Opteron
 base system has a theoretical peak performance of $\sim$50 Tflop/s that
 is not included in this figure.}.
@@ -162,7 +164,14 @@ fastest supercomputers in the world for the TOP500 list \cite{top500}.
 
 \subsection*{Connected Unit}
 
-A Connected Unit (CU) is made up of 180 \emph{Triblade}, compute nodes and 12 I/O nodes linked by a first-stage, 288-port Voltaire Infiniband $4x$ DDR switch.  Using a top-down description, the system is comprised of 18 CUs connected via eight, second-stage, 288-port Voltaire Infiniband $4x$ DDR switches.  This allows for twelve links per CU to each of the eight switches, with 192 ports \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed, fat-tree network topology.
+A Connected Unit (CU) is made up of 180 \emph{Triblade}, compute
+nodes and 12 I/O nodes linked by a first-stage, 288-port Voltaire
+Infiniband $4x$ DDR switch.  Using a top-down description, the
+system is comprised of 18 CUs connected via eight, second-stage,
+288-port Voltaire Infiniband $4x$ DDR switches.  This allows for
+twelve links per CU to each of the eight switches, with 192 ports
+\emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed,
+fat-tree network topology.
 
 A Connected Unit is a powerful cluster in 
 its own right, with a theoretical peak performance of
@@ -179,13 +188,33 @@ top 20 on the current (November 2007) TOP500 list.
 
 \subsection*{Triblade}
 
-A Triblade compute node, Figure \ref{fig:triblade}, actually integrates four physical blades: one IBM LS21, dual-socket Opteron blade, one expansion blade, and two IBM QS22 Cell blades containing the new eDP chips.  The expansion blade connects the two QS22s to the LS21 via four PCI-e $x8$ links and provides the node's ConnectX IB $4x$ DDR link to the rest of the CU cluster.  Each PCI-e $x8$ link logically connects an Opteron core to a Cell processor ---there is a one-to-one relationship between Opteron cores and Cell chips-- with a theoretical bandwidth of 2 GB/s.  Triblades are completely diskless, running from RAM disks with NFS and Panasas \cite{panasas} to the LS21 only.
+A Triblade compute node, Figure \ref{fig:triblade}, actually integrates
+four physical blades: one IBM LS21, dual-socket Opteron blade, one
+expansion blade, and two IBM QS22 Cell blades containing the new
+Cell eDP processors.  The expansion blade connects the two QS22s to
+the LS21 via four PCI-e $x8$ links and provides the node's
+ConnectX IB $4x$ DDR link to the rest of the CU cluster.
+Each PCI-e $x8$ link logically connects an Opteron core to a
+Cell eDP processor ---there is a one-to-one relationship between
+Opteron cores and eDP processors-- with a theoretical bandwidth
+of 2 GB/s.  Triblades are completely diskless, running from RAM disks
+with NFS and Panasas \cite{panasas} to the LS21 only.
 
-The LS21 blade incorporates two dual-core AMD Opteron processors running at 1.8 GHz with 4 GB RAM per core.  Each LS21 has a theoretical peak of 14.4 Gflop/s in double precision.
+The LS21 blade incorporates two dual-core AMD Opteron processors
+running at 1.8 GHz with 4 GB RAM per core.  Each LS21 has a
+theoretical peak of 14.4 Gflop/s in double precision.
 
-Each QS22 blade has two enhanced Double Precision (eDP) IBM Cell processors ---the official product name is IBM PowerXCell 8I-- running at 3.2 GHz with 8 GB RAM so that each Cell chip has 4 GB RAM.  The two QS22 blades have an aggregate theoretical peak performance of 409.6 Gflop/s in double precision.
+Each QS22 blade has two Cell eDP processors running at 3.2 GHz
+with 8 GB RAM so that each Cell chip has 4 GB RAM.  The two QS22
+blades have an aggregate theoretical peak performance of
+409.6 Gflop/s in double precision.
 
-In total, each Triblade has 32 GB RAM, with 16 GB RAM on the LS21 blade and 16 GB RAM each per QS22 blade, so that each logical processor in a compute node has 4 GB RAM.  The total theoretical peak performance per Triblade is 424 Gflop/s in double precision.  The full RoadRunner machine has a total of 3240 Triblade compute nodes.
+In total, each Triblade has 32 GB RAM, with 16 GB RAM on the
+LS21 blade and 16 GB RAM each per QS22 blade, so that each
+logical processor in a compute node has 4 GB RAM.  The total
+theoretical peak performance per Triblade is 424 Gflop/s in
+double precision.  The full RoadRunner machine has a total of
+3240 Triblade compute nodes.
 
 \subsection*{Cell Broadband Engine Architecture (CBEA)}
 
@@ -197,26 +226,85 @@ In total, each Triblade has 32 GB RAM, with 16 GB RAM on the LS21 blade and 16 G
 %    \end{center}
 %\end{figure}
 
-The \emph{Cell Broadband Engine (Cell BE)}, developed jointly by Sony Computer Entertainment, Toshiba, and IBM, is an (8+1)-way, 90nm SOI, heterogeneous parallel processor that incorporates eight \emph{synergistic processing elements (SPEs)} and one \emph{power processing element (PPE)} connected via an \emph{Element Interconnect Bus (EIB)}.  The EIB also connects a memory controller (MIC) and two off-chip I/O interfaces.  This processor is used in the Sony Playstation 3 gaming console, and is currently offered in products from IBM (QS21 blade) and Mercury Computer Systems (CAB PCI-e card and DCBB2 blade) \cite{mercury}.
+The \emph{Cell Broadband Engine (Cell BE)}, developed jointly by Sony
+Computer Entertainment, Toshiba, and IBM, is an (8+1)-way, 90nm SOI,
+heterogeneous parallel processor that incorporates eight
+\emph{synergistic processing elements (SPEs)} and one
+\emph{power processing element (PPE)} connected via an
+\emph{Element Interconnect Bus (EIB)}.  The EIB also connects
+a memory controller (MIC) and two off-chip I/O interfaces.
+This processor is used in the Sony Playstation 3 gaming console,
+and is currently offered in products from IBM (QS21 blade)
+and Mercury Computer Systems
+(CAB PCI-e card and DCBB2 blade) \cite{mercury}.
 
-The PPE is a modestly provisioned general purpose processor capable of running the Linux OS, and which serves as a controller for the eight SPEs.  It supports two execution threads and has a theoretical peak performance of 6.4 Gflop/s double precision at 3.2 GHz.
+The PPE is a modestly provisioned general purpose processor capable
+of running the Linux OS, and which serves as a controller for
+the eight SPEs.  It supports two execution threads and has a
+theoretical peak performance of 6.4 Gflop/s double precision at 3.2 GHz.
 
-Each SPE processor is a 128-bit vector engine with a 256 KB user-controlled, embedded SRAM called the \emph{Local Store (LS)}.  Additionally, each SPE has a 128-bit, 128-entry register file.  All data and text operated on by the SPE must be fetched from main memory to the LS using \emph{direct memory access (DMA)} calls.  Each SPE has its own \emph{Memory Flow Controller (MFC)} that supports up to 12 outstanding DMA requests and has a theoretical bandwidth of 25.6 GB/s to main memory using DDR2-800 SDRAM\footnote{The current plan of record for RoadRunner calls for DDR2-667, in which case, the theoretical bandwidth will be 21.4 GB/s.}.  SPEs support dual-issue on even and odd execution pipelines and have a theoretical single-precision, peak performance of 204.8 Gflop/s at 3.2 GHz.  Double-precision computation is possible on the Cell BE, although at the much lower rate of $\sim$14.63 Gflop/s at 3.2 GHz.
+Each SPE processor is a 128-bit vector engine with a 256 KB
+user-controlled, embedded SRAM called the \emph{Local Store (LS)}.
+Additionally, each SPE has a 128-bit, 128-entry register file.  All
+data and text operated on by the SPE must be fetched from main
+memory to the LS using \emph{direct memory access (DMA)} calls.
+Each SPE has its own \emph{Memory Flow Controller (MFC)} that
+supports up to 12 outstanding DMA requests and has a theoretical
+bandwidth of 25.6 GB/s to main memory using DDR2-800
+SDRAM\footnote{The current plan of record for RoadRunner
+calls for DDR2-667, in which case, the theoretical bandwidth
+will be 21.4 GB/s.}.  SPEs support dual-issue on even and odd
+execution pipelines and have a theoretical single-precision,
+peak performance of 204.8 Gflop/s at 3.2 GHz.  Double-precision
+computation is possible on the Cell BE, although at the much
+lower rate of $\sim$14.63 Gflop/s at 3.2 GHz.
 
-The EIB is configured as a four-way, circular ring with paired counter-rotating, uni-directional channels that are each 16 bytes wide.  There are currently 12 units connected to this bus, so that the maximum number of steps between any two units is six.  Each SPE has a 16 byte read port and a 16 byte write port, and is capable of performing a read or write of 16 bytes on every EIB clock cycle.  SPEs are able overlap computation with communication using special DMA queues for requests that are still in flight.  The EIB operates at one-half the system clock speed and has an aggregate theoretical bandwidth of 204.8 GB/s at 3.2 GHz.
+The EIB is configured as a four-way, circular ring with paired
+counter-rotating, uni-directional channels that are each
+16 bytes wide.  There are currently 12 units connected to
+this bus, so that the maximum number of steps between any two
+units is six.  Each SPE has a 16 byte read port and a 16 byte
+write port, and is capable of performing a read or write of 16
+bytes on every EIB clock cycle.  SPEs are able overlap
+computation with communication using special DMA queues for
+requests that are still in flight.  The EIB operates at one-half
+the system clock speed and has an aggregate theoretical
+bandwidth of 204.8 GB/s at 3.2 GHz.
 
 \subsection*{IBM PowerXCell 8I (eDP)}
 
-IBM has developed an enhanced version of the Cell BE chip specifically designed for use in supercomputing.  This chip, the IBM PowerXCell 8I, adds fully-pipelined, double-precision computing capability to the SPEs of the Cell BE chip.  The PowerXCell 8I uses a 65nm SOI process and has a double-precision theoretical peak performance of 102.4 Gflop/s at 3.2 GHz.  Except as regards double-precision performance, the PowerXCell 8I does not differ significantly from the Cell BE.  This is the Cell chip that is used in RoadRunner.
+IBM has developed an enhanced version of the Cell BE chip
+specifically designed for use in supercomputing.  This chip,
+the IBM PowerXCell 8I, adds fully-pipelined, double-precision
+computing capability to the SPEs of the Cell BE chip.
+The PowerXCell 8I uses a 65nm SOI process and has a
+double-precision theoretical peak performance of 102.4
+Gflop/s at 3.2 GHz.  Except as regards double-precision
+performance, the PowerXCell 8I does not differ significantly
+from the Cell BE.  This is the Cell chip that is used in RoadRunner.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Architecture
+% Early Hardware Access
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Early Hardware Access}
 
-As part of the RoadRunner deployment, two identical test systems ---both called ASDS-- are available to developers in preparation for moving to the full machine.  Each of these has 12 Triblade compute nodes and one I/O node, which are accessable through a front-end using MOAB and Torque.  Disk access is available through NFS.  With 12 Triblades, each test system has a total of 24 dual-core Opterons and 48 Cell chips with a peak theoretical performance of 4.9 Tflop/s\footnote{This is the Cell-only performance.  The Opterons add another 172.8 Gflop/s.} at 3.2 GHz.  Currently, these machines are not collocated, and cannot be used as a single cluster.
+As part of the RoadRunner deployment, two identical test systems
+---both called ASDS-- are available to developers in preparation
+for moving to the full machine.  Each of these has 12 Triblade
+compute nodes and one I/O node, which are accessable through a
+front-end using MOAB and Torque.  Disk access is available
+through NFS.  With 12 Triblades, each test system has a total of
+24 dual-core Opterons and 48 Cell eDP processors with a peak
+theoretical performance of 4.9 Tflop/s\footnote{This is the
+Cell-only performance.  The Opterons add another 172.8 Gflop/s.}
+at 3.2 GHz.  Currently, these machines are not collocated,
+and cannot be used as a single cluster.
 
-Members of the Performance and Architecture Team (PAL) at Los Alamos National Laboratory were given early access to a CU at IBM's test facilities in Poughkeepsie, New York.  This system was used to conduct some of the scalability analysis presented in \S \ref{sec:performance}.
+Members of the Performance and Architecture Team (PAL) at
+Los Alamos National Laboratory were given early access to a
+CU at IBM's test facilities in Poughkeepsie, New York.  This system
+was used to conduct some of the scalability analysis presented
+in \S \ref{sec:performance}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Science
@@ -931,43 +1019,193 @@ to implement and allows the VPIC to be used on Cell-only clusters.
 
 % FIXME: BETTER QUANTIFY BANDWIDTH ABOVE?
 
-A kernel ported to the Cell SPE cores can have outstanding
-performance.  For example, in VPIC on Roadrunner, a SPE core is
-clock-for-clock faster than an Opteron core at the common case
-particle advance kernel ($158$ versus $174$ clocks per particle).
-Further the SPE cores run at a higher clock rate ($3.2 GHz$ versus
-$1.8 GHz$) and there are $8$ times as many of them.  As a result,
-VPIC's SPE accelerated particle advance kernel itself can achieve
-$0.517 Pflop/s$ on whole of Roadrunner, over $15$ times faster than
-the $0.033 Pflop/s$ can achieve by running the particle advance kernel
-on the Opteron cores.  (For reference, this corresponds to achieving
-$20\%$ of theoretical single precision peak performance on a Cell SPE
-core.)
+%A kernel ported to the Cell SPE cores can have outstanding
+%performance.  For example, in VPIC on Roadrunner, a SPE core is
+%clock-for-clock faster than an Opteron core at the common case
+%particle advance kernel ($158$ versus $174$ clocks per particle).
+%Further the SPE cores run at a higher clock rate ($3.2 GHz$ versus
+%$1.8 GHz$) and there are $8$ times as many of them.  As a result,
+%VPIC's SPE accelerated particle advance kernel itself can achieve
+%$0.517 Pflop/s$ on whole of Roadrunner, over $15$ times faster than
+%the $0.033 Pflop/s$ can achieve by running the particle advance kernel
+%on the Opteron cores.  (For reference, this corresponds to achieving
+%$20\%$ of theoretical single precision peak performance on a Cell SPE
+%core.)
 
-At the same time, a Cell PPE core is significantly less powerful than
-an Opteron core on Roadrunner.  Even though the parts of VPIC that run
-on the SPE cores run over an order of magnitude faster than if they
-were run on the Opteron cores in aggregate, the parts of VPIC that run
-on the PPE cores execute $\sim 2$ to $\sim 3$ times slower!  The
-typical overall simulation speed up achieved by porting VPIC from
-Roadrunner's Opterons to Roadrunner's Cells is a lower (though still
-impressive) $\sim 4$ to $\sim 8$, depending on simulation physical and
-numerical parameters.
+%At the same time, a Cell PPE core is significantly less powerful than
+%an Opteron core on Roadrunner.  Even though the parts of VPIC that run
+%on the SPE cores run over an order of magnitude faster than if they
+%were run on the Opteron cores in aggregate, the parts of VPIC that run
+%on the PPE cores execute $\sim 2$ to $\sim 3$ times slower!  The
+%typical overall simulation speed up achieved by porting VPIC from
+%Roadrunner's Opterons to Roadrunner's Cells is a lower (though still
+%impressive) $\sim 4$ to $\sim 8$, depending on simulation physical and
+%numerical parameters.
 
 % FIXME: BETTER QUANTIFY ON ASDS ABOVE?
 
-Thus, maximizing performance of a code like VPIC on Cell requires an
-all-of-nothing approach to porting.  In addition to SPE accelerating
-the dominant computational kernel, minor computations also need to be
-SPE accelerated lest they become performance bottlenecks.  Likewise,
-performance on Cell is much more sensitive to physical and numerical
-paraemters that affect these other computations.  In VPIC, though the
-infrequent particle sort, the field solve and the particle exception
-processing are typically negligible expenses when run on conventional
-clusters, they are large expenses (even dominant in some regimes)
-currently when VPIC is run SPE accelerated on Roadrunner.  Current
-VPIC development is focused on porting these operations to the SPE as
-well.
+%Thus, maximizing performance of a code like VPIC on Cell requires an
+%all-of-nothing approach to porting.  In addition to SPE accelerating
+%the dominant computational kernel, minor computations also need to be
+%SPE accelerated lest they become performance bottlenecks.  Likewise,
+%performance on Cell is much more sensitive to physical and numerical
+%paraemters that affect these other computations.  In VPIC, though the
+%infrequent particle sort, the field solve and the particle exception
+%processing are typically negligible expenses when run on conventional
+%clusters, they are large expenses (even dominant in some regimes)
+%currently when VPIC is run SPE accelerated on Roadrunner.  Current
+%VPIC development is focused on porting these operations to the SPE as
+%well.
+
+% FIXME: IN USE VOXEL TERMINOLOGY TO DISAMBIGUATE FROM CELL PROCESSOR
+% IN TEXT OVERALL
+
+Each Cell CPU contains $1$ general purpose core (``PPE'') and $8$ high
+performance $4$-vector SIMD cores (``SPE'').  Each SPE can only
+directly access $256$ KiB of high performance memory local to it.
+This ``local store'' is analogous to cache, but, unlike conventional
+cache, memory transfers to and from it must be explicitly managed via
+the SPE's $32$ channel DMA engine.  Though non-trivial, this makes it
+possible to design high performance application specific cache
+protocols. % FIXME: CITE KAHLE_ET_AL_2005 HERE?
+
+To process a particle list, the SPEs are assigned appromixately equally
+sized non overlapping segments of the list and their own
+current accumulator.  Each segment contains a
+multiple of $16$ particles; the PPE advances any left overs while the
+SPEs are working.  Particle data is triple buffered on the SPEs in
+blocks of up to $512$ particles (at most $16$ KiB are needed to hold a
+block---the largest size a single DMA transfer supports).
+While a block is processed, the next is loaded and the previous is
+stored.  $48$ KiB of local store and $3$ channels are used for particle
+triple buffering.
+
+Block processing groups particles by $4$ and uses $4$-vector SIMD to
+advance them data parallel (much like is done on conventional
+clusters).  To fully utilize the SPE's $128$ registers and minimize
+pipeline stalls, the 4-vector inner loop is hand unrolled and modulo
+scheduled by $4$.  Since a block is guaranteed to contain a multiple
+of $16$ particles, no code is needed to process left
+over particles.
+
+The challenges of SPE particle processing are handling random
+memory access and particle exceptions.  A $512$ line
+software cache of read-only interpolation coefficients, read-only
+voxel adjacencies and read-write partially accumulated currents
+handles random memory access.  The cache has a fully associative
+least recently used (LRU) policy; a line can hold any voxel's data and
+the least recently used line is replaced when caching new data.
+
+The cache has a simple interface:
+\begin{verbatim}
+  cache_line = voxel_cache_fetch( voxel_index )
+\end{verbatim}
+and:
+\begin{verbatim}
+  voxel_cache_wait()
+\end{verbatim}
+
+voxel\_cache\_fetch() initiates DMA transfers to evict the least
+recently used cache line and replace it with the requested data.
+voxel\_cache\_wait() waits until all pending cache DMA transfers are
+complete.  Because the cache is LRU, it is easy to determine which
+requests are still cached; the last $512$ unique requests are
+guaranteed to be cached after a call to voxel\_cache\_wait() and before
+any further calls to voxel\_cache\_fetch().  Accordingly, before processing
+a block, voxel\_cache\_fetch() is called for each voxel referenced in
+the block followed by a call to voxel\_cache\_wait().  Because the
+particle list is approximately sorted at all times, most of these will
+be cache hits.  Regardless, the cache is large enough that, even if
+every particle in a block were in different voxels, all voxel data is
+guaranteed to be in cache once block processing begins.
+
+Under the hood, voxel\_cache\_fetch() queries a hash table to determine
+if the requested voxel is already cached.  This hash table is
+oversized to reduce collisions and uses linear probing and modular
+hashing for implementation efficiency.  If a cache hit, the cache line
+replacement order (stored as a doubly linked circular queue) is
+updated.  If a cache miss, the least recently used line is selected
+for replacement.  For read-only data, a DMA load on a channel selected
+round robin from a set of channels reserved for this purpose is
+initiated.  This allows multiple simultaneous fetches of read only
+data.
+
+Allowing multiple simultaneous fetches of read-write data is more
+complicated as transfers to a given voxel must not be reordered by the
+DMA engine.  For read-write data, if the line to fill needs
+eviction first, a channel is selected based on the voxel index of the data
+to evict, that data is copied to that channel's writeback buffer
+(first waiting until any previous writebacks on that channel are
+complete) and a DMA store is performed.  Then a fenced DMA load is
+initiated for the requested read-write data on a channel selected
+based on the requested voxel index.  Since all transfers of read/write
+data to a given voxel use the same channel, the fence is effective.
+
+Finally, the hash table and least recently used line are updated.
+Though complicated, all operations above are a fast $O(1)$ on average.
+A cache line requires $268$ bytes per line ($192$ for the actual data,
+$4$ for the cache tag, $8$ for the LRU ordering and $64$ for the hash
+table) and thus requires of $134 KiB$ local store.  $10$ channels are
+reserved for transfers of read-only data and $16$ channels are
+reserved for transfers of read-write data.  While such a cache may
+seem expensive, a SPE core can be faster (even clock-for-clock) than a
+conventional processor core at particle advances.  The net impact is
+minimal DMA transfers are used, most DMA transfers are overlapped with
+computation and the inner loop operates exclusively out of local store.
+
+When a particle exception occurs that the SPE logic cannot handle
+(e.g. particle needs communication to a neighboring node), the
+particle's index and remaining displacement ($16$ bytes) is saved to a
+list of exceptions that occured during block processing.  When
+the processed block is stored, the list of unprocessed
+exceptions that occured during is also streamed out to memory for
+later processing.  Since up to $512$ exceptions could occur while
+processing a particle block and there $3$ such blocks, $24
+KiB$ of local store and $3$ DMA channels are used for managing
+unprocessed exceptions.
+
+Overall, $206$ KiB of local store data is used for particle
+processing (leaving $56$ KiB for code) and all $32$ DMA channels
+are utilized.
+
+\subsection*{Message Passing Relay}
+
+As mentioned earlier, as part of the adaptation of VPIC to the
+Roadrunner architecture, we developed a message relay layer
+called \emph{MP Relay}
+that runs on the Opterons and handles forwarding
+of message traffic and remote I/O operations for the diskless
+QS22 blades (required for restart and visualizaiton dumps).
+The original VPIC code already abstracted message passing
+operations, so this modification was straightforward.
+
+The MP Relay essentially flattens the hierarchical topology of
+Roadrunner making it possible to use the same underlying
+VPIC implementation to run on Roadrunner, clusters of Cell processors,
+and traditional clusters with very few architecture specific code 
+sections.  VPIC uses an autoconf-based build system, which supports
+compile-time selection of the target architecture.  This allows
+VPIC to easily be configured to use the original message passing
+abstraction layer or the MP Relay.  The master control logic of the
+code is unchanged.
+
+Communication between Opterons and Cells is handled using the
+\emph{Data, Communication, and Synchronization (DaCS)} library developed by
+IBM.  This library provides send/recieve and put/get symmantics
+for moving data over the PCI-e link between the LS21 and QS22 blades.
+Communication between the Opteron host processes is implemented
+using OpenMPI.
+
+On the Operton side, the relay runs an event loop that issues
+a non-blocking dacs\_recv call that accepts a point-to-point request
+data structure from its associated PPE peer.
+Incoming requests are passed through a switch statement
+that makes additional non-blocking
+send (dacs\_send) and recieve calls to complete the
+point-to-point communication.  Messages that need to be
+passed to other PPEs are sent via MPI calls to that PPE's host relay.
+I/O requests are handled by double-buffered communication and
+calls to fread and fwrite.
 
 \begin{figure}
     \begin{center}

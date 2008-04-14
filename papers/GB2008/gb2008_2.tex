@@ -1112,12 +1112,23 @@ Cell Cores & Gflop/s per Core & Projected Full Machine Tflop/s Performance \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\section{Conclusion}
+\section{Conclusion}
 
-
+VPIC has been shown to run very efficiently on the Roadrunner hybrid 
+platform on problems that are particle-dominated.  Currently, 
+we are SPU accelerating other parts of the VPIC algorithm, in particular, 
+the particle sort and the field solve.  This will improve upon the
+performance we have achieved on particle-dominated simulations as 
+well as expand the class of problems on which we can expect 
+large speedups.  As dicsussed earlier, by Amdahl's law, the faster the 
+particle push becomes, the more important it is to accelerate the other
+parts of the algorithm.  We expect to have made significant progress
+towards this by the time the full Roadrunner system becomes available,
+which make make accessible sustained 400+ Tflop/s simulations on the 
+LPI problems presented.  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Conclusion
+% Acknowledgments
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection*{Acknowledgments}
 This work was performed under the auspices of the United States Dept. 

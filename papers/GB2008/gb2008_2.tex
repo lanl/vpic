@@ -78,7 +78,7 @@
 % FIXME: CHECK ABOUT TJTK
 % FIXME: if we have assessment, then we need to include CCS-1 types, no? 
 
-\title{0.4 PFlop/s Trillion-Particle Particle-in-Cell Modeling of Laser Plasma Interactions on Roadrunner}
+\title{0.37 PFlop/s Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
 \author{%
 K. J. Bowers\thanks{Guest Scientist, Applied Physics Divsion (X-1-PTA Plasma Theory and Applications, Presently at D.E. Shaw Research LLC, 120 W 45th Street, 39th Floor, New York, NY 10036, Email: \emph{kevin.j.bowers@gmail.com}} \and%
 %
@@ -109,20 +109,21 @@ L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications),
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{singlespace}
 \begin{abstract}
-We demonstrate the outstanding performance and scalability of the VPIC
-kinetic plasma modeling code on the heterogeneous IBM Roadrunner
+We demonstrate the outstanding performance and scalability of the VPIC 
+kinetic plasma modeling code on the heterogeneous IBM Roadrunner 
 supercomputer at Los Alamos National Laboratory.  VPIC is a three-
-dimensional, relativistic, electromagnetic, particle-in-cell code that
-self-consistently evolves a kinetic plasma.  VPIC simulations of laser
-plasma interaction (LPI) have been conducted at unprecedented fidelity
-and scale ---one trillion simulation macro particles on 125 million
-computational voxels-- to accurately model the plasma environment
-inside a laser-driven hohlraum in an inertial confinement fusion
-experiment.  Sustained performance of approximately 0.4~Pflop/s was
-achieved.  This capability opens up the exciting possibility of using
-VPIC to model, in a first-principles manner, a problem that threatens
-the success of the multi-billion dollar DOE/NNSA National Ignition
-Facility.
+dimensional, relativistic, electromagnetic, particle-in-cell code that 
+self-consistently evolves a kinetic plasma.  VPIC simulations of laser 
+plasma interaction (LPI) will be conducted at unprecedented fidelity 
+and scale---up to $1.1 \times 10^{12}$ macro particles on as many as 
+$1.3 \times 10^8$ 
+computational voxels---to accurately model the particle trapping physics 
+occurring within a laser-driven hohlraum in an inertial confinement 
+fusion experiment.  On these calculations, sustained performance of 
+0.37~Pflop/s was 
+achieved.  This capability opens up the exciting possibility of using 
+VPIC to model, in a first-principles manner, a problem that threatens 
+the success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
 \end{abstract}
 \end{singlespace}
 
@@ -147,8 +148,8 @@ in experiments starting in 2010 requires control of LPI.
 
 Kinetic modeling ``at scale'' using particle-in-cell kinetic plasma
 simulations is the only economical and practicable means by which LPI
-physics can be understood and the effects ultimately mitigated.
-Within the plasma physics community, large particle-in-cell
+physics can be understood and the effects mitigated.
+Large particle-in-cell plasma 
 simulations typically employ tens to hundreds of millions of voxels
 (cells) and a few billion simulation macroparticles (tens to hundreds
 of particles/voxel).  While adequate for some problems, high levels of
@@ -156,8 +157,8 @@ noise have proved problematic for accurate modeling of the nonlinear
 wave-particle kinetics of LPI~\cite{Yin_et_al_Phys_Plasmas_2006}.  The
 Roadrunner hybrid petascale supercomputer (described below), however,
 enables plasma kinetic modeling of LPI at unprecedented scale,
-\textit{more than one trillion particles and hundreds of millions to
-billions of voxels}, which makes possible study of both large
+\textit{trillions of particles and billions of voxels}, which makes 
+possible study of both large
 simulation volume and highly intricate kinetic behavior, where
 thousands of particles/voxel may be needed.  We have adapted the VPIC
 kinetic plasma modeling code to run efficiently on the Roadrunner
@@ -174,7 +175,7 @@ platforms.  Lastly, we present measured on single-Cell chip and
 extrapolated performance on up to the 12960 AMD Opteron-hosted IBM
 \emph{PowerXCell 8I accelerator} chips (hereafter referred to as
 ``Cell'' chips).  On the full Roadrunner machine, we anticipate
-sustained VPIC performance to be around 400 TFlop/s on LPI physics
+sustained VPIC performance approaching 400 TFlop/s on LPI physics
 problems.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,8 +185,8 @@ problems.
 
 The NIF is designed to ignite thermonuclear fuel in a laser-driven ICF
 capsule, a breakthrough that will be one of the landmark achievements
-in science and engineering, with a host of potential applications,
-including fusion energy research, high energy density physics, and
+in science and engineering, with a host of applications, spanning
+fusion energy research, high energy density physics, and
 laboratory astrophysics.  In NIF ICF experiments, which commence in
 2010, 192 laser beams with 1.8~MJ of energy are directed onto the
 inner walls of a hohlraum, a centimeter-sized cylindrical radiation
@@ -206,9 +207,11 @@ light scatters off electron and ion density fluctuations,
 respectively.
 
 The NIF employs random phase plates to break each laser beam into a
-collection of ``speckles'' or hot spots.  The speckle geometry depends
-on the properties of the beam, including wavelength and diffraction
-($f$/\#), and random phase plates.  With VPIC running on the full
+collection of ``speckles'' or hot spots.  
+%The speckle geometry depends
+%on the properties of the beam, including wavelength and diffraction
+%($f$/\#), and random phase plates.  
+With VPIC running on the full
 Roadrunner platform, we have the opportunity for the first time to
 simulate \abinitio\ LPI within a solitary laser speckle under NIF-like
 conditions and \textit{fully resolve} the kinetic wave-particle
@@ -218,9 +221,6 @@ and mitigation of risk for NIF ignition.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Science method
-%
-% BJA:  Still working on this.  Describe simulation we are doing.  
-%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Plasma Physics Simulations}
 
@@ -243,31 +243,34 @@ laser beam.  In our three-dimensional VPIC simulations, we launch a
 Gaussian diffraction-limited laser beam from a boundary into a plasma
 of dimension $35 \times 6 \times 6$~$\mu$m; the simulation boundaries
 absorb outgoing electromagnetic waves and reflect particles.  The
-$f/4$ beam (diffraction chosen to match LPI laboratory experiments and
-prior PIC calculations) is linearly polarized, of wavelength
+$f/4$ beam (diffraction chosen to emulate laboratory experiments and
+prior calculations) is linearly polarized, of wavelength
 $\lambda_0 = 351$~nm, and has peak intensity ranging from $I_0 =
-10^{15} - 10^{17}$~W/cm$^2$ at the center of the simulation volume.
+10^{15} - 10^{17}$~W/cm$^2$ at the center of the simulation volume.\footnote{It 
+is expected that the laser backscatter from daughter SRS and SBS waves 
+is dominated by the nonlinear dynamics of the rare speckles at very 
+high intensity.}
 The plasma is underdense with electron density $n_e = 0.14
 n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} = c m_e / 2 \lambda_0 e^2$ is
 the critical density, $c$ is the speed of light, $m_e$ is electron
-mass, and $e$ is electronic charge (statcoul).  We have chosen the
-simulation volume to span two Rayleigh lengths in $x$, the direction
-of laser propagation and three times the Gaussian width of the laser
+mass, and $e$ is electronic charge (statcoul).  The simulation volume 
+spans two Rayleigh lengths in $x$, the direction
+of laser propagation, and three Gaussian widths of the laser
 at the entrance plane in $y$ and $z$.  The electron and ion
-temperatures are $T_e = 4$~keV and $T_i = 1$~keV, which match hohlraum
-plasma conditions when the drive lasers are at maximum intensity.  The
-hohlraum is filled with a plasma comprising hydrogen, helium, and
+temperatures are $T_e = 4$~keV and $T_i = 2$~keV, comparable to hohlraum
+plasma conditions at maximum drive intensity.  The
+hohlraum is filled with plasma comprising hydrogen, helium, and
 (possibly) trace amounts of krypton and xenon.
 
-The LPI simulations are at conditions where $k \lde = 0.34$, where $k$
+The LPI simulations are at conditions $k \lde = 0.34$, where $k$
 is the wavenumber of the most unstable SRS electron density
 fluctuation and $\lde = (k_B T_e / 4 \pi n_e e^2)^{1/2}$ is the plasma
 Debye length ($k_B$ is Boltzmann's constant).  The simulation time is
-$10^4~\wpe^{-1}$ ($\wpe = (4 \pi n_e e^2 / m_e)^{1/2}$, which
+$10^4~\wpe^{-1}$ ($\wpe = (4 \pi n_e e^2 / m_e)^{1/2})$, which
 translates to $1.3 \times 10^5$ time steps and which allows for growth
-of the first ``bursts'' of SRS and SBS.  The simulation volume is
-divided evenly into voxels of size $1.3 \times 1.7 \times 1.7$~Debye
-lengths, which ensures ample resolution to sample the collective
+of several ``bursts'' of SRS and SBS.  The simulation volume is
+divided into voxels of size $1.3 \times 1.7 \times 1.7$~Debye
+lengths, which ensures ample resolution to resolve the collective
 processes that occur.
 
 We have chosen to address two questions in LPI physics: (1) What is
@@ -279,11 +282,11 @@ hohlraum plasma environment?
 Verify recent work by the
 authors~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}
 that shows that SRS and SBS saturate via nonlinear wave-particle
-trapping that bends electrostatic wavefronts and de-tunes the
-parametric coupling, followed by transverse filamentation and break-up
-of wave fronts.  On Roadrunner, we run, for the first time,
-calculations of 1.1 trillion ($10^{12}$) simulation macroparticles,
-nearly a factor of six larger than the next largest PIC simulations of
+trapping that bends electrostatic wavefronts (see Fig.~\ref{fig:lpi}), followed by transverse 
+filamentation and break-up of wave fronts.  This fundamentally limits 
+how much backscatter can occur. On Roadrunner, we run, for the first 
+time, calculations of 1.1 trillion ($10^{12}$) simulation macroparticles,
+six times larger than the next largest PIC simulations of
 plasma~\cite{Yin_et_al_PRL_2007_reconnection} (also with VPIC, but on
 the Roadrunner base system), to verify that the nonlinear processes we
 identify are indeed the ones that govern LPI saturation.
@@ -311,6 +314,19 @@ this problem on the full Roadrunner system approaches 400 TFlop/s.
 % FIXME: CONSIDER PUTTING BACK BRIAN'S NIFTY PARAGRAPH TOWARD INTRO
 %VPIC is a three-dimensional, relativistic, electromagnetic, particle-
 %in-cell code ...
+
+
+\begin{figure}
+    \begin{center}
+%    \scalebox{0.3}{\input{system.pstex_t}}
+    \caption{Bowing and self-focusing of electron plasma waves from 
+		a 3D SRS simulation of an f/4 speckle. Displayed are 
+		isosurfaces of electron plasma waves with color 
+		indicating laser field.}
+    \label{fig:lpi}
+    \end{center}
+\end{figure}
+
 
 \section{The VPIC Particle-In-Cell Code}
 

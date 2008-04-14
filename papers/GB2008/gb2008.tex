@@ -291,7 +291,7 @@ from the Cell BE.  This is the Cell chip that is used in RoadRunner.
 As part of the RoadRunner deployment, two identical test systems
 ---both called ASDS-- are available to developers in preparation
 for moving to the full machine.  Each of these has 12 Triblade
-compute nodes and one I/O node, which are accessable through a
+compute nodes and one I/O node, which are accessible through a
 front-end using MOAB and Torque.  Disk access is available
 through NFS.  With 12 Triblades, each test system has a total of
 24 dual-core Opterons and 48 Cell eDP processors with a peak
@@ -424,7 +424,7 @@ we identify are indeed the ones that govern LPI saturation.
 We study the effects of adding high-$Z$ plasma components to the gas fill, a 
 proposed LPI mitigation scheme~\cite{} and a problem arising for understanding of 
 LPI near the hohlraum boundary (where gold and uranium plasma mix with the low-$Z$ gas) 
-and ablator edge.  VPIC allows use of an aribitrary number of different plasma species, 
+and ablator edge.  VPIC allows use of an arbitrary number of different plasma species, 
 so it is ideal for these studies.  In this work, we use concentrations krypton and 
 xenon of noble gases in addition to the hydrogen and helium gas fill.  To compare 
 with small-scale laboratory experiments of LPI, we use a more diffracted beam ($f/3$) 
@@ -814,8 +814,8 @@ interpolation could involve up to 13 memory transfers per particle
 under the hood (assuming adjacent $x$ data is contiguous in memory, 4
 for $E_x$, 2 for $E_y$, $E_z$, $B_y$ and $B_z$ and 1 for $B_x$).
 Further exacerbating this, far more data than requested would be
-transfered; modern cores round-up the amount of memory transfered in
-small requests like this to, at least, the (larger) memory-core dath
+transferred; modern cores round-up the amount of memory transferred in
+small requests like this to, at least, the (larger) memory-core data
 path width.
 
 To make field interpolation efficient, an array of interpolation
@@ -958,105 +958,6 @@ simulation domain volume.
 
 \subsection{G. IBM Cell Considerations for Roadrunner}
 
-VPIC was recently ported to IBM's Cell processor.  Each Cell processor
-contains one general purpose core and eight high performance 4-vector
-SIMD processor cores (``SPE'').  Each SPE can only directly access 256
-KB of high performance memory specific to it.  This ``local store'' is
-analogous to cache, but, unlike conventional cache, memory transfers
-to and from it must be explicitly managed.  Though non-trivial, this
-makes it possible to design high performance application specific
-cache protocols. \cite{Kahle_et_al_2005}
-
-On the SPEs, particle data is tripled buffered in blocks of $N=512$;
-while a block is processed, the next is loaded and the previous is
-stored.  An $N$ line software cache of read-only interpolation
-coefficients and read-write partially accumulated currents handles
-inner loop random memory access.  It has a fully associative least
-recently used policy (i.e. a line can hold any cell's data and the
-least recently used line is replaced when caching new data); the last
-$N$ distinct requests are guaranteed to be cached.  Before processing
-a block, requests are made for all cells referenced in the block.
-Most of these will already be in the cache.  Non-redundant memory
-transfers are initiated for the remainder and block processing begins.
-The net impact is minimal memory transfers are used, memory transfers
-are overlapped with computation and the inner loop operates
-exclusively out of cache (cell crossing current accumulation makes
-additional requests following the inner loop).
-
-While such a cache may seem expensive, each SPE can be faster (even
-clock-for-clock) than a conventional processor core at cold particle
-advances.  Presently, VPIC performs at $\sim 173$ million cold
-particles advanced per second on a 3.2 GHz Cell ($\sim 49\%$ of
-measured peak memory bandwidth and $\sim 21\%$ of theoretical
-aggregate SPE single precision floating point performance).  By
-comparison, VPIC runs at $\sim 12.6$ million PA/s on a single core 2.2
-GHz AMD Opteron (used in the systems that ran the below examples).  As
-Los Alamos's Roadrunner supercomputer plans to use $\sim 13,000$ Cell
-eDP processors, a sustained rate up to $\sim 2.25$ trillion PA/s could
-be achieved in particle dominated simulations.  As a cold particle
-advance takes $\sim 246$ FLOP per particle (warm particle advances
-take more, depending on simulation details such as temperature, for
-cell crossing current accumulation), this is equivalent to $\sim
-0.556$ quadrillion FLOP per second.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Moving the code to RoadRunner
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Adapting VPIC to RoadRunner}
-
-In VPIC, performance is asymptotically limited by the rate particles
-can be streamed to and from DRAM.  On Roadrunner, the bandwidth
-between the Cell CPU and Cell local DRAM exceeds the bandwidth between
-the Cell CPU and Opteron local DRAM (limited by the PCI-Express
-bridge).  However, the Cell CPU to Cell CPU bandwidth is limited by
-the internode Infiniband connection.  Accordingly, in porting VPIC to
-Roadrunner, we decided (1) all local simulation state would reside
-within Cell DRAM, (2) the Cell CPU would be responsible for all
-simulation computations and (3) the Opteron cores would manage
-communications between Cell CPUs.  This maximizes the bandwidth
-between Cell CPUs and simulation state.  It also is less complicated
-to implement and allows the VPIC to be used on Cell-only clusters.
-
-% FIXME: BETTER QUANTIFY BANDWIDTH ABOVE?
-
-%A kernel ported to the Cell SPE cores can have outstanding
-%performance.  For example, in VPIC on Roadrunner, a SPE core is
-%clock-for-clock faster than an Opteron core at the common case
-%particle advance kernel ($158$ versus $174$ clocks per particle).
-%Further the SPE cores run at a higher clock rate ($3.2 GHz$ versus
-%$1.8 GHz$) and there are $8$ times as many of them.  As a result,
-%VPIC's SPE accelerated particle advance kernel itself can achieve
-%$0.517 Pflop/s$ on whole of Roadrunner, over $15$ times faster than
-%the $0.033 Pflop/s$ can achieve by running the particle advance kernel
-%on the Opteron cores.  (For reference, this corresponds to achieving
-%$20\%$ of theoretical single precision peak performance on a Cell SPE
-%core.)
-
-%At the same time, a Cell PPE core is significantly less powerful than
-%an Opteron core on Roadrunner.  Even though the parts of VPIC that run
-%on the SPE cores run over an order of magnitude faster than if they
-%were run on the Opteron cores in aggregate, the parts of VPIC that run
-%on the PPE cores execute $\sim 2$ to $\sim 3$ times slower!  The
-%typical overall simulation speed up achieved by porting VPIC from
-%Roadrunner's Opterons to Roadrunner's Cells is a lower (though still
-%impressive) $\sim 4$ to $\sim 8$, depending on simulation physical and
-%numerical parameters.
-
-% FIXME: BETTER QUANTIFY ON ASDS ABOVE?
-
-%Thus, maximizing performance of a code like VPIC on Cell requires an
-%all-of-nothing approach to porting.  In addition to SPE accelerating
-%the dominant computational kernel, minor computations also need to be
-%SPE accelerated lest they become performance bottlenecks.  Likewise,
-%performance on Cell is much more sensitive to physical and numerical
-%paraemters that affect these other computations.  In VPIC, though the
-%infrequent particle sort, the field solve and the particle exception
-%processing are typically negligible expenses when run on conventional
-%clusters, they are large expenses (even dominant in some regimes)
-%currently when VPIC is run SPE accelerated on Roadrunner.  Current
-%VPIC development is focused on porting these operations to the SPE as
-%well.
-
 % FIXME: IN USE VOXEL TERMINOLOGY TO DISAMBIGUATE FROM CELL PROCESSOR
 % IN TEXT OVERALL
 
@@ -1069,7 +970,7 @@ the SPE's $32$ channel DMA engine.  Though non-trivial, this makes it
 possible to design high performance application specific cache
 protocols. % FIXME: CITE KAHLE_ET_AL_2005 HERE?
 
-To process a particle list, the SPEs are assigned appromixately equally
+To process a particle list, the SPEs are assigned approximately equally
 sized non overlapping segments of the list and their own
 current accumulator.  Each segment contains a
 multiple of $16$ particles; the PPE advances any left overs while the
@@ -1156,9 +1057,9 @@ computation and the inner loop operates exclusively out of local store.
 When a particle exception occurs that the SPE logic cannot handle
 (e.g. particle needs communication to a neighboring node), the
 particle's index and remaining displacement ($16$ bytes) is saved to a
-list of exceptions that occured during block processing.  When
+list of exceptions that occurred during block processing.  When
 the processed block is stored, the list of unprocessed
-exceptions that occured during is also streamed out to memory for
+exceptions that occurred during is also streamed out to memory for
 later processing.  Since up to $512$ exceptions could occur while
 processing a particle block and there $3$ such blocks, $24
 KiB$ of local store and $3$ DMA channels are used for managing
@@ -1168,6 +1069,68 @@ Overall, $206$ KiB of local store data is used for particle
 processing (leaving $56$ KiB for code) and all $32$ DMA channels
 are utilized.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Moving the code to RoadRunner
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Adapting VPIC to RoadRunner}
+
+In VPIC, performance is asymptotically limited by the rate particles
+can be streamed to and from DRAM.  On Roadrunner, the bandwidth
+between the Cell CPU and Cell local DRAM exceeds the bandwidth between
+the Cell CPU and Opteron local DRAM (limited by the PCI-Express
+bridge).  However, the Cell CPU to Cell CPU bandwidth is limited by
+the internode Infiniband connection.  Accordingly, in porting VPIC to
+Roadrunner, we decided (1) all local simulation state would reside
+within Cell DRAM, (2) the Cell CPU would be responsible for all
+simulation computations and (3) the Opteron cores would manage
+communications between Cell CPUs.  This maximizes the bandwidth
+between Cell CPUs and simulation state.  It also is less complicated
+to implement and allows the VPIC to be used on Cell-only clusters.
+
+% FIXME: BETTER QUANTIFY BANDWIDTH ABOVE?
+
+A kernel ported to the Cell SPE cores can have outstanding
+performance.  For example, in VPIC on Roadrunner, a SPE core is
+clock-for-clock faster than an Opteron core at the common case
+particle advance kernel ($158$ versus $174$ clocks per particle).
+Further the SPE cores run at a higher clock rate ($3.2 GHz$ versus
+$1.8 GHz$) and there are $8$ times as many of them.  As a result,
+VPIC's SPE accelerated particle advance kernel itself can achieve
+$0.517 Pflop/s$ on whole of Roadrunner, over $15$ times faster than
+the $0.033 Pflop/s$ can achieve by running the particle advance kernel
+on the Opteron cores.  (For reference, this corresponds to achieving
+$20\%$ of theoretical single precision peak performance on a Cell SPE
+core.)
+
+At the same time, a Cell PPE core is significantly less powerful than
+an Opteron core on Roadrunner.  Even though the parts of VPIC that run
+on the SPE cores run over an order of magnitude faster than if they
+were run on the Opteron cores in aggregate, the parts of VPIC that run
+on the PPE cores execute $\sim 2$ to $\sim 3$ times slower!  The
+typical overall simulation speed up achieved by porting VPIC from
+Roadrunner's Opterons to Roadrunner's Cells is a lower (though still
+impressive) $\sim 4$ to $\sim 8$, depending on simulation physical and
+numerical parameters.
+
+% FIXME: BETTER QUANTIFY ON ASDS ABOVE?
+
+Thus, maximizing performance of a code like VPIC on Cell requires an
+all-of-nothing approach to porting.  In addition to SPE accelerating
+the dominant computational kernel, minor computations also need to be
+SPE accelerated lest they become performance bottlenecks.  Likewise,
+performance on Cell is much more sensitive to physical and numerical
+parameters that affect these other computations.  In VPIC, though the
+infrequent particle sort, the field solve and the particle exception
+processing are typically negligible expenses when run on conventional
+clusters, they are large expenses (even dominant in some regimes)
+currently when VPIC is run SPE accelerated on Roadrunner.  Current
+VPIC development is focused on porting these operations to the SPE as
+well.
+
+%
+% Don't know where this should go
+%
 \subsection*{Message Passing Relay}
 
 As mentioned earlier, as part of the adaptation of VPIC to the
@@ -1175,11 +1138,11 @@ Roadrunner architecture, we developed a message relay layer
 called \emph{MP Relay}
 that runs on the Opterons and handles forwarding
 of message traffic and remote I/O operations for the diskless
-QS22 blades (required for restart and visualizaiton dumps).
+QS22 blades (required for restart and visualization dumps).
 The original VPIC code already abstracted message passing
 operations, so this modification was straightforward.
 
-The MP Relay essentially flattens the hierarchical topology of
+The MP Relay essentially flattens the hierarchical network topology of
 Roadrunner making it possible to use the same underlying
 VPIC implementation to run on Roadrunner, clusters of Cell processors,
 and traditional clusters with very few architecture specific code 
@@ -1191,19 +1154,29 @@ code is unchanged.
 
 Communication between Opterons and Cells is handled using the
 \emph{Data, Communication, and Synchronization (DaCS)} library developed by
-IBM.  This library provides send/recieve and put/get symmantics
+IBM.  This library provides send/receive and put/get semantics
 for moving data over the PCI-e link between the LS21 and QS22 blades.
-Communication between the Opteron host processes is implemented
-using OpenMPI.
+The interconnect between the Opteron hosts can be viewed as
+a standard flat, distributed memory topology.  Communication between
+Opterons uses MPI.
+
+The PPE handles all communication for the Cell processor through the
+abstracted message passing layer.  When the MP Relay implementation
+is in use, message traffic is initiated by sending a request data
+structure to the Opteron.  Send requests are followed by 
+sending the actual message buffer using dacs\_send, while receive requests
+issue a dacs\_recv to accept an incoming message from the host.
 
 On the Operton side, the relay runs an event loop that issues
-a non-blocking dacs\_recv call that accepts a point-to-point request
+a non-blocking dacs\_recv call that accepts the point-to-point request
 data structure from its associated PPE peer.
-Incoming requests are passed through a switch statement
+Incoming requests are passed through an interpreter
 that makes additional non-blocking
-send (dacs\_send) and recieve calls to complete the
-point-to-point communication.  Messages that need to be
-passed to other PPEs are sent via MPI calls to that PPE's host relay.
+send (dacs\_send) and receive calls to complete the
+point-to-point communication.  Operations that require
+Messages to be
+passed to other PPEs are sent via MPI calls to that PPE's host relay,
+which then forwards the data to the PPE.
 I/O requests are handled by double-buffered communication and
 calls to fread and fwrite.
 
@@ -1280,7 +1253,7 @@ in the ratio of particles/cell than P2).
 Scaled to the full Roadrunner machine, the simulation would 
 use 1.1 trillion particles and 119 million cells.  This uses essentially
 all available system memory (necessitating the use of an in-place sort). 
-This problem systained 27.2 GFlop/s. 
+This problem sustained 27.2 GFlop/s. 
 
 
 \textbf{P2}:  On a single Cell processor, a $13 \times 14 \times 14$ mesh 
@@ -1291,7 +1264,7 @@ Scaled to the full Roadrunner machine, this problem would employ
 643 billion particles and 33 million cells. This uses essentially
 all available system memory, but with an out-of-place sort for improved 
 sorting performance. 
-This problem systained 32.2 GFlop/s. 
+This problem sustained 32.2 GFlop/s. 
 
 Performance is a balance between loss of spatial locality (which degrades
 software cache performance on the SPU particle advance) and time spent

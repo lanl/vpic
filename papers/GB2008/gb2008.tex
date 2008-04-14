@@ -151,8 +151,8 @@ Within the plasma physics community, large particle-in-cell simulations
 typically employ tens to hundreds of millions of voxels (cells) and a few 
 billion simulation macroparticles (tens to hundreds of particles/voxel).  
 While adequate for some problems, high levels of noise have proved problematic 
-for accurate modeling of the nonlinear wave-particle kinetics of LPI~\cite{}.  
-
+for accurate modeling of the nonlinear wave-particle kinetics of 
+LPI~\cite{Yin_et_al_Phys_Plasmas_2006}.  
 The Roadrunner hybrid petascale supercomputer (described below), however, 
 enables plasma kinetic modeling of LPI at unprecedented 
 scale, \textit{more than one trillion particles and hundreds of millions 
@@ -161,7 +161,7 @@ volume and highly intricate kinetic behavior, where thousands of particles/voxel
 may be needed.  
 We have adapted the VPIC kinetic plasma modeling code to run efficiently on the
 Roadrunner hybrid architecture.  VPIC is a ``best in class'' explicit, relativistic, 
-charge-conserving, electromagnetic, particle-in-cell code~\cite{} developed at
+charge-conserving, electromagnetic, particle-in-cell code~\cite{Bowers_et_al_Phys_Plasmas_2007} developed at
 Los Alamos National Laboratory and capable of simulating the physics of LPI. 
 
 This paper is structured as follows:  We begin with a discussion of the two LPI 
@@ -199,11 +199,10 @@ DT fuel can ignite.
 LPI jeopardize the success of fusion
 ignition on the NIF.  As a laser beam travels through the plasma filling
 the hohlraum, it scatters from and amplifies density irregularities.  
-This leads to growth of parametric instabilities that
-scatter laser light and create hot electrons, which degrade energy and 
-symmetry of capsule compression.  The most pernicious LPI are stimulated
-Raman (SRS) and Brillouin (SBS) scattering, where laser light scatters 
-off electron and ion density fluctuations, respectively.
+This leads to growth of parametric instabilities that scatter laser light 
+and degrade energy and symmetry of capsule compression.  The most pernicious 
+LPI are stimulated Raman (SRS) and Brillouin (SBS) scattering, where laser 
+light scatters off electron and ion density fluctuations, respectively.
 
 The NIF employs random phase plates to break each laser beam
 into a collection of ``speckles'' or hot spots.  The
@@ -235,9 +234,9 @@ Roadrunner, that capture all of the wave-particle physics.  These
 simulations must resolve complex trapped-particle orbits and 
 complicated structures in phase space and therefore require the use 
 of many simulation macroparticles (as many as thousands of particles/voxel of
-each species) to resolve the dynamics.~\cite{}
+each species) to resolve the dynamics.~\cite{Yin_et_al_Phys_Plasmas_2006}
 
-Recent experimental~\cite{} and modeling~\cite{} work shows that LPI
+Recent experimental~\cite{Kline_PRL_2005} and modeling~\cite{Yin_et_al_PRL_2007_SRS} work shows that LPI
 in a solitary laser speckle is represented well by a
 diffraction-limited laser beam.  In our three-dimensional VPIC
 simulations, we launch a Gaussian diffraction-limited laser beam from
@@ -278,19 +277,19 @@ the role is of trapped particles in the nonlinear evolution of SRS?
 hohlraum plasma environment?
 
 \textbf{Problem 1}
-Verify recent work by the authors~\cite{} that shows that SRS and
+Verify recent work by the authors~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS} that shows that SRS and
 SBS saturate via nonlinear wave-particle trapping that bends
 electrostatic wavefronts and de-tunes the parametric coupling,
 followed by transverse filamentation and break-up of wave fronts.  On
 Roadrunner, we run, for the first time, calculations of 1.1 trillion
 ($10^{12}$) simulation macroparticles, nearly a factor of six larger
-than the next largest PIC simulations of plasma~\cite{} (also with
+than the next largest PIC simulations of plasma~\cite{Yin_et_al_PRL_2007_reconnection} (also with
 VPIC, but on the Roadrunner base system), to verify that the nonlinear 
 processes we identify are indeed the ones that govern LPI saturation.
 
 \textbf{Problem 2}
 Study the effects of high-$Z$ plasma components on LPI, a proposed mitigation 
-scheme~\cite{} and a problem arising
+scheme~\cite{Lushnikov_PPCF_2006} and a problem arising
 for understanding of LPI near the hohlraum boundary (where gold and
 uranium plasma mix with the low-$Z$ gas) and ablator edge.  VPIC
 supports an arbitrary number of different plasma species.  In this 
@@ -306,8 +305,9 @@ The early Roadrunner deployment lacks a high-performance file system,
 so our primary diagnostic for both studies is the integrated Poynting
 flux $P$ (scattered laser power) leaving the simulation volume; $P$ is
 sampled every 16 time steps and computed and output with
-negligible computational, communications, and I/O overhead.  Based on a
-verification and validation studies for VPIC LPI simulation~\cite{}, 
+negligible computational, communications, and I/O overhead.  Based on extensive
+verification and validation studies for VPIC LPI 
+simulation~\cite{Yin_et_al_Phys_Plasmas_2006}, 
 we have high confidence that single-precision is more than adequate 
 for this problem.
 
@@ -1112,36 +1112,41 @@ Weak Scalability}
 Cell Cores & Gflop/s per Core & Projected Full Machine Tflop/s Performance \\
  & & (based on this measurement) \\
 \hline
-1 & 32.2 & 404.3 \\
-4 & 29.8 & 386.0 \\
-8 & 29.1 & 377.5 \\
-16 & 28.5 & 369.8 \\
-36 & 28.4 & 367.5 \\
+%1 & 32.2 & 404.3 \\
+%4 & 29.8 & 386.0 \\
+%8 & 29.1 & 377.5 \\
+%16 & 28.5 & 369.8 \\
+%36 & 28.4 & 367.5 \\
+1 & 32.2 \\
+4 & 29.8 \\
+8 & 29.1 \\
+16 & 28.5 \\
+36 & 28.4 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-Outline I see (BJA):  
-\begin{itemize}
-\item XXXXX Single core performance on tuned VPIC deck.
-
-\item ????? How we optimized:  large particle number; sort interval to be 
-balance between performance gain from improved data locality vs. 
-cost of doing the sort. 
-
-\item ????? Breakdown of how we infer single-core performance.  (What flops go to 
-what; worst-case, we give a lower bound on performance from cold particle
-benchmark).  What does this translate into in terms of theoretical peak 
-flops?  In terms of bandwidth to memory? 
-
-\item Summarize Kevin Barker's measured scaling on a less-particle-dominated 
-simulation.  (216 ppc on VPIC with broken earlier version of VPIC). 
-
-\item Anticipated scaling for full Roadrunner from scaling up of tuned 
-single-core measured performance (and as many as 48 cores of ASDS).  
-
-\end{itemize}
+%Outline I see (BJA):  
+%\begin{itemize}
+%\item XXXXX Single core performance on tuned VPIC deck.
+%
+%\item ????? How we optimized:  large particle number; sort interval to be 
+%balance between performance gain from improved data locality vs. 
+%cost of doing the sort. 
+%
+%\item ????? Breakdown of how we infer single-core performance.  (What flops go to 
+%what; worst-case, we give a lower bound on performance from cold particle
+%benchmark).  What does this translate into in terms of theoretical peak 
+%flops?  In terms of bandwidth to memory? 
+%
+%\item Summarize Kevin Barker's measured scaling on a less-particle-dominated 
+%simulation.  (216 ppc on VPIC with broken earlier version of VPIC). 
+%
+%\item Anticipated scaling for full Roadrunner from scaling up of tuned 
+%single-core measured performance (and as many as 48 cores of ASDS).  
+%
+%\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion

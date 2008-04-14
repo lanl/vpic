@@ -78,7 +78,7 @@
 % FIXME: CHECK ABOUT TJTK
 % FIXME: if we have assessment, then we need to include CCS-1 types, no? 
 
-\title{0.37 Pflop/s and Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
+\title{0.383 Pflop/s and Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
 \author{%
 K. J. Bowers\thanks{Guest Scientist, Applied Physics Divsion (X-1-PTA Plasma Theory and Applications, Presently at D.E. Shaw Research LLC, 120 W 45th Street, 39th Floor, New York, NY 10036, Email: \emph{kevin.j.bowers@gmail.com}} \and%
 %
@@ -86,11 +86,12 @@ B. J. Albright\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applic
 %
 B. Bergen\thanks{Computer, Computational, and Statistical Sciences Division (CCS-2 Computational Physics), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{bergen@lanl.gov}} \and%
 %
+L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{lyin@lanl.gov}} \and%
+%
 K. Barker\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{kjbarker@lanl.gov}} \and%
 %
-D. Kerbyson\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{djk@lanl.gov}} \and%
-%
-L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{lyin@lanl.gov}}}
+D. Kerbyson\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{djk@lanl.gov}}
+}
 \date{\today}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,7 +121,7 @@ $1.3 \times 10^8$
 computational voxels---to accurately model the particle trapping physics 
 occurring within a laser-driven hohlraum in an inertial confinement 
 fusion experiment.  On these calculations, sustained performance of 
-0.37~Pflop/s was 
+0.383~Pflop/s was 
 achieved.  This capability opens up the exciting possibility of using 
 VPIC to model, in a first-principles manner, a problem that threatens 
 the success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
@@ -176,7 +177,7 @@ kinetic plasma code.  Following this, we discuss the Roadrunner
 supercomputer platform and the considerations of porting VPIC to this
 platforms.  Lastly, we present measured on single-Cell chip and
 extrapolated performance on up to the 12960 AMD Opteron-hosted IBM
-\emph{PowerXCell 8I accelerator} chips (hereafter referred to as
+\emph{PowerXCell 8i accelerator} chips (hereafter referred to as
 ``Cell'' chips).  On the full Roadrunner machine, we anticipate
 sustained VPIC performance approaching 400 Tflop/s on LPI physics
 problems.
@@ -655,7 +656,11 @@ benefits described for interpolation coefficients apply.
 \begin{figure}
     \begin{center}
     \scalebox{0.3}{\input{system.pstex_t}}
-    \caption{Roadrunner System Overview}
+    \caption{Roadrunner System Overview ---
+Roadrunner is a collection of 18 Connected Units of
+180 Triblade compute nodes connected by an Infiniband backplane.
+Each Triblade has 4 Opteron cores and 4 Cell eDP chips.
+A Cell eDP chip can only communicate with its associated Opteron core.}
     \label{fig:system}
     \end{center}
 \end{figure}
@@ -665,7 +670,7 @@ hybrid, petascale system to be deployed at Los Alamos National
 Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous
 cluster-of-clusters that utilizes a combination of 6,912, 1.8 GHz,
 dual-socket, dual-core AMD Opteron \emph{host} CPUs with 12,960, 3.2
-GHz, IBM \emph{PowerXCell 8I accelerator} CPU also known as the Cell
+GHz, IBM \emph{PowerXCell 8i accelerator} CPU also known as the Cell
 \emph{extended Double Precision (eDP)} CPU.  Each Cell eDP CPU
 is capable of performing 204.8 Gflop/s single-precision (102.4 Gflop/s 
 double-precision), for a total theoretical peak performance of
@@ -739,7 +744,7 @@ is used in the Sony Playstation 3 gaming console, and is currently
 offered in products from IBM (QS21 blade) and Mercury Computer Systems
 (CAB PCI-e card and DCBB2 blade) \cite{mercury}.  IBM has developed an
 enhanced double precision version of the Cell BE chip specifically
-designed for use in supercomputers like Roadrunner, the PowerXCell 8I
+designed for use in supercomputers like Roadrunner, the PowerXCell 8i
 (Cell eDP).  Except as regards double-precision performance, the Cell
 eDP does not differ significantly architecturally from the Cell BE.
 
@@ -1068,6 +1073,14 @@ species, delocalize most rapidly and therefore need to be sorted most
 frequently.  On both problems, electron and ion sort intervals were 
 optimized.  
 
+\subsection{Measured Results on Early Hardware}
+
+As part of the Roadrunner deployment, several triblade compute
+nodes are available to developers in a test system called ASDS.
+Table \ref{tab:weak} shows measured results on this early system,
+which are consistent with the performance models presented in
+the next section.
+
 \begin{table}
 \caption{\label{tbl:ASDS_Weak_Scalability}
 \textbf{P2} Measured Results on ASDS}
@@ -1083,10 +1096,11 @@ Cores & Opteron & Cell eDP & Improvement\\
  4  & 2.5 & 30.0 & 12.0 \\
  8  & 2.5 & 28.9 & 11.6 \\
  16 & 2.5 & 28.3 & 11.3 \\
- 48 & 2.5 & 26.7 & 10.7 \\
 \hline
 \end{tabular}
 \end{center}
+\caption{Early Access Weak Scalability for P2}
+\label{tab:weak}
 \end{table}
 
 
@@ -1111,6 +1125,81 @@ Cores & Opteron & Cell eDP & Improvement\\
 %
 %\end{itemize}
 
+\subsection{Performance Modeling}
+
+A model of VPIC was developed which accurately characterizes its performance. 
+This model is a function of the input deck and of the hardware execution 
+platform.  
+%The 
+%performance model was actually developed to assess the viability of the 
+%Roadrunner system during stages of its procurement.  
+The model includes 
+details on the amount of inter-processor communication occurring in an 
+average iteration, the communication pattern capturing all communications 
+across the system, the computational cost of each of the computational 
+stages of VPIC, and the performance  characteristics of the system, 
+including message transfer latency and bandwidth. 
+
+Some pertinent charateristics of the model are:  
+messaging between sub-grids in each 
+iteration of the "weak-scaling" input deck comprises 56 4-byte messages 
+and a number of particle transfer message, the largest of which measures 
+200kb in size; the number of particles migrating to each neighbor may 
+vary by 25\%, resulting in a difference in message sizes among a 
+sub-domain's six neighbors; in P1, particle transfer 
+message sizes vary among neighbors by less than 10\% and have a maximum 
+size of 214~KiB; from the system standpoint, the 0-byte latency from Cell 
+PPU to Cell PPU (across tri-blades) was measured to be 10.5 $\mu$s on 
+pre-production hardware, and a bandwidth of 1 GB/s was measured for 
+1 MB message sizes. 
+
+The performance model was validated on a 256-node dual-core, dual-socket 
+Opteron Infiniband cluster \textbf{as well as on a single CU of Roadrunner.}  
+The average prediction error was less than 4\% for both systems.  The 
+predicted average iteration time for VPIC on P2 
+is listed in Table \ref{tab:p2}, along with the effective processing rates 
+in Tflop/s.  We also give the performance improvement achievable on 
+Roadrunner relative to Opteron-only performance.  Table 
+\ref{tab:p1} contains the predicted times and flop rates for P1. 
+
+\begin{table}
+\begin{center}
+\begin{tabular}{c c c c c}
+\hline
+\hline
+ System Size & 1 CU & 6 CU & 12 CU & 18 CU \\
+             & (180 Triblades) & (1080 Triblades) & (2160 Triblades) & (3240 Triblades) \\
+\hline
+Avg. Itr. Time (Hybrid) & 0.417 sec & 0.422 sec & 0.422 sec & 0.422 sec \\
+Av. Itr. Time (Opteron) & 4.85 sec & 4.86 sec & 4.86 sec & 4.86 sec \\
+Processing Rate (Hybrid) & 21.3 TF & 127.8 TF & 255.5 TF & \textbf{383.3 TF} \\
+Processing Rate (Opteron) & 1.82 TF & 10.9 TF & 21.9 TF & 32.8 TF \\
+Performance Advantage & 11.7x & 11.7x & 11.7x & 11.7x \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Predicted scaling performance for P2}
+\label{tab:p2}
+\end{table}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{c c c c c}
+\hline
+\hline
+ System Size & 1 CU & 6 CU & 12 CU & 18 CU \\
+             & (180 Triblades) & (1080 Triblades) & (2160 Triblades) & (3240 Triblades) \\
+\hline
+Avg. Itr. Time (Hybrid) & 0.784 sec & 0.789 sec & 0.789 sec & 0.789 sec \\
+Processing Rate (Hybrid) & 20.3 TF & 122.0 TF & 243.9 TF & \textbf{365.9 TF} \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Predicted scaling performance for P1}
+\label{tab:p1}
+\end{table}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1118,16 +1207,16 @@ Cores & Opteron & Cell eDP & Improvement\\
 
 VPIC has been shown to run very efficiently on the Roadrunner hybrid 
 platform on problems that are particle-dominated.  Currently, 
-we are SPU accelerating other parts of the VPIC algorithm, in particular, 
-the particle sort and the field solve.  This will improve upon the
-performance we have achieved on particle-dominated simulations as 
+we are SPU accelerating other parts of the VPIC algorithm.
+Acceleration of the particle sort and the field solve will improve the
+performance of particle-dominated simulations as 
 well as expand the class of problems on which we can expect 
 large speedups.  As dicsussed earlier, by Amdahl's law, the faster the 
-particle push becomes, the more important it is to accelerate the other
-parts of the algorithm.  We expect to have made significant progress
-towards this by the time the full Roadrunner system becomes available,
-which make make accessible sustained 400+ Tflop/s simulations on the 
-LPI problems presented.  
+particle push, the more important it is to accelerate the other
+parts of the algorithm.  We expect to make significant progress
+towards this by the time the full Roadrunner system becomes available.
+This could make 400+ Tflop/s simulations of the LPI problems presented
+here possible.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Acknowledgments

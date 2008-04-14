@@ -78,7 +78,7 @@
 % FIXME: CHECK ABOUT TJTK
 % FIXME: if we have assessment, then we need to include CCS-1 types, no? 
 
-\title{0.37 PFlop/s and Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
+\title{0.37 Pflop/s and Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
 \author{%
 K. J. Bowers\thanks{Guest Scientist, Applied Physics Divsion (X-1-PTA Plasma Theory and Applications, Presently at D.E. Shaw Research LLC, 120 W 45th Street, 39th Floor, New York, NY 10036, Email: \emph{kevin.j.bowers@gmail.com}} \and%
 %
@@ -178,7 +178,7 @@ platforms.  Lastly, we present measured on single-Cell chip and
 extrapolated performance on up to the 12960 AMD Opteron-hosted IBM
 \emph{PowerXCell 8I accelerator} chips (hereafter referred to as
 ``Cell'' chips).  On the full Roadrunner machine, we anticipate
-sustained VPIC performance approaching 400 TFlop/s on LPI physics
+sustained VPIC performance approaching 400 Tflop/s on LPI physics
 problems.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,7 +278,7 @@ processes.
 
 We have chosen to address two questions: (1) What is
 the role is of trapped particles in the nonlinear evolution of LPI?
-(2) What is the effect on LPI of high-$Z$ dopants in the
+(2) What is the effect on LPI of high-$Z$ dopant in the
 hohlraum plasma environment?
 
 \textbf{Problem 1}
@@ -329,7 +329,7 @@ macroparticles/voxel to resolve the ion kinetics.
 
 \section{The VPIC Particle-In-Cell Code}
 
-VPIC uses state-of-the-art techniques of relativstic plasma 
+VPIC uses state-of-the-art techniques of relativistic plasma 
 simulation~\cite{Blahovec_et_al_2000,Eastwood_et_al_1995,Jones_et_al_1996,Kwan_Snell_1985,Nieter_Cary_2004,Verboncoeur_et_al_1995}; 
 these methods are briefly described below for completeness and are
 further discussed in Ref.~\cite{Bowers_et_al_Phys_Plasmas_2007}.  More
@@ -542,13 +542,13 @@ acceptable provided it does not introduce non-physical artifacts
 (e.g. large violations of otherwise conserved quantities).  VPIC uses
 single precision to help achieve high performance but takes care to
 structure operations to minimize its impact.  For example, particle
-coordinates are not stored in an absolute coordiate system but as a
+coordinates are not stored in an absolute coordinate system but as a
 voxel index and offset within that voxel (interestingly, each voxel
 has identical numerical properties regardless how the voxel mesh is
 translated, oriented or reflected in absolute coordinates).  In
 practice, single precision has not been an issue for production use of
 VPIC and even more precision demanding computations have successfully
-used single precison as well
+used single precision as well
 \cite{Bowers_et_al_2006,Langou_et_al_2006,Lippert_et_al_2007}.
 Based on extensive verification and validation studies for VPIC LPI
 simulation~\cite{Yin_et_al_Phys_Plasmas_2006}, we have high confidence
@@ -667,7 +667,7 @@ cluster-of-clusters that utilizes a combination of 6,912, 1.8 GHz,
 dual-socket, dual-core AMD Opteron \emph{host} CPUs with 12,960, 3.2
 GHz, IBM \emph{PowerXCell 8I accelerator} CPU also known as the Cell
 \emph{extended Double Precision (eDP)} CPU.  Each Cell eDP CPU
-is capable of performing 204.8 GFlop/s single-precision (102.4 Gflop/s 
+is capable of performing 204.8 Gflop/s single-precision (102.4 Gflop/s 
 double-precision), for a total theoretical peak performance of
 $2.6$~Pflop/s in single precision\footnote{The Opteron base system has 
 a theoretical peak performance of $\sim$50 Tflop/s that is not included 
@@ -1009,7 +1009,7 @@ The operations count is dominated by the particle advance.  Within the
 particle advance, the most common case is a ``cold'' particle advance,
 i.e., the particle does not leave its voxel.  Cold 
 advances require 246 floating point operations, obtained by hand
-counting the number of add, sub, mul, rsqrt, recip, compare, etc. 
+counting the number of % add, sub, mul, rsqrt, recip, compare, etc. 
 operations in the inner loop.  The non-common case involves a particle
 crossing a voxel boundary and requires an additional 168 operations plus 
 168 times the number of boundaries crossed.
@@ -1018,7 +1018,7 @@ To estimate the total number of floating-point operations required to
 push a single particle one step for a given distribution and
 simulation parameters in VPIC, a random distribution of $10^7$ thermal
 particles is created and advanced for one iteration.  The resulting
-spatial distribution is then analyzed to esimate the probability that
+spatial distribution is then analyzed to estimate the probability that
 a particle will cross a given number of boundaries.  The results of
 this approximation are generally accurate to over 3 significant
 digits, based on the assumptions that: 1) Particles are evenly
@@ -1049,7 +1049,7 @@ is used with 1755 particles/voxel of each of five particle species.
 Scaled to the full Roadrunner machine, the simulation would
 use 1.1 trillion particles and 126 million voxels.  This uses
 essentially all available system memory (necessitating the use of an
-in-place sort).  This problem sustained 27.2 GFlop/s.
+in-place sort).  This problem sustained 27.2 Gflop/s.
 
 \textbf{P2}:  On a single Cell CPU, a $13 \times 14 \times 14$ mesh 
 is used with 3900 particles/voxel of each of five particle species.
@@ -1058,7 +1058,7 @@ particles/voxel to resolve highly detailed phase space structures.
 Scaled to the full Roadrunner machine, this problem would employ 643
 billion particles and 33 million voxels. This uses essentially all
 available system memory, but with an out-of-place sort for improved
-sorting performance.  This problem sustained 32.2 GFlop/s.
+sorting performance.  This problem sustained 32.2 Gflop/s.
 
 Performance is a balance between loss of spatial locality (which
 degrades software cache performance on the SPU particle advance) and
@@ -1112,7 +1112,20 @@ Cell Cores & Gflop/s per Core & Projected Full Machine Tflop/s Performance \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusion}
+%\section{Conclusion}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Conclusion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Acknowledgments}
+This work was performed under the auspices of the United States Dept. 
+of Energy by the Los Alamos National Security LLC Los Alamos National
+Laboratory under Contract No. DE-AC52-06NA25396.  Work supported in 
+part by the Laboratory Directed Research and Development (LDRD) Program.
+Document release number: LA-UR-08-2405. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % biliography

@@ -668,13 +668,11 @@ Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous
 cluster-of-clusters that utilizes a combination of 6,480, 1.8 GHz,
 dual-socket, dual-core AMD Opteron \emph{host} CPUs with 12,960, 3.2
 GHz, IBM \emph{PowerXCell 8i accelerator} CPU also known as the Cell
-\emph{extended Double Precision (eDP)} CPU.  Each Cell eDP CPU
-is capable of performing 204.8 Gflop/s single-precision (102.4 Gflop/s 
-double-precision), for a total theoretical peak performance of
-$3.0$~Pflop/s in single precision\footnote{This includes the
-PPE's capability.  The Opteron base system has 
-a theoretical peak performance of 93.3 Tflop/s that is not included 
-in this figure.}.  The Roadrunner supercomputer will be the first machine 
+\emph{extended Double Precision (eDP)} CPU.  Roadrunner has a
+theoretical peak performance of $3.0$~Pflop/s in single precision.
+\footnote{This does not include the Opteron host CPUs, which have
+an additional theoretical peak performance of 0.0933 Pflop/s in
+single precision.}  The Roadrunner supercomputer will be the first machine 
 to achieve a sustained petaflop on the LINPACK benchmark used in ranking
 the fastest supercomputers in the world for the TOP500 list
 \cite{top500}.
@@ -751,10 +749,12 @@ The PPE is a modestly provisioned general purpose core
 %running the Linux OS, and 
 which serves as a controller for the eight
 SPE.  It supports two execution threads and has a theoretical peak
-performance of 6.4 Gflop/s double precision at 3.2 GHz.  Each SPE core
-is a 128-bit vector engine with a 256 KB user-controlled, embedded
-SRAM called the \emph{Local Store (LS)}.  Additionally, each SPE has a
-128-bit, 128-entry register file.  All data and text operated on by
+performance of 12.8 Gflop/s single-precision (6.4 Gflop/s double
+precision) at 3.2 GHz.  Each SPE core has dual 128-bit vector execution
+pipelines, a 128 entry register file and 256 KB user-controlled, embedded
+SRAM called the \emph{Local Store (LS)}.  Each SPE has a theoretical
+peak performance of 25.6 Gflop/s single precision (12.8 GFlop/s
+double precision) at 3.2 GHz.  All data and text operated on by
 the SPE must be fetched from main memory to the LS using \emph{direct
 memory access (DMA)} calls.  Each SPE has its own 32-channel
 \emph{Memory Flow Controller (MFC)} that supports up to 12 outstanding

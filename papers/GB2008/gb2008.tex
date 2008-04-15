@@ -88,9 +88,9 @@ B. Bergen\thanks{Computer, Computational, and Statistical Sciences Division (CCS
 %
 L. Yin\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{lyin@lanl.gov}} \and%
 %
-K. Barker\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{kjbarker@lanl.gov}} \and%
+K. J. Barker\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{kjbarker@lanl.gov}} \and%
 %
-D. Kerbyson\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{djk@lanl.gov}}
+D. J. Kerbyson\thanks{Computer, Computational, and Statistical Sciences Division (CCS-1 Computer Science on High Performance Computing), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{djk@lanl.gov}}
 }
 \date{\today}
 
@@ -139,7 +139,7 @@ the success of the multi-billion dollar DOE/NNSA National Ignition Facility.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Introduction}
+\section{Introduction}
 
 When a high-power laser propagates through plasma, parametric
 instabilities can amplify electron and ion density fluctuations and
@@ -668,14 +668,15 @@ A Cell eDP chip can only communicate with its associated Opteron core.}
 The Roadrunner supercomputer, shown in Figure \ref{fig:system}, is a
 hybrid, petascale system to be deployed at Los Alamos National
 Laboratory in 2008.  The system is a first-of-its-kind, heterogeneous
-cluster-of-clusters that utilizes a combination of 6,912, 1.8 GHz,
+cluster-of-clusters that utilizes a combination of 6,480, 1.8 GHz,
 dual-socket, dual-core AMD Opteron \emph{host} CPUs with 12,960, 3.2
 GHz, IBM \emph{PowerXCell 8i accelerator} CPU also known as the Cell
 \emph{extended Double Precision (eDP)} CPU.  Each Cell eDP CPU
 is capable of performing 204.8 Gflop/s single-precision (102.4 Gflop/s 
 double-precision), for a total theoretical peak performance of
-$2.6$~Pflop/s in single precision\footnote{The Opteron base system has 
-a theoretical peak performance of $\sim$50 Tflop/s that is not included 
+$3.0$~Pflop/s in single precision\footnote{This includes the
+PPE's capability.  The Opteron base system has 
+a theoretical peak performance of 93.3 Tflop/s that is not included 
 in this figure.}.  The Roadrunner supercomputer will be the first machine 
 to achieve a sustained petaflop on the LINPACK benchmark used in ranking
 the fastest supercomputers in the world for the TOP500 list
@@ -754,7 +755,7 @@ The PPE is a modestly provisioned general purpose core
 which serves as a controller for the eight
 SPE.  It supports two execution threads and has a theoretical peak
 performance of 6.4 Gflop/s double precision at 3.2 GHz.  Each SPE core
-is a 128-bit vector engine with a 256 KB user-controlled, embedded
+is a 128-bit vector engine with a 256 KiB user-controlled, embedded
 SRAM called the \emph{Local Store (LS)}.  Additionally, each SPE has a
 128-bit, 128-entry register file.  All data and text operated on by
 the SPE must be fetched from main memory to the LS using \emph{direct
@@ -865,10 +866,10 @@ of the list and their own set of partial currents to accumulate.  Each
 segment contains a multiple of $16$ particles; the PPE advances any
 left overs while the SPE are working.  Particle data are triple
 buffered on the SPE in blocks of up to $512$ particles (at most $16$
-KB are needed to hold a block---the largest size of a single DMA
+KiB are needed to hold a block---the largest size of a single DMA
 transfer).  While a block is processed, the next is loaded and the
 previous is stored.
-%$48$ KB of local store and $3$ channels are used
+%$48$ KiB of local store and $3$ channels are used
 %for particle triple buffering.
 Block processing groups particles by $4$ and uses $4$-vector SIMD to
 advance them (as done on conventional CPU).  To minimize
@@ -933,7 +934,7 @@ loop operates exclusively out of local store.
 
 %Each cache line requires $268$ bytes ($192$ for the
 %data, $4$ for the tag, $8$ for LRU ordering and $64$ for the hash
-%table) and thus the cache requires of $134$ KB local store overall.
+%table) and thus the cache requires of $134$ KiB local store overall.
 %$10$ channels are used for transfers of read-only data and $16$
 %channels are used for transfers of read-write data.
 
@@ -947,11 +948,11 @@ is streamed out to memory for later processing.
 
 % Since up
 %to $512$ exceptions could occur while processing a particle block and
-%there $3$ such blocks, $24$ KB of local store and $3$ DMA channels are
+%there $3$ such blocks, $24$ KiB of local store and $3$ DMA channels are
 %used for managing unprocessed exceptions.
 
-Overall, $206$ KB of local store data is used for the particle advance
-(leaving $50$ KB for code) and all $32$ DMA channels are utilized.
+Overall, $206$ KiB of local store data is used for the particle advance
+(leaving $50$ KiB for code) and all $32$ DMA channels are utilized.
 While such a strategy may seem expensive, a SPE core achieves $20\%$
 of theoretical single precision peak performance and is faster
 clock-for-clock than an Opteron core at the particle advance kernel
@@ -998,12 +999,13 @@ performance that will be achieved on the full machine in June
 systems are available to developers in preparation for moving to the
 full machine.  Each has 12 Triblade compute nodes for a total of 24 
 dual-core Opterons and 48 Cell eDP CPU with a peak theoretical 
-performance of 4.9 Tflop/s\footnote{This is the Cell-only performance.  
+performance of 9.8 Tflop/s\footnote{This is the Cell-only, SPE-only
+single-precision performance.  
 The Opterons add another 172.8 Gflop/s.}.  
 %Currently, these machines are not collocated, and cannot be used as 
 %a single cluster.  Access to the
 %full 48 nodes of the cluster is similarly limited.  
-Members of the
+Additionally, members of the
 Performance and Architecture Team (PAL) at Los Alamos National
 Laboratory were given early access to a CU at IBM's test facilities in
 Poughkeepsie, New York.  This system was used to conduct some of the
@@ -1055,7 +1057,7 @@ is used with 1755 particles/voxel of each of five particle species.
 Scaled to the full Roadrunner machine, the simulation would
 use 1.1 trillion particles and 126 million voxels.  This uses
 essentially all available system memory (necessitating the use of an
-in-place sort).  This problem sustained 27.2 Gflop/s.
+in-place sort).  This problem sustained 27.0 Gflop/s.
 
 \textbf{P2}:  On a single Cell CPU, a $13 \times 14 \times 14$ mesh 
 is used with 3900 particles/voxel of each of five particle species.
@@ -1064,7 +1066,7 @@ particles/voxel to resolve highly detailed phase space structures.
 Scaled to the full Roadrunner machine, this problem would employ 643
 billion particles and 33 million voxels. This uses essentially all
 available system memory, but with an out-of-place sort for improved
-sorting performance.  This problem sustained 32.2 Gflop/s.
+sorting performance.  This problem sustained 31.0 Gflop/s.
 
 Performance is a balance between loss of spatial locality (which
 degrades software cache performance on the SPU particle advance) and
@@ -1082,20 +1084,17 @@ which are consistent with the performance models presented in
 the next section.
 
 \begin{table}
-\caption{\label{tbl:ASDS_Weak_Scalability}
-\textbf{P2} Measured Results on ASDS}
-
 \begin{center}
 \begin{tabular}{l c c c}
 \hline
 \hline
-Cores & Opteron & Cell eDP & Improvement\\
- & GFlop/s & GFlop/s & $x$ speedup\\
+Cores & Opteron & Cell eDP & Performance \\
+ & Gflop/s & Gflop/s & Advantage \\
 \hline
- 1  & 2.5 & 31.0 & 12.4 \\
- 4  & 2.5 & 30.0 & 12.0 \\
- 8  & 2.5 & 28.9 & 11.6 \\
- 16 & 2.5 & 28.3 & 11.3 \\
+ 1  & 2.5 & 31.0 & 12.4$x$ \\
+ 4  & 2.5 & 30.0 & 12.0$x$ \\
+ 8  & 2.5 & 28.9 & 11.6$x$ \\
+ 16 & 2.5 & 28.3 & 11.3$x$ \\
 \hline
 \end{tabular}
 \end{center}
@@ -1142,14 +1141,14 @@ including message transfer latency and bandwidth.
 
 Some pertinent charateristics of the model are:  
 messaging between sub-grids in each 
-iteration of the "weak-scaling" input deck comprises 56 4-byte messages 
+iteration of the ``weak-scaling'' input deck comprises 56 4-byte messages 
 and a number of particle transfer message, the largest of which measures 
-200kb in size; the number of particles migrating to each neighbor may 
+200 KiB in size; the number of particles migrating to each neighbor may 
 vary by 25\%, resulting in a difference in message sizes among a 
 sub-domain's six neighbors; in P1, particle transfer 
 message sizes vary among neighbors by less than 10\% and have a maximum 
 size of 214~KiB; from the system standpoint, the 0-byte latency from Cell 
-PPU to Cell PPU (across tri-blades) was measured to be 10.5 $\mu$s on 
+PPU to Cell PPU (across tri-blades) was measured to be 10.6 $\mu$s on 
 pre-production hardware, and a bandwidth of 1 GB/s was measured for 
 1 MB message sizes. 
 
@@ -1174,7 +1173,7 @@ Avg. Itr. Time (Hybrid) & 0.417 sec & 0.422 sec & 0.422 sec & 0.422 sec \\
 Av. Itr. Time (Opteron) & 4.85 sec & 4.86 sec & 4.86 sec & 4.86 sec \\
 Processing Rate (Hybrid) & 21.3 TF & 127.8 TF & 255.5 TF & \textbf{383.3 TF} \\
 Processing Rate (Opteron) & 1.82 TF & 10.9 TF & 21.9 TF & 32.8 TF \\
-Performance Advantage & 11.7x & 11.7x & 11.7x & 11.7x \\
+Performance Advantage & 11.7$x$ & 11.7$x$ & 11.7$x$ & 11.7$x$ \\
 \hline
 \end{tabular}
 \end{center}
@@ -1214,9 +1213,13 @@ well as expand the class of problems on which we can expect
 large speedups.  As dicsussed earlier, by Amdahl's law, the faster the 
 particle push, the more important it is to accelerate the other
 parts of the algorithm.  We expect to make significant progress
-towards this by the time the full Roadrunner system becomes available.
+towards this by June 2008, when the full Roadrunner system becomes 
+available to us for conducting science runs.
 This could make 400+ Tflop/s simulations of the LPI problems presented
-here possible.
+here possible, as well as enable calculations of even higher relevance
+to the NIF experiments. In particular, with an accelerated field solve,
+we will be able to directly model LPI from the $f/8$ NIF laser beams
+at a computational efficiency approaching that of P2. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Acknowledgments

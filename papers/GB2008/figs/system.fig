@@ -554,10 +554,7 @@ Single
 	 23850 6300 19650 10800
 2 1 0 3 0 33 50 -1 -1 0.000 0 0 -1 0 0 2
 	 23775 6300 19575 10800
-4 0 0 50 -1 2 40 0.0000 2 450 3030 17700 -900 Processors\001
-4 0 0 50 -1 0 36 0.0000 2 570 14385 18150 300 12,960 Cell eDP chips (3.2 GHz) $\\Rightarrow$ 1.3 Pflop/s\001
 4 0 0 50 -1 2 40 0.0000 2 555 6060 2400 -825 Connected Unit (CU)\001
-4 0 0 50 -1 0 36 0.0000 2 570 14985 18150 -300 6,912 dual-core Opterons (1.8 GHz) $\\Rightarrow$ 50 Tflop/s\001
 4 0 0 50 -1 0 36 0.0000 2 540 8805 2850 -225 -180 cell-accelerated compute nodes\001
 4 0 0 50 -1 0 36 0.0000 2 420 3300 2850 300 -12 I/O nodes\001
 4 1 0 50 -1 2 36 0.0000 2 585 5790 7350 6000 288-port IB $4x$ DDR\001
@@ -565,3 +562,6 @@ Single
 4 1 0 50 -1 2 36 0.0000 2 435 4995 15000 3600 18 Connected Units\001
 4 1 0 50 -1 2 40 0.0000 2 585 10395 15000 8550 12 links per CU to each of 8 switches\001
 4 1 0 50 -1 2 40 0.0000 2 630 15105 15000 12450 Eight $2^{nd}$-stage 288-port IB $4x$ DDR switches\001
+4 0 0 50 -1 2 40 0.0000 2 585 5835 17700 -900 Compute Processors\001
+4 0 0 50 -1 0 36 0.0000 2 570 16815 18150 -300 6,480 dual-core Opterons (1.8 GHz) $\\Rightarrow$ 93.3 Tflop/s (s.p.)\001
+4 0 0 50 -1 0 36 0.0000 2 570 15765 18150 300 12,960 Cell eDP chips (3.2 GHz) $\\Rightarrow$ 3.0 Pflop/s (s.p.)\001

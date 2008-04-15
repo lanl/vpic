@@ -687,8 +687,9 @@ system is comprised of 18 CUs connected via eight, second-stage,
 twelve links per CU to each of the eight switches, with 192 ports
 \emph{in} and 96 ports \emph{up}, creating a 2-to-1 over-subscribed,
 fat-tree network topology.  A Connected Unit is a powerful cluster in
-its own right, with a theoretical peak performance of $\sim$74
-Tflop/s.  A single CU of Roadrunner would rank in the top 20 on the
+its own right, with a single-precision theoretical peak performance
+of 165.9 Tflop/s (double-precision peak is 82.9 Tflop/s).
+A single CU of Roadrunner would rank in the top 20 on the
 current (November 2007) TOP500 list.
 % FIXME: IS NOVEMBER 2007 STILL CURRENT?
 
@@ -749,7 +750,7 @@ The PPE is a modestly provisioned general purpose core
 %running the Linux OS, and 
 which serves as a controller for the eight
 SPE.  It supports two execution threads and has a theoretical peak
-performance of 12.8 Gflop/s single-precision (6.4 Gflop/s double
+performance of 25.6 Gflop/s single-precision (6.4 Gflop/s double
 precision) at 3.2 GHz.  Each SPE core has dual 128-bit vector execution
 pipelines, a 128 entry register file and 256 KB user-controlled, embedded
 SRAM called the \emph{Local Store (LS)}.  Each SPE has a theoretical
@@ -759,9 +760,9 @@ the SPE must be fetched from main memory to the LS using \emph{direct
 memory access (DMA)} calls.  Each SPE has its own 32-channel
 \emph{Memory Flow Controller (MFC)} that supports up to 12 outstanding
 DMA requests and has a theoretical bandwidth of 25.6 GB/s to main
-memory using DDR2-800 SDRAM\footnote{The current plan of record for
+memory using DDR2-800 SDRAM. \footnote{The current plan of record for
 Roadrunner calls for DDR2-667, in which case, the theoretical
-bandwidth will be 21.4 GB/s.}.
+bandwidth will be 21.4 GB/s.}
 
 % REDUNDANT WITH ELSEWHERE
 %The Cell eDP SPEs support
@@ -992,13 +993,15 @@ operations to the SPE cores.
 This section documents methodologies used both in measuring actual
 performance on the currently available hardware and in predicting the
 performance that will be achieved on the full machine in June
-2008.  As part of the Roadrunner deployment, two identical test
-systems are available to developers in preparation for moving to the
-full machine.  Each has 12 Triblade compute nodes for a total of 24 
-dual-core Opterons and 48 Cell eDP CPU with a peak theoretical 
-performance of 9.8 Tflop/s\footnote{This is the Cell-only, SPE-only
-single-precision performance.  
-The Opterons add another 172.8 Gflop/s.}.  
+2008.  As part of the Roadrunner deployment, several triblade compute
+nodes are available to developers in a test system called ASDS.
+%As part of the Roadrunner deployment, two identical test
+%systems are available to developers in preparation for moving to the
+%full machine.  Each has 12 Triblade compute nodes for a total of 24 
+%dual-core Opterons and 48 Cell eDP CPU with a peak theoretical 
+%performance of 9.8 Tflop/s. \footnote{This is the Cell-only, SPE-only
+%single-precision performance.  
+%The Opterons add another 172.8 Gflop/s.}
 %Currently, these machines are not collocated, and cannot be used as 
 %a single cluster.  Access to the
 %full 48 nodes of the cluster is similarly limited.  
@@ -1074,8 +1077,6 @@ optimized.
 
 \subsection{Measured Results on Early Hardware}
 
-As part of the Roadrunner deployment, several triblade compute
-nodes are available to developers in a test system called ASDS.
 Table \ref{tab:weak} shows measured results on this early system,
 which are consistent with the performance models presented in
 the next section.

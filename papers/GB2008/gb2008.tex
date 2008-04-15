@@ -123,8 +123,8 @@ occurring within a laser-driven hohlraum in an inertial confinement
 fusion experiment.  On these calculations, sustained performance of 
 0.365~Pflop/s is expected. 
 This capability opens up the exciting possibility of using 
-VPIC to model, in a first-principles manner, a problem that threatens 
-the success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
+VPIC to model, in a first-principles manner, an issue critical
+to the success of the multi-billion dollar DOE/NNSA National Ignition Facility.  
 
 \vspace{2in}
 
@@ -175,12 +175,9 @@ This paper is structured as follows: We begin with a discussion of the
 two LPI physics problems we wish to study.  Then, we describe the VPIC
 kinetic plasma code.  Following this, we discuss the Roadrunner
 supercomputer platform and the considerations of porting VPIC to this
-platforms.  Lastly, we present measured on single-Cell chip and
-extrapolated performance on up to the 12960 AMD Opteron-hosted IBM
-\emph{PowerXCell 8i accelerator} chips (hereafter referred to as
-``Cell'' chips).  On the full Roadrunner machine, we anticipate
-sustained VPIC performance approaching 400 Tflop/s on LPI physics
-problems.
+platform.  Lastly, we present measured and extrapolated performance on
+Roadrunner.  On the full Roadrunner machine, we anticipate sustained
+VPIC performance approaching 0.4 Pflop/s on LPI physics problems.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Science
@@ -210,7 +207,7 @@ stimulated Raman (SRS) and Brillouin (SBS) scattering, where laser
 light scatters off electron and ion density fluctuations,
 respectively.
 
-The NIF employs random phase plates to break each laser beam into a
+NIF employs random phase plates to break each laser beam into a
 collection of ``speckles'' or hot spots.  
 %The speckle geometry depends
 %on the properties of the beam, including wavelength and diffraction
@@ -274,7 +271,7 @@ $10^4~\wpe^{-1}$ [$\wpe = (4 \pi n_e e^2 / m_e)^{1/2}$];
 the $1.3 \times 10^5$ time steps allow for growth
 of several ``bursts'' of SRS and SBS.  The simulation volume is
 divided into voxels of size $1.3 \times 1.7 \times 1.7$~Debye
-lengths, which ensures ample resolution to resolve the collective
+lengths, which ensures ample resolution for the collective
 processes.
 
 We have chosen to address two questions: (1) What is
@@ -384,10 +381,10 @@ from the particles for use in \eq{Faraday}-\eq{Ampere}.
 
 \subsection{Model Discretization}
 
-Time is discretized with an explicit 2nd order splitting of
+Time is discretized with an mixed explicit-implicit 2nd order splitting of
 \eq{Faraday}-\eq{Momentum} into operators that (in exact arithmetic)
 can be individually applied exactly.  The result is a mixture of the
-velocity Verlet, leapfrog, Boris rotation and exponential differencing
+velocity Verlet, leapfrog, implicit Boris rotation and exponential differencing
 schemes
 \begin{eqnarray}
 \vecu_{s,n}\left(t^-\right) &=&\vecu_{s,n}\left(t-\delta_t/2\right) +
@@ -422,7 +419,7 @@ can be sampled on this mesh and interpolated between the mesh and
 particles.  Particle fields are interpolated with an ``energy
 conserving'' scheme; for example, $E_x$ is bilinearly interpolated
 from the four Yee-mesh $E_x$ edge samples and $B_x$ is linearly
-interpolated from two $B_x$ face samples of the voxel containing a
+interpolated from two Yee-mesh $B_x$ face samples of the voxel containing a
 particle.  This scheme is especially efficient in simulations with
 irregular boundary conditions as it uses no field samples outside the
 voxel containing a particle.  Yee-mesh $\vecJ$ samples are
@@ -684,7 +681,7 @@ the fastest supercomputers in the world for the TOP500 list
 
 \subsection{Connected Unit}
 
-A Connected Unit (CU) is made up of 180 \emph{Triblade}, compute
+A Connected Unit (CU) is made up of 180 \emph{Triblades}, compute
 nodes and 12 I/O nodes linked by a first-stage, 288-port Voltaire
 Infiniband $4x$ DDR switch.  Using a top-down description, the
 system is comprised of 18 CUs connected via eight, second-stage,
@@ -755,7 +752,7 @@ The PPE is a modestly provisioned general purpose core
 which serves as a controller for the eight
 SPE.  It supports two execution threads and has a theoretical peak
 performance of 6.4 Gflop/s double precision at 3.2 GHz.  Each SPE core
-is a 128-bit vector engine with a 256 KiB user-controlled, embedded
+is a 128-bit vector engine with a 256 KB user-controlled, embedded
 SRAM called the \emph{Local Store (LS)}.  Additionally, each SPE has a
 128-bit, 128-entry register file.  All data and text operated on by
 the SPE must be fetched from main memory to the LS using \emph{direct
@@ -796,7 +793,7 @@ bridge).  However, the Cell CPU to Cell CPU bandwidth is limited by
 the internode Infiniband connection.  Accordingly, in porting VPIC to
 Roadrunner, we decided (1) all local simulation state would reside
 within Cell DRAM, (2) the Cell CPU would be responsible for all
-simulation computations and (3) the Opteron cores would manage
+simulation computations and (3) the Opterons would manage
 communications among Cell CPU.  This maximizes the bandwidth
 between Cell CPU and simulation state.  It also is less complicated
 to implement and allows the VPIC to be used on Cell-only clusters.
@@ -866,10 +863,10 @@ of the list and their own set of partial currents to accumulate.  Each
 segment contains a multiple of $16$ particles; the PPE advances any
 left overs while the SPE are working.  Particle data are triple
 buffered on the SPE in blocks of up to $512$ particles (at most $16$
-KiB are needed to hold a block---the largest size of a single DMA
+KB are needed to hold a block---the largest size of a single DMA
 transfer).  While a block is processed, the next is loaded and the
 previous is stored.
-%$48$ KiB of local store and $3$ channels are used
+%$48$ KB of local store and $3$ channels are used
 %for particle triple buffering.
 Block processing groups particles by $4$ and uses $4$-vector SIMD to
 advance them (as done on conventional CPU).  To minimize
@@ -890,7 +887,7 @@ voxel adjacencies and read-write partially accumulated currents
 handles random memory access.  The cache has a fully associative least
 recently used (LRU) policy; a line can hold any voxel's data and the
 least recently used line is replaced when caching new data.  The cache
-has a simple software interface voxel\_cache\_fetch and
+has a simple software interface: voxel\_cache\_fetch and
 voxel\_cache\_wait.
 
 voxel\_cache\_fetch initiates DMA transfers to evict the least
@@ -934,7 +931,7 @@ loop operates exclusively out of local store.
 
 %Each cache line requires $268$ bytes ($192$ for the
 %data, $4$ for the tag, $8$ for LRU ordering and $64$ for the hash
-%table) and thus the cache requires of $134$ KiB local store overall.
+%table) and thus the cache requires of $134$ KB local store overall.
 %$10$ channels are used for transfers of read-only data and $16$
 %channels are used for transfers of read-write data.
 
@@ -944,15 +941,15 @@ particle's index and remaining displacement are saved to a list of
 exceptions that occurred during block processing.  When the processed
 block is stored, the list of unprocessed exceptions
 %that occurred during
-is streamed out to memory for later processing.
+is streamed out to memory as well.
 
 % Since up
 %to $512$ exceptions could occur while processing a particle block and
-%there $3$ such blocks, $24$ KiB of local store and $3$ DMA channels are
+%there $3$ such blocks, $24$ KB of local store and $3$ DMA channels are
 %used for managing unprocessed exceptions.
 
-Overall, $206$ KiB of local store data is used for the particle advance
-(leaving $50$ KiB for code) and all $32$ DMA channels are utilized.
+Overall, $206$ KB of local store data is used for the particle advance
+(leaving $50$ KB for code) and all $32$ DMA channels are utilized.
 While such a strategy may seem expensive, a SPE core achieves $20\%$
 of theoretical single precision peak performance and is faster
 clock-for-clock than an Opteron core at the particle advance kernel
@@ -974,7 +971,7 @@ the Opteron cores in aggregate, the parts of VPIC that run on the PPE
 cores execute $2$ to $3$ times slower!  The typical overall
 simulation speed up achieved by porting VPIC from Roadrunner's
 Opterons to Roadrunner's Cells is a lower (though still impressive)
-$4$ to $\sim 12$, depending on simulation physical and numerical
+$4$ to $12$, depending on simulation physical and numerical
 parameters.  Thus, maximizing performance on Cell requires an
 all-or-nothing porting approach.  In addition to SPE accelerating the
 dominant computational kernel, other computations also need to be SPE
@@ -1033,9 +1030,9 @@ digits, based on the assumptions that: 1) Particles are evenly
 distributed in space, and 2) Particles have a drifting Maxwellian
 distribution.
 
-% FIXME: GIVE THE PROBLEM THAT THIS CORRESPONDS TO
 Using this estimation with $\delta t = 0.02 \wpe^{-1}$ and voxel 
-dimensions $1.3 \times 1.8 \times 1.8$ (in $\lde$), we obtain 
+dimensions $1.3 \times 1.8 \times 1.8$ (in $\lde$) corresponding to
+input deck P1 below, we obtain 
 256.15 operations for electrons (using a thermal speed $v_{\mathrm{th}} =
 1.0$), and 246.25 for ions (thermal speed reduced by
 $(m_e/m_i)^{1/2}$).  These values are weighted by the fraction of 
@@ -1143,11 +1140,11 @@ Some pertinent charateristics of the model are:
 messaging between sub-grids in each 
 iteration of the ``weak-scaling'' input deck comprises 56 4-byte messages 
 and a number of particle transfer message, the largest of which measures 
-200 KiB in size; the number of particles migrating to each neighbor may 
+200 KB in size; the number of particles migrating to each neighbor may 
 vary by 25\%, resulting in a difference in message sizes among a 
 sub-domain's six neighbors; in P1, particle transfer 
 message sizes vary among neighbors by less than 10\% and have a maximum 
-size of 214~KiB; from the system standpoint, the 0-byte latency from Cell 
+size of 214~KB; from the system standpoint, the 0-byte latency from Cell 
 PPU to Cell PPU (across tri-blades) was measured to be 10.6 $\mu$s on 
 pre-production hardware, and a bandwidth of 1 GB/s was measured for 
 1 MB message sizes. 
@@ -1210,12 +1207,12 @@ we are SPU accelerating other parts of the VPIC algorithm.
 Acceleration of the particle sort and the field solve will improve the
 performance of particle-dominated simulations as 
 well as expand the class of problems on which we can expect 
-large speedups.  As dicsussed earlier, by Amdahl's law, the faster the 
+large speedups.  As discussed earlier, by Amdahl's law, the faster the 
 particle push, the more important it is to accelerate the other
 parts of the algorithm.  We expect to make significant progress
 towards this by June 2008, when the full Roadrunner system becomes 
 available to us for conducting science runs.
-This could make 400+ Tflop/s simulations of the LPI problems presented
+This could make 0.4+ Pflop/s simulations of the LPI problems presented
 here possible, as well as enable calculations of even higher relevance
 to the NIF experiments. In particular, with an accelerated field solve,
 we will be able to directly model LPI from the $f/8$ NIF laser beams

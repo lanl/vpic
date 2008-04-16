@@ -80,7 +80,7 @@
 
 \title{0.365 Pflop/s Trillion-Particle Kinetic Modeling of Laser Plasma Interaction on Roadrunner}
 \author{%
-K. J. Bowers\thanks{Guest Scientist, Applied Physics Divsion (X-1-PTA Plasma Theory and Applications, Presently at D.E. Shaw Research LLC, 120 W 45th Street, 39th Floor, New York, NY 10036, Email: \emph{kevin.j.bowers@gmail.com}} \and%
+K. J. Bowers\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{kevin.j.bowers@gmail.com} (Guest Scientist. Presently at D.E. Shaw Research LLC, 120 W 45th Street, 39th Floor, New York, NY 10036.)} \and%
 %
 B. J. Albright\thanks{Applied Physics Division (X-1-PTA Plasma Theory and Applications), Los Alamos National Laboratory, Los Alamos, NM 87544, Email: \emph{balbright@lanl.gov}} \and%
 %
@@ -364,7 +364,7 @@ effects (e.g. short range Coulomb collisions, excitation and
 ionization).
 
 To avoid a costly direct discretization of $f_s$, PIC simulations
-sample it with computational particles that typically represents many
+sample it with computational particles that typically represent many
 physical particles.  \eq{Boltzmann} is replaced by the equations of
 motion
 \begin{eqnarray}
@@ -381,7 +381,7 @@ from the particles for use in \eq{Faraday}-\eq{Ampere}.
 
 \subsection{Model Discretization}
 
-Time is discretized with an mixed explicit-implicit 2nd order splitting of
+Time is discretized with a mixed explicit-implicit 2nd order splitting of
 \eq{Faraday}-\eq{Momentum} into operators that (in exact arithmetic)
 can be individually applied exactly.  The result is a mixture of the
 velocity Verlet, leapfrog, implicit Boris rotation and exponential differencing
@@ -475,7 +475,7 @@ particles per voxel depending on the above and the phenomena being
 studied to avoid enhanced computational particle collision rates and
 resolve fully resonant kinetic phenomena.
 
-\section{Model implementation}
+\section{VPIC Implementation}
 
 %\begin{table}
 %\caption{\label{tbl:Rules_of_thumb}
@@ -827,7 +827,7 @@ MP Relay flattens the hierarchical network
 topology of Roadrunner making it possible to use the same underlying
 VPIC implementation to run on Roadrunner, clusters of Cell CPU, and
 traditional clusters with very little architecture specific code.  The
-PPE handles communication for the Cell CPU through the abstracted
+PPE handles communication for the Cell CPU through an abstracted
 message passing layer.  Communication between Opterons and Cells is
 handled within the message passing layer using the IBM \emph{Data,
 Communication, and Synchronization (DaCS)} library. 
@@ -858,7 +858,7 @@ Communication among Opterons uses MPI.
 \subsection{Particle advance kernel}
 
 Since the particle advance is the dominant cost in VPIC, it was the
-focus of the initial porting efforts.  To process a particle list, the
+focus of initial porting efforts.  To process a particle list, the
 SPE are assigned approximately equally sized non overlapping segments
 of the list and their own set of partial currents to accumulate.  Each
 segment contains a multiple of $16$ particles; the PPE advances any
@@ -902,8 +902,8 @@ voxel\_cache\_fetch.  Accordingly, before block processing,
 voxel\_cache\_fetch is called for each voxel referenced in the block
 followed by a voxel\_cache\_wait.  Because the particle list is
 approximately sorted, most of these will be cache hits.  Regardless,
-the cache is large enough that, even if every particle in a block were
-in different voxels, all voxel data is guaranteed to be in cache once
+the cache is large enough that, even if every particle in a block was
+in a different voxel, all voxel data is guaranteed to be in cache once
 block processing begins.
 
 Under the hood, voxel\_cache\_fetch queries a hash table to determine
@@ -949,17 +949,17 @@ is streamed out to memory as well.
 %there $3$ such blocks, $24$ KB of local store and $3$ DMA channels are
 %used for managing unprocessed exceptions.
 
-Overall, $206$ KB of local store data is used for the particle advance
+Overall, $206$ KB of local store is used for the particle advance data
 (leaving $50$ KB for code) and all $32$ DMA channels are utilized.
 While such a strategy may seem expensive, a SPE core achieves $20\%$
 of theoretical single precision peak performance and is faster
 clock-for-clock than an Opteron core at the particle advance kernel
-($158$ versus $174$ clocks per common case particle advance).  Further, 
-the SPE cores run at a higher clock rate and there are many more of
-them.  As a result, VPIC's SPE accelerated particle advance kernel can
-achieve $0.517$~Pflop/s on whole of Roadrunner, over $15$ times faster
-than the $0.033$~Pflop/s the kernel can achieve by running on all
-Opteron cores.
+($158$ versus $174$ clocks per common case particle advance).
+Further, the SPE cores run at a higher clock rate and there are many
+more of them.  As a result, VPIC's SPE accelerated particle advance
+kernel can achieve $0.517$~Pflop/s on whole of Roadrunner, over $15$
+times faster than the $0.033$~Pflop/s the kernel can achieve by
+running on all Opteron cores.
 
 \subsection{Additional porting considerations}
 
@@ -1037,14 +1037,14 @@ Using this estimation with $\delta t = 0.02 \wpe^{-1}$ and voxel
 dimensions $1.3 \times 1.8 \times 1.8$ (in $\lde$) corresponding to
 input deck P1 below, we obtain 
 256.15 operations for electrons (using a thermal speed $v_{\mathrm{th}} =
-1.0$), and 246.25 for ions (thermal speed reduced by
+\wpe \lde$), and 246.25 for ions (thermal speed reduced by
 $(m_e/m_i)^{1/2}$).  These values are weighted by the fraction of 
 the number of particles of each type present and averaged to obtain 
 a single per particle operation count.  This estimate represents a 
 lower bound because we do not include the cost of field solve or 
 other bookkeeping.
 
-\subsection{Performance on a Single Cell}
+\subsection{Performance Measurements}
 
 Two input decks, P1 and P2, corresponding to the two problems
 identified above, were considered and used to evaluate the
@@ -1075,10 +1075,9 @@ species, delocalize most rapidly and therefore need to be sorted most
 frequently.  On both problems, electron and ion sort intervals were 
 optimized.  
 
-\subsection{Measured Results on Early Hardware}
-
-Table \ref{tab:weak} shows measured results on this early system,
-which are consistent with the performance models presented in
+Table \ref{tab:weak} shows measured weak scaling results of deck P2 on
+both Opteron and Cell ports on Roadrunner hardware.  These
+measurements are consistent with the performance models presented in
 the next section.
 
 \begin{table}
@@ -1099,7 +1098,6 @@ Cores & Opteron & Cell eDP & Performance \\
 \caption{Early Access Weak Scalability for P2}
 \label{tab:weak}
 \end{table}
-
 
 %Outline I see (BJA):  
 %\begin{itemize}

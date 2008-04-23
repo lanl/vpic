@@ -53,6 +53,11 @@ new_species( const char *name,
   sp->p = new_particle_array( max_local_np );
   if( sp->p==NULL )
     ERROR(("Could not allocate particle array for species \"%s\".",name));
+# if OUT_OF_PLACE
+  sp->spare_p = new_particle_array( max_local_np );
+  if( sp->spare_p==NULL )
+    ERROR(("Could not allocate spare particle array for species \"%s\".",name));
+# endif
   sp->nm = 0;
   sp->max_nm = max_local_nm;
   sp->pm = new_particle_mover( max_local_nm );

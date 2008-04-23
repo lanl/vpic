@@ -15,10 +15,13 @@
 void
 sort_p( struct species * sp,
         const grid_t * g ) {
-  particle_t save_p, *src, *dest, *p;
+# if !OUT_OF_PLACE
+  particle_t save_p, *src, *dest;
+# endif
+  particle_t *p;
   int np; 
-  static int * ALIGNED(16) next=NULL; 
-  int * ALIGNED(16) copy=NULL; 
+  static int * __restrict ALIGNED(16) next=NULL; 
+  int * __restrict ALIGNED(16) copy=NULL; 
   int i, j, nc;
 
   p =sp->p; 
@@ -60,6 +63,15 @@ sort_p( struct species * sp,
     next[i] = copy[i];
   }
 
+# if OUT_OF_PLACE
+  do {
+    const particle_t * __restrict ALIGNED(32) in_p  = sp->p;
+    /**/  particle_t * __restrict ALIGNED(32) out_p = sp->spare_p;
+    for( i=0; i<np; i++ ) out_p[ next[ in_p[i].i ]++ ] = in_p[i];
+    sp->spare_p = p;
+    sp->p       = out_p;
+  } while(0);
+# else
   // Run sort cycles until the list is sorted
   i=0;
   while( i<nc ) {
@@ -75,5 +87,6 @@ sort_p( struct species * sp,
       }
     }
   }
+# endif
 }
 

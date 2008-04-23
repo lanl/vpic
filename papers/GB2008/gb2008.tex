@@ -550,7 +550,7 @@ used single precision as well
 \cite{Bowers_et_al_2006,Langou_et_al_2006,Lippert_et_al_2007}.
 Based on extensive verification and validation studies for VPIC LPI
 simulation~\cite{Yin_et_al_Phys_Plasmas_2006}, we have high confidence
-that single-precision is more than adequate for this problems
+that single-precision is more than adequate for the problems
 described previously.
 
 % SINGLE PASS PROCESSING
@@ -573,7 +573,7 @@ made worse if field samples are directly accessed as several
 non-contiguous memory transfers may be necessary.  Worse still is if the
 field components are stored in separate arrays; in this worst case,
 VPIC's field interpolation could involve up to 13 memory transfers per
-particle under the hood.  Further exacerbating this, more data than
+particle.  Further exacerbating this, more data than
 requested would be transferred as modern CPUs tend to round-up small
 memory transfers to the cache line granularity.  To make field
 interpolation efficient, in addition to the index+offset particle

@@ -24,6 +24,9 @@ typedef struct species {
   species_id id;                      // Unique identifier for a species
   int np, max_np;                     // Number and max local particles
   particle_t * ALIGNED(128) p;        // Array of particles for the species
+# if OUT_OF_PLACE
+  particle_t * ALIGNED(128) spare_p;
+# endif
   int nm, max_nm;                     // Number and max local movers in use
   particle_mover_t * ALIGNED(128) pm; // Particle movers
   float q_m;                          // Species charge to mass ratio

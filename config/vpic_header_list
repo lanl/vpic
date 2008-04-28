@@ -35,13 +35,13 @@ src/util/util_base.h
 src/util/pipelines/pipeline_control.h
 src/util/pipelines/pipelines.h
 src/util/spe_events.h
+src/util/mp/relay/RelayPolicy.hxx
 src/util/mp/mp.h
 src/util/mp/mp.hxx
 src/util/mp/mp_handle.h
 src/util/mp/dmp/mp_dmp.h
 src/util/mp/dmp/mp_t.h
 src/util/mp/dmp/DMPPolicy.hxx
-src/util/mp/aais/AAISPolicy.hxx
 src/util/mp/MPWrapper.hxx
 src/boundary/boundary.h
 src/material/material.h

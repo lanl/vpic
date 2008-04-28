@@ -37,8 +37,8 @@ template<class MPPolicy> class MPWrapper_T
 
 // compile time selection of implementation policy
 #if defined USE_MPRELAY
-	#include <AAISPolicy.hxx>
-	typedef MPWrapper_T<AAISPolicy> MPWrapper;
+	#include <RelayPolicy.hxx>
+	typedef MPWrapper_T<RelayPolicy> MPWrapper;
 #else
 	#include <DMPPolicy.hxx>
 	typedef MPWrapper_T<DMPPolicy> MPWrapper;

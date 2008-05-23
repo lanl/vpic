@@ -50,6 +50,7 @@ CCS_WITH_ADDRESSING
 CCS_WITH_PPU_COMPILER
 CCS_WITH_LIBSPE2
 CCS_WITH_SPU_MODULES
+CCS_WITH_PARTICLE_SORT
 
 ################################################################################
 # C/C++ configuration

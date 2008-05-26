@@ -142,7 +142,6 @@ private:
     grid->y0 += yl;
     grid->z0 += zl;
     IUO_allocate_fields();
-    IUO_allocate_fields();
   }
 
   inline void define_reflecting_grid( double xl,  double yl,  double zl,
@@ -155,7 +154,6 @@ private:
     grid->x0 += xl;
     grid->y0 += yl;
     grid->z0 += zl;
-    IUO_allocate_fields();
     IUO_allocate_fields();
   }
 

@@ -15,6 +15,13 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   species_t *sp;
   int rank;
 
+  // FIXME!!!
+  // start pipelines
+  // This is a hack to get us through the RR assessment.  At some
+  // point this will have to be re-worked to use overlays to allow
+  // for multple accelerated implementations
+  advance_p_initialize();
+
   // Create an empty grid (creates the communicator too)
   grid = new_grid();
   if( grid==NULL ) ERROR(("Could not create the grid"));
@@ -69,13 +76,6 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   }
   LIST_FOR_EACH(sp, species_list)
     uncenter_p( sp->p, sp->np, sp->q_m, interpolator, grid );
-
-  // FIXME!!!
-  // start pipelines
-  // This is a hack to get us through the RR assessment.  At some
-  // point this will have to be re-worked to use overlays to allow
-  // for multple accelerated implementations
-  advance_p_initialize();
 
   if( rank==0 ) MESSAGE(("Initialization complete"));
 

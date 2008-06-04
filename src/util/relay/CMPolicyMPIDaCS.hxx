@@ -104,11 +104,24 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
         const char ** args = argc > 2 ?
             const_cast<const char **>(&argv[2]) : NULL;
 
+		// environment
+		const char * envp[1000];
+		int e = 0;
+		const char * const * ep;
+
+		for(ep=environ; *ep; ep++) {
+			if(strncmp(*ep, "DACS", 4)) {
+				envp[e++] = strdup(*ep);
+			} // if
+		} // for
+
+		envp[e] = NULL;
+
 #if 1
-		errcode_ = dacs_de_start(peer_de_, argv[1], args, NULL,
+		errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
 			DACS_PROC_LOCAL_FILE, &peer_pid_);	
 #else
-		errcode_ = dacs_de_start(peer_de_, argv[1], args, NULL,
+		errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
 			DACS_PROC_REMOTE_FILE, &peer_pid_);	
 #endif
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);

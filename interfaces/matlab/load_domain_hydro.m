@@ -74,51 +74,57 @@ if nargin<2, order = [2 1 3]; end;
 handle = fopen(filename);
 if handle==-1, error('Could not open file'); end;
 
+arch = 'ieee-le';
+
 % Read binary compatibility information
 
-cbit = fread(handle,1,'int8');
-shsz = fread(handle,1,'int8');
-isz  = fread(handle,1,'int8');
-flsz = fread(handle,1,'int8');
-dbsz = fread(handle,1,'int8');
-mgcs = fread(handle,1,'uint16'); tsts = hex2dec('cafe');
-mgci = fread(handle,1,'uint32'); tsti = hex2dec('deadbeef');
-mgcf = fread(handle,1,'single');
-mgcd = fread(handle,1,'double');
+cbit = fread(handle,1,'int8',0,arch);
+shsz = fread(handle,1,'int8',0,arch);
+isz  = fread(handle,1,'int8',0,arch);
+flsz = fread(handle,1,'int8',0,arch);
+dbsz = fread(handle,1,'int8',0,arch);
+
+mgcs = fread(handle,1,'uint16',0,arch);
+if mgcs==hex2dec('cafe'), arch = 'ieee-le'; end
+if mgcs==hex2dec('feca'), arch = 'ieee-be'; end
+
+mgci = fread(handle,1,'uint32',0,arch); tsti = hex2dec('deadbeef');
+mgcf = fread(handle,1,'single',0,arch);
+mgcd = fread(handle,1,'double',0,arch);
 
 % Read the dump version and type
 
-vers = fread(handle,1,'int32');
-type = fread(handle,1,'int32');
+vers = fread(handle,1,'int32',0,arch);
+type = fread(handle,1,'int32',0,arch);
 
 % Read the metadata
 
-nt   = fread(handle,1,'int32');
-nx   = fread(handle,1,'int32');
-ny   = fread(handle,1,'int32');
-nz   = fread(handle,1,'int32');
-dt   = fread(handle,1,'single');
-dx   = fread(handle,1,'single');
-dy   = fread(handle,1,'single');
-dz   = fread(handle,1,'single');
-x0   = fread(handle,1,'single');
-y0   = fread(handle,1,'single');
-z0   = fread(handle,1,'single');
-cvac = fread(handle,1,'single');
-eps0 = fread(handle,1,'single');
-damp = fread(handle,1,'single');
-rank = fread(handle,1,'int32');
-npro = fread(handle,1,'int32');
-spid = fread(handle,1,'int32');
-spqm = fread(handle,1,'single');
+nt   = fread(handle,1,'int32',0,arch);
+nx   = fread(handle,1,'int32',0,arch);
+ny   = fread(handle,1,'int32',0,arch);
+nz   = fread(handle,1,'int32',0,arch);
+dt   = fread(handle,1,'single',0,arch);
+dx   = fread(handle,1,'single',0,arch);
+dy   = fread(handle,1,'single',0,arch);
+dz   = fread(handle,1,'single',0,arch);
+x0   = fread(handle,1,'single',0,arch);
+y0   = fread(handle,1,'single',0,arch);
+z0   = fread(handle,1,'single',0,arch);
+cvac = fread(handle,1,'single',0,arch);
+eps0 = fread(handle,1,'single',0,arch);
+damp = fread(handle,1,'single',0,arch);
+rank = fread(handle,1,'int32',0,arch);
+npro = fread(handle,1,'int32',0,arch);
+spid = fread(handle,1,'int32',0,arch);
+spqm = fread(handle,1,'single',0,arch);
 
 % Read the field array header
 
-elsz = fread(handle,1,'int32');
-ndim = fread(handle,1,'int32');
-dim0 = fread(handle,1,'int32');
-dim1 = fread(handle,1,'int32');
-dim2 = fread(handle,1,'int32');
+elsz = fread(handle,1,'int32',0,arch);
+ndim = fread(handle,1,'int32',0,arch);
+dim0 = fread(handle,1,'int32',0,arch);
+dim1 = fread(handle,1,'int32',0,arch);
+dim2 = fread(handle,1,'int32',0,arch);
 
 % Check for file compatibility / corruption
 
@@ -127,7 +133,7 @@ if shsz~=2,      fclose(handle); error('Invalid shsz'); end
 if isz ~=4,      fclose(handle); error('Invalid isz');  end
 if flsz~=4,      fclose(handle); error('Invalid flsz'); end
 if dbsz~=8,      fclose(handle); error('Invalid dbsz'); end
-if mgcs~=tsts,   fclose(handle); error('Invalid mgcs'); end
+
 if mgci~=tsti,   fclose(handle); error('Invalid mgci'); end
 if mgcf~=1,      fclose(handle); error('Invalid mgcf'); end
 if mgcd~=1,      fclose(handle); error('Invalid mgcd'); end
@@ -145,7 +151,7 @@ if cvac<=0,      fclose(handle); error('Invalid cvac'); end
 if rank<0,       fclose(handle); error('Invalid rank'); end
 if rank>=npro,   fclose(handle); error('Invalid rank'); end
 if npro<1,       fclose(handle); error('Invalid npro'); end
-if elsz~=64,     fclose(handle); error('Invalid elsz'); end
+
 if ndim~=3,      fclose(handle); error('Invalid ndim'); end
 if dim0~=(nx+2), fclose(handle); error('Invalid dim0'); end
 if dim1~=(ny+2), fclose(handle); error('Invalid dim1'); end
@@ -159,7 +165,7 @@ g = [ nt nx ny nz dt dx dy dz cvac eps0 damp x0 y0 z0 spid spqm rank npro ];
 
 shape = [nx+2 ny+2 nz+2];
 nc = prod(shape);
-data = fread(handle,[16,nc],'single');
+data = fread(handle,[elsz/4,nc],'single',0,arch);
 
 jx  = reshape( data(1, :), shape );
 jy  = reshape( data(2, :), shape );

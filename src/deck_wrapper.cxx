@@ -9,7 +9,7 @@
  */
 
 #include <iostream> // For std::cerr and friends
-#include <vpic.hxx>
+#include "vpic/vpic.hxx"
 
 //-----------------------------------------------------------------------------
 
@@ -110,6 +110,8 @@
 
 // The x=x statements are to avoid a compiler warning if the supplied
 // region or field equation does not use x, y and/or z
+
+// FIXME: THESE GLOBAL POSITION CALCULATIONS NEED TO BE MADE MORE RIGOROUS
 
 #define set_point_region_material(rgn,name) BEGIN_PRIMITIVE {		\
   const material_id _rmat = lookup_material((const char *)name);	\

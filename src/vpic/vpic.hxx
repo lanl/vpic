@@ -11,8 +11,10 @@
 #ifndef _vpic_hxx_
 #define _vpic_hxx_
 
-#include <emitter.h>
-#include <boundary.h>
+// FIXME: INCLUDES ONCE ALL IS CLEANED UP
+#include "../emitter/emitter.h"
+#include "../boundary/boundary.h"
+#include "../species_advance/standard/spa.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -47,8 +49,10 @@ private:
 
   // Directly initialized by user; saved in a restart dump
 
+  int verbose;              // Should system be verbose
   int step;                 // Number of steps taken so far
   int num_step;             // Number of steps to take
+  int num_comm_round;       // Num comm round 
   int status_interval;      // How often to print status messages
   int clean_div_e_interval; // How often to clean div e
   int clean_div_b_interval; // How often to clean div b
@@ -62,21 +66,22 @@ private:
 
   // Helper initialized by user; restart-saved
 
-  mt_handle rng;               // Random helpers (seed defaults to rank)
+  mt_rng_t *rng;               // Random helpers (seed defaults to rank)
   material_t *material_list;   // Material helpers
   grid_t *grid;                // Grid helpers
-  field_t * ALIGNED(16) field; // Grid helpers / field helpers
   species_t *species_list;     // Species helpers / particle helpers
   emitter_t *emitter_list;     // Particle emitters
+  field_advance_t * field_advance; 
+
+  // FIXME: Backward compatible hacks
+  field_t * ALIGNED(128) field;
 
   // Helper initialized by user; not restart-saved (can be derived from above)
 
-  material_coefficient_t * ALIGNED(16) material_coefficient;
-  /**/                                        // Material helpers
-  interpolator_t * ALIGNED(128) interpolator; // Grid helpers
-  accumulator_t * ALIGNED(128) accumulator;   // Grid helpers
-  hydro_t * ALIGNED(16) hydro;                // Grid helpers
-  species_t **species_lookup;                 // Species / particle helpers
+  /**/                                        
+  interpolator_t * ALIGNED(128) interpolator;
+  accumulator_t * ALIGNED(128) accumulator;
+  hydro_t * ALIGNED(128) hydro; 
 
   // Internal use only variables; restart saved
 
@@ -111,58 +116,48 @@ private:
   ///////////////
   // Grid helpers
 
-  void IUO_allocate_fields(void);
-
   // The below functions automatically create partition simple grids with
   // simple boundary conditions on the edges.
 
-  inline void define_periodic_grid( double xl,  double yl,  double zl,
-                                    double xh,  double yh,  double zh,
-				    double gnx, double gny, double gnz,
-				    double gpx, double gpy, double gpz ) {
-    partition_periodic_box( grid, xh-xl, yh-yl, zh-zl,
+  // FIXME: THE TIMESTEP SHOULD HAVE HELPERS LIKE THIS
+
+  inline void
+  define_periodic_grid( double xl,  double yl,  double zl,
+                        double xh,  double yh,  double zh,
+                        double gnx, double gny, double gnz,
+                        double gpx, double gpy, double gpz ) {
+    partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
                             (int)gnx, (int)gny, (int)gnz,
                             (int)gpx, (int)gpy, (int)gpz );
-    grid->x0 += xl;
-    grid->y0 += yl;
-    grid->z0 += zl;
-    IUO_allocate_fields();
   }
 
-  inline void define_absorbing_grid( double xl,  double yl,  double zl,
-                                     double xh,  double yh,  double zh,
-                                     double gnx, double gny, double gnz,
-                                     double gpx, double gpy, double gpz,
-                                     int pbc ) {
-    partition_absorbing_box( grid, xh-xl, yh-yl, zh-zl,
+  inline void
+  define_absorbing_grid( double xl,  double yl,  double zl,
+                         double xh,  double yh,  double zh,
+                         double gnx, double gny, double gnz,
+                         double gpx, double gpy, double gpz, int pbc ) {
+    partition_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
                              (int)gnx, (int)gny, (int)gnz,
                              (int)gpx, (int)gpy, (int)gpz,
                              pbc );
-    grid->x0 += xl;
-    grid->y0 += yl;
-    grid->z0 += zl;
-    IUO_allocate_fields();
   }
 
-  inline void define_reflecting_grid( double xl,  double yl,  double zl,
-                                      double xh,  double yh,  double zh,
-                                      double gnx, double gny, double gnz,
-                                      double gpx, double gpy, double gpz ) {
-    partition_metal_box( grid, xh-xl, yh-yl, zh-zl,
+  inline void
+  define_reflecting_grid( double xl,  double yl,  double zl,
+                          double xh,  double yh,  double zh,
+                          double gnx, double gny, double gnz,
+                          double gpx, double gpy, double gpz ) {
+    partition_metal_box( grid, xl, yl, zl, xh, yh, zh,
                          (int)gnx, (int)gny, (int)gnz,
                          (int)gpx, (int)gpy, (int)gpz );
-    grid->x0 += xl;
-    grid->y0 += yl;
-    grid->z0 += zl;
-    IUO_allocate_fields();
   }
 
   // The below macros allow custom domains to be created
 
   // Creates a particle reflecting metal box in the local domain
-  inline void size_domain( double lnx, double lny, double lnz ) {
+  inline void
+  size_domain( double lnx, double lny, double lnz ) {
     size_grid(grid,(int)lnx,(int)lny,(int)lnz);
-    IUO_allocate_fields();
   }
 
   // Attaches a local domain boundary to another domain
@@ -183,47 +178,83 @@ private:
   ///////////////////
   // Material helpers
 
-  inline material_id define_material( const char *name,
-				      double eps,
-				      double mu = 1,
-				      double sigma = 0 ) {
-    return new_material(name,
-			eps,  eps,  eps,
-			mu,   mu,   mu,
-			sigma,sigma,sigma,
-			&material_list);
+  inline material_id
+  define_material( const char *name,
+                   double eps,
+                   double mu = 1,
+                   double sigma = 0,
+                   double zeta = 0 ) {
+    return new_material( name,
+			 eps,   eps,   eps,
+			 mu,    mu,    mu,
+			 sigma, sigma, sigma,
+                         zeta,  zeta,  zeta,
+			 &material_list );
   }
   
-  inline material_id define_material( const char *name,
-				      double epsx,   double epsy,  double epsz,
-				      double mux,    double muy,   double muz,
-				      double sigmax,
-                                      double sigmay,
-				      double sigmaz ) {
-    return new_material(name,
-			epsx,  epsy,  epsz,
-			mux,   muy,   muz,
-			sigmax,sigmay,sigmaz,
-			&material_list);
+  inline material_id
+  define_material( const char *name,
+                   double epsx,   double epsy,   double epsz,
+                   double mux,    double muy,    double muz,
+                   double sigmax, double sigmay, double sigmaz,
+                   double zetax,  double zetay,  double zetaz ) {
+    return new_material( name,
+			 epsx,   epsy,   epsz,
+			 mux,    muy,    muz,
+			 sigmax, sigmay, sigmaz,
+                         zetax,  zetay,  zetaz,
+			 &material_list );
   }
 
-  inline void finalize_materials(void) {
-    material_coefficient = new_material_coefficients( grid, material_list );
-  }
-
-  inline material_id lookup_material( const char *name ) {
+  inline material_id
+  lookup_material( const char * name ) {
     material_t *m = find_material_name(name,material_list);
     return m==NULL ? invalid_material_id : m->id;
+  }
+
+  //////////////////////
+  // Setup field advance
+
+  inline void
+  finalize_field_advance( field_advance_methods_t * fam = standard_field_advance ) {
+    int nx1 = grid->nx + 1, ny1 = grid->ny+1, nz1 = grid->nz+1;
+
+    field_advance = new_field_advance( grid, material_list, fam );
+    field        = field_advance->f; // FIXME: Temporary hack
+
+    interpolator = new_interpolator(grid);
+    accumulator  = new_accumulators(grid);
+    hydro        = new_hydro(grid);
+
+    // Pre-size communications buffers
+    // This is done to get 99.9% of memory allocation over with before
+    // the simulation starts running
+    mp_size_recv_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
+    mp_size_recv_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
+    mp_size_recv_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
+    mp_size_recv_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
+    mp_size_recv_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro[0]),grid->mp);
+    mp_size_recv_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro[0]),grid->mp);
+   
+    mp_size_send_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro[0]),grid->mp);
   }
 
   //////////////////
   // Species helpers
 
-  inline species_id define_species( const char *name,
-				    double q_m,
-				    double max_local_np,
-				    double sort_interval=25.,
-				    double max_local_nm=-1. ) {
+  // FIXME: SILLY PROMOTIONS
+  inline species_t *
+  define_species( const char *name,
+                  double q_m,
+                  double max_local_np,
+                  double max_local_nm,
+                  double sort_interval,
+                  double sort_out_of_place ) {
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
@@ -233,17 +264,7 @@ private:
         max_local_nm = 16*(MAX_PIPELINE+1);
     }
     return new_species( name, (float)q_m, (int)max_local_np, (int)max_local_nm,
-			(int)sort_interval, &species_list );
-  }
-
-  inline void finalize_species(void) {
-    if( species_list==NULL ) return;
-    species_lookup = new_species_lookup( species_list );
-  }
-
-  inline species_id lookup_species( const char *name ) {
-    species_t *sp = find_species_name(name,species_list);
-    return sp==NULL ? invalid_species_id : sp->id;
+			(int)sort_interval, (int)sort_out_of_place, &species_list );
   }
 
   // BJA - Putting this here in first cut of collisionality addition in
@@ -252,10 +273,10 @@ private:
   // so that it is more user-transparent and supports user-defined collision 
   // operators. 
 
-  inline species_t * find_species( const char *name ) {
+  inline species_t *
+  find_species( const char *name ) {
      return find_species_name( name, species_list );  
   }
-
 
   ////////////////
   // Field helpers
@@ -265,38 +286,65 @@ private:
   ///////////////////
   // Particle helpers
 
-  error_code inject_particle( species_id id,
-                              double x,  double y,  double z,
-                              double ux, double uy, double uz,
-                              double q,  double age = 0 );
+  // Note: Don't use injection with aging during initialization
 
-  // It is more efficient to use species id for repeated particle
-  // injection as it does not require the string compare costs for
-  // species name lookup
-  inline error_code inject_particle( const char *name,
-                                     double x,  double y,  double z,
-                                     double ux, double uy, double uz,
-                                     double q,  double age = 0 ) {
-    species_t *sp = find_species_name(name,species_list);
-    if( sp==NULL ) return ERROR_CODE("Invalid species name");
-    return inject_particle( sp->id, x, y, z, ux, uy, uz, q, age );
+  void
+  inject_particle( species_t * sp,
+                   double x,  double y,  double z,
+                   double ux, double uy, double uz,
+                   double q,  double age, int update_rhob );
+
+  // Inject particle raw is for power users!
+  // No nannyism _at_ _all_:
+  // - Availability of free stoarge is _not_ checked.
+  // - Particle displacements and voxel index are _not_ for validity.
+  // - The rhob field is _not_ updated.
+  // - Injection with displacment may use up movers (i.e. don't use
+  //   injection with displacement during initialization).
+  // This injection is _ultra_ _fast_.
+
+  inline void
+  inject_particle_raw( species_t * sp,
+                       float dx, float dy, float dz, int32_t i,
+                       float ux, float uy, float uz, float q ) {
+    particle_t * p = sp->p + (sp->np++);
+    p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
+    p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
   }
+
+  inline void
+  inject_particle_raw( species_t * sp,
+                       float dx, float dy, float dz, int32_t i,
+                       float ux, float uy, float uz, float q,
+                       float dispx, float dispy, float dispz,
+                       int update_rhob ) {
+    particle_t       * p  = sp->p  + (sp->np++);
+    particle_mover_t * pm = sp->pm + sp->nm;
+    p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
+    p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
+    pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
+    if( update_rhob ) { p->q=-q; accumulate_rhob( field, p, grid ); p->q=q; }
+    sp->nm += move_p( sp->p, pm, accumulator, grid );
+  }
+
 
   //////////////////////////////////
   // Random number generator helpers
 
   inline void seed_rand( double seed ) {
-    mt_srand(rng,(int)seed);
+    seed_mt_rng( rng, (int)seed );
   }
 
   // Uniform random number on (low,high) (open interval)
+  // FIXME: THINK CAREFULLY ABOUT THE INTERVAL FINITE PRECISION HERE!
   inline double uniform_rand( double low, double high ) {
-    return low + (high-low)*mt_drand(rng);
+    double dx = mt_drand(rng);
+    return low*(1-dx) + high*dx;
   }
 
   // Maxwellian random number with standard deviation dev
   inline double maxwellian_rand( double dev ) {
-    return dev*mt_normal_drand(rng);
+    return dev*mt_drandn(rng);
   }
 
   ////////////////////////
@@ -325,7 +373,7 @@ private:
 
   // Compute the remainder of a/b
   inline double remainder( double a, double b ) {
-    return drem(a,b);
+    return remainder(a,b);
   }
 
   // Compute the Courant length on a regular mesh

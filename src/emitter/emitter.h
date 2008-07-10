@@ -1,7 +1,7 @@
 #ifndef _emitter_h_
 #define _emitter_h_
 
-#include <species.h>
+#include "../species_advance/standard/spa.h"
 
 // Every local cell has 27 components associated with it (6 faces, 12
 // edges, 8 corners and cell body). All components in a local grid
@@ -29,7 +29,7 @@ typedef void
                      field_t              * ALIGNED(16)  f, 
                      accumulator_t        * ALIGNED(128) a, 
                      grid_t               *              g, 
-                     mt_handle                           rng );
+                     mt_rng_t             *              rng );
 
 typedef struct emitter {
   int * ALIGNED(16) component;
@@ -73,7 +73,7 @@ child_langmuir( emitter_t            *              e,
                 field_t              * ALIGNED(16)  f,     // For rhob accum
                 accumulator_t        * ALIGNED(128) a,     // For J accum
                 grid_t               *              g,     // Underlying grid
-                mt_handle                           rng ); // Random numbers
+                mt_rng_t             *              rng ); // Random numbers
 
 // In ccube.c
 
@@ -90,7 +90,7 @@ ccube( emitter_t            *              e,
        field_t              * ALIGNED(16)  f,     // For rhob accum
        accumulator_t        * ALIGNED(128) a,     // For J accum
        grid_t               *              g,     // Underlying grid
-       mt_handle                           rng ); // Random numbers
+       mt_rng_t             *              rng ); // Random numbers
 
 // In ivory.c
 
@@ -107,7 +107,7 @@ ivory( emitter_t            *              e,
        field_t              * ALIGNED(16)  f,     // For rhob accum
        accumulator_t        * ALIGNED(128) a,     // For J accum
        grid_t               *              g,     // Underlying grid
-       mt_handle                           rng ); // Random numbers
+       mt_rng_t             *              rng ); // Random numbers
 
 END_C_DECLS
 

@@ -13,10 +13,10 @@
 #define P2PPolicyMPI_hxx
 
 #include <mpi.h>
-#include <ConnectionManager.hxx>
-#include <P2PTag.hxx>
-#include <MPData.hxx>
-#include <Type2MPIType.hxx>
+#include "../ConnectionManager.hxx"
+#include "P2PTag.hxx"
+#include "../MPData.hxx"
+#include "../Type2MPIType.hxx"
 
 /*!
 	\struct P2PPolicyMPI P2PPolicyMPI.h

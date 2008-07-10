@@ -1,4 +1,4 @@
-#include <grid.h>
+#include "grid.h"
 
 // Define custom boundary handler for grid g.  Return integer tag in
 // range [-3...-inf] associated with boundary handler which is used
@@ -11,22 +11,20 @@ IUO_add_boundary( grid_t *g,
                   boundary_handler_t handler,
                   const void * initial_params,
                   int sz ) {
+  boundary_t * gb;
 
   if( g==NULL || handler==NULL || sz<0 || sz>MAX_BOUNDARY_DATA_SIZE ||
      ( initial_params==NULL && sz!=0 ) )
     return INVALID_BOUNDARY;
 
-  if( g->boundary==NULL )
-    g->boundary = (boundary_t *)malloc( (g->nb+1)*sizeof(boundary_t) );
-  else
-    g->boundary = (boundary_t *)realloc( g->boundary,
-                                         (g->nb+1)*sizeof(boundary_t) );
-
-  if( g->boundary==NULL ) ERROR(( "g->boundary alloc failed" ));
+  MALLOC( gb, g->nb+1 );
+  COPY( gb, g->boundary, g->nb );
+  FREE( g->boundary );
+  g->boundary = gb;
 
   g->boundary[g->nb].handler = handler;
-  memset( g->boundary[g->nb].params, 0, MAX_BOUNDARY_DATA_SIZE );
-  memcpy( g->boundary[g->nb].params, initial_params, sz );
+  CLEAR( (char *)g->boundary[g->nb].params, MAX_BOUNDARY_DATA_SIZE );
+  COPY(  (char *)g->boundary[g->nb].params, initial_params, sz );
 
   return -(g->nb++) - 3;
 }

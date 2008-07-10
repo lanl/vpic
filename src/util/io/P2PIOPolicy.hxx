@@ -13,10 +13,10 @@
 #define P2PIOPolicy_hxx
 
 #include <cstdarg>
-#include <FileIOData.hxx>
-#include <P2PConnection.hxx>
-#include <MPData.hxx>
-#include <swap.h>
+#include "FileIOData.hxx"
+#include "P2PConnection.hxx"
+#include "MPData.hxx"
+#include "swap.h"
 
 /*!
 	\class P2PIOPolicy P2PIOPolicy.h

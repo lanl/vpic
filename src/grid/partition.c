@@ -8,7 +8,7 @@
  *
  */
 
-#include <grid.h>
+#include "grid.h"
 
 #define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {  \
   int _ix, _iy, _iz;                                    \
@@ -34,9 +34,11 @@
 
 void
 partition_periodic_box( grid_t * g,
-                        double glx, double gly, double glz,
+                        double gx0, double gy0, double gz0,
+                        double gx1, double gy1, double gz1,
                         int gnx, int gny, int gnz,
                         int gpx, int gpy, int gpz ) {
+  double f;
   int rank, nproc, px, py, pz; 
 
   // Make sure the grid can be setup
@@ -53,8 +55,22 @@ partition_periodic_box( grid_t * g,
 
   // Setup basic variables
   RANK_TO_INDEX(rank,px,py,pz);
-  g->x0 = px*(glx/gpx); g->y0 = py*(gly/gpy); g->z0 = pz*(glz/gpz);
-  g->dx = glx/gnx;      g->dy = gly/gny;      g->dz = glz/gnz;
+
+  g->dx = (gx1-gx0)/(double)gnx;
+  g->dy = (gy1-gy0)/(double)gny;
+  g->dz = (gz1-gz0)/(double)gnz;
+
+  g->rdx = (double)gnx/(gx1-gx0);
+  g->rdy = (double)gny/(gy1-gy0);
+  g->rdz = (double)gnz/(gz1-gz0);
+
+  f = (double) px   /(double)gpx; g->x0 = gx0*(1-f) + gx1*f;
+  f = (double) py   /(double)gpy; g->y0 = gy0*(1-f) + gy1*f;
+  f = (double) pz   /(double)gpz; g->z0 = gz0*(1-f) + gz1*f;
+
+  f = (double)(px+1)/(double)gpx; g->x1 = gx0*(1-f) + gx1*f;
+  f = (double)(py+1)/(double)gpy; g->y1 = gy0*(1-f) + gy1*f;
+  f = (double)(pz+1)/(double)gpz; g->z1 = gz0*(1-f) + gz1*f;
 
   // Size the local grid
   size_grid(g,gnx/gpx,gny/gpy,gnz/gpz);
@@ -70,28 +86,23 @@ partition_periodic_box( grid_t * g,
 
 void
 partition_absorbing_box( grid_t * g,
-                         double glx, double gly, double glz,
+                         double gx0, double gy0, double gz0,
+                         double gx1, double gy1, double gz1,
                          int gnx, int gny, int gnz,
                          int gpx, int gpy, int gpz,
                          int pbc ) {
   int rank, nproc, px, py, pz; 
 
-  // Make sure the grid can be setup
-  if( g==NULL                      ) ERROR(("Bad grid"));
-  if( g->mp==NULL                  ) ERROR(("Bad mp"));
-  if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
-  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
-  if( gnx%gpx!=0 ||
-      gny%gpy!=0 ||
-      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
-  rank = mp_rank(g->mp);
-  nproc = mp_nproc(g->mp);
-
-  partition_periodic_box( g, glx, gly, glz, gnx, gny, gnz, gpx, gpy, gpz );
+  partition_periodic_box( g,
+                          gx0, gy0, gz0,
+                          gx1, gy1, gz1,
+                          gnx, gny, gnz,
+                          gpx, gpy, gpz );
 
   // Override periodic boundary conditions
 
+  rank = mp_rank(g->mp);
+  nproc = mp_nproc(g->mp);
   RANK_TO_INDEX(rank,px,py,pz);
 
   if( px==0 && gnx>1 ) { 
@@ -129,77 +140,51 @@ partition_absorbing_box( grid_t * g,
 
 void
 partition_metal_box( grid_t * g,
-                     double glx, double gly, double glz,
+                     double gx0, double gy0, double gz0,
+                     double gx1, double gy1, double gz1,
                      int gnx, int gny, int gnz,
                      int gpx, int gpy, int gpz ) {
   int rank, nproc, px, py, pz; 
 
-  // Make sure the grid can be setup
-  if( g==NULL                      ) ERROR(("Bad grid"));
-  if( g->mp==NULL                  ) ERROR(("Bad mp"));
-  if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
-  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
-  if( gnx%gpx!=0 ||
-      gny%gpy!=0 ||
-      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
+  partition_periodic_box( g,
+                          gx0, gy0, gz0,
+                          gx1, gy1, gz1,
+                          gnx, gny, gnz,
+                          gpx, gpy, gpz );
+
+  // Override periodic boundary conditions
+
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
-
-  // Setup basic variables
   RANK_TO_INDEX(rank,px,py,pz);
-  g->x0 = px*(glx/gpx); g->y0 = py*(gly/gpy); g->z0 = pz*(glz/gpz);
-  g->dx = glx/gnx;      g->dy = gly/gny;      g->dz = glz/gnz;
-  
-  // Size the local grid
-  size_grid(g,gnx/gpx,gny/gpy,gnz/gpz);
 
-  // Join the grid to neighbors
-  if( px==0 ) {
+  if( px==0 && gnx>1 ) {
     set_fbc(g,BOUNDARY(-1,0,0),anti_symmetric_fields);
     set_pbc(g,BOUNDARY(-1,0,0),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px-1,py,pz,rank);
-    join_grid(g,BOUNDARY(-1,0,0),rank);
   }
 
-  if( py==0 ) {
-    set_fbc(g,BOUNDARY(0,-1,0),anti_symmetric_fields);
-    set_pbc(g,BOUNDARY(0,-1,0),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px,py-1,pz,rank);
-    join_grid(g,BOUNDARY(0,-1,0),rank);
-  }
-
-  if( pz==0 ) {
-    set_fbc(g,BOUNDARY(0,0,-1),anti_symmetric_fields);
-    set_pbc(g,BOUNDARY(0,0,-1),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px,py,pz-1,rank);
-    join_grid(g,BOUNDARY(0,0,-1),rank);
-  }
-
-  if( px==gpx-1 ) {
+  if( px==gpx-1 && gnx>1 ) {
     set_fbc(g,BOUNDARY(1,0,0),anti_symmetric_fields);
     set_pbc(g,BOUNDARY(1,0,0),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px+1,py,pz,rank);
-    join_grid(g,BOUNDARY(1,0,0),rank);
   }
 
-  if( py==gpy-1 ) {
+  if( py==0 && gny>1 ) {
+    set_fbc(g,BOUNDARY(0,-1,0),anti_symmetric_fields);
+    set_pbc(g,BOUNDARY(0,-1,0),reflect_particles);
+  }
+
+  if( py==gpy-1 && gny>1 ) {
     set_fbc(g,BOUNDARY(0,1,0),anti_symmetric_fields);
     set_pbc(g,BOUNDARY(0,1,0),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px,py+1,pz,rank);
-    join_grid(g,BOUNDARY(0,1,0),rank);
   }
 
-  if( pz==gpz-1 ) {
+  if( pz==0 && gnz>1 ) {
+    set_fbc(g,BOUNDARY(0,0,-1),anti_symmetric_fields);
+    set_pbc(g,BOUNDARY(0,0,-1),reflect_particles);
+  }
+
+  if( pz==gpz-1 && gnz>1 ) {
     set_fbc(g,BOUNDARY(0,0,1),anti_symmetric_fields);
     set_pbc(g,BOUNDARY(0,0,1),reflect_particles);
-  } else {
-    INDEX_TO_RANK(px,py,pz+1,rank);
-    join_grid(g,BOUNDARY(0,0,1),rank);
   }
 }

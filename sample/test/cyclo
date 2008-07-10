@@ -24,39 +24,33 @@ begin_initialization {
   int npart = 21;
   int nstep = 64;
 
-  grid->dt = 1;
+  grid->dt   = 1;
   grid->cvac = 1;
   grid->eps0 = 1;
   define_periodic_grid( 0, 0, 0,   // Grid low corner
                         L, L, L,   // Grid high corner
                         1, 1, 1,   // Grid resolution
                         1, 1, 1 ); // Processor configuration
-
   define_material("vacuum",1.0,1.0,0.0);
-  define_species("test_species",2.,npart);
-
-  finalize_materials();
-  finalize_species();
+  finalize_field_advance( standard_field_advance );
 
   field(1,1,1).cbz  = 2*M_PI / (double)nstep;
   field(1,1,2).cbz  = 2*M_PI / (double)nstep;
 
-  species_id test_species = lookup_species("test_species");
-  repeat(npart) {
-    error_code err = inject_particle( test_species,
-                                      uniform_rand(0,L),
-                                      uniform_rand(0,L),
-                                      uniform_rand(0,L),
-                                      1, 1, 1, // Gamma = 2
-                                      uniform_rand(0,1) );
-    if( err ) sim_log("Injection error - " << err);
-  }
+  species_t * sp = define_species( "test_species", 2., npart, npart, 0, 0 );
+  repeat(npart)
+    inject_particle( sp,
+                     uniform_rand(0,L),
+                     uniform_rand(0,L),
+                     uniform_rand(0,L),
+                     1, 1, 1, // Gamma = 2
+                     uniform_rand(0,1),
+                     0, 0 );
 
   // Hack into vpic internals
 
   int failed = 0;
   load_interpolator( interpolator, field, grid );
-  species_t *sp = find_species_id(test_species,species_list);
   for( int n=0; n<nstep; n++ ) {
     advance_p(sp->p,sp->np,sp->q_m,sp->pm,sp->max_nm,
               accumulator,interpolator,grid);

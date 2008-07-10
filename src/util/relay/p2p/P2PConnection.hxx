@@ -47,14 +47,14 @@ template<class CommunicationPolicy> class P2PConnection_T
 
 
 #if defined USE_DACS_P2P
-	#include <P2PPolicyDaCS.hxx>
+	#include "P2PPolicyDaCS.hxx"
 	#if defined HOST_BUILD
 		typedef P2PConnection_T<P2PPolicyDaCS<0> > P2PConnection;
 	#else
 		typedef P2PConnection_T<P2PPolicyDaCS<1> > P2PConnection;
 	#endif // BUILD
 #else
-	#include <P2PPolicyMPI.hxx>
+	#include "P2PPolicyMPI.hxx"
 	#if defined HOST_BUILD
 		typedef P2PConnection_T<P2PPolicyMPI<0> > P2PConnection;
 	#else

@@ -28,8 +28,8 @@ begin_initialization {
     printf( "frand24_c:  FAIL (%.19e, %.19e)\n", f0, 1-f1 );
 
   /* Test frand24_c1 */
-  f1 = frand24_c1(a0); /* frand24_c1 operates in reverse */
-  f0 = frand24_c1(a1);
+  f0 = frand24_c1(a0); /* frand24_c1 operates in reverse */
+  f1 = frand24_c1(a1);
   if( 0<f0 && f0<2*FLT_EPSILON && f1==1 )
     printf( "frand24_c1: pass (%.19e, %.19e)\n", f0, 1-f1 );
   else               
@@ -60,8 +60,8 @@ begin_initialization {
     printf( "drand32_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
 
   /* Test drand32_c1 */
-  d1 = drand32_c1(a0); /* drand32_c1 operates in reverse */
-  d0 = drand32_c1(a1);
+  d0 = drand32_c1(a0); /* drand32_c1 operates in reverse */
+  d1 = drand32_c1(a1);
   if( 0<d0 && d0<2*FLT_EPSILON && d1==1 )
     printf( "drand32_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
   else               
@@ -92,8 +92,8 @@ begin_initialization {
     printf( "drand53_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
 
   /* Test drand53_c1 */
-  d1 = drand53_c1(a0,b0); /* drand53_c1 operates in reverse */
-  d0 = drand53_c1(a1,b1);
+  d0 = drand53_c1(a0,b0); /* drand53_c1 operates in reverse */
+  d1 = drand53_c1(a1,b1);
   if( 0<d0 && d0<2*DBL_EPSILON && d1==1 )
     printf( "drand53_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
   else               

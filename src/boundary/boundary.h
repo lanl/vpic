@@ -1,17 +1,17 @@
 #ifndef _boundary_h_
 #define _boundary_h_
 
-#include <species.h>
+#include "../species_advance/standard/spa.h"
 
 BEGIN_C_DECLS
 
-// in maxwellian_reflux.c
+// In maxwellian_reflux.c
+
+// FIXME: MAXWELLIAN_REFLUX SILENTLY ASSUMES LESS THAN 32 SPECIES
 
 typedef struct maxwellian_reflux {
-  int nspec;          // number of species interacting with boundary
-  species_id id[32];  // array of species ids
-  double ut_perp[32]; // array of perp thermal velocities 
-  double ut_para[32]; // array of parallel thermal velocities
+  float ut_perp[32]; // array of perp thermal velocities 
+  float ut_para[32]; // array of parallel thermal velocities
 } maxwellian_reflux_t; 
 
 void
@@ -23,7 +23,7 @@ maxwellian_reflux( void * params,
                    const grid_t *g,
                    species_t *s,
                    particle_injector_t **ppi,
-                   mt_handle rng,
+                   mt_rng_t *rng,
                    int face ); 
 
 // In absorb_tally.c
@@ -43,7 +43,7 @@ absorb_tally( void * params,
               const grid_t *g,
               species_t *s,
               particle_injector_t **ppi,
-              mt_handle rng,
+              mt_rng_t *rng,
               int face ); 
 
 // In absorb_tally.c
@@ -63,9 +63,10 @@ link_boundary( void * params,
                const grid_t *g,
                species_t *s,
                particle_injector_t **ppi,
-               mt_handle rng,
+               mt_rng_t *rng,
                int face ); 
 
 END_C_DECLS
 
 #endif // _boundary_h_
+

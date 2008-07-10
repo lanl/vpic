@@ -50,7 +50,7 @@ CCS_WITH_ADDRESSING
 CCS_WITH_PPU_COMPILER
 CCS_WITH_LIBSPE2
 CCS_WITH_SPU_MODULES
-CCS_WITH_PARTICLE_SORT
+#CCS_WITH_PARTICLE_SORT
 
 ################################################################################
 # C/C++ configuration
@@ -63,17 +63,17 @@ CCS_TUNE_PCXX
 ################################################################################
 # particle sorting
 ################################################################################
-case "$PARTICLE_SORT" in
-
-	in-place)
-		AC_DEFINE(IN_PLACE)
-	;;
-
-	out-of-place)
-		AC_DEFINE(OUT_OF_PLACE)
-	;;
-
-esac
+#case "$PARTICLE_SORT" in
+#
+#	in-place)
+#		AC_DEFINE(IN_PLACE)
+#	;;
+#
+#	out-of-place)
+#		AC_DEFINE(OUT_OF_PLACE)
+#	;;
+#
+#esac
 
 ################################################################################
 # setup EXTRA

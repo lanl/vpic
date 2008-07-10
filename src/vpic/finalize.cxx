@@ -8,7 +8,7 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic.hxx"
 
 void vpic_simulation::finalize( void ) {
 

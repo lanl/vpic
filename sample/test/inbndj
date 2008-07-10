@@ -26,12 +26,10 @@ begin_initialization {
                         0.5, 0.5, 0.5, // Grid high corner
                         1, 1, 1,       // Grid resolution
                         1, 1, 1 );     // Processor configuration
-
   define_material("vacuum",1.0,1.0,0.0);
-  define_species("test_species",1.,NPART);
+  finalize_field_advance(_vacuum_field_advance);
 
-  finalize_materials();
-  finalize_species();
+  species_t * sp = define_species( "test_species", 1., NPART, NPART, 0, 0 );
 
   float dx0[NPART], dy0[NPART], dz0[NPART], dx1[NPART], dy1[NPART], dz1[NPART];
   float rho0[8], rho1[8], drho[8], divj[8];
@@ -70,8 +68,6 @@ begin_initialization {
 
   // Hack into vpic internals
 
-  species_t *sp = find_species_name("test_species",species_list);
-
   sp->np = NPART;
   for( int n=0; n<NPART; n++ ) {
     sp->p[n].i  = LOCAL_CELL_ID(1,1,1);
@@ -91,11 +87,10 @@ begin_initialization {
     sp->p[n].q = 1;
   }
 
-  clear_interpolator(interpolator,grid);
-  clear_accumulators(accumulator,grid);
-  advance_p(sp->p,sp->np,sp->q_m,sp->pm,sp->max_nm,
-            accumulator,interpolator,grid);
-  reduce_accumulators(accumulator,grid);
+  clear_accumulators( accumulator, grid );
+  advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
+             accumulator,interpolator,grid);
+  reduce_accumulators( accumulator, grid );
 
   accumulator_t *a = &accumulator[LOCAL_CELL_ID(1,1,1)];
   divj[0] = 0.25*(  a->jx[0] + a->jy[0] + a->jz[0] ); // -1,-1,-1

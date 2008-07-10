@@ -60,11 +60,14 @@ function [ G,                         ...
 %     partial_t E = cvac^2 curl B - Jf/eps0  ... Ampere's Law
 %     div E = (rhof+rhob)/eps0               ... E boundary cond.
 %     div B = 0                              ... B boundary cond.
+% - rhob may not be in sync on domain boundaries when this is
+%   called.  It is doubtful this will cause any problems but
+%   if so, let KJB know and this script can be updated.
 % - tcax, tcay, tcaz, rhof, div_e_err and div_b_err are for
-%   code debugging purposes only. They may not be current values!
-%   (They are used for code debugging!)
+%   code debugging purposes only. They may not be current values
+%   or in sync from node to node.  (They are used for debugging!)
 % - You should not use this routine unless you know you have
-%   enough physical RAM to hold all the hydro fields in memory
+%   enough physical RAM to hold all the fields in memory
 %   at once.
 %
 % Written by:

@@ -8,7 +8,7 @@
  *
  */
 
-#include <grid.h>
+#include "grid.h"
 
 #define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3(x,y,z,0,lnx+1,0,lny+1,0,lnz+1)
 #define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3(x,y,z,0,rnx+1,0,rny+1,0,rnz+1)
@@ -41,10 +41,8 @@ size_grid( grid_t * g,
   // Setup phase 3 data structures.  This is an ugly kludge to
   // interface phase 2 and phase 3 data structures
   lnc = (lnx+2)*(lny+2)*(lnz+2);
-  if( g->range!=NULL ) free_aligned( g->range );
-  g->range =
-    (int64_t * ALIGNED(16))malloc_aligned( (nproc+1)*sizeof(int64_t), 16 );
-  if( g->range==NULL ) ERROR(("Could not allocate range array"));
+  FREE_ALIGNED( g->range );
+  MALLOC_ALIGNED( g->range, nproc+1, 16 );
   ii = lnc; // lnc is not 64-bits
   mp_allgather_i64(&ii,g->range,1,g->mp);
   jj = 0;
@@ -57,10 +55,8 @@ size_grid( grid_t * g,
   g->rangel = g->range[rank];
   g->rangeh = g->range[rank+1]-1;
 
-  if( g->neighbor!=NULL ) free_aligned( g->neighbor );
-  g->neighbor =
-    (int64_t * ALIGNED(128))malloc_aligned( 6*lnc*sizeof(int64_t), 128 );
-  if( g->neighbor==NULL ) ERROR(("Could not allocate neighbor array"));
+  FREE_ALIGNED( g->neighbor );
+  MALLOC_ALIGNED( g->neighbor, 6*lnc, 128 );
 
   for( z=0; z<=lnz+1; z++ )
     for( y=0; y<=lny+1; y++ )
@@ -91,6 +87,33 @@ size_grid( grid_t * g,
           g->neighbor[i+5] = reflect_particles;
         }
       }
+
+  // Setup the space filling curve
+  // FIXME: THIS IS A CRUDE HACK UNTIL A GOOD SFC CAN BE WRITTEN
+  // CURRENT SFC IS GOOD FOR THREADING WITH POWER-OF-TWO NUMBER OF THREADS.
+  // UP TO AND INCLUDING 8 THREADS.
+
+  FREE_ALIGNED( g->sfc );
+  MALLOC_ALIGNED( g->sfc, lnc, 128 );
+
+  do {
+    int off;
+    int ox, oy, oz;
+    int nx, ny, nz;
+    int nx1 = (lnx+2)/2,   ny1 = (lny+2)/2,   nz1 = (lnz+2)/2;
+    int nx0 = (lnx+2)-nx1, ny0 = (lny+2)-ny1, nz0 = (lnz+2)-nz1;
+
+    for( z=0; z<=lnz+1; z++ )
+      for( y=0; y<=lny+1; y++ )
+        for( x=0; x<=lnx+1; x++ ) {
+          i = LOCAL_CELL_ID(x,y,z);
+          off = 0;
+          ox=x; nx=nx0; if(ox>=nx) ox-=nx, off+=nx,                 nx=nx1;
+          oy=y; ny=ny0; if(oy>=ny) oy-=ny, off+=ny*(lnx+2),         ny=ny1;
+          oz=z; nz=nz0; if(oz>=nz) oz-=nz, off+=nz*(lnx+2)*(lny+2), nz=nz1;
+          g->sfc[i] = off + ox + nx*( oy + ny*oz );
+        }
+  } while(0);
 }
 
 void join_grid( grid_t * g, int boundary, int rank ) {

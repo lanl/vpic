@@ -8,7 +8,7 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic.hxx"
 
 void vpic_simulation::initialize( int argc, char **argv ) {
   double tmp;
@@ -24,55 +24,53 @@ void vpic_simulation::initialize( int argc, char **argv ) {
 
   // Create an empty grid (creates the communicator too)
   grid = new_grid();
-  if( grid==NULL ) ERROR(("Could not create the grid"));
 
   // Create a random number generator seeded with the rank
   rank = mp_rank(grid->mp);
-  rng = mt_new_generator(rank);
-  if( rng==NULL ) ERROR(("Could not create the random number generator"));
+  rng = new_mt_rng( rank );
 
   // Call the user initialize the simulation
   user_initialization(argc,argv);
 
   // Do some consistency checks on user initialized fields
   if( rank==0 ) MESSAGE(("Checking interdomain synchronization"));
-  tmp = synchronize_tang_e_norm_b( field, grid );
+  tmp = field_advance->method->synchronize_tang_e_norm_b( field_advance->f, field_advance->g );
   if( rank==0 ) MESSAGE(("Error = %e (arb units)",tmp));
 
   if( rank==0 ) MESSAGE(("Checking magnetic field divergence"));
-  compute_div_b_err( field, grid );
-  tmp = compute_rms_div_b_err( field, grid );
+  field_advance->method->compute_div_b_err( field_advance->f, field_advance->g );
+  tmp = field_advance->method->compute_rms_div_b_err( field_advance->f, field_advance->g );
   if( rank==0 ) MESSAGE(("RMS error = %e (charge/volume)",tmp));
   if( rank==0 ) MESSAGE(("trying clean_div_b"));
-  clean_div_b( field, grid );
+  field_advance->method->clean_div_b( field_advance->f, field_advance->g );
   if( rank==0 ) MESSAGE(("succeeded clean_div_b"));
 
   // Load fields not initialized by the user
   if( rank==0 ) MESSAGE(("Initializing radiation damping fields"));
-  compute_curl_b( field, material_coefficient, grid );
+  field_advance->method->compute_curl_b( field_advance->f, field_advance->m, field_advance->g );
 
   if( rank==0 ) MESSAGE(("Initializing bound charge density"));
-  clear_rhof( field, grid );
+  field_advance->method->clear_rhof( field_advance->f, field_advance->g );
   LIST_FOR_EACH(sp,species_list)
-    accumulate_rho_p( field, sp->p, sp->np, grid );
-  synchronize_rhof( field, grid );
-  compute_rhob( field, material_coefficient, grid );
+    accumulate_rho_p( field_advance->f, sp->p, sp->np, field_advance->g );
+  field_advance->method->synchronize_rho( field_advance->f, field_advance->g );
+  field_advance->method->compute_rhob( field_advance->f, field_advance->m, field_advance->g );
 
-#if 1 // Internal sanity checks
+# if 1 // Internal sanity checks
   if( rank==0 ) MESSAGE(("Checking electric field divergence"));
-  compute_div_e_err( field, material_coefficient, grid );
-  tmp = compute_rms_div_e_err( field, grid );
+  field_advance->method->compute_div_e_err( field_advance->f, field_advance->m, field_advance->g );
+  tmp = field_advance->method->compute_rms_div_e_err( field_advance->f, field_advance->g );
   if( rank==0 ) MESSAGE(("RMS error = %e (charge/volume)",tmp));
-  if( tmp>0 ) clean_div_e( field, material_coefficient, grid );
+  if( tmp>0 ) field_advance->method->clean_div_e( field_advance->f, field_advance->m, field_advance->g );
 
   if( rank==0 ) MESSAGE(("Double checking interdomain synchronization"));
-  tmp = synchronize_tang_e_norm_b( field, grid );
+  tmp = field_advance->method->synchronize_tang_e_norm_b( field_advance->f, field_advance->g );
   if( rank==0 ) MESSAGE(("Error = %e (arb units)",tmp));
-#endif
+# endif
     
   if( species_list!=NULL ) {
     if( rank==0 ) MESSAGE(("Uncentering particles"));
-    load_interpolator( interpolator, field, grid );
+    load_interpolator( interpolator, field_advance->f, field_advance->g );
   }
   LIST_FOR_EACH(sp, species_list)
     uncenter_p( sp->p, sp->np, sp->q_m, interpolator, grid );

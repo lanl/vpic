@@ -2,7 +2,7 @@
 #define mp_t_h
 
 #include <mpi.h>
-#include <util_base.h>
+#include "../../util_base.h"
 
 #define BEGIN_TURNSTYLE do {                                          \
    int _rank, _size, _baton = 0;                                      \
@@ -26,18 +26,18 @@
 #define NUM_BUF 27
 
 typedef struct mp {
-	int rank, nproc;
-	double elapsed_ref;
-	double time00_ref;
-	int time00_toggle;
-	char * ALIGNED(16) rbuf[NUM_BUF];
-	char * ALIGNED(16) sbuf[NUM_BUF];
-	int rbuf_size[NUM_BUF];
-	int sbuf_size[NUM_BUF];
-	MPI_Request rreq[NUM_BUF];
-	MPI_Request sreq[NUM_BUF];
-	int rreq_size[NUM_BUF];
-	int sreq_size[NUM_BUF];
+  int rank, nproc;
+  double elapsed_ref;
+  double time00_ref;
+  int time00_toggle;
+  char * ALIGNED(16) rbuf[NUM_BUF];
+  char * ALIGNED(16) sbuf[NUM_BUF];
+  int rbuf_size[NUM_BUF];
+  int sbuf_size[NUM_BUF];
+  MPI_Request rreq[NUM_BUF];
+  MPI_Request sreq[NUM_BUF];
+  int rreq_size[NUM_BUF];
+  int sreq_size[NUM_BUF];
 } mp_t;
 
 #endif // mp_t_h

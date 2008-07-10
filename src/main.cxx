@@ -8,7 +8,7 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic/vpic.hxx"
 
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 #include <fenv.h>
@@ -44,7 +44,6 @@ main( int argc,
   argv[m] = NULL; // ANSI - argv is NULL terminated
   argc = m;
 
-MESSAGE(("Using %d SPEs\n", spp));
   spu.boot( spp, // Total number of SPUs for processing pipeline workloads
             0 ); // This PPU thread physically cannot process SPU workloads!
 
@@ -82,11 +81,11 @@ MESSAGE(("Using %d SPEs\n", spp));
   if ( argc==4 ) simulation.modify_runparams( argv[3] );  
 
   double start = mp_wtime();
-
   while( simulation.advance() ); 
-
   double stop = mp_wtime();
-  MESSAGE(("simulation time: %lf\n", stop-start));
+
+  if( simulation.rank()==0 )
+    MESSAGE(("simulation time: %lf\n", stop-start));
 
   // Let all processors finish up
 

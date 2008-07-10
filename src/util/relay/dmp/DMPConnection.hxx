@@ -41,7 +41,7 @@ template<class CommunicationPolicy> class DMPConnection_T
 
 	}; // class DMPConnection_T
 
-#include <DMPPolicyMPI.hxx>
+#include "DMPPolicyMPI.hxx"
 
 typedef DMPConnection_T<DMPPolicyMPI> DMPConnection;
 

@@ -38,14 +38,14 @@ template<class ConnectionPolicy> class ConnectionManager_T
 
 #if defined USE_DACS_P2P
 	#if defined HOST_BUILD
-		#include <CMPolicyMPIDaCS.hxx>
+		#include "CMPolicyMPIDaCS.hxx"
 		typedef ConnectionManager_T<CMPolicyMPIDaCS> ConnectionManager;
 	#else
-		#include <CMPolicyDaCS.hxx>
+		#include "CMPolicyDaCS.hxx"
 		typedef ConnectionManager_T<CMPolicyDaCS> ConnectionManager;
 	#endif // BUILD TYPE
 #else
-	#include <CMPolicyMultipleContextMPI.hxx>
+	#include "CMPolicyMultipleContextMPI.hxx"
 	typedef ConnectionManager_T<CMPolicyMultipleContextMPI>
 		ConnectionManager;
 #endif // P2P TYPE

@@ -1,5 +1,4 @@
-#include <boundary.h>
-#include <stdio.h> // for debugging output
+#include "boundary.h"
 
 // Refluxing boundary condition on particles.  Calculate normalized
 // momenta from the various perp and para temperatures.  Then, sample
@@ -38,110 +37,141 @@
 // dx_new = dx_old * (ux_new/ux_old) * sqrt((1+|u_old|**2)/(1+|u_new|**2))
 //
 // Written by:  Brian J. Albright, X-1, LANL   April, 2005
+// Revamped by KJB, May 2008
 
-#define maxwellian_rand(DEV)      ((DEV)*mt_normal_drand(rng))
-#define SQRT_TWO                  1.41421356237
-#define SET_VELOCITY(SIGN,X,Y,Z)  u##X=SIGN fabs(u0);u##Y=u1;u##Z=u2; break;
+#ifndef M_SQRT2
+#define M_SQRT2 (1.4142135623730950488016887242096981)
+#endif
  
+// FIXME: MIGHT WANT TO CHECK THAT SP_ID DOESN'T OVERFLOW
+
 void
-maxwellian_reflux( void * _data,
-                   particle_t *r, 
-                   particle_mover_t *pm,
-                   field_t *f,
-                   accumulator_t *a, 
-                   const grid_t *g,
-                   species_t *s, 
+maxwellian_reflux( void * _mr,
+                   particle_t * __restrict__ r, 
+                   particle_mover_t * __restrict__ pm,
+                   field_t * __restrict__ f,
+                   accumulator_t * __restrict__ a, 
+                   const grid_t * __restrict__ g,
+                   species_t * __restrict__ s, 
                    particle_injector_t **ppi,
-                   mt_handle rng,
+                   mt_rng_t * __restrict__ rng,
                    int face ) {
-  maxwellian_reflux_t * reflux_data = (maxwellian_reflux_t *)_data;
-  float u0, u1, u2;       // u0 = para, u1 & u2 = perp
-  float ux, uy, uz;       // x, y, z normalized momenta
-  float h, gamma_ratio;  
-  int ispec;
+  maxwellian_reflux_t * __restrict__ mr = (maxwellian_reflux_t *)_mr;
+  int32_t sp_id = s->id;
+  float ut_para = mr->ut_para[sp_id]; 
+  float ut_perp = mr->ut_perp[sp_id];
+  float u[3];                // u0 = para, u1 & u2 = perp
+  float ux, uy, uz;          // x, y, z normalized momenta
+  float dispx, dispy, dispz; // Particle displacement
+  float ratio;  
   particle_injector_t *pi; 
 
-  // try to avoid having zero displacements
-#define NO_ZERO_DISPLACEMENT 0
-
-#if NO_ZERO_DISPLACEMENT 
-  int pass=0; 
-# define MAX_PASSES 5
-# define EPS        1e-7
-#endif 
-
-  // sanity check: print handler data once at simulation start and restart
-  {
-    static int initted=0;
-    if ( !initted && mp_rank(g->mp)==0 ) {
-      initted=1;
-      MESSAGE(("----------------boundary handler data-----------------")); 
-      for ( ispec=0; ispec<reflux_data->nspec; ++ispec )
-        MESSAGE(("Species: %i  ut_perp: %e  ut_para: %e",
-	         reflux_data->id[ispec], reflux_data->ut_perp[ispec], 
-                 reflux_data->ut_para[ispec])); 
-      MESSAGE(("----------------boundary handler data-----------------")); 
-    }
-  }
-
-  // obtain reflux data for particle according to particle species
-  for ( ispec=0; ispec<reflux_data->nspec && s->id!=reflux_data->id[ispec]; ++ispec )
-    ; 
-  if ( ispec==reflux_data->nspec ) 
-    ERROR(("Unknown species passed to boundary handler."));
-
-#if NO_ZERO_DISPLACEMENT 
- sample_maxwellian_speeds: 
-#endif 
+  static const int perm[6][3] = { { 0, 1, 2 },
+                                  { 1, 2, 0 },
+                                  { 2, 0, 1 },
+                                  { 0, 1, 2 },
+                                  { 1, 2, 0 },
+                                  { 2, 0, 1 } };
+  static const float scale[6] = {  M_SQRT2,  M_SQRT2,  M_SQRT2,
+                                  -M_SQRT2, -M_SQRT2, -M_SQRT2 };
 
   // compute velocity of injected particle
-  do h=mt_drand(rng); while ( h==0 || h==1 ); 
-  u0 = SQRT_TWO*reflux_data->ut_para[ispec]*sqrt(-log(h)); 
-  u1 = maxwellian_rand(reflux_data->ut_perp[ispec]);
-  u2 = maxwellian_rand(reflux_data->ut_perp[ispec]);
+  //
+  // Suppose you have a Maxwellian at a boundary: p(u) ~ exp(-u^2/(2
+  // ub^2)) where u is the || speed and ub is the thermal speed.  In a
+  // time delta t, if the boundary has surface area delta A, there
+  // will be
+  //   
+  //   p_inj(u) du ~ u exp(-u^2/(2 ub^2)) (delta t)(delta A) du
+  //   
+  // particles injected from the boundary between speeds u and
+  // u+du. p_inj(u) is the distribution function we wish to sample.
+  // It has a cumulative i distribution function
+  //   
+  //   cdf(u) = \int_0^u du p_inj(u) = 1 - exp(-u^2/(2 ub^2))
+  //   
+  // (I've adjusted the constants out front to give a proper cdf
+  // ranging from 0 to 1, the range of h).
+  //   
+  // Let mu be a uniformly distributed random number from 0 to 1.
+  // Setting cdf(u)=mu and solving for u gives the means for sampling
+  // u:
+  //   
+  //   exp(-u^2/(2 ub^2)) = mu - 1 = mu
+  //
+  // (Note that 1-mu has same dist as mu.)  This implies that
+  //
+  //   u = sqrt(2) ub sqrt( -log(mu) ).
+  //
+  // Note that -log(mu) is an _exponentially_ distributed random
+  // number.  In the long haul then, we should probably call
+  // something like sqrt( mt_frande(rng) ) and mtrand is in a
+  // better position to decide the best method to compute such
+  // a rand (it too can be ziggurat accelerated) or even add a
+  // maxwellian flux method to mtrand.
 
-  // set velocity of particle according to which face it crosses
-  switch( face ) {
-  case 0:  SET_VELOCITY(+,x,y,z)  // negative x face
-  case 1:  SET_VELOCITY(+,y,z,x)  // negative y face
-  case 2:  SET_VELOCITY(+,z,x,y)  // negative z face
-  case 3:  SET_VELOCITY(-,x,y,z)  // positive x face
-  case 4:  SET_VELOCITY(-,y,z,x)  // positive y face
-  case 5:  SET_VELOCITY(-,z,x,y)  // positive z face
-      default: // should never happen
-    ERROR(("Invalid face data passed to custom boundary routine."));
-    ux = uy = uz = 0;
-    break; 
-  } 
-
-  // insert values into particle injector
-  pi = *ppi; 
-  pi->dx = r->dx;
-  pi->dy = r->dy;
-  pi->dz = r->dz;
-  pi->i  = r->i;
-  pi->ux = ux;
-  pi->uy = uy;
-  pi->uz = uz;
-  pi->q  = r->q;
-
-  // compute particle displacements    
-  gamma_ratio = sqrt((1+r->ux*r->ux+r->uy*r->uy+r->uz*r->uz)/(1+ux*ux+uy*uy+uz*uz)); 
-  pi->dispx=pi->dispy=pi->dispz=0; 
-# define ZWARN WARNING(("Zero velocity component encountered."))   
-  if ( r->ux!=0 ) pi->dispx=pm->dispx*(ux/r->ux)*gamma_ratio; else ZWARN;
-  if ( r->uy!=0 ) pi->dispy=pm->dispy*(uy/r->uy)*gamma_ratio; else ZWARN;
-  if ( r->uz!=0 ) pi->dispz=pm->dispz*(uz/r->uz)*gamma_ratio; else ZWARN;
-# undef ZWARN
+  // Note: This assumes ut_para > 0
   
-#if NO_ZERO_DISPLACEMENT 
-  if ( ++pass<MAX_PASSES ) {
-    if ( fabs(pi->dispx)/g->dx<EPS || fabs(pi->dispy)/g->dy<EPS || fabs(pi->dispz)/g->dz<EPS )
-      goto sample_maxwellian_speeds; 
-  } else WARNING(("Infinitesmal particle displacement encountered.")); 
-#endif 
+  // Note: mt_frand_c1 may be more appropriate theoretically but
+  // mt_frand is closer to original behavior (and guarantees a
+  // non-zero normal displacement).
 
-  // increment pointer to injector
-  (*ppi)++;
+  u[0] = ut_para*scale[face]*sqrtf(-logf(mt_frand(rng)));
+  u[1] = ut_perp*mt_frandn(rng);
+  u[2] = ut_perp*mt_frandn(rng);
+  ux   = u[perm[face][0]];
+  uy   = u[perm[face][1]];
+  uz   = u[perm[face][2]];
+
+  // Compute the amount of aging to due of the refluxed particle.
+  //
+  // The displacement of the refluxed particle should be:
+  //
+  //   dr' = c dt u' (1-a) / gamma'
+  //
+  // where u' and gamma' refer to the refluxed 4-momentum and
+  // a is when the particle's time step "age" when it hit the
+  // boundary.
+  //
+  //   1-a = |remaining_dr| / ( c dt |u| / gamma )
+  //
+  // Thus, we have:
+  //
+  //   dr' = u' gamma |remaining_dr| / ( gamma' |u| )
+  //
+  // or:
+  //
+  //   dr' = u' sqrt(( (1+|u|^2) |remaining_dr|^2 ) / ( (1+|u'|^2) |u|^2 ))
+
+  dispx = g->dx * pm->dispx;
+  dispy = g->dy * pm->dispy;
+  dispz = g->dz * pm->dispz;
+  ratio = r->ux*r->ux + r->uy*r->uy + r->uz*r->uz;
+  ratio = sqrtf( ( ( 1+ratio )*( dispx*dispx + dispy*dispy + dispz*dispz ) ) /
+                 ( ( 1+(ux*ux+uy*uy+uz*uz) )*( FLT_MIN+ratio ) ) );
+  dispx = ux * ratio * g->rdx;
+  dispy = uy * ratio * g->rdy;
+  dispz = uz * ratio * g->rdz;
+
+  // If disp and u passed to this are consistent, ratio is sane in and
+  // the displacment is non-zero in exact arithmetic.  However,
+  // paranoid checking like the below can be done here if desired.
+  //
+  // if( ratio<=0 || ratio>=g->dt*g->cvac )
+  //   WARNING(( "Bizarre behavior detected in maxwellian_reflux" ));
+
+  pi        = (*ppi)++;
+  pi->dx    = r->dx;
+  pi->dy    = r->dy;
+  pi->dz    = r->dz;
+  pi->i     = r->i;
+  pi->ux    = ux;
+  pi->uy    = uy;
+  pi->uz    = uz;
+  pi->q     = r->q;
+  pi->dispx = dispx;
+  pi->dispy = dispy;
+  pi->dispz = dispz;
+  pi->sp_id = sp_id;
 }
 

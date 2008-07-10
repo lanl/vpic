@@ -13,9 +13,9 @@
 #define DMPPolicyMPI_hxx
 
 #include <mpi.h>
-#include <MPData.hxx>
-#include <ConnectionManager.hxx>
-#include <Type2MPIType.hxx>
+#include "MPData.hxx"
+#include "ConnectionManager.hxx"
+#include "Type2MPIType.hxx"
 
 /*!
 	\class DMPPolicyMPI DMPPolicyMPI.h

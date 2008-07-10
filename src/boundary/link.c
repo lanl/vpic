@@ -1,4 +1,4 @@
-#include <boundary.h>
+#include "boundary.h"
 #include <stdio.h> // for debugging output
 
 // Special absorbing boundary condition that generates a "link" output
@@ -23,7 +23,7 @@ link_boundary( void * _lb,
                const grid_t *g,
                species_t *s, 
                particle_injector_t **ppi,
-               mt_handle rng,
+               mt_rng_t *rng,
                int face ) {
   link_boundary_t * lb = (link_boundary_t *)_lb;
   static FILE *fp = NULL; 
@@ -54,6 +54,7 @@ link_boundary( void * _lb,
   iy = (r->i-iz*(g->nx+2)*(g->ny+2))/(g->nx+2);          
   ix = r->i-(g->nx+2)*(iy+(g->ny+2)*iz);                  
 
+  // FIXME: THIS CALCULATIO SHOULD BE MADE MORE RIGOROUS!
   x = g->x0 + ((ix-1)+(r->dx+1)*0.5)*g->dx;
   y = g->y0 + ((iy-1)+(r->dy+1)*0.5)*g->dy;
   z = g->z0 + ((iz-1)+(r->dz+1)*0.5)*g->dz;
@@ -67,4 +68,6 @@ link_boundary( void * _lb,
   fprintf( fp, "%d %e %e %e %e %e %e %e\n",
            s->id, x, y, z, r->ux, r->uy, r->uz, r->q );
   lb->n_out++;
+
+  accumulate_rhob( f, r, g );
 }

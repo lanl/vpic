@@ -1,10 +1,10 @@
 #ifndef RelayPolicy_hxx
 #define RelayPolicy_hxx
 
-#include <util_base.h>
-#include <mp_handle.h>
-#include <ConnectionManager.hxx>
-#include <P2PConnection.hxx>
+#include "../../util_base.h"
+#include "../mp_handle.h"
+#include "../../relay/ConnectionManager.hxx"
+#include "../../relay/p2p/P2PConnection.hxx"
 
 static const double RESIZE_FACTOR = 1.1;
 
@@ -39,30 +39,15 @@ struct RelayPolicy {
         // get p2p connection
         P2PConnection & p2p = P2PConnection::instance();
 
-        mp_t * mp = static_cast<mp_t *>(malloc(sizeof(mp_t)));
-        if(!mp) { return static_cast<mp_handle>(NULL); }
+        mp_t * mp;
+        MALLOC( mp, 1 );
+        CLEAR( mp, 1 );
 
         // get rank and size from point-to-point connection
         mp->rank = p2p.global_id();
         mp->nproc = p2p.global_size();
 
-        // get wtime from point-to-point connection
-        //mp->elapsed_ref = p2p.wtime();
         mp->elapsed_ref = mp_wtime();
-        mp->time00_ref = 0;
-        mp->time00_toggle = 0;
-
-        // max_buffers is a global defined in <mp_t.h>
-        for(size_t i(0); i<max_buffers; i++) {
-            mp->rbuf[i] = NULL;
-            mp->sbuf[i] = NULL;
-            mp->rbuf_size[i] = 0;
-            mp->sbuf_size[i] = 0;
-            mp->rreq[i] = 0;
-            mp->sreq[i] = 0;
-            mp->rreq_size[i] = 0;
-            mp->sreq_size[i] = 0;
-        } // for
 
         return static_cast<mp_handle>(mp);
     } // new_mp
@@ -70,11 +55,10 @@ struct RelayPolicy {
     inline void delete_mp(mp_handle * h) {
         mp_t * mp;
 
-        if(!h) { return; }
+        if(!h) return;
 
         mp = static_cast<mp_t *>(*h);
-
-        if(!mp) { return; }
+        if(!mp) return;
 
         mp->rank = -1;
         mp->nproc = 0;
@@ -84,12 +68,8 @@ struct RelayPolicy {
 
         // max_buffers is a global defined in <mp_t.h>
         for(size_t i(0); i<max_buffers; i++) {
-            // allocated with malloc
-            if(mp->rbuf[i]) { free_aligned(mp->rbuf[i]); }
-            if(mp->sbuf[i]) { free_aligned(mp->sbuf[i]); }
-
-            mp->rbuf[i] = NULL;
-            mp->sbuf[i] = NULL;
+            FREE_ALIGNED( mp->rbuf[i] );
+            FREE_ALIGNED( mp->sbuf[i] );
             mp->rbuf_size[i] = 0;
             mp->sbuf_size[i] = 0;
             mp->rreq[i] = 0;
@@ -98,7 +78,7 @@ struct RelayPolicy {
             mp->sreq_size[i] = 0;
         } // for
 
-        free(mp);
+        FREE(mp);
         *h = NULL;
     } // delete_mp
 
@@ -144,13 +124,9 @@ struct RelayPolicy {
 
         mp->time00_toggle ^= 1;
 
-        if(mp->time00_toggle) {
-            //mp->time00_ref = p2p.wtime();
-            mp->time00_ref = mp_wtime();
-        } // if
+        if(mp->time00_toggle) mp->time00_ref = mp_wtime(); // mp->time00_ref = p2p.wtime();
 
-        //return(p2p.wtime() - mp->time00_ref);
-        return(mp_wtime() - mp->time00_ref);
+        return mp_wtime() - mp->time00_ref; // return p2p.wtime() - mp->time00_ref;
     } // mp_time00
 
     inline double mp_wtime() {
@@ -176,28 +152,24 @@ struct RelayPolicy {
         p2p.barrier();
     } // mp_barrier
 
-    inline error_code mp_size_recv_buffer(int tag, int size, mp_handle h) {
+    inline void mp_size_recv_buffer(int tag, int size, mp_handle h) {
         mp_t *mp = (mp_t *)h;
         char * ALIGNED(16) rbuf;
 
         // Check input arguments
-        if( mp==NULL            ) return ERROR_CODE("Bad handle");
-        if( tag<0 || uint64_t(tag)>=max_buffers ) return ERROR_CODE("Bad tag");
-        if( size<=0               ) return ERROR_CODE("Bad size");
+        if( mp==NULL            ) ERROR(( "Bad handle" ));
+        if( tag<0 || uint64_t(tag)>=max_buffers ) ERROR(( "Bad tag" ));
+        if( size<=0               ) ERROR(( "Bad size" ));
 
         // If no buffer allocated for this tag
         if( mp->rbuf[tag]==NULL ) {
-            mp->rbuf[tag] = (char * ALIGNED(16))
-            malloc_aligned( size, 16 );
-            if( mp->rbuf[tag]==NULL ) {
-                return ERROR_CODE("malloc_aligned failed");
-            }
-            mp->rbuf_size[tag] = size;
-            return NO_ERROR;
+          MALLOC_ALIGNED( mp->rbuf[tag], size, 16 );
+          mp->rbuf_size[tag] = size;
+          return;
         }
 
         // Is there already a large enough buffer
-        if( mp->rbuf_size[tag]>=size ) return NO_ERROR;
+        if( mp->rbuf_size[tag]>=size ) return;
 
         // Try to reduce the number of realloc calls
 
@@ -205,44 +177,37 @@ struct RelayPolicy {
 
         // Create the new recv buffer
 
-        rbuf = (char * ALIGNED(16))malloc_aligned( size, 16 );
-        if( rbuf==NULL ) return ERROR_CODE("malloc_aligned failed");
+        MALLOC_ALIGNED( rbuf, size, 16 );
 
         // Preserve the old recv buffer data
-
-        memcpy( rbuf, mp->rbuf[tag], mp->rbuf_size[tag] );
+        // FIMXE: SILLY
+        COPY( rbuf, mp->rbuf[tag], mp->rbuf_size[tag] );
 
         // Free the old recv buffer
 
-        free_aligned( mp->rbuf[tag] );
+        FREE_ALIGNED( mp->rbuf[tag] );
         mp->rbuf[tag]      = rbuf;
         mp->rbuf_size[tag] = size;
-
-        return NO_ERROR;
     } // mp_size_recv_buffer
 
-    inline error_code mp_size_send_buffer(int tag, int size, mp_handle h) {
+    inline void mp_size_send_buffer(int tag, int size, mp_handle h) {
         mp_t *mp = (mp_t *)h;
         char * ALIGNED(16) sbuf;
 
         // Check input arguments
-        if( mp==NULL              ) return ERROR_CODE("Bad handle");
-        if( tag<0 || uint64_t(tag)>=max_buffers ) return ERROR_CODE("Bad tag");
-        if( size<=0               ) return ERROR_CODE("Bad size");
+        if( mp==NULL              ) ERROR(( "Bad handle" ));
+        if( tag<0 || uint64_t(tag)>=max_buffers ) ERROR(( "Bad tag" ));
+        if( size<=0               ) ERROR(( "Bad size" ));
 
         // If no buffer allocated for this tag
         if( mp->sbuf[tag]==NULL ) {
-            mp->sbuf[tag] = (char * ALIGNED(16))
-            malloc_aligned( size, 16 );
-            if( mp->sbuf[tag]==NULL ) {
-                return ERROR_CODE("malloc_aligned failed");
-            }
-            mp->sbuf_size[tag] = size;
-            return NO_ERROR;
+          MALLOC_ALIGNED( mp->sbuf[tag], size, 16 );
+          mp->sbuf_size[tag] = size;
+          return;
         }
 
         // Is there already a large enough buffer
-        if( mp->sbuf_size[tag]>=size ) return NO_ERROR;
+        if( mp->sbuf_size[tag]>=size ) return;
 
         // Try to reduce the number of realloc calls
 
@@ -250,36 +215,30 @@ struct RelayPolicy {
 
         // Create the new send buffer
 
-        sbuf = (char * ALIGNED(16))malloc_aligned( size, 16 );
-        if( sbuf==NULL ) return ERROR_CODE("malloc_aligned failed");
+        MALLOC_ALIGNED( sbuf, size, 16 );
 
         // Preserve the old send buffer data
-
-        memcpy( sbuf, mp->sbuf[tag], mp->sbuf_size[tag] );
+        // FIXME: SILLY
+        COPY( sbuf, mp->sbuf[tag], mp->sbuf_size[tag] );
 
         // Free the old recv buffer
 
-        free_aligned( mp->sbuf[tag] );
+        FREE_ALIGNED( mp->sbuf[tag] );
         mp->sbuf[tag]      = sbuf;
         mp->sbuf_size[tag] = size;
-
-        return NO_ERROR;
     } // mp_size_send_buffer
 
-    inline error_code mp_begin_recv(int rbuf, int size, int sender,
+    inline void mp_begin_recv(int rbuf, int size, int sender,
         int tag, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(rbuf<0 || uint64_t(rbuf)>=max_buffers)
-            { return ERROR_CODE("Bad recv_buf"); }
-        if(size<=0) { return ERROR_CODE("Bad msg_size"); }
-        if(sender<0 || sender>=mp->nproc) { return ERROR_CODE("Bad sender"); }
-        if(mp->rbuf[rbuf]==NULL) { return ERROR_CODE("NULL recv_buf"); }
-        if(mp->rbuf_size[rbuf]<size) {
-            return ERROR_CODE("recv_buf too small");
-        } // if
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(rbuf<0 || uint64_t(rbuf)>=max_buffers) ERROR(( "Bad recv_buf" ));
+        if(size<=0) ERROR(( "Bad msg_size" ));
+        if(sender<0 || sender>=mp->nproc) ERROR(( "Bad sender" ));
+        if(mp->rbuf[rbuf]==NULL) ERROR(( "NULL recv_buf" ));
+        if(mp->rbuf_size[rbuf]<size) ERROR(( "recv_buf too small" ));
 
         mp->rreq_size[rbuf] = size;
 
@@ -293,7 +252,6 @@ struct RelayPolicy {
             p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size, tag, rbuf);
         */
         p2p.irecv(static_cast<char *>(mp->rbuf[rbuf]), size, tag, rbuf);
-        return NO_ERROR;
 
         // NEED TO DEAL WITH ERRORS!!!
 
@@ -302,42 +260,37 @@ struct RelayPolicy {
             tag, rbuf)) {
             case MPI_SUCCESS:
 //      std::cerr << "WRAPPER: p2p.irecv succeeded" << std::endl;
-                return NO_ERROR;
+                return;
             case MPI_ERR_COMM:
-                return ERROR_CODE("MPI_ERR_COMM");
+                ERROR(( "MPI_ERR_COMM" ));
             case MPI_ERR_COUNT:
-                return ERROR_CODE("MPI_ERR_COUNT");
+                ERROR(( "MPI_ERR_COUNT" ));
             case MPI_ERR_TYPE:
-                return ERROR_CODE("MPI_ERR_TYPE");
+                ERROR(( "MPI_ERR_TYPE" ));
             case MPI_ERR_TAG:
-                return ERROR_CODE("MPI_ERR_TAG");
+                ERROR(( "MPI_ERR_TAG" ));
             case MPI_ERR_RANK:
-                return ERROR_CODE("MPI_ERR_RANK");
+                ERROR(( "MPI_ERR_RANK" ));
             case MPI_ERR_OTHER:
-                return ERROR_CODE("MPI_ERR_OTHER");
+                ERROR(( "MPI_ERR_OTHER" ));
             default: break;
         } // switch
 
-        return ERROR_CODE("Unknown MPI error");
+        ERROR(( "Unknown MPI error" ));
         */
     } // mp_begin_recv
 
-    inline error_code mp_begin_send(int sbuf, int size, int receiver,
+    inline void mp_begin_send(int sbuf, int size, int receiver,
         int tag, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(sbuf<0 || uint64_t(sbuf)>=max_buffers)
-            { return ERROR_CODE("Bad send_buf"); }
-        if(size<=0) { return ERROR_CODE("Bad msg_size"); }
-        if(receiver<0 || receiver>=mp->nproc) {
-            return ERROR_CODE("Bad receiver");
-        } // if
-        if(mp->sbuf[sbuf]==NULL) { return ERROR_CODE("NULL send_buf"); }
-        if(mp->sbuf_size[sbuf]<size) {
-            return ERROR_CODE("send_buf too small");
-        } // if
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(sbuf<0 || uint64_t(sbuf)>=max_buffers) ERROR(( "Bad send_buf" ));
+        if(size<=0) ERROR(( "Bad msg_size" ));
+        if(receiver<0 || receiver>=mp->nproc) ERROR(( "Bad receiver" ));
+        if(mp->sbuf[sbuf]==NULL) ERROR(( "NULL send_buf" ));
+        if(mp->sbuf_size[sbuf]<size) ERROR(( "send_buf too small" ));
 
         mp->sreq_size[sbuf] = size;
 
@@ -350,41 +303,39 @@ struct RelayPolicy {
             size, tag, sbuf);
         */
         p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size, tag, sbuf);
-        return NO_ERROR;
 
         /*
         switch(p2p.isend(static_cast<char *>(mp->sbuf[sbuf]), size,
             tag, sbuf)) {
             case MPI_SUCCESS:
-                return NO_ERROR;
+                return;
             case MPI_ERR_COMM:
-                return ERROR_CODE("MPI_ERR_COMM");
+                ERROR(( "MPI_ERR_COMM" ));
             case MPI_ERR_COUNT:
-                return ERROR_CODE("MPI_ERR_COUNT");
+                ERROR(( "MPI_ERR_COUNT" ));
             case MPI_ERR_TYPE:
-                return ERROR_CODE("MPI_ERR_TYPE");
+                ERROR(( "MPI_ERR_TYPE" ));
             case MPI_ERR_TAG:
-                return ERROR_CODE("MPI_ERR_TAG");
+                ERROR(( "MPI_ERR_TAG" ));
             case MPI_ERR_RANK:
-                return ERROR_CODE("MPI_ERR_RANK");
+                ERROR(( "MPI_ERR_RANK" ));
             case MPI_ERR_OTHER:
-                return ERROR_CODE("MPI_ERR_OTHER");
+                ERROR(( "MPI_ERR_OTHER" ));
             default: break;
         } // switch
 
-        return ERROR_CODE("Unknown MPI error");
+        ERROR(( "Unknown MPI error" ));
         */
     } // mp_begin_send
 
-    inline error_code mp_end_recv(int rbuf, mp_handle h) {
+    inline void mp_end_recv(int rbuf, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
         int size;
         //std::cerr << "WRAPPER: mp_end_recv called" << std::endl;
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(rbuf<0 || uint64_t(rbuf)>=max_buffers)
-            { return ERROR_CODE("Bad recv_buf"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(rbuf<0 || uint64_t(rbuf)>=max_buffers) ERROR(( "Bad recv_buf" ));
 
         //std::cout << "WRAPPER: begin wait " << p2p.rank() << std::endl;
 
@@ -399,11 +350,11 @@ struct RelayPolicy {
         //std::cout << "WRAPPER: end wait" << std::endl;
                 break;
             case MPI_ERR_REQUEST:
-                return ERROR_CODE("MPI_Wait - MPI_ERR_REQUEST");
+                ERROR(( "MPI_Wait - MPI_ERR_REQUEST" ));
             case MPI_ERR_ARG:
-                return ERROR_CODE("MPI_Wait - MPI_ERR_ARG");
+                ERROR(( "MPI_Wait - MPI_ERR_ARG" ));
             default:
-                return ERROR_CODE("MPI_Wait - Unknown MPI error");
+                ERROR(( "MPI_Wait - Unknown MPI error" ));
         } // switch
 */
 
@@ -415,29 +366,26 @@ struct RelayPolicy {
         //std::cout << "WRAPPER: end get count" << std::endl;
                 break;
             case MPI_ERR_ARG:
-                return ERROR_CODE("MPI_Get_count - MPI_ERR_ARG");
+                ERROR(( "MPI_Get_count - MPI_ERR_ARG" ));
             case MPI_ERR_TYPE:
-                return ERROR_CODE("MPI_Get_count - MPI_ERR_TYPE");
+                ERROR(( "MPI_Get_count - MPI_ERR_TYPE" ));
             default:
-                return ERROR_CODE("MPI_Wait - Unknown MPI error");
+                ERROR(( "MPI_Wait - Unknown MPI error" ));
         } // switch
 
-        if(mp->rreq_size[rbuf] != size) {
-            return ERROR_CODE("Sizes do not match");
-        } // if
+        if(mp->rreq_size[rbuf] != size) ERROR(( "Sizes do not match" ));
 */
 
-        return NO_ERROR;
     } // mp_end_recv
 
-    inline error_code mp_end_send(int sbuf, mp_handle h) {
+    inline void mp_end_send(int sbuf, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
         //std::cerr << "WRAPPER: mp_end_send called" << std::endl;
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
         if(sbuf<0 || uint64_t(sbuf)>=max_buffers)
-            { return ERROR_CODE("Bad send_buf"); }
+            ERROR(( "Bad send_buf" ));
 
         MPRequest request(P2PTag::wait_send, 0, 0, sbuf);
         p2p.post(request);
@@ -447,35 +395,32 @@ struct RelayPolicy {
         int errcode = p2p.wait_send(sbuf);
 */
         p2p.wait_send(sbuf);
-        return NO_ERROR;
 
 /*
         switch(p2p.wait_send(sbuf)) {
             case MPI_SUCCESS:
-                return NO_ERROR;
+                return;
             case MPI_ERR_REQUEST:
-                return ERROR_CODE("MPI_ERR_REQUEST");
+                ERROR(( "MPI_ERR_REQUEST" ));
             case MPI_ERR_ARG:
-                return ERROR_CODE("MPI_ERR_ARG");
+                ERROR(( "MPI_ERR_ARG" ));
             default:
                 break;
         } // switch
 
-        return ERROR_CODE("Unknown MPI error");
+        ERROR(( "Unknown MPI error" ));
 */
     } // mp_end_send
 
-    inline error_code mp_allsum_d(double *local, double *global,
+    inline void mp_allsum_d(double *local, double *global,
         int n, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(local==NULL) { return ERROR_CODE("Bad local"); }
-        if(global==NULL) { return ERROR_CODE("Bad global"); }
-        if(abs(local-global)<n) {
-            return ERROR_CODE("Overlapping local and global");
-        } // if
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(local==NULL) ERROR(( "Bad local" ));
+        if(global==NULL) ERROR(( "Bad global" ));
+        if(abs(local-global)<n) ERROR(( "Overlapping local and global" ));
 
         MPRequest request(P2PTag::allreduce_sum_double, P2PTag::data, n, 0);
         p2p.post(request);
@@ -483,20 +428,17 @@ struct RelayPolicy {
         p2p.recv(global, request.count, request.tag, request.id);
 
         // need to fix error code propagation
-        return NO_ERROR;
     } // mp_allsum_d
 
-    inline error_code mp_allsum_i(int *local, int *global, int n,
+    inline void mp_allsum_i(int *local, int *global, int n,
         mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(local==NULL) { return ERROR_CODE("Bad local"); }
-        if(global==NULL) { return ERROR_CODE("Bad global"); }
-        if(abs(local-global)<n) {
-            return ERROR_CODE("Overlapping local and global");
-        } // if
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(local==NULL) ERROR(( "Bad local" ));
+        if(global==NULL) ERROR(( "Bad global" ));
+        if(abs(local-global)<n) ERROR(( "Overlapping local and global" ));
 
         MPRequest request(P2PTag::allreduce_sum_int, P2PTag::data, n, 0);
         p2p.post(request);
@@ -504,18 +446,17 @@ struct RelayPolicy {
         p2p.recv(global, request.count, request.tag, request.id);
 
         // need to fix error code propagation
-        return NO_ERROR;
     } // mp_allsum_i
 
-    inline error_code mp_allgather_i(int *sbuf, int *rbuf, int n,
+    inline void mp_allgather_i(int *sbuf, int *rbuf, int n,
         mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(sbuf==NULL) { return ERROR_CODE("Bad send"); }
-        if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
-        if(n<1) { return ERROR_CODE("Bad n"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(sbuf==NULL) ERROR(( "Bad send" ));
+        if(rbuf==NULL) ERROR(( "Bad recv" ));
+        if(n<1) ERROR(( "Bad n" ));
 
         MPRequest request(P2PTag::allgather_int, P2PTag::data, n, 0);
         p2p.post(request);
@@ -524,18 +465,17 @@ struct RelayPolicy {
             request.tag, request.id);
 
         // need to fix error code propagation
-        return NO_ERROR;
     } // mp_allgather_i
 
-    inline error_code mp_allgather_i64(int64_t *sbuf, int64_t *rbuf, int n,
+    inline void mp_allgather_i64(int64_t *sbuf, int64_t *rbuf, int n,
         mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
-        if(sbuf==NULL) { return ERROR_CODE("Bad send"); }
-        if(rbuf==NULL) { return ERROR_CODE("Bad recv"); }
-        if(n<1) { return ERROR_CODE("Bad n"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
+        if(sbuf==NULL) ERROR(( "Bad send" ));
+        if(rbuf==NULL) ERROR(( "Bad recv" ));
+        if(n<1) ERROR(( "Bad n" ));
 
         MPRequest request(P2PTag::allgather_int64, P2PTag::data, n, 0);
         p2p.post(request);
@@ -544,14 +484,13 @@ struct RelayPolicy {
             request.tag, request.id);
 
         // need to fix error code propagation
-        return NO_ERROR;
     } // mp_allgather_i64
 
-    error_code mp_send_i(int *buf, int n, int dst, mp_handle h) {
+    void mp_send_i(int *buf, int n, int dst, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
 
         MPRequest request(P2PTag::send, P2PTag::data, n, 0, dst);
         p2p.post(request);
@@ -561,32 +500,31 @@ struct RelayPolicy {
         int errcode = p2p.send(buf, request.count, request.tag);
         */
         p2p.send(buf, request.count, request.tag);
-        return NO_ERROR;
 
 /*
         switch(p2p.send(buf, request.count, request.tag)) {
             case MPI_SUCCESS:
-                return NO_ERROR;
+                return;
             case MPI_ERR_COMM:
-                return ERROR_CODE("MPI_ERR_COMM");
+                ERROR(( "MPI_ERR_COMM" ));
             case MPI_ERR_COUNT:
-                return ERROR_CODE("MPI_ERR_COUNT");
+                ERROR(( "MPI_ERR_COUNT" ));
             case MPI_ERR_TYPE:
-                return ERROR_CODE("MPI_ERR_TYPE");
+                ERROR(( "MPI_ERR_TYPE" ));
             case MPI_ERR_OTHER:
-                return ERROR_CODE("MPI_ERR_OTHER");
+                ERROR(( "MPI_ERR_OTHER" ));
             default: break;
         } // switch
 
-        return ERROR_CODE("Unknown MPI error");
+        ERROR(( "Unknown MPI error" ));
 */
     } // mp_send_i
 
-    error_code mp_recv_i(int *buf, int n, int src, mp_handle h) {
+    void mp_recv_i(int *buf, int n, int src, mp_handle h) {
         mp_t * mp = static_cast<mp_t *>(h);
         P2PConnection & p2p = P2PConnection::instance();
 
-        if(mp==NULL) { return ERROR_CODE("Bad handle"); }
+        if(mp==NULL) ERROR(( "Bad handle" ));
 
         MPRequest request(P2PTag::recv, P2PTag::data, n, 0, src);
         p2p.post(request);
@@ -596,24 +534,23 @@ struct RelayPolicy {
         int errcode = p2p.recv(buf, request.count, request.tag, request.id);
         */
         p2p.recv(buf, request.count, request.tag, request.id);
-        return NO_ERROR;
 
 /*
         switch(p2p.recv(buf, request.count, request.tag, request.id)) {
             case MPI_SUCCESS:
-                return NO_ERROR;
+                return;
             case MPI_ERR_COMM:
-                return ERROR_CODE("MPI_ERR_COMM");
+                ERROR(( "MPI_ERR_COMM" ));
             case MPI_ERR_COUNT:
-                return ERROR_CODE("MPI_ERR_COUNT");
+                ERROR(( "MPI_ERR_COUNT" ));
             case MPI_ERR_TYPE:
-                return ERROR_CODE("MPI_ERR_TYPE");
+                ERROR(( "MPI_ERR_TYPE" ));
             case MPI_ERR_OTHER:
-                return ERROR_CODE("MPI_ERR_OTHER");
+                ERROR(( "MPI_ERR_OTHER" ));
             default: break;
         } // switch
 
-        return ERROR_CODE("Unknown MPI error");
+        ERROR(( "Unknown MPI error" ));
 */
     } // mp_recv_i
 

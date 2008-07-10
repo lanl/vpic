@@ -8,7 +8,7 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic.hxx"
 
 int vpic_simulation::advance(void) {
   int rank;
@@ -53,7 +53,7 @@ int vpic_simulation::advance(void) {
   // user_particle_injection should be a stub if species_list is empty.
 
   LIST_FOR_EACH(emitter,emitter_list)
-    (emitter->emission_model)( emitter, interpolator, field, accumulator, grid, rng );
+    (emitter->emission_model)( emitter, interpolator, field_advance->f, accumulator, field_advance->g, rng );
   user_particle_injection();
 
   u_time += mp_time00(grid->mp) - overhead;
@@ -65,19 +65,25 @@ int vpic_simulation::advance(void) {
   // guard lists. Particles that absorbed are added to rhob (using a corrected
   // local accumulation).
 
-  LIST_FOR_EACH(sp,species_list) 
-    sp->np = boundary_p( sp->pm, sp->nm, sp->max_nm,
-                         sp->p,  sp->np, sp->max_np,
-                         field, accumulator, grid, sp, rng );
+  for( int round=0; round<num_comm_round; round++ )
+    boundary_p( species_list,
+                field_advance->f, accumulator, field_advance->g, rng );
+
+  LIST_FOR_EACH( sp, species_list ) {
+    if( sp->nm!=0 && verbose )
+      WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
+                sp->nm, sp->name ));
+    sp->nm = 0;
+  }
 
   // At this point, all particle positions are at r_1 and u_{1/2}, the
   // guard lists are empty and the accumulators on each processor are current.
   // Convert the accumulators into currents.
 
-  clear_jf( field, grid );
+  field_advance->method->clear_jf( field_advance->f, field_advance->g );
   if( species_list!=NULL )
-    unload_accumulator( field, accumulator, grid );
-  synchronize_jf( field, grid );
+    unload_accumulator( field_advance->f, accumulator, field_advance->g );
+  field_advance->method->synchronize_jf( field_advance->f, field_advance->g );
 
   g_time += mp_time00(grid->mp) - overhead;
 
@@ -98,11 +104,11 @@ int vpic_simulation::advance(void) {
 
   // Half advance the magnetic field from B_0 to B_{1/2}
 
-  advance_b( field, grid, 0.5 );
+  field_advance->method->advance_b( field_advance->f, field_advance->g, 0.5 );
 
   // Advance the electric field from E_0 to E_1
 
-  advance_e( field, material_coefficient, grid );
+  field_advance->method->advance_e( field_advance->f, field_advance->m, field_advance->g );
 
   f_time += mp_time00(grid->mp) - overhead;
 
@@ -120,26 +126,25 @@ int vpic_simulation::advance(void) {
 
   // Half advance the magnetic field from B_{1/2} to B_1
 
-  advance_b( field, grid, 0.5 );
+  field_advance->method->advance_b( field_advance->f, field_advance->g, 0.5 );
 
   // Divergence clean e
 
   if( clean_div_e_interval>0 && step%clean_div_e_interval==0 ) {
     if( rank==0 ) MESSAGE(("Divergence cleaning electric field"));
-    clear_rhof( field, grid );
+    field_advance->method->clear_rhof( field_advance->f, field_advance->g );
     LIST_FOR_EACH(sp,species_list)
-      accumulate_rho_p( field, sp->p, sp->np, grid );
-    synchronize_rhof( field, grid );
-    synchronize_rhob( field, grid );
-    compute_div_e_err( field, material_coefficient, grid );
-    err = compute_rms_div_e_err( field, grid );
+      accumulate_rho_p( field_advance->f, sp->p, sp->np, field_advance->g );
+    field_advance->method->synchronize_rho( field_advance->f, field_advance->g );
+    field_advance->method->compute_div_e_err( field_advance->f, field_advance->m, field_advance->g );
+    err = field_advance->method->compute_rms_div_e_err( field_advance->f, field_advance->g );
     if( rank==0 ) MESSAGE(("Initial rms error = %e (charge/volume)",err));
     if( err>0 ) {
-      clean_div_e( field, material_coefficient, grid );
-      compute_div_e_err( field, material_coefficient, grid );
-      err = compute_rms_div_e_err( field, grid );
+      field_advance->method->clean_div_e( field_advance->f, field_advance->m, field_advance->g );
+      field_advance->method->compute_div_e_err( field_advance->f, field_advance->m, field_advance->g );
+      err = field_advance->method->compute_rms_div_e_err( field_advance->f, field_advance->g );
       if( rank==0 ) MESSAGE(("Cleaned rms error = %e (charge/volume)",err));
-      if( err>0 ) clean_div_e( field, material_coefficient, grid );
+      if( err>0 ) field_advance->method->clean_div_e( field_advance->f, field_advance->m, field_advance->g );
     }
   }
 
@@ -147,15 +152,15 @@ int vpic_simulation::advance(void) {
 
   if( clean_div_b_interval>0 && step%clean_div_b_interval==0 ) {
     if( rank==0 ) MESSAGE(("Divergence cleaning magnetic field"));
-    compute_div_b_err( field, grid );
-    err = compute_rms_div_b_err( field, grid );
+    field_advance->method->compute_div_b_err( field_advance->f, field_advance->g );
+    err = field_advance->method->compute_rms_div_b_err( field_advance->f, field_advance->g );
     if( rank==0 ) MESSAGE(("Initial rms error = %e (charge/volume)",err));
     if( err>0 ) {
-      clean_div_b( field, grid );
-      compute_div_b_err( field, grid );
-      err = compute_rms_div_b_err( field, grid );
+      field_advance->method->clean_div_b( field_advance->f, field_advance->g );
+      field_advance->method->compute_div_b_err( field_advance->f, field_advance->g );
+      err = field_advance->method->compute_rms_div_b_err( field_advance->f, field_advance->g );
       if( rank==0 ) MESSAGE(("Cleaned rms error = %e (charge/volume)",err));
-      if( err>0 ) clean_div_b( field, grid );
+      if( err>0 ) field_advance->method->clean_div_b( field_advance->f, field_advance->g );
     }
   }
 
@@ -163,8 +168,7 @@ int vpic_simulation::advance(void) {
 
   if( sync_shared_interval>0 && step%sync_shared_interval==0 ) {
     if( rank==0 ) MESSAGE(("Synchronizing shared tang e, norm b, rho_b"));
-    synchronize_rhob( field, grid );
-    err = synchronize_tang_e_norm_b( field, grid );
+    err = field_advance->method->synchronize_tang_e_norm_b( field_advance->f, field_advance->g );
     if( rank==0 )
       MESSAGE(("Domain desynchronization error = %e (arb units)",err));
   }
@@ -173,7 +177,7 @@ int vpic_simulation::advance(void) {
   // particle diagnostics in user_diagnostics if there are any particle
   // species to worry about
 
-  if( species_list!=NULL ) load_interpolator( interpolator, field, grid );
+  if( species_list!=NULL ) load_interpolator( interpolator, field_advance->f, field_advance->g );
 
   step++;
 

@@ -8,156 +8,135 @@
  *
  */
 
-#include <stdlib.h> // For malloc, NULL and size_t
-#include <stdint.h> // For int32_t
-#include <math.h>   // For sqrt, log and tan
+#include "mtrand.h"
 #include "mtrand_conv.h" // For drand53_o, drand53_c0, drand53_c1, ...
-#include "mtrand.h" // Assure consistency with the header
-
-#ifndef M_PI
-#define M_PI 3.1415926535897932384626433832795029
-#endif
 
 /*******************************************************
  * Mersenne-Twister 19937 Random Number Generator Core *
  *******************************************************/
 
-#define MT19937_N          624
-#define MT19937_M          397
-#define MT19937_TWIST(u,v) (((((u)&0x80000000UL)|((v)&0x7fffffffUL))>>1)^((-((v)&1))&0x9908b0dfUL))
-#define MT19937_TEMPER(u)  (u) ^= ( (u) >> 11 );                \
-                           (u) ^= ( (u) << 7  ) & 0x9d2c5680UL; \
-                           (u) ^= ( (u) << 15 ) & 0xefc60000UL; \
-                           (u) ^= ( (u) >> 18 )
+#define MT_N          624
+#define MT_M          397
+#define MT_TWIST(u,v) (((((u)&0x80000000UL)|((v)&0x7fffffffUL))>>1)^((-((v)&1))&0x9908b0dfUL))
+#define MT_TEMPER(u)  (u) ^= ( (u) >> 11 );                \
+                      (u) ^= ( (u) << 7  ) & 0x9d2c5680UL; \
+                      (u) ^= ( (u) << 15 ) & 0xefc60000UL; \
+                      (u) ^= ( (u) >> 18 )
 
-typedef struct mt_gen {
+struct mt_rng {
   uint32_t next;
-  uint32_t state[MT19937_N];
-} mt_gen_t;
+  uint32_t state[MT_N];
+};
 
-static void mt19937_next_state( mt_gen_t *g ) {
+static void
+mt_next_state( mt_rng_t * rng ) {
   int j;
-  uint32_t *p;
+  uint32_t * p;
 
-  g->next = 0;
-  p = g->state;
-  for( j=MT19937_N-MT19937_M+1; --j; p++ ) p[0] = p[MT19937_M]           ^ MT19937_TWIST( p[0], p[1] );
-  for( j=MT19937_M            ; --j; p++ ) p[0] = p[MT19937_M-MT19937_N] ^ MT19937_TWIST( p[0], p[1] );
-  p[0] = p[MT19937_M-MT19937_N] ^ MT19937_TWIST( p[0], g->state[0] );
+  rng->next = 0;
+  p = rng->state;
+  for( j=MT_N-MT_M+1; --j; p++ ) p[0] = p[MT_M]      ^ MT_TWIST( p[0], p[1] );
+  for( j=MT_M       ; --j; p++ ) p[0] = p[MT_M-MT_N] ^ MT_TWIST( p[0], p[1] );
+  /**/                           p[0] = p[MT_M-MT_N] ^ MT_TWIST( p[0], rng->state[0] );
 }
 
-#define urand32(g,y)					\
-  if( (g)->next==MT19937_N ) mt19937_next_state(g);	\
-  (y) = (g)->state[ (g)->next++ ];			\
-  MT19937_TEMPER(y)
+#define URAND32( rng, y )                               \
+  if( (rng)->next==MT_N ) mt_next_state( rng );         \
+  (y) = (rng)->state[ (rng)->next++ ];			\
+  MT_TEMPER(y)
 
 /*****************************************************************************
  * Constructors and destructors                                              *
  *****************************************************************************/
 
-mt_handle mt_new_generator( unsigned int s ) {
-  mt_handle h = (mt_handle)malloc(sizeof(mt_gen_t));
-  if( h!=NULL ) mt_srand( h, s );
-  return h;
+mt_rng_t *
+new_mt_rng( unsigned int seed ) {
+  mt_rng_t * rng;
+  MALLOC( rng, 1 );
+  seed_mt_rng( rng, seed );
+  return rng;
 }
 
-void mt_delete_generator( mt_handle *h ) {
-  if( h==NULL ) return;
-  if( (*h)!=NULL ) free(*h);
-  (*h) = NULL;
+void
+delete_mt_rng( mt_rng_t * rng ) {
+  FREE( rng );
 }
 
 /*****************************************************************************
  * Seeders and related functions                                             *
  *****************************************************************************/
 
-int mt_srand( mt_handle h, unsigned int s ) {
-  mt_gen_t *g = (mt_gen_t *)h;
+void
+seed_mt_rng( mt_rng_t * rng,
+             unsigned int seed ) {
   int j;
-
-  if( h==NULL ) return 1;
-  g->next = MT19937_N;
-  g->state[0] = s^0x900df00cUL;  // state[0] on srand(1) is goodfood
-  g->state[0] &= 0xffffffffUL;   // 64-bit compatibility
-  for( j=1; j<MT19937_N; j++ ) {
-    g->state[j] = 1812433253UL*(g->state[j-1]^(g->state[j-1]>>30)) + j;
-    g->state[j] &= 0xffffffffUL; // 64-bit compatibility
-  }
-  return 0;
+  rng->next = MT_N;
+  rng->state[0] = seed ^ 0x900df00c; // state[0] on srand(1) is goodfood
+  for( j=1; j<MT_N; j++ )
+    rng->state[j] = 1812433253*(rng->state[j-1]^(rng->state[j-1]>>30))+j;
 }
 
-#if CHAR_BIT==8
 // mt_getsize returns the number of chars required to hold the
 // generator's internal state in the format used by mt_getstate
 // function. This routine assumes 8-bit "char"s
-size_t mt_getsize( mt_handle h ) {
-  return 4*(MT19937_N+1);
+
+size_t
+get_mt_rng_size( mt_rng_t * rng ) {
+  return 4*(MT_N+1);
 }
 
 // mt_getstate saves the state of the generator in a machine
 // independent format on machines with 8-bits "char"s (true on
 // virtually all hardware in the last 30 years) if the char array is
 // large enough to hold it.
-int mt_getstate( mt_handle h, char *s, size_t n ) {
-  mt_gen_t *g = (mt_gen_t *)h;
+
+void
+get_mt_rng_state( mt_rng_t * rng,
+                  char * s ) {
   size_t j;
 
-  // Error checking
-  if( h==NULL || s==NULL ) return -1;
-  j = mt_getsize(h);
-  if( n<j ) return j;
+  // Serialize rng->next
+  *(s++) = (rng->next & 0x000000ff) >> 0;
+  *(s++) = (rng->next & 0x0000ff00) >> 8;
+  *(s++) = (rng->next & 0x00ff0000) >> 16;
+  *(s++) = (rng->next & 0xff000000) >> 24;
 
-  // Serialize g->next
-  *(s++) = (g->next & 0x000000ff) >> 0;
-  *(s++) = (g->next & 0x0000ff00) >> 8;
-  *(s++) = (g->next & 0x00ff0000) >> 16;
-  *(s++) = (g->next & 0xff000000) >> 24;
-
-  // Serialize g->state
-  for( j=0; j<MT19937_N; j++ ) {
-    *(s++) = (g->state[j] & 0x000000ff) >> 0;
-    *(s++) = (g->state[j] & 0x0000ff00) >> 8;
-    *(s++) = (g->state[j] & 0x00ff0000) >> 16;
-    *(s++) = (g->state[j] & 0xff000000) >> 24;
+  // Serialize rng->state
+  for( j=0; j<MT_N; j++ ) {
+    *(s++) = (rng->state[j] & 0x000000ff) >> 0;
+    *(s++) = (rng->state[j] & 0x0000ff00) >> 8;
+    *(s++) = (rng->state[j] & 0x00ff0000) >> 16;
+    *(s++) = (rng->state[j] & 0xff000000) >> 24;
   }
-
-  return 0;
 }
 
 // mt_setstate sets the state of the generator. It can take a state
 // provided by mt_getstate or a user designed state of at least 5
 // bytes. A valid user designed state has at least one non-zero char
-// among s[4] through s[min(n,mt_getsize(h))-1]. This routine assumes
-// 8-bit chars.
-int mt_setstate( mt_handle h, const char *s, size_t n ) {
-  mt_gen_t *g = (mt_gen_t *)h;
+// among s[4] through s[min(n,get_mt_rng_size(h))-1]. This routine
+// assumes 8-bit chars.
+
+void
+set_mt_rng_state( mt_rng_t * rng,
+                  const char * s,
+                  size_t n ) {
   size_t j, k;
 
-  // Error checking
-  if( h==NULL || s==NULL || n<5 ) return 1;
-  j = 4*(MT19937_N+1); if( j>n ) j=n;
-  for( k=4; k<j; k++ ) if( s[k]!=0 ) break;
-  if( k==j ) return 2;
+  // Extract rng->next
+  rng->next  = ((uint32_t)(s[0])) << 0;
+  rng->next |= ((uint32_t)(s[1])) << 8;
+  rng->next |= ((uint32_t)(s[2])) << 16;
+  rng->next |= ((uint32_t)(s[3])) << 24;
+  if( rng->next<0 || rng->next>MT_N ) rng->next=MT_N;
 
-  // Extract g->next
-  g->next  = ((uint32_t)(s[0])) << 0;
-  g->next |= ((uint32_t)(s[1])) << 8;
-  g->next |= ((uint32_t)(s[2])) << 16;
-  g->next |= ((uint32_t)(s[3])) << 24;
-  if( g->next<0 || g->next>MT19937_N ) g->next=MT19937_N;
-
-  // Extract g->state
-  k=4;
-  for( j=0, k=4; j<MT19937_N; j++ ) {
-    g->state[j]  = ((uint32_t)(s[k++])) << 0;  if( k==n ) k=4;
-    g->state[j] |= ((uint32_t)(s[k++])) << 8;  if( k==n ) k=4;
-    g->state[j] |= ((uint32_t)(s[k++])) << 16; if( k==n ) k=4;
-    g->state[j] |= ((uint32_t)(s[k++])) << 24; if( k==n ) k=4;
+  // Extract rng->state
+  for( j=0, k=4; j<MT_N; j++ ) {
+    rng->state[j]  = ((uint32_t)(s[k++])) << 0;  if( k==n ) k=4;
+    rng->state[j] |= ((uint32_t)(s[k++])) << 8;  if( k==n ) k=4;
+    rng->state[j] |= ((uint32_t)(s[k++])) << 16; if( k==n ) k=4;
+    rng->state[j] |= ((uint32_t)(s[k++])) << 24; if( k==n ) k=4;
   }
-
-  return 0;
 }
-#endif
 
 /*****************************************************************************
  * Generate integer random numbers                                           *
@@ -168,373 +147,376 @@ int mt_setstate( mt_handle h, const char *s, size_t n ) {
 // 32-bit system with 8-bit chars, 4 chars could be made for every
 // 32-bit rand). Note: any self-respecting compiler will optimize the
 // bit shift at compile time
-#define irf( name, t, s )				                    \
-t mt_##name( mt_handle h ) {						    \
-  uint32_t y;								    \
-  urand32((mt_gen_t *)h,y);						    \
-  return (t)(y>>(s+((CHAR_BIT*sizeof(t)<32)?(32-CHAR_BIT*sizeof(t)):0)));   \
-}									    \
-int mt_##name##_fill( mt_handle h, t * x, size_t n ) {		            \
-  uint32_t y;								    \
-  if( h==NULL || x==NULL || n<1 ) return 1;				    \
-  for(;n;n--) {								    \
-    urand32((mt_gen_t *)h,y);						    \
-    *(x++)=(t)(y>>(s+((CHAR_BIT*sizeof(t)<32)?(32-CHAR_BIT*sizeof(t)):0))); \
-  }									    \
-  return 0;                                                                 \
-}                    
-irf(crand,   signed char,        1) // Force signed chars
-irf(shrand,  signed short int,   1) // Can't use 's' due to srand
-irf(rand,    signed int,         1)
-irf(lrand,   signed long int,    1)
-irf(ucrand,  unsigned char,      0)
-irf(ushrand, unsigned short int, 0)
-irf(urand,   unsigned int,       0)
-irf(ulrand,  unsigned long int,  0)
-#undef irf
+
+#define INT_RNG( name, type, s )                                        \
+  type                                                                  \
+  mt_##name( mt_rng_t * rng ) {                                         \
+    uint32_t y;                                                         \
+    URAND32( rng, y );                                                  \
+    return (type)(y>>(s+((CHAR_BIT*sizeof(type)<32)?                    \
+                         (32-CHAR_BIT*sizeof(type)):0)));               \
+  }                                                                     \
+                                                                        \
+  void                                                                  \
+  mt_##name##_fill( mt_rng_t * rng,                                     \
+                    type * x,                                           \
+                    size_t n ) {                                        \
+    uint32_t y;                                                         \
+    for(;n;n--) {                                                       \
+      URAND32( rng, y );                                                \
+      *(x++)=(type)(y>>(s+((CHAR_BIT*sizeof(type)<32)?                  \
+                           (32-CHAR_BIT*sizeof(type)):0)));             \
+    }                                                                   \
+  }
+
+INT_RNG( crand,  signed char,        1 ) // Force signed chars
+INT_RNG( hrand,  signed short int,   1 )
+INT_RNG( rand,   signed int,         1 )
+INT_RNG( lrand,  signed long int,    1 )
+
+INT_RNG( ucrand, unsigned char,      0 )
+INT_RNG( uhrand, unsigned short int, 0 )
+INT_RNG( urand,  unsigned int,       0 )
+INT_RNG( ulrand, unsigned long int,  0 )
+
+#undef INT_RNG
 
 /*****************************************************************************
  * Generate floating point random numbers                                    *
  *****************************************************************************/
-#define frf( name, type, which )				\
-type mt_##name( mt_handle h ) {					\
-  uint32_t a;							\
-  urand32((mt_gen_t *)h,a);					\
-  return which(a);						\
-}								\
-int mt_##name##_fill( mt_handle h, type * x, size_t n ) {	\
-  uint32_t a;							\
-  if( h==NULL || x==NULL || n<1 ) return 1;			\
-  for(;n;n--) {							\
-    urand32((mt_gen_t *)h,a);					\
-    *(x++) = which(a);						\
-  }								\
-  return 0;                                                     \
-}
-#define drf( name, which )					\
-double mt_##name( mt_handle h ) {				\
-  uint32_t a, b;						\
-  urand32((mt_gen_t *)h,a);					\
-  urand32((mt_gen_t *)h,b);					\
-  return which(a,b);						\
-}								\
-int mt_##name##_fill( mt_handle h, double * x, size_t n ) {	\
-  uint32_t a, b;						\
-  if( h==NULL || x==NULL || n<1 ) return 1;			\
-  for(;n;n--) {							\
-    urand32((mt_gen_t *)h,a);					\
-    urand32((mt_gen_t *)h,b);					\
-    *(x++) = which(a,b);					\
-  }								\
-  return 0;                                                     \
-}
-frf(frand,         float,  frand24_o )
-frf(frand_c0,      float,  frand24_c0)
-frf(frand_c1,      float,  frand24_c1)
-frf(frand_c,       float,  frand24_c )
-frf(fast_drand,    double, drand32_o )
-frf(fast_drand_c0, double, drand32_c0)
-frf(fast_drand_c1, double, drand32_c1)
-frf(fast_drand_c,  double, drand32_c )
-drf(drand,    drand53_o )
-drf(drand_c0, drand53_c0)
-drf(drand_c1, drand53_c1)
-drf(drand_c,  drand53_c )
-#undef frf
-#undef drf
 
-/********************************************
- * Normal random number based distributions *
- ********************************************/
+#define FLT_RNG( name, type, which )                                    \
+  type                                                                  \
+  mt_##name( mt_rng_t * rng ) {                                         \
+    uint32_t a;                                                         \
+    URAND32( rng, a );                                                  \
+    return which(a);                                                    \
+  }                                                                     \
+                                                                        \
+  void                                                                  \
+  mt_##name##_fill( mt_rng_t * rng,                                     \
+                    type * x,                                           \
+                    size_t n ) {                                        \
+    uint32_t a;                                                         \
+    for(;n;n--) {							\
+      URAND32( rng, a );                                                \
+      *(x++) = which(a);						\
+    }                                                                   \
+  }
 
-#define normal_drand_core()			\
-  do {						\
-    urand32((mt_gen_t *)h,a);			\
-    urand32((mt_gen_t *)h,b);			\
-    d1 = drand53_o(a,b); d1 += d1 - 1;		\
-    urand32((mt_gen_t *)h,a);			\
-    urand32((mt_gen_t *)h,b);			\
-    d2 = drand53_o(a,b); d2 += d2 - 1;		\
-    d3 = d1*d1 + d2*d2;				\
-  } while( d3>1 || d3==0 );			\
-  d3 = -log(d3)/d3; d3 += d3; d3 = sqrt(d3)
+#define DBL_RNG( name, which )                                     \
+  double                                                           \
+  mt_##name( mt_rng_t * rng ) {                                    \
+    uint32_t a, b;                                                 \
+    URAND32( rng, a );                                             \
+    URAND32( rng, b );                                             \
+    return which(a,b);                                             \
+  }                                                                \
+                                                                   \
+  void                                                             \
+  mt_##name##_fill( mt_rng_t * rng,                                \
+                    double * x,                                    \
+                    size_t n ) {                                   \
+    uint32_t a, b;                                                 \
+    for(;n;n--) {                                                  \
+      URAND32( rng, a );                                           \
+      URAND32( rng, b );                                           \
+      *(x++) = which(a,b);                                         \
+    }                                                              \
+  }
+
+FLT_RNG( frand,         float,  frand24_o  )
+FLT_RNG( frand_c0,      float,  frand24_c0 )
+FLT_RNG( frand_c1,      float,  frand24_c1 )
+FLT_RNG( frand_c,       float,  frand24_c  )
+
+FLT_RNG( fast_drand,    double, drand32_o  )
+FLT_RNG( fast_drand_c0, double, drand32_c0 )
+FLT_RNG( fast_drand_c1, double, drand32_c1 )
+FLT_RNG( fast_drand_c,  double, drand32_c  )
+
+DBL_RNG( drand,    drand53_o  )
+DBL_RNG( drand_c0, drand53_c0 )
+DBL_RNG( drand_c1, drand53_c1 )
+DBL_RNG( drand_c,  drand53_c  )
+
+#undef FLT_RNG
+#undef DBL_RNG
 
 /*****************************************************************************
  * Generate a normal random number. Range is (-inf,inf)                      *
  * f(x) = exp( -x^2 / 2 ) / sqrt( 2*pi )                                     *
  *****************************************************************************/
 
-// FIXME: ZIGGURAT METHOD IS BETTER!
+/* The ziggurat method is a very efficient method for random number
+   generation of variables with monotonically decreasing PDFs.
 
-double mt_normal_drand( mt_handle h ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  normal_drand_core();
-  return d1*d3; // d2*d3 is also a normal drand but it is wasted!
+   For a Gaussian, if (x,y) are picked randomly but uniformly in the
+   region 0 <= y <= f(x) = exp(-x^2/2) for x in (-inf,inf) then the
+   PDF of x alone is Gaussian.  Rejection testing is based on the
+   observation that if we could pick (x,y) in a region uniformly that
+   completely covers this and reject the points that are outside, the
+   PDF of the remaining x would also be Gaussian distribted.  The goal
+   then is to find a region for which random points can be generated
+   uniformly efficiently and that tightly covers the original region.
+   The ziggurat method constructs such a region then also uses
+   monotonicity to improve performance further.
+
+   To be specific, cover f(x) with N regions of equal area enumerated
+   0:N-1.  Let regions 0:N-2 be the strips:
+     ( -x_{i+1},+x_{i+1} ) x ( f(x_{i+1}), f(x_i) )
+   and let x_0 = 0 and x_{i+1} > x_i.  Let region N-1 be the
+   rectangular strip:
+     ( -x_{N-1},+x_{N-1} ) x ( 0, f(x_{N-1}) )
+   plus a tail for |x|>=x_{N-1}, 0<=y<=t(x) where exp(-x^2/2)<=t(x)
+   for |x|>x_{N-1}.
+
+   This set of regions (or ziggurat) tightly and completely covers the
+   original region.  Since each individual region has the same area,
+   picking (x,y) uniformly within that region consists of:
+
+     (1) Picking a region at random uniformly.
+     (2) Picking a point uniformly within that region
+
+   Step 1 is trivial and step 2 is trivial for all but region N-1.
+   This yields the beginning of the Ziggurat algortihm:
+
+   for(;;)
+     i = rand uniformly from [0,1,...N-1]
+     if i!=N-1,
+       x = rand uniformly from ( -x_{i+1}, +x_{i+1} )
+       y = rand uniformly from ( f(x_{i+1}, f(x_i)  ]
+       if y < exp(-x^2/2), return x
+     else
+       handle region N-1
+
+   This can be dramatically optimized if it is noted that, for all but
+   the last region, if the x-coordinate less than x_i, the
+   y-coordinate is guaranteed to fall under the Gaussian by
+   monotonicity!  This yields the more efficient:
+
+   for(;;)
+     i = rand uniformly from [0,1,...N-1]
+     if i!=N-1,
+       x = rand uniformly from ( -x_{i+1}, +x_{i+1} )
+       if |x| < x_i, return x
+       y = rand uniformly from ( f(x_{i+1}, f(x_i)  ]
+       if y < exp(-x^2/2), return x
+     else
+       handle region N-1
+
+   Let 2v be the total area of each region and let r = x_{N-1}.  The
+   last region handled more elegantly by noting r f(r) / v percent of
+   the time, a uniform random point in region N-1 comes from the
+   rectangular part (2 r f(r) is the rectangle area and 2v is the
+   total area).  Letting x_N = v/f(r) then, the quick acceptance test
+   can account for the rectangular part of region N-1.  However, in
+   the last region when not quickly accepted, we need to compute a
+   point in the uniformly in the tail region.  This yields:
+
+   for(;;)
+     i = rand uniformly from [0,1,...N-1]
+     x = rand uniformly from ( -x_{i+1}, +x_{i+1} )
+     if |x| < x_i, return x
+     if i!=N-1,
+       y = rand uniformly from ( f(x_{i+1}, f(x_i)  ]
+     else
+       (x,y) = rand uniformly from region N-1 tails
+     if y < exp(-x^2/2), return x
+
+   Using an exponential decay that matches with the first derivative
+   at f(x) at r is a good choice for the tail:
+     g(x) = exp(-r^2/2 ) exp( -r ( |x| - r ) )
+          = exp( -r ( |x| - r/2 ) )
+   An x with the distribution of g is easily generated directly, and,
+   given such an x, a y uniformly distributed on ( 0, g(x) ] yields a
+   (x,y) uniformly from the tail region.  This yields:
+
+   for(;;)
+     i = rand uniformly from [0,1,...N-1]
+     x = rand uniformly from ( -x_{i+1}, +x_{i+1} )
+     if |x| < x_i, return x
+     if i!=N-1,
+       y = rand uniformly from ( f(x_{i+1}, f(x_i)  ]
+     else
+       x = rand uniformly from [+1,-1] *
+           ( r - (1/r) log rand uniformly from (0,1] )
+       y = rand uniformly from ( 0, exp( -r ( |x| - r/2 ) ) ]
+     if y < exp(-x^2/2), return x
+
+   The last bit of magic is that if dealing with single precision
+   randomness, i and x may be extracted from the bits of a single
+   unsigned 32-bit random integer.  Specifically, let N=64 and:
+
+     u = 32-bit rand
+     s = bit  0    of u (      a  1-bit rand)
+     i = bits 1:6  of u (2   * a  6-bit rand)
+     k = bit  7    of u (2^7 * a  1-bit rand)
+     j = bits 8:31 of u (2^8 * a 24-bit rand)
+
+   Then, an appropriate x (uniform rand with no finite precision
+   biases in the interval [-x_{i+1},+x_{i+1}]:
+     z = (s?-1:1) (j+2k) / 2^32
+     x = x_{i+1} z
+
+   Note that j+2k is a 2^8 times a rand on [0,2^24] p_0 = p_{2^24 } =
+   1/2^25 and p_n = 1/2^24 otherwise ("trapezoidal rand").  As a
+   result, it is as though z was picked in continuum interval (-1,+1)
+   and rounded to the nearest representable point in the desired
+   interval from the 2^25+1 point lattice uniformly (even signed zeros
+   are picked with sanely).  Due to the uniform choice of sign and the
+   number of bits in j, the computation of z is exact and yields a
+   full precision float.
+
+    Note that given all the above:
+      v     = r f(r) + exp(-r^2/2) / r
+      x_N   = v/f(r)
+      x_N-1 = r
+      x_i   = inverse_f( f(x_{i+1}) + v/x_{i+1} )
+      x_0   = 0
+    and r can be found iteratively.  Letting:
+      N        = 64
+      R        = x_{N-1}
+      scale    = 1/2^32
+      zig_x[i] = x_i
+      zig_y[i] = f(x_i)
+    yields the freaky efficient algorithm below.  The vast majority of
+    the normals are generated with a single u32, some quick table
+    lookups and floating point multiplies.
+
+    Similarly considerations hold for the double precision variant.
+    There a 64-bit rand is used instead of a 32-bit rand to generate a
+    53-bit trapezoid rand, 8-bit index, 1 bit sign and N = 256 and
+    scale = 1/2^64. */
+
+double
+mt_drandn( mt_rng_t * rng ) {
+  uint32_t a, b, i, s;
+  double x, y, j;
+
+  static const double sgn[2] = { 1., -1. };
+
+# include "drandn_table.h"
+
+  for(;;) {
+
+    // Extract components of a 32-bit rand 
+
+    URAND32( rng, a );
+    URAND32( rng, b );
+
+    s = ( a & 0x00000001 );      //         1-bit uniform   rand 
+    i = ( a & 0x000001fe ) >> 1; //         8-bit uniform   rand
+    j = 4294967296.*b + (( a & 0xfffff800 ) + (( a & 0x00000400 ) << 1));
+                                 // 2^11 ( 53-bit trapezoid rand )
+
+    // Construct |x| and see if we can accept this point 
+    // FIXME: COULD PRECOMPUTE SCALE * ZIG_X[i+1] AND/OR
+    // EVEN DO THE COMPARE DIRECTLY ON j!
+
+    x = j*(scale*zig_x[i+1]);
+    if( x<zig_x[i] ) break; /* Vast majority of the time */
+ 
+    // Construct a y for rejection testing 
+ 
+    URAND32( rng, a );
+    URAND32( rng, b );
+    y = drand53_c( a, b );
+    if( i!=N-1 ) y = zig_y[i]+(zig_y[i+1]-zig_y[i])*y;
+    else { /* In tail */
+      URAND32( rng, a );
+      URAND32( rng, b );
+      x  = R - (1./R)*log( drand53_c1( a, b ) );
+      y *= exp( -R*( x - 0.5*R ) );
+    }
+
+    if( y < exp(-0.5*x*x) ) break;
+ }
+
+ return sgn[s]*x; // FIXME: Use copysign, trinary or branch? 
 }
 
-int mt_normal_drand_fill( mt_handle h, double * x, size_t n ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  if( n&1 ) *(x++) = mt_normal_drand(h);
-  n>>=1;
-  for(;n;n--) {
-    normal_drand_core();
-    x[0] = d1*d3;
-    x[1] = d2*d3;
-    x +=2;
-  }
-  return 0;
+void
+mt_drandn_fill( mt_rng_t * rng,
+                double * x,
+                size_t n ) {
+  for( ; n; n-- ) *(x++) = mt_drandn( rng );
 }
 
-/*****************************************************************************
- * Generate a log normal random number. Range is (0,inf)                     *
- * f(x) = exp( -(ln x)^2 / (2 sigma^2) ) / (x*sigma*sqrt( 2*pi ))            *
- *****************************************************************************/
+float
+mt_frandn( mt_rng_t * rng ) {
+  uint32_t a, i, j, s;
+  float x, y;
 
-// FIXME: ZIGGURAT METHOD IS BETTER!
+  static const float sgn[2] = { 1.f, -1.f };
 
-double mt_lognormal_drand( mt_handle h, double sigma ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  normal_drand_core();
-  return exp(sigma*d1*d3); // d2*d3 is wasted!
+# include "frandn_table.h"
+
+  for(;;) {
+
+    // Extract components of a 32-bit rand 
+
+    URAND32( rng, a );
+    s = ( a & 0x00000001 );      //        1-bit uniform   rand 
+    i = ( a & 0x0000007e ) >> 1; //        6-bit uniform   rand
+    j = ( a & 0x00000080 ) << 1; // 2^8 (  1-bit uniform   rand )
+    j = ( a & 0xffffff00 ) + j;  // 2^8 ( 24-bit trapezoid rand )
+
+    // Construct |x| and see if we can accept this point 
+    // FIXME: COULD PRECOMPUTE SCALE * ZIG_X[i+1] AND/OR
+    // EVEN DO THE COMPARE DIRECTLY ON j!
+
+    x = j*(scale*zig_x[i+1]);
+    if( x<zig_x[i] ) break; /* Vast majority of the time */
+ 
+    // Construct a y for rejection testing 
+ 
+    URAND32( rng, a );
+    y = frand24_c(a);
+    if( i!=N-1 ) y = zig_y[i]+(zig_y[i+1]-zig_y[i])*y;
+    else { /* In tail */
+      URAND32( rng, a );
+      x  = R - (1.f/R)*logf( frand24_c1(a) );
+      y *= expf( -R*( x - 0.5f*R ) );
+    }
+
+    if( y < expf(-0.5f*x*x) ) break;
+ }
+
+ return sgn[s]*x; // FIXME: Use copysign, trinary or branch? 
 }
 
-int mt_lognormal_drand_fill( mt_handle h, double sigma,
-                             double * x, size_t n ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  if( n&1 ) *(x++) = mt_lognormal_drand(h,sigma);
-  n>>=1;
-  for(;n;n--) {
-    normal_drand_core();
-    d3 *= sigma;
-    x[0] = exp(d1*d3);
-    x[1] = exp(d2*d3);
-    x +=2;
-  }
-  return 0;
+void
+mt_frandn_fill( mt_rng_t * rng,
+                float * x,
+                size_t n ) {
+  for( ; n; n-- ) *(x++) = mt_frandn( rng );
 }
-
-/*****************************************************************************
- * Generate a Birnbaum-Saunders random number. Range is (0,inf)              *
- * f(x) = ?                                                                  *
- *****************************************************************************/
-
-// FIXME: ZIGGURAT METHOD IS BETTER!
-
-double mt_bs_drand( mt_handle h, double gamma ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  normal_drand_core();
-  d1 *= 0.5*gamma*d3; d1 += sqrt( 1+d1*d1 ); d1 *= d1;
-  return d1; // d2 is wasted!
-}
-
-int mt_bs_drand_fill( mt_handle h, double gamma,
-                      double * x, size_t n ) {
-  double d1, d2, d3;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  if( n&1 ) *(x++) = mt_bs_drand(h,gamma);
-  n>>=1;
-  for(;n;n--) {
-    normal_drand_core();
-    d3 *= 0.5;
-    d1 *= gamma*d3; d1 += sqrt( 1+d1*d1 ); d1 *= d1;
-    d2 *= gamma*d3; d2 += sqrt( 1+d2*d2 ); d2 *= d2;
-    x[0] = d1;
-    x[1] = d2;
-    x +=2;
-  }
-  return 0;
-}
-
-#undef normal_drand_core
-
-/*************************************************
- * Exponential random number based distributions *
- *************************************************/
 
 /*****************************************************************************
  * Generate an exponential random number. Range is (0,inf)                   *
  * f(x) = exp(-x) for x>0, 0 otherwise                                       *
  *****************************************************************************/
 
-double mt_exp_drand( mt_handle h ) {
+double
+mt_drande( mt_rng_t * rng ) {
   uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-  return -log(drand53_o(a,b));
+  URAND32( rng, a );
+  URAND32( rng, b );
+  return -log( drand53_c1(a,b) );
 }
 
-int mt_exp_drand_fill( mt_handle h, double * x, size_t n ) {
+void
+mt_drande_fill( mt_rng_t * rng,
+                double * x,
+                size_t n ) {
   uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  for(;n;n--) {
-    urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-    *(x++) = -log(drand53_o(a,b));
+
+  for( ; n; n-- ) {
+    URAND32( rng, a );
+    URAND32( rng, b );
+    *(x++) = -log( drand53_c1(a,b) );
   }
-  return 0;
-}
-
-/*****************************************************************************
- * Generate a double exponential distributed random number.                  *
- * Range is (-inf,inf) f(x) = 0.5*exp(-|x|)                                  *
- *****************************************************************************/
-
-double mt_dblexp_drand( mt_handle h ) {
-  double u;
-  uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-  u += u;
-  return (u<=1) ? log(u) : -log(u-1);
-}
-
-int mt_dblexp_drand_fill( mt_handle h, double * x, size_t n ) {
-  double u;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  for(;n;n--) {
-    urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-    u += u;
-    *(x++) = (u<=1) ? log(u) : -log(u-1);
-  }
-  return 0;
-}
-
-/*****************************************************************************
- * Generate a Gumbel distributed random number (minimum case).               *
- * Range is (-inf,inf), f(x) = exp(x)exp(-exp(x))                            *
- *****************************************************************************/
-
-double mt_gumbel_drand( mt_handle h ) {
-  uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-  return log(-log(drand53_o(a,b)));
-}
-
-int mt_gumbel_drand_fill( mt_handle h, double * x, size_t n ) {
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  for(;n;n--) {
-    urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-    *(x++) = log(-log(drand53_o(a,b)));
-  }
-  return 0;
-}
-
-/*****************************************************************************
- * Generate a Weibull distributed random number. Range is (0,inf)            *
- * f(x) = gamma*(x^(gamma-1))*exp(-x^gamma)                                  *
- *****************************************************************************/
-
-// FIXME: Optimize integer and sqrt cases of pow??
-
-double mt_weibull_drand( mt_handle h, double gamma ) {
-  double rgamma = 1/gamma;
-  uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-  return pow(-log(drand53_o(a,b)),rgamma);
-}
-
-int mt_weibull_drand_fill( mt_handle h, double gamma,
-                           double * x, size_t n ) {
-  double rgamma = 1/gamma;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  for(;n;n--) {
-    urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-    *(x++) = pow(-log(drand53_o(a,b)),rgamma);
-  }
-  return 0;
-}
-
-/********************************
- * Other distribution functions *
- ********************************/
-
-/*****************************************************************************
- * Generate a Cauchy distributed random number. Range is (-inf,inf)          *
- * f(x) = 1/ ( pi*(1+x^2) )                                                  *
- *****************************************************************************/
-
-double mt_cauchy_drand( mt_handle h ) {
-  uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-  return tan( M_PI*( drand53_o(a,b)-0.5 ) );
-}
-
-int mt_cauchy_drand_fill( mt_handle h, double * x, size_t n ) {
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  for(;n;n--) {
-    urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b);
-    *(x++) = tan( M_PI*( drand53_o(a,b)-0.5 ) );
-  }
-  return 0;
-}
-
-/*****************************************************************************
- * Generate a Tukey-lambda distributed random number. Range is (-inf,inf)    *
- * f(x) has no simple closed form                                            *
- *****************************************************************************/
-
-double mt_lambda_drand( mt_handle h, double lambda ) {
-  double u;
-  uint32_t a, b;
-  urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-  if      ( lambda==-1   ) u = 1/(1-u) - 1/u;
-  else if ( lambda==-0.5 ) u = 1/sqrt(1-u) - 1/sqrt(u), u += u;
-  else if ( lambda==0    ) u = log(u/(1-u));
-  else if ( lambda==0.5  ) u = sqrt(u) - sqrt(1-u), u += u;
-  else if ( lambda==1    ) u += u - 1;
-  else                     u = ( pow(u,lambda) - pow(1-u,lambda) )/lambda;
-  return u;
-}
-
-int mt_lambda_drand_fill( mt_handle h, double lambda,
-                          double * x, size_t n ) {
-  double u;
-  uint32_t a, b;
-  if( h==NULL || x==NULL || n<1 ) return 1;
-  if(        lambda==-1   ) {
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      *(x++) = 1/(1-u) - 1/u;
-    }
-  } else if( lambda==-0.5 ) {
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      u = 1/sqrt(1-u) - 1/sqrt(u);
-      *(x++) = u + u;
-    }
-  } else if( lambda==0    ) {
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      *(x++) = log(u/(1-u));
-    }
-  } else if( lambda==0.5  ) {
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      u = sqrt(u) - sqrt(1-u);
-      *(x++) = u + u;
-    }
-  } else if( lambda==1    ) {
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      *(x++) = u + u - 1;
-    }
-  } else {
-    lambda = 1/lambda;
-    for(;n;n--) {
-      urand32((mt_gen_t *)h,a); urand32((mt_gen_t *)h,b); u = drand53_o(a,b);
-      *(x++) = ( pow(u,lambda) - pow(1-u,lambda) ) * lambda;
-    }
-  }
-  return 0;
 }
 
 /*****************************************************************************
@@ -542,41 +524,41 @@ int mt_lambda_drand_fill( mt_handle h, double lambda,
  * Routine generally valid for 1 <= n <= min(2^32,int_max)                   *
  *****************************************************************************/
 
-int mt_randperm( mt_handle h, int * x, int n ) {
+void
+mt_randperm( mt_rng_t * rng,
+             int * x,
+             int n ) {
   uint32_t a, d;
   int i, t, r;
 
-  // Error checking
-  if( h==NULL || x==NULL || n<1 ) return 1;
-
   // Create the initial permutation
+
   for( i=0; i<n; i++ ) x[i] = i;
 
   // Apply a random swap to each element of the permutation such that
   // any of the n! permutations could be generated with equal
   // probability. Note: The method used to pick a random number on
   // [0...t-1] ([0...n-i-1]) uses the highest quality (most
-  // significant) bits of a urand32 to determine an _exactly_
+  // significant) bits of a URAND32 to determine an _exactly_
   // uniformly distributed rand. A simpler "mod n" method uses the
   // least significant bits and is not exactly uniform unless 2^32 is
   // an exact multiple of t. Note: the d calculation is done with
   // double precision because 2^32 cannot be represented with 32-bit
   // ints and not all 32-bit integers have an exact single precision
   // representation.
+
   for( i=0; i<n-1; i++ ) {
     t = n-i;
-    d = (uint32_t)((double)4294967296./(double)t);
+    d = (uint32_t)(4294967296./(double)t);
     do {
-      urand32((mt_gen_t *)h,a);
+      URAND32( rng, a );
       r = a/d;
     } while( r>=t );
     r += i;
-    t = x[i];
+    t    = x[i];
     x[i] = x[r];
     x[r] = t;
   }
-
-  return 0;
 }
 
 /*****************************************************************************
@@ -584,20 +566,21 @@ int mt_randperm( mt_handle h, int * x, int n ) {
  * This routine works for 1 <= n <= min(2^32,size_t_max)                     *
  *****************************************************************************/
 
-int mt_shuffle( mt_handle h, void * x, size_t n, size_t s ) {
+void
+mt_shuffle( mt_rng_t * rng,
+            void * x,
+            size_t n,
+            size_t s ) {
   uint32_t a, d;
   size_t i, t, r;
   char *xi, *xr, c;
-
-  // Error checking
-  if( h==NULL || x==NULL || n<1 || s<1 ) return 1;
 
   // See randperm comment
   for( i=0; i<n-1; i++ ) {
     t = n-i;
     d = (size_t)((double)4294967296./(double)t);
     do {
-      urand32((mt_gen_t *)h,a);
+      URAND32( rng, a );
       r = a/d;
     } while( r>=t );
     r += i;
@@ -609,6 +592,4 @@ int mt_shuffle( mt_handle h, void * x, size_t n, size_t s ) {
       *(xr++) = c;
     }
   }
-
-  return 0;
 }

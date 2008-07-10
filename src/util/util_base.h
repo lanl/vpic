@@ -19,7 +19,7 @@
 #define END_C_DECLS
 #endif
 
-#include <stdlib.h> // For malloc, realloc, free, size_t, NULL
+#include <stdlib.h> // For exit, size_t, NULL
 #include <string.h> // For string and memory manipulation
 #include <math.h>   // For math prototypes
 #include <stdint.h> // For fixed width integer types
@@ -168,10 +168,10 @@
 // Given an integer data type "type", MASK_BIT_RANGE returns a bit
 // field of that type for which bits [f,l] inclusive are 1 and all
 // other bits are zero.  Note that: 0<=f<=l<CHAR_BIT*sizeof(type) and
-// f must be safe agaisnt multiple dereferencing.
+// f must be safe against multiple dereferencing.
 
 #define MASK_BIT_RANGE(type,f,l) \
-  ( ( ( (type)1 << ( (l) - (f) + 1 ) ) - 1 ) << (f) )
+  ( ( ( ((type)1) << ( (l) - (f) + 1 ) ) - 1 ) << (f) )
 
 // The following macros give a provide a simple logging capabilty. Due
 // to the way they work, usage needs double parenthesis. That is:
@@ -211,21 +211,66 @@
   exit(1);                                                 \
 } END_PRIMITIVE
 
-// FIXME: DEPRECATE THIS
-typedef const char *error_code;
-#define ERROR_CODE(s) \
-  ((error_code)(__FILE__"("EXPAND_AND_STRINGIFY(__LINE__)"): "s))
-#define NO_ERROR ((error_code)NULL)
+// Element wise (rather than byte wise) mem{cpy,move,set} semantics
+
+#define COPY(  d, s, n ) do { size_t _sz = (n)*sizeof(*(d)); if( _sz>0 ) memcpy(  (d), (s), _sz ); } while(0)
+#define MOVE(  d, s, n ) do { size_t _sz = (n)*sizeof(*(d)); if( _sz>0 ) memmove( (d), (s), _sz ); } while(0)
+#define CLEAR( d,    n ) do { size_t _sz = (n)*sizeof(*(d)); if( _sz>0 ) memset(  (d),   0, _sz ); } while(0)
 
 BEGIN_C_DECLS
 
 // In util.c
 
-void *
-malloc_aligned( size_t n, size_t a );
+// MALLOC is guaranteed to succeed from the caller's point of view
+// (thus, _no_ NULL checking the pointer is necessary).  n is the
+// number of elements of the type of x to allocate (_not_ the number
+// of bytes to allocate).  n==0 is a request for no elements and x is
+// set NULL as a result.
+
+#define MALLOC(x,n)                                                 \
+  util_malloc( "MALLOC( "#x", "#n" (%lu bytes) ) at "               \
+               __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)") failed", \
+               &(x), (n)*sizeof(*(x)) ) 
 
 void
-free_aligned( void * mem );
+util_malloc( const char * err_fmt, // Has exactly one %lu in it
+             void * mem_ref,
+             size_t n );
+
+// FREE frees memory allocated via MALLOC above.  It is safe to pass
+// any value returned by MALLOC to FREE (_including_ a null pointer).
+// The pointer to the memory will be set to NULL to indicate that it
+// no longer points to anything.
+
+#define FREE(x) util_free(&(x))
+
+void
+util_free( void * mem_ref );
+
+// MALLOC_ALIGNED behaves equivalently to MALLOC.  The alignment must
+// be a power of two.  Alignments smaller than 16 will be rounded up
+// to 16.
+
+#define MALLOC_ALIGNED(x,n,a)                                               \
+  util_malloc_aligned( "MALLOC_ALIGNED( "#x", "                             \
+                                         #n" (%lu bytes), "                 \
+                                         #a" (%lu bytes) ) at "             \
+                       __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)") failed", \
+                       &(x), (n)*sizeof(*(x)), (a) ) 
+
+
+void
+util_malloc_aligned( const char * err_fmt, // Has exactly two %lu in it
+                     void * mem_ref,
+                     size_t n,
+                     size_t a );
+
+// FREE_ALIGNED behaves equivalently to FREE.
+
+#define FREE_ALIGNED(x) util_free_aligned(&(x))
+
+void
+util_free_aligned( void * mem_ref );
 
 void
 print_log( const char *fmt, ... );

@@ -1,4 +1,4 @@
-#include <emitter.h>
+#include "emitter.h"
 
 emitter_t *
 new_emitter( const char * name,
@@ -6,6 +6,7 @@ new_emitter( const char * name,
              emission_model_t emission_model,
              int max_component,
              emitter_t **e_list ) {
+  char * buf;
   emitter_t * e;
   int len;
 
@@ -22,27 +23,25 @@ new_emitter( const char * name,
     // contain the emitter.  The proper behavior should be to silently
     // return NULL rather than throw an error condition.
 
+    // FIXME: KJB-BOTH BEHAVIORS ARE UNCOOL.  I'LL FIX THIS LATER.
+
     // ERROR(("Invalid max_component requested for emitter \"%s\".",name));
     return NULL;
   }
 
   // Create the emitter
 
-  // sizeof(emitter_t) includes the termininating null of name
-  e = (emitter_t *)malloc(sizeof(emitter_t)+len);
-  if( e==NULL ) ERROR(("Could not allocate emitter"));
+  // sizeof(e[0]) includes the termininating null of name
+  MALLOC( buf, sizeof(e[0])+len ); e = (emitter_t *)buf;
 
   // Initialize the emitter
 
   e->sp             = sp;
   e->emission_model = emission_model;
-  memset( e->model_parameters, 0, MAX_EMISSION_MODEL_SIZE );
-  e->component =
-    (int * ALIGNED(16))malloc_aligned( max_component*sizeof(int), 16 );
-  if( e->component==NULL ) ERROR(("Could not allocate region components"));
+  CLEAR( e->model_parameters, MAX_EMISSION_MODEL_SIZE );
+  MALLOC_ALIGNED( e->component, max_component, 16 );
   e->n_component   = 0;
   e->max_component = max_component;
-
 
   e->next = *e_list;
   strcpy( e->name, name );
@@ -58,8 +57,8 @@ delete_emitter_list( emitter_t **e ) {
   if( e==NULL ) return;
   while( *e!=NULL ) {
     next = (*e)->next;
-    free_aligned( (*e)->component );
-    free( (*e) );
+    FREE_ALIGNED( (*e)->component );
+    FREE( (*e) );
     (*e) = next;
   }
 }

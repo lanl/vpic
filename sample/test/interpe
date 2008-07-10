@@ -21,12 +21,8 @@ begin_initialization {
                         L, L, L,   // Grid high corner
                         1, 1, 1,   // Grid resolution
                         1, 1, 1 ); // Processor configuration
-
   define_material("vacuum",1.0,1.0,0.0);
-  define_species("test_species",1.,npart);
-
-  finalize_materials();
-  finalize_species();
+  finalize_field_advance( _standard_field_advance );
 
   field(1,1,1).ex  = 0;
   field(1,2,1).ex  = 1;
@@ -43,11 +39,12 @@ begin_initialization {
   field(1,2,1).ez  = 10;
   field(2,2,1).ez  = 11;
 
+  species_t * sp = define_species( "test_species", 1., npart, npart, 0, 0 );
+
   // Hack into vpic internals 
 
   int failed = 0;
   load_interpolator(interpolator,field,grid); 
-  species_t *sp = find_species_name("test_species",species_list);
   sp->np = npart; 
 
 # define test_e(X,DX,DY,DZ,VAL)                         \
@@ -59,7 +56,7 @@ begin_initialization {
     sp->p[n].ux = 0;                                    \
     sp->p[n].uy = 0;                                    \
     sp->p[n].uz = 0;                                    \
-    sp->p[n].q  = mt_cauchy_drand(rng);                 \
+    sp->p[n].q  = mt_drandn(rng);                       \
   }                                                     \
   advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,\
              accumulator, interpolator, grid );         \

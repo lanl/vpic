@@ -130,8 +130,8 @@ begin_initialization {
   global->iparticle_interval = status_interval; // Do not dump
   global->restart_interval   = status_interval; // Do not dump
 
-  /////////////////
-  // Setup the grid
+  //////////////////////////
+  // Setup the field advance
 
   // Setup basic grid parameters
   grid->dt = dt;
@@ -152,24 +152,23 @@ begin_initialization {
   set_domain_particle_bc( BOUNDARY(-1,0,0), reflect_particles );
   set_domain_particle_bc( BOUNDARY( 1,0,0), reflect_particles );
 
-  ////////////////////
-  // Setup the species
-
-  // Allow 50% more local_particles in case of non-uniformity
-  define_species("ion",      ec/mi,1.5*Ni/nproc(),40);
-  define_species("electron",-ec/me,1.5*Ne/nproc(),20);
-  finalize_species();
-
-  //////////////////
-  // Setup materials
-
   define_material( "vacuum", 1 );
-  finalize_materials();
   // Note: define_material defaults to isotropic materials with mu=1,sigma=0
   // Tensor electronic, magnetic and conductive materials are supported
   // though. See "shapes" for how to define them and assign them to regions.
   // Also, space is initially filled with the first material defined.
-  
+
+  finalize_field_advance();
+
+  ////////////////////
+  // Setup the species
+
+  // Allow 50% more local_particles in case of non-uniformity
+  // VPIC will pick the number of movers to use for each species
+  // Both species use out-of-place sorting
+  species_t * ion      = define_species( "ion",       ec/mi, 1.5*Ni/nproc(), -1, 40, 1 );
+  species_t * electron = define_species( "electron", -ec/me, 1.5*Ne/nproc(), -1, 20, 1 );
+
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
 
@@ -241,12 +240,8 @@ begin_initialization {
 
   double ymin = rank()*Ly/nproc(), ymax = (rank()+1)*Ly/nproc();
 
-  species_id ion      = lookup_species("ion");
-  species_id electron = lookup_species("electron");
-
   repeat( Ni/nproc() ) {
     double x, y, z, ux, uy, uz, d0;
-    error_code err;
 
     // Pick an appropriately distributed random location for the pair
     do {
@@ -267,8 +262,7 @@ begin_initialization {
     d0 = gdri*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udri;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
-    err = inject_particle( ion, x, y, z, ux, uy, uz, qi );
-    if( err ) sim_log_local(err);
+    inject_particle( ion,      x, y, z, ux, uy, uz, qi, 0, 0 );
 
     ux = maxwellian_rand(uthe);
     uy = maxwellian_rand(uthe);
@@ -276,10 +270,7 @@ begin_initialization {
     d0 = gdre*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udre;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
-    err = inject_particle( electron, x, y, z, ux, uy, uz, qe );
-    if( err ) sim_log_local(err);
-    // inject particle can also take a particle age (on [0,1]) but age
-    // defaults to 0 (which it should for the initial inject)
+    inject_particle( electron, x, y, z, ux, uy, uz, qe, 0, 0 );
   }
 
   // Upon completion of the initialization, the following occurs:

@@ -1,7 +1,7 @@
 #ifndef _pipelines_h_
 #define _pipelines_h_
 
-#include <util_base.h>
+#include "../util_base.h"
 
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
 // FIXME: Should CELL_SPU_BUILDs include this (and if so, under what

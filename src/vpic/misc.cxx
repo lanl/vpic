@@ -8,102 +8,97 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic.hxx"
 
-void vpic_simulation::IUO_allocate_fields(void) {
-  int nx1 = grid->nx + 1, ny1 = grid->ny+1, nz1 = grid->nz+1;
-  field = new_field(grid);
-  interpolator = new_interpolator(grid);
-  accumulator = new_accumulators(grid);
-  hydro = new_hydro(grid);
-  // Pre-size communications buffers
-  // This is done to get 99.9% of memory allocation over with before
-  // the simulation starts running
-  mp_size_recv_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t),grid->mp);
-  mp_size_recv_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t),grid->mp);
-  mp_size_recv_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t),grid->mp);
-  mp_size_recv_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t),grid->mp);
-  mp_size_recv_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t),grid->mp);
-  mp_size_recv_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t),grid->mp);
-  mp_size_send_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t),grid->mp);
-}
+// FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
 
-error_code vpic_simulation::inject_particle( species_id id,
-                                             double x,  double y,  double z,
-                                             double ux, double uy, double uz,
-                                             double q,  double age ) {
-  species_t *sp;
+void
+vpic_simulation::inject_particle( species_t * sp,
+                                  double x,  double y,  double z,
+                                  double ux, double uy, double uz,
+                                  double q,  double age,
+                                  int update_rhob ) {
   int ix, iy, iz;
-  particle_injector_t pi;
 
   // Check input parameters
-  if( age<0 || age>1 ) return ERROR_CODE("Invalid age");
-  if( grid==NULL ) return ERROR_CODE("NULL grid");
-  if( accumulator==NULL ) return ERROR_CODE("NULL accumulator");
-  if( species_list==NULL ) return ERROR_CODE("No species defined");
-  if( id<0 || id>species_list->id ) return ERROR_CODE("Invalid species ID");
-  if( species_lookup==NULL ) return ERROR_CODE("Species list not finalized");
-  sp = species_lookup[id];
-  if( sp->p==NULL  || sp->np>=sp->max_np ||
-      sp->pm==NULL || sp->nm>=sp->max_nm )
-    return ERROR_CODE("No room to inject");
+  if( grid==NULL        ) ERROR(( "Grid not setup yet" ));
+  if( accumulator==NULL ) ERROR(( "Accumulator not setup yet" ));
+  if( sp==NULL          ) ERROR(( "Invalid species" ));
+
+  const double x0 = (double)grid->x0, y0 = (double)grid->y0, z0 = (double)grid->z0;
+  const double x1 = (double)grid->x1, y1 = (double)grid->y1, z1 = (double)grid->z1;
+  const int    nx = grid->nx,         ny = grid->ny,         nz = grid->nz;
   
+  // Do not inject if the particle is strictly outside the local domain
+  // or if a far wall of local domain shared with a neighbor
+  // FIXME: DO THIS THE PHASE-3 WAY WITH GRID->NEIGHBOR
+  // NOT THE PHASE-2 WAY WITH GRID->BC
+
+  if( x<x0 | x>x1 | ( x==x1 & grid->bc[BOUNDARY(1,0,0)]>=0 ) ) return;
+  if( y<y0 | y>y1 | ( y==y1 & grid->bc[BOUNDARY(0,1,0)]>=0 ) ) return;
+  if( z<z0 | z>z1 | ( z==z1 & grid->bc[BOUNDARY(0,0,1)]>=0 ) ) return;
+
+  // This node should inject the particle
+    
+  if( sp->np>=sp->max_np ) ERROR(( "No room to inject particle" ));
+
   // Compute the injection cell and coordinate in cell coordinate system
   // BJA:  Note the use of double precision here for accurate particle 
   //       placement on large meshes. 
-  x -= (double)grid->x0;
-  y -= (double)grid->y0;
-  z -= (double)grid->z0;
-  x /= (double)grid->dx;
-  y /= (double)grid->dy;
-  z /= (double)grid->dz;
-  ix = (int)floor(x);
-  iy = (int)floor(y);
-  iz = (int)floor(z); 
-  x -= ix;
-  y -= iy;
-  z -= iz;
-  x += x-1;
-  y += y-1;
-  z += z-1;
-  ix++;
-  iy++;
-  iz++;
-    
-  // Allow injection on the far walls of the local computational domain
-  if( x<-1+1e-6 && ix==grid->nx+1 ) x=1, ix--;
-  if( y<-1+1e-6 && iy==grid->ny+1 ) y=1, iy--;
-  if( z<-1+1e-6 && iz==grid->nz+1 ) z=1, iz--;
+ 
+  // The ifs allow for injection on the far walls of the local computational
+  // domain when necessary
+ 
+  x  = ((double)nx)*((x-x0)/(x1-x0)); // x is rigorously on [0,nx]
+  ix = (int)x;                        // ix is rigorously on [0,nx]
+  x -= (double)ix;                    // x is rigorously on [0,1)
+  x  = (x+x)-1;                       // x is rigorously on [-1,1)
+  if( ix==nx ) x = 1;                 // On far wall ... conditional move
+  if( ix==nx ) ix = nx-1;             // On far wall ... conditional move
+  ix++;                               // Adjust for mesh indexing
 
-  // Check if requested injection point is inbounds
-  if( ix<1 || ix>grid->nx || iy<1 || iy>grid->ny || iz<1 || iz>grid->nz )
-    return ERROR_CODE("Injection point is outside local domain");
-  
-  // Load the particle injector
-  pi.dx = x;
-  pi.dy = y;
-  pi.dz = z;
-  pi.i  = INDEX_FORTRAN_3(ix,iy,iz,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1);
-  pi.ux = ux;
-  pi.uy = uy;
-  pi.uz = uz;
-  pi.q  = q;
+  y  = ((double)ny)*((y-y0)/(y1-y0)); // y is rigorously on [0,ny]
+  iy = (int)y;                        // iy is rigorously on [0,ny]
+  y -= (double)iy;                    // y is rigorously on [0,1)
+  y  = (y+y)-1;                       // y is rigorously on [-1,1)
+  if( iy==ny ) y = 1;                 // On far wall ... conditional move
+  if( iy==ny ) iy = ny-1;             // On far wall ... conditional move
+  iy++;                               // Adjust for mesh indexing
 
-  age *= grid->cvac*grid->dt/sqrt( ux*ux + uy*uy + uz*uz + 1 );
-  pi.dispx = ux*age/grid->dx;
-  pi.dispy = uy*age/grid->dy;
-  pi.dispz = uz*age/grid->dz;
+  z  = ((double)nz)*((z-z0)/(z1-z0)); // z is rigorously on [0,nz]
+  iz = (int)z;                        // iz is rigorously on [0,nz]
+  z -= (double)iz;                    // z is rigorously on [0,1)
+  z  = (z+z)-1;                       // z is rigorously on [-1,1)
+  if( iz==nz ) z = 1;                 // On far wall ... conditional move
+  if( iz==nz ) iz = nz-1;             // On far wall ... conditional move
+  iz++;                               // Adjust for mesh indexing
 
-  // Inject the particle
-  sp->nm += inject_p( sp->p, sp->np, sp->pm+sp->nm, field, accumulator,
-                      &pi, grid );
-  sp->np++;
-  // FIXME: if inject_p fails, sp->np should not be incremented
+  particle_t * p = sp->p + (sp->np++);
+  p->dx = (float)x; // Note: Might be rounded to be on [-1,1]
+  p->dy = (float)y; // Note: Might be rounded to be on [-1,1]
+  p->dz = (float)z; // Note: Might be rounded to be on [-1,1]
+  p->i  = INDEX_FORTRAN_3(ix,iy,iz,0,nx+1,0,ny+1,0,nz+1);
+  p->ux = (float)ux;
+  p->uy = (float)uy;
+  p->uz = (float)uz;
+  p->q  = q;
 
-  return NO_ERROR;
+  if( update_rhob ) {
+    p->q = -q;
+    accumulate_rhob( field, p, grid );
+    p->q =  q;
+  }
+
+  if( age!=0 ) {
+    if( sp->nm>=sp->max_nm ) WARNING(( "No movers available to age particle" ));
+    particle_mover_t * pm = sp->pm + sp->nm;
+    age *= grid->cvac*grid->dt/sqrt( ux*ux + uy*uy + uz*uz + 1 );
+    pm->dispx = ux*age*grid->rdx;
+    pm->dispy = uy*age*grid->rdy;
+    pm->dispz = uz*age*grid->rdz;
+    pm->i     = sp->np-1;
+    sp->nm += move_p( sp->p, pm, accumulator, grid );
+  }
+
 }
+

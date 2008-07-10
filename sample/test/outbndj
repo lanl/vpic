@@ -31,23 +31,20 @@ begin_initialization {
                         nx, ny, nz, // Grid high corner
                         nx, ny, nz, // Grid resolution
                         1, 1, 1 );  // Processor topology
-
   define_material("vacuum",1.0,1.0,0.0);
-  species_id test_species = define_species("test_species",1.,npart);
+  finalize_field_advance();
 
-  finalize_materials();
-  finalize_species();
+  species_t * sp = define_species( "test_species", 1., npart, npart, 0, 0 );
 
   // Hack into vpic internals
 
-  double cdt_dx = grid->cvac*grid->dt/grid->dx;
-  double cdt_dy = grid->cvac*grid->dt/grid->dy;
-  double cdt_dz = grid->cvac*grid->dt/grid->dz;
+  double cdt_dx = grid->cvac*grid->dt*grid->rdx;
+  double cdt_dy = grid->cvac*grid->dt*grid->rdy;
+  double cdt_dz = grid->cvac*grid->dt*grid->rdz;
   int num_pass = 0, num_fail = 0;
   double worst_div_err = 0;
 
-  species_t *sp = find_species_id(test_species,species_list);
-  for(n_iter=50000;n_iter;n_iter--) {
+  for( n_iter=50000; n_iter; n_iter-- ) {
 
     // Load the particles 
     sp->np = 0;
@@ -56,22 +53,22 @@ begin_initialization {
       double betay = uniform_rand(-ny,ny)/cdt_dy;
       double betaz = uniform_rand(-nz,nz)/cdt_dz;
       double gamma = 1/sqrt( 1 - betax*betax - betay*betay - betaz*betaz );
-      error_code err = inject_particle( test_species,
-                                        uniform_rand(0,nx),
-                                        uniform_rand(0,ny),
-                                        uniform_rand(0,nz),
-                                        betax*gamma,
-                                        betay*gamma,
-                                        betaz*gamma,
-                                        uniform_rand(0,1) ); 
-      if( err ) sim_log("Injection error - " << err);
+      inject_particle( sp,
+                       uniform_rand(0,nx),
+                       uniform_rand(0,ny),
+                       uniform_rand(0,nz),
+                       betax*gamma,
+                       betay*gamma,
+                       betaz*gamma,
+                       uniform_rand(0,1),
+                       0, 0 ); 
     }
     
  
     // Compute the initial rho
-    clear_rhof( field, grid );
+    field_advance->method->clear_rhof( field, grid );
     accumulate_rho_p( field, sp->p, sp->np, grid );
-    synchronize_rhof( field, grid );
+    field_advance->method->synchronize_rho( field, grid );
     for( int z=1; z<=nz+1; z++ ) 
       for( int y=1; y<=ny+1; y++ ) 
         for( int x=1; x<=nx+1; x++ ) 
@@ -82,15 +79,15 @@ begin_initialization {
     clear_accumulators( accumulator, grid );
     advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                accumulator, interpolator, grid );
-    clear_jf( field, grid );
+    field_advance->method->clear_jf( field, grid );
     reduce_accumulators( accumulator, grid );
     unload_accumulator( field, accumulator, grid );
-    synchronize_jf( field, grid );
+    field_advance->method->synchronize_jf( field, grid );
     
     // Compute the final rho
-    clear_rhof( field, grid );
+    field_advance->method->clear_rhof( field, grid );
     accumulate_rho_p( field, sp->p, sp->np, grid );
-    synchronize_rhof( field, grid );
+    field_advance->method->synchronize_rho( field, grid );
   
     // Compute divj
     for( int z=1; z<=nz+1; z++ ) 

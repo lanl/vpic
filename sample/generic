@@ -1,3 +1,4 @@
+// FIXME: THIS INPUT DECK NEEDS REVAMPED FOR NEW SOURCE TREE
 //========================================================================
 //  Generic plasma deck for VPIC intended for use in testing performance 
 //
@@ -92,31 +93,20 @@ begin_initialization {
   // Set up high level simulation parameters
 
   sim_log("Setting up high-level simulation parameters."); 
+  verbose              = 0;
+  num_comm_round       = 6;
   status_interval      = 200; 
   sync_shared_interval = status_interval/10; 
   clean_div_e_interval = status_interval/10; 
   clean_div_b_interval = status_interval/10; 
 
-  // Set up the species
-  // Allow additional local particles in case of non-uniformity.
-  
-  sim_log("Setting up species.");
-  species_id electron = define_species( "electron",      // species name 
-                                        -1,              // species q/m 
-                                        1.2*Ne/nproc(),  // num particles on local domain
-                                        20 );            // sort interval
-  finalize_species(); 
-
   // Set up grid
 
   sim_log("Setting up computational grid."); 
-  grid->dx       = cell_size; 
-  grid->dy       = cell_size;  
-  grid->dz       = cell_size;  
-  grid->dt       = dt; 
-  grid->cvac     = 1;
-  grid->eps0     = 1; 
-  grid->damp     = damp; 
+  grid->dt   = dt; 
+  grid->cvac = 1;
+  grid->eps0 = 1; 
+  grid->damp = damp; 
 
   sim_log("Setting up periodic mesh."); 
   define_periodic_grid( 0,         -0.5*Ly,    -0.5*Lz,        // Low corner
@@ -143,6 +133,17 @@ begin_initialization {
   if ( ix==0 )            set_domain_field_bc( BOUNDARY(-1,0,0), absorb_fields ); 
   if ( ix==topology_x-1 ) set_domain_field_bc( BOUNDARY( 1,0,0), absorb_fields ); 
 
+  // Set up the species
+  // Allow additional local particles in case of non-uniformity.
+  
+  sim_log("Setting up species.");
+  species_t *electron = define_species( "electron",      // species name 
+                                        -1,              // species q/m 
+                                        1.2*Ne/nproc(),  // num particles on local domain
+                                        -1,              // num movers (-1 means let computer choose)
+                                        20,              // sort interval
+                                        1 );             // faster sort (out of place)
+
   // Set up Maxwellian reinjection B.C.  Particles that strike lower and upper x boundaries
   // are reinjected randomly from a Maxwellian distribution. (Implemented via a callback
   // function).   This is a common topology for our 3D problems. 
@@ -150,13 +151,8 @@ begin_initialization {
   sim_log("Setting up Maxwellian reinjection particle boundary condition."); 
 
   maxwellian_reflux_t boundary_data[1];
-  boundary_data->nspec   = 1;              // Number of species - 1 for now
-  int isp=0;
-  boundary_data->id[isp]      = electron; 
-  boundary_data->ut_perp[isp] = uthe;      // vth_e in perp direction
-  boundary_data->ut_para[isp] = uthe;      // vth_e in para direction
-  ++isp; 
-
+  boundary_data->ut_perp[electron->id] = uthe;      // vth_e in perp direction
+  boundary_data->ut_para[electron->id] = uthe;      // vth_e in para direction
   int maxwellian_reinjection = add_boundary( grid, maxwellian_reflux, boundary_data ); 
  
   // Set up materials
@@ -164,7 +160,7 @@ begin_initialization {
   sim_log("Setting up materials."); 
   define_material( "vacuum", 1 );
   define_material( "impermeable_vacuum", 1 ); 
-  finalize_materials(); 
+  finalize_field_advance( vacuum_field_advance );
  
   // Paint the simulation volume with materials and boundary conditions
 
@@ -177,18 +173,22 @@ begin_initialization {
   if ( load_particles ) {
     sim_log("Loading particles."); 
     // Fast load of particles--don't bother fixing artificial domain correlations
-    double xmin=grid->x0, xmax=grid->x0+grid->dx*grid->nx;  
-    double ymin=grid->y0, ymax=grid->y0+grid->dy*grid->ny;  
-    double zmin=grid->z0, zmax=grid->z0+grid->dz*grid->nz;  
+    double xmin=grid->x0, xmax=grid->x1;
+    double ymin=grid->y0, ymax=grid->y1;
+    double zmin=grid->z0, zmax=grid->z1;
     repeat( Ne/(topology_x*topology_y*topology_z) ) {
       double x = uniform_rand( xmin, xmax ); 
       double y = uniform_rand( ymin, ymax ); 
       double z = uniform_rand( zmin, zmax ); 
-      if ( iv_region ) continue;           // Particle fell in iv_region.  Don't load.
-      inject_particle( electron, x, y, z, 
+      if ( iv_region ) continue; // Particle fell in iv_region.  Don't load.
+      inject_particle( electron,
+                       x, y, z, 
                        maxwellian_rand(uthe), 
                        maxwellian_rand(uthe), 
-                       maxwellian_rand(uthe), qe ); 
+                       maxwellian_rand(uthe),
+                       qe,
+                       0,   // Age (jsut say zero during startup ... particle injection typically wants non-zero here)
+                       0 ); // Do not accumulate inverse to bound charge rhob (rhob will be computed to be consistent with this charge density and initial zero electric field after initialization)
     }  
   }
 

@@ -16,8 +16,8 @@
 #include <assert.h>
 #include <mpi.h>
 #include <dacs.h>
-#include <DaCSUtils.h>
-#include <MPData.hxx>
+#include "DaCSUtils.h"
+#include "MPData.hxx"
 
 /*!
 	\struct CMPolicyMPIDaCS CMPolicyMPIDaCS.h
@@ -77,8 +77,6 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		errcode_ = dacs_init(DACS_INIT_SINGLE_THREADED);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		std::cerr << "host process initialized" << std::endl;
-
 		// create a group for this process and its child
 		errcode_ = dacs_group_init(&group_, 0);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
@@ -93,7 +91,6 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		errcode_ = dacs_get_num_avail_children(DACS_DE_CBE, &children);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 		assert(children>0);
-		std::cerr << "children " << children << std::endl;
 		children = 1;
 
 		errcode_ = dacs_reserve_children(DACS_DE_CBE, &children, &peer_de_);

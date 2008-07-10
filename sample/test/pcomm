@@ -27,6 +27,7 @@ begin_initialization {
   }
 
   num_step = 40;
+
   define_periodic_grid( 0,  0,  0,     // Box low corner
                         10, 10, 10,    // Box high corner
                         10, 10, 10,    // Box resolution
@@ -35,21 +36,18 @@ begin_initialization {
   grid->cvac = 1;
   grid->eps0 = 1;
   grid->damp = 0;
+  define_material( "vacuum", 1 );
+  finalize_field_advance();
 
-  define_species("test_species",1,1,0,2);
-  finalize_species();
+  species_t * sp = define_species( "test_species", 1, 1, 1, 0, 0 );
 
-  define_material("vacuum",1);
-  finalize_materials();
-
-  if( rank()==0 )
-    inject_particle( "test_species", 2.5, 2.5, 2.5, 1, 1, 1, 0 );
+  inject_particle( sp, 2.5, 2.5, 2.5, 1, 1, 1, 0, 0, 0 );
 
   global->fail = 0;
 }
 
 begin_diagnostics {
-  species_t *sp = find_species_name( "test_species", species_list );
+  species_t * sp = find_species_name( "test_species", species_list );
 
   if( step==0 ) {
     if( rank()==0 ) {

@@ -1,5 +1,4 @@
-#include <boundary.h>
-#include <stdio.h> // for debugging output
+#include "boundary.h"
 
 // Special absorbing boundary condition that tallies the number of
 // particles absorbed of each species.
@@ -15,7 +14,7 @@ absorb_tally( void * params,
               const grid_t *g,
               species_t *s, 
               particle_injector_t **ppi,
-              mt_handle rng,
+              mt_rng_t *rng,
               int face ) {
   absorb_tally_t * absorb_tally_data = (absorb_tally_t *)params;
   int ispec; 
@@ -28,5 +27,6 @@ absorb_tally( void * params,
   if ( ispec==absorb_tally_data->nspec ) 
     ERROR(("Unknown species passed to boundary handler."));
   ++(absorb_tally_data->nabs[ispec]);
-}
 
+  accumulate_rhob( f, r, g );
+}

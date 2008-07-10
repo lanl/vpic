@@ -1,6 +1,4 @@
-#include <emitter.h>
-
-// FIXME: ERROR TRAPPING AND ERROR RETURNS
+#include "emitter.h"
 
 void
 ivory( emitter_t            *              e,      // Actual emitter
@@ -8,9 +6,10 @@ ivory( emitter_t            *              e,      // Actual emitter
        field_t              * ALIGNED(16)  f,      // rhob accum
        accumulator_t        * ALIGNED(128) a,      // injected current accum
        grid_t               *              g,      // matching grid
-       mt_handle                           rng ) { // Random number generator
+       mt_rng_t             *              rng ) { // Random number generator
   ivory_t * args = (ivory_t *)e->model_parameters;
-  particle_injector_t pi;
+  particle_t       * p;
+  particle_mover_t * pm;
   int i, n;
 
   // Loop over all components of the region
@@ -52,25 +51,34 @@ ivory( emitter_t            *              e,      // Actual emitter
             sqrt((1./6.)*fabs(e->sp->q_m*fi[i].e##X*fi[i].e##X*fi[i].e##X)/g->d##X)/   \
             (float)m;                                                                  \
          if( e->sp->q_m<0 ) qp = -qp;                                                  \
+         if( e->sp->np+m>=e->sp->max_np ) { \
+           WARNING(( "Insufficent room for emission; some particles skipped" )); \
+           m = e->sp->max_np - e->sp->np; \
+           if( m<0 ) m=0; \
+         } \
          for( ; m; m-- ) {                                                             \
-           pi.d##X     = -(dir 1);                                                     \
-           pi.d##Y     = 2*mt_drand(rng)-1;                                            \
-           pi.d##Z     = 2*mt_drand(rng)-1;                                            \
-           pi.i        = i;                                                            \
-           pi.u##X     = dir fabs( args->ut_para*mt_normal_drand(rng) );               \
-           pi.u##Y     = args->ut_perp*mt_normal_drand(rng);                           \
-           pi.u##Z     = args->ut_perp*mt_normal_drand(rng);                           \
-           pi.q        = qp;                                                           \
-           age         = mt_drand(rng);                                                \
+           p           = e->sp->p  + e->sp->np++; \
+           p->d##X     = -(dir 1);                                                     \
+           p->d##Y     = 2*mt_drand_c(rng)-1;                                            \
+           p->d##Z     = 2*mt_drand_c(rng)-1;                                            \
+           p->i        = i;                                                            \
+           p->u##X     = dir fabs( args->ut_para*mt_drandn(rng) );               \
+           p->u##Y     = args->ut_perp*mt_drandn(rng);                           \
+           p->u##Z     = args->ut_perp*mt_drandn(rng);                           \
+           p->q        = -qp; accumulate_rhob( f, p, g ); p->q = qp;                   \
+           if( e->sp->nm>=e->sp->max_nm ) { \
+             WARNING(( "Insufficient movers to age emitted particle" )); \
+             continue; \
+           } \
+           pm          = e->sp->pm + e->sp->nm; \
+           age         = mt_drand_c0(rng);                                                \
            age        *= g->cvac*g->dt /                                               \
-             sqrt( pi.u##X*pi.u##X + pi.u##Y*pi.u##Y + pi.u##Z*pi.u##Z + 1 );          \
-           pi.disp##X  = pi.u##X*age/g->d##X;                                          \
-           pi.disp##Y  = pi.u##Y*age/g->d##Y;                                          \
-           pi.disp##Z  = pi.u##Z*age/g->d##Z;                                          \
-           e->sp->nm  += inject_p( e->sp->p, e->sp->np, e->sp->pm+e->sp->nm,           \
-                                   f, a, &pi, g );                                     \
-           e->sp->np++;                                                                \
-           /* FIXME: if inject_p fails, sp->np should not be incremented */            \
+             sqrt( p->u##X*p->u##X + p->u##Y*p->u##Y + p->u##Z*p->u##Z + 1 );          \
+           pm->disp##X  = p->u##X*age/g->d##X;                                          \
+           pm->disp##Y  = p->u##Y*age/g->d##Y;                                          \
+           pm->disp##Z  = p->u##Z*age/g->d##Z;                                          \
+           pm->i       = e->sp->np-1; \
+           e->sp->nm  += move_p( e->sp->p, pm, a, g ); \
          }                                                                             \
        }                                                                               \
      } END_PRIMITIVE

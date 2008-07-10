@@ -11,7 +11,7 @@
 #ifndef _grid_h_
 #define _grid_h_
 
-#include <util.h>
+#include "../util/util.h"
 
 // Define a "pointer to boundary handler function" type.
 
@@ -33,7 +33,7 @@ typedef void (*boundary_handler_t)( void                  * params,
                                     const struct grid     * g,
                                     struct species        * s, 
                                     struct particle_injector ** ppi, 
-                                    mt_handle     rng, 
+                                    mt_rng_t              * rng, 
                                     int           face );
 
 enum boundary_handler_enums {
@@ -109,12 +109,16 @@ typedef struct grid {
   mp_handle mp;           // Communications handle
   float dt, cvac, eps0;   // System of units
   float damp;             // Radiation damping parameter
+                          // FIXME: DOESN'T GO HERE
 
   /* Phase 2 grid data structures */
-  float x0, y0, z0;       // Corner of cell 1,1,1 */
-  float dx, dy, dz;       // Cell dimensions */
-  int nx, ny, nz;         // Number of cells in domain */
-  int bc[27];             // (-1:1,-1:1,-1:1) FORTRAN indexed array of
+  float x0, y0, z0;       // Min corner local domain (must be coherent) */
+  float x1, y1, z1;       // Max corner local domain (must be coherent) */
+  float dx, dy, dz;       // Cell dimensions (CONVENIENCE ... USE
+                          // x0,x1 WHEN DECIDING WHICH NODE TO USE!)
+  float rdx, rdy, rdz;    // Inverse cell dimensions (CONVENIENCE)
+  int   nx, ny, nz;       // Number of cells in domain */
+  int   bc[27];           // (-1:1,-1:1,-1:1) FORTRAN indexed array of
   /**/                    // boundary conditions to apply at domain edge
   /**/                    // 0 ... nproc-1 ... comm boundary condition
   /**/                    // <0 ... locally applied boundary condition
@@ -146,10 +150,17 @@ typedef struct grid {
                           //   rangeh = range[rank+1]-1.
                           // Note: rangeh-rangel <~ 2^31 / 6
 
+  int32_t * ALIGNED(128) sfc; // Given a local index of a voxel (on
+                              // 0:(g->nx+2)*(g->ny+2)*(g->nz+2)-1), return
+                              // the space filling curve index of that voxel.
+                              // Used in particle sorting to improve cache
+                              // locality and thread load balance.
+ 
   // Enable user-defined boundary handlers
 
   int nb;                 // Number of custom boundary conditions
   boundary_t * boundary;  // Head of array of boundary_t.
+                          // FIXME: DOESN'T GO HERE!
 
 } grid_t;
 
@@ -179,10 +190,10 @@ IUO_add_boundary( grid_t *g,
 // In grid_structors.c
 
 grid_t *
-new_grid(void);
+new_grid( void );
 
 void
-delete_grid( grid_t **g );
+delete_grid( grid_t * g );
 
 // In ops.c
 
@@ -200,24 +211,145 @@ set_pbc( grid_t *g, int bound, int pbc );
 
 // In partition.c
 
+// g->{n,d}{x,y,z} is _coherent_ on all nodes in the domain after
+// these calls as are g->{x,y,z}{0,1}.  Due to the vagaries of
+// floating point, though g->nx*g->dx may not be the exactly the same
+// as g->x1-g->x0 though.  Thus matters when doing things like
+// robustly converting global position coordinates to/from local index
+// + offset position coordinates.
+//
+// The robust procedure to convert _from_ a global coordinate to a
+// local coordinate is:
+//
+// (1) Test if this node has ownership of the point using
+// g->{x,y,z}{0,1}.  Points with x==g->x1 exactly boundaries should be
+// considered part of the local domain only if the corresponding
+// x-boundary condition is local.  Similarly for y- and z-.
+//
+// (2) If this node has ownership of the point, compute the relative
+// cell and offset of the x-coordinate via
+// g->nx*((x-g->x0)/(g->x1-g->x0)), _NOT_ (x-g->x0)/g->dx and _NOT_
+// (x-g->x0)*(1/g->dx)!  Similarly for y and z.
+//
+// (3) Break the cell and offsets into integer and fractional parts.
+// Particles exactly on the far wall should have their fractional
+// particles set to 1 and their integer parts subtracted by 1.  Double
+// the fractional part and subtract by one to get the cell centered
+// offset.  Convert the local cell coordinates into a local cell index
+// using FORTRAN indexing.
+//
+// Reverse this protocol to robustly convert from cell+offset to
+// global coordinates.  Due to the vagaries of floating point, the
+// inverse process may not be exact.
+
 void
 partition_periodic_box( grid_t *g,
-			double glx, double gly, double glz,
-			int gnx, int gny, int gnz,
-			int gpx, int gpy, int gpz );
+			double gx0, double gy0, double gz0,
+			double gx1, double gy1, double gz1,
+                        int gnx, int gny, int gnz,
+                        int gpx, int gpy, int gpz );
 
 void
 partition_absorbing_box( grid_t *g,
-			 double glx, double gly, double glz,
-			 int gnx, int gny, int gnz,
-			 int gpx, int gpy, int gpz,
-			 int pbc );
+                         double gx0, double gy0, double gz0,
+                         double gx1, double gy1, double gz1,
+                         int gnx, int gny, int gnz,
+                         int gpx, int gpy, int gpz,
+                         int pbc );
 
 void
 partition_metal_box( grid_t *g,
-		     double glx, double gly, double glz,
-		     int gnx, int gny, int gnz,
-		     int gpx, int gpy, int gpz );
+                     double gx0, double gy0, double gz0,
+                     double gx1, double gy1, double gz1,
+                     int gnx, int gny, int gnz,
+                     int gpx, int gpy, int gpz );
+
+// In grid_comm.c
+
+// FIXME: SHOULD TAKE A RAW PORT INDEX INSTEAD OF A PORT COORDS
+
+// Start receiving a message from the node.
+// Only one message recv may be pending at a time on a given port.
+
+void
+begin_recv_port( int i,    // x port coord ([-1,0,1])
+                 int j,    // y port coord ([-1,0,1])
+                 int k,    // z port coord ([-1,0,1])
+                 int size, // Expected size in bytes
+                 const grid_t * g );
+
+// Returns pointer to the buffer that begin send will use for the next
+// send on the given port.  The buffer is guaranteed to have enough
+// room for size bytes.  This is only valid to call if no sends on
+// that port are pending.
+
+void * ALIGNED(16)
+size_send_port( int i,    // x port coord ([-1,0,1])
+                int j,    // y port coord ([-1,0,1])
+                int k,    // z port coord ([-1,0,1])
+                int size, // Needed send size in bytes
+                const grid_t * g );
+
+// Begin sending size bytes of the buffer out the given port.  Only
+// one message send may be pending at a time on a given port.  (FIXME:
+// WHAT HAPPENS IF SIZE_SEND_PORT size < begin_send_port
+// size??)
+
+void
+begin_send_port( int i,    // x port coord ([-1,0,1])
+                 int j,    // y port coord ([-1,0,1])
+                 int k,    // z port coord ([-1,0,1])
+                 int size, // Number of bytes to send (in bytes)
+                 const grid_t * g );
+
+// Complete the pending recv on the given port.  Only valid to call if
+// there is a pending recv.  Returns pointer to a buffer containing
+// the received data.  (FIXME: WHAT HAPPENS IF EXPECTED RECV SIZE
+// GIVEN IN BEGIN_RECV DOES NOT MATCH END_RECV??)
+
+void * ALIGNED(16)
+end_recv_port( int i, // x port coord ([-1,0,1])
+               int j, // y port coord ([-1,0,1])
+               int k, // z port coord ([-1,0,1])
+               const grid_t * g );
+
+// Complete the pending send on the given port.  Only valid to call if
+// there is a pending send on the port.  Note that this guarantees
+// that send port is available to the caller for additional use, not
+// necessarily that the message has arrived at the destination of the
+// port.
+
+void
+end_send_port( int i, // x port coord ([-1,0,1])
+               int j, // y port coord ([-1,0,1])
+               int k, // z port coord ([-1,0,1])
+               const grid_t * g );
+
+// In distribute_voxels.c
+
+// Given a block of voxels to be processed, determine the number of
+// voxels and the first voxel a particular job assigned to a pipeline
+// should process.  The return voxel is the number of voxels to
+// process.
+//
+// It is assumed that the pipelines will process voxels in FORTRAN
+// ordering (e.g. inner loop increments x-index).
+//
+// jobs are indexed from 0 to n_job-1.  jobs are _always_ have the
+// number of voxels an integer multiple of the bundle size.  If job 
+// is set to n_job, this function will compute the voxel index of
+// the first voxel in the final incomplete bundle and return the
+// number of voxels in the final incomplete bundle.
+
+// FIXME: MACROIZE THIS SO BOTH PPE AND SPE CAN USE IT!
+
+int
+distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
+                   int y0, int y1,     // range of y-indices (inclusive)
+                   int z0, int z1,     // range of z-indices (inclusive)
+                   int bundle,         // number of voxels in a bundle
+                   int job, int n_job, // job ... on [0,n_job-1]
+                   int * _x, int * _y, int * _z );
 
 END_C_DECLS
 

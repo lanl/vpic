@@ -12,7 +12,7 @@
 #ifndef FileIO_hxx
 #define FileIO_hxx
 
-#include <FileIOData.hxx>
+#include "FileIOData.hxx"
 
 /*!
 	\class FileIO FileIO.h

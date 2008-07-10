@@ -12,7 +12,7 @@
 #ifndef StandardIOPolicy_hxx
 #define StandardIOPolicy_hxx
 
-#include <FileIOData.hxx>
+#include "FileIOData.hxx"
 #include <string>
 #include <cstdarg>
 #include <cstdio>

@@ -1,7 +1,7 @@
 #ifndef _material_h_
 #define _material_h_
 
-#include <grid.h>
+#include "../util/util.h"
 
 /*****************************************************************************
  * Materials module
@@ -39,54 +39,37 @@ typedef struct material {
   material_id id;               // Unique identifier for material
   float epsx, epsy, epsz;       // Relative permittivity along x,y,z axes
   float mux, muy, muz;          // Relative permeability along x,y,z axes
-  float sigmax, sigmay, sigmaz; // Physical conductivity along x,y,z axes
+  float sigmax, sigmay, sigmaz; // Electrical conductivity along x,y,z axes
+  float zetax,  zetay,  zetaz;  // Magnetic conductivity along x,y,z axes
   struct material *next;        // Next material in list
   char name[1];                 // Name of the material (resized at alloc)
 } material_t;
   
-typedef struct material_coefficient {
-  float decayx, drivex;         // Decay of ex and drive of (curl H)x and Jx
-  float decayy, drivey;         // Decay of ey and drive of (curl H)y and Jy
-  float decayz, drivez;         // Decay of ez and drive of (curl H)z and Jz
-  float rmux, rmuy, rmuz;       // Reciprocle of relative permeability
-  float nonconductive;          // Divergence cleaning related coefficients
-  float epsx, epsy, epsz; 
-  float pad[3];                 // For alignment and future expansion
-} material_coefficient_t;
-
 BEGIN_C_DECLS
 
 // In material.c
 
 int
-num_materials( const material_t *m_list );
+num_materials( const material_t * m_list );
 
 material_id
-new_material( const char *name,
+new_material( const char * name,
               float epsx,   float epsy,   float epsz,
               float mux,    float muy,    float muz,
               float sigmax, float sigmay, float sigmaz,
-              material_t **m_list );
+              float zetax,  float zetay,  float zetaz,
+              material_t ** m_list );
 
 void
-delete_material_list( material_t **m_list );
+delete_material_list( material_t ** m_list );
 
 material_t *
 find_material_id( material_id id,
-                  material_t *m_list );
+                  material_t * m_list );
 
 material_t *
-find_material_name( const char *name,
-                    material_t *m_list );
-
-// In coefficient.c
-
-material_coefficient_t * ALIGNED(16)
-new_material_coefficients( const grid_t *g,
-                           const material_t *m_list );
-
-void
-delete_material_coefficients( material_coefficient_t ** ALIGNED(16) mc );
+find_material_name( const char * name,
+                    material_t * m_list );
 
 END_C_DECLS
 

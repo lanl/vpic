@@ -16,8 +16,8 @@
 #include <assert.h>
 #include <mpi.h>
 #include <dacs.h>
-#include "DaCSUtils.h"
-#include "MPData.hxx"
+#include <DaCSUtils.h>
+#include <MPData.hxx>
 
 /*!
 	\struct CMPolicyMPIDaCS CMPolicyMPIDaCS.h
@@ -77,29 +77,49 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		errcode_ = dacs_init(DACS_INIT_SINGLE_THREADED);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-		// create a group for this process and its child
-		errcode_ = dacs_group_init(&group_, 0);
-		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+		//std::cerr << "host process initialized" << std::endl;
 
-		// add this process to group
-		errcode_ = dacs_group_add_member(DACS_DE_SELF,
-			DACS_PID_SELF, group_);
-		process_dacs_errcode(errcode_, __FILE__, __LINE__);
-		
 		// check for available children and try to reserve one
 		uint32_t children;
 		errcode_ = dacs_get_num_avail_children(DACS_DE_CBE, &children);
+		if(children == 0) {
+			static char h[1024];
+			gethostname(h, 1024);
+			std::cerr << "host: " << h << std::endl;
+		}
+		else {
+			children = 1;
+		} // if
+
+#if 1
+		uint32_t sum;
+		MPI_Allreduce(&children, &sum, 1, MPI_INT,
+			MPI_SUM, MPI_COMM_WORLD);
+		
+		if(sum != size_) {
+			if(rank_ == 0) {
+				std::cerr << "DaCS failed to reserve children. Check output for failed hosts." << std::endl;
+			} // if
+
+			errcode_ = dacs_exit();
+			process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
+			MPI_Finalize();
+			exit(sum);
+		} // if
+#endif
+
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
-		assert(children>0);
-		children = 1;
+
+		//assert(children>0);
+		//std::cerr << "children " << children << std::endl;
 
 		errcode_ = dacs_reserve_children(DACS_DE_CBE, &children, &peer_de_);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
-
-        // get args to pass on to child
-        const char ** args = argc > 2 ?
-            const_cast<const char **>(&argv[2]) : NULL;
+		// get args to pass on to child
+		const char ** args = argc > 2 ?
+			const_cast<const char **>(&argv[2]) : NULL;
 
 		// environment
 		const char * envp[1000];
@@ -114,13 +134,33 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 
 		envp[e] = NULL;
 
-#if 1
-		errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
-			DACS_PROC_LOCAL_FILE, &peer_pid_);	
+		uint32_t tries(0);
+		uint32_t sleeptime(rank_*1000);
+		do {
+			usleep(sleeptime);
+#if !defined(DACS_FILE_REMOTE)
+			errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
+				DACS_PROC_LOCAL_FILE, &peer_pid_);	
 #else
-		errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
-			DACS_PROC_REMOTE_FILE, &peer_pid_);	
+			errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
+				DACS_PROC_REMOTE_FILE, &peer_pid_);	
 #endif
+			if(errcode_ == DACS_SUCCESS) {
+				continue;
+			} // if
+			
+			sleeptime = 500000;
+		} while(++tries<3);
+
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
+		// create a group for this process and its child
+		errcode_ = dacs_group_init(&group_, 0);
+		process_dacs_errcode(errcode_, __FILE__, __LINE__);
+
+		// add this process to group
+		errcode_ = dacs_group_add_member(DACS_DE_SELF,
+			DACS_PID_SELF, group_);
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// add the new child process to the group

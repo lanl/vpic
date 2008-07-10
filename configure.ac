@@ -47,7 +47,7 @@ CCS_WITH_BUILDSTYLE
 CCS_WITH_ADDRESSING
 CCS_WITH_CPUMODEL
 CCS_WITH_EXTENSION
-#CCS_WITH_PARTICLE_SORT
+CCS_WITH_DACS_LAUNCH
 
 ################################################################################
 # extra flags
@@ -81,22 +81,6 @@ case "$buildstyle" in
 		LIB_EXTENSION="$EXTENSION"
 		ACCEL_EXTENSION="$EXTENSION"
 		MPRELAY_EXTENSION="$EXTENSION"
-
-		########################################################################
-		# particle sorting method
-		########################################################################
-#		case "$PARTICLE_SORT" in
-#
-#			in-place)
-#				AC_DEFINE(IN_PLACE)
-#			;;
-#
-#			out-of-place)
-#				AC_DEFINE(OUT_OF_PLACE)
-#			;;
-#
-#		esac
-
 	;;
 
 	standard_cell)
@@ -211,6 +195,12 @@ case "$buildstyle" in
 		AC_SUBST(CLEAN_LOCAL, ["clean-mprelay-exe clean-accelerator-exe"])
 		AC_DEFINE(USE_MPRELAY)
 		AC_DEFINE(USE_DACS_P2P)
+
+		if test "$DACS_LAUNCH" = "local" ; then
+			AC_DEFINE(DACS_FILE_LOCAL)
+		else			
+			AC_DEFINE(DACS_FILE_REMOTE)
+		fi
 
 		CCS_WITH_DACS(hybrid)
 

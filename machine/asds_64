@@ -40,6 +40,12 @@ DACS_LDFLAGS="-L/opt/cell/sdk/prototype/usr/lib64"
 DACS_LIBS="-ldacs_hybrid"
 
 ################################################################################
+# DACS_LAUNCH - specify whether DaCS should use local or remote file for launch
+# location is relative to the Opteron
+################################################################################
+DACS_LAUNCH=local
+
+################################################################################
 # MPI configuration
 # MPI_CPPFLAGS - configure MPI preprocessor flags
 # MPI_LDFLAGS - configure MPI link flags

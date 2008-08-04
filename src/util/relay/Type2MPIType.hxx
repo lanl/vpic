@@ -10,11 +10,6 @@ template<> struct Type2MPIType<char>
 		inline static MPI_Datatype type() { return MPI_BYTE; }
 	}; // struct Type2MPIType
 
-template<> struct Type2MPIType<uint32_t>
-	{
-		inline static MPI_Datatype type() { return MPI_INT; }
-	}; // struct Type2MPIType
-
 template<> struct Type2MPIType<int>
 	{
 		inline static MPI_Datatype type() { return MPI_INT; }

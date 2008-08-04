@@ -130,8 +130,9 @@ void MPRelay::start()
 					dmp_send_request_[request.id] = request;
 
 					// blocking receive of crc value
-					p2p.recv(static_cast<char *>(&crc), sizeof(uint32_t),
-						10101, 10101);
+					p2p.recv(&crc, 1, 10101, 10101);
+
+std::cerr << "CRC Value: " << crc << std::endl;
 
 					// blocking receive from point-to-point peer
 					p2p.recv(cbuf_send_[request.id].data(), request.count,

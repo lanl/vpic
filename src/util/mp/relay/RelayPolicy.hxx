@@ -299,7 +299,7 @@ struct RelayPolicy {
 
 		uint32_t crc = 27; 
 
-		p2p.isend(static_cast<char *>(&crc), sizeof(uint32_t), 10101, 10101);
+		p2p.isend(&crc, 1, 10101, 10101);
 
         /*
         !!!FIXME!!!

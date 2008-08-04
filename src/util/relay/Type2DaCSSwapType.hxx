@@ -11,6 +11,12 @@ template<> struct Type2DaCSSwapType<char>
 			{ return DACS_BYTE_SWAP_DISABLE; }
 	}; // struct Type2DaCSSwapType
 
+template<> struct Type2DaCSSwapType<uint32_t>
+	{
+		inline static DACS_BYTE_SWAP_T type()
+			{ return DACS_BYTE_SWAP_WORD; }
+	}; // struct Type2DaCSSwapType
+
 template<> struct Type2DaCSSwapType<int>
 	{
 		inline static DACS_BYTE_SWAP_T type()

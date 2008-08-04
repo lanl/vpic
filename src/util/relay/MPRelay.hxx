@@ -72,7 +72,6 @@ void MPRelay::start()
 		bool relay(true);
 		int filesize;
 		double wtime;
-		uint32_t crc;
 		MPRequest_T<MP_HOST> request;
 
 		while(relay) {
@@ -118,11 +117,6 @@ void MPRelay::start()
 					// in case the host process is ever required to
 					// do real work.
 				case P2PTag::isend:
-					// blocking receive of crc value
-					p2p.recv(&crc, 1, 10101, 10101);
-					dmp.send(&crc, 1, request.peer, 10101);
-					std::cerr << "CRC Value: " << crc << std::endl;
-
 /*
 					std::cout << "isend request" << std::endl;
 					std::cout << request;
@@ -148,10 +142,6 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::irecv:
-					// blocking receive of crc value
-					dmp.recv(&crc, 1, request.peer, 10101, 10101);
-					p2p.send(&crc, 1, 10101);
-					std::cerr << "CRC Value: " << crc << std::endl;
 /*
 					std::cout << "irecv request" << std::endl;
 					std::cout << request;

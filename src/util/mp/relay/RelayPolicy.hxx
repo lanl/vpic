@@ -297,6 +297,10 @@ struct RelayPolicy {
         MPRequest request(P2PTag::isend, tag, size, sbuf, receiver);
         p2p.post(request);
 
+		uint32_t crc = 27; 
+
+		p2p.isend(static_cast<char *>(&crc), sizeof(uint32_t), 10101, 10101);
+
         /*
         !!!FIXME!!!
         int errcode = p2p.isend(static_cast<char *>(mp->sbuf[sbuf]),

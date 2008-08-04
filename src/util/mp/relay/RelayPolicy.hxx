@@ -245,6 +245,10 @@ struct RelayPolicy {
         MPRequest request(P2PTag::irecv, tag, size, rbuf, sender);
         p2p.post(request);
 
+		uint32_t crc = 0; 
+
+		p2p.recv(&crc, 1, 10101, 10101);
+		MESSAGE(("CRC Value Received %d", crc));
         
         /*
         !!!FIXME!!!

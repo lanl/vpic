@@ -118,6 +118,11 @@ void MPRelay::start()
 					// in case the host process is ever required to
 					// do real work.
 				case P2PTag::isend:
+					// blocking receive of crc value
+					p2p.recv(&crc, 1, 10101, 10101);
+					dmp.send(&crc, 1, request.peer, 10101);
+					std::cerr << "CRC Value: " << crc << std::endl;
+
 /*
 					std::cout << "isend request" << std::endl;
 					std::cout << request;
@@ -128,11 +133,6 @@ void MPRelay::start()
 
 					// save request
 					dmp_send_request_[request.id] = request;
-
-					// blocking receive of crc value
-					p2p.recv(&crc, 1, 10101, 10101);
-
-std::cerr << "CRC Value: " << crc << std::endl;
 
 					// blocking receive from point-to-point peer
 					p2p.recv(cbuf_send_[request.id].data(), request.count,
@@ -148,6 +148,10 @@ std::cerr << "CRC Value: " << crc << std::endl;
 					break;
 
 				case P2PTag::irecv:
+					// blocking receive of crc value
+					dmp.recv(&crc, 1, request.peer, 10101, 10101);
+					p2p.send(&crc, 1, 10101);
+					std::cerr << "CRC Value: " << crc << std::endl;
 /*
 					std::cout << "irecv request" << std::endl;
 					std::cout << request;

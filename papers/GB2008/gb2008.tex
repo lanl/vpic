@@ -1,4 +1,3 @@
-%\documentclass[letter,10pt]{article}
 \documentclass[journal,twoside]{IEEEtran}
 
 \usepackage{cite}
@@ -77,21 +76,38 @@ NY 10036.}% <- Need this
 We demonstrate the outstanding performance and scalability of the VPIC
 kinetic plasma modeling code on the heterogeneous IBM Roadrunner
 supercomputer at Los Alamos National Laboratory.  VPIC is a three-
-dimensional, relativistic, electromagnetic, particle-in-cell code that
-self-consistently evolves a kinetic plasma.  VPIC simulations of laser
-plasma interaction (LPI) will be conducted at unprecedented fidelity
-and scale---up to $1.0 \times 10^{12}$ macro particles on as many as
-$1.3 \times 10^8$ computational voxels---to accurately model the
-particle trapping physics occurring within a laser-driven hohlraum in
-an inertial confinement fusion experiment.  On these calculations,
-sustained performance of 0.365~Pflop/s is expected.  This capability
-opens up the exciting possibility of using VPIC to model, in a
-first-principles manner, an issue critical to the success of the
-multi-billion dollar DOE/NNSA National Ignition Facility.
+dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
+code that self-consistently evolves a kinetic plasma.  VPIC
+simulations of laser plasma interaction (LPI) were conducted at
+unprecedented fidelity and scale---up to $1.0 \times 10^{12}$ macro
+particles on as many as $130
+\times 10^6$ computational voxels---to accurately model the particle
+trapping physics occurring within a laser-driven hohlraum in an
+inertial confinement fusion experiment.  During a parameter study of
+laser reflectivity as a function of laser intensity under
+experimentally realizable hohlraum
+conditions~\cite{AAC_Conference_Paper}, sustained performance
+exceeding 0.374~Pflop/s was measured (with the inner loop itself
+achieving 0.488~Pflop/s).  Given the increasing importance of
+data motion limitations in high performance computing, it is notable
+that this performance was measured in a PIC code---a technique that
+typically requires more data motion per computation than other
+techniques (such as dense matrix computations, molecular dynamics
+N-body calculations and Monte-Carlo calculations) often used to
+demonstrate supercomputer performance.  This capability opens up the
+exciting possibility of using VPIC to model, in a first-principles
+manner, an issue critical to the success of the multi-billion dollar
+DOE/NNSA National Ignition Facility.
 \end{abstract}
 
 \begin{IEEEkeywords}
-FIXME, FIXME, FIXME, FIXME, FIXME
+particle in cell,
+laser plasma instability,
+inertial confinement fusion,
+high performance computing,
+heterogeneous architecture,
+memory management,
+petaflop
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -165,7 +181,7 @@ respectively; indeed, the U.~S.~National Nuclear Security
 Administration (NNSA), customers for this work, have reported that
 ``success of ICF depends on mitigating the undesirable effects of ...
 parametric instabilities.''~\cite{LLNL_LPI_webpage}
-% KJB: Don't like the ellipsis ... how long is full quote??
+% KJB: Don't like the ellipsis ... how long is the full quote??
 
 NIF employs random phase plates to break each laser beam into a
 collection of ``speckles'' or hot spots.  
@@ -461,6 +477,10 @@ particles per voxel depending on the above and the phenomena being
 studied to avoid enhanced computational particle collision rates and
 resolve fully resonant kinetic phenomena.
 
+\section{Comparison with other simulation techniques}
+
+FIXME WRITE THIS
+
 \section{VPIC Implementation}
 
 %\begin{table}
@@ -549,6 +569,7 @@ particle data, particle data is stored contiguously, memory aligned
 and organized for 4-vector SIMD.  As a result, the inner loop streams
 through particle data once using large aligned memory transfers under
 the hood---the ideal memory access pattern.
+% FIXME: INSTALL DATA LAYOUT
 
 % FIELD INTERPOLATION AND SORTING
 Field interpolation can likewise severely impact performance.  If

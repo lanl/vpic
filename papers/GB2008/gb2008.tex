@@ -47,7 +47,7 @@ Interaction on Roadrunner}
 
 % FIXME: CHECK IEEE MEMBERSHIP OF OTHER AUTHORS
 \author{K.~J.~Bowers,~\IEEEmembership{Member, IEEE},
-        B.~J.~Albright,
+        B.~J.~Albright~\IEEEmembership{Member, IEEE},
         B.~Bergen,
         L.~Yin,
         K.~J.~Barker
@@ -179,9 +179,9 @@ stimulated Raman (SRS) and Brillouin (SBS) scattering, where laser
 light scatters off electron and ion density fluctuations,
 respectively; indeed, the U.~S.~National Nuclear Security
 Administration (NNSA), customers for this work, have reported that
-``success of ICF depends on mitigating the undesirable effects of ...
-parametric instabilities.''~\cite{LLNL_LPI_webpage}
-% KJB: Don't like the ellipsis ... how long is the full quote??
+``success of ICF depends partly on mitigating the undesirable effects of
+two particular parametric instabilities, stimulated Raman scattering
+and stimulated Brillouin scattering.''~\cite{LLNL_LPI_webpage}
 
 NIF employs random phase plates to break each laser beam into a
 collection of ``speckles'' or hot spots.  
@@ -273,7 +273,7 @@ In the following, ``Problem 1'' refers to runs with
 $2000$~particles/voxel per species and ``Problem 2'' is the same
 problem, but at higher phase space fidelity ($6420$~particles/voxel
 per species).  These numbers of particles/voxel are comparable to
-published studies of LPI
+published 2D studies of LPI
 physics~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}.
 In both problems, at full scale (12240 cores), $31 \times 10^6$ voxels
 were used, with $0.31 \times 10^{12}$ and $1.0 \times 10^{12}$
@@ -317,10 +317,35 @@ plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
 % FIXME: INSET THIS AND ADD ROADRUNNER CAPTION
 \begin{figure*}
 \begin{center}
+
+%\vspace{-0.75in} % <--if we need space, we can crop the top of lpi.eps and uncomment this
 \includegraphics[width=7in]{figs/lpi.eps}
+
+\vspace{-3.75in}
+\hspace{-4in}
+\includegraphics[width=1.5in]{figs/lpi_comparison.eps}
+\vspace{1.5in}
+
 \caption{Bowing and self-focusing of electron plasma waves from a
 3D SRS simulation of an $f/4$ speckle. Displayed are isosurfaces of
-electron plasma waves with color indicating laser field.}
+longitudinal electric field $E_x$ (indicating the presence of electron plasma waves) 
+with color indicating laser field ($E_y$).  In the nonlinear evolution of SRS, the source
+for SRS backscatter (proportional to $E_x E_y$) loses coherence, as represented
+by the multi-colored coloring of the isosurfaces.
+Inset: SRS reflectivity as a function of incident laser peak intensity.  The laser 
+diffraction and computational meshes and are identical to those in Problems 1 and 2.  
+Squares represent reflectivity obtained from runs on a homogeneous cluster of Opteron cores 
+using 25 particles/voxel/species; diamonds are from a \textit{suite of calculations run on 
+Roadrunner at higher fidelity} (80 particles/voxel/species).
+As expected, the level of saturated reflectivity
+(the plateau) observed is the same in the two runs, but the lower noise afforded 
+by the higher number of particles/cell on Roadrunner leads to reflectivity onset 
+at slightly lower intensity, as predicted by theory~\cite{Yin_et_al_Phys_Plasmas_2006}.  
+These science runs are a stringent test of correctness of the Cell implementation 
+of VPIC.  Moreover, they allow us to better characterize the nonlinear, ``threshold'' 
+behavior of high SRS reflectivity in NIF-like plasma conditions, a key component of 
+reduced models of SRS in codes such as pF3D. 
+}
 \label{fig:lpi}
 \end{center}
 \end{figure*}
@@ -1057,8 +1082,8 @@ On a single Cell, measured performance on Roadrunner was $31.4$
 Gflop/s.  To test weak scalability, a series of runs were conducted by
 composing $5N \times 12 \times 12$ simulation domains for $N$
 connected units, each containing $720$ Cell CPU, for $1 \le N \le 17$
-(12240 Cell CPU).  As shown in Fig. YY, results were scalable up to a
-measured performance of $0.374$~Pflop/s.
+(12240 Cell CPU).  As shown in \fig{weakscaling}, results were scalable 
+up to a measured performance of $0.374$~Pflop/s.
 
 A similar study was done for the''Problem 1'' (2000 particles/voxel).
 Measured single-Cell performance was $28.7$~Gflop/s and, scaled up as
@@ -1072,6 +1097,25 @@ species, delocalize most rapidly and therefore need to be sorted most
 frequently.  On both problems, sort intervals were optimized with the
 ion sort interval a being a integer multiple of the electron sort
 interval.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=3.4in]{figs/weak_scaling.eps}
+
+[FIXME: INSERT TABLE HERE]. 
+
+
+\caption{Measured weak scaling on Roadrunner for two LPI physics problems. 
+Peak performance of $>0.374$ Pflop/s
+was measured for Problem 2 on 12240 cores.  The table lists the actual 
+measured performance numbers.}
+\label{fig:weakscaling}
+\end{center}
+\end{figure}
+
+
+
+
 
 % FIXME: NEED TO RECAST THE BELOW SECTIONS
 
@@ -1212,13 +1256,12 @@ particle-dominated simulations as well as expand the class of problems
 on which we can expect large speedups.  As discussed earlier, by
 Amdahl's law, the faster the particle push, the more important it is
 to accelerate the other parts of the algorithm.  We expect to make
-significant progress towards this by June 2008, when the full
+significant progress towards this by January 2009, when the full
 Roadrunner system becomes available to us for conducting science runs.
-This could make 0.4+ Pflop/s simulations of the LPI problems presented
-here possible, as well as enable calculations of even higher relevance
+This will enable calculations of even higher relevance
 to the NIF experiments. In particular, with an accelerated field
 solve, we will be able to directly model LPI from the $f/8$ NIF laser
-beams at a computational efficiency approaching that of P2.
+beams at a computational efficiency approaching that of Problem 2.
 
 \subsection*{Acknowledgments}
 

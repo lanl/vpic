@@ -80,7 +80,7 @@ dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
 code that self-consistently evolves a kinetic plasma.  VPIC
 simulations of laser plasma interaction (LPI) were conducted at
 unprecedented fidelity and scale---up to $1.0 \times 10^{12}$ macro
-particles on as many as $130
+particles on as many as $31
 \times 10^6$ computational voxels---to accurately model the particle
 trapping physics occurring within a laser-driven hohlraum in an
 inertial confinement fusion experiment.  During a parameter study of
@@ -210,7 +210,7 @@ high-resolution kinetic plasma simulations, as afforded by the use of
 VPIC on Roadrunner, that capture all of the wave-particle physics.
 These simulations must resolve complex trapped-particle orbits and
 complicated structures in phase space and therefore require the use of
-many simulation macroparticles (as many as thousands of
+many simulation macroparticles (in some cases, as many as thousands of
 particles/voxel of each species) to resolve the
 dynamics~\cite{Yin_et_al_Phys_Plasmas_2006}.
 
@@ -1068,7 +1068,7 @@ cost of field solve or other bookkeeping.
 
 \subsection{Measured Performance on Roadrunner}
 
-We begin with ``Problem 2'', which gave the highest level of
+We begin with Problem 2, which yielded the highest level of
 performance.  On a single Cell CPU, a $13 \times 14 \times 14$ mesh
 was used with $6420$ particles/voxel for each of the five plasma
 species.  Timing was conducted over $870$ time steps, corresponding to
@@ -1078,16 +1078,16 @@ an ion sort interval.  This averaging procedure ensured that the cost
 of particle sorting and the penalty for imperfect data locality were
 properly amortized.}
 
-On a single Cell, measured performance on Roadrunner was $31.4$
+On a single Cell CPU, measured performance on Roadrunner was $31.4$
 Gflop/s.  To test weak scalability, a series of runs were conducted by
 composing $5N \times 12 \times 12$ simulation domains for $N$
 connected units, each containing $720$ Cell CPU, for $1 \le N \le 17$
-(12240 Cell CPU).  As shown in \fig{weakscaling}, results were scalable 
-up to a measured performance of $0.374$~Pflop/s.
+(12240 Cell CPU).  As shown in the figure and table in \fig{weakscaling}, 
+results were scalable up to a measured performance of $0.374$~Pflop/s.
 
-A similar study was done for the''Problem 1'' (2000 particles/voxel).
+A similar study was done for the Problem 1 (2000 particles/voxel).
 Measured single-Cell performance was $28.7$~Gflop/s and, scaled up as
-above, performance on the full machine was measured at
+in Problem 2, performance on the full machine was measured at
 $0.340$~Pflop/s.
 
 Performance is a balance between loss of spatial locality (which
@@ -1102,20 +1102,39 @@ interval.
 \begin{center}
 \includegraphics[width=3.4in]{figs/weak_scaling.eps}
 
-[FIXME: INSERT TABLE HERE]. 
+\
 
+\begin{tabular}{ccccccc}
+\hline
+\hline
+$N$ & Cell & $n_x$ & $n_y$ & $n_z$ & Prob. 1 & Prob. 2  \\
+   & CPU        &        & &            & (Tflop/s) & (Tflop/s) \\
+\hline
+1  &  720  &  65  & 168 & 168  &  22.2 &  22.4 \\ 
+2  & 1440  & 130  & 168 & 168  &  43.6 &  44.8 \\
+3  & 2160  & 185  & 168 & 168  &  64.4 &       \\
+4  & 2880  & 260  & 168 & 168  &  86.2 &  88.4 \\
+8  & 5760  & 520  & 168 & 168  & 166.4 & 177.0 \\
+10 & 7200  & 650  & 168 & 168  & 205.4 &       \\
+12 & 8640  & 880  & 168 & 168  &       & 264.0 \\
+15 & 10800 & 975  & 168 & 168  &       & 328.1 \\
+16 & 11520 & 1040 & 168 & 168  &       & 363.3 \\
+17 & 12240 & 1105 & 168 & 168  & 340.2 & 374.2 \\
+\hline
+\end{tabular}
 
-\caption{Measured weak scaling on Roadrunner for two LPI physics problems. 
-Peak performance of $>0.374$ Pflop/s
-was measured for Problem 2 on 12240 cores.  The table lists the actual 
-measured performance numbers.}
+\caption{Measured weak scaling on Roadrunner for LPI physics. 
+The top panel shows performance vs. problem size for Problems 1 (squares)
+and 2 (diamonds). Peak performance of Problem 2 was measured  on 12240 Cell CPU
+of Roadrunner to be $>0.374$ Pflop/s.  The table lists the 
+measured performance numbers along with the total numbers $n_x$, $n_y$, and $n_z$ of 
+voxels in each spatial dimension.  Both problems exhibit linear scaling 
+with $y$-intercept near zero:  Problem 1 has fit $y=0.276x + 4.9703$ and
+$R^2=0.9996$; Problem 2 has fit $y=0.0301x + 1.6635$ (shown) 
+and $R^2 = 0.9995$.}
 \label{fig:weakscaling}
 \end{center}
 \end{figure}
-
-
-
-
 
 % FIXME: NEED TO RECAST THE BELOW SECTIONS
 
@@ -1257,11 +1276,12 @@ on which we can expect large speedups.  As discussed earlier, by
 Amdahl's law, the faster the particle push, the more important it is
 to accelerate the other parts of the algorithm.  We expect to make
 significant progress towards this by January 2009, when the full
-Roadrunner system becomes available to us for conducting science runs.
+Roadrunner system becomes available to us for science runs.
 This will enable calculations of even higher relevance
 to the NIF experiments. In particular, with an accelerated field
 solve, we will be able to directly model LPI from the $f/8$ NIF laser
-beams at a computational efficiency approaching that of Problem 2.
+beams at a computational efficiency comparable to that obtained in 
+Problem 2.
 
 \subsection*{Acknowledgments}
 

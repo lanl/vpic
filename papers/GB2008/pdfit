@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Usage: texit [article]
+#
+# article is the name of the article to compile.
+# article should have an article.tex and article.bib file in the current
+# directory
+#
+# pdfit compiles the LaTeX file from scratch and
+# produces a dvi, a ps file and a pdf file from it.
+#
+# Important errors and warnings (usually) from the compile are dumped to 
+# screen
+# (important = something that is your problem and you should fix ...)
+# (not important = the whiny TeX errors about inability to hypenate a
+#                  word such that the pagination agrees with the principles
+#                  of Feng-Shui or other such typographical nit-picking)
+#
+# article.lof, .lot, .log, .toc, .aux, .bbl, .blg, .dvi, .ps.gz and .ps
+# in the current directory will be overwritten
+#
+# Details about the errors can be found in the log files           
+
+rm -rf $1.lof $1.lot $1.log $1.toc $1.aux $1.bbl $1.blg $1.fgx $1.tbx $1.end
+
+latex '\scrollmode\input ' $1.tex
+bibtex $1
+latex '\scrollmode\input ' $1.tex
+latex '\scrollmode\input ' $1.tex
+latex '\scrollmode\input ' $1.tex
+dvips -Ppdf -j0 -o $1.ps $1.dvi
+ps2pdf13 $1.ps $1.pdf
+
+clear
+grep -n ! $1.log
+grep -n arning $1.log
+

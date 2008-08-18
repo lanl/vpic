@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# cleantex: Cleanup all the intermediate files created with building
+# latex documents in the current directory. texit output files (dvi, ps, ps.gz)
+# are not erased.
+
+rm -rf *.lof *.lot *.log *.toc *.aux *.bbl *.blg *.fgx *.tbx *.end

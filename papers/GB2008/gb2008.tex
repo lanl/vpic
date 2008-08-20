@@ -190,10 +190,10 @@ higher fidelity of the runs on Roadrunner leads to reflectivity onset
 at slightly lower intensity, as predicted by
 theory~\cite{Yin_et_al_Phys_Plasmas_2006}.  These science runs are a
 stringent test of correctness of the Cell implementation of VPIC.
-Moreover, they allow us to better characterize the nonlinear,
-``threshold'' behavior of high SRS reflectivity in NIF-like plasma
-conditions, a key component of reduced models of SRS in codes such as
-pF3D.}
+Moreover, they allow us to better characterize the nonlinear
+onset and saturation of high SRS reflectivity in NIF-like plasma
+conditions, the key physics to be implemented in reduced physics 
+models, such as pF3D.}
 \label{fig:lpi}
 \end{center}
 \end{figure*}
@@ -226,14 +226,27 @@ of two particular parametric instabilities, stimulated Raman
 scattering and stimulated Brillouin
 scattering.''~\cite{LLNL_LPI_webpage}
 
-The NIF employs random phase plates to break each laser beam into a
-collection of ``speckles'' or hot spots.  With VPIC running on the
-full Roadrunner platform, we have the opportunity for the first time
-to simulate \abinitio\ LPI within a solitary laser speckle under
-NIF-like conditions and \textit{fully resolve} the kinetic
-wave-particle dynamics.  This gives us a unique platform for
-understanding LPI that will translate into improved predictive
-modeling of ICF experiments and mitigation of risk for NIF ignition.
+% LIN:  Replace this paragraph with the one following: 
+
+%The NIF employs random phase plates to break each laser beam into a
+%collection of ``speckles'' or hot spots.  With VPIC running on the
+%full Roadrunner platform, we have the opportunity for the first time
+%to simulate \abinitio\ LPI within a solitary laser speckle under
+%NIF-like conditions and \textit{fully resolve} the kinetic
+%wave-particle dynamics.  This gives us a unique platform for
+%understanding LPI that will translate into improved predictive
+%modeling of ICF experiments and mitigation of risk for NIF ignition.
+
+The NIF employs random phase plates to break each laser beam into a 
+collection of ``speckles,'' or hot spots.  To mitigate SRS backscatter
+requires a predictive capability of SRS onset threshold and scaling 
+of reflectivity with laser intensity within a solitary laser speckle.  
+This long-sought research goal is enabled for the first time with VPIC
+running on the full Roadrunner platform and fully resolving the kinetic
+wave-particle dynamics. This gives us a unique platform for understanding
+LPI that will translate into improved predictive modeling of ICF experiments
+and mitigation of risk for ICF ignition. 
+
 
 To put this into context, for over 30 years, LPI has been one of
 the critical issues facing ICF fusion ignition experiments.  
@@ -244,10 +257,12 @@ to obtain the amount of laser backscatter from SRS and
 SBS in laser-driven hohlraum plasma.~\cite{Glenzer_Nature_Physics_2007,
 Labaune_Nature_Physics_2007}
 These codes compute SRS and SBS from
-analytic models with known limitations: the models possess neither a 
-laser threshold intensity, above which the reflectivity increases by 
-orders of magnitude, nor do they exhibit a nonlinear saturation in reflectivity 
-at high intensity. In contrast, both fearures are observed in \abinitio\ VPIC 
+analytic models with known limitations: the models 
+do not retain the electron trapping physics that nonlinearly determine both
+the instability onset at a laser threshold intensity, above which the 
+reflectivity increases by orders of magnitude, and the nonlinear saturation 
+mechanism, which causes reflectivity to saturate
+at high intensity.  In contrast, both fearures are observed in \abinitio\ VPIC 
 simulations (see the inset of \fig{lpi}) 
 as well as laboratory experiments.~\cite{Montgomery_et_al_Phys_Plasmas_2002}  
 
@@ -1182,8 +1197,9 @@ speedups.  We expect to make significant progress towards this by
 January 2009, when the full Roadrunner system becomes available to us
 for sustained science runs.  This will enable calculations of even
 higher relevance to the NIF experiments. In particular, with an
-accelerated field solve, we will be able to directly model LPI from
-the $f/8$ NIF laser beams at a computational efficiency comparable to
+accelerated field solve, we will be able to directly model both LPI from
+$f/8$ NIF laser beams and also the interaction of neighboring speckles,
+all at a computational efficiency comparable to
 that obtained in Problem 2.
 
 \subsection*{Acknowledgments}

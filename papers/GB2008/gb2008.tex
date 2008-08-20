@@ -49,7 +49,7 @@ Interaction on Roadrunner}
 \author{K.~J.~Bowers,~\IEEEmembership{Member, IEEE},
         B.~J.~Albright,~\IEEEmembership{Member, IEEE},
         B.~Bergen,
-        L.~Yin,
+        L.~Yin,           % <-- not an IEEE member
         K.~J.~Barker
         and~D.~J.~Kerbyson% <- Need this
 \thanks{
@@ -80,7 +80,7 @@ dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
 code that self-consistently evolves a kinetic plasma.  VPIC
 simulations of laser plasma interaction (LPI) were conducted at
 unprecedented fidelity and scale---up to $1.0 \times 10^{12}$~macro
-particles on as many as $31 \times 10^6$~computational voxels---to
+particles on as many as $136 \times 10^6$~computational voxels---to
 model accurately the particle trapping physics occurring within a
 laser-driven hohlraum in an inertial confinement fusion experiment.
 During a parameter study of laser reflectivity as a function of laser
@@ -178,8 +178,12 @@ a function of incident laser peak
 intensity~\cite{AAC_Conference_Paper}; the laser diffraction and
 computational meshes are comparable to Problems 1 and 2.  Squares
 represent reflectivity obtained from runs on a homogeneous cluster of
-Opteron cores; diamonds are from a
+Opteron cores (the Roadrunner ``base system,'' already deployed at 
+LANL); diamonds are from a
 \textit{suite of calculations run on Roadrunner at higher fidelity}.
+Both sets of simulations used $136 \times 10^6$ voxels; the ones 
+on the Opteron cluster used 25 particles/cell/species whereas the
+runs on Roadrunner used 80 particles per cell.  
 As expected, the level of saturated reflectivity (the plateau)
 observed is the same in the two runs, but the lower noise afforded by
 higher fidelity of the runs on Roadrunner leads to reflectivity onset
@@ -230,11 +234,41 @@ NIF-like conditions and \textit{fully resolve} the kinetic
 wave-particle dynamics.  This gives us a unique platform for
 understanding LPI that will translate into improved predictive
 modeling of ICF experiments and mitigation of risk for NIF ignition.
-The current NNSA strategy for LPI predictive modeling capability
-involves multi-scale physics codes, such as pF3D, whose models are
-calibrated with VPIC mo`adeling~\cite{Glenzer_Nature_Physics_2007,
-Labaune_Nature_Physics_2007}.
-% FIXME: MAKE MORE CLEAR WHAT PREDICTIVE CAPABILITIES WE BRING TO TABLE
+
+To put this into context, for over 30 years, LPI has been one of
+the critical issues facing ICF fusion ignition experiments.  
+The current NNSA strategy for estimating the effects of LPI
+centers on the use of paraxial codes, 
+such as pF3D~\cite{Berger_Phys_Plasmas_1998}, 
+to obtain the amount of laser backscatter from SRS and 
+SBS in laser-driven hohlraum plasma.~\cite{Glenzer_Nature_Physics_2007,
+Labaune_Nature_Physics_2007}
+These codes compute SRS and SBS from
+analytic models with known limitations: the models possess neither a 
+laser threshold intensity, above which the reflectivity increases by 
+orders of magnitude, nor do they exhibit a nonlinear saturation in reflectivity 
+at high intensity. In contrast, both fearures are observed in \abinitio\ VPIC 
+simulations (see the inset of \fig{lpi}) 
+as well as laboratory experiments.~\cite{Montgomery_et_al_Phys_Plasmas_2002}  
+
+Only recently, with the advent of VPIC modeling of entire laser speckles over 
+unprecedented space and time scales, has the state-of-the-art in kinetic 
+plasma simiulation advanced to the point where predictive LPI modeling 
+is even practicable.  This topic is of acute interest 
+to the ICF and high energy density physics communities and spurred a recent 
+Workshop on SRS and hohlraum energetics.\footnote{The SRS Assessment Workshop, 
+held May 7, 2008 in Livermore, California, USA.}  
+One of the outcomes of the Workshop was a decision to assess the 
+risk to existing ICF experimental designs and initiate integration of 
+LPI models derived from \abinitio\ modeling of LPI into pF3D.  
+
+A predictive capability for LPI will facilitate design of ICF ignition experiments 
+on the multi-billion dollar NIF facility that avoid the deleterious (and potentially
+damaging) effects of LPI. Moreover, it will enable 
+rapid and economical testing of candidate LPI mitigation strategies, such as the 
+use of high-$Z$ dopant in the hohlraum fill gas, under conditions that are difficult or
+expensive to assess in the laboratory.  
+
 
 \subsection{Plasma Physics Simulations}
 
@@ -261,10 +295,11 @@ $f/4$ beam (diffraction chosen to emulate laboratory experiments and
 prior calculations) is linearly polarized, of wavelength $\lambda_0 =
 351$~nm, and has peak intensity ranging from $I_0 = 10^{15} -
 10^{17}$~W/cm$^2$ at the center of the simulation volume.
-% FIXME: IS THIS FOOTNOTE NECESSARY?
 \footnote{It is expected that the laser backscatter from daughter SRS
 and SBS waves is dominated by the nonlinear dynamics of the rare
-speckles at very high intensity.}  The plasma is underdense with
+speckles at very high intensity.  While modeling of an entire laser beam
+within a PIC code is impractical, we can indeed model these 
+highest-intensity ``hot spots.''}  The plasma is underdense with
 electron density $n_e = 0.14 n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} =
 c m_e / 2 \lambda_0 e^2$ is the critical density, $c$ is the speed of
 light, $m_e$ is electron mass, and $e$ is electronic charge
@@ -296,7 +331,7 @@ work~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}
 showing how SRS and SBS saturate and are limited by nonlinear
 wave-particle trapping that bends electrostatic wavefronts (see
 \fig{lpi}), followed by transverse filamentation and break-up
-of wave fronts.  (2) What is the effect on LPI of high-$Z$ dopant such
+of wave fronts?  (2) What is the effect on LPI of high-$Z$ dopant such
 as Kr and Xe (of interest as a possible mitigation
 stategy~\cite{Lushnikov_PPCF_2006} and at the hohlraum edge where Au
 and U mix with low-$Z$ gas)?  In the following, ``Problem 1'' refers
@@ -304,15 +339,20 @@ to runs with $2000$~particles/voxel per species and ``Problem 2'' is
 the same problem, but at higher phase space fidelity
 ($6,420$~particles/voxel per species).  These numbers of
 particles/voxel are comparable to published 2d studies of LPI
-physics~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}.
+physics~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}. 
 As appropriate for LPI simulations, the voxel mesh is uniform to avoid
 laser reflection off mesh discontinuities.  In both problems, at full
 scale ($12,240$~cores), $31 \times 10^6$~voxels were used, with $0.31
 \times 10^{12}$ and $1.0 \times 10^{12}$~particles, respectively.  The
-latter were three times larger than the next largest published PIC
-simulations of plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
+latter were three times larger in number of particles than the next 
+largest published PIC simulations of 
+plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
 
-% FIXME: NEED CANONICAL CITE OF CODE PF3D!
+During the initial deployment of Roadrunner at LANL, a large number of
+single-laser-speckle simulations of the type typified by Problems 
+1 and 2 (but varying plasma conditions and laser intensity and 
+diffraction) will be run and analyzed.  Therefore, it is critical to 
+demonstrate high performance on these problems on Roadrunner. 
 
 \section{The VPIC Particle-In-Cell Code}
 
@@ -1155,7 +1195,13 @@ part by the Laboratory Directed Research and Development (LDRD)
 Program.  Document release number: LA-UR-08-2405.
 
 \bibliographystyle{IEEEtran}
+
+%FIXME:  Kevin, when I latex, I get dashes in place of authors for the current
+%reference 11.  I looked at the bibtex entry and everything looks fine.  Does
+%this happen for you?
+
 \bibliography{bib/gb2008,bib/vpic}
+
 
 % FIXME: DO WE NEED BIOGRAPHIES?
 %\begin{IEEEbiographynophoto}{Kevin J.~Bowers}

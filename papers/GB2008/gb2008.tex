@@ -224,7 +224,7 @@ The NIF employs random phase plates to break each laser beam into a
 collection of ``speckles,'' or hot spots.  To mitigate SRS backscatter
 requires a predictive capability for the SRS onset threshold and
 scaling of reflectivity versus laser intensity within a solitary laser
-speckle.  This long-sought research goal is enabled for the first time
+speckle.  This long-sought-after research goal is enabled for the first time
 by VPIC running on the full Roadrunner platform.  This gives a unique
 platform for understanding LPI that will translate into improved
 predictive modeling of ICF experiments and mitigation of risk for ICF
@@ -319,7 +319,7 @@ laser reflection off mesh discontinuities.
 
 We tested VPIC weak scalability and conducted a suite of science
 calculations~\cite{AAC_Conference_Paper} based on the above
-configuration to investigate two LPI issues: (1) What is the role is
+configuration to investigate two LPI issues: (1) What is the role
 of trapped particles in the nonlinear evolution of LPI?  Can we verify
 (at higher fidelity) recent
 work~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}
@@ -342,8 +342,8 @@ in number of particles than the next largest published PIC simulations
 of plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
 
 During the initial deployment of Roadrunner at LANL, a large number of
-single-laser-speckle simulations of the type typified by Problems 1
-and 2 (but varying plasma conditions and laser intensity and
+single-laser-speckle simulations of the type described by Problems 1
+and 2 (but with varying plasma conditions, laser intensity, and
 diffraction) will be run and analyzed.  Therefore, it is critical to
 demonstrate high performance on these problems on Roadrunner.
 
@@ -382,7 +382,7 @@ speed of light in vacuum, $\vecu$ is the normalized momentum and
 $\gamma\left(\vecu\right) = \sqrt{1 + u^2}$ is the relativistic
 factor.  $\vecE\left(\vecr,t\right)$, $\vecB\left(\vecr,t\right)$ and
 $\vecJ\left(\vecr,t\right) = \sum_s \int d\vecu q_s c\gamma^{-1}\vecu
-f_s$ are electric field, magnetic field and current density.
+f_s$ are the electric field, magnetic field and current density, respectively.
 $\eps\left(\vecr\right)$, $\mu\left(\vecr\right)$ and
 $\sigma\left(\vecr\right)$ are the background diagonal permittivity,
 permeability and conductivity tensors.
@@ -446,7 +446,7 @@ can be sampled on this mesh and interpolated between the mesh and
 particles.  Particle fields are interpolated with an ``energy
 conserving'' scheme; for example, $E_x$ is bilinearly interpolated
 from the four Yee-mesh $E_x$ edge samples and $B_x$ is linearly
-interpolated from two Yee-mesh $B_x$ face samples of the voxel
+interpolated from the two Yee-mesh $B_x$ face samples of the voxel
 containing a particle.  This scheme is especially efficient in
 simulations with irregular boundary conditions as it uses no field
 samples outside the voxel containing a particle.  Yee-mesh $\vecJ$
@@ -490,13 +490,13 @@ satisfy the Courant condition, $\left(c\delta_t/\delta_x\right)^2 +
 step and voxel dimensions to satisfy $\omega_p \delta_t < 2$ and
 $\delta_{x,y,z} \approx \lambda_d$ where $\omega_p$ is the peak plasma
 frequency and $\lambda_d$ is the plasma Debye
-length~\cite{Birdsall_Langdon_1985,Hockney_Eastwood_1988}.  Given
+length~\cite{Birdsall_Langdon_1985,Hockney_Eastwood_1988}.  Given that
 particles cannot exceed $c$, satisfying both the Courant and Debye
-conditions are typically sufficient.  Though the time step is stable
+conditions is typically sufficient.  Though the time step is stable
 for any cyclotron frequency, it is usually resolved for accurate
 dynamics.  Sampling $f_s$ can require over thousands of particles per
-voxel depending on the above and the phenomena being studied to avoid
-enhanced computational particle collision rates and resolve fully
+voxel, depending on the above and the phenomena being studied, to avoid
+enhanced computational particle collision rates and to fully resolve
 resonant kinetic phenomena.
 
 \subsection{Comparison with other simulation techniques}
@@ -513,16 +513,16 @@ the detailed phase-space dynamics critical to wave-particle LPI
 processes.
 
 The simulation technique most related to PIC is MD.  The primary
-difference is short range particle-particle interactions are
+difference is that short range particle-particle interactions are
 explicitly computed and long range particle-particle interactions are
 often approximated in MD (e.g. atoms interacting via a Lennard-Jones
-potential) while the converse is true in PIC (e.g. high temperature
+potential), while the converse is true in PIC (e.g. high temperature
 plasma where long range collective interactions among charged
 particles dominate over short range interactions).  Computationally,
 the impact is, even compared to MD techniques whose operations per
-timestep scale as $O(N)$ (where $N$ is the number of particles), the
+timestep scale as $O(N)$ (where $N$ is the number of particles), that the
 amount of computation necessary per particle per timestep is much
-lower than MD.  While a net benefit for systems amenable to PIC
+lower than MD.  While being a net benefit for systems amenable to PIC
 simulation, this makes it harder to achieve high raw performance due
 to data motion limitations on modern supercomputers.
 
@@ -563,7 +563,7 @@ extrapolated from various data sheets and benchmarks.
 Most modern supercomputers consist of a large number of nodes
 connected by a network.  The nodes themselves contain one or more CPUs
 and memory.  CPU performance has improved more rapidly than memory
-performance over recent decades.  To compensate, modern CPU use a
+performance over recent decades.  To compensate, modern CPUs use a
 deep memory hierarchy with faster (though smaller and more limited)
 ``cache'' memories located close to the CPU.  As shown in
 \tbl{rules-of-thumb}, optimizing data access is critical; achieving
@@ -572,14 +572,14 @@ communications, number of memory accesses, amount of data in internode
 communications, amount of memory accessed and number of arithmetic
 operations, in roughly that order.
 
-In contrast with embarassingly parallel simulations, due to the
+In contrast to embarassingly parallel simulations, due to the
 emphasis on long range interactions, communication between nodes is
-necessary every timestep in PIC simulations.  Fortunately, due to the
+necessary at every timestep in PIC simulations.  Fortunately, due to the
 finite $c$ in relativistic simulations, internode communications are
 naturally optimized by a spatial domain decomposition.  Nodes need
 only communicate with neighboring nodes and no global communications
 or barriers are required.  As a result, optimizing memory access is
-the greatest technical challenge in high performance PIC simulation as
+the greatest technical challenge in high performance PIC simulation, as
 there is typically more field and particle data per node than can fit
 in any cache on that node.  Minimizing local data motion requires
 grouping data needed to perform operations contiguously and accessing
@@ -590,8 +590,8 @@ often worthwhile.
 \subsection{Data motion optimization}
 
 Single precision codes can often be made to run faster than their
-double precision equivalents as single precision requires half the
-data movement and most modern CPUs provide single precision 4-vector
+double precision equivalents, as single precision requires half the
+data movement, and most modern CPUs provide single precision 4-vector
 SIMD capabilities.  For typical time steps, voxel dimensions and
 particles per voxel, model discretization error exceeds single
 precision arithmetic error.  Thus, single precision should usually be
@@ -672,7 +672,7 @@ access pattern.
 \caption{Roadrunner System Overview --- Roadrunner is a collection
 of $17$~Connected Units of $180$~Triblade compute nodes connected by
 an Infiniband backplane.  Each Triblade has $4$~Opteron cores and
-$4$~Cell eDP chips.}
+$4$~Cell eDP chips. Thanks to Kenneth R. Koch for original figure.}
 \label{fig:system}
 \end{center}
 \end{figure*}
@@ -681,7 +681,7 @@ Field interpolation can likewise severely impact performance.  If
 particles are stored in a random order, field samples will be accessed
 in a random order.  Because field samples do not fit within cache,
 these accesses will often require memory transfers.  The situation is
-made worse if field samples are directly accessed as several
+made worse if field samples are directly accessed, as several
 non-contiguous memory transfers may be necessary.  Worse still is if
 the field components are stored in separate arrays; in this worst
 case, VPIC's field interpolation could involve up to $13$~memory
@@ -730,11 +730,12 @@ instructions on a wide variety of platforms.  A similar approach was
 used in Ref.~\cite{Bowers_et_al_2006}.
 
 Unfortunately, $\vecJ$ accumulation is not as SIMD friendly.
-Determining the voxels through which a particle passed varies: one
-particle might remain in the voxel in which it started while the next
+Determining the voxels through which a particle has passed varies: one
+particle might remain in the voxel in which it started, while the next
 might cross through several in a timestep.  Fortunately, particles
 cross voxel boundaries infrequently.  VPIC uses 4-vector SIMD to
-advance and accumulate $4$~particles at a time, assuming none of the
+advance and accumulate $4$~particles at a time, making the assumption that
+none of the
 $4$~particles cross any boundaries.  Particles that do are detected
 and make no $\vecJ$ contribution during this process.  During
 subsequent $\vecJ$ accumulation of voxel crossing particles, if a
@@ -745,7 +746,7 @@ necessary to find exceptions.  Thus, exception handling (often slow
 and application specific) is cleanly separated and does not pollute
 the instruction or data caches during the particle advance.  Like the
 interpolation coefficients, $\vecJ$ contributions from particle motion
-in a voxel are made to a contiguous aligned set of partial currents
+in a voxel are made to a contiguous, aligned set of partial currents,
 which is then postprocessed into $\vecJ$ prior to the field advance;
 the same benefits described for interpolation coefficients apply.
 
@@ -825,7 +826,7 @@ DDR2-800 DRAM per Cell CPU.
 \includegraphics[width=3.375in]{figs/triblade.eps}
 \caption{Triblade Compute Node.  Each Cell eDP CPU is logically
 connected to an Opteron core with a theoretical bandwidth of
-$2$~GB/s.}
+$2$~GB/s.  Thanks to Kenneth R. Koch for original figure.}
 \label{fig:triblade}
 \end{center}
 \end{figure}

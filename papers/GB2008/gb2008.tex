@@ -45,13 +45,12 @@
 \title{$0.374$~Pflop/s Trillion-Particle Kinetic Modeling of Laser Plasma
 Interaction on Roadrunner}
 
-% FIXME: CHECK IEEE MEMBERSHIP OF OTHER AUTHORS
 \author{K.~J.~Bowers,~\IEEEmembership{Member, IEEE},
         B.~J.~Albright,~\IEEEmembership{Member, IEEE},
-        B.~Bergen,
-        L.~Yin,           % <-- not an IEEE member
-        K.~J.~Barker
-        and~D.~J.~Kerbyson% <- Need this
+        B.~Bergen,~\IEEEmembership{Member, IEEE}, \\
+        L.~Yin, % <-- not an IEEE member
+        K.~J.~Barker % <-- not an IEEE member
+        and D.~J.~Kerbyson,~\IEEEmembership{Member, IEEE}% <- Need this
 \thanks{
 K.~J.~Bowers (guest scientist, \emph{kevin.j.bowers@gmail.com}),
 B.~J.~Albright (\emph{balbright@lanl.gov}) and L.~Yin
@@ -78,25 +77,25 @@ kinetic plasma modeling code on the heterogeneous IBM Roadrunner
 supercomputer at Los Alamos National Laboratory.  VPIC is a three-
 dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
 code that self-consistently evolves a kinetic plasma.  VPIC
-simulations of laser plasma interaction (LPI) were conducted at
-unprecedented fidelity and scale---up to $1.0 \times 10^{12}$~macro
-particles on as many as $136 \times 10^6$~computational voxels---to
-model accurately the particle trapping physics occurring within a
+simulations of laser plasma interaction were conducted at
+unprecedented fidelity and scale---up to $1.0 \times
+10^{12}$~particles on as many as $136 \times 10^6$~voxels---to model
+accurately the particle trapping physics occurring within a
 laser-driven hohlraum in an inertial confinement fusion experiment.
 During a parameter study of laser reflectivity as a function of laser
 intensity under experimentally realizable hohlraum
 conditions~\cite{AAC_Conference_Paper}, we measured sustained
 performance exceeding $0.374$~Pflop/s (s.p.) with the inner loop
 itself achieving $0.488$~Pflop/s (s.p.).  Given the increasing
-importance of data motion limitations in high performance computing,
-it is notable that this performance was measured in a PIC code---a
-technique that typically requires more data motion per computation
-than other techniques (such as dense matrix computations, molecular
-dynamics N-body calculations and Monte-Carlo calculations) often used
-to demonstrate supercomputer performance.  This capability opens up
-the exciting possibility of using VPIC to model, in a first-principles
-manner, an issue critical to the success of the multi-billion dollar
-DOE/NNSA National Ignition Facility.
+importance of data motion limitations, it is notable that this was
+measured in a PIC calculation---a technique that typically requires
+more data motion per computation than other techniques (such as dense
+matrix calculations, molecular dynamics N-body calculations and
+Monte-Carlo calculations) often used to demonstrate supercomputer
+performance.  This capability opens up the exciting possibility of
+using VPIC to model, from first-principles, an issue critical to the
+success of the multi-billion dollar DOE/NNSA National Ignition
+Facility.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -126,22 +125,23 @@ In PIC simulations, the simulation domain is partitioned into a mesh
 of small voxels (cells).  Computational particles in the simulation
 domain are integrated forward through time using forces interpolated
 from fields sampled on the voxel mesh.  In turn, fields are integrated
-in forward through time using sources extrapolated from the particles.
+forward through time using sources extrapolated from the particles.
 Large PIC plasma simulations typically employ tens to hundreds of
 millions of voxels (cells) and a few billion particles (tens to
 hundreds of particles/voxel).  While adequate for some problems, high
 levels of noise have proved problematic for accurate modeling of the
-nonlinear wave-particle kinetics of
+nonlinear wave-particle kinetics in
 LPI~\cite{Yin_et_al_Phys_Plasmas_2006}.  The Roadrunner hybrid
-petascale supercomputer (described below), however, enables plasma
-kinetic modeling of LPI at unprecedented scale, which makes possible
-study of both large simulation volume and highly intricate kinetic
-behavior, where thousands of particles/voxel may be needed.  We have
-adapted the VPIC kinetic plasma modeling code to run efficiently on
-the Roadrunner hybrid architecture.  VPIC is a ``best in class''
-explicit, relativistic, charge-conserving, electromagnetic, PIC
+petascale supercomputer, however, enables plasma kinetic modeling of
+LPI at unprecedented scale, \textit{with trillions of particles and
+billions of voxels}, allowing the simulation of large simulation
+volumes with highly intricate kinetic behavior where thousands of
+particles/voxel may be needed.  We have adapted the VPIC kinetic
+plasma modeling code to run efficiently on the Roadrunner hybrid
+architecture.  VPIC is a ``best in class'' explicit, relativistic,
+charge-conserving, electromagnetic, PIC
 code~\cite{Bowers_et_al_Phys_Plasmas_2007} developed at Los Alamos
-National Laboratory and capable of simulating the physics of LPI.
+National Laboratory capable of simulating the physics of LPI.
 
 This paper is structured as follows: We begin with a discussion of two
 LPI physics problems we wish to study.  We then describe the VPIC
@@ -149,10 +149,10 @@ kinetic plasma code.  Following this, we discuss the Roadrunner
 supercomputer platform and porting VPIC to this platform.  Lastly, we
 present measured and extrapolated performance on Roadrunner in
 simulations of these two LPI problems.  On the full Roadrunner
-machine, we achieved sustained performance of over $0.374$~Pflop/s.
-These are end-to-end performance measurements; VPIC's dominant
-computational kernel by itself is capable of $0.488$~Pflop/s on the
-full machine.
+machine, we achieved sustained performance of over $0.374$~Pflop/s
+(s.p.).  These are end-to-end performance measurements; VPIC's
+dominant computational kernel by itself is capable of $0.488$~Pflop/s
+(s.p.) on the full machine.
 
 \section{LPI in ICF Experiments}
 
@@ -173,27 +173,22 @@ longitudinal electric field $E_x$ (indicating the presence of electron
 plasma waves) with color indicating laser field ($E_y$).  In the
 nonlinear evolution of SRS, the source for SRS backscatter
 (proportional to $E_x E_y$) loses coherence, as represented by the
-multi-colored coloring of the isosurfaces.  Inset: SRS reflectivity as
-a function of incident laser peak
-intensity~\cite{AAC_Conference_Paper}; the laser diffraction and
-computational meshes are comparable to Problems 1 and 2.  Squares
+multi-colored isosurfaces.  Inset: SRS reflectivity as a function of
+incident laser peak intensity~\cite{AAC_Conference_Paper} for laser
+and plasma conditions comparable to Problems 1 and 2.  Squares
 represent reflectivity obtained from runs on a homogeneous cluster of
-Opteron cores (the Roadrunner ``base system,'' already deployed at 
-LANL); diamonds are from a
-\textit{suite of calculations run on Roadrunner at higher fidelity}.
-Both sets of simulations used $136 \times 10^6$ voxels; the ones 
-on the Opteron cluster used 25 particles/cell/species whereas the
-runs on Roadrunner used 80 particles per cell.  
-As expected, the level of saturated reflectivity (the plateau)
-observed is the same in the two runs, but the lower noise afforded by
-higher fidelity of the runs on Roadrunner leads to reflectivity onset
-at slightly lower intensity, as predicted by
+Opteron cores (the Roadrunner ``base system,'' already deployed at
+LANL); diamonds are from a \textit{suite of calculations run on
+Roadrunner with higher phase-space fidelity}.  Both sets of
+simulations used $136 \times 10^6$ voxels.  As expected, the observed
+saturated reflectivity (the plateau) is the same, but the lower noise
+afforded by higher fidelity on Roadrunner leads to reflectivity onset
+at a slightly lower intensity, as predicted by
 theory~\cite{Yin_et_al_Phys_Plasmas_2006}.  These science runs are a
 stringent test of correctness of the Cell implementation of VPIC.
-Moreover, they allow us to better characterize the nonlinear
-onset and saturation of high SRS reflectivity in NIF-like plasma
-conditions, the key physics to be implemented in reduced physics 
-models, such as pF3D.}
+Moreover, they allow better characterization of the nonlinear onset
+and saturation of SRS in NIF-like plasma conditions, the key physics
+to be implemented in reduced physics models like pF3D.}
 \label{fig:lpi}
 \end{center}
 \end{figure*}
@@ -212,119 +207,104 @@ beryllium ablator.  The capsule compresses to a density of hundreds of
 g/cc and temperature in excess of $10$~keV, conditions under which DT
 fuel can ignite.
 
-LPI jeopardize the success of fusion ignition on the NIF.  As a laser
-beam travels through the plasma filling the hohlraum, it scatters from
-and amplifies density irregularities.  This leads to growth of
-parametric instabilities that scatter laser light and degrade energy
-and symmetry of capsule compression.  The most pernicious LPI are
-stimulated Raman (SRS) and stimulated Brillouin (SBS) scattering,
-where laser light scatters off electron and ion density fluctuations,
-respectively.  Indeed, the U.~S.~National Nuclear Security
-Administration (NNSA), customers for this work, have reported that
-``success of ICF depends partly on mitigating the undesirable effects
-of two particular parametric instabilities, stimulated Raman
-scattering and stimulated Brillouin
-scattering.''~\cite{LLNL_LPI_webpage}
+LPI jeopardize the success of NIF fusion ignition.  As a laser beam
+travels through the plasma filling the hohlraum, it scatters from and
+amplifies density irregularities.  This leads to growth of parametric
+instabilities that scatter laser light and degrade energy and symmetry
+of capsule compression.  The most pernicious LPI are stimulated Raman
+(SRS) and stimulated Brillouin (SBS) scattering, where laser light
+scatters off electron and ion density fluctuations, respectively.
+Indeed, the U.~S.~National Nuclear Security Administration (NNSA),
+customers for this work, have reported that ``success of ICF depends
+partly on mitigating the undesirable effects of two particular
+parametric instabilities, stimulated Raman scattering and stimulated
+Brillouin scattering.''~\cite{LLNL_LPI_webpage}
 
-% LIN:  Replace this paragraph with the one following: 
-
-%The NIF employs random phase plates to break each laser beam into a
-%collection of ``speckles'' or hot spots.  With VPIC running on the
-%full Roadrunner platform, we have the opportunity for the first time
-%to simulate \abinitio\ LPI within a solitary laser speckle under
-%NIF-like conditions and \textit{fully resolve} the kinetic
-%wave-particle dynamics.  This gives us a unique platform for
-%understanding LPI that will translate into improved predictive
-%modeling of ICF experiments and mitigation of risk for NIF ignition.
-
-The NIF employs random phase plates to break each laser beam into a 
+The NIF employs random phase plates to break each laser beam into a
 collection of ``speckles,'' or hot spots.  To mitigate SRS backscatter
-requires a predictive capability of SRS onset threshold and scaling 
-of reflectivity with laser intensity within a solitary laser speckle.  
-This long-sought research goal is enabled for the first time with VPIC
-running on the full Roadrunner platform and fully resolving the kinetic
-wave-particle dynamics. This gives us a unique platform for understanding
-LPI that will translate into improved predictive modeling of ICF experiments
-and mitigation of risk for ICF ignition. 
+requires a predictive capability for the SRS onset threshold and
+scaling of reflectivity versus laser intensity within a solitary laser
+speckle.  This long-sought research goal is enabled for the first time
+by VPIC running on the full Roadrunner platform.  This gives a unique
+platform for understanding LPI that will translate into improved
+predictive modeling of ICF experiments and mitigation of risk for ICF
+ignition.
 
+To put this in context, for over $30$~years, LPI has been one of the
+critical issues facing ICF ignition experiments.  The current NNSA
+strategy for estimating the LPI effects centers on the use of paraxial
+codes, such as pF3D~\cite{Berger_Phys_Plasmas_1998}, to obtain the
+amount of SRS and SBS laser backscatter in laser-driven hohlraum
+plasma~\cite{Glenzer_Nature_Physics_2007,Labaune_Nature_Physics_2007}.
+These codes compute SRS and SBS from analytic models with known
+limitations: the models do not retain the electron trapping physics
+that nonlinearly determine both the laser threshold intensity for
+instability onset (above which the reflectivity increases by orders of
+magnitude) or the saturation mechanism (which causes reflectivity to
+saturate at high laser intensity).  In contrast, both features are
+observed in \abinitio\ VPIC simulations (see the inset of
+\fig{lpi}) as well as laboratory
+experiments.~\cite{Montgomery_et_al_Phys_Plasmas_2002}
 
-To put this into context, for over 30 years, LPI has been one of
-the critical issues facing ICF fusion ignition experiments.  
-The current NNSA strategy for estimating the effects of LPI
-centers on the use of paraxial codes, 
-such as pF3D~\cite{Berger_Phys_Plasmas_1998}, 
-to obtain the amount of laser backscatter from SRS and 
-SBS in laser-driven hohlraum plasma.~\cite{Glenzer_Nature_Physics_2007,
-Labaune_Nature_Physics_2007}
-These codes compute SRS and SBS from
-analytic models with known limitations: the models 
-do not retain the electron trapping physics that nonlinearly determine both
-the instability onset at a laser threshold intensity, above which the 
-reflectivity increases by orders of magnitude, and the nonlinear saturation 
-mechanism, which causes reflectivity to saturate
-at high intensity.  In contrast, both fearures are observed in \abinitio\ VPIC 
-simulations (see the inset of \fig{lpi}) 
-as well as laboratory experiments.~\cite{Montgomery_et_al_Phys_Plasmas_2002}  
+Only recently, with the advent of VPIC modeling of entire laser
+speckles over unprecedented space and time scales, has the
+state-of-the-art in kinetic plasma simulation advanced to the point
+where predictive LPI modeling is possible.  This topic is of acute
+interest to the ICF and high energy density physics communities and
+spurred a recent Workshop on SRS and hohlraum energetics.\footnote{The
+SRS Assessment Workshop, held May 7, 2008 in Livermore, California,
+USA.}  One of the outcomes of the Workshop was a decision to assess
+the risk to existing ICF experimental designs and initiate integration
+of LPI models derived from \abinitio\ modeling of LPI into pF3D.
 
-Only recently, with the advent of VPIC modeling of entire laser speckles over 
-unprecedented space and time scales, has the state-of-the-art in kinetic 
-plasma simiulation advanced to the point where predictive LPI modeling 
-is even practicable.  This topic is of acute interest 
-to the ICF and high energy density physics communities and spurred a recent 
-Workshop on SRS and hohlraum energetics.\footnote{The SRS Assessment Workshop, 
-held May 7, 2008 in Livermore, California, USA.}  
-One of the outcomes of the Workshop was a decision to assess the 
-risk to existing ICF experimental designs and initiate integration of 
-LPI models derived from \abinitio\ modeling of LPI into pF3D.  
-
-A predictive capability for LPI will facilitate design of ICF ignition experiments 
-on the multi-billion dollar NIF facility that avoid the deleterious (and potentially
-damaging) effects of LPI. Moreover, it will enable 
-rapid and economical testing of candidate LPI mitigation strategies, such as the 
-use of high-$Z$ dopant in the hohlraum fill gas, under conditions that are difficult or
-expensive to assess in the laboratory.  
-
+A predictive capability for LPI will facilitate design of ICF ignition
+experiments on the multi-billion dollar NIF facility that avoid the
+deleterious effects of LPI.  Moreover, it will enable rapid and
+economical testing of LPI mitigation strategies, such as the use of
+high-$Z$ dopant in the hohlraum fill gas, under conditions that are
+difficult or expensive to assess in the laboratory.
 
 \subsection{Plasma Physics Simulations}
 
 In ICF experiments, LPI evolve to a complex, highly nonlinear state
 involving wave-wave and wave-particle interaction; of greatest concern
-for ignition are when wave-particle interactions dominate the
-nonlinearity.  Understanding LPI under these conditions requires
-high-resolution kinetic plasma simulations, as afforded by the use of
-VPIC on Roadrunner, that capture all of the wave-particle physics.
-These simulations must resolve complex trapped-particle orbits and
-complicated structures in phase space and therefore require the use of
-many particles (in some cases, as many as thousands of particles/voxel
-of each species) to resolve the
+are when wave-particle interactions dominate the nonlinearity.
+Understanding LPI under these conditions requires high-resolution
+kinetic plasma simulations that capture all of the wave-particle
+physics.  These simulations must resolve complex trapped-particle
+orbits and complicated structures in phase space and therefore require
+the use of many particles (in some cases, as many as thousands of
+particles/voxel of each species) to resolve the
 dynamics~\cite{Yin_et_al_Phys_Plasmas_2006}.
 
-Recent experimental~\cite{Kline_PRL_2005} and
-modeling~\cite{Yin_et_al_PRL_2007_SRS} work shows that LPI in a
-solitary laser speckle is represented well by a diffraction-limited
-laser beam.  In our 3d VPIC simulations, we launch a Gaussian
-diffraction-limited laser beam from a boundary into a plasma of
-dimension $35 \times 6 \times 6$~$\mu$m; the simulation boundaries
-absorb outgoing electromagnetic waves and reflect particles.  The
-$f/4$ beam (diffraction chosen to emulate laboratory experiments and
-prior calculations) is linearly polarized, of wavelength $\lambda_0 =
+Recent experiments~\cite{Kline_PRL_2005} and
+modeling~\cite{Yin_et_al_PRL_2007_SRS} show that LPI in a solitary
+laser speckle is represented well by a diffraction-limited laser beam.
+In our 3d VPIC simulations, we launch a Gaussian diffraction-limited
+laser beam from a boundary into a plasma of dimension $35 \times 6
+\times 6$~$\mu$m; the simulation boundaries absorb outgoing
+electromagnetic waves and reflect particles.  The $f/4$ beam
+(diffraction chosen to emulate laboratory experiments and prior
+calculations) is linearly polarized, of wavelength $\lambda_0 =
 351$~nm, and has peak intensity ranging from $I_0 = 10^{15} -
-10^{17}$~W/cm$^2$ at the center of the simulation volume.
-\footnote{It is expected that the laser backscatter from daughter SRS
-and SBS waves is dominated by the nonlinear dynamics of the rare
-speckles at very high intensity.  While modeling of an entire laser beam
-within a PIC code is impractical, we can indeed model these 
-highest-intensity ``hot spots.''}  The plasma is underdense with
-electron density $n_e = 0.14 n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} =
-c m_e / 2 \lambda_0 e^2$ is the critical density, $c$ is the speed of
-light, $m_e$ is electron mass, and $e$ is electronic charge
-(statcoul).  The simulation volume spans two Rayleigh lengths in $x$,
-the direction of laser propagation, and three Gaussian widths of the
-laser at the entrance plane in $y$ and $z$.  The electron and ion
-temperatures are $T_e = 4$~keV and $T_i = 2$~keV, comparable to
-hohlraum plasma conditions at maximum drive intensity.  The hohlraum
-is filled with plasma comprising hydrogen, helium, and trace amounts
-of krypton and xenon.
+10^{17}$~W/cm$^2$ at the center of the simulation volume.\footnote{It
+is expected that the laser backscatter from daughter SRS and SBS waves
+is dominated by the nonlinear dynamics of the rare speckles at very
+high intensity.  While modeling of an entire laser beam within a PIC
+code is impractical, we can indeed model these highest-intensity ``hot
+spots.''}
+% FIXME: THIS FOOTNOTE STILL NEEDS WORK.  WHAT DOES ``RARE'' SPECKLE
+% MEAN?
+The plasma is underdense with electron density $n_e = 0.14
+n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} = c m_e / 2 \lambda_0 e^2$ is
+the critical density, $c$ is the speed of light, $m_e$ is electron
+mass, and $e$ is electronic charge (statcoul).  The simulation volume
+spans two Rayleigh lengths in $x$, the direction of laser propagation,
+and three Gaussian widths of the laser at the entrance plane in $y$
+and $z$.  The electron and ion temperatures are $T_e = 4$~keV and $T_i
+= 2$~keV, comparable to hohlraum plasma conditions at maximum drive
+intensity.  The hohlraum is filled with plasma comprising hydrogen,
+helium, and trace amounts of krypton and xenon.
 
 The LPI simulations are at conditions $k \lde = 0.34$, where $k$ is
 the wavenumber of the most unstable electron fluctuation and $\lde =
@@ -332,15 +312,15 @@ the wavenumber of the most unstable electron fluctuation and $\lde =
 Boltzmann's constant).  The simulation time is $10^4~\wpe^{-1}$ [$\wpe
 = (4 \pi n_e e^2 / m_e)^{1/2}$]; the $0.13 \times 10^6$ time steps
 allow for growth of several ``bursts'' of SRS and SBS.  The simulation
-volume is divided into voxels of size $1.3 \times 1.7 \times
-1.7$~Debye lengths, which ensures ample resolution for the collective
-processes.
+volume is divided into voxels of size $1.3\lde \times 1.7\lde \times
+1.7\lde$, which ensures ample resolution for the collective processes.
+As appropriate for LPI simulations, the voxel mesh is uniform to avoid
+laser reflection off mesh discontinuities.
 
-We tested VPIC weak scalability on two LPI science problems and
-conducted a suite of science calculations~\cite{AAC_Conference_Paper}.
-The two problems differ primiarily in number of particles per voxel of
-each ionic species and they address: (1) What is the role is of
-trapped particles in the nonlinear evolution of LPI?  Can we verify
+We tested VPIC weak scalability and conducted a suite of science
+calculations~\cite{AAC_Conference_Paper} based on the above
+configuration to investigate two LPI issues: (1) What is the role is
+of trapped particles in the nonlinear evolution of LPI?  Can we verify
 (at higher fidelity) recent
 work~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}
 showing how SRS and SBS saturate and are limited by nonlinear
@@ -350,24 +330,22 @@ of wave fronts?  (2) What is the effect on LPI of high-$Z$ dopant such
 as Kr and Xe (of interest as a possible mitigation
 stategy~\cite{Lushnikov_PPCF_2006} and at the hohlraum edge where Au
 and U mix with low-$Z$ gas)?  In the following, ``Problem 1'' refers
-to runs with $2000$~particles/voxel per species and ``Problem 2'' is
+to runs with $2,000$~particles/voxel per species and ``Problem 2'' is
 the same problem, but at higher phase space fidelity
 ($6,420$~particles/voxel per species).  These numbers of
 particles/voxel are comparable to published 2d studies of LPI
-physics~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}. 
-As appropriate for LPI simulations, the voxel mesh is uniform to avoid
-laser reflection off mesh discontinuities.  In both problems, at full
-scale ($12,240$~cores), $31 \times 10^6$~voxels were used, with $0.31
-\times 10^{12}$ and $1.0 \times 10^{12}$~particles, respectively.  The
-latter were three times larger in number of particles than the next 
-largest published PIC simulations of 
-plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
+physics~\cite{Yin_et_al_PRL_2007_SRS,Yin_et_al_Phys_Plasmas_2007_SRS}.
+In both problems, at full scale ($12,240$~cores), $31 \times
+10^6$~voxels were used, with $0.31 \times 10^{12}$ and $1.0 \times
+10^{12}$~particles, respectively.  The latter were three times larger
+in number of particles than the next largest published PIC simulations
+of plasma~\cite{Yin_et_al_PRL_2007_reconnection}.
 
 During the initial deployment of Roadrunner at LANL, a large number of
-single-laser-speckle simulations of the type typified by Problems 
-1 and 2 (but varying plasma conditions and laser intensity and 
-diffraction) will be run and analyzed.  Therefore, it is critical to 
-demonstrate high performance on these problems on Roadrunner. 
+single-laser-speckle simulations of the type typified by Problems 1
+and 2 (but varying plasma conditions and laser intensity and
+diffraction) will be run and analyzed.  Therefore, it is critical to
+demonstrate high performance on these problems on Roadrunner.
 
 \section{The VPIC Particle-In-Cell Code}
 
@@ -398,9 +376,9 @@ linear background medium:
 \label{eq:Ampere}
 \hspace{0.75in}&
 \end{eqnarray}
-Above, $f_s\left(\vecr,\vecu,t\right)$ is the phase-space distribution
-of a species $s$ with particle charge $q_s$ and mass $m_s$.  $c$ is
-the speed of light in vacuum, $\vecu$ is the normalized momentum and
+Above, $f_s\left(\vecr,\vecu,t\right)$ is the phase-space density of a
+species $s$ with particle charge $q_s$ and mass $m_s$.  $c$ is the
+speed of light in vacuum, $\vecu$ is the normalized momentum and
 $\gamma\left(\vecu\right) = \sqrt{1 + u^2}$ is the relativistic
 factor.  $\vecE\left(\vecr,t\right)$, $\vecB\left(\vecr,t\right)$ and
 $\vecJ\left(\vecr,t\right) = \sum_s \int d\vecu q_s c\gamma^{-1}\vecu
@@ -536,8 +514,8 @@ processes.
 
 The simulation technique most related to PIC is MD.  The primary
 difference is short range particle-particle interactions are
-explicitly computed and long range particle-particle are often
-approximated in MD (e.g. atoms interacting via a Lennard-Jones
+explicitly computed and long range particle-particle interactions are
+often approximated in MD (e.g. atoms interacting via a Lennard-Jones
 potential) while the converse is true in PIC (e.g. high temperature
 plasma where long range collective interactions among charged
 particles dominate over short range interactions).  Computationally,
@@ -579,16 +557,16 @@ performance cluster interconnects.  The single precision FLOP figure
 corresponds to a $2.5$~GHz processor completing a 4-vector SIMD
 instruction every clock.  Other rules of thumb were similarly
 extrapolated from various data sheets and benchmarks.
-\label{tbl:Rules_of_thumb}
+\label{tbl:rules-of-thumb}
 \end{table}
 
 Most modern supercomputers consist of a large number of nodes
 connected by a network.  The nodes themselves contain one or more CPUs
 and memory.  CPU performance has improved more rapidly than memory
-performance over recent decades.  To compensate, modern CPUs use a
+performance over recent decades.  To compensate, modern CPU use a
 deep memory hierarchy with faster (though smaller and more limited)
 ``cache'' memories located close to the CPU.  As shown in
-\tbl{Rules_of_thumb}, optimizing data access is critical; achieving
+\tbl{rules-of-thumb}, optimizing data access is critical; achieving
 high performance requires minimizing the number of internode
 communications, number of memory accesses, amount of data in internode
 communications, amount of memory accessed and number of arithmetic
@@ -621,32 +599,39 @@ acceptable provided it does not introduce non-physical artifacts
 (e.g. large violations of otherwise conserved quantities).
 
 VPIC uses single precision to help achieve high performance but takes
-care to structure operations to minimize its impact.  One example is
-particle coordinates are stored as a voxel index plus a normalized
-offset from the center of that voxel.  This gives over three orders of
-magnitude improvement in the worst case absolute position resolution
-seen by a particle typically.  It also eliminates symmetry breaking
-spatially dependent arithmetic errors that can lead to poor
-conservation properties when using more common position
-representations (interestingly, each voxel has identical numerical
-properties regardless how the voxel mesh is translated, oriented or
-reflected in absolute coordinates).  Beyond reducing numerical errors,
-this representation accelerates common operations like field
-interpolation (though it does require that the coordinate system for a
-particle's offsets be transformed whenever that particle crosses into
-a different voxel).  Another example is that particle velocity is
-stored as the particle relativistic momentum normalized by $mc$ to
-make it dimensionless.  Unlike a quantity linearly proportional to
-velocity, the normalized momentum is not bounded.  This avoids issues
-with both discretization and arithmetic error, especially for
-particles moving very close to $c$.  In practice, single precision has
-not been an issue for production use of VPIC and even more precision
-demanding computations have successfully used single precision as
+care to structure calculations to maximize accuracy.  One example is
+that particle coordinates are stored as a voxel index plus a
+normalized offset from the center of that voxel; this gives over three
+orders of magnitude improvement in the worst case absolute position
+resolution seen by a particle for simulations of interest compared to
+a more common global coordinate system position
+representation.\footnote{In exact arithmetic, the index+offset
+representation is equivalent to the more common global coordinate
+system representation.  As such, there are no abrupt changes in
+Jacobians as particles move from voxel to voxel.  Interestingly, each
+voxel has identical numerical properties regardless how the voxel mesh
+is translated, oriented or reflected in absolute
+coordinates---avoiding symmetry breaking spatially dependent
+arithmetic errors that can corrupt single precision simulations using
+global coordinate system position representations.}  Beyond reducing
+numerical errors, this representation accelerates operations like
+field interpolation (though it does require that the coordinate system
+for a particle's offset be updated whenever that particle crosses into
+a different voxel).
+
+Another example is that particle velocity is stored as the
+relativistic particle momentum normalized by $mc$.  Unlike a quantity
+linearly proportional to velocity, the normalized momentum is not
+bounded.  This avoids issues with both discretization and arithmetic
+error, especially for particles moving very close to $c$.  In
+practice, single precision has not been an issue for production use of
+VPIC and even more precision demanding computations have successfully
+used single precision as
 well~\cite{Bowers_et_al_2006,Langou_et_al_2006,Lippert_et_al_2007}.
-Based on extensive verification and validation studies for VPIC LPI
-simulation~\cite{Yin_et_al_Phys_Plasmas_2006}, we have high confidence
-that single precision is more than adequate for the problems described
-previously.
+Based on extensive verification and validation studies of VPIC LPI
+simulations~\cite{Yin_et_al_Phys_Plasmas_2006}, we have high
+confidence that single precision is more than adequate for the
+problems described previously.
 
 Since there is more particle data than can fit in any cache, it is
 desirable to limit the number of times a particle is touched during a
@@ -667,10 +652,10 @@ for all particles,
   end if
 end for
 \end{verbatim}
-To further minimize the cost of moving particle data, particles are
-stored contiguously, memory aligned and organized for 4-vector SIMD.
-Given this and the above, particles for a given species are stored in
-an aligned 1d array of structures of the form:
+To further minimize particle data moving costs, particles are stored
+contiguously, memory aligned and organized for 4-vector SIMD.  Given
+this and the above, particles for a given species are stored in an
+aligned 1d array of structures of the form:
 \begin{verbatim}
 struct {
   float dx, dy, dz; int32_t i;
@@ -680,6 +665,17 @@ struct {
 As a result, the inner loop streams through particle data once using
 large aligned memory transfers under the hood---the ideal memory
 access pattern.
+
+\begin{figure*}
+\begin{center}
+\includegraphics[width=7in]{figs/system.eps}
+\caption{Roadrunner System Overview --- Roadrunner is a collection
+of $17$~Connected Units of $180$~Triblade compute nodes connected by
+an Infiniband backplane.  Each Triblade has $4$~Opteron cores and
+$4$~Cell eDP chips.}
+\label{fig:system}
+\end{center}
+\end{figure*}
 
 Field interpolation can likewise severely impact performance.  If
 particles are stored in a random order, field samples will be accessed
@@ -695,8 +691,7 @@ memory transfers to the cache line granularity.  To make field
 interpolation efficient, in addition to the index+offset particle
 position representation, an array of interpolation coefficients is
 precomputed and saved in a contiguous, aligned, 4-vector SIMD
-compatible layout.  A voxel's field interpolation coefficients look
-like:
+compatible layout:
 \begin{verbatim}
 struct {
   float ex, dex_dy, dex_dz, d2ex_dydz;
@@ -724,18 +719,6 @@ levels by making more efficient use of cache.
 
 \subsection{SIMD optimization and exceptions}
 
-\begin{figure*}
-\begin{center}
-\includegraphics[width=7in]{figs/system.eps}
-\caption{Roadrunner System Overview --- Roadrunner is a collection
-of $17$~Connected Units of $180$~Triblade compute nodes connected by
-an Infiniband backplane.  Each Triblade has $4$~Opteron cores and
-$4$~Cell eDP chips.  A Cell eDP chip can only communicate with its
-associated Opteron core.}
-\label{fig:system}
-\end{center}
-\end{figure*}
-
 Given single precision and SIMD compatible data layouts, all particle
 processing described above is ideal for 4-vector SIMD.  However,
 languages like C and FORTRAN are not expressive enough (e.g. data
@@ -749,22 +732,22 @@ used in Ref.~\cite{Bowers_et_al_2006}.
 Unfortunately, $\vecJ$ accumulation is not as SIMD friendly.
 Determining the voxels through which a particle passed varies: one
 particle might remain in the voxel in which it started while the next
-might cross through several.  Fortunately, particles cross voxel
-boundaries infrequently.  VPIC uses 4-vector SIMD to advance and
-accumulate $4$~particles at a time, assuming none of the $4$~particles
-cross any boundaries.  Particles that do are detected and make no
-$\vecJ$ contribution during this process.  During subsequent voxel
-crossing $\vecJ$ accumulation of these particles, if a particle hits
-an ``exceptional'' boundary (e.g. needs to be sent to another node),
-the index and remaining displacement are saved for later processing.
-No additional passes through the particles are necessary to find
-exceptions.  Thus, exception handling (often slow and application
-specific) is cleanly separated and does not pollute the instruction or
-data caches during the particle advance.  Like the interpolation
-coefficients, $\vecJ$ contributions from particle motion in a voxel
-are made to a contiguous aligned set of partial currents which is then
-postprocessed into $\vecJ$ prior to the field advance; the same
-benefits described for interpolation coefficients apply.
+might cross through several in a timestep.  Fortunately, particles
+cross voxel boundaries infrequently.  VPIC uses 4-vector SIMD to
+advance and accumulate $4$~particles at a time, assuming none of the
+$4$~particles cross any boundaries.  Particles that do are detected
+and make no $\vecJ$ contribution during this process.  During
+subsequent $\vecJ$ accumulation of voxel crossing particles, if a
+particle hits an ``exceptional'' boundary (e.g. needs to be sent to
+another node), the particle index and remaining displacement are saved
+for later processing.  No additional passes through the particles are
+necessary to find exceptions.  Thus, exception handling (often slow
+and application specific) is cleanly separated and does not pollute
+the instruction or data caches during the particle advance.  Like the
+interpolation coefficients, $\vecJ$ contributions from particle motion
+in a voxel are made to a contiguous aligned set of partial currents
+which is then postprocessed into $\vecJ$ prior to the field advance;
+the same benefits described for interpolation coefficients apply.
 
 \section{Roadrunner overview}
 
@@ -775,50 +758,12 @@ cluster-of-clusters that utilizes a combination of $6,120$, $1.8$~GHz,
 dual-core AMD Opteron \emph{host} CPUs with $12,240$, $3.2$~GHz, IBM
 \emph{PowerXCell 8i accelerator} CPU also known as the Cell
 \emph{extended Double Precision (eDP)} CPU.  Roadrunner has a
-theoretical peak performance of $2.82$~Pflop/s in single precision.
-\footnote{This does not include the Opteron host CPUs, which have
-an additional theoretical peak performance of $0.0881$~Pflop/s in
+theoretical peak performance of $2.82$~Pflop/s in single
+precision.\footnote{This does not include the Opteron host CPUs, which
+have an additional theoretical peak performance of $0.0881$~Pflop/s in
 single precision.}  The Roadrunner supercomputer was the first machine
 to achieve a sustained petaflop on the TOP500 LINPACK benchmark used
 to rank the fastest supercomputers in the world~\cite{top500}.
-
-\subsection{Connected Unit}
-
-A Connected Unit (CU) is made up of $180$~\emph{Triblades}, compute
-nodes and $12$~I/O nodes linked by a first-stage, $288$~port Voltaire
-Infiniband 4x DDR switch.  Using a top-down description, the system is
-comprised of $17$~CUs connected via eight, second-stage, $288$~port
-Voltaire Infiniband 4x DDR switches.  This allows for $12$~links per
-CU to each of the eight switches, with $192$~ports
-\emph{in} and $96$~ports \emph{up}, creating a two-to-one
-over-subscribed, fat-tree network topology.  A Connected Unit is a
-powerful cluster in its own right, with a single precision theoretical
-peak performance of $165.9$~Tflop/s (double-precision peak is
-$82.9$~Tflop/s); a single CU of Roadrunner would rank in the top $30$
-of the June 2008 TOP500 list.
-
-\subsection{Triblade}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=3.375in]{figs/triblade.eps}
-\caption{Triblade Compute Node}
-\label{fig:triblade}
-\end{center}
-\end{figure}
-
-A Triblade compute node, shown in \fig{triblade}, actually integrates
-four physical blades: one IBM LS21, dual-socket Opteron blade, one
-expansion blade, and two IBM QS22 Cell blades.  The expansion blade
-connects the two QS22s to the LS21 via four PCI-e x8 links and
-provides the node's ConnectX IB 4x DDR link to the rest of the CU
-cluster.  Each PCI-e x8 link logically connects an Opteron core to a
-Cell eDP CPU ---there is a one-to-one relationship between Opteron
-cores and Cell eDP CPUs---with a theoretical bandwidth of $2$~GB/s.
-The LS21 blade incorporates two dual-core AMD Opteron CPUs running at
-$1.8$~GHz with $4$~GB RAM per core.  Each QS22 blade has two Cell eDP
-CPUs running at $3.2$~GHz with $4$~GB RAM per Cell CPU.  The full
-Roadrunner machine has a total of $3,240$~Triblade compute nodes.
 
 \subsection{Cell Broadband Engine Architecture (CBEA)}
 
@@ -854,30 +799,54 @@ $128$~bit vector execution pipelines, a $128$~entry register file and
 $256$~KB user-controlled, embedded SRAM called the \emph{Local Store
 (LS)}.  Each SPE has a theoretical peak performance of $25.6$~Gflop/s
 single precision ($12.8$~GFlop/s double precision) at $3.2$~GHz.  All
-data and text operated on by the SPE must be fetched from main memory
-to the LS using \emph{direct memory access (DMA)} calls.  Each SPE has
-its own $32$~channel \emph{Memory Flow Controller (MFC)} that supports
-up to $12$~outstanding DMA requests and has a theoretical bandwidth of
-$21.4$~GB/s to the DDR2-667 SDRAM main memory used in on the QS22
-blades.
-% FIXME: CHECK THIS
+data and text operated on by a SPE must be fetched from main memory to
+the SPE's LS using \emph{direct memory access (DMA)} calls.  Each SPE
+has its own $32$~channel \emph{Memory Flow Controller (MFC)} that
+supports up to $12$~outstanding DMA requests and has a theoretical
+bandwidth of $25.6$~GB/s to DRAM.
+
+\subsection{Triblades}
+
+Roadrunner's CPUs are hosted on $3,060$~\emph{Triblade} compute nodes.
+A triblade, shown in \fig{triblade}, actually integrates four physical
+blades: one IBM LS21, dual-socket Opteron blade, one expansion blade,
+and two IBM QS22 Cell blades.  The expansion blade connects the two
+QS22s to the LS21 via four PCI-e x8 links and provides the node's
+ConnectX IB 4x DDR link.  Each PCI-e x8 link logically connects an
+Opteron core to a Cell eDP CPU---there is a one-to-one relationship
+between Opteron cores and Cell eDP CPUs---with a theoretical bandwidth
+of $2$~GB/s.  The LS21 blade incorporates two dual-core AMD Opteron
+CPUs running at $1.8$~GHz with $4$~GB DDR2-667 DRAM per core.  Each
+QS22 blade has two Cell eDP CPUs running at $3.2$~GHz with $4$~GB
+DDR2-800 DRAM per Cell CPU.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=3.375in]{figs/triblade.eps}
+\caption{Triblade Compute Node.  Each Cell eDP CPU is logically
+connected to an Opteron core with a theoretical bandwidth of
+$2$~GB/s.}
+\label{fig:triblade}
+\end{center}
+\end{figure}
+
+\subsection{Connected Units}
+
+Roadrunner's Triblades are organized into $17$~\emph{Connected Units
+(CU)}.  A CU consists of $180$~Triblades and $12$~I/O nodes linked by
+a $288$~port Voltaire Infiniband 4x DDR switch.  A CU is a powerful
+cluster in its own right, with a single precision theoretical peak
+performance of $165.9$~Tflop/s (double precision peak of
+$82.9$~Tflop/s); a single CU would rank in the top $30$ of the June
+2008 TOP500 list.
+
+The CUs are connected via eight second-stage $288$~port Voltaire
+Infiniband 4x DDR switches.  This allows for $12$~links per CU to each
+of the eight switches, with $192$~ports \emph{in} and $96$~ports
+\emph{up}, creating a two-to-one over-subscribed, fat-tree network
+topology.
 
 \section{Porting to Roadrunner}
-
-\subsection{General strategy}
-
-In VPIC, performance is asymptotically limited by the rate particles
-can be streamed to and from DRAM.  On Roadrunner, the bandwidth
-between the Cell CPU and Cell local DRAM exceeds the bandwidth between
-the Cell CPU and Opteron local DRAM (limited by the PCI-Express
-bridge).  However, the Cell CPU to Cell CPU bandwidth is limited by
-the internode Infiniband connection.  Accordingly, in porting VPIC to
-Roadrunner, we decided (1) all local simulation state would reside
-within Cell DRAM, (2) the Cell CPU would be responsible for all
-simulation computations and (3) the Opterons would manage
-communications among Cell CPU.  This maximizes the bandwidth between
-Cell CPU and simulation state.  It also is less complicated to
-implement and allows the VPIC to be used on Cell-only clusters.
 
 \begin{figure}
 \begin{center}
@@ -888,6 +857,21 @@ clusters.}
 \label{fig:relay}
 \end{center}
 \end{figure}
+
+\subsection{General strategy}
+
+In VPIC, performance is asymptotically limited by the rate particles
+can be streamed to and from DRAM.  On Roadrunner, the bandwidth
+between the Cell CPU and Cell local DRAM greatly exceeds the bandwidth
+between the Cell CPU and Opteron local DRAM (limited by the
+PCI-Express bridge).  However, the Cell CPU to Cell CPU bandwidth is
+limited by the internode Infiniband connection.  Accordingly, in
+porting VPIC to Roadrunner, we decided (1) all local simulation state
+would reside within Cell DRAM, (2) the Cell CPU would be responsible
+for all simulation computations and (3) the Opterons would manage
+communications among Cell CPU.  This maximizes the bandwidth between
+Cell CPU and simulation state.  It also is less complicated to
+implement and allows the VPIC to be used on Cell-only clusters.
 
 To execute this strategy, we developed a message relay layer called
 \emph{MP Relay} that runs on the Opterons and handles forwarding of
@@ -901,10 +885,9 @@ layer.  Communication between Opterons and Cells is handled within the
 message passing layer using the IBM \emph{Data, Communication, and
 Synchronization (DaCS)} library.  Communication among Opterons uses
 MPI.  Under \emph{MP Replay}, the zero-byte latency from Cell PPU to
-Cell PPU (across tri-blades was measured to be $10.6$~$\mu$s and a
+Cell PPU (across tri-blades) was measured to be $10.6$~$\mu$s and a
 bandwidth of $1$~GB/s was measured for $1$~MB message sizes on
-pre-production hardware---consistent with the rules of thumb given in
-\tbl{Rules_of_thumb}.
+pre-production hardware.
 
 \subsection{Particle advance kernel}
 
@@ -921,11 +904,11 @@ previous is stored.  Block processing groups particles by $4$ and uses
 4-vector SIMD to advance them (as done on conventional CPU).  To
 minimize stalls and utilize fully the SPE's register file and dual
 execution pipelines, the vectorized inner loop is hand unrolled and
-modulo scheduled by $4$.  A block is guaranteed to contain a multiple
-of $16$~particles, so no code is needed to process left over particles
-on the SPE.
+modulo scheduled by $4$.  As a block is guaranteed to contain a
+multiple of $16$~particles, no code is needed to process left over
+particles on the SPE.
 
-The challenges of SPE particle processing are handling random memory
+The challenge of SPE particle processing is handling random memory
 access and particle exceptions.  Each SPE's ``local store'' is
 analogous to cache, but, unlike conventional cache, memory transfers
 must be explicitly managed through the MFC.  Though non-trivial, this
@@ -986,16 +969,16 @@ stored, the corresponding list of unprocessed exceptions is streamed
 out to memory as well.
 
 Overall, $206$~KB of local store is used for the particle advance data
-(leaving $50$~KB for code) and all $32$~DMA channels are utilized.
-While such a strategy may seem expensive, a SPE core achieves $20\%$
-of theoretical single precision peak performance and is faster
-clock-for-clock than an Opteron core at the particle advance kernel
-($158$ versus $174$~clocks per common case particle advance).
+structures (leaving $50$~KB for code) and all $32$~DMA channels are
+utilized.  While such a strategy may seem expensive, a SPE core
+achieves $20\%$ of theoretical single precision peak performance and
+is faster clock-for-clock than an Opteron core at the particle advance
+kernel ($158$ versus $174$~clocks per common case particle advance).
 Further, the SPE cores run at a higher clock rate and there are many
 more of them.  As a result, VPIC's SPE accelerated particle advance
-kernel can achieve $0.488$~Pflop/s on whole of Roadrunner, over $15.6$
-times faster than the $0.031$~Pflop/s the kernel can achieve by
-running on all Opteron cores.
+kernel can achieve $0.488$~Pflop/s (s.p.) on whole of Roadrunner, over
+$15.6$ times faster than the $0.031$~Pflop/s (s.p.) the kernel can
+achieve by running on all Opteron cores.
 
 \subsection{Additional porting considerations}
 
@@ -1023,16 +1006,84 @@ outside the particle advance when run on Roadrunner's Opterons versus
 roughly $23\%$ when run on SPE accelerated on Roadrunner's Cells (with
 the particle sort accounting for most of this).  As such, VPIC
 development is focused on porting these other kernels to the SPE cores
-with the particle sort being top priority.
+with the particle sort being top priority.  Fortunately, these kernels
+are much less technically challenging than the particle advance to SPE
+accelerate due to the negligible amount of random access memory used
+by these kernels.
 
 \section{Performance and Scalability} \label{sec:performance}
 
 \begin{figure}
 \begin{center}
 \scalebox{0.43}{\includegraphics*[0.875in,0.375in][9in,7in]{figs/weak_scaling.eps}}
+\caption{
+Measured weak scaling on Roadrunner.  The top panel shows performance
+versus problem size for Problems 1 (squares) and 2 (diamonds).  Peak
+performance of Problem 2 was measured on $12,240$~Cell CPU of
+Roadrunner to be over $0.374$~Pflop/s (s.p.).  The table lists the
+measured performance numbers along with the total numbers $n_x$,
+$n_y$, and $n_z$ of voxels in each spatial dimension.  Both problems
+exhibit linear scaling with $y$-intercept near zero: Problem 1 has fit
+$y=0.276x + 4.9703$ and $R^2=0.9996$; Problem 2 has fit $y=0.0301x +
+1.6635$ (shown) and $R^2 = 0.9995$.}
+\label{fig:weakscaling}
+\end{center}
+\end{figure}
 
-\
+\subsection{Operation Count and Communication Costs}
 
+The operations count is dominated by the particle advance.  Within the
+particle advance, the most common case is a ``cold'' particle advance,
+i.e., the particle does not leave its voxel.  Cold advances require
+$246$~floating point operations, obtained by hand counting the number
+of operations in the inner loop.  The non-common case involves a
+particle crossing a voxel boundary and requires an additional
+$168$~operations plus $168$~operations times the number of boundaries
+crossed.
+
+To estimate the total number of floating-point operations required to
+push a single particle one step for given physical and numerical
+parameters, a random thermal distribution of $10^7$ particles was
+created and advanced one step.  The resulting spatial distribution was
+then analyzed to estimate the probability that a particle will cross a
+given number of boundaries.  The results of this approximation are
+accurate to over $3$~significant digits, assuming: (1) particles are
+evenly distributed in space and (2) particles have a drifting
+Maxwellian distribution.  With $\delta t = 0.02 \wpe^{-1}$ and voxel
+dimensions $1.3\lde \times 1.8\lde \times 1.8\lde$, corresponding to
+the LPI problems of interest, this yields $256.15$~operations/particle
+for electrons and $246.25$~operations/particle for ions.  These values
+are weighted by the fraction of the number of particles of each type
+present and averaged to obtain a single operations/particle measure.
+This estimate is conservative because we do not include the cost of
+the field advance or other kernels.  LPI simulation phase space
+measurements validate the above
+assumptions.~\cite{Yin_et_al_Phys_Plasmas_2007_SRS}
+
+Typical timesteps require $6$~messages to communicate field values
+between nodes and $18$~$4$-byte messages plus an additional
+$18$~messages to transfer particles between nodes.  Field
+communication messages for the problems simulated below are
+approximately $2.5$~KB in size and fully overlaped with computation.
+Particle transfer messages vary in size with the largest messages
+requiring over $200$~KB and fluctuate up to $25\%$ in size timestep to
+timestep and node to node.  Thanks to the simulation model's finite
+$c$, there are no collective communications or synchronizations per
+timestep.
+
+A model of VPIC performance based on the above was developed to assess
+the viability of the Roadrunner system during stages of its
+procurement.  This model is a function of the simulation parameters
+and the hardware platform and was validated on a $256$~node dual-core,
+dual-socket Opteron Infiniband cluster and on a single CU of
+Roadrunner with average prediction error less than $4\%$ for Problems
+1 and 2.
+
+\subsection{Measured Performance on Roadrunner}
+
+\begin{table}
+\caption{Table of measured weak scaling on Roadrunner}
+\begin{center}
 \begin{tabular}{rrrrrrr}
 \hline
 \hline
@@ -1051,72 +1102,9 @@ $N$ &  Cell & $n_x$ & $n_y$ & $n_z$ &   Prob.~1 &   Prob.~2  \\
  17 & 12240 &  1105 &   168 &   168 &     340.2 &     374.2  \\
 \hline
 \end{tabular}
-
-\caption{
-Measured weak scaling on Roadrunner for LPI physics.  The top panel
-shows performance versus problem size for Problems 1 (squares) and 2
-(diamonds).  Peak performance of Problem 2 was measured on
-$12,240$~Cell CPU of Roadrunner to be over $0.374$~Pflop/s.  The table
-lists the measured performance numbers along with the total numbers
-$n_x$, $n_y$, and $n_z$ of voxels in each spatial dimension.  Both
-problems exhibit linear scaling with $y$-intercept near zero: Problem
-1 has fit $y=0.276x + 4.9703$ and $R^2=0.9996$; Problem 2 has fit
-$y=0.0301x + 1.6635$ (shown) and $R^2 = 0.9995$.}
-\label{fig:weakscaling}
 \end{center}
-\end{figure}
-
-\subsection{Operation Count and Communication Costs}
-
-The operations count is dominated by the particle advance.  Within the
-particle advance, the most common case is a ``cold'' particle advance,
-i.e., the particle does not leave its voxel.  Cold advances require
-$246$~floating point operations, obtained by hand counting the number
-of operations in the inner loop.  The non-common case involves a
-particle crossing a voxel boundary and requires an additional
-$168$~operations plus $168$~operations times the number of boundaries
-crossed.
-
-To estimate the total number of floating-point operations required to
-push a single particle one step for a given physical and numerical
-parameters, a random thermal distribution of $10^7$ particles was
-created and advanced for one iteration.  The resulting spatial
-distribution was then analyzed to estimate the probability that a
-particle will cross a given number of boundaries.  The results of this
-approximation are generally accurate to over $3$~significant digits,
-based on the assumptions that: 1) Particles are evenly distributed in
-space, and 2) Particles have a drifting Maxwellian distribution.  With
-$\delta t = 0.02 \wpe^{-1}$ and voxel dimensions $1.3\lde \times
-1.8\lde \times 1.8\lde$, corresponding to the LPI problems of
-interest, this yields $256.15$~operations/particle for electrons and
-$246.25$~operations/particles for ions.  These values are weighted by
-the fraction of the number of particles of each type present and
-averaged to obtain a single per particle operation count.  This
-estimate is a conservative lower bound because we do not include the
-cost of the field solve or other bookkeeping.  Analysis of phase space
-in LPI simulations validates the assumed
-distributions.~\cite{Yin_et_al_Phys_Plasmas_2007_SRS}
-
-Typical timesteps require $6$~messages to communicate field values
-between nodes and $18$~$4$-byte messages plus an additional
-$18$~messages to transfer particles between nodes.  Field
-communication messages for the problems simulated below are
-approximately $2.5$~KB in size and fully overlaped with computation.
-Particle transfer messages vary in size with the largest messages
-requiring over $200$~KB and fluctuate up to $25\%$ in size timestep to
-timestep and node to node.  Thanks to the simulation model's finite
-$c$, there are no collective communications, synchronizations or
-barriers per timestep.
-
-A model of VPIC performance based on the above was developed to assess
-the viability of the Roadrunner system during stages of its
-procurement.  This model is a function of the input deck and of the
-hardware execution platform and was validated on a $256$~node
-dual-core, dual-socket Opteron Infiniband cluster and on a single CU
-of Roadrunner with average prediction error less than $4\%$ for
-Problems 1 and 2.
-
-\subsection{Measured Performance on Roadrunner}
+\label{tbl:weakscaling}
+\end{table}
 
 During Roadrunner's acceptance trials at IBM's Poughkeepsie, New York
 facility in late May 2008, we had limited access to the full machine
@@ -1136,19 +1124,19 @@ problem specifications, timings were observed to be exceedingly
 regular over an ion sort interval.  This averaging procedure ensured
 that the cost of particle sorting and the penalty for imperfect data
 locality were properly amortized.}  On a single Cell CPU, measured
-performance on Roadrunner was $31.4$~Gflop/s.  To test weak
+performance on Roadrunner was $31.4$~Gflop/s (s.p.).  To test weak
 scalability, a series of runs were conducted by composing $5N \times
 12 \times 12$ simulation domains for $N$ connected units, each
 containing $720$~Cell CPU, for $1 \le N \le 17$ ($12,240$~Cell CPU).
-As shown in \fig{weakscaling}, results were scalable up to a measured
-performance of $0.374$~Pflop/s.  Notably, on the full Roadrunner,
-Problem 2 utilized over a trillion particles and over $93\%$ of the
-approximately $47$~TB of Cell DRAM.
+As shown in \fig{weakscaling} and \tbl{weakscaling}, results were
+scalable up to a measured performance of $0.374$~Pflop/s (s.p.).
+Notably, on the full Roadrunner, Problem 2 utilized over a trillion
+particles and over $93\%$ of the approximately $47$~TB of Cell DRAM.
 
-A similar study was done for the Problem 1 ($2,000$~particles/voxel).
-Measured single-Cell performance was $28.7$~Gflop/s and, scaled up as
-in Problem 2, performance on the full machine was measured at
-$0.340$~Pflop/s.
+A similar study was done for the Problem 1 ($2,000$~particles/voxel
+for each species).  Measured single-Cell performance was
+$28.7$~Gflop/s (s.p.) and, scaled up as in Problem 2, performance on
+the full machine was measured at $0.340$~Pflop/s (s.p.).
 
 Performance is a balance between loss of spatial locality (which
 degrades the SPE's particle advance software cache performance) and
@@ -1157,6 +1145,14 @@ species, delocalize most rapidly and therefore need to be sorted most
 frequently.  On both problems, out-of-place sorting was used for
 performance and sort intervals were optimized with the ion sort
 interval being an integer multiple of the electron sort interval.
+
+Lastly, \tbl{opteron-cell-compared} compares end-to-end performance of
+Opteron and Cell VPIC ports to Roadrunner on a simulation intermediate
+between Problems 1 and 2 (it utilized $3,900$~particles/voxel for each
+of the species).  As can be seen, utilization of Roadrunner's Cell
+CPUs gives over an order of magnitude advantage for these problems.
+
+\section{Conclusion}
 
 \begin{table}
 \caption{Opteron and Cell performance compared}
@@ -1177,14 +1173,6 @@ Cores & Opteron & Cell eDP & Performance \\
 \label{tbl:opteron-cell-compared}
 \end{table}
 
-Lastly, \tbl{opteron-cell-compared} compares end-to-end performance of
-Opteron and Cell VPIC ports to Roadrunner on a simulation intermediate
-between Problems 1 and 2 that utilized $3,900$~particles/voxel for
-each of the species.  As can be seen, utilization of Roadrunner's Cell
-CPUs gives over an order of magnitude advantage for these problems.
-
-\section{Conclusion}
-
 VPIC has been shown to run very efficiently on the Roadrunner hybrid
 platform on problems that are particle dominated.  As discussed
 earlier though, by Amdahl's law, the faster the particles are
@@ -1193,31 +1181,26 @@ the algorithm.  Currently, we are SPE accelerating other kernels in
 VPIC.  In particular, acceleration of the particle sort and the field
 solve will improve the performance of particle dominated simulations
 as well as expand the class of problems on which we can expect large
-speedups.  We expect to make significant progress towards this by
-January 2009, when the full Roadrunner system becomes available to us
-for sustained science runs.  This will enable calculations of even
-higher relevance to the NIF experiments. In particular, with an
-accelerated field solve, we will be able to directly model both LPI from
-$f/8$ NIF laser beams and also the interaction of neighboring speckles,
-all at a computational efficiency comparable to
-that obtained in Problem 2.
+speedups.  Fortunately, SPE accelerating these kernels is much less
+technically challenging than SPE accelerating the particle advance and
+we expect to make significant progress towards this by January 2009,
+when the full Roadrunner system becomes available to us for sustained
+science runs.  This will enable calculations of even higher relevance
+to the NIF experiments.  In particular, with additional SPE
+acceleration, we will be able to directly model both LPI from $f/8$
+NIF laser beams and the interaction of multiple speckles at a
+computational efficiency comparable to that obtained in Problem 2.
 
 \subsection*{Acknowledgments}
 
-This work was performed under the auspices of the United States Dept.
-of Energy by the Los Alamos National Security LLC Los Alamos National
-Laboratory under Contract No. DE-AC52-06NA25396.  Work supported in
-part by the Laboratory Directed Research and Development (LDRD)
-Program.  Document release number: LA-UR-08-2405.
+This work was performed under the auspices of the United States
+Department of Energy by the Los Alamos National Security LLC Los
+Alamos National Laboratory under Contract No. DE-AC52-06NA25396.  Work
+supported in part by the Laboratory Directed Research and Development
+(LDRD) Program.  Document release number: LA-UR-08-2405.
 
 \bibliographystyle{IEEEtran}
-
-%FIXME:  Kevin, when I latex, I get dashes in place of authors for the current
-%reference 11.  I looked at the bibtex entry and everything looks fine.  Does
-%this happen for you?
-
 \bibliography{bib/gb2008,bib/vpic}
-
 
 % FIXME: DO WE NEED BIOGRAPHIES?
 %\begin{IEEEbiographynophoto}{Kevin J.~Bowers}

@@ -295,7 +295,7 @@ code is impractical, we can indeed model these highest-intensity ``hot
 spots.''}
 % FIXME: THIS FOOTNOTE STILL NEEDS WORK.  WHAT DOES ``RARE'' SPECKLE
 % MEAN?
-The plasma is underdense with electron density $n_e = 0.14
+The plasma is under-dense with electron density $n_e = 0.14
 n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} = c m_e / 2 \lambda_0 e^2$ is
 the critical density, $c$ is the speed of light, $m_e$ is electron
 mass, and $e$ is electronic charge (statcoul).  The simulation volume
@@ -328,7 +328,7 @@ wave-particle trapping that bends electrostatic wavefronts (see
 \fig{lpi}), followed by transverse filamentation and break-up
 of wave fronts?  (2) What is the effect on LPI of high-$Z$ dopant such
 as Kr and Xe (of interest as a possible mitigation
-stategy~\cite{Lushnikov_PPCF_2006} and at the hohlraum edge where Au
+strategy~\cite{Lushnikov_PPCF_2006} and at the hohlraum edge where Au
 and U mix with low-$Z$ gas)?  In the following, ``Problem 1'' refers
 to runs with $2,000$~particles/voxel per species and ``Problem 2'' is
 the same problem, but at higher phase space fidelity
@@ -503,10 +503,10 @@ resonant kinetic phenomena.
 
 Monte Carlo, fluid dynamics and molecular dynamics (MD) techniques can
 also be used to simulate plasma systems or, more generally, systems
-modeled by the Boltzmann equation.  Though amenable to embarassingly
+modeled by the Boltzmann equation.  Though amenable to embarrassingly
 parallel computation, Monte Carlo techniques are best at computing
 equilibrium properties and thus not suited for examining the
-non-equilbrium time-dependent dynamics of LPI.  Though less expensive
+non-equilibrium time-dependent dynamics of LPI.  Though less expensive
 than PIC, the equations of state (which relate quantities like
 pressure to density and temperature) used in fluid dynamics neglect
 the detailed phase-space dynamics critical to wave-particle LPI
@@ -520,8 +520,8 @@ potential), while the converse is true in PIC (e.g. high temperature
 plasma where long range collective interactions among charged
 particles dominate over short range interactions).  Computationally,
 the impact is, even compared to MD techniques whose operations per
-timestep scale as $O(N)$ (where $N$ is the number of particles), that the
-amount of computation necessary per particle per timestep is much
+time step scale as $O(N)$ (where $N$ is the number of particles), that the
+amount of computation necessary per particle per time step is much
 lower than MD.  While being a net benefit for systems amenable to PIC
 simulation, this makes it harder to achieve high raw performance due
 to data motion limitations on modern supercomputers.
@@ -572,9 +572,9 @@ communications, number of memory accesses, amount of data in internode
 communications, amount of memory accessed and number of arithmetic
 operations, in roughly that order.
 
-In contrast to embarassingly parallel simulations, due to the
+In contrast to embarrassingly parallel simulations, due to the
 emphasis on long range interactions, communication between nodes is
-necessary at every timestep in PIC simulations.  Fortunately, due to the
+necessary at every time step in PIC simulations.  Fortunately, due to the
 finite $c$ in relativistic simulations, internode communications are
 naturally optimized by a spatial domain decomposition.  Nodes need
 only communicate with neighboring nodes and no global communications
@@ -732,7 +732,7 @@ used in Ref.~\cite{Bowers_et_al_2006}.
 Unfortunately, $\vecJ$ accumulation is not as SIMD friendly.
 Determining the voxels through which a particle has passed varies: one
 particle might remain in the voxel in which it started, while the next
-might cross through several in a timestep.  Fortunately, particles
+might cross through several in a time step.  Fortunately, particles
 cross voxel boundaries infrequently.  VPIC uses 4-vector SIMD to
 advance and accumulate $4$~particles at a time, making the assumption that
 none of the
@@ -747,7 +747,7 @@ and application specific) is cleanly separated and does not pollute
 the instruction or data caches during the particle advance.  Like the
 interpolation coefficients, $\vecJ$ contributions from particle motion
 in a voxel are made to a contiguous, aligned set of partial currents,
-which is then postprocessed into $\vecJ$ prior to the field advance;
+which is then post-processed into $\vecJ$ prior to the field advance;
 the same benefits described for interpolation coefficients apply.
 
 \section{Roadrunner overview}
@@ -757,12 +757,12 @@ petascale system to be deployed at Los Alamos National Laboratory in
 2008.  The system is a first-of-its-kind, heterogeneous
 cluster-of-clusters that utilizes a combination of $6,120$, $1.8$~GHz,
 dual-core AMD Opteron \emph{host} CPUs with $12,240$, $3.2$~GHz, IBM
-\emph{PowerXCell 8i accelerator} CPU also known as the Cell
+\emph{PowerXCell 8i accelerator} CPUs also known as the Cell
 \emph{extended Double Precision (eDP)} CPU.  Roadrunner has a
 theoretical peak performance of $2.82$~Pflop/s in single
 precision.\footnote{This does not include the Opteron host CPUs, which
 have an additional theoretical peak performance of $0.0881$~Pflop/s in
-single precision.}  The Roadrunner supercomputer was the first machine
+single precision.}  The Roadrunner supercomputer is the first machine
 to achieve a sustained petaflop on the TOP500 LINPACK benchmark used
 to rank the fastest supercomputers in the world~\cite{top500}.
 
@@ -793,7 +793,7 @@ Except as regards double precision performance, the Cell eDP does not
 differ significantly architecturally from the Cell BE.
 
 The PPE is a modestly provisioned general purpose core which serves as
-a controller for the eight SPE.  It supports two execution threads and
+a controller for the eight SPEs.  It supports two execution threads and
 has a theoretical peak performance of $25.6$~Gflop/s single precision
 ($6.4$~Gflop/s double precision) at $3.2$~GHz.  Each SPE core has dual
 $128$~bit vector execution pipelines, a $128$~entry register file and
@@ -809,7 +809,7 @@ bandwidth of $25.6$~GB/s to DRAM.
 \subsection{Triblades}
 
 Roadrunner's CPUs are hosted on $3,060$~\emph{Triblade} compute nodes.
-A triblade, shown in \fig{triblade}, actually integrates four physical
+A Triblade, shown in \fig{triblade}, actually integrates four physical
 blades: one IBM LS21, dual-socket Opteron blade, one expansion blade,
 and two IBM QS22 Cell blades.  The expansion blade connects the two
 QS22s to the LS21 via four PCI-e x8 links and provides the node's
@@ -868,46 +868,46 @@ between the Cell CPU and Opteron local DRAM (limited by the
 PCI-Express bridge).  However, the Cell CPU to Cell CPU bandwidth is
 limited by the internode Infiniband connection.  Accordingly, in
 porting VPIC to Roadrunner, we decided (1) all local simulation state
-would reside within Cell DRAM, (2) the Cell CPU would be responsible
+would reside within Cell DRAM, (2) the Cell CPUs would be responsible
 for all simulation computations and (3) the Opterons would manage
-communications among Cell CPU.  This maximizes the bandwidth between
-Cell CPU and simulation state.  It also is less complicated to
-implement and allows the VPIC to be used on Cell-only clusters.
+communications among Cell CPUs.  This maximizes the bandwidth between
+Cell CPUs and simulation state.  It also is less complicated to
+implement and allows VPIC to be used on Cell-only clusters.
 
 To execute this strategy, we developed a message relay layer called
 \emph{MP Relay} that runs on the Opterons and handles forwarding of
 message traffic and remote I/O for the QS22 blades.  As shown in
 \fig{relay}, MP Relay flattens the hierarchical network topology of
-Roadrunner making it possible to use the same underlying VPIC
-implementation on Roadrunner, clusters of Cell CPU, and traditional
+Roadrunner, making it possible to use the same underlying VPIC
+implementation on Roadrunner, clusters of Cell CPUs, and traditional
 clusters with very little architecture specific code.  The PPE handles
 communication for the Cell CPU through an abstracted message passing
 layer.  Communication between Opterons and Cells is handled within the
 message passing layer using the IBM \emph{Data, Communication, and
 Synchronization (DaCS)} library.  Communication among Opterons uses
 MPI.  Under \emph{MP Replay}, the zero-byte latency from Cell PPU to
-Cell PPU (across tri-blades) was measured to be $10.6$~$\mu$s and a
+Cell PPU (across Triblades) was measured to be $10.6$~$\mu$s and a
 bandwidth of $1$~GB/s was measured for $1$~MB message sizes on
 pre-production hardware.
 
 \subsection{Particle advance kernel}
 
 Since the particle advance is the dominant cost in VPIC, it was the
-focus of initial porting efforts.  To process a particle list, the SPE
+focus of initial porting efforts.  To process a particle list, the SPEs
 are assigned approximately equally sized non overlapping segments of
 the list and their own set of partial currents to accumulate.  Each
 segment contains a multiple of $16$~particles; the PPE advances any
-left overs while the SPE are working.  Particle data are triple
-buffered on the SPE in blocks of up to $512$~particles (at most
+left overs while the SPEs are working.  Particle data are triple
+buffered on the SPEs in blocks of up to $512$~particles (at most
 $16$~KB are needed to hold a block---the largest size of a single DMA
 transfer).  While a block is processed, the next is loaded and the
 previous is stored.  Block processing groups particles by $4$ and uses
-4-vector SIMD to advance them (as done on conventional CPU).  To
-minimize stalls and utilize fully the SPE's register file and dual
+4-vector SIMD to advance them (as done on conventional CPUs).  To
+minimize stalls and utilize fully an SPE's register file and dual
 execution pipelines, the vectorized inner loop is hand unrolled and
 modulo scheduled by $4$.  As a block is guaranteed to contain a
 multiple of $16$~particles, no code is needed to process left over
-particles on the SPE.
+particles on the SPEs.
 
 The challenge of SPE particle processing is handling random memory
 access and particle exceptions.  Each SPE's ``local store'' is
@@ -941,25 +941,25 @@ in cache once block processing begins.
 Under the hood, \verb+voxel_cache_fetch+ queries a hash table to
 determine if the requested voxel is already cached.  This hash table
 is oversized to reduce collisions and uses linear probing and modular
-hashing for implementation efficiency.  If a cache hit, the cache line
+hashing for implementation efficiency.  If a cache hit occurs, the cache line
 replacement order (stored as a doubly linked circular queue) is
-updated.  If a cache miss, the LRU line is selected for replacement.
+updated.  If a cache miss occurs, the LRU line is selected for replacement.
 For read-only data, a DMA load on a channel selected round robin from
 a set of channels reserved for this purpose is initiated.  This allows
 multiple simultaneous fetches of read only data.  Multiple
-simultaneous fetches of read-write data is more complicated as
+simultaneous fetches of read-write data is more complicated, as
 transfers to a given voxel must not be reordered by the MFC.  For
-read-write data, if the line to replace needs eviction, a channel is
+read-write data, if the line to be replaced needs eviction, a channel is
 selected based on the voxel whose data is being evicted, that data is
 copied to that channel's writeback buffer (first waiting for any
 previous writebacks on that channel to complete) and a DMA store is
 performed.  Then a fenced DMA load is initiated for the requested
-read-write data on a channel selected based on the requested voxel.
+read-write data on a channel selected on the basis of the requested voxel.
 Since all transfers of read/write data to a given voxel use the same
 channel, the fence is effective.  Finally, the hash table and index of
 the least recently used line are updated.  Though complicated, these
 operations are a fast $O(1)$ typically.  The net impact is that
-minimal DMA transfers are used, most are overlapped and the inner loop
+minimal DMA transfers are used, most are overlapped, and the inner loop
 operates exclusively out of local store.
 
 When a particle exception occurs that the SPE logic cannot handle
@@ -1002,7 +1002,7 @@ performance bottlenecks.  In VPIC, though the particle sort, field
 advance and particle exception processing are typically negligible on
 conventional clusters, they are large (even dominant in some regimes)
 when running SPE accelerated on Roadrunner.  To be concrete, for the
-LPI simulations of interest, VPIC spend under $4\%$ of its time
+LPI simulations of interest, VPIC spends under $4\%$ of its time
 outside the particle advance when run on Roadrunner's Opterons versus
 roughly $23\%$ when run on SPE accelerated on Roadrunner's Cells (with
 the particle sort accounting for most of this).  As such, VPIC
@@ -1010,7 +1010,7 @@ development is focused on porting these other kernels to the SPE cores
 with the particle sort being top priority.  Fortunately, these kernels
 are much less technically challenging than the particle advance to SPE
 accelerate due to the negligible amount of random access memory used
-by these kernels.
+by them.
 
 \section{Performance and Scalability} \label{sec:performance}
 
@@ -1061,16 +1061,16 @@ the field advance or other kernels.  LPI simulation phase space
 measurements validate the above
 assumptions.~\cite{Yin_et_al_Phys_Plasmas_2007_SRS}
 
-Typical timesteps require $6$~messages to communicate field values
+Typical time steps require $6$~messages to communicate field values
 between nodes and $18$~$4$-byte messages plus an additional
 $18$~messages to transfer particles between nodes.  Field
 communication messages for the problems simulated below are
-approximately $2.5$~KB in size and fully overlaped with computation.
+approximately $2.5$~KB in size and fully overlapped with computation.
 Particle transfer messages vary in size with the largest messages
-requiring over $200$~KB and fluctuate up to $25\%$ in size timestep to
-timestep and node to node.  Thanks to the simulation model's finite
+requiring over $200$~KB and fluctuate up to $25\%$ in size from time step to
+time step and node to node.  Thanks to the simulation model's finite
 $c$, there are no collective communications or synchronizations per
-timestep.
+time step.
 
 A model of VPIC performance based on the above was developed to assess
 the viability of the Roadrunner system during stages of its
@@ -1142,7 +1142,7 @@ the full machine was measured at $0.340$~Pflop/s (s.p.).
 Performance is a balance between loss of spatial locality (which
 degrades the SPE's particle advance software cache performance) and
 time spent sorting particles.  Generally, electrons, being the hottest
-species, delocalize most rapidly and therefore need to be sorted most
+species, de-localize most rapidly and therefore need to be sorted most
 frequently.  On both problems, out-of-place sorting was used for
 performance and sort intervals were optimized with the ion sort
 interval being an integer multiple of the electron sort interval.

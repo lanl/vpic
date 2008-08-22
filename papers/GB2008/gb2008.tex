@@ -74,8 +74,8 @@ NY 10036.}% <- Need this
 \begin{abstract}
 We demonstrate the outstanding performance and scalability of the VPIC
 kinetic plasma modeling code on the heterogeneous IBM Roadrunner
-supercomputer at Los Alamos National Laboratory.  VPIC is a three-
-dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
+supercomputer at Los Alamos National Laboratory.  VPIC is a 
+three-dimensional, relativistic, electromagnetic, particle-in-cell (PIC)
 code that self-consistently evolves a kinetic plasma.  VPIC
 simulations of laser plasma interaction were conducted at
 unprecedented fidelity and scale---up to $1.0 \times
@@ -118,7 +118,7 @@ margin for uncertainty in inertial confinement fusion (ICF)
 experiments at the multi-billion-dollar National Ignition Facility
 (NIF).  Kinetic modeling ``at scale'' using particle-in-cell (PIC)
 kinetic plasma simulations is the only economical and practicable
-means by which LPI physics can be understood and the effects
+means by which complex LPI physics can be understood and the effects
 mitigated.
 
 In PIC calculations, the simulation volume is partitioned into a mesh
@@ -222,14 +222,14 @@ collection of ``speckles,'' or hot spots.  To mitigate SRS backscatter
 requires a predictive capability for the SRS onset threshold and
 scaling of reflectivity with laser intensity within a solitary laser
 speckle.  This long-sought-after research goal is enabled for the
-first time by VPIC running on the full Roadrunner platform.  This
+first time by \abinitio\ 3d VPIC simulations on the full Roadrunner platform.  This
 gives a unique platform for understanding LPI that will translate into
 improved predictive modeling of ICF experiments and mitigation of risk
 for ICF ignition.
 
 To put this in context, for over $30$~years, LPI has been one of the
 critical issues facing ICF ignition experiments.  The current NNSA
-strategy for estimating the LPI effects centers on the use of paraxial
+strategy for estimating LPI effects centers on the use of paraxial
 codes, such as pF3D~\cite{Berger_Phys_Plasmas_1998}, to obtain the
 amount of SRS and SBS laser backscatter in laser-driven hohlraum
 plasma~\cite{Glenzer_Nature_Physics_2007,Labaune_Nature_Physics_2007}.
@@ -284,14 +284,12 @@ electromagnetic waves and reflect particles.  The $f/4$ beam
 (diffraction chosen to emulate laboratory experiments and prior
 calculations) is linearly polarized, of wavelength $\lambda_0 =
 351$~nm, and has peak intensity ranging from $I_0 = 10^{15} -
-10^{17}$~W/cm$^2$ at the center of the simulation volume.\footnote{It
-is expected that the laser backscatter from daughter SRS and SBS waves
-is dominated by the nonlinear dynamics of the rare speckles at very
-high intensity.  While modeling of an entire laser beam within a PIC
-code is impractical, we can indeed model these highest-intensity ``hot
-spots.''}
-% FIXME: THIS FOOTNOTE STILL NEEDS WORK.  WHAT DOES ``RARE'' SPECKLE
-% MEAN?
+10^{17}$~W/cm$^2$ at the center of the simulation 
+volume.\footnote{
+SRS daughter electron plasma waves first exhibit substantial nonlinear
+wave dynamics in rare, large-intensity speckles ($\sim 10\times$
+the average laser intensity).  This physics is not accounted for 
+presently in design of ICF experiments.}
 The plasma is under-dense with electron density $n_e = 0.14
 n_{\mathrm{cr}}$; here $n_{\mathrm{cr}} = c m_e / 2 \lambda_0 e^2$ is
 the critical density, $c$ is the speed of light, $m_e$ is electron
@@ -306,8 +304,9 @@ helium, and trace amounts of krypton and xenon.
 The LPI simulations are at conditions $k \lde = 0.34$, where $k$ is
 the wavenumber of the most unstable electron fluctuation and $\lde =
 (k_B T_e / 4 \pi n_e e^2)^{1/2}$ is the Debye length ($k_B$ is
-Boltzmann's constant).  The simulation time is $10^4~\wpe^{-1}$ [$\wpe
-= (4 \pi n_e e^2 / m_e)^{1/2}$]; the $0.13 \times 10^6$ time steps
+% ``Desired'' simulation time?  We didn't actually run this long in our test cases. 
+Boltzmann's constant).  The desired simulation time is $10^4~\wpe^{-1}$ 
+[$\wpe = (4 \pi n_e e^2 / m_e)^{1/2}$]; the $0.13 \times 10^6$ time steps
 allow for growth of several ``bursts'' of SRS and SBS.  The simulation
 volume is divided into voxels of size $1.3\lde \times 1.7\lde \times
 1.7\lde$, which ensures ample resolution for the collective processes.
@@ -603,7 +602,7 @@ representation.\footnote{In exact arithmetic, the index+offset
 representation is equivalent to the more common global coordinate
 system representation.  As such, there is no abrupt change in Jacobian
 as a particle moves from voxel to voxel.  Interestingly, each voxel
-has identical numerical properties regardless how the voxel mesh is
+has identical numerical properties regardless of how the voxel mesh is
 translated, oriented or reflected in absolute coordinates---avoiding
 symmetry breaking spatially dependent arithmetic errors that can
 corrupt single precision simulations using global coordinate system

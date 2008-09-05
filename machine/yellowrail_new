@@ -1,0 +1,43 @@
+#autoconf#######################################################################
+# test machine configuration file
+################################################################################
+
+################################################################################
+# BUILDSTYLE - build style
+################################################################################
+BUILDSTYLE=standard
+
+################################################################################
+# CFLAGS - configure C compiler behavior
+################################################################################
+CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse"
+
+################################################################################
+# CXXFLAGS - configure C++ compiler behavior
+################################################################################
+CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -DUSE_V4_SSE"
+
+################################################################################
+# EXTENSION - executable extension
+################################################################################
+EXTENSION=yr
+
+################################################################################
+# ADDRESSING - configure pointer size (32|64)[32]
+################################################################################
+ADDRESSING=64
+
+################################################################################
+# PARTICLE_SORT
+################################################################################
+#PARTICLE_SORT=out-of-place
+
+################################################################################
+# MPI configuration
+# MPI_CPPFLAGS - configure MPI preprocessor flags
+# MPI_LDFLAGS - configure MPI link flags
+# MPI_LIBS - configure MPI library names
+################################################################################
+MPI_CPPFLAGS=`mpicc --showme:compile | sed 's,-m64,,g'`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g;s,-m64,,g'`
+MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-m64,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`

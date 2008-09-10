@@ -1,42 +1,42 @@
 // FIXME: THIS INPUT DECK NEEDS REVAMPED FOR NEW SOURCE TREE
 //========================================================================
-//  Generic plasma deck for VPIC intended for use in testing performance 
+//  Generic plasma deck for VPIC intended for use in testing performance
 //
 //  Written by B. Albright, X-1-PTA, 6/14/2007
 //
-//  Can be modified to mock up various 1d, 2d, 3d problems.  
-//  
-//  Modify nx, ny, nz to adjust # of voxels per processor in each direction
-//  Modify topology_x, topology_y, topology_z to adjust # of domains in 
-//         each direction.
-//  Modify nppc to adjust the number of particles/cell on average. 
+//  Can be modified to mock up various 1d, 2d, 3d problems.
 //
-//  Particles are assumed to be electrons with temperature of order 5 keV, so 
+//  Modify nx, ny, nz to adjust # of voxels per processor in each direction
+//  Modify topology_x, topology_y, topology_z to adjust # of domains in
+//         each direction.
+//  Modify nppc to adjust the number of particles/cell on average.
+//
+//  Particles are assumed to be electrons with temperature of order 5 keV, so
 //  relatively frequent boundary crossings are expected.  No ions are
-//  generated, so the ion background is, by default, a static bound charge.  
-//  Particle traffic across boundaries will be about twice what we expect in 
-//  other problems. 
+//  generated, so the ion background is, by default, a static bound charge.
+//  Particle traffic across boundaries will be about twice what we expect in
+//  other problems.
 //
 //  The system topology is defined to be periodic in y and z and has field
-//  absorbing boundaries in x as well as Maxwellian reinjection.  This 
-//  reflects a common class of problems that we plan to run in 3D.   
+//  absorbing boundaries in x as well as Maxwellian reinjection.  This
+//  reflects a common class of problems that we plan to run in 3D.
 //
 //========================================================================
-
+ 
 begin_globals {
 };
-
+ 
 begin_initialization {
-  
+ 
   // System of units
-//  double ec          = 1; 
-  double c           = 1; 
-//  double me          = 1; 
+//  double ec          = 1;
+  double c           = 1;
+//  double me          = 1;
 //  double eps0        = 1;             // "natural" simulation units: wpe = 1
   double uthe        = 0.1;           // normalized thermal momenta; typically less than unity
-  double debye       = uthe/c;        // Debye length 
-  double delta       = 1;             // Plasma skin depth 
-
+  double debye       = uthe/c;        // Debye length
+  double delta       = 1;             // Plasma skin depth
+ 
   // Simulation parameters
   double cell_size   = debye/delta;   // Voxel size in Debye lengths
   double cfl_req     = 0.99;          // How close to Courant should we try to run
@@ -46,37 +46,37 @@ begin_initialization {
   double topology_y  = 1;             // Number of computational domains in y
   double topology_z  = 1;             // Number of computational domains in z
   double damp        = 0;             // Radiation damping term (to help control numerical heating)
-                                      
+ 
   int load_particles = 1;             // Flag to turn on particle load
   int rng_seed       = 1;             // Random number seed increent
   num_step       = 256;               // Number of time steps; set this to whatever you need
-
+ 
   // 125^3 = 1.95e6 voxels per domain, which is torturously slow on Coyote with 64 ppc (takes ~30
-  //                                   min to load), but comparable to what we plan to run on RR.  
+  //                                   min to load), but comparable to what we plan to run on RR.
   // 75^3 = 4.22e5 voxels per domain, which is tolerable on Coyote with 64 ppc
   // 50^3 = 1.25e5 voxels per domain, which goes quickly on Coyote with 64 ppc
   double nx          = 50;           // Number of voxels per domain in x, y, z directions
-  double ny          = 50;           
-  double nz          = 50;           
-  nx*=topology_x;                     // Convert to number of voxels in system in x, y, z directions 
-  ny*=topology_y;  
-  nz*=topology_z; 
-
+  double ny          = 50;
+  double nz          = 50;
+  nx*=topology_x;                     // Convert to number of voxels in system in x, y, z directions
+  ny*=topology_y;
+  nz*=topology_z;
+ 
   double Lx         = nx*cell_size;   // Physical size of system in skin depths
-  double Ly         = ny*cell_size; 
-  double Lz         = nz*cell_size; 
-
+  double Ly         = ny*cell_size;
+  double Lz         = nz*cell_size;
+ 
   double dt         = cfl_req*courant_length (Lx,Ly,Lz,nx,ny,nz ); // in 1/wpe (c=1)
   double Ne         = nppc*nx*ny*nz;  // Number of macro electrons in box: uniform distribution
   double Npe        = Lx*Ly*Lz;       // Number of physcial electrons in box, wpe=1
   double qe         = -Npe/Ne;        // Charge per macro electron
-
+ 
   // Print simulation parameters
-
+ 
   sim_log("***** Simulation parameters *****");
   sim_log("* Processors:                    "<<nproc());
-  sim_log("* Topology:                      "<<topology_x<<" "<<topology_y<<" "<<topology_z); 
-  sim_log("* Time step, max time, nsteps:   "<<dt<<" "<<num_step*dt<<" "<<num_step); 
+  sim_log("* Topology:                      "<<topology_x<<" "<<topology_y<<" "<<topology_z);
+  sim_log("* Time step, max time, nsteps:   "<<dt<<" "<<num_step*dt<<" "<<num_step);
   sim_log("* Debye length, voxel size:      "<<debye<<" "<<cell_size);
   sim_log("* Lx, Ly, Lz =                   "<<Lx<<" "<<Ly<<" "<<Lz);
   sim_log("* nx, ny, nz =                   "<<nx<<" "<<ny<<" "<<nz);
@@ -89,31 +89,31 @@ begin_initialization {
   sim_log("* vthe/c:                        "<<uthe);
   sim_log("* random number base seed:       "<<rng_seed);
   sim_log("*********************************");
-
+ 
   // Set up high level simulation parameters
-
-  sim_log("Setting up high-level simulation parameters."); 
+ 
+  sim_log("Setting up high-level simulation parameters.");
   verbose              = 0;
   num_comm_round       = 6;
-  status_interval      = 200; 
-  sync_shared_interval = status_interval/10; 
-  clean_div_e_interval = status_interval/10; 
-  clean_div_b_interval = status_interval/10; 
-
+  status_interval      = 200;
+  sync_shared_interval = status_interval/10;
+  clean_div_e_interval = status_interval/10;
+  clean_div_b_interval = status_interval/10;
+ 
   // Set up grid
-
-  sim_log("Setting up computational grid."); 
-  grid->dt   = dt; 
+ 
+  sim_log("Setting up computational grid.");
+  grid->dt   = dt;
   grid->cvac = 1;
-  grid->eps0 = 1; 
-  grid->damp = damp; 
-
-  sim_log("Setting up periodic mesh."); 
+  grid->eps0 = 1;
+  grid->damp = damp;
+ 
+  sim_log("Setting up periodic mesh.");
   define_periodic_grid( 0,         -0.5*Ly,    -0.5*Lz,        // Low corner
-                        Lx,         0.5*Ly,     0.5*Lz,        // High corner 
+                        Lx,         0.5*Ly,     0.5*Lz,        // High corner
                         nx,         ny,         nz,            // Resolution
                         topology_x, topology_y, topology_z );  // Topology
-
+ 
   // From grid/partition.c: used to determine which domains are on edge
 # define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {          \
     int _ix, _iy, _iz;                                           \
@@ -125,75 +125,75 @@ begin_initialization {
     (ix) = _ix;                                                  \
     (iy) = _iy;                                                  \
     (iz) = _iz;                                                  \
-  } END_PRIMITIVE 
-
-  sim_log("Overriding x field boundaries to absorb."); 
+  } END_PRIMITIVE
+ 
+  sim_log("Overriding x field boundaries to absorb.");
   int ix, iy, iz;        // Domain location in mesh
-  RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
-  if ( ix==0 )            set_domain_field_bc( BOUNDARY(-1,0,0), absorb_fields ); 
-  if ( ix==topology_x-1 ) set_domain_field_bc( BOUNDARY( 1,0,0), absorb_fields ); 
-
+  RANK_TO_INDEX( int(rank()), ix, iy, iz );
+  if ( ix==0 )            set_domain_field_bc( BOUNDARY(-1,0,0), absorb_fields );
+  if ( ix==topology_x-1 ) set_domain_field_bc( BOUNDARY( 1,0,0), absorb_fields );
+ 
   // Set up the species
   // Allow additional local particles in case of non-uniformity.
-  
+ 
   sim_log("Setting up species.");
-  species_t *electron = define_species( "electron",      // species name 
-                                        -1,              // species q/m 
+  species_t *electron = define_species( "electron",      // species name
+                                        -1,              // species q/m
                                         1.2*Ne/nproc(),  // num particles on local domain
                                         -1,              // num movers (-1 means let computer choose)
                                         20,              // sort interval
                                         1 );             // faster sort (out of place)
-
+ 
   // Set up Maxwellian reinjection B.C.  Particles that strike lower and upper x boundaries
   // are reinjected randomly from a Maxwellian distribution. (Implemented via a callback
-  // function).   This is a common topology for our 3D problems. 
-
-  sim_log("Setting up Maxwellian reinjection particle boundary condition."); 
-
+  // function).   This is a common topology for our 3D problems.
+ 
+  sim_log("Setting up Maxwellian reinjection particle boundary condition.");
+ 
   maxwellian_reflux_t boundary_data[1];
   boundary_data->ut_perp[electron->id] = uthe;      // vth_e in perp direction
   boundary_data->ut_para[electron->id] = uthe;      // vth_e in para direction
-  int maxwellian_reinjection = add_boundary( grid, maxwellian_reflux, boundary_data ); 
+  int maxwellian_reinjection = add_boundary( grid, maxwellian_reflux, boundary_data );
  
   // Set up materials
-
-  sim_log("Setting up materials."); 
+ 
+  sim_log("Setting up materials.");
   define_material( "vacuum", 1 );
-  define_material( "impermeable_vacuum", 1 ); 
+  define_material( "impermeable_vacuum", 1 );
   finalize_field_advance( vacuum_field_advance );
  
   // Paint the simulation volume with materials and boundary conditions
-
-# define iv_region (x<cell_size*iv_thick || x>Lx-cell_size*iv_thick ) /* left and right are i.v. */ 
-  set_region_material( iv_region, "impermeable_vacuum",     "impermeable_vacuum" ); 
-  set_region_bc( iv_region, maxwellian_reinjection, maxwellian_reinjection, maxwellian_reinjection ); 
-
-  // Load particles 
-
+ 
+# define iv_region (x<cell_size*iv_thick || x>Lx-cell_size*iv_thick ) /* left and right are i.v. */
+  set_region_material( iv_region, "impermeable_vacuum",     "impermeable_vacuum" );
+  set_region_bc( iv_region, maxwellian_reinjection, maxwellian_reinjection, maxwellian_reinjection );
+ 
+  // Load particles
+ 
   if ( load_particles ) {
-    sim_log("Loading particles."); 
+    sim_log("Loading particles.");
     // Fast load of particles--don't bother fixing artificial domain correlations
     double xmin=grid->x0, xmax=grid->x1;
     double ymin=grid->y0, ymax=grid->y1;
     double zmin=grid->z0, zmax=grid->z1;
     repeat( Ne/(topology_x*topology_y*topology_z) ) {
-      double x = uniform_rand( xmin, xmax ); 
-      double y = uniform_rand( ymin, ymax ); 
-      double z = uniform_rand( zmin, zmax ); 
+      double x = uniform_rand( xmin, xmax );
+      double y = uniform_rand( ymin, ymax );
+      double z = uniform_rand( zmin, zmax );
       if ( iv_region ) continue; // Particle fell in iv_region.  Don't load.
       inject_particle( electron,
-                       x, y, z, 
-                       maxwellian_rand(uthe), 
-                       maxwellian_rand(uthe), 
+                       x, y, z,
+                       maxwellian_rand(uthe),
+                       maxwellian_rand(uthe),
                        maxwellian_rand(uthe),
                        qe,
                        0,   // Age (jsut say zero during startup ... particle injection typically wants non-zero here)
                        0 ); // Do not accumulate inverse to bound charge rhob (rhob will be computed to be consistent with this charge density and initial zero electric field after initialization)
-    }  
+    }
   }
-
-  sim_log("***Finished with user-specified initialization ***"); 
-
+ 
+  sim_log("***Finished with user-specified initialization ***");
+ 
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains
   //   and tang E / norm B are synchronized by averaging where discrepancies
@@ -220,72 +220,72 @@ begin_initialization {
   // - Increment the time step
   // - Call user diagnostics
   // - (periodically) Print a status message
-
+ 
 }
-
-
+ 
+ 
 begin_diagnostics {
  
-  return;  // Turn off diagnostics for now (but leave them in for Ben to look at). 
-
+  return;  // Turn off diagnostics for now (but leave them in for Ben to look at).
+ 
 # if 0
-
+ 
 # define should_dump(x) \
   (global->x##_interval>0 && remainder(step,global->x##_interval)==0)
-
+ 
   if ( step==0 ) {
     // A grid dump contains all grid parameters, field boundary conditions,
     // particle boundary conditions and domain connectivity information. This
     // is stored in a binary format. Each rank makes a grid dump
     dump_grid("rundata/grid");
-
+ 
     // A materials dump contains all the materials parameters. This is in a
     // text format. Only rank 0 makes the materials dump
     dump_materials("rundata/materials");
-
+ 
     // A species dump contains the physics parameters of a species. This is in
     // a text format. Only rank 0 makes the species dump
     dump_species("rundata/species");
   }
-
+ 
   // Field and hydro data
-
+ 
   if ( should_dump(field) ) {
-    dump_fields("field/fields"); 
-    if ( global->load_particles ) dump_hydro( "electron", "hydro/e_hydro" ); 
-  } 
-
+    dump_fields("field/fields");
+    if ( global->load_particles ) dump_hydro( "electron", "hydro/e_hydro" );
+  }
+ 
   // Partcile dump data
-
-  if ( should_dump(particle) && global->load_particles ) dump_particles( "electron", "particle/eparticle" ); 
-
+ 
+  if ( should_dump(particle) && global->load_particles ) dump_particles( "electron", "particle/eparticle" );
+ 
   // Ponyting data - Example of custom diagnostic written into input deck
-
+ 
   // Write Poynting flux at left boundary
-  // Poynting flux is defined positive if directed in the +x direction. 
-  // Note: Ponyting dumps are infrequent, so we can afford the mpi_allreduce() here.  
-  
+  // Poynting flux is defined positive if directed in the +x direction.
+  // Note: Ponyting dumps are infrequent, so we can afford the mpi_allreduce() here.
+ 
   // FIXME: Do we need to half-advance B?
-  
+ 
 #define ALLOCATE(A,LEN,TYPE)                                             \
-  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate.")); 
-
-  static float *pvec=NULL; 
-  static double psum, gpsum; 
+  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate."));
+ 
+  static float *pvec=NULL;
+  static double psum, gpsum;
   static FILE *fp_poynting;
   static char fname_poynting[]="poynting/poynting";
-  static int stride, initted=0; 
-  
-  if ( !initted ) { 
-    stride=(grid->ny-1)*(grid->nz-1); 
-    ALLOCATE( pvec, stride, float ); 
-    initted=1; 
+  static int stride, initted=0;
+ 
+  if ( !initted ) {
+    stride=(grid->ny-1)*(grid->nz-1);
+    ALLOCATE( pvec, stride, float );
+    initted=1;
   }
-
+ 
   if ( step>0 && should_dump(poynting) ) {
-    int i, j, k, k1, k2, ix, iy, iz; 
-    for ( i=0; i<stride; ++i ) pvec[i]=0;     // Initialize pvec to zero. 
-    RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
+    int i, j, k, k1, k2, ix, iy, iz;
+    for ( i=0; i<stride; ++i ) pvec[i]=0;     // Initialize pvec to zero.
+    RANK_TO_INDEX( int(rank()), ix, iy, iz );
     if ( ix==0 ) {                            // Compute Poynting for domains on left of box
       for ( j=1; j<grid->ny; ++j ) {
         for ( k=1; k<grid->nz; ++k ) {
@@ -297,55 +297,55 @@ begin_diagnostics {
         }
       }
     }                                         // Leave pvec = zero in mp_allsum_d for interior
-
+ 
     // FIXME: Buffer to improve performance (i.e. reduce MPI_all_reduce() calls and better
-    //        map onto the canonical way to do I/O on Panasas. To work with the quota, 
+    //        map onto the canonical way to do I/O on Panasas. To work with the quota,
     //        we would need to store buffer in global space so it survives restart
-
+ 
     // Sum poynting flux on surface
-    for ( i=0, psum=0; i<stride; ++i ) psum+=pvec[i]; 
+    for ( i=0, psum=0; i<stride; ++i ) psum+=pvec[i];
     // Sum over all surfaces
-    if ( mp_allsum_d(&psum, &gpsum, 1, grid->mp)!=SUCCESS ) ERROR(("Bad summation in poynting diagnostic"));  
+    if ( mp_allsum_d(&psum, &gpsum, 1, grid->mp)!=SUCCESS ) ERROR(("Bad summation in poynting diagnostic"));
     // Divide by number of mesh points summed over
-    gpsum /= stride*global->topology_y*global->topology_z; 
-    
-    if ( rank()==0 ) { 
+    gpsum /= stride*global->topology_y*global->topology_z;
+ 
+    if ( rank()==0 ) {
       fp_poynting=fopen( fname_poynting, (step==global->poynting_interval ? "w" : "rb+") );
       if ( !fp_poynting ) ERROR(("Could not open file."));
       fseek( fp_poynting,
              (step/global->poynting_interval-1)*sizeof(double), SEEK_SET );
       fwrite( &gpsum, sizeof(double), 1, fp_poynting );
       fclose(fp_poynting);
-    } 
+    }
     sim_log("** step = "<<step<<" Poynting = "<<gpsum);  // Maybe too spammy for outfile....
   }
-
-  // Restart dump 
+ 
+  // Restart dump
   if ( should_dump(restart) ) {
-    char *restart_fbase[] = { "restart/restart0", "restart/restart1" }; 
-    dump_restart( restart_fbase[global->rtoggle], 0 ); 
-    global->rtoggle^=1; 
-  } 
-
-  if ( step>0 && (step%global->quota_check_interval)==0 ) { 
+    char *restart_fbase[] = { "restart/restart0", "restart/restart1" };
+    dump_restart( restart_fbase[global->rtoggle], 0 );
+    global->rtoggle^=1;
+  }
+ 
+  if ( step>0 && (step%global->quota_check_interval)==0 ) {
     if ( mp_elapsed(grid->mp) > global->quota_sec ) {
-      dump_restart( "restart/restart", 0 ); 
-      sim_log( "Restart dump restart completed." ); 
-      sim_log( "Allowed runtime exceeded for this job.  Terminating." ); 
+      dump_restart( "restart/restart", 0 );
+      sim_log( "Restart dump restart completed." );
+      sim_log( "Allowed runtime exceeded for this job.  Terminating." );
       mp_barrier( grid->mp ); // Just to be safe
-      mp_finalize( grid->mp ); 
-      exit(0); 
+      mp_finalize( grid->mp );
+      exit(0);
     }
   }
-# endif 
-
+# endif
+ 
 }
-
-begin_field_injection { 
+ 
+begin_field_injection {
 }
-
+ 
 begin_particle_injection {
 }
-
+ 
 begin_current_injection {
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -7,9 +7,9 @@
  * March/April 2004 - Heavily revised and extended from earlier V4PIC versions
  *
  */
-
+ 
 #include "vpic.hxx"
-
+ 
 vpic_simulation::vpic_simulation() {
   verbose = 1;
   step = 0;
@@ -19,13 +19,13 @@ vpic_simulation::vpic_simulation() {
   clean_div_e_interval = 0;
   clean_div_b_interval = 0;
   sync_shared_interval = 0;
-
+ 
   quota=0;
   restart_interval=0;
   hydro_interval=0;
   field_interval=0;
   particle_interval=0;
-
+ 
   rng = NULL;
   material_list = NULL;
   grid = NULL;
@@ -41,13 +41,13 @@ vpic_simulation::vpic_simulation() {
   g_time = 0;
   f_time = 0;
   u_time = 0;
-
+ 
   // Allow run-time modification of variables
   quota=11;
-
+ 
   CLEAR( user_global, USER_GLOBAL_SIZE );
 }
-
+ 
 vpic_simulation::~vpic_simulation() {
   verbose = 1;
   step = 0;
@@ -57,13 +57,13 @@ vpic_simulation::~vpic_simulation() {
   clean_div_e_interval = 0;
   clean_div_b_interval = 0;
   sync_shared_interval = 0;
-
+ 
   quota=0;
   restart_interval=0;
   hydro_interval=0;
   field_interval=0;
   particle_interval=0;
-
+ 
   // FIXME: SHOULD DO REVERSE ORDER DELETION!
   delete_mt_rng( rng );
   delete_material_list( &material_list );
@@ -81,4 +81,4 @@ vpic_simulation::~vpic_simulation() {
   u_time = 0;
   CLEAR( user_global, USER_GLOBAL_SIZE );
 }
-
+ 

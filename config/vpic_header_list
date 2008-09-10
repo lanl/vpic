@@ -56,3 +56,5 @@ src/util/v4/v4_spu.hxx
 src/util/v4/v4_sse.hxx
 src/util/v4/v4c_spu.h
 src/vpic/vpic.hxx
+src/vpic/dumphead.h
+src/vpic/dumpvars.h

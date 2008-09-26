@@ -53,7 +53,7 @@ DACS_LAUNCH=local
 ################################################################################
 
 MPI_CPPFLAGS=`mpicc --showme:compile`
-MPI_LDFLAGS=`mpicc --showme:link | sed 's,-l[^ ]*,,g'`
+MPI_LDFLAGS=`mpicc --showme:link | sed 's, -l[^ ]*,,g'`
 MPI_LIBS=`mpicc --showme:link | sed 's, -[^l][^ ]*,,g;s,-pthread,,g' | sed 's, *,,' | sed 's, $,,'`
 
 ################################################################################

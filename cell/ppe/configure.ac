@@ -180,7 +180,7 @@ case "$buildstyle" in
 	;;
 
 	dacs_relay_hybrid_cell)
-		CCS_WITH_PPU_DACS(hybrid)
+		CCS_WITH_PPU_DACS(_hybrid)
 
 		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
 
@@ -202,7 +202,7 @@ case "$buildstyle" in
 	;;
 
 	dacs_relay_hybrid_cell_ppe)
-		CCS_WITH_PPU_DACS(hybrid)
+		CCS_WITH_PPU_DACS(_hybrid)
 
 		AC_SUBST(PPEDIRS, ["lib bin accelerator"])
 

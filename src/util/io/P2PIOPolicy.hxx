@@ -100,13 +100,29 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 				p2p.post(request);
 				break;
 
+			case io_read_write:
+				request.set(P2PTag::io_open_read_write, P2PTag::data, msg_size);
+				p2p.post(request);
+				break;
+
 			case io_write:
 				request.set(P2PTag::io_open_write, P2PTag::data, msg_size);
 				p2p.post(request);
 				break;
 
-			case io_write_append:
-				request.set(P2PTag::io_open_write_append,
+			case io_write_read:
+				request.set(P2PTag::io_open_write_read, P2PTag::data, msg_size);
+				p2p.post(request);
+				break;
+
+			case io_append:
+				request.set(P2PTag::io_open_append,
+					P2PTag::data, msg_size);
+				p2p.post(request);
+				break;
+
+			case io_append_read:
+				request.set(P2PTag::io_open_append_read,
 					P2PTag::data, msg_size);
 				p2p.post(request);
 				break;
@@ -287,6 +303,17 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 			} // if
 		} while(bytes > 0);
 	} // P2PIOPolicy<>::write
+
+template<bool swapped>
+void P2PIOPolicy<swapped>::seek(long offset, int whence)
+	{
+		MPRequest request(P2PTag::io_seek, P2PTag::data);
+		P2PConnection & p2p = P2PConnection::instance();
+
+		p2p.post(request);
+		p2p.send(&offset, 1, P2PTag::data);
+		p2p.send(&whence, 1, P2PTag::data);
+	} // P2PIOPolicy<>::seek
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)

@@ -29,7 +29,18 @@ template<class ReadWritePolicy> class FileIO_T
 		//! Destructor
 		~FileIO_T() {}
 
-		// public interface inherited from policy
+		FileIOStatus open(const char * filename, FileIOMode mode)
+			{ return ReadWritePolicy::open(filename, mode); }
+		void close()
+			{ return ReadWritePolicy::close(); }
+
+		int size()
+			{ return ReadWritePolicy::size(); }
+
+		template<typename T> void read(T * data, size_t elements)
+			{ return ReadWritePolicy::read(data, elements); }
+		template<typename T> void write(const T * data, size_t elements)
+			{ return ReadWritePolicy::write(data, elements); }
 
 	private:
 

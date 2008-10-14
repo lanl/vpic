@@ -14,8 +14,11 @@
 
 enum FileIOMode {
 	io_read,
+	io_read_write,
 	io_write,
-	io_write_append
+	io_write_read,
+	io_append,
+	io_append_read
 }; // FileIOMode
 
 enum FileIOStatus {

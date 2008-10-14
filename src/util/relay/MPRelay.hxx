@@ -71,6 +71,8 @@ void MPRelay::start()
 
 		bool relay(true);
 		int filesize;
+		long foffset;
+		int fwhence;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
 
@@ -318,16 +320,36 @@ void MPRelay::start()
 					p2p.send(&filesize, 1, request.tag);
 					break;
 
+				case P2PTag::io_open_read_write:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_read_write);
+					filesize = fileIO_.size();
+					p2p.send(&filesize, 1, request.tag);
+					break;
+
 				case P2PTag::io_open_write:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
 					fileIO_.open(filename_.data(), io_write);
 					break;
 
-				case P2PTag::io_open_write_append:
+				case P2PTag::io_open_write_read:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
-					fileIO_.open(filename_.data(), io_write_append);
+					fileIO_.open(filename_.data(), io_write_read);
+					break;
+
+				case P2PTag::io_open_append:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_append);
+					break;
+
+				case P2PTag::io_open_append:
+					p2p.recv(filename_.data(), request.count,
+						request.tag, request.id);
+					fileIO_.open(filename_.data(), io_append_read);
 					break;
 
 				case P2PTag::io_read:
@@ -339,6 +361,12 @@ void MPRelay::start()
 					p2p.recv(io_buffer_.data(), request.count,
 						request.tag, request.id);
 					fileIO_.write(io_buffer_.data(), request.count);
+					break;
+
+				case P2PTag::io_seek:
+					p2p.recv(&foffset, 1, request.tag, request.id);
+					p2p.recv(&fwhence, 1, request.tag, request.id);
+					fileIO_.seek(foffset, fwhence);
 					break;
 
 				case P2PTag::io_close:

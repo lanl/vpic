@@ -34,10 +34,14 @@ struct P2PTag {
 		allgather_int,
 		allgather_int64,
 		io_open_read,
+		io_open_read_write,
 		io_open_write,
-		io_open_write_append,
+		io_open_write_read,
+		io_open_append,
+		io_open_append_read,
 		io_write,
 		io_read,
+		io_seek,
 		io_close
 	}; // enum
 

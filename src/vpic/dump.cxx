@@ -35,7 +35,7 @@ vpic_simulation::dump_energies( const char *fname,
   if( fname==NULL ) ERROR(("Invalid file name"));
  
   if( rank==0 ) {
-    status = fileIO.open(fname, append ? io_write_append : io_write);
+    status = fileIO.open(fname, append ? io_append : io_write);
     if( status==fail ) ERROR(( "Could not open \"%s\".", fname ));
     else {
       if( append==0 ) {

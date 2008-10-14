@@ -45,6 +45,8 @@ class StandardIOPolicy
 		template<typename T> void read(T * data, size_t elements);
 		template<typename T> void write(const T * data, size_t elements);
 
+		void seek(long offset, int whence);
+
 	private:
 
 		FILE * handle_;
@@ -59,12 +61,24 @@ FileIOStatus StandardIOPolicy::open(const char * filename, FileIOMode mode)
 				handle_ = fopen(filename, "r");
 				break;
 
+			case io_read_write:
+				handle_ = fopen(filename, "r+");
+				break;
+
 			case io_write:
 				handle_ = fopen(filename, "w");
 				break;
 
-			case io_write_append:
+			case io_write_read:
+				handle_ = fopen(filename, "w+");
+				break;
+
+			case io_append:
 				handle_ = fopen(filename, "a");
+				break;
+
+			case io_append_read:
+				handle_ = fopen(filename, "a+");
 				break;
 
 		} // switch
@@ -130,5 +144,10 @@ void StandardIOPolicy::write(const T * data, size_t elements)
 		fwrite(reinterpret_cast<void *>(const_cast<T *>(data)),
 			sizeof(T), elements, handle_);
 	} // StandardIOPolicy::write
+
+void StandardIOPolicy::seek(long offset, int whence)
+	{
+		fseek(handle_, offset, whence);
+	} // StandardIOPolicy::seek
 
 #endif // StandardIOPolicy_hxx

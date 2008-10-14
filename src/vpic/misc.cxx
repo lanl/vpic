@@ -34,9 +34,9 @@ vpic_simulation::inject_particle( species_t * sp,
   // FIXME: DO THIS THE PHASE-3 WAY WITH GRID->NEIGHBOR
   // NOT THE PHASE-2 WAY WITH GRID->BC
 
-  if( x<x0 | x>x1 | ( x==x1 & grid->bc[BOUNDARY(1,0,0)]>=0 ) ) return;
-  if( y<y0 | y>y1 | ( y==y1 & grid->bc[BOUNDARY(0,1,0)]>=0 ) ) return;
-  if( z<z0 | z>z1 | ( z==z1 & grid->bc[BOUNDARY(0,0,1)]>=0 ) ) return;
+  if( x<x0 || x>x1 || ( x==x1 && grid->bc[BOUNDARY(1,0,0)]>=0 ) ) return;
+  if( y<y0 || y>y1 || ( y==y1 && grid->bc[BOUNDARY(0,1,0)]>=0 ) ) return;
+  if( z<z0 || z>z1 || ( z==z1 && grid->bc[BOUNDARY(0,0,1)]>=0 ) ) return;
 
   // This node should inject the particle
     

@@ -49,6 +49,8 @@ class P2PIOPolicy
 		template<typename T> void read(T * data, size_t elements);
 		template<typename T> void write(const T * data, size_t elements);
 
+		void seek(long offset, int whence);
+
 	private:
 
 		template<typename T> inline void swap_bytes(T * data, size_t elements);

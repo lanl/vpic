@@ -12,7 +12,6 @@
 #include "vpic.hxx"
 #include "dumphead.h"
 #include "dumpvars.h"
-//#include <stdio.h>  // For fopen, fclose, fwrite, fprintf
 #include <FileIO.hxx>
  
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
@@ -214,12 +213,20 @@ namespace dump_type {
     fileIO.write( string, __WRITE_STRING_len );        \
 } END_PRIMITIVE
  
+/*
 #define READ(type,value,file) BEGIN_PRIMITIVE { \
   type __READ_tmp;                              \
   fread( &__READ_tmp, sizeof(type), 1, file );  \
   (value) = __READ_tmp;                         \
 } END_PRIMITIVE
+*/
  
+#define READ(type,value,fileIO) BEGIN_PRIMITIVE { \
+  type __READ_tmp;                                \
+  fileIO.read(&__READ_tmp, 1 );                   \
+  (value) = __READ_tmp;                           \
+} END_PRIMITIVE
+
 FILE *fildesc;
  
 #define F_WRITE_HEADER_V0(dump_type,sp_id,q_m,fildesc) BEGIN_PRIMITIVE { \
@@ -695,7 +702,7 @@ vpic_simulation::restart( const char *fbase ) {
   int rank, nproc, size, ndim, dim[4], n;
   int siztmp;
   char fname[256], c, *state;
-  FILE *handle = NULL;
+  FileIO fileIO;
   short int s;
   float f;
   double d;
@@ -717,44 +724,45 @@ vpic_simulation::restart( const char *fbase ) {
   ABORT(fbase==NULL);
   if( rank==0 ) MESSAGE(("Restarting from \"%s\"",fbase));
   sprintf( fname, "%s.%i", fbase, rank );
-  handle = fopen( fname, "rb" ); ABORT(handle==NULL);
+  FileIOStatus status = fileIO.open( fname, io_read );
+  if( status == fail) ABORT(true);
  
   // Machine compatibility information
-  READ(char,     c,handle);  ABORT(c!=CHAR_BIT         );
-  READ(char,     c,handle);  ABORT(c!=2                );
-  READ(char,     c,handle);  ABORT(c!=4                );
-  READ(char,     c,handle);  ABORT(c!=4                );
-  READ(char,     c,handle);  ABORT(c!=8                );
-  READ(short int,s,handle);  ABORT(s!=(short int)0xcafe);
-  READ(int,      n,handle);  ABORT(n!=(int)0xdeadbeef  );
-  READ(float,    f,handle);  ABORT(f!=1.0              );
-  READ(double,   d,handle);  ABORT(d!=1.0              );
+  READ(char,     c,fileIO);  ABORT(c!=CHAR_BIT         );
+  READ(char,     c,fileIO);  ABORT(c!=2                );
+  READ(char,     c,fileIO);  ABORT(c!=4                );
+  READ(char,     c,fileIO);  ABORT(c!=4                );
+  READ(char,     c,fileIO);  ABORT(c!=8                );
+  READ(short int,s,fileIO);  ABORT(s!=(short int)0xcafe);
+  READ(int,      n,fileIO);  ABORT(n!=(int)0xdeadbeef  );
+  READ(float,    f,fileIO);  ABORT(f!=1.0              );
+  READ(double,   d,fileIO);  ABORT(d!=1.0              );
  
   // Dump type and header version
-  READ(int,n,handle); ABORT(n!=0           );
-  READ(int,n,handle); ABORT(n!=dump_type::restart_dump);
+  READ(int,n,fileIO); ABORT(n!=0           );
+  READ(int,n,fileIO); ABORT(n!=dump_type::restart_dump);
  
   // High level information
-  READ(int,  step,      handle); ABORT(step<0       );
-  READ(int,  grid->nx,  handle); ABORT(grid->nx<1   );
-  READ(int,  grid->ny,  handle); ABORT(grid->ny<1   );
-  READ(int,  grid->nz,  handle); ABORT(grid->nz<1   );
-  READ(float,grid->dt,  handle); ABORT(grid->dt<=0  );
-  READ(float,grid->dx,  handle); ABORT(grid->dx<=0  );
-  READ(float,grid->dy,  handle); ABORT(grid->dy<=0  );
-  READ(float,grid->dz,  handle); ABORT(grid->dz<=0  );
-  READ(float,grid->x0,  handle);
-  READ(float,grid->y0,  handle);
-  READ(float,grid->z0,  handle);
-  READ(float,grid->cvac,handle); ABORT(grid->cvac<=0);
-  READ(float,grid->eps0,handle); ABORT(grid->eps0<=0);
-  READ(float,grid->damp,handle); ABORT(grid->damp<0 );
-  READ(int,  n,         handle); ABORT(n!=rank      );
-  READ(int,  n,         handle); ABORT(n!=nproc     );
+  READ(int,  step,      fileIO); ABORT(step<0       );
+  READ(int,  grid->nx,  fileIO); ABORT(grid->nx<1   );
+  READ(int,  grid->ny,  fileIO); ABORT(grid->ny<1   );
+  READ(int,  grid->nz,  fileIO); ABORT(grid->nz<1   );
+  READ(float,grid->dt,  fileIO); ABORT(grid->dt<=0  );
+  READ(float,grid->dx,  fileIO); ABORT(grid->dx<=0  );
+  READ(float,grid->dy,  fileIO); ABORT(grid->dy<=0  );
+  READ(float,grid->dz,  fileIO); ABORT(grid->dz<=0  );
+  READ(float,grid->x0,  fileIO);
+  READ(float,grid->y0,  fileIO);
+  READ(float,grid->z0,  fileIO);
+  READ(float,grid->cvac,fileIO); ABORT(grid->cvac<=0);
+  READ(float,grid->eps0,fileIO); ABORT(grid->eps0<=0);
+  READ(float,grid->damp,fileIO); ABORT(grid->damp<0 );
+  READ(int,  n,         fileIO); ABORT(n!=rank      );
+  READ(int,  n,         fileIO); ABORT(n!=nproc     );
  
   // Species parameters
-  READ(int,  n,handle); ABORT(n!=invalid_species_id);
-  READ(float,f,handle); ABORT(f!=0                 );
+  READ(int,  n,fileIO); ABORT(n!=invalid_species_id);
+  READ(float,f,fileIO); ABORT(f!=0                 );
  
   /************************************************
    * Restart saved directly initialized variables *
@@ -762,16 +770,16 @@ vpic_simulation::restart( const char *fbase ) {
  
   // variables not already restored above
  
-  READ(int,    num_step,             handle);
-  READ(int,    status_interval,      handle);
-  READ(int,    clean_div_e_interval, handle);
-  READ(int,    clean_div_b_interval, handle);
-  READ(int,    sync_shared_interval, handle);
-  READ(double, quota,                handle);
-  READ(int,    restart_interval,     handle);
-  READ(int,    hydro_interval,       handle);
-  READ(int,    field_interval,       handle);
-  READ(int,    particle_interval,    handle);
+  READ(int,    num_step,             fileIO);
+  READ(int,    status_interval,      fileIO);
+  READ(int,    clean_div_e_interval, fileIO);
+  READ(int,    clean_div_b_interval, fileIO);
+  READ(int,    sync_shared_interval, fileIO);
+  READ(double, quota,                fileIO);
+  READ(int,    restart_interval,     fileIO);
+  READ(int,    hydro_interval,       fileIO);
+  READ(int,    field_interval,       fileIO);
+  READ(int,    particle_interval,    fileIO);
  
   /**********************************************
    * Restart saved helper initialized variables *
@@ -779,40 +787,40 @@ vpic_simulation::restart( const char *fbase ) {
  
   // random number generator
  
-  READ(int,size,  handle);           ABORT(size!=sizeof(char));
-  READ(int,ndim,  handle);           ABORT(ndim!=1           );
-  READ(int,dim[0],handle);           ABORT(dim[0]<0          );
+  READ(int,size,  fileIO);           ABORT(size!=sizeof(char));
+  READ(int,ndim,  fileIO);           ABORT(ndim!=1           );
+  READ(int,dim[0],fileIO);           ABORT(dim[0]<0          );
  
   MALLOC( state, dim[0] );
-  fread(state,size,dim[0],handle);
+  fileIO.read(state, dim[0]);
   set_mt_rng_state( rng, state, dim[0] );
   FREE( state );
  
   // materials ... material_list must be put together in the same
   // order it was originally in
  
-  READ(int,n,handle); ABORT(n<1);
+  READ(int,n,fileIO); ABORT(n<1);
   for(last_m=NULL;n;n--) {
     char * buf;
     // Note: sizeof(m[0]) includes terminating '\0'
-    READ(int,size,handle);                       ABORT(size<1 );
+    READ(int,size,fileIO);                       ABORT(size<1 );
     MALLOC( buf, sizeof(m[0])+size ); m = (material_t *)buf;
-    fread(m->name,1,size,handle);
+    fileIO.read(m->name, size);
     m->name[size]='\0';
  
-    READ(short int,m->id,     handle); ABORT(m->id!=n-1);
-    READ(float,    m->epsx,   handle);
-    READ(float,    m->epsy,   handle);
-    READ(float,    m->epsz,   handle);
-    READ(float,    m->mux,    handle);
-    READ(float,    m->muy,    handle);
-    READ(float,    m->muz,    handle);
-    READ(float,    m->sigmax, handle);
-    READ(float,    m->sigmay, handle);
-    READ(float,    m->sigmaz, handle);
-    READ(float,    m->zetax,  handle);
-    READ(float,    m->zetay,  handle);
-    READ(float,    m->zetaz,  handle);
+    READ(short int,m->id,     fileIO); ABORT(m->id!=n-1);
+    READ(float,    m->epsx,   fileIO);
+    READ(float,    m->epsy,   fileIO);
+    READ(float,    m->epsz,   fileIO);
+    READ(float,    m->mux,    fileIO);
+    READ(float,    m->muy,    fileIO);
+    READ(float,    m->muz,    fileIO);
+    READ(float,    m->sigmax, fileIO);
+    READ(float,    m->sigmay, fileIO);
+    READ(float,    m->sigmaz, fileIO);
+    READ(float,    m->zetax,  fileIO);
+    READ(float,    m->zetay,  fileIO);
+    READ(float,    m->zetaz,  fileIO);
  
     m->next = NULL;
     if( last_m==NULL ) {
@@ -826,42 +834,42 @@ vpic_simulation::restart( const char *fbase ) {
  
   // grid variables not already saved above
  
-  READ(float,grid->rdx, handle);
-  READ(float,grid->rdy, handle);
-  READ(float,grid->rdz, handle);
-  READ(float,grid->x1,  handle);
-  READ(float,grid->y1,  handle);
-  READ(float,grid->z1,  handle);
+  READ(float,grid->rdx, fileIO);
+  READ(float,grid->rdy, fileIO);
+  READ(float,grid->rdz, fileIO);
+  READ(float,grid->x1,  fileIO);
+  READ(float,grid->y1,  fileIO);
+  READ(float,grid->z1,  fileIO);
  
-  READ(int,size,  handle); ABORT(size!=sizeof(grid->bc[0]));
-  READ(int,ndim,  handle); ABORT(ndim!=3          );
-  READ(int,dim[0],handle); ABORT(dim[0]!=3        );
-  READ(int,dim[1],handle); ABORT(dim[1]!=3        );
-  READ(int,dim[2],handle); ABORT(dim[2]!=3        );
-  fread( grid->bc, size, dim[0]*dim[1]*dim[2], handle );
+  READ(int,size,  fileIO); ABORT(size!=sizeof(grid->bc[0]));
+  READ(int,ndim,  fileIO); ABORT(ndim!=3          );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=3        );
+  READ(int,dim[1],fileIO); ABORT(dim[1]!=3        );
+  READ(int,dim[2],fileIO); ABORT(dim[2]!=3        );
+  fileIO.read( grid->bc, dim[0]*dim[1]*dim[2]);
  
-  READ(int,size,handle);   ABORT(size!=sizeof(grid->range[0]));
-  READ(int,ndim,handle);   ABORT(ndim!=1          );
-  READ(int,dim[0],handle); ABORT(dim[0]!=nproc+1  );
+  READ(int,size,fileIO);   ABORT(size!=sizeof(grid->range[0]));
+  READ(int,ndim,fileIO);   ABORT(ndim!=1          );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=nproc+1  );
   MALLOC_ALIGNED( grid->range, dim[0], 16 );
-  fread( grid->range, size, dim[0], handle );
+  fileIO.read( grid->range, dim[0] );
  
-  READ(int,size,  handle); ABORT(size!=sizeof(grid->neighbor[0]) );
-  READ(int,ndim,  handle); ABORT(ndim!=4           );
-  READ(int,dim[0],handle); ABORT(dim[0]!=6         );
-  READ(int,dim[1],handle); ABORT(dim[1]!=grid->nx+2);
-  READ(int,dim[2],handle); ABORT(dim[2]!=grid->ny+2);
-  READ(int,dim[3],handle); ABORT(dim[3]!=grid->nz+2);
+  READ(int,size,  fileIO); ABORT(size!=sizeof(grid->neighbor[0]) );
+  READ(int,ndim,  fileIO); ABORT(ndim!=4           );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=6         );
+  READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->nx+2);
+  READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->ny+2);
+  READ(int,dim[3],fileIO); ABORT(dim[3]!=grid->nz+2);
   MALLOC_ALIGNED( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3], 128 );
-  fread( grid->neighbor, size, dim[0]*dim[1]*dim[2]*dim[3], handle );
+  fileIO.read( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
  
-  READ(int,size,  handle); ABORT(size!=sizeof(grid->sfc[0]) );
-  READ(int,ndim,  handle); ABORT(ndim!=3           );
-  READ(int,dim[0],handle); ABORT(dim[0]!=grid->nx+2);
-  READ(int,dim[1],handle); ABORT(dim[1]!=grid->ny+2);
-  READ(int,dim[2],handle); ABORT(dim[2]!=grid->nz+2);
+  READ(int,size,  fileIO); ABORT(size!=sizeof(grid->sfc[0]) );
+  READ(int,ndim,  fileIO); ABORT(ndim!=3           );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=grid->nx+2);
+  READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->ny+2);
+  READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->nz+2);
   MALLOC_ALIGNED( grid->sfc, dim[0]*dim[1]*dim[2], 128 );
-  fread( grid->sfc, size, dim[0]*dim[1]*dim[2], handle );
+  fileIO.read( grid->sfc, dim[0]*dim[1]*dim[2] );
  
   grid->rangel = grid->range[rank];
   grid->rangeh = grid->range[rank+1]-1;
@@ -870,16 +878,16 @@ vpic_simulation::restart( const char *fbase ) {
  
   // FIXME: SEE NOTE IN ABOVE ABOUT THIS!
   field_advance_methods_t fam[1];
-  READ(field_advance_methods_t,fam[0],handle);
+  READ(field_advance_methods_t,fam[0],fileIO);
   field_advance = new_field_advance( grid, material_list, fam );
   field = field_advance->f; // FIXME: Temporary hack
  
-  READ(int,size,  handle); ABORT(size!=sizeof(field[0]));
-  READ(int,ndim,  handle); ABORT(ndim!=3              );
-  READ(int,dim[0],handle); ABORT(dim[0]!=grid->nx+2   );
-  READ(int,dim[1],handle); ABORT(dim[1]!=grid->ny+2   );
-  READ(int,dim[2],handle); ABORT(dim[2]!=grid->nz+2   );
-  fread( field_advance->f, size, dim[0]*dim[1]*dim[2], handle );
+  READ(int,size,  fileIO); ABORT(size!=sizeof(field[0]));
+  READ(int,ndim,  fileIO); ABORT(ndim!=3              );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=grid->nx+2   );
+  READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->ny+2   );
+  READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->nz+2   );
+  fileIO.read( field_advance->f, dim[0]*dim[1]*dim[2] );
  
   // species ... species_list must be put together in the same order
   // it was originally in
@@ -888,27 +896,27 @@ vpic_simulation::restart( const char *fbase ) {
   // CONCERN ABOUT ORDERING ... RETOOL THIS TO CREATE THE
   // LIST AND THEN FLIP INTO CORRECT ORDERING?
  
-  READ(int,n,handle); ABORT(n<1);
+  READ(int,n,fileIO); ABORT(n<1);
   for(last_sp=NULL;n;n--) {
     char * buf;
     // Note: sizeof(sp[0]) includes terminating '\0'
-    READ(int,size,handle);                        ABORT(size<1 );
+    READ(int,size,fileIO);                        ABORT(size<1 );
     MALLOC( buf, sizeof(sp[0])+size ); sp = (species_t *)buf;
-    fread(sp->name,1,size,handle);
+	fileIO.read( sp->name, size);
     sp->name[size]='\0';
  
-    READ( int,   sp->id,                handle ); ABORT(sp->id!=n-1 );
-    READ( int,   sp->max_np,            handle ); ABORT(sp->max_np<1);
-    READ( int,   sp->max_nm,            handle ); ABORT(sp->max_nm<1);
-    READ( float, sp->q_m,               handle );
-    READ( int,   sp->sort_interval,     handle );
-    READ( int,   sp->sort_out_of_place, handle );
+    READ( int,   sp->id,                fileIO ); ABORT(sp->id!=n-1 );
+    READ( int,   sp->max_np,            fileIO ); ABORT(sp->max_np<1);
+    READ( int,   sp->max_nm,            fileIO ); ABORT(sp->max_nm<1);
+    READ( float, sp->q_m,               fileIO );
+    READ( int,   sp->sort_interval,     fileIO );
+    READ( int,   sp->sort_out_of_place, fileIO );
  
     MALLOC_ALIGNED( sp->p, sp->max_np, 128 );
-    READ(int,size,  handle); ABORT(size!=sizeof(sp->p[0])       );
-    READ(int,ndim,  handle); ABORT(ndim!=1                      );
-    READ(int,dim[0],handle); ABORT(dim[0]<0 || dim[0]>sp->max_np);
-    if( dim[0]>0 ) fread( sp->p, size, dim[0], handle );
+    READ(int,size,  fileIO); ABORT(size!=sizeof(sp->p[0])       );
+    READ(int,ndim,  fileIO); ABORT(ndim!=1                      );
+    READ(int,dim[0],fileIO); ABORT(dim[0]<0 || dim[0]>sp->max_np);
+    if( dim[0]>0 ) fileIO.read( sp->p, dim[0] );
     sp->np = dim[0];
  
     MALLOC_ALIGNED( sp->pm, sp->max_nm, 128 );
@@ -928,61 +936,65 @@ vpic_simulation::restart( const char *fbase ) {
  
   // custom boundary condition data
  
-  READ( int, grid->nb, handle ); ABORT( grid->nb<0 );
+  READ( int, grid->nb, fileIO ); ABORT( grid->nb<0 );
   if( grid->nb==0 ) grid->boundary = NULL;
   else {
     MALLOC( grid->boundary, grid->nb );
-    fread( grid->boundary,  sizeof(grid->boundary[0]), grid->nb, handle );
+	fileIO.read( grid->boundary, grid->nb );
   }
  
   /****************************************
    * Restart-saved internal use variables *
    ****************************************/
  
-  READ( double, p_time, handle ); ABORT(p_time<0);
-  READ( double, g_time, handle ); ABORT(g_time<0);
-  READ( double, u_time, handle ); ABORT(u_time<0);
-  READ( double, f_time, handle ); ABORT(f_time<0);
+  READ( double, p_time, fileIO ); ABORT(p_time<0);
+  READ( double, g_time, fileIO ); ABORT(g_time<0);
+  READ( double, u_time, fileIO ); ABORT(u_time<0);
+  READ( double, f_time, fileIO ); ABORT(f_time<0);
  
   /****************************************
    * Restart-saved user defined variables *
    ****************************************/
  
-  READ(int,size, handle); ABORT(size!=sizeof(user_global[0]));
-  READ(int,ndim, handle); ABORT(ndim!=1                     );
-  READ(int,dim[0],handle); ABORT(dim[0]!=USER_GLOBAL_SIZE   );
-  fread( user_global, size, dim[0], handle );
+  READ(int,size, fileIO); ABORT(size!=sizeof(user_global[0]));
+  READ(int,ndim, fileIO); ABORT(ndim!=1                     );
+  READ(int,dim[0],fileIO); ABORT(dim[0]!=USER_GLOBAL_SIZE   );
+  fileIO.read( user_global, dim[0] );
  
   /* restart read additional user variables */
-  READ(int,    ndfld, handle );
-  READ(int,    ndhyd, handle );
-  READ(int,    ndpar, handle );
-  READ(int,    ndhis, handle );
-  READ(int,    ndgrd, handle );
-  READ(int,    head_option, handle );
-  READ(int,    istride, handle );
-  READ(int,    jstride, handle );
-  READ(int,    kstride, handle );
-  READ(int,    stride_option, handle );
-  READ(int,    pstride, handle );
-  READ(int,    nprobe, handle );
-  READ(int,    ifenergies, handle );
-  READ(int,    block_dump, handle );
-  READ(int,    stepdigit, handle );
-  READ(int,    rankdigit, handle );
+  READ(int,    ndfld, fileIO );
+  READ(int,    ndhyd, fileIO );
+  READ(int,    ndpar, fileIO );
+  READ(int,    ndhis, fileIO );
+  READ(int,    ndgrd, fileIO );
+  READ(int,    head_option, fileIO );
+  READ(int,    istride, fileIO );
+  READ(int,    jstride, fileIO );
+  READ(int,    kstride, fileIO );
+  READ(int,    stride_option, fileIO );
+  READ(int,    pstride, fileIO );
+  READ(int,    nprobe, fileIO );
+  READ(int,    ifenergies, fileIO );
+  READ(int,    block_dump, fileIO );
+  READ(int,    stepdigit, fileIO );
+  READ(int,    rankdigit, fileIO );
   siztmp = NVARFLDMX;
-  fread( iffldvar, 4, siztmp, handle);
+  //fread( iffldvar, 4, siztmp, handle);
+  fileIO.read( iffldvar, siztmp );
   siztmp = NVARHYDMX;
-  fread( ifhydvar, 4, siztmp, handle);
+  //fread( ifhydvar, 4, siztmp, handle);
+  fileIO.read( ifhydvar, siztmp );
   siztmp = NVARPARMX;
-  fread( ifparvar, 4, siztmp, handle);
+  //fread( ifparvar, 4, siztmp, handle);
+  fileIO.read( ifparvar, siztmp );
   siztmp = 4*NVARHISMX;
-  fread( ijkprobe, 4, siztmp, handle);
+  //fread( ijkprobe, 4, siztmp, handle);
+  fileIO.read( ijkprobe, siztmp );
   siztmp = 3*NVARHISMX;
-  fread( xyzprobe, 4, siztmp, handle);
+  //fread( xyzprobe, 4, siztmp, handle);
+  fileIO.read( xyzprobe, siztmp );
  
-  fclose(handle);
-  handle = NULL;
+  fileIO.close();
  
   /**********************************
    * Recreate other data structures *

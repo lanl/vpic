@@ -346,7 +346,7 @@ void MPRelay::start()
 					fileIO_.open(filename_.data(), io_append);
 					break;
 
-				case P2PTag::io_open_append:
+				case P2PTag::io_open_append_read:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
 					fileIO_.open(filename_.data(), io_append_read);

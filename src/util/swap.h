@@ -34,9 +34,11 @@
 #if defined __cplusplus
 namespace utils {
 
-template<typename T> void swap(T & element);
+template<typename T> void inline swap(T & element) {
+	std::cerr << "Un-typed swap function called!!!" << std::endl;
+}
 
-template<> void swap<double>(double & element) {
+template<> void inline swap<double>(double & element) {
 
 	union type64 {
 		type64(double d_) : d(d_) {}
@@ -49,15 +51,15 @@ template<> void swap<double>(double & element) {
 	element = t64.d;
 } // swap
 
-template<> void swap<uint64_t>(uint64_t & element) {
+template<> void inline swap<uint64_t>(uint64_t & element) {
 	element = bswap_64(element);
 } // swap
 
-template<> void swap<int64_t>(int64_t & element) {
+template<> void inline swap<int64_t>(int64_t & element) {
 	element = bswap_64(element);
 } // swap
 
-template<> void swap<float>(float & element) {
+template<> void inline swap<float>(float & element) {
 
 	union type32 {
 		type32(float f_) : f(f_) {}
@@ -70,11 +72,11 @@ template<> void swap<float>(float & element) {
 	element = t32.f;
 } // swap
 
-template<> void swap<uint32_t>(uint32_t & element) {
+template<> void inline swap<uint32_t>(uint32_t & element) {
 	element = bswap_32(element);
 } // swap
 
-template<> void swap<int32_t>(int32_t & element) {
+template<> void inline swap<int32_t>(int32_t & element) {
 	element = bswap_32(element);
 } // swap
 

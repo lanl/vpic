@@ -53,7 +53,8 @@ class StandardIOPolicy
 
 	}; // class StandardIOPolicy
 
-FileIOStatus StandardIOPolicy::open(const char * filename, FileIOMode mode)
+inline FileIOStatus
+StandardIOPolicy::open(const char * filename, FileIOMode mode)
 	{
 		switch(mode) {
 			
@@ -90,12 +91,12 @@ FileIOStatus StandardIOPolicy::open(const char * filename, FileIOMode mode)
 		return ok;
 	} // StandardIOPolicy::StandardIOPolicy
 
-void StandardIOPolicy::close()
+inline void StandardIOPolicy::close()
 	{
 		fclose(handle_);
 	} // StandardIOPolicy::~StandardIOPolicy
 
-int StandardIOPolicy::size()
+inline int StandardIOPolicy::size()
 	{
 		long current = ftell(handle_);
 		fseek(handle_, 0L, SEEK_END);
@@ -104,7 +105,7 @@ int StandardIOPolicy::size()
 		return size;
 	} // StandardIOPolicy::size
 
-void StandardIOPolicy::scan(const char * format, ...)
+inline void StandardIOPolicy::scan(const char * format, ...)
 	{
 		va_list ab;
 
@@ -118,7 +119,7 @@ void StandardIOPolicy::scan(const char * format, ...)
 		va_end(ab);
 	} // StandardIOPolicy::scan
 
-void StandardIOPolicy::print(const char * format, ...)
+inline void StandardIOPolicy::print(const char * format, ...)
 	{
 		va_list ab;
 
@@ -133,19 +134,19 @@ void StandardIOPolicy::print(const char * format, ...)
 	} // StandardIOPolicy::print
 
 template<typename T>
-void StandardIOPolicy::read(T * data, size_t elements)
+inline void StandardIOPolicy::read(T * data, size_t elements)
 	{
 		fread(reinterpret_cast<void *>(data), sizeof(T), elements, handle_);
 	} // StandardIOPolicy::read
 
 template<typename T>
-void StandardIOPolicy::write(const T * data, size_t elements)
+inline void StandardIOPolicy::write(const T * data, size_t elements)
 	{
 		fwrite(reinterpret_cast<void *>(const_cast<T *>(data)),
 			sizeof(T), elements, handle_);
 	} // StandardIOPolicy::write
 
-void StandardIOPolicy::seek(long offset, int whence)
+inline void StandardIOPolicy::seek(long offset, int whence)
 	{
 		fseek(handle_, offset, whence);
 	} // StandardIOPolicy::seek

@@ -17,6 +17,7 @@
 #include "../emitter/emitter.h"
 #include "../boundary/boundary.h"
 #include "../species_advance/standard/spa.h"
+#include <FileIO.hxx>
  
 #include <stdio.h>
  
@@ -29,6 +30,8 @@
 #endif
 //  #include "dumpvars.h"
  
+typedef FileIO FILETYPE;
+
 class vpic_simulation {
 public:
   vpic_simulation();
@@ -159,29 +162,29 @@ private:
   void nulset(char *cstr);
   void fname_append(char *fname, int *step, int *stepdigit,
     int *nrnk, int *rankdigit);
-  void fwr_ara(float *ara, int *nara, FILE *fdunit, int *ier);
+  void fwr_ara(float *ara, int *nara, FILETYPE fdunit, int *ier);
   void fwr_stride(float *ara, int *nvartot, int *ifvar, int *offset,
     int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
     int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
-    int *stropt, FILE *fdunit, int *ier);
+    int *stropt, FILETYPE fdunit, int *ier);
   void fwr_stride_block(float *ara, int *nvartot, int *ifvar, int *offset,
     int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
     int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
-    int *stropt, FILE *fdunit, int *ier);
+    int *stropt, FILETYPE fdunit, int *ier);
   /* not yet used */
   void fwr_stride_grid (float *ara, int *nvartot, int *ifxyz, int *nvstrt, int *offset,
     int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
     int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
     float *x0, float *y0, float *z0, float *dx, float *dy, float *dz,
-    int *stropt, FILE *fdunit, int *ier);
-  void fwr_buf(int *ndxbuf, FILE *fdunit, int *ier);
+    int *stropt, FILETYPE fdunit, int *ier);
+  void fwr_buf(int *ndxbuf, FILETYPE fdunit, int *ier);
   void fwr_par(float *ara, int *nara, int *nvartot, int *ifvar, int *nstr,
-    FILE *fdunit, int *ier);
-  void fwr_bin_head( FILE *fdunit, int *ier );
-  void fwr_asc_head( FILE *fdunit, int *ier );
-  void prtint(FILE *fdasc, int *intara, int *nprt);
-  void prtflt(FILE *fdasc, float *fltara, int *nprt);
-  void prtstr(FILE *fdasc, char *strara, int *nprt);
+    FILETYPE fdunit, int *ier);
+  void fwr_bin_head( FILETYPE fdunit, int *ier );
+  void fwr_asc_head( FILETYPE fdunit, int *ier );
+  void prtint(FILETYPE fdasc, int *intara, int *nprt);
+  void prtflt(FILETYPE fdasc, float *fltara, int *nprt);
+  void prtstr(FILETYPE fdasc, char *strara, int *nprt);
   void define_glb( double xl, double yl, double zl,
     double xh, double yh, double zh,
     int gnx, int gny, int gnz, int gpx, int gpy, int gpz );

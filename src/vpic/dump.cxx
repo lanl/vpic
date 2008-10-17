@@ -121,8 +121,6 @@ enum dump_types {
 };
 */
  
-#define FILETYPE FILE*
-// #define FILETYPE FileIO
 FILETYPE fdgrd[NFILMX];
 FILETYPE fdfld[NFILMX];
 FILETYPE fdhyd[NFILMX];
@@ -303,20 +301,20 @@ FILE *fildesc;
  
 // Note dim _MUST_ be a pointer to an int
  
-#define F_WRITE_ARRAY_HEADER(psiz,ndim,dim,fildesc) BEGIN_PRIMITIVE { \
-  F_WRITE( int, psiz, fildesc );                           \
-  F_WRITE( int, ndim,         fildesc );                           \
-   fwrite( dim, 4, ndim, fildesc );              \
+#define F_WRITE_ARRAY_HEADER(psiz,ndim,dim,fileIO) BEGIN_PRIMITIVE { \
+  F_WRITE( int, psiz, fileIO );                           \
+  F_WRITE( int, ndim, fileIO );                           \
+  fileIO.write( dim, ndim );                              \
 } END_PRIMITIVE
  
-#define F_WRITE(type,value,fildesc) BEGIN_PRIMITIVE {  \
-  type __F_WRITE_tmp = (type)(value);                  \
-   fwrite( &__F_WRITE_tmp, sizeof(type), 1, fildesc ); \
+#define F_WRITE(type,value,fileIO) BEGIN_PRIMITIVE {  \
+  type __F_WRITE_tmp = (type)(value);                 \
+  fileIO.write( &__F_WRITE_tmp, 1 );                  \
 } END_PRIMITIVE
  
 #define F_READ(type,value,fildesc) BEGIN_PRIMITIVE { \
   type __F_READ_tmp;                                 \
-  fread( &__F_READ_tmp, sizeof(type), 1, fildesc );  \
+  fileIO.read( &__F_READ_tmp, 1 );                   \
   (value) = __F_READ_tmp;                            \
 } END_PRIMITIVE
  
@@ -677,7 +675,7 @@ vpic_simulation::dump_restart( const char *fbase,
   // continuity of dump files on restart.
   if (nfilhis > 0 && step > 0) {
     for (ii=0; ii<nfilhis; ii++) {
-      fclose(fdhis[ii]);
+      fdhis[ii].close();
       strcpy(&fbasehis[ii][0]," ");
     }
     nfilhis = 0;
@@ -1152,8 +1150,8 @@ void vpic_simulation::vfld_dump( const char *fbase)
   nrnk = mp_rank(grid->mp);
   nprc = mp_nproc(grid->mp);
   fname_append(fdmpnam, &step, &stepdigit, &nrnk, &rankdigit);
-  fdfld[0] = fopen(fdmpnam,"wb");
-  if(fdfld[0] == NULL) {
+  FileIOStatus status = fdfld[0].open(fdmpnam, io_write);
+  if(status == fail) {
     printf(" *** error - could not open file %s \n",fdmpnam);
     return;
   }
@@ -1166,13 +1164,13 @@ void vpic_simulation::vfld_dump( const char *fbase)
   ii = -1;
   fname_append(fcatnam, &step, &ii, &nrnk, &rankdigit);
   if (step<=1) {
-    fdcat = fopen(fcatnam,"w");
+	fdcat.open(fcatnam, io_write);
   }
   else {
-    fdcat = fopen(fcatnam,"a");
+	fdcat.open(fcatnam, io_append);
   }
-  fprintf(fdcat, "%s %d %e\n",&fdmpnam[0],step,(double)tim);
-  fclose(fdcat);
+  fdcat.print("%s %d %e\n", &fdmpnam[0], step, (double)tim);
+  fdcat.close();
  
   /* dump up to 16 field variables, as specified */
   nvarfld = 0;
@@ -1203,31 +1201,30 @@ void vpic_simulation::vfld_dump( const char *fbase)
     strcpy(&fheadnam[len],".header");
     ii = -1;
     fname_append(fheadnam, &step, &ii, &nrnk, &rankdigit);
-    fdheader = fopen(fheadnam,"w");
-    if(fdheader == NULL) {
+	FileIOStatus status = fdheader.open(fheadnam, io_write);
+    if(status == fail) {
       printf(" *** error - could not open file %s \n",fheadnam);
       return;
     }
-    //  fwr_bin_head(fdheader, &ier);
     fwr_asc_head(fdheader, &ier);
  
     idhead[0]=105;
     idhead[1] = nvarfld;
-    fprintf(fdheader, "%d %d\n", idhead[0], idhead[1]);
+	fdheader.print("%d %d\n", idhead[0], idhead[1]);
  
     for (nv=0; nv<nvarfld; nv++) {
-      fprintf(fdheader, "%s\n", &namfld[nv][0]);
+	  fdheader.print("%s\n", &namfld[nv][0]);
     }
  
     idhead[0]=107;
     idhead[1] = nvarfld;
-    fprintf(fdheader, "%d %d\n", idhead[0], idhead[1]);
+    fdheader.print("%d %d\n", idhead[0], idhead[1]);
  
     for (nv=0; nv<nvarfld; nv++) {
-      fprintf(fdheader, "%s\n", &cenfld[nv][0]);
+      fdheader.print("%s\n", &cenfld[nv][0]);
     }
  
-    fclose(fdheader);
+	fdheader.close();
   }
  
   if (head_option == 1) {
@@ -1235,18 +1232,18 @@ void vpic_simulation::vfld_dump( const char *fbase)
  
     idhead[0]=105;
     idhead[1] = nvarfld;
-    fwrite(&idhead[0], nbytwrd, 2, fdfld[0]);
+	fdfld[0].write(&idhead[0], 2);
  
     for (nv=0; nv<nvarfld; nv++) {
-      fwrite(&namfld[nv][0], 1, 8, fdfld[0]);
+	  fdfld[0].write(&namfld[nv][0], 8);
     }
  
     idhead[0]=107;
     idhead[1] = nvarfld;
-    fwrite(&idhead[0], nbytwrd, 2, fdfld[0]);
+	fdfld[0].write(&idhead[0], 2);
  
     for (nv=0; nv<nvarfld; nv++) {
-      fwrite(&cenfld[nv][0], 1, 8, fdfld[0]);
+	  fdfld[0].write(&cenfld[nv][0], 8);
     }
   }
   else {
@@ -1337,7 +1334,7 @@ void vpic_simulation::vfld_dump( const char *fbase)
 //   &imx, &jmx, &kmx, &istr, &jstr, &kstr,
 //   &iglo, &igup, &jglo, &jgup, &kglo, &kgup, &stropt, fdfld[0], &ier);
  
-  fclose(fdfld[0]);
+  fdfld[0].close();
 }
  
 /**********************************************************************/
@@ -1387,8 +1384,8 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
   nrnk = mp_rank(grid->mp);
   nprc = mp_nproc(grid->mp);
   fname_append(fdmpnam, &step, &stepdigit, &nrnk, &rankdigit);
-  fdhyd[0] = fopen(fdmpnam,"wb");
-  if(fdhyd[0] == NULL) {
+  FileIOStatus status = fdhyd[0].open(fdmpnam, io_write);
+  if(status == fail) {
     printf(" *** error - could not open file %s \n",fdmpnam);
     return;
   }
@@ -1401,13 +1398,13 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
   ii = -1;
   fname_append(fcatnam, &step, &ii, &nrnk, &rankdigit);
   if (step<=1) {
-    fdcat = fopen(fcatnam,"w");
+    fdcat.open(fcatnam, io_write);
   }
   else {
-    fdcat = fopen(fcatnam,"a");
+    fdcat.open(fcatnam, io_append);
   }
-  fprintf(fdcat, "%s %d %e\n",&fdmpnam[0],step,(double)tim);
-  fclose(fdcat);
+  fdcat.print("%s %d %e\n",&fdmpnam[0],step,(double)tim);
+  fdcat.close();
  
   /* dump up to 14 hyd variables, as specified */
   nvarhyd = 0;
@@ -1438,8 +1435,8 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
     strcpy(&fheadnam[len],".header");
     ii = -1;
     fname_append(fheadnam, &step, &ii, &nrnk, &rankdigit);
-    fdheader = fopen(fheadnam,"w");
-    if(fdheader == NULL) {
+    FileIOStatus status = fdheader.open(fheadnam, io_write);
+    if(status == fail) {
       printf(" *** error - could not open file %s \n",fheadnam);
       return;
     }
@@ -1448,13 +1445,13 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
  
     idhead[0]=105;
     idhead[1] = nvarhyd;
-    fprintf(fdheader, "%d %d\n", idhead[0], idhead[1]);
+    fdheader.print("%d %d\n", idhead[0], idhead[1]);
  
     for (nv=0; nv<nvarhyd; nv++) {
-      fprintf(fdheader, "%s\n", &namhyd[nv][0]);
+      fdheader.print("%s\n", &namhyd[nv][0]);
     }
  
-    fclose(fdheader);
+	fdheader.close();
   }
  
   if (head_option == 1) {
@@ -1462,10 +1459,10 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
  
     idhead[0]=105;
     idhead[1] = nvarhyd;
-    fwrite(&idhead[0], nbytwrd, 2, fdhyd[0]);
+    fdhyd[0].write(&idhead[0], 2);
  
     for (nv=0; nv<nvarhyd; nv++) {
-      fwrite(&namhyd[nv][0], 1, 8, fdhyd[0]);
+	  fdhyd[0].write(&namhyd[nv][0], 8);
     }
   }
   else {
@@ -1550,7 +1547,7 @@ void vpic_simulation::vhyd_dump( const char *sp_name, const char *fbase)
 //   &imx, &jmx, &kmx, &istr, &jstr, &kstr,
 //   &iglo, &igup, &jglo, &jgup, &kglo, &kgup, &stropt, fdhyd[0], &ier);
  
-  fclose(fdhyd[0]);
+  fdhyd[0].close();
 }
  
 /**********************************************************************/
@@ -1600,8 +1597,8 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
   nrnk = mp_rank(grid->mp);
   nprc = mp_nproc(grid->mp);
   fname_append(fdmpnam, &step, &stepdigit, &nrnk, &rankdigit);
-  fdpar[0] = fopen(fdmpnam,"wb");
-  if(fdpar[0] == NULL) {
+  FileIOStatus status = fdpar[0].open(fdmpnam,io_write);
+  if(status == fail) {
     printf(" *** error - could not open file %s \n",fdmpnam);
     return;
   }
@@ -1614,13 +1611,13 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
   ii = -1;
   fname_append(fcatnam, &step, &ii, &nrnk, &rankdigit);
   if (step<=1) {
-    fdcat = fopen(fcatnam,"w");
+    fdcat.open(fcatnam, io_write);
   }
   else {
-    fdcat = fopen(fcatnam,"a");
+    fdcat.open(fcatnam, io_append);
   }
-  fprintf(fdcat, "%s %d %e\n",&fdmpnam[0],step,(double)tim);
-  fclose(fdcat);
+  fdcat.print("%s %d %e\n",&fdmpnam[0],step,(double)tim);
+  fdcat.close();
  
   /* dump the 8 par variables; need to add selection option */
   nvarpar = 0;
@@ -1648,8 +1645,8 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
     strcpy(&fheadnam[len],".header");
     ii = -1;
     fname_append(fheadnam, &step, &ii, &nrnk, &rankdigit);
-    fdheader = fopen(fheadnam,"w");
-    if(fdheader == NULL) {
+    FileIOStatus status = fdheader.open(fheadnam, io_write);
+    if(status == fail) {
       printf(" *** error - could not open file %s \n",fheadnam);
       return;
     }
@@ -1658,13 +1655,13 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
  
     idhead[0]=105;
     idhead[1] = nvarpar;
-    fprintf(fdheader, "%d %d\n", idhead[0], idhead[1]);
+    fdheader.print("%d %d\n", idhead[0], idhead[1]);
  
     for (nv=0; nv<nvarpar; nv++) {
-      fprintf(fdheader, "%s\n", &nampar[nv][0]);
+      fdheader.print("%s\n", &nampar[nv][0]);
     }
  
-    fclose(fdheader);
+	fdheader.close();
   }
  
   if (head_option == 1) {
@@ -1672,10 +1669,10 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
  
     idhead[0]=105;
     idhead[1] = nvarpar;
-    fwrite(&idhead[0], nbytwrd, 2, fdpar[0]);
+    fdpar[0].write(&idhead[0], 2);
  
     for (nv=0; nv<nvarpar; nv++) {
-      fwrite(&nampar[nv][0], 1, 8, fdpar[0]);
+      fdpar[0].write(&nampar[nv][0], 8);
     }
   }
   else {
@@ -1705,7 +1702,7 @@ void vpic_simulation::vpar_dump( const char *sp_name, const char *fbase)
  
   fwr_par (&sp->p->dx, &npr, &nvartot, &ifparvar[0], &nstr, fdpar[0], &ier);
  
-  fclose(fdpar[0]);
+  fdpar[0].close();
  
 }
  
@@ -1795,8 +1792,8 @@ void vpic_simulation::vhis_dump( const char *sp_name, const char *fbase )
     nrnk = mp_rank(grid->mp);
     nprc = mp_nproc(grid->mp);
     fname_append(fdmpnam, &step, &stepdigit, &nrnk, &rankdigit);
-    fdhis[nfil-1] = fopen(fdmpnam,"wb");
-    if(fdhis[nfil-1] == NULL) {
+    FileIOStatus status = fdhis[nfil-1].open(fdmpnam, io_write);
+    if(status == fail) {
       printf(" *** error - could not open file %s \n",fdmpnam);
       return;
     }
@@ -1812,13 +1809,13 @@ void vpic_simulation::vhis_dump( const char *sp_name, const char *fbase )
     ii = -1;
     fname_append(fcatnam, &step, &ii, &nrnk, &rankdigit);
     if (step<=1) {
-      fdcat = fopen(fcatnam,"w");
+      fdcat.open(fcatnam, io_write);
     }
     else {
-      fdcat = fopen(fcatnam,"a");
+      fdcat.open(fcatnam, io_append);
     }
-    fprintf(fdcat, "%s %d %e\n",&fdmpnam[0],step,(double)tim);
-    fclose(fdcat);
+    fdcat.print("%s %d %e\n",&fdmpnam[0],step,(double)tim);
+    fdcat.close();
  
  
     /* set the names and nvarhis (number of history variables to dump */
@@ -1908,10 +1905,10 @@ void vpic_simulation::vhis_dump( const char *sp_name, const char *fbase )
  
       idhead[0]=105;
       idhead[1] = nvarhis;
-      fwrite(&idhead[0], nbytwrd, 2, fdhis[nfil-1]);
+      fdhis[nfil-1].write(&idhead[0], 2);
  
       for (nv=0; nv<nvarhis; nv++) {
-        fwrite(&namhis[nv][0], 1, 8, fdhis[nfil-1]);
+        fdhis[nfil-1].write(&namhis[nv][0], 8);
       }
     }
     else {
@@ -2072,8 +2069,8 @@ void vpic_simulation::vgrd_dump( const char *fbase )
   nrnk = mp_rank(grid->mp);
   nprc = mp_nproc(grid->mp);
   fname_append(fdmpnam, &step, &stepdigit, &nrnk, &rankdigit);
-  fdgrd[0] = fopen(fdmpnam,"wb");
-  if(fdgrd[0] == NULL) {
+  FileIOStatus status = fdgrd[0].open(fdmpnam, io_write);
+  if(status == fail) {
     printf(" *** error - could not open file %s \n",fdmpnam);
     return;
   }
@@ -2086,13 +2083,13 @@ void vpic_simulation::vgrd_dump( const char *fbase )
   ii = -1;
   fname_append(fcatnam, &step, &ii, &nrnk, &rankdigit);
   if (step<=1) {
-    fdcat = fopen(fcatnam,"w");
+    fdcat.open(fcatnam, io_write);
   }
   else {
-    fdcat = fopen(fcatnam,"a");
+    fdcat.open(fcatnam, io_append);
   }
-  fprintf(fdcat, "%s %d %e\n",&fdmpnam[0],step,(double)tim);
-  fclose(fdcat);
+  fdcat.print("%s %d %e\n",&fdmpnam[0],step,(double)tim);
+  fdcat.close();
  
   /* dump the grid variables to a separate dump file */
   nvargrd = 0;
@@ -2126,8 +2123,8 @@ void vpic_simulation::vgrd_dump( const char *fbase )
     strcpy(&fheadnam[len],".header");
     ii = -1;
     fname_append(fheadnam, &step, &ii, &nrnk, &rankdigit);
-    fdheader = fopen(fheadnam,"w");
-    if(fdheader == NULL) {
+    FileIOStatus status = fdheader.open(fheadnam, io_write);
+    if(status == fail) {
       printf(" *** error - could not open file %s \n",fheadnam);
       return;
     }
@@ -2136,13 +2133,13 @@ void vpic_simulation::vgrd_dump( const char *fbase )
  
     idhead[0]=105;
     idhead[1] = nvargrd;
-    fprintf(fdheader, "%d %d\n", idhead[0], idhead[1]);
+    fdheader.print("%d %d\n", idhead[0], idhead[1]);
  
     for (nv=0; nv<nvargrd; nv++) {
-      fprintf(fdheader, "%s\n", &namgrd[nv][0]);
+      fdheader.print("%s\n", &namgrd[nv][0]);
     }
  
-    fclose(fdheader);
+ 	fdheader.close();
   }
  
   if (head_option == 1) {
@@ -2150,10 +2147,10 @@ void vpic_simulation::vgrd_dump( const char *fbase )
  
     idhead[0]=105;
     idhead[1] = nvargrd;
-    fwrite(&idhead[0], nbytwrd, 2, fdgrd[0]);
+    fdgrd[0].write(&idhead[0], 2);
  
     for (nv=0; nv<nvargrd; nv++) {
-      fwrite(&namgrd[nv][0], 1, 8, fdgrd[0]);
+	  fdgrd[0].write(&namgrd[nv][0], 8);
     }
   }
   else {
@@ -2183,7 +2180,7 @@ void vpic_simulation::vgrd_dump( const char *fbase )
     &xmn, &ymn, &zmn, &dx, &dy, &dz,
     &stropt, fdgrd[0], &ier);
  
-  fclose(fdgrd[0]);
+  fdgrd[0].close();
 }
  
 /**********************************************************************/
@@ -2752,16 +2749,13 @@ void vpic_simulation::fwr_ara (
 /* write a contiguous array using a buffer */
  
 {
-  INT nbat, nb, naralo, naraup, na, ndxbuf, nwr, nwritten;
+  //INT nbat, nb, naralo, naraup, na, ndxbuf, nwr, nwritten;
+  INT nbat, nb, naralo, naraup, na, ndxbuf, nwr;
  
   // begin
  
   *ier = 0;
  
-  if (fdunit == NULL) {
-    *ier++;
-    printf(" *** error - file unit for output file not assigned.\n");
-  }
   /* compute number of buffer batches needed, copy and output data */
   nbat = (*nara-1)/NBUFMX + 1;
   for (nb=1; nb<=nbat; nb++) {
@@ -2774,11 +2768,14 @@ void vpic_simulation::fwr_ara (
       buf[ndxbuf] = ara[na];
     }
     nwr = nbytwrd*(ndxbuf+1);
-    nwritten = fwrite(&buf[0], 1, nwr, fdunit);
+    //nwritten = fwrite(&buf[0], 1, nwr, fdunit);
+    fdunit.write(&buf[0], nwr);
+	/*
     if (nwritten != nwr) {
       *ier++;
       printf(" *** error - fwrite to output file failed in fwr_ara.\n");
     }
+	*/
   }
 }
  
@@ -2828,10 +2825,12 @@ int nwordswrit=0;
  
   *ier = 0;
  
+ /*
   if (fdunit == NULL) {
     *ier++;
     printf(" *** error - file unit for output file not assigned.\n");
   }
+  */
   /* test for illegal option for data output, do not write any data */
   if (*stropt < 0 || *stropt >3) {
     *ier++;
@@ -3072,10 +3071,12 @@ void vpic_simulation::fwr_stride_block (
  
   *ier = 0;
  
+  /*
   if (fdunit == NULL) {
     *ier++;
     printf(" *** error - file unit for output file not assigned.\n");
   }
+  */
   /* test for illegal option for data output, do not write any data */
   if (*stropt < 0 || *stropt >3) {
     *ier++;
@@ -3285,10 +3286,12 @@ void vpic_simulation::fwr_stride_grid (
  
   *ier = 0;
  
+  /*
   if (fdunit == NULL) {
     *ier++;
     printf(" *** error - file unit for output file not assigned.\n");
   }
+  */
   /* test for illegal option for data output, do not write any data */
   if (*stropt < 0 || *stropt > 2) {
     *ier++;
@@ -3460,10 +3463,12 @@ void vpic_simulation::fwr_par (
  
   *ier = 0;
  
+  /*
   if (fdunit == NULL) {
     *ier++;
     printf(" *** error - file unit for output file not assigned.\n");
   }
+  */
  
   nnara = *nara;
   nnvartot = *nvartot;
@@ -3510,16 +3515,20 @@ void vpic_simulation::fwr_buf (
 /* ndxbuf is reset to -1 and returned to allow for c 0 indexing */
  
 {
-  INT nwr, nwritten;
+  //INT nwr, nwritten;
+  INT nwr;
  
   // begin
  
   nwr = nbytwrd*(*ndxbuf+1);
-  nwritten = fwrite(&buf[0], 1, nwr, fdunit);
+  //nwritten = fwrite(&buf[0], 1, nwr, fdunit);
+  fdunit.write(&buf[0], nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_buf.\n");
   }
+  */
   *ndxbuf = -1;   /* allow for c zero indexing */
                   /* when resetting pointer    */
 }
@@ -3536,48 +3545,59 @@ void vpic_simulation::fwr_bin_head (
 /* header, and the 24-word float header at start of the dump file */
  
 {
-  INT nwr, nwritten;
+  //INT nwr, nwritten;
+  INT nwr;
  
   // begin
  
   *ier = 0;
  
   nwr = nbytwrd;
-  nwritten = fwrite(&ityphead, 1, nwr, fdunit);
+  fdunit.write(&ityphead, nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_bin_head.\n");
   }
+  */
  
   idhead[0] = 101;
   idhead[1] = NWHEAD_INT;
   nwr = nbytwrd*2;
-  nwritten = fwrite(&idhead[0], 1, nwr, fdunit);
+  fdunit.write(&idhead[0], nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_bin_head.\n");
   }
+  */
   nwr = nbytwrd * NWHEAD_INT;
-  nwritten = fwrite(&nrnk, 1, nwr, fdunit);
+  fdunit.write(&nrnk, nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_bin_head.\n");
   }
+  */
  
   idhead[0] = 103;
   idhead[1] = NWHEAD_REAL;
   nwr = nbytwrd*2;
-  nwritten = fwrite(&idhead[0], 1, nwr, fdunit);
+  fdunit.write(&idhead[0], nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_bin_head.\n");
   }
+  */
   nwr = nbytwrd * NWHEAD_REAL;
-  nwritten = fwrite(&tim, 1, nwr, fdunit);
+  fdunit.write(&tim, nwr);
+  /*
   if (nwritten != nwr) {
     *ier++;
     printf(" *** error - fwrite to output file failed in fwr_bin_head.\n");
   }
+  */
  
 }
  
@@ -3603,17 +3623,17 @@ void vpic_simulation::fwr_asc_head (
  
   *ier = 0;
  
-  fprintf(fdunit, "%d\n", ityphead);
+  fdunit.print("%d\n", ityphead);
  
   idhead[0] = 101;
   idhead[1] = NWHEAD_INT;
-  fprintf(fdunit, "%d %d\n", idhead[0], idhead[1]);
+  fdunit.print("%d %d\n", idhead[0], idhead[1]);
   nint = NWHEAD_INT;
   prtint(fdunit, &nrnk, &nint);
  
   idhead[0] = 103;
   idhead[1] = NWHEAD_REAL;
-  fprintf(fdunit, "%d %d\n", idhead[0], idhead[1]);
+  fdunit.print("%d %d\n", idhead[0], idhead[1]);
   nflt = NWHEAD_REAL;
   prtflt(fdunit, &tim, &nflt);
  
@@ -3621,7 +3641,7 @@ void vpic_simulation::fwr_asc_head (
  
 /**********************************************************************/
  
-void vpic_simulation::prtint(FILE* fdasc, int *intara, int *nprt)
+void vpic_simulation::prtint(FILETYPE fdasc, int *intara, int *nprt)
  
   /* fdasc - file descriptor of open ascii output file */
   /* fltara - int array to print to ascii file         */
@@ -3633,13 +3653,13 @@ void vpic_simulation::prtint(FILE* fdasc, int *intara, int *nprt)
   int ii;
  
   for (ii=1; ii<=*nprt; ii++) {
-    fprintf(fdasc, "%d\n", *intara++);
+    fdasc.print("%d\n", *intara++);
   }
 }
  
 /**********************************************************************/
  
-void vpic_simulation::prtflt(FILE* fdasc, float *fltara, int *nprt)
+void vpic_simulation::prtflt(FILETYPE fdasc, float *fltara, int *nprt)
  
   /* fdasc - file descriptor of open ascii output file */
   /* fltara - float array to print to ascii file       */
@@ -3651,13 +3671,13 @@ void vpic_simulation::prtflt(FILE* fdasc, float *fltara, int *nprt)
   int ii;
  
   for (ii=1; ii<=*nprt; ii++) {
-    fprintf(fdasc, "%e\n", *fltara++);
+    fdasc.print("%e\n", *fltara++);
   }
 }
  
 /**********************************************************************/
  
-void vpic_simulation::prtstr(FILE* fdasc, char *strara, int *nprt)
+void vpic_simulation::prtstr(FILETYPE fdasc, char *strara, int *nprt)
  
   /* fdasc - file descriptor of open ascii output file */
   /* strara - character string array to print to file  */
@@ -3675,10 +3695,10 @@ void vpic_simulation::prtstr(FILE* fdasc, char *strara, int *nprt)
     /* each string is printed one character at a time */
     for (jj=1; jj<=slen; jj++) {
       if (jj%slen == 0) {
-        fprintf(fdasc, "\n");
+        fdasc.print("\n");
       }
       else {
-        fprintf(fdasc, "%c", strara[ic]);
+        fdasc.print("%c", strara[ic]);
       }
       ic++;
     }

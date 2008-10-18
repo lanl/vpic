@@ -112,7 +112,8 @@ struct RelayPolicy {
         MPRequest request(P2PTag::allreduce_max_double, P2PTag::data, 1, 0);
         p2p.post(request);
         p2p.send(&time, request.count, request.tag);
-        p2p.recv(&time, request.count, request.tag, request.id);
+		double recv_time;
+        p2p.recv(&recv_time, request.count, request.tag, request.id);
 
         return time;
     } // mp_elapsed
@@ -245,11 +246,6 @@ struct RelayPolicy {
         MPRequest request(P2PTag::irecv, tag, size, rbuf, sender);
         p2p.post(request);
 
-		uint32_t crc = 0; 
-
-		p2p.recv(&crc, 1, 10101, 10101);
-		MESSAGE(("CRC Value Received %d", crc));
-        
         /*
         !!!FIXME!!!
         int errcode =
@@ -300,10 +296,6 @@ struct RelayPolicy {
 
         MPRequest request(P2PTag::isend, tag, size, sbuf, receiver);
         p2p.post(request);
-
-		uint32_t crc = 27; 
-
-		p2p.isend(&crc, 1, 10101, 10101);
 
         /*
         !!!FIXME!!!

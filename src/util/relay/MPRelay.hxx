@@ -120,8 +120,7 @@ void MPRelay::start()
 					// do real work.
 				case P2PTag::isend:
 /*
-					std::cout << "isend request" << std::endl;
-					std::cout << request;
+					std::cerr << "isend request " << request;
 */
 
 					// resize buffer if necessary
@@ -145,8 +144,7 @@ void MPRelay::start()
 
 				case P2PTag::irecv:
 /*
-					std::cout << "irecv request" << std::endl;
-					std::cout << request;
+					std::cerr << "irecv request " << request;
 */
 
 					// resize buffer if necessary
@@ -165,7 +163,14 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::wait_recv:
+/*
+					std::cout << "waiting recv requested" << std::endl;
+*/
 					if(dmp_recv_request_[request.id].state == pending) {
+/*
+					std::cerr << "waiting recv " << request;
+*/
+
 						// block on irecv if it hasn't finished
 						dmp.wait_recv(dmp_recv_request_[request.id]);
 
@@ -193,7 +198,14 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::wait_send:
+/*
+					std::cout << "waiting send requested" << std::endl;
+*/
 					if(dmp_send_request_[request.id].state == pending) {
+/*
+					std::cerr << "waiting send " << request;
+*/
+
 						// block on isend if it hasn't finished
 						dmp.wait_send(dmp_send_request_[request.id]);
 
@@ -214,7 +226,6 @@ void MPRelay::start()
 					//std::cout << "wtime requested from dmp: count " <<
 					//	request.count << " tag " << request.tag << std::endl;
 					wtime = dmp.wtime();
-					//std::cout << "wtime " << wtime << std::endl;
 					p2p.send(&wtime, request.count, request.tag);
 					break;
 
@@ -387,6 +398,10 @@ void MPRelay::start()
 						dmp.test_send(dmp_send_request_[*ita]);
 
 						if(dmp_send_request_[*ita].state == complete) {
+/*
+							std::cerr << "dmp send request complete" <<
+								dmp_send_request_[*ita];
+*/
 							ita = pending_dmp_send_.erase(ita);
 						}
 						else {
@@ -403,6 +418,10 @@ void MPRelay::start()
 						dmp.test_recv(dmp_recv_request_[*ita]);
 
 						if(dmp_recv_request_[*ita].state == complete) {
+/*
+							std::cerr << "recv request complete" <<
+								dmp_recv_request_[*ita];
+*/
 							// forward to accelerator
 							p2p.send(
 								cbuf_recv_[dmp_recv_request_[*ita].id].data(),

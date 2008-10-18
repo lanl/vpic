@@ -375,14 +375,14 @@ synchronize_tang_e_norm_b( field_t      * ALIGNED(128) field,
 # define END_SEND(i,j,k,X,Y,Z) end_send_port( i, j, k, g )
 
   // Exchange x-faces
-  BEGIN_SEND(-1, 0, 0,x,y,z);
-  BEGIN_SEND( 1, 0, 0,x,y,z);
   BEGIN_RECV(-1, 0, 0,x,y,z);
   BEGIN_RECV( 1, 0, 0,x,y,z);
-  END_RECV(-1, 0, 0,x,y,z);
-  END_RECV( 1, 0, 0,x,y,z);
+  BEGIN_SEND(-1, 0, 0,x,y,z);
+  BEGIN_SEND( 1, 0, 0,x,y,z);
   END_SEND(-1, 0, 0,x,y,z);
   END_SEND( 1, 0, 0,x,y,z);
+  END_RECV(-1, 0, 0,x,y,z);
+  END_RECV( 1, 0, 0,x,y,z);
 
   // Exchange y-faces
   BEGIN_SEND( 0,-1, 0,y,z,x);

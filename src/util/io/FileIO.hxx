@@ -57,7 +57,8 @@ typedef FileIO_T<StandardIOPolicy> FileIO;
 #include <P2PIOPolicy.hxx>
 
 //typedef FileIO_T<P2PIOPolicy<true> > FileIOSwapped;
-typedef FileIO_T<P2PIOPolicy<true> > FileIO;
+//typedef FileIO_T<P2PIOPolicy<true> > FileIO;
+typedef FileIO_T<P2PIOPolicy<false> > FileIO;
 #endif // BUILD
 
 #else

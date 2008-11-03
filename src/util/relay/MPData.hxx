@@ -19,10 +19,11 @@ static const uint64_t default_buffer_size(51200);
 
 static const uint64_t filename_size(256);
 
-static const uint64_t io_line_size(256);
+static const uint64_t io_line_size(1024);
 
 // this should change to a -D compile option
-static const uint64_t io_buffer_size(4096);
+static const uint64_t io_buffer_size(51200);
+static const uint64_t utils_buffer_size(4096);
 //static const uint64_t io_buffer_size(2048);
 //static const uint64_t io_buffer_size(1024);
 //static const uint64_t io_buffer_size(64);
@@ -142,16 +143,39 @@ inline int request_count() {
 #endif // USE_DACS_P2P
 } // request_count
 
+#include <unistd.h>
+#include <sys/syscall.h>
+
 // message passing buffer
-template<typename T, int BS = default_buffer_size> class MPBuffer
+template<typename T, int BS = default_buffer_size, int ROLE = 0> class MPBuffer
 	{
 	public:
 
-		MPBuffer()
-			: size_(BS),
-			data_(new T[BS]) {}
-		~MPBuffer()
-			{ size_ = 0; delete[] data_; }
+		MPBuffer() : id_(0), size_(BS), data_(new T[BS]) {
+			/*
+			dataOrig_ = data_;
+			int pid = syscall(SYS_gettid);
+			printf("Role %d(%d - %p - %d): called constructor with data: %p\n",
+				ROLE, pid, (void *)this, id_, (void *)data_);
+			*/
+		}
+
+		~MPBuffer() {
+			/*
+			int pid = syscall(SYS_gettid);
+			if(data_ != dataOrig_) {
+			printf("ERROR!!! Role %d(%d - %p - %d): called destructor with data: %p\n",
+				ROLE, pid, (void *)this, id_, (void *)data_);
+			}
+			else {
+			printf("Role %d(%d - %p - %d): called destructor with data: %p\n",
+				ROLE, pid, (void *)this, id_, (void *)data_);
+			} // else
+			*/
+			delete[] data_;
+		}
+
+		void setId(uint32_t id) { id_ = id; }
 
 		int size() { return size_; }
 		T * data() { return data_; }
@@ -168,8 +192,10 @@ template<typename T, int BS = default_buffer_size> class MPBuffer
 
 	private:
 
+		uint32_t id_;
 		int size_;
 		T * data_;
+		T * dataOrig_;
 
 }; // class MPBuffer
 

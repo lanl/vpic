@@ -34,6 +34,9 @@ template<class ReadWritePolicy> class FileIO_T
 		void close()
 			{ return ReadWritePolicy::close(); }
 
+		bool isOpen()
+			{ return ReadWritePolicy::isOpen(); }
+
 		int size()
 			{ return ReadWritePolicy::size(); }
 
@@ -58,12 +61,14 @@ typedef FileIO_T<StandardIOPolicy> FileIO;
 
 //typedef FileIO_T<P2PIOPolicy<true> > FileIOSwapped;
 //typedef FileIO_T<P2PIOPolicy<true> > FileIO;
-typedef FileIO_T<P2PIOPolicy<false> > FileIO;
+typedef FileIO_T<P2PIOPolicy<true> > FileIO;
+typedef FileIO_T<P2PIOPolicy<false> > FileIOUnswapped;
 #endif // BUILD
 
 #else
 #include <StandardIOPolicy.hxx>
 typedef FileIO_T<StandardIOPolicy> FileIO;
+typedef FileIO_T<StandardIOPolicy> FileIOUnswapped;
 #endif // MP Implementation
 
 #endif // FileIO_hxx

@@ -19,6 +19,7 @@
 #include "DMPConnection.hxx"
 #include "MPData.hxx"
 #include "FileIO.hxx"
+#include "FileUtils.hxx"
 
 /*!
 	\class MPRelay MPRelay.h
@@ -61,6 +62,7 @@ class MPRelay
 		FileIO fileIO_;
 		MPBuffer<char, filename_size> filename_;
 		MPBuffer<char, io_buffer_size> io_buffer_;
+		MPBuffer<char, utils_buffer_size> utils_buffer_;
 
 	}; // class MPRelay
 
@@ -73,6 +75,7 @@ void MPRelay::start()
 		int filesize;
 		long foffset;
 		int fwhence;
+		int utils_return;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
 
@@ -326,6 +329,12 @@ void MPRelay::start()
 				case P2PTag::io_open_read:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_read " << filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_read);
 					filesize = fileIO_.size();
 					p2p.send(&filesize, 1, request.tag);
@@ -334,6 +343,12 @@ void MPRelay::start()
 				case P2PTag::io_open_read_write:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_read_write " << filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_read_write);
 					filesize = fileIO_.size();
 					p2p.send(&filesize, 1, request.tag);
@@ -342,24 +357,49 @@ void MPRelay::start()
 				case P2PTag::io_open_write:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_write " << filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_write);
 					break;
 
 				case P2PTag::io_open_write_read:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_write_read " << filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_write_read);
 					break;
 
 				case P2PTag::io_open_append:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_append " << filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_append);
 					break;
 
 				case P2PTag::io_open_append_read:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_open_append_read " <<
+						filename_.data() << std::endl;
+					*/
+
 					fileIO_.open(filename_.data(), io_append_read);
 					break;
 
@@ -371,6 +411,13 @@ void MPRelay::start()
 				case P2PTag::io_write:
 					p2p.recv(io_buffer_.data(), request.count,
 						request.tag, request.id);
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" writing " << request.count << " to file " <<
+						std::endl;
+					*/
+
 					fileIO_.write(io_buffer_.data(), request.count);
 					break;
 
@@ -381,7 +428,21 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::io_close:
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_close" << std::endl;
+					*/
+
 					fileIO_.close();
+					break;
+
+				case P2PTag::utils_mkdir:
+					p2p.recv(utils_buffer_.data(), request.count,
+						request.tag, request.id);
+					utils_return =
+						FileUtils::makeDirectory(utils_buffer_.data());
+					p2p.send(&utils_return, 1, request.tag);
 					break;
 
 				case P2PTag::end:

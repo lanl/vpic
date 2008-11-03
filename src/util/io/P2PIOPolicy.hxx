@@ -13,6 +13,7 @@
 #define P2PIOPolicy_hxx
 
 #include <cstdarg>
+#include <string>
 #include "FileIOData.hxx"
 #include "P2PConnection.hxx"
 #include "MPData.hxx"
@@ -29,12 +30,14 @@ class P2PIOPolicy
 
 		//! Constructor
 		P2PIOPolicy()
-			: current_(0), buffer_offset_(0), file_size_(0)
+			: is_open_(false), current_(0), buffer_offset_(0), file_size_(0)
 			{
 				pending_[0] = false;
 				pending_[1] = false;
 				buffer_fill_[0] = 0;
 				buffer_fill_[1] = 0;
+
+				io_line_.setId(1);
 			}
 
 		//! Destructor
@@ -42,6 +45,8 @@ class P2PIOPolicy
 
 		FileIOStatus open(const char * filename, FileIOMode mode);
 		void close();
+
+		bool isOpen() { return is_open_; }
 
 		void scan(const char * format, ...);
 		void print(const char * format, ...);
@@ -62,9 +67,10 @@ class P2PIOPolicy
 		void request_read_block(uint32_t buffer);
 		void wait_read_block(uint32_t buffer);
 
-		MPBuffer<char, io_buffer_size> io_buffer_[2];
-		MPBuffer<char, io_line_size> io_line_;
+		MPBuffer<char, io_buffer_size, 1> io_buffer_[2];
+		MPBuffer<char, io_line_size, 1> io_line_;
 
+		bool is_open_;
 		uint32_t current_;
 		uint64_t buffer_offset_;
 		uint64_t buffer_fill_[2];
@@ -80,7 +86,13 @@ class P2PIOPolicy
 template<bool swapped>
 FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 	{
+		assert(!is_open_);
 		P2PConnection & p2p = P2PConnection::instance();
+
+		/*
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" opening " << filename << std::endl;
+		*/
 
 		// this sends the string terminator as well
 		size_t msg_size = strlen(filename)+1;
@@ -153,23 +165,39 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 
 // FIXME: need to handle errors properly
 
+		is_open_ = true;
 		return ok;
 	} // P2PIOPolicy<>::open
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::close()
 	{
+
+		/*
+		P2PConnection & p2p = P2PConnection::instance();
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" closing file" << std::endl;
+		*/
+
 		// force write if current block hasn't been written
 		if(buffer_offset_ > 0) {
 			flush();
 		} // if
 
+		/*
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" after flush" << std::endl;
+		*/
+
 		P2PConnection::instance().post(P2PTag::io_close);
+		is_open_ = false;
 	} // P2PIOPolicy<>::close
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::scan(const char * format, ...)
 	{
+		assert(is_open_);
+
 		/*
 		P2PConnection & p2p = P2PConnection::instance();
 
@@ -193,6 +221,8 @@ void P2PIOPolicy<swapped>::scan(const char * format, ...)
 template<bool swapped>
 void P2PIOPolicy<swapped>::print(const char * format, ...)
 	{
+		assert(is_open_);
+
 		va_list ab;
 
 		// initialize varg list
@@ -201,6 +231,12 @@ void P2PIOPolicy<swapped>::print(const char * format, ...)
 		// sprintf to local buffer
 		vsprintf(io_line_.data(), format, ab);
 
+		/*
+		P2PConnection & p2p = P2PConnection::instance();
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" printing " << io_line_.data() << std::endl;
+		*/
+		
 		// use write function to do actual work
 		P2PIOPolicy::write(io_line_.data(), strlen(io_line_.data()));
 	} // P2PIOPolicy<>::scan
@@ -209,6 +245,8 @@ template<bool swapped>
 template<typename T>
 void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 	{
+		assert(is_open_);
+
 		// everything is done in bytes
 		uint64_t bytes = elements*sizeof(T);
 		char * bdata = reinterpret_cast<char *>(data);
@@ -253,15 +291,26 @@ template<bool swapped>
 template<typename T>
 void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 	{
+		assert(is_open_);
+
 		// book-keeping is done in bytes
 		uint64_t bytes(elements*sizeof(T));
 		const char * bdata = reinterpret_cast<const char *>(data);
 		uint64_t bdata_offset(0);
 
+		/*
+		P2PConnection & p2p = P2PConnection::instance();
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" bytes " << bytes << std::endl;
+		*/
 		do {
 			const int64_t over_run = (buffer_offset_ + bytes) -
 				io_buffer_[current_].size();
 
+			/*
+			std::cerr << "PPE rank: " << p2p.global_id() <<
+				" over_run " << over_run << std::endl;
+			*/
 			if(over_run > 0) {
 				const uint64_t under_run =
 					io_buffer_[current_].size() - buffer_offset_;
@@ -270,6 +319,13 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				// we need to make sure that only even multiples
 				// of the type are copied at once
 				const uint64_t copy_bytes = (under_run/sizeof(T))*sizeof(T);
+
+				/*
+				printf("PPE rank: %d dst %p src %p bytes %ld\n",
+					p2p.global_id(),
+					io_buffer_[current_].data() + buffer_offset_,
+					bdata + bdata_offset, copy_bytes);
+				*/
 
 				memcpy(io_buffer_[current_].data() + buffer_offset_,
 					bdata + bdata_offset, copy_bytes);
@@ -292,6 +348,13 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				buffer_offset_ = 0;
 			}
 			else {
+				/*
+				printf("PPE rank: %d dst %p src %p bytes %ld\n",
+					p2p.global_id(),
+					io_buffer_[current_].data() + buffer_offset_,
+					bdata + bdata_offset, bytes);
+				*/
+
 				memcpy(io_buffer_[current_].data() + buffer_offset_,
 					bdata + bdata_offset, bytes);
 
@@ -309,6 +372,8 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 template<bool swapped>
 void P2PIOPolicy<swapped>::seek(long offset, int whence)
 	{
+		assert(is_open_);
+
 		MPRequest request(P2PTag::io_seek, P2PTag::data);
 		P2PConnection & p2p = P2PConnection::instance();
 
@@ -360,6 +425,10 @@ void P2PIOPolicy<swapped>::send_write_block(uint32_t buffer)
 		P2PConnection & p2p = P2PConnection::instance();
 
 		p2p.post(request_[buffer]);
+		/*
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" sending " << request_[buffer].count << std::endl;
+		*/
 		p2p.isend(io_buffer_[buffer].data(), request_[buffer].count,
 			request_[buffer].tag, request_[buffer].id);
 		pending_[buffer] = true;
@@ -376,6 +445,12 @@ void P2PIOPolicy<swapped>::wait_write_block(uint32_t buffer)
 template<bool swapped>
 void P2PIOPolicy<swapped>::flush()
 	{
+		/*
+		P2PConnection & p2p = P2PConnection::instance();
+		std::cerr << "PPE rank: " << p2p.global_id() <<
+			" buffer_offset_: " << buffer_offset_ << std::endl;
+		*/
+
 		// request remote write
 		request_[current_].set(P2PTag::io_write, P2PTag::data,
 			buffer_offset_, current_);

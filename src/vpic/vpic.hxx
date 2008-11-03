@@ -18,6 +18,7 @@
 #include "../boundary/boundary.h"
 #include "../species_advance/standard/spa.h"
 #include <FileIO.hxx>
+#include <BitField.hxx>
  
 #include <stdio.h>
  
@@ -31,6 +32,50 @@
 //  #include "dumpvars.h"
  
 typedef FileIO FILETYPE;
+
+const uint32_t ex			(1<<0);
+const uint32_t ey			(1<<1);
+const uint32_t ez			(1<<2);
+const uint32_t div_e_err	(1<<3);
+const uint32_t cbx			(1<<4);
+const uint32_t cby			(1<<5);
+const uint32_t cbz			(1<<6);
+const uint32_t div_b_err	(1<<7);
+const uint32_t tcax			(1<<8);
+const uint32_t tcay			(1<<9);
+const uint32_t tcaz			(1<<10);
+const uint32_t rhob			(1<<11);
+const uint32_t jfx			(1<<12);
+const uint32_t jfy			(1<<13);
+const uint32_t jfz			(1<<14);
+const uint32_t rhof			(1<<15);
+const uint32_t ematx		(1<<16);
+const uint32_t ematy		(1<<17);
+const uint32_t ematz		(1<<18);
+const uint32_t nmat			(1<<19);
+const uint32_t fmatx		(1<<20);
+const uint32_t fmaty		(1<<21);
+const uint32_t fmatz		(1<<22);
+const uint32_t cmat			(1<<23);
+
+const size_t total_field_variables(24);
+
+const uint32_t jx			(1<<0);
+const uint32_t jy			(1<<1);
+const uint32_t jz			(1<<2);
+const uint32_t rho			(1<<3);
+const uint32_t px			(1<<4);
+const uint32_t py			(1<<5);
+const uint32_t pz			(1<<6);
+const uint32_t ke			(1<<7);
+const uint32_t txx			(1<<8);
+const uint32_t tyy			(1<<9);
+const uint32_t tzz			(1<<10);
+const uint32_t tyz			(1<<11);
+const uint32_t tzx			(1<<12);
+const uint32_t txy			(1<<13);
+
+const size_t total_hydro_variables(24);
 
 class vpic_simulation {
 public:
@@ -76,6 +121,9 @@ private:
   int field_interval;
   int particle_interval;
  
+  size_t nxout, nyout, nzout;
+  float dxout, dyout, dzout;
+
   int ndfld;
   int ndhyd;
   int ndpar;
@@ -130,6 +178,8 @@ private:
   ///////////////
   // Dump helpers
  
+  int dump_mkdir(const char * dname);
+
   // Text dumps
   void dump_energies( const char *fname, int append = 1 );
   void dump_materials( const char *fname );
@@ -144,53 +194,49 @@ private:
                        int fname_tag = 1 );
   void dump_restart( const char *fbase, int fname_tag = 1 );
  
-  // strided dumps and support functions
-  void vfld_dump( const char *fbase );
-  void vhyd_dump( const char *sp_name, const char *fbase );
-  void vpar_dump( const char *sp_name, const char *fbase );
-  void vhis_dump( const char *sp_name, const char *fbase );
-  void vgrd_dump( const char *fbase );
-  void vhead_init( );
-  void vhis_probe( const char *prbname, float xprb, float yprb, float zprb);
-  void vhis_probe( const int prbtyp, float xprb, float yprb, float zprb);
-  void vhis_energies( const char *optname);
-  void vhis_nam( char *cnam, const char *cbase, const int *prbnum);
-  void var_off( const char *varname );
-  void var_ls( void );
- 
-  void nultrm(char *cstr);
-  void nulset(char *cstr);
-  void fname_append(char *fname, int *step, int *stepdigit,
-    int *nrnk, int *rankdigit);
-  void fwr_ara(float *ara, int *nara, FILETYPE fdunit, int *ier);
-  void fwr_stride(float *ara, int *nvartot, int *ifvar, int *offset,
-    int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
-    int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
-    int *stropt, FILETYPE fdunit, int *ier);
-  void fwr_stride_block(float *ara, int *nvartot, int *ifvar, int *offset,
-    int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
-    int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
-    int *stropt, FILETYPE fdunit, int *ier);
-  /* not yet used */
-  void fwr_stride_grid (float *ara, int *nvartot, int *ifxyz, int *nvstrt, int *offset,
-    int *iara, int *jara, int *kara, int *istr, int *jstr, int *kstr,
-    int *iglo, int *igup, int *jglo, int *jgup, int *kglo, int *kgup,
-    float *x0, float *y0, float *z0, float *dx, float *dy, float *dz,
-    int *stropt, FILETYPE fdunit, int *ier);
-  void fwr_buf(int *ndxbuf, FILETYPE fdunit, int *ier);
-  void fwr_par(float *ara, int *nara, int *nvartot, int *ifvar, int *nstr,
-    FILETYPE fdunit, int *ier);
-  void fwr_bin_head( FILETYPE fdunit, int *ier );
-  void fwr_asc_head( FILETYPE fdunit, int *ier );
-  void prtint(FILETYPE fdasc, int *intara, int *nprt);
-  void prtflt(FILETYPE fdasc, float *fltara, int *nprt);
-  void prtstr(FILETYPE fdasc, char *strara, int *nprt);
-  void define_glb( double xl, double yl, double zl,
-    double xh, double yh, double zh,
-    int gnx, int gny, int gnz, int gpx, int gpy, int gpz );
-  void flipbyte(long long int *iara, long long int *nara);
-  void flipbyte4(long int *iara, long int *nara);
- 
+  /*----------------------------------------------------------------------------
+   * DumpParameters Struct
+  ----------------------------------------------------------------------------*/
+  enum DumpFormat {
+    band = 0,
+	band_interleave = 1
+  }; // enum DumpFormat
+
+  /*----------------------------------------------------------------------------
+   * DumpParameters Struct
+  ----------------------------------------------------------------------------*/
+  struct DumpParameters {
+
+    void output_fields(uint32_t mask) {
+      field_vars.set(mask);
+    } // OUTPUT_FIELDS
+
+    void output_hydro(uint32_t mask) {
+      hydro_vars.set(mask);
+    } // OUTPUT_FIELDS
+
+    BitField field_vars;
+
+    size_t field_stride_x;
+    size_t field_stride_y;
+    size_t field_stride_z;
+
+	DumpFormat field_format;
+
+    BitField hydro_vars;
+
+    size_t hydro_stride_x;
+    size_t hydro_stride_y;
+    size_t hydro_stride_z;
+
+	DumpFormat hydro_format;
+
+  }; // struct DumpParameters
+
+  void field_dump(const char * fbase, DumpParameters & dumpParams);
+  void hydro_dump(const char * speciesname, const char * fbase,
+    DumpParameters & dumpParams);
+
   ///////////////
   // Grid helpers
  

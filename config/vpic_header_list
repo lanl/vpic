@@ -14,8 +14,11 @@ src/species_advance/standard/spa.h
 src/species_advance/standard/spa_private.h
 src/util/io/FileIO.hxx
 src/util/io/FileIOData.hxx
+src/util/io/FileUtils.hxx
 src/util/io/P2PIOPolicy.hxx
+src/util/io/P2PUtilsPolicy.hxx
 src/util/io/StandardIOPolicy.hxx
+src/util/io/StandardUtilsPolicy.hxx
 src/util/mp/dmp/DMPPolicy.hxx
 src/util/mp/dmp/mp_dmp.h
 src/util/mp/dmp/mp_t.h
@@ -49,6 +52,7 @@ src/util/spe_events.h
 src/util/swap.h
 src/util/util.h
 src/util/util_base.h
+src/util/BitField.hxx
 src/util/v4/v4.h
 src/util/v4/v4_altivec.hxx
 src/util/v4/v4_portable.hxx
@@ -56,5 +60,4 @@ src/util/v4/v4_spu.hxx
 src/util/v4/v4_sse.hxx
 src/util/v4/v4c_spu.h
 src/vpic/vpic.hxx
-src/vpic/dumphead.h
-src/vpic/dumpvars.h
+src/vpic/dumpmacros.h

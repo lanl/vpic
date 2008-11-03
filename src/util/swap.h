@@ -12,6 +12,10 @@
 #ifndef swap_h
 #define swap_h
 
+#include <field_advance.h>
+#include <sf_interface.h>
+#include <species_advance.h>
+
 #if defined(__GNUC__)
 	#include <byteswap.h>
 #else
@@ -55,6 +59,25 @@ void inline swap(double & element) {
 	element = t64.d;
 } // swap
 
+union type32 {
+	type32(float f_) : f(f_) {}
+
+	float f;
+	uint32_t ui;
+};
+
+float inline swap_float(float f) {
+	union type32 {
+		type32(float f_) : f(f_) {}
+
+		float f;
+		uint32_t ui;
+	} t32(f);
+
+	t32.ui = bswap_32(t32.ui);
+	return t32.f;
+} // swap_float
+
 //template<> void inline swap<uint64_t>(uint64_t & element) {
 void inline swap(uint64_t & element) {
 	element = bswap_64(element);
@@ -79,6 +102,10 @@ void inline swap(float & element) {
 	element = t32.f;
 } // swap
 
+void inline swap(uint16_t & element) {
+	element = bswap_16(element);
+} // swap
+
 //template<> void inline swap<uint32_t>(uint32_t & element) {
 void inline swap(uint32_t & element) {
 	element = bswap_32(element);
@@ -87,6 +114,86 @@ void inline swap(uint32_t & element) {
 //template<> void inline swap<int32_t>(int32_t & element) {
 void inline swap(int32_t & element) {
 	element = bswap_32(element);
+} // swap
+
+void inline swap(field_t & element) {
+	// electric field
+	utils::swap(element.ex);
+	utils::swap(element.ey);
+	utils::swap(element.ez);
+	utils::swap(element.div_e_err);
+
+	// magnetic field
+	utils::swap(element.cbx);
+	utils::swap(element.cby);
+	utils::swap(element.cbz);
+	utils::swap(element.div_b_err);
+
+	// tca field
+	utils::swap(element.tcax);
+	utils::swap(element.tcay);
+	utils::swap(element.tcaz);
+	utils::swap(element.rhob);
+
+	// tca field
+	utils::swap(element.jfx);
+	utils::swap(element.jfy);
+	utils::swap(element.jfz);
+	utils::swap(element.rhof);
+
+	// material
+	utils::swap(element.ematx);
+	utils::swap(element.ematy);
+	utils::swap(element.ematz);
+	utils::swap(element.nmat);
+
+	// material
+	utils::swap(element.fmatx);
+	utils::swap(element.fmaty);
+	utils::swap(element.fmatz);
+	utils::swap(element.cmat);
+} // swap
+
+void inline swap(hydro_t & element) {
+	// current and charge
+	utils::swap(element.jx);
+	utils::swap(element.jy);
+	utils::swap(element.jz);
+	utils::swap(element.rho);
+
+	// current and charge
+	utils::swap(element.px);
+	utils::swap(element.py);
+	utils::swap(element.pz);
+	utils::swap(element.ke);
+
+	// stress diag
+	utils::swap(element.txx);
+	utils::swap(element.tyy);
+	utils::swap(element.tzz);
+
+	// stress off-diag
+	utils::swap(element.tyz);
+	utils::swap(element.tzx);
+	utils::swap(element.txy);
+} // swap
+
+void inline swap(particle_t & element) {
+	// position
+	utils::swap(element.dx);
+	utils::swap(element.dy);
+	utils::swap(element.dz);
+
+	// id
+	utils::swap(element.i);
+
+	// momentum
+	utils::swap(element.ux);
+	utils::swap(element.uy);
+	utils::swap(element.uz);
+
+	// charge
+	utils::swap(element.q);
 } // swap
 
 } // namespace utils

@@ -42,7 +42,8 @@ struct P2PTag {
 		io_write,
 		io_read,
 		io_seek,
-		io_close
+		io_close,
+		utils_mkdir
 	}; // enum
 
 }; // class P2PTag

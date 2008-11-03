@@ -12,6 +12,8 @@
 #ifndef FileIOData_hxx
 #define FileIOData_hxx
 
+#include<cstddef>
+
 enum FileIOMode {
 	io_read,
 	io_read_write,

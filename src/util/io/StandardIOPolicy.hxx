@@ -35,6 +35,8 @@ class StandardIOPolicy
 		FileIOStatus open(const char * filename, FileIOMode mode);
 		void close();
 		
+		bool isOpen() { return is_open_; }
+
 		int size();
 
 		// ascii methods
@@ -49,6 +51,7 @@ class StandardIOPolicy
 
 	private:
 
+		bool is_open_;
 		FILE * handle_;
 
 	}; // class StandardIOPolicy
@@ -88,12 +91,14 @@ StandardIOPolicy::open(const char * filename, FileIOMode mode)
 			return fail;
 		} // if
 
+		is_open_ = true;
 		return ok;
 	} // StandardIOPolicy::StandardIOPolicy
 
 inline void StandardIOPolicy::close()
 	{
 		fclose(handle_);
+		is_open_ = false;
 	} // StandardIOPolicy::~StandardIOPolicy
 
 inline int StandardIOPolicy::size()

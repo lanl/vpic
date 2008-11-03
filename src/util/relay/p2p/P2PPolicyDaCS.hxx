@@ -35,6 +35,9 @@ template<int ROLE> class P2PPolicyDaCS
 		inline int global_size()
 			{ return ConnectionManager::instance().global_size(); }
 
+		inline int role()
+			{ return ROLE; }
+
 		// host side poll
 		inline int poll(MPRequest_T<ROLE> & request);
 

@@ -153,10 +153,16 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 			p2p.recv(&file_size_, 1, request.tag, request.id);
 			read_blocks_ = div(file_size_, io_buffer_size);
 
+			std::cerr << "PPE rank: " << p2p.global_id() <<
+				"file size: " << file_size_ " read blocks: " <<
+				read_blocks_ << std::endl;
+
 			// request block
 			request_read_block(current_);
 
 			// request next block
+			// This will only do a real request if
+			// read_blocks_ > 1
 			request_read_block(current_^1);
 
 			// wait on the first block

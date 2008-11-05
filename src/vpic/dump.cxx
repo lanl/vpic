@@ -983,48 +983,67 @@ void vpic_simulation::field_dump(const char * fbase,
 		std::cerr << std::endl;
 		*/
 
-		for(size_t v(0); v<numvars; v++) {
-			for(size_t k(0); k<nzout+2; k++) {
-				for(size_t j(0); j<nyout+2; j++) {
-					for(size_t i(0); i<nxout+2; i++) {
-						/*
-						const uint32_t * fref = reinterpret_cast<uint32_t *>(
-							&field_advance->f(
-							i*istride+1,j*jstride+1,k*kstride+1));
-						*/
-						const uint32_t * fref = reinterpret_cast<uint32_t *>(
-							&field_advance->f(
-							i*istride,j*jstride,k*kstride));
+		if(istride == 1 && jstride == 1 && kstride == 1) {
+			for(size_t v(0); v<numvars; v++) {
+				for(size_t k(0); k<nzout+2; k++) {
+					for(size_t j(0); j<nyout+2; j++) {
+						for(size_t i(0); i<nxout+2; i++) {
+							/*
+							const uint32_t * fref =
+								reinterpret_cast<uint32_t *>(
+								&field_advance->f(
+								i*istride+1,j*jstride+1,k*kstride+1));
+							*/
+							const uint32_t * fref =
+								reinterpret_cast<uint32_t *>(
+								&field_advance->f(i,j,k));
 
-						/*
-						std::cerr << "f(" << i*istride+1 << "," <<
-							j*jstride+1 << "," << k*kstride+1 <<
-							") = " << ((float *)fref)[varlist[v]] << std::endl;
-						*/
+							/*
+							std::cerr << "f(" << i*istride+1 << "," <<
+								j*jstride+1 << "," << k*kstride+1 <<
+								") = " << ((float *)fref)[varlist[v]] <<
+								std::endl;
+							*/
 
-						fileIO.write(&fref[varlist[v]], 1);
+							fileIO.write(&fref[varlist[v]], 1);
+						} // for
 					} // for
 				} // for
 			} // for
-		} // for
+		}
+		else {
+			for(size_t v(0); v<numvars; v++) {
+				for(size_t k(0); k<nzout+2; k++) {
+					for(size_t j(0); j<nyout+2; j++) {
+						for(size_t i(0); i<nxout+2; i++) {
+							const uint32_t * fref =
+								reinterpret_cast<uint32_t *>(
+								&field_advance->f(
+								i*istride,j*jstride,k*kstride));
+							fileIO.write(&fref[varlist[v]], 1);
+						} // for
+					} // for
+				} // for
+			} // for
+		} // if
 
 		delete[] varlist;
 	}
 	else { // band_interleave
 
 		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-		nxout = grid->nx;
-		nyout = grid->ny;
-		nzout = grid->nz;
-		dxout = grid->dx;
-		dyout = grid->dy;
-		dzout = grid->dz;
+		nxout = (grid->nx)/istride;
+		nyout = (grid->ny)/jstride;
+		nzout = (grid->nz)/kstride;
+		dxout = (grid->dx)*istride;
+		dyout = (grid->dy)*jstride;
+		dzout = (grid->dz)*kstride;
 
 		WRITE_HEADER_V0(dump_type::field_dump, invalid_species_id, 0, fileIO);
 	 
-		dim[0] = nxout;
-		dim[1] = nyout;
-		dim[2] = nzout;
+		dim[0] = nxout+2;
+		dim[1] = nyout+2;
+		dim[2] = nzout+2;
 
 		WRITE_ARRAY_HEADER(field_advance->f, 3, dim, fileIO);
 
@@ -1032,11 +1051,11 @@ void vpic_simulation::field_dump(const char * fbase,
   			fileIO.write(field_advance->f, dim[0]*dim[1]*dim[2]);
 		}
 		else {
-			for(size_t k(0); k<nzout; k++) {
-				for(size_t j(0); j<nyout; j++) {
-					for(size_t i(0); i<nxout; i++) {
+			for(size_t k(0); k<nzout+2; k++) {
+				for(size_t j(0); j<nyout+2; j++) {
+					for(size_t i(0); i<nxout+2; i++) {
 						fileIO.write(&field_advance->f(
-								i*istride+1,j*jstride+1,k*kstride+1), 1);
+								i*istride,j*jstride,k*kstride), 1);
 					} // for
 				} // for
 			} // for

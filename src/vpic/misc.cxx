@@ -9,6 +9,7 @@
  */
 
 #include "vpic.hxx"
+#include <CheckSum.hxx>
 
 // FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
 
@@ -102,3 +103,20 @@ vpic_simulation::inject_particle( species_t * sp,
 
 }
 
+void vpic_simulation::output_checksum_fields() {
+  CheckSum cs;
+  md5CheckSum<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2), cs);
+  MESSAGE(("RANK %d FIELDS MD5CHECKSUM: %s", mp_rank(grid->mp), cs.strvalue));
+} // vpic_simulation::output_checksum_fields
+
+void vpic_simulation::output_checksum_species(const char * species) {
+  species_t * sp = find_species_name(species, species_list);
+  if(sp == NULL) {
+    ERROR(("Invalid species name \"%s\".", species));
+  } // if
+  
+  CheckSum cs;
+  md5CheckSum<particle_t>(sp->p, sp->np, cs);
+  MESSAGE(("RANK %d SPECIES \"%s\" MD5CHECKSUM: %s",
+    mp_rank(grid->mp), species, cs.strvalue));
+} // vpic_simulation::output_checksum_species

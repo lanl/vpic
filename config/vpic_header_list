@@ -61,3 +61,4 @@ src/util/v4/v4_sse.hxx
 src/util/v4/v4c_spu.h
 src/vpic/vpic.hxx
 src/vpic/dumpmacros.h
+src/util/CheckSum.hxx

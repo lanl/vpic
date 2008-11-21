@@ -175,6 +175,12 @@ private:
   char user_global[USER_GLOBAL_SIZE];
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
  
+  /*----------------------------------------------------------------------------
+   * Check Sums
+   ---------------------------------------------------------------------------*/
+  void output_checksum_fields();
+  void output_checksum_species(const char * species);
+
   ///////////////
   // Dump helpers
  

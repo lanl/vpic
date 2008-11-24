@@ -48,7 +48,7 @@ inline void output_swap_type(DACS_BYTE_SWAP_T type) {
 } // output_swap_type
 
 inline void process_dacs_errcode(DACS_ERR_T errcode,
-	char * file, int line) {
+	const char * file, int line) {
     if(errcode <= -35000) {
         DACS_PRINT_ERR(dacs_strerror(errcode), file, line);
         exit(errcode);

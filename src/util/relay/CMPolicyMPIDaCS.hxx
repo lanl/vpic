@@ -18,6 +18,7 @@
 #include <dacs.h>
 #include <DaCSUtils.h>
 #include <MPData.hxx>
+#include <string.h>
 
 /*!
 	\struct CMPolicyMPIDaCS CMPolicyMPIDaCS.h

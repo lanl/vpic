@@ -15,6 +15,7 @@
 //#include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <algorithm>
 #include "P2PConnection.hxx"
 #include "DMPConnection.hxx"
 #include "MPData.hxx"
@@ -422,6 +423,11 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::io_read:
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" requesting io_read of " << request.count <<
+						" bytes" << std::endl;
+					*/
 					fileIO_.read(io_buffer_.data(), request.count);
 					p2p.send(io_buffer_.data(), request.count, request.tag);
 					break;

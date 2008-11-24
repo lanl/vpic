@@ -154,8 +154,8 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 			read_blocks_ = div(file_size_, io_buffer_size);
 
 			std::cerr << "PPE rank: " << p2p.global_id() <<
-				"file size: " << file_size_ " read blocks: " <<
-				read_blocks_ << std::endl;
+				" file size: " << file_size_ << " read blocks: " <<
+				read_blocks_.quot << std::endl;
 
 			// request block
 			request_read_block(current_);
@@ -168,8 +168,6 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 			// wait on the first block
 			wait_read_block(current_);
 		} // if
-
-// FIXME: need to handle errors properly
 
 		is_open_ = true;
 		return ok;
@@ -396,6 +394,13 @@ void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)
 		if(read_blocks_.quot > 0) {
 			request_[buffer].set(P2PTag::io_read, P2PTag::data,
 				io_buffer_[buffer].size(), buffer);
+
+			/*
+			std::cerr << "PPE rank: " << p2p.global_id() <<
+				" requesting " << request_[buffer].count <<
+				" bytes " << std::endl;
+			*/
+
 			p2p.post(request_[buffer]);
 			p2p.irecv(io_buffer_[buffer].data(), request_[buffer].count,
 				request_[buffer].tag, request_[buffer].id);
@@ -407,6 +412,13 @@ void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)
 		else if(read_blocks_.rem > 0) {
 			request_[buffer].set(P2PTag::io_read, P2PTag::data,
 				read_blocks_.rem, buffer);
+
+			/*
+			std::cerr << "PPE rank: " << p2p.global_id() <<
+				" requesting " << request_[buffer].count <<
+				" bytes " << std::endl;
+			*/
+
 			p2p.post(request_[buffer]);
 			p2p.irecv(io_buffer_[buffer].data(), request_[buffer].count,
 				request_[buffer].tag, request_[buffer].id);

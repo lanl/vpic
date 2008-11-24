@@ -50,7 +50,7 @@ CCS_WITH_ADDRESSING
 CCS_WITH_PPU_COMPILER
 CCS_WITH_LIBSPE2
 CCS_WITH_SPU_MODULES
-#CCS_WITH_PARTICLE_SORT
+CCS_WITH_PPU_OPENSSL
 
 ################################################################################
 # C/C++ configuration
@@ -78,9 +78,9 @@ CCS_TUNE_PCXX
 ################################################################################
 # setup EXTRA
 ################################################################################
-EXTRA_CPPFLAGS="$LIBSPE2_CPPFLAGS $TOOLCHAIN_CPPFLAGS"
-EXTRA_LDFLAGS="$LIBSPE2_LDFLAGS"
-EXTRA_LIBS="$LIBSPE2_LIBS"
+EXTRA_CPPFLAGS="$LIBSPE2_CPPFLAGS $TOOLCHAIN_CPPFLAGS $PPU_OPENSSL_CPPFLAGS"
+EXTRA_LDFLAGS="$LIBSPE2_LDFLAGS $PPU_OPENSSL_LDFLAGS"
+EXTRA_LIBS="$LIBSPE2_LIBS $PPU_OPENSSL_LIBS"
 
 LIB_EXTENSION="ppu"
 AC_SUBST(LIB_EXTENSION)

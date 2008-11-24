@@ -48,6 +48,7 @@ CCS_WITH_ADDRESSING
 CCS_WITH_CPUMODEL
 CCS_WITH_EXTENSION
 CCS_WITH_DACS_LAUNCH
+CCS_WITH_OPENSSL
 
 ################################################################################
 # extra flags

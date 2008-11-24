@@ -157,6 +157,14 @@ mp_allgather_i64( int64_t *sbuf,
 } // mp_allgather_i64
 
 static inline void
+mp_gather_uc( unsigned char * sbuf,
+              unsigned char * rbuf,
+			  int n,
+			  mp_handle h) {
+  mp_gather_uc_cxx( sbuf, rbuf, n, h);
+} // mp_gather_uc
+
+static inline void
 mp_send_i( int *buf,
            int n,
            int dst,

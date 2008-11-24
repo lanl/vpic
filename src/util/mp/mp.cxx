@@ -164,6 +164,14 @@ mp_allgather_i64_cxx( int64_t *sbuf,
   return MPWrapper::instance().mp_allgather_i64( sbuf, rbuf, n, h );
 } // mp_allgather_i64
 
+void
+mp_gather_uc_cxx( unsigned char * sbuf,
+                  unsigned char * rbuf,
+                  int n,
+                  mp_handle h ) {
+  return MPWrapper::instance().mp_gather_uc( sbuf, rbuf, n, h );
+} // mp_gather_uc_cxx
+
 // We need blocking send/receive to implement turnstiles.
 
 void

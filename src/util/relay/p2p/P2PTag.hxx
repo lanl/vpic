@@ -31,6 +31,7 @@ struct P2PTag {
 		allreduce_max_double,
 		allreduce_sum_double,
 		allreduce_sum_int,
+		gather_uc,
 		allgather_int,
 		allgather_int64,
 		io_open_read,

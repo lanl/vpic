@@ -52,6 +52,7 @@ class DMPPolicyMPI
 			int count);
 		template<typename T> int allreduce_sum(T * src, T * dest,
 			int count);
+		template<typename T> int gather(T * src, T * dest, int count);
 		template<typename T> int allgather(T * src, T * dest, int count);
 
 		int abort(int reason);
@@ -167,6 +168,14 @@ int  DMPPolicyMPI::allreduce_sum(T * src, T * dest, int count)
 		ConnectionManager & mgr = ConnectionManager::instance();
 		return MPI_Allreduce(src, dest, count, Type2MPIType<T>::type(),
 			MPI_SUM, mgr.dmp_comm());
+	} // DMPPolicyMPI::allreduce_max
+
+template<typename T>
+int  DMPPolicyMPI::gather(T * src, T * dest, int count)
+	{
+		ConnectionManager & mgr = ConnectionManager::instance();
+		return MPI_Gather(src, count, Type2MPIType<T>::type(),
+			dest, count, Type2MPIType<T>::type(), 0, mgr.dmp_comm());
 	} // DMPPolicyMPI::allreduce_max
 
 template<typename T>

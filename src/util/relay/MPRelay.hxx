@@ -283,6 +283,24 @@ void MPRelay::start()
 					p2p.send(ibuf_recv_.data(), request.count, request.tag);
 					break;
 
+				case P2PTag::gather_uc:
+					// resize buffers if necessary
+					ibuf_send_.resize(request.count);
+					ibuf_recv_.resize(request.count*dmp.global_size());
+
+					// blocking receive from point-to-point peer
+					p2p.recv(ibuf_send_.data(), request.count,
+						request.tag, request.id);
+
+					// call all gather with dmp peers
+					dmp.gather(ibuf_send_.data(), ibuf_recv_.data(),
+						request.count);
+
+					// blocking send result back to point-to-point peer
+					p2p.send(ibuf_recv_.data(),
+						request.count*dmp.global_size(), request.tag);
+					break;
+
 				case P2PTag::allgather_int:
 					// resize buffers if necessary
 					ibuf_send_.resize(request.count);

@@ -136,6 +136,14 @@ struct DMPPolicy {
   } // mp_allsum_i
   
   inline void
+  mp_gather_uc( unsigned char * sbuf,
+                unsigned char * rbuf,
+                int n,
+                mp_handle h ) {
+    return mp_gather_uc_dmp( sbuf, rbuf, n, h );
+  } // mp_gather_uc
+  
+  inline void
   mp_allgather_i( int *sbuf,
                   int *rbuf,
                   int n,

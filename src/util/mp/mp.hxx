@@ -118,6 +118,12 @@ mp_allgather_i64_cxx( int64_t *sbuf,
                       int n,
                       mp_handle h );
 
+void
+mp_gather_uc_cxx( unsigned char * sbuf,
+                  unsigned char * rbuf,
+				  int n,
+				  mp_handle h );
+
 // We need blocking send/receive to implement turnstiles.
 
 void

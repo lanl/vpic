@@ -105,8 +105,27 @@ vpic_simulation::inject_particle( species_t * sp,
 
 void vpic_simulation::output_checksum_fields() {
   CheckSum cs;
-  md5CheckSum<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2), cs);
-  MESSAGE(("RANK %d FIELDS MD5CHECKSUM: %s", mp_rank(grid->mp), cs.strvalue));
+  checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
+    cs, "sha1");
+
+  const int nproc = mp_nproc(grid->mp);
+  if(nproc > 1) {
+    const unsigned int csels = cs.length*nproc;
+    unsigned char * sums = new unsigned char[cs.length*nproc];
+
+	// gather sums from all ranks
+	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+    checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+
+	if(mp_rank(grid->mp) == 0) {
+      MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
+    } // if
+
+	delete[] sums;
+  }
+  else {
+    MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
+  } // if
 } // vpic_simulation::output_checksum_fields
 
 void vpic_simulation::output_checksum_species(const char * species) {
@@ -116,7 +135,24 @@ void vpic_simulation::output_checksum_species(const char * species) {
   } // if
   
   CheckSum cs;
-  md5CheckSum<particle_t>(sp->p, sp->np, cs);
-  MESSAGE(("RANK %d SPECIES \"%s\" MD5CHECKSUM: %s",
-    mp_rank(grid->mp), species, cs.strvalue));
+  checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
+
+  const int nproc = mp_nproc(grid->mp);
+  if(nproc > 1) {
+    const unsigned int csels = cs.length*nproc;
+    unsigned char * sums = new unsigned char[cs.length*nproc];
+
+	// gather sums from all ranks
+	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+    checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+
+	if(mp_rank(grid->mp) == 0) {
+      MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
+    } // if
+
+	delete[] sums;
+  }
+  else {
+    MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
+  } // if
 } // vpic_simulation::output_checksum_species

@@ -46,6 +46,8 @@ void mp_allsum_d_dmp( double *local, double *global, int n,
                       mp_handle h );
 void mp_allsum_i_dmp( int *local, int *global, int n,
                       mp_handle h );
+void mp_gather_uc_dmp( unsigned char * sbuf, unsigned char * rbuf,
+  int n, mp_handle h );
 void mp_allgather_i_dmp( int *sbuf, int *rbuf, int n, mp_handle h );
 void mp_allgather_i64_dmp( int64_t *sbuf, int64_t *rbuf,
                            int n, mp_handle h );

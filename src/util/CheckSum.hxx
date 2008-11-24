@@ -10,14 +10,23 @@ struct CheckSum {
 }; // struct CheckSum
 
 template<typename T>
-void md5CheckSum(T * buffer, size_t elements, CheckSum & sum) {
+void checkSumBuffer(T * buffer, size_t elements, CheckSum & sum,
+	const char * digest = "md5") {
 	size_t bytes = elements*sizeof(T);
-	const EVP_MD * md = EVP_md5();
 
 	EVP_MD_CTX ctx;
 
+	// add all digests to table
+	OpenSSL_add_all_digests();
+
 	// initialize context
 	EVP_MD_CTX_init(&ctx);
+
+	// get digest
+	const EVP_MD * md = EVP_get_digestbyname(digest);
+	if(!md) {
+		ERROR(("Invalid digest!"));
+	} // if
 
 	// initialize digest
 	EVP_DigestInit_ex(&ctx, md, NULL);
@@ -37,6 +46,6 @@ void md5CheckSum(T * buffer, size_t elements, CheckSum & sum) {
 		sprintf(tmp, "%02x", sum.value[i]);
 		strcat(sum.strvalue, tmp);
 	} // for
-} // checkSum
+} // checkSumBuffer
 
 #endif // CheckSum_hxx

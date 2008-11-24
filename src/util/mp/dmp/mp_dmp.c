@@ -358,6 +358,23 @@ mp_allgather_i64_dmp( int64_t *sbuf,
                        rbuf, n, MPI_LONG_LONG, MPI_COMM_WORLD ) );
 }
 
+void
+mp_gather_uc_dmp( unsigned char * sbuf,
+                  unsigned char * rbuf,
+				  int n,
+				  mp_handle h) {
+  mp_t *mp = (mp_t *)h;
+
+  if( mp==NULL   ) ERROR(( "Bad handle" ));
+  if( sbuf==NULL ) ERROR(( "Bad send" ));
+  if( rbuf==NULL ) ERROR(( "Bad recv" ));
+  if( n<1        ) ERROR(( "Bad n" ));
+
+  // FIXME: THIS IS BROKEN
+  TRAP( MPI_Gather( sbuf, n, MPI_CHAR,
+                       rbuf, n, MPI_CHAR, 0, MPI_COMM_WORLD ) );
+}
+
 // We need blocking send/receive to implement turnstiles.
 
 void

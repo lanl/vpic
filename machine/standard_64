@@ -33,6 +33,11 @@ ADDRESSING=64
 #PARTICLE_SORT=out-of-place
 
 ################################################################################
+# OpenSSL
+################################################################################
+#OPEN_SSL="/usr"
+
+################################################################################
 # MPI configuration
 # MPI_CPPFLAGS - configure MPI preprocessor flags
 # MPI_LDFLAGS - configure MPI link flags

@@ -628,7 +628,7 @@ Since there is more particle data than can fit in any cache, it is
 desirable to limit the number of times a particle is touched during a
 time step lest performance be limited by moving particle data to and
 from memory.  This can be achieved by processing the majority of the
-particles in a single pass.  Give the above discretization, the inner
+particles in a single pass.  Given the above discretization, the inner
 loop of VPIC conceptually is:
 \begin{verbatim}
 for all particles,

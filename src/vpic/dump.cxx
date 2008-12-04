@@ -891,13 +891,57 @@ vpic_simulation::modify_runparams( const char *fname ) {
  * New dump logic
 ------------------------------------------------------------------------------*/
 
+#include <iostream>
+
+static FieldInfo fieldInfo[24] = {
+	{ "ex", "float", sizeof(float) },
+	{ "ey", "float", sizeof(float) },
+	{ "ez", "float", sizeof(float) },
+	{ "div_e_err", "float", sizeof(float) },
+	{ "cbx", "float", sizeof(float) },
+	{ "cby", "float", sizeof(float) },
+	{ "cbz", "float", sizeof(float) },
+	{ "div_b_err", "float", sizeof(float) },
+	{ "tcax", "float", sizeof(float) },
+	{ "tcay", "float", sizeof(float) },
+	{ "tcaz", "float", sizeof(float) },
+	{ "rhob", "float", sizeof(float) },
+	{ "jfx", "float", sizeof(float) },
+	{ "jfy", "float", sizeof(float) },
+	{ "jfz", "float", sizeof(float) },
+	{ "rhof", "float", sizeof(float) },
+	{ "ematx", "int", sizeof(material_id) },
+	{ "ematy", "int", sizeof(material_id) },
+	{ "ematz", "int", sizeof(material_id) },
+	{ "nmat", "int", sizeof(material_id) },
+	{ "fmatx", "int", sizeof(material_id) },
+	{ "fmaty", "int", sizeof(material_id) },
+	{ "fmatz", "int", sizeof(material_id) },
+	{ "cmat", "int", sizeof(material_id) }};
+
+static HydroInfo hydroInfo[14] = {
+	{ "jx", "float", sizeof(float) },
+	{ "jy", "float", sizeof(float) },
+	{ "jz", "float", sizeof(float) },
+	{ "rho", "float", sizeof(float) },
+	{ "px", "float", sizeof(float) },
+	{ "py", "float", sizeof(float) },
+	{ "pz", "float", sizeof(float) },
+	{ "ke", "float", sizeof(float) },
+	{ "txx", "float", sizeof(float) },
+	{ "tyy", "float", sizeof(float) },
+	{ "tzz", "float", sizeof(float) },
+	{ "tyz", "float", sizeof(float) },
+	{ "tzx", "float", sizeof(float) },
+	{ "txy", "float", sizeof(float) }};
+
 void vpic_simulation::field_dump(const char * fbase,
 	DumpParameters & dumpParams) {
 
 	/*
 	 * Open the file for output
 	 */
-	char filename[256];
+ 	char filename[256];
 	sprintf(filename, "%s.%06d.%04d", fbase, step, mp_rank(grid->mp));
 
 	FileIO fileIO;
@@ -963,7 +1007,6 @@ void vpic_simulation::field_dump(const char * fbase,
 		dim[1] = nyout+2;
 		dim[2] = nzout+2;
 
-		// WHAT SHOULD THIS BE???
 		WRITE_ARRAY_HEADER(field_advance->f, 3, dim, fileIO);
 
 		/*
@@ -975,6 +1018,20 @@ void vpic_simulation::field_dump(const char * fbase,
 			if(dumpParams.field_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
+		// output variable list
+		if(step == 0 && mp_rank(grid->mp) == 0) {
+			sprintf(filename, "%s.varlist", fbase);
+			FileIO varListIO;
+			status = varListIO.open(filename, io_write);
+
+			for(size_t v(0); v<numvars; v++) {
+				varListIO.print("%s %s %d\n", fieldInfo[varlist[v]].name,
+				fieldInfo[varlist[v]].type, fieldInfo[varlist[v]].size);
+			} // for
+
+			varListIO.close();
+		} // if
+		
 		/*
 		std::cerr << "var indices: ";
 		for(size_t i(0); i<numvars; i++) {
@@ -983,28 +1040,15 @@ void vpic_simulation::field_dump(const char * fbase,
 		std::cerr << std::endl;
 		*/
 
+		// more efficient for standard case
 		if(istride == 1 && jstride == 1 && kstride == 1) {
 			for(size_t v(0); v<numvars; v++) {
 				for(size_t k(0); k<nzout+2; k++) {
 					for(size_t j(0); j<nyout+2; j++) {
 						for(size_t i(0); i<nxout+2; i++) {
-							/*
-							const uint32_t * fref =
-								reinterpret_cast<uint32_t *>(
-								&field_advance->f(
-								i*istride+1,j*jstride+1,k*kstride+1));
-							*/
 							const uint32_t * fref =
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(i,j,k));
-
-							/*
-							std::cerr << "f(" << i*istride+1 << "," <<
-								j*jstride+1 << "," << k*kstride+1 <<
-								") = " << ((float *)fref)[varlist[v]] <<
-								std::endl;
-							*/
-
 							fileIO.write(&fref[varlist[v]], 1);
 						} // for
 					} // for
@@ -1014,15 +1058,20 @@ void vpic_simulation::field_dump(const char * fbase,
 		else {
 			for(size_t v(0); v<numvars; v++) {
 				for(size_t k(0); k<nzout+2; k++) {
-					for(size_t j(0); j<nyout+2; j++) {
-						for(size_t i(0); i<nxout+2; i++) {
-							const uint32_t * fref =
-								reinterpret_cast<uint32_t *>(
-								&field_advance->f(
-								i*istride,j*jstride,k*kstride));
-							fileIO.write(&fref[varlist[v]], 1);
+					if(k==0 || k==nzout+1 || k%kstride) {
+						for(size_t j(0); j<nyout+2; j++) {
+							if(j==0 || j==nyout+1 || j%jstride) {
+								for(size_t i(0); i<nxout+2; i++) {
+									if(i==0 || i==nxout+1 || i%istride) {
+										const uint32_t * fref =
+											reinterpret_cast<uint32_t *>(
+											&field_advance->f(i,j,k));
+										fileIO.write(&fref[varlist[v]], 1);
+									} // if
+								} // for
+							} // if
 						} // for
-					} // for
+					} // if
 				} // for
 			} // for
 		} // if
@@ -1052,12 +1101,18 @@ void vpic_simulation::field_dump(const char * fbase,
 		}
 		else {
 			for(size_t k(0); k<nzout+2; k++) {
-				for(size_t j(0); j<nyout+2; j++) {
-					for(size_t i(0); i<nxout+2; i++) {
-						fileIO.write(&field_advance->f(
-								i*istride,j*jstride,k*kstride), 1);
+				if(k==0 || k==nzout+1 || k%kstride) {
+					for(size_t j(0); j<nyout+2; j++) {
+						if(j==0 || j==nyout+1 || j%jstride) {
+							for(size_t i(0); i<nxout+2; i++) {
+								if(i==0 || i==nxout+1 || i%istride) {
+									fileIO.write(&field_advance->f(i,j,k),
+										1);
+								} // if
+							} // for
+						} // if
 					} // for
-				} // for
+				} // if
 			} // for
 		} // if
 	} // if
@@ -1164,6 +1219,20 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 			if(dumpParams.hydro_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
+		// output variable list
+		if(step == 0 && mp_rank(grid->mp) == 0) {
+			sprintf(filename, "%s.varlist", fbase);
+			FileIO varListIO;
+			status = varListIO.open(filename, io_write);
+
+			for(size_t v(0); v<numvars; v++) {
+				varListIO.print("%s %s %d\n", hydroInfo[varlist[v]].name,
+				hydroInfo[varlist[v]].type, hydroInfo[varlist[v]].size);
+			} // for
+
+			varListIO.close();
+		} // if
+		
 		/*
 		std::cerr << "var indices: ";
 		for(size_t i(0); i<numvars; i++) {

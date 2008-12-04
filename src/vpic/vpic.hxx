@@ -60,6 +60,12 @@ const uint32_t cmat			(1<<23);
 
 const size_t total_field_variables(24);
 
+struct FieldInfo {
+	char name[16];
+	char type[16];
+	size_t size;
+}; // struct FieldInfo
+
 const uint32_t jx			(1<<0);
 const uint32_t jy			(1<<1);
 const uint32_t jz			(1<<2);
@@ -76,6 +82,12 @@ const uint32_t tzx			(1<<12);
 const uint32_t txy			(1<<13);
 
 const size_t total_hydro_variables(24);
+
+struct HydroInfo {
+	char name[16];
+	char type[16];
+	size_t size;
+}; // struct FieldInfo
 
 class vpic_simulation {
 public:

@@ -213,7 +213,7 @@ private:
   void dump_restart( const char *fbase, int fname_tag = 1 );
  
   /*----------------------------------------------------------------------------
-   * DumpParameters Struct
+   * DumpFormat Enumeration
   ----------------------------------------------------------------------------*/
   enum DumpFormat {
     band = 0,
@@ -225,29 +225,17 @@ private:
   ----------------------------------------------------------------------------*/
   struct DumpParameters {
 
-    void output_fields(uint32_t mask) {
-      field_vars.set(mask);
-    } // OUTPUT_FIELDS
+    void output_variables(uint32_t mask) {
+      output_vars.set(mask);
+    } // output_variables
 
-    void output_hydro(uint32_t mask) {
-      hydro_vars.set(mask);
-    } // OUTPUT_FIELDS
+    BitField output_vars;
 
-    BitField field_vars;
+    size_t stride_x;
+    size_t stride_y;
+    size_t stride_z;
 
-    size_t field_stride_x;
-    size_t field_stride_y;
-    size_t field_stride_z;
-
-	DumpFormat field_format;
-
-    BitField hydro_vars;
-
-    size_t hydro_stride_x;
-    size_t hydro_stride_y;
-    size_t hydro_stride_z;
-
-	DumpFormat hydro_format;
+	DumpFormat format;
 
   }; // struct DumpParameters
 

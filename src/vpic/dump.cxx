@@ -917,7 +917,8 @@ static FieldInfo fieldInfo[24] = {
 	{ "fmatx", "int", sizeof(material_id) },
 	{ "fmaty", "int", sizeof(material_id) },
 	{ "fmatz", "int", sizeof(material_id) },
-	{ "cmat", "int", sizeof(material_id) }};
+	{ "cmat", "int", sizeof(material_id) }
+}; // fieldInfo
 
 static HydroInfo hydroInfo[14] = {
 	{ "jx", "float", sizeof(float) },
@@ -933,7 +934,8 @@ static HydroInfo hydroInfo[14] = {
 	{ "tzz", "float", sizeof(float) },
 	{ "tyz", "float", sizeof(float) },
 	{ "tzx", "float", sizeof(float) },
-	{ "txy", "float", sizeof(float) }};
+	{ "txy", "float", sizeof(float) }
+}; // hydroInfo
 
 void vpic_simulation::field_dump(const char * fbase,
 	DumpParameters & dumpParams) {
@@ -955,9 +957,9 @@ void vpic_simulation::field_dump(const char * fbase,
 	} // if
 
 	// convenience
-	const size_t istride(dumpParams.field_stride_x);
-	const size_t jstride(dumpParams.field_stride_y);
-	const size_t kstride(dumpParams.field_stride_z);
+	const size_t istride(dumpParams.stride_x);
+	const size_t jstride(dumpParams.stride_y);
+	const size_t kstride(dumpParams.stride_z);
 
 	/*
 	 * Check stride values.
@@ -984,7 +986,7 @@ void vpic_simulation::field_dump(const char * fbase,
 	#define f(x,y,z) \
 		f[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
-	if(dumpParams.field_format == band) {
+	if(dumpParams.format == band) {
 
 		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 		nxout = (grid->nx)/istride;
@@ -1012,10 +1014,10 @@ void vpic_simulation::field_dump(const char * fbase,
 		/*
 		 * Create a variable list of field values to output.
 		 */
-		size_t numvars = dumpParams.field_vars.bitsum();
+		size_t numvars = dumpParams.output_vars.bitsum();
 		size_t * varlist = new size_t[numvars];
 		for(size_t i(0), c(0); i<total_field_variables; i++) {
-			if(dumpParams.field_vars.bitset(i)) { varlist[c++] = i;}
+			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
 		// output variable list
@@ -1023,6 +1025,8 @@ void vpic_simulation::field_dump(const char * fbase,
 			sprintf(filename, "%s.varlist", fbase);
 			FileIO varListIO;
 			status = varListIO.open(filename, io_write);
+
+			varListIO.print("NUMVARS %d\n", numvars);
 
 			for(size_t v(0); v<numvars; v++) {
 				varListIO.print("%s %s %d\n", fieldInfo[varlist[v]].name,
@@ -1155,9 +1159,9 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 	synchronize_hydro(hydro, grid);
 
 	// convenience
-	const size_t istride(dumpParams.hydro_stride_x);
-	const size_t jstride(dumpParams.hydro_stride_y);
-	const size_t kstride(dumpParams.hydro_stride_z);
+	const size_t istride(dumpParams.stride_x);
+	const size_t jstride(dumpParams.stride_y);
+	const size_t kstride(dumpParams.stride_z);
 
 	/*
 	 * Check stride values.
@@ -1184,7 +1188,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 	#define hydro(x,y,z) \
 		hydro[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
-	if(dumpParams.hydro_format == band) {
+	if(dumpParams.format == band) {
 
 		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 		nxout = (grid->nx)/istride;
@@ -1213,10 +1217,10 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		/*
 		 * Create a variable list of hydro values to output.
 		 */
-		size_t numvars = dumpParams.hydro_vars.bitsum();
+		size_t numvars = dumpParams.output_vars.bitsum();
 		size_t * varlist = new size_t[numvars];
 		for(size_t i(0), c(0); i<total_hydro_variables; i++) {
-			if(dumpParams.hydro_vars.bitset(i)) { varlist[c++] = i;}
+			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
 		// output variable list
@@ -1224,6 +1228,8 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 			sprintf(filename, "%s.varlist", fbase);
 			FileIO varListIO;
 			status = varListIO.open(filename, io_write);
+
+			varListIO.print("NUMVARS %d\n", numvars);
 
 			for(size_t v(0); v<numvars; v++) {
 				varListIO.print("%s %s %d\n", hydroInfo[varlist[v]].name,

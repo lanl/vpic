@@ -1,0 +1,588 @@
+/*------------------------------------------------------------------------------
+ * SC08 Demo Deck
+ * mkdir rundata fields hydro restart particle rate
+------------------------------------------------------------------------------*/
+
+begin_globals {
+	int dump_start;
+	int dump_end;
+	int restart_interval;
+	int energies_interval;
+	int fields_interval;
+	int ehydro_interval;
+	int Hhydro_interval;
+	int eparticle_interval;
+	int Hparticle_interval;
+	int ez_save_interval;
+	int rtoggle;
+	double quota_sec;
+	double b0;
+	double v_A;
+}; // begin_globals
+
+begin_initialization {
+
+	// use natural units
+	double ec   = 1;         // Charge normalization
+	double me   = 1;         // Mass normalization
+	double c    = 1;         // Speed of light
+	double L    = 1;         // Length normalization (sheet thickness)
+	double eps0 = 1;         // Permittivity of space
+
+	double cfl_req   = 0.99;  // How close to Courant should we try to run
+	double wpedt_max = 0.36;  // How big a timestep is allowed if Courant
+                              // is not too restrictive
+
+	double damp      = 0.0;   // Level of radiation damping
+	int rng_seed     = 1;     // Random number seed increment
+
+	// Physics parameters
+	double mi_me   = 1.0;            // Ion mass / electron mass
+	double rhoi_L  = 1.0/sqrt(2.0);  // Ion thermal gyroradius / Sheet
+                                     // thickness; using vthi = sqrt(Ti/mi)
+
+	double Ti_Te   = 1.0;            // Ion temperature / electron temperature
+	double Tb_Te   = 1;              // Tb background plasma temperature /
+                                     // electron termperature
+
+	double nb_n0   = 0.3;            // background plasma density
+	double wpe_wce = 4;              // electron plasma freq / electron
+                                     // cyclotron freq
+
+	double theta   = M_PI/2.0;       // B0 = By
+	double taui    = 71;             // simulation wci's to run
+  
+	double quota   = 1000.0;         // run quota in hours
+	double quota_sec = quota*3600;   // Run quota in seconds
+
+	double cs   = cos(theta);
+	double sn   = sin(theta);
+
+	//derived qunatities
+	double mi = me*mi_me;                       // Ion mass
+
+	double Te = me*c*c/(2*eps0*wpe_wce* wpe_wce*(1+Ti_Te));
+                                                // Electron temperature
+
+	double Ti = Te*Ti_Te;                       // Ion temperature
+	double Tb = Te*Tb_Te;                       // background temperature
+	double vthe = sqrt(Te/me);                  // Electron thermal velocity
+	double vthi = sqrt(Ti/mi);                  // Ion thermal velocity
+	double wci  = vthi/(rhoi_L*L);              // Ion cyclotron frequency
+	double wce  = wci*mi_me;                    // Electron cyclotron freqeuncy
+	double wpe  = wce*wpe_wce;                  // electron plasma frequency
+	double wpi  = wpe/sqrt(mi_me);              // ion plasma frequency
+	double di   = c/wpi;                        // double debye = vthe/wpe;
+	double v_A=(wci/wpi)/sqrt(nb_n0);           // based on nb
+
+	// Numerical parameters
+	double Lx = 30*di; // size of box in x dimension
+	double Ly = 30*(1.0/6.0)*di; // size of box in y dimension
+	double Lz = 20*di; // size of box in z dimension
+	double nx = 150;
+	double ny = 150*(1.0/6.0);
+	double nz = 100;
+
+	// 24 node for SC08 demo with two Triblades
+	double topology_x = 1;
+	double topology_y = 1;
+	double topology_z = 4;
+
+	// Average number of macro particles per cell per species
+	double nppc = 1;
+
+	double hy = Ly/ny;
+
+	// Asymptotic magnetic field strength
+	double b0 = me*c*wce/ec;
+
+	// Peak electron (ion) density
+	double n0 = me*eps0*wpe*wpe/(ec*ec);
+
+	// electron drift velocity
+	double vdre =  b0/(L*ec*n0*(1+Ti_Te));
+
+	// Ion drift velocity
+	double vdri = -Ti_Te*vdre;
+
+	// number of physical electrons in sheet
+	double Npe_sheet = 2*n0*Ly*Lz*L*tanh(0.5*Lx/L);
+
+	// Number of physical electrons in background
+	double Npe_back = nb_n0*n0*Ly*Lz*Lx;
+
+	double Npe = Npe_sheet + Npe_back;
+
+	// total macro electrons in box
+	double Ne = nppc*nx*ny*nz;
+
+	double Ne_sheet = Ne*Npe_sheet/Npe;
+	double Ne_back = Ne*Npe_back/Npe;
+
+	// Make it divisible by number of processors
+	Ne_sheet = trunc_granular(Ne_sheet,nproc());
+
+	// Make it divisible by number of processors
+	Ne_back = trunc_granular(Ne_back,nproc());
+	Ne = Ne_sheet + Ne_back;
+
+	// Charge per macro electron
+	double qe_s = -ec*Npe_sheet/Ne_sheet;
+
+	// Charge per macro electron
+	double qe_b = -ec*Npe_back/Ne_back;
+
+	// Charge per macro electron
+	double qi_s = ec*Npe_sheet/Ne_sheet;
+
+	// Charge per macro electron       
+	double qi_b = ec*Npe_back/Ne_back;
+  
+	// gamma of ion drift frame
+	double gdri = 1/sqrt(1-vdri*vdri/(c*c));
+
+	// gamma of electron drift frame
+	double gdre = 1/sqrt(1-vdre*vdre/(c*c));
+
+	// 4-velocity of ion drift frame
+	double udri = vdri* gdri;
+
+	// 4-velocity of electron drift frame
+	double udre = vdre*gdre;
+
+	// normalized ion thermal velocity
+	double uthi = sqrt(Ti/mi)/c;
+
+	//  normalized electron thermal velocity
+	double uthe = sqrt(Te/me)/c;
+
+	// normalized background electron thermal velocity
+	double utheb = sqrt(Tb/me)/c;
+
+	// normalized background ion thermal velocity
+	double uthib = sqrt(Tb/mi)/c;
+
+	double tanhf = tanh(0.5*Lx/L);
+	double dbx = 0.0;
+	double dby = 0.0;
+
+	// determine the time step
+
+	// courant length
+	double dg = courant_length(Lx,Ly,Lz,nx,ny,nz);
+
+	// courant limited time step
+	double dt = cfl_req*dg/c;
+
+	// override timestep if plasma frequency limited
+	if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;
+   
+	int restart_interval = 10;
+	int energies_interval = 500;
+	int interval = int(0.5/(wci*dt)); 
+	int dump_start = int(1.0/(wci*dt));
+	int dump_end = int(70.0/(wci*dt));
+	int fields_interval = interval;
+	int ehydro_interval = interval;
+	int Hhydro_interval = interval;
+	int eparticle_interval = interval;
+	int Hparticle_interval = interval;
+	int ez_save_interval = int(0.1/(wci*dt)); 
+
+	/*--------------------------------------------------------------------------
+	 * Setup high level simulation parameters
+	--------------------------------------------------------------------------*/
+	//num_step             = int(taui/(wci*dt));
+	num_step             = 10;
+	status_interval      = 200;
+	sync_shared_interval = status_interval/10;
+	clean_div_e_interval = status_interval/10;
+	clean_div_b_interval = status_interval/10;
+
+	global->dump_start         = dump_start;
+	global->dump_end           = dump_end;
+	global->restart_interval   = restart_interval;
+	global->energies_interval  = energies_interval; 
+	global->fields_interval    = fields_interval;  
+	global->ehydro_interval    = ehydro_interval;  
+	global->Hhydro_interval    = Hhydro_interval;  
+	global->eparticle_interval = eparticle_interval;  
+	global->Hparticle_interval = Hparticle_interval;  
+	global->quota_sec          = quota_sec;  
+	global->rtoggle            = 0;  
+	global->ez_save_interval   = ez_save_interval;
+	global->b0                 = b0;              
+	global->v_A                = v_A;
+
+
+	/*--------------------------------------------------------------------------
+     * Setup the grid
+	--------------------------------------------------------------------------*/
+
+	// basic grid parameters
+	grid->dx = hy;
+	grid->dy = hy;
+	grid->dz = hy;
+	grid->dt = dt;
+	grid->cvac = c;
+	grid->eps0 = eps0;
+	grid-> damp = damp;
+
+	// strided output
+	head_option = 0;
+	block_dump = 1;
+	ndfld = interval;
+	ndhyd = interval;
+	ndpar = 16600000;
+	ndhis = 10;
+	ndgrd = 10000000;
+	istride = 1;
+	jstride = 1;
+	kstride = 1;
+	stride_option = 1;
+	pstride = 10;
+
+	// Parition a periodic box among the processors sliced uniformly along y
+	define_periodic_grid( -0.5*Lx, 0,  0,  // Low corner
+                          0.5*Lx, Ly, Lz,  // High corner
+                          nx, ny, nz,      // Resolution
+                          topology_x, topology_y, topology_z ); // Topology
+
+	// Override some of the boundary conditions to put a particle reflecting
+	// perfect electrical conductor on the -x and +x boundaries
+	set_domain_field_bc( BOUNDARY(-1,0,0), pec_fields );
+	set_domain_field_bc( BOUNDARY( 1,0,0), pec_fields );
+	set_domain_particle_bc( BOUNDARY(-1,0,0), reflect_particles );
+	set_domain_particle_bc( BOUNDARY( 1,0,0), reflect_particles );
+
+	/*--------------------------------------------------------------------------
+     * Setup the species
+	--------------------------------------------------------------------------*/
+
+	// Allow 20% more local_particles in case of non-uniformity
+	species_t * ele = define_species("ele",-ec/me,2.0*Ne/nproc(),-1,20,1);
+	species_t * ion = define_species("ion", ec/mi,2.0*Ne/nproc(),-1,20,1);
+
+	/*--------------------------------------------------------------------------
+     * Setup materials
+	--------------------------------------------------------------------------*/
+	define_material( "vacuum", 1 );
+	finalize_field_advance();
+
+	/*--------------------------------------------------------------------------
+	 * Note: define_material defaults to isotropic materials with mu=1,sigma=0
+	 * Tensor electronic, magnetic and conductive materials are supported
+	 * though. See "shapes" for how to define them and assign them to regions.
+	 * Also, space is initially filled with the first material defined.
+	--------------------------------------------------------------------------*/
+  
+	/*--------------------------------------------------------------------------
+     * Log diagnostic information about this simulation
+	--------------------------------------------------------------------------*/
+	sim_log( "***********************************************" );
+	sim_log ( "tanhf = " << tanhf );
+	sim_log ( "rhoi/L   = " << rhoi_L ); 
+	sim_log ( "Ti/Te = " << Ti_Te ) ;
+	sim_log ( "nb/n0 = " << nb_n0 ) ;
+	sim_log ( "wpe/wce = " << wpe_wce );
+	sim_log ( "mi/me = " << mi_me );
+	sim_log ( "theta = " << theta );
+	sim_log ( "taui = " << taui );
+	sim_log ( "num_step = " << num_step );
+	sim_log ( "Lx/L = " << Lx/L );
+	sim_log ( "Ly/L = " << Ly/L );
+	sim_log ( "Lz/L = " << Lz/L );
+	sim_log ( "nx = " << nx );
+	sim_log ( "ny = " << ny );
+	sim_log ( "nz = " << nz ); 
+	sim_log ( "damp = " << damp );
+	sim_log ( "courant = " << c*dt/dg );
+	sim_log ( "nproc = " << nproc ()  );
+	sim_log ( "nppc = " << nppc );
+	sim_log ( " b0 = " << b0 );
+	sim_log ( " v_A (based on nb) = " << v_A );
+	sim_log ( " di = " << di );
+	sim_log ( " Ne = " << Ne );
+	sim_log ( " Ne_sheet = " << Ne_sheet );
+	sim_log ( " Ne_back = " << Ne_back );
+	sim_log ( "total # of particles = " << 2*Ne );
+	sim_log ( "dt*wpe = " << wpe*dt ); 
+	sim_log ( "dt*wce = " << wce*dt );
+	sim_log ( "dt*wci = " << wci*dt );
+	sim_log ( " ez save interval: " << ez_save_interval );
+	sim_log ( " energies_interval: " << energies_interval );
+	sim_log ( "L/dx = " << L*nx/Lx );
+	sim_log ( "L/dy = " << L*ny/Ly );
+	sim_log ( "L/dz = " << L*nz/Lz );
+	sim_log ( "L/rhoi = " << L/(vthi/wci)  );
+	sim_log ( "dx/rhoi = " << (Lx/nx)/(vthi/wci)  );
+	sim_log ( "L/rhoe  = " << L/(vthe/wce)  );
+	sim_log ( "dx/rhoe = " << (Lx/nx)/(vthe/wce)  );
+	sim_log ( "L/debye = " << L/(vthe/wpe)  );
+	sim_log ( "dx/debye = " << (Lx/nx)/(vthe/wpe)  );
+	sim_log ( "n0 = " << n0 );
+	sim_log ( "vthi/c = " << vthi/c );
+	sim_log ( "vthe/c = " << vthe/c );
+	sim_log ( "vdri/c = " << vdri/c );
+	sim_log ( "vdre/c = " << vdre/c );
+  
+#if 0
+	// Dump simulation information to file "info"
+	if (rank() == 0 ) {
+	FILE *fp_info;
+	if ( ! (fp_info=fopen("info", "w")) ) ERROR(("Cannot open file."));
+	fprintf(fp_info, "***** Simulation parameters ***** \n");
+	fprintf(fp_info, "rhoi/L	=		%e\n", rhoi_L);
+	fprintf(fp_info, "Ti/Te	=		%e\n", Ti_Te );
+	fprintf(fp_info, "nb/n0 =		%e\n", nb_n0 );
+	fprintf(fp_info, "wpe/wce = 		%e\n", wpe_wce );
+	fprintf(fp_info, "mi/me =		%e\n", mi_me );
+	fprintf(fp_info, "theta =		%e\n", theta );
+	fprintf(fp_info, "taui =			%e\n", taui );
+	fprintf(fp_info, "num_step = 		%i\n", num_step );
+	fprintf(fp_info, "Lx/L = 		%e\n", Lx/L );
+	fprintf(fp_info, "Ly/L = 		%e\n", Ly/L );
+	fprintf(fp_info, "Lz/L =			%e\n", Lz/L );
+	fprintf(fp_info, "nx = 			%e\n", nx );
+	fprintf(fp_info, "ny = 			%e\n", ny );
+	fprintf(fp_info, "nz =			%e\n", nz );
+	fprintf(fp_info, "damp =			%e\n", damp );
+	fprintf(fp_info, "courant = 		%e\n", c*dt/dg );
+	fprintf(fp_info, "nproc = 		%e\n", nproc() );
+	fprintf(fp_info, "nppc = 		%e\n", nppc );
+	fprintf(fp_info, "b0 =			%e\n", b0 );
+	fprintf(fp_info, "v_A (based on nb) = %e\n", v_A );
+	fprintf(fp_info, "di = 			%e\n", di );
+	fprintf(fp_info, "Ne = 			%e\n", Ne );
+	fprintf(fp_info, "Ne_sheet = 		%e\n", Ne_sheet );
+	fprintf(fp_info, "Ne_back = 		%e\n", Ne_back );
+	fprintf(fp_info, "total # of particles = %e\n", 2*Ne );
+	fprintf(fp_info, "dt*wpe = 		%e\n", wpe*dt );
+	fprintf(fp_info, "dt*wce = 		%e\n", wce*dt );
+	fprintf(fp_info, "dt*wci = 		%e\n", wci*dt );
+	fprintf(fp_info, "ez save interval : 	%i\n", ez_save_interval);
+	fprintf(fp_info, "energies_interval:     %i\n", energies_interval);
+	fprintf(fp_info, "L/dx =			%e\n", L*nx/Lx );
+	fprintf(fp_info, "L/dy =			%e\n", L*ny/Ly );
+	fprintf(fp_info, "L/dz =			%e\n", L*nz/Lz );
+	fprintf(fp_info, "L/rhoi =		%e\n", L/(vthi/wci) );
+	fprintf(fp_info, "L/rhoe =		%e\n", L/(vthe/wce) );
+	fprintf(fp_info, "L/debye =		%e\n", L/(vthe/wpe) );
+	fprintf(fp_info, "dx/rhoi =		%e\n", (Lx/nx)/(vthi/wci) );
+	fprintf(fp_info, "dx/rhoe = 		%e\n", (Lx/nx)/(vthe/wce) );
+	fprintf(fp_info, "dx/debye = 		%e\n", (Lx/nx)/(vthe/wpe) );
+	fprintf(fp_info, "n0 =            	%e\n", n0 );
+	fprintf(fp_info, "vthi/c =		%e\n", vthi/c );
+	fprintf(fp_info, "vthe/c =		%e\n", vthe/c );
+	fprintf(fp_info, "vdri/c =		%e\n", vdri/c );
+	fprintf(fp_info, "vdre/c =		%e\n", vdre/c );
+	fprintf(fp_info, "***************************\n");
+	fclose(fp_info);
+	}
+#endif
+
+	/*--------------------------------------------------------------------------
+     * Load fields
+	--------------------------------------------------------------------------*/
+	sim_log( "Loading fields" );
+
+	set_region_field( everywhere, 0, 0, 0,   // Electric field
+		dbx*sin(2.0*M_PI*(y-0.5*Ly)/Ly)*cos(M_PI*x/Lx), // Bx
+		-sn*b0*tanh(x/L)+dby*cos(2.0*M_PI*(y-0.5*Ly)/Ly)*sin(M_PI*x/Lx),  //By
+		cs*b0*tanh(x/L)  ); // Bz
+
+	// Note: everywhere is a region that encompasses the entire simulation
+	// In general, regions are specied as logical equations (i.e. x>0 && x+y<2)
+
+	/*--------------------------------------------------------------------------
+     * Load particles
+	--------------------------------------------------------------------------*/
+	sim_log( "Loading particles" );
+	seed_rand ( 0 );   // WARNING : Generators are synchronized
+
+	repeat ( Ne_sheet ) {
+		double x, y, z, ux, uy, uz, d0;
+
+		do {
+			x = L*atanh(uniform_rand(-1,1)*tanhf);
+		} while( x<= -0.5*Lx || x>=0.5*Lx );
+		y = uniform_rand(0,Ly);
+		z = uniform_rand(0,Lz);
+	 
+		// inject_particles() will return an error for particles no on this
+		// node and will not  inject particle locally
+
+		ux = maxwellian_rand(uthe);
+		uy = maxwellian_rand(uthe);
+		uz = maxwellian_rand(uthe);
+		d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
+		uy = d0*cs - uz*sn;
+		uz = d0*sn + uz*cs;
+		inject_particle(ele, x, y, z, ux, uy, uz, qe_s, 0, 0 );
+
+		ux = maxwellian_rand(uthi);
+		uy = maxwellian_rand(uthi);
+		uz = maxwellian_rand(uthi);
+		d0 = gdri*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udri;
+		uy = d0*cs - uz*sn;
+		uz = d0*sn + uz*cs;
+		inject_particle(ion, x, y, z, ux, uy, uz, qi_s, 0, 0 );
+	} // repeat
+
+	repeat ( Ne_back ) {
+
+		double x = uniform_rand(-0.5*Lx, 0.5*Lx);
+		double y = uniform_rand(0,Ly);
+		double z = uniform_rand(0,Lz);
+
+		inject_particle( ele, x, y, z,
+		maxwellian_rand(utheb),
+		maxwellian_rand(utheb),
+		maxwellian_rand(utheb),qe_b, 0, 0 );
+
+		inject_particle( ion, x, y, z,
+		maxwellian_rand(uthib),
+		maxwellian_rand(uthib),
+		maxwellian_rand(uthib),qi_b, 0, 0 );
+	} // repeat
+
+	seed_rand( rng_seed*nproc() + rank() );  // Generators desynchronized
+
+	sim_log("*** Finished with user-specified initialization ***");
+} // begin_initialization
+
+#define should_dump(x) \
+	(global->x##_interval>0 && remainder(step, global->x##_interval) == 0)
+
+begin_diagnostics {
+
+	if(step == 1) {
+		dump_restart("restart/restart", 0);
+		sim_log("Restart complete");
+		sim_log("Allowed runtime exceeded.  Terminating...\n");
+		mp_barrier(grid->mp);
+		mp_finalize(grid->mp);	
+		exit(0);
+	} // if
+
+	output_checksum_fields();
+	output_checksum_species("ele");
+	output_checksum_species("ion");
+
+	if(!(step%100)) sim_log("Time step: " << step);
+
+	if(step==0) {
+		dump_grid("rundata/grid");
+		dump_materials("rundata/materials");
+		dump_species("rundata/species");
+	} // if
+
+	if(should_dump(energies)) {
+		dump_energies("rundata/energies", step == 0 ? 0 : 1);
+	} // if
+
+	DumpParameters fdParams;
+
+	// band or band-interleave format
+	fdParams.format = band;
+
+	// set stride
+	fdParams.stride_x = 1; // nx = 150
+	fdParams.stride_y = 1; // ny = 150
+	fdParams.stride_z = 1;  // nz = 100
+
+	// select fields to output
+	fdParams.output_variables(		ex    | ey    | ez    | div_e_err |
+									cbx   | cby   | cbz   | div_b_err |
+									tcax  | tcay  | tcaz  | rhob |
+									jfx   | jfy   | jfz   | rhof |
+									ematx | ematy | ematz | nmat |
+									fmatx | fmaty | fmatz | cmat );
+
+	char buffer[256];
+	if(step == 1 || should_dump(fields)) {
+		sprintf(buffer, "fields/T.%d", step);
+		dump_mkdir(buffer);
+		sprintf(buffer, "fields/T.%d/fields", step);
+		field_dump(buffer, fdParams);
+	} // if
+
+#if 0
+	DumpParameters hedParams;
+
+	// band or band-interleave format
+	hedParams.format = band;
+
+	// set stride
+	hedParams.stride_x = 1; // nx = 150
+	hedParams.stride_y = 1; // ny = 150
+	hedParams.stride_z = 1;  // nz = 100
+
+	// select fields to output
+	hedParams.output_variables(	jx    | jy    | jz    | rho |
+								px    | px    | px    | ke  |
+								txx   | tyy   | tzz   |
+								tyz   | tzx   | txy );
+
+	if(should_dump(ehydro)) {
+		sprintf(buffer, "hydro/T.%d", step);
+		dump_mkdir(buffer);
+		sprintf(buffer, "hydro/T.%d/ehydro", step);
+		hydro_dump("ele", buffer, hedParams);
+	} // if
+
+	DumpParameters hHdParams;
+
+	// band or band-interleave format
+	hHdParams.format = band;
+
+	// set stride
+	hHdParams.stride_x = 1; // nx = 150
+	hHdParams.stride_y = 1; // ny = 150
+	hHdParams.stride_z = 1;  // nz = 100
+
+	// select fields to output
+	hHdParams.output_variables(	jx    | jy    | jz    | rho |
+								px    | px    | px    | ke  |
+								txx   | tyy   | tzz   |
+								tyz   | tzx   | txy );
+
+	if(should_dump(Hhydro)) {
+		sprintf(buffer, "hydro/T.%d/Hhydro", step);
+		hydro_dump("ion", buffer, hHdParams);
+	} // if
+#endif
+
+#if 0
+	if(step && !(step%global->restart_interval)) {
+		if(!global->rtoggle) {
+			global->rtoggle = 1;
+			dump_restart("restart/restart0", 0);
+		}
+		else {
+			global->rtoggle = 0;
+			dump_restart("restart/restart1", 0);
+		} // if
+	} // if
+
+	double elapsed = mp_elapsed(grid->mp);
+
+	if(elapsed > global->quota_sec) {
+		dump_restart("restart/restart", 0);
+		sim_log("Restart complete");
+		sim_log("Allowed runtime exceeded.  Terminating...\n");
+		mp_barrier(grid->mp);
+		mp_finalize(grid->mp);	
+		exit(0);
+	} // if
+#endif
+} // begin_diagnostics
+
+begin_particle_injection {
+} // begin_particle_injection
+
+begin_current_injection {
+} // begin_current_injection
+
+begin_field_injection {
+} // begin_field_injection

@@ -15,6 +15,7 @@
 //#include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include "P2PConnection.hxx"
 #include "DMPConnection.hxx"
@@ -31,7 +32,7 @@ class MPRelay
 	public:
 
 		//! Constructor
-		MPRelay() {}
+		MPRelay() : file_dsc_(0) {}
 
 		//! Destructor
 		~MPRelay() {}
@@ -60,7 +61,8 @@ class MPRelay
 		std::vector<int> pending_dmp_send_;
 		std::vector<int> pending_p2p_send_;
 
-		FileIO fileIO_;
+		uint32_t file_dsc_;
+		std::map<int, FileIO> file_;
 		MPBuffer<char, filename_size> filename_;
 		MPBuffer<char, io_buffer_size> io_buffer_;
 		MPBuffer<char, utils_buffer_size> utils_buffer_;
@@ -75,7 +77,7 @@ void MPRelay::start()
 		bool relay(true);
 		int filesize;
 		long foffset;
-		int fwhence;
+		int fwhence, file_id;
 		int utils_return;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
@@ -354,9 +356,16 @@ void MPRelay::start()
 						" io_open_read " << filename_.data() << std::endl;
 					*/
 
-					fileIO_.open(filename_.data(), io_read);
-					filesize = fileIO_.size();
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_read);
+					filesize = file_[file_dsc_].size();
+					p2p.send(&file_dsc_, 1, request.tag);
 					p2p.send(&filesize, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_open_read_write:
@@ -368,21 +377,36 @@ void MPRelay::start()
 						" io_open_read_write " << filename_.data() << std::endl;
 					*/
 
-					fileIO_.open(filename_.data(), io_read_write);
-					filesize = fileIO_.size();
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_read_write);
+					filesize = file_[file_dsc_].size();
+					p2p.send(&file_dsc_, 1, request.tag);
 					p2p.send(&filesize, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_open_write:
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
 
-					/*
+					///*
 					std::cerr << "rank: " << p2p.global_id() <<
-						" io_open_write " << filename_.data() << std::endl;
-					*/
+						" io_open_write " << filename_.data() <<
+						" id " << file_dsc_ << std::endl;
+					//*/
 
-					fileIO_.open(filename_.data(), io_write);
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_write);
+					p2p.send(&file_dsc_, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_open_write_read:
@@ -394,7 +418,14 @@ void MPRelay::start()
 						" io_open_write_read " << filename_.data() << std::endl;
 					*/
 
-					fileIO_.open(filename_.data(), io_write_read);
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_write_read);
+					p2p.send(&file_dsc_, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_open_append:
@@ -406,7 +437,14 @@ void MPRelay::start()
 						" io_open_append " << filename_.data() << std::endl;
 					*/
 
-					fileIO_.open(filename_.data(), io_append);
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_append);
+					p2p.send(&file_dsc_, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_open_append_read:
@@ -419,7 +457,14 @@ void MPRelay::start()
 						filename_.data() << std::endl;
 					*/
 
-					fileIO_.open(filename_.data(), io_append_read);
+					// make sure that this id is not in use
+					assert(file_.find(file_dsc_) == file_.end());
+
+					file_[file_dsc_].open(filename_.data(), io_append_read);
+					p2p.send(&file_dsc_, 1, request.tag);
+
+					// increment id
+					++file_dsc_;
 					break;
 
 				case P2PTag::io_read:
@@ -428,13 +473,21 @@ void MPRelay::start()
 						" requesting io_read of " << request.count <<
 						" bytes" << std::endl;
 					*/
-					fileIO_.read(io_buffer_.data(), request.count);
-					p2p.send(io_buffer_.data(), request.count, request.tag);
+
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
+					file_[request.id].read(io_buffer_.data(), request.count);
+					p2p.send(io_buffer_.data(), request.count,
+						request.tag);
 					break;
 
 				case P2PTag::io_write:
 					p2p.recv(io_buffer_.data(), request.count,
 						request.tag, request.id);
+
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
 
 					/*
 					std::cerr << "rank: " << p2p.global_id() <<
@@ -442,23 +495,35 @@ void MPRelay::start()
 						std::endl;
 					*/
 
-					fileIO_.write(io_buffer_.data(), request.count);
+					file_[request.id].write(io_buffer_.data(), request.count);
 					break;
 
 				case P2PTag::io_seek:
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
 					p2p.recv(&foffset, 1, request.tag, request.id);
 					p2p.recv(&fwhence, 1, request.tag, request.id);
-					fileIO_.seek(foffset, fwhence);
+					file_[request.id].seek(foffset, fwhence);
 					break;
 
 				case P2PTag::io_close:
 
+					///*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" io_close id " << request.id << std::endl;
+					//*/
+
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
 					/*
 					std::cerr << "rank: " << p2p.global_id() <<
-						" io_close" << std::endl;
+						" writing " << request.count << " to file " <<
+						std::endl;
 					*/
 
-					fileIO_.close();
+					file_[request.id].close();
 					break;
 
 				case P2PTag::utils_mkdir:

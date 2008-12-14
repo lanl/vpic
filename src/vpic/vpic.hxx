@@ -89,6 +89,33 @@ struct HydroInfo {
 	size_t size;
 }; // struct FieldInfo
 
+/*----------------------------------------------------------------------------
+ * DumpFormat Enumeration
+----------------------------------------------------------------------------*/
+enum DumpFormat {
+  band = 0,
+  band_interleave = 1
+}; // enum DumpFormat
+
+/*----------------------------------------------------------------------------
+ * DumpParameters Struct
+----------------------------------------------------------------------------*/
+struct DumpParameters {
+
+  void output_variables(uint32_t mask) {
+    output_vars.set(mask);
+  } // output_variables
+
+  BitField output_vars;
+
+  size_t stride_x;
+  size_t stride_y;
+  size_t stride_z;
+
+  DumpFormat format;
+
+}; // struct DumpParameters
+
 class vpic_simulation {
 public:
   vpic_simulation();
@@ -212,33 +239,6 @@ private:
                        int fname_tag = 1 );
   void dump_restart( const char *fbase, int fname_tag = 1 );
  
-  /*----------------------------------------------------------------------------
-   * DumpFormat Enumeration
-  ----------------------------------------------------------------------------*/
-  enum DumpFormat {
-    band = 0,
-	band_interleave = 1
-  }; // enum DumpFormat
-
-  /*----------------------------------------------------------------------------
-   * DumpParameters Struct
-  ----------------------------------------------------------------------------*/
-  struct DumpParameters {
-
-    void output_variables(uint32_t mask) {
-      output_vars.set(mask);
-    } // output_variables
-
-    BitField output_vars;
-
-    size_t stride_x;
-    size_t stride_y;
-    size_t stride_z;
-
-	DumpFormat format;
-
-  }; // struct DumpParameters
-
   void field_dump(const char * fbase, DumpParameters & dumpParams);
   void hydro_dump(const char * speciesname, const char * fbase,
     DumpParameters & dumpParams);

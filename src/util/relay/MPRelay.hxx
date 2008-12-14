@@ -491,8 +491,8 @@ void MPRelay::start()
 
 					/*
 					std::cerr << "rank: " << p2p.global_id() <<
-						" writing " << request.count << " to file " <<
-						std::endl;
+						" writing " << request.count
+						<< " to file id " << request.id << std::endl;
 					*/
 
 					file_[request.id].write(io_buffer_.data(), request.count);

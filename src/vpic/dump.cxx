@@ -1014,7 +1014,8 @@ void vpic_simulation::field_dump(const char * fbase,
 		/*
 		 * Create a variable list of field values to output.
 		 */
-		size_t numvars = dumpParams.output_vars.bitsum();
+		size_t numvars = std::min(dumpParams.output_vars.bitsum(),
+			total_field_variables);
 		size_t * varlist = new size_t[numvars];
 		for(size_t i(0), c(0); i<total_field_variables; i++) {
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
@@ -1217,7 +1218,8 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		/*
 		 * Create a variable list of hydro values to output.
 		 */
-		size_t numvars = dumpParams.output_vars.bitsum();
+		size_t numvars = std::min(dumpParams.output_vars.bitsum(),
+			total_hydro_variables);
 		size_t * varlist = new size_t[numvars];
 		for(size_t i(0), c(0); i<total_hydro_variables; i++) {
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}

@@ -525,6 +525,7 @@ void MPRelay::start()
 					*/
 
 					file_[request.id].close();
+					file_.erase(request.id);
 					break;
 
 				case P2PTag::utils_mkdir:
@@ -541,12 +542,14 @@ void MPRelay::start()
 
 				case P2PTag::pending:
 					// if file map is empty, reset file_dsc_
-					if(file_.size() == 0) { file_dsc_ = 0; }
+					if(file_.size() == 0 && file_dsc_ > 0) {
+						file_dsc_ = 0;
+						/*
+						std::cerr << "rank: " << p2p.global_id() <<
+							" resetting map " << file_.size() << std::endl;
+						*/
+					}
 
-					///*
-					std::cerr << "rank: " << p2p.global_id() <<
-						" resetting map " << file_.size() << std::endl;
-					//*/
 
 					// check for finished send communications
 					for(std::vector<int>::iterator ita =

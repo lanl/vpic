@@ -42,6 +42,7 @@ void checkSumBuffer(T * buffer, size_t elements, CheckSum & sum,
 
 	char tmp[256];
 	strcpy(sum.strvalue, "");
+	MESSAGE(("SUM LENGTH: %d", sum.length));
 	for(size_t i(0); i<sum.length; i++) {
 		sprintf(tmp, "%02x", sum.value[i]);
 		strcat(sum.strvalue, tmp);

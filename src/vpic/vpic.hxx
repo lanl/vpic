@@ -33,6 +33,7 @@
  
 typedef FileIO FILETYPE;
 
+const uint32_t all			(0xffffffff);
 const uint32_t ex			(1<<0);
 const uint32_t ey			(1<<1);
 const uint32_t ez			(1<<2);
@@ -81,7 +82,7 @@ const uint32_t tyz			(1<<11);
 const uint32_t tzx			(1<<12);
 const uint32_t txy			(1<<13);
 
-const size_t total_hydro_variables(24);
+const size_t total_hydro_variables(14);
 
 struct HydroInfo {
 	char name[16];
@@ -239,8 +240,17 @@ private:
                        int fname_tag = 1 );
   void dump_restart( const char *fbase, int fname_tag = 1 );
  
+  // convenience functions for simlog output
+  void create_field_list(char * strlist, DumpParameters & dumpParams);
+  void create_hydro_list(char * strlist, DumpParameters & dumpParams);
+
+  void global_header(const char * base);
+  void field_header(const char * fbase, DumpParameters & dumpParams);
+  void hydro_header(const char * speciesname, const char * hbase,
+    DumpParameters & dumpParams);
+
   void field_dump(const char * fbase, DumpParameters & dumpParams);
-  void hydro_dump(const char * speciesname, const char * fbase,
+  void hydro_dump(const char * speciesname, const char * hbase,
     DumpParameters & dumpParams);
 
   ///////////////

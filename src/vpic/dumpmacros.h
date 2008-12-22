@@ -7,6 +7,24 @@
 #ifndef dumpmacros_h
 #define dumpmacros_h
 
+#define WRITE_GLOBAL_HEADER(fileIO) BEGIN_PRIMITIVE { \
+  WRITE( float, grid->dt,   fileIO ); \
+  WRITE( float, grid->cvac, fileIO ); \
+  WRITE( float, grid->eps0, fileIO ); \
+  WRITE( float, grid->x0,   fileIO ); \
+  WRITE( float, grid->y0,   fileIO ); \
+  WRITE( float, grid->z0,   fileIO ); \
+  WRITE( float, grid->x1,   fileIO ); \
+  WRITE( float, grid->y1,   fileIO ); \
+  WRITE( float, grid->z1,   fileIO ); \
+  WRITE( float, grid->dx,   fileIO ); \
+  WRITE( float, grid->dy,   fileIO ); \
+  WRITE( float, grid->dz,   fileIO ); \
+  WRITE( int,   grid->nx,   fileIO ); \
+  WRITE( int,   grid->ny,   fileIO ); \
+  WRITE( int,   grid->nz,   fileIO ); \
+} END_PRIMITIVE
+
 #define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO) BEGIN_PRIMITIVE {      \
   /* Binary compatibility information */                                   \
   WRITE( char,      CHAR_BIT,               fileIO );                      \

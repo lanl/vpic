@@ -353,7 +353,8 @@ void MPRelay::start()
 
 					/*
 					std::cerr << "rank: " << p2p.global_id() <<
-						" io_open_read " << filename_.data() << std::endl;
+						" io_open_read " << filename_.data() <<
+						" filedsc " << file_dsc_ << std::endl;
 					*/
 
 					// make sure that this id is not in use
@@ -393,11 +394,11 @@ void MPRelay::start()
 					p2p.recv(filename_.data(), request.count,
 						request.tag, request.id);
 
-					///*
+					/*
 					std::cerr << "rank: " << p2p.global_id() <<
 						" io_open_write " << filename_.data() <<
 						" id " << file_dsc_ << std::endl;
-					//*/
+					*/
 
 					// make sure that this id is not in use
 					assert(file_.find(file_dsc_) == file_.end());
@@ -509,10 +510,10 @@ void MPRelay::start()
 
 				case P2PTag::io_close:
 
-					///*
+					/*
 					std::cerr << "rank: " << p2p.global_id() <<
 						" io_close id " << request.id << std::endl;
-					//*/
+					*/
 
 					// make sure that this id exists
 					assert(file_.find(request.id) != file_.end());
@@ -539,6 +540,14 @@ void MPRelay::start()
 					break;
 
 				case P2PTag::pending:
+					// if file map is empty, reset file_dsc_
+					if(file_.size() == 0) { file_dsc_ = 0; }
+
+					///*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" resetting map " << file_.size() << std::endl;
+					//*/
+
 					// check for finished send communications
 					for(std::vector<int>::iterator ita =
 						pending_dmp_send_.begin();

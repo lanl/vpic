@@ -83,7 +83,7 @@ begin_initialization {
 	double Ly = 30*(1.0/6.0)*di; // size of box in y dimension
 	double Lz = 20*di; // size of box in z dimension
 	double nx = 150;
-	double ny = 25; // 150*(1.0/6.0)
+	double ny = 150*(1.0/6.0);
 	double nz = 100;
 
 	// 24 node for SC08 demo with two Triblades
@@ -180,7 +180,7 @@ begin_initialization {
 	// override timestep if plasma frequency limited
 	if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;
    
-	int restart_interval = 10;
+	int restart_interval = 8000;
 	int energies_interval = 500;
 	int interval = int(0.5/(wci*dt)); 
 	int dump_start = int(1.0/(wci*dt));
@@ -195,8 +195,7 @@ begin_initialization {
 	/*--------------------------------------------------------------------------
 	 * Setup high level simulation parameters
 	--------------------------------------------------------------------------*/
-	//num_step             = int(taui/(wci*dt));
-	num_step             = 10;
+	num_step             = int(taui/(wci*dt));
 	status_interval      = 200;
 	sync_shared_interval = status_interval/10;
 	clean_div_e_interval = status_interval/10;
@@ -474,7 +473,16 @@ begin_initialization {
      *------------------------------------------------------------------------*/
 
 	global->fdParams.format = band;
+
 	sim_log ( "Fields output format = band" );
+
+	global->hedParams.format = band;
+
+	sim_log ( "Electron species output format = band" );
+
+	global->hHdParams.format = band;
+
+	sim_log ( "Ion species output format = band" );
 
     /*--------------------------------------------------------------------------
 	 * Set stride
@@ -523,6 +531,32 @@ begin_initialization {
 	sim_log ( "Fields y-stride " << global->fdParams.stride_y );
 	sim_log ( "Fields z-stride " << global->fdParams.stride_z );
 
+	// nx = 150
+	global->hedParams.stride_x = 5;
+
+	// ny = 25
+	global->hedParams.stride_y = 5;
+
+	// nz = 100
+	global->hedParams.stride_z = 5;
+
+	sim_log ( "Electron species x-stride " << global->hedParams.stride_x );
+	sim_log ( "Electron species y-stride " << global->hedParams.stride_y );
+	sim_log ( "Electron species z-stride " << global->hedParams.stride_z );
+
+	// nx = 150
+	global->hHdParams.stride_x = 5;
+
+	// ny = 25
+	global->hHdParams.stride_y = 5;
+
+	// nz = 100
+	global->hHdParams.stride_z = 5;
+
+	sim_log ( "Ion species x-stride " << global->hHdParams.stride_x );
+	sim_log ( "Ion species y-stride " << global->hHdParams.stride_y );
+	sim_log ( "Ion species z-stride " << global->hHdParams.stride_z );
+
     /*--------------------------------------------------------------------------
 	 * Set output fields
 	 *
@@ -537,22 +571,56 @@ begin_initialization {
 	 * NOTE: OUTPUT VARIABLES ARE ONLY USED FOR THE BANDED FORMAT.  IF THE
 	 * FORMAT IS BAND-INTERLEAVE, ALL VARIABLES ARE OUTPUT AND CALLS TO
 	 * 'output_variables' WILL HAVE NO EFFECT.
+	 *
+	 * ALSO: DEFAULT OUTPUT IS NONE!  THIS IS DUE TO THE WAY THAT VPIC
+	 * HANDLES GLOBAL VARIABLES IN THE INPUT DECK AND IS UNAVOIDABLE.
+	 *
+	 * For convenience, the output variable 'all' is defined:
+	 *
+	 *   global->fdParams.output_variables( all );
      *------------------------------------------------------------------------*/
+	/* CUT AND PASTE AS A STARTING POINT
+	 * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
+	
+    output_variables( all );
 
-	global->fdParams.output_variables(	ex    | ey    | ez    | div_e_err |
-										cbx   | cby   | cbz   | div_b_err |
-										tcax  | tcay  | tcaz  | rhob |
-										jfx   | jfy   | jfz   | rhof |
-										ematx | ematy | ematz | nmat |
-										fmatx | fmaty | fmatz | cmat );
+    output_variables( ex    | ey    | ez    | div_e_err |
+                      cbx   | cby   | cbz   | div_b_err |
+                      tcax  | tcay  | tcaz  | rhob |
+                      jfx   | jfy   | jfz   | rhof |
+                      ematx | ematy | ematz | nmat |
+                      fmatx | fmaty | fmatz | cmat );
 
-	sim_log ( "Fields variable list:" <<
-		" ex," << " ey," << " ez," << " div_e_err," <<
-		" cbx," << " cby," << " cbz," << " div_b_err," <<
-		" tcax," << " tcay," << " tcaz," << " rhob," <<
-		" jfx," << " jfy," << " jfz," << " rhof," <<
-		" ematx," << " ematy," << " ematz," << " nmat," <<
-		" fmatx," << " fmaty," << " fmatz," << " cmat" );
+    output_variables( jx  | jy  | jz  | rho |
+                      px  | py  | pz  | ke  |
+                      txx | tyy | tzz |
+                      tyz | tzx | txy );
+	*/
+
+	//global->fdParams.output_variables( all );
+	global->fdParams.output_variables( ex | cbx );
+
+	//global->hedParams.output_variables( all );
+	global->hedParams.output_variables( jx | py );
+
+	//global->hHdParams.output_variables( all );
+	global->hHdParams.output_variables( jx | py );
+
+	/*--------------------------------------------------------------------------
+	 * Convenience functions for simlog output
+     *------------------------------------------------------------------------*/
+	char varlist[256];
+	create_field_list(varlist, global->fdParams);
+
+	sim_log ( "Fields variable list: " << varlist );
+
+	create_hydro_list(varlist, global->hedParams);
+
+	sim_log ( "Electron species variable list: " << varlist );
+
+	create_hydro_list(varlist, global->hHdParams);
+
+	sim_log ( "Ion species variable list: " << varlist );
 
 	sim_log("*** Finished with user-specified initialization ***");
 
@@ -561,35 +629,64 @@ begin_initialization {
 #define should_dump(x) \
 	(global->x##_interval>0 && remainder(step, global->x##_interval) == 0)
 
+#include <FileIO.hxx>
+
 begin_diagnostics {
 
-#if 0
-	if(step == 1) {
-		dump_restart("restart/restart", 0);
-		sim_log("Restart complete");
-		sim_log("Allowed runtime exceeded.  Terminating...\n");
-		mp_barrier(grid->mp);
-		mp_finalize(grid->mp);	
-		exit(0);
-	} // if
-
-	output_checksum_fields();
-	output_checksum_species("ele");
-	output_checksum_species("ion");
+	/*--------------------------------------------------------------------------
+	 * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
+	 *
+	 * To create a new directory, use:
+	 *
+	 *   dump_mkdir("full-path-to-directory/directoryname")
+	 *
+	 * To open a file, use: FileIO class
+	 *
+	 * Example for file creation and use:
+	 *
+	 *   // declare file and open for writing
+	 *   // possible modes are: io_write, io_read, io_append,
+	 *   // io_read_write, io_write_read, io_append_read
+	 *   FileIO fileIO;
+	 *   FileIOStatus status;
+	 *   status= fileIO.open("full-path-to-file/filename", io_write);
+	 *
+	 *   // formatted ASCII  output
+	 *   fileIO.print("format string", varg1, varg2, ...);
+	 *
+	 *   // binary output
+	 *   // Write n elements from array data to file.
+	 *   // T is the type, e.g., if T=double
+	 *   // fileIO.write(double * data, size_t n);
+	 *   // All basic types are supported.
+	 *   fileIO.write(T * data, size_t n);
+	 *
+	 *   // close file
+	 *   fileIO.close();
+     *------------------------------------------------------------------------*/
 
 	if(!(step%100)) sim_log("Time step: " << step);
 
+	/*--------------------------------------------------------------------------
+	 * Normal rundata dump
+     *------------------------------------------------------------------------*/
 	if(step==0) {
 		dump_grid("rundata/grid");
 		dump_materials("rundata/materials");
 		dump_species("rundata/species");
+		global_header("rundata/vpic");
 	} // if
 
+	/*--------------------------------------------------------------------------
+	 * Normal rundata energies dump
+     *------------------------------------------------------------------------*/
 	if(should_dump(energies)) {
 		dump_energies("rundata/energies", step == 0 ? 0 : 1);
 	} // if
-#endif
 
+	/*--------------------------------------------------------------------------
+	 * Field data output
+     *------------------------------------------------------------------------*/
 	char buffer[256];
 	if(step == 1 || should_dump(fields)) {
 		sprintf(buffer, "fields/T.%d", step);
@@ -598,50 +695,27 @@ begin_diagnostics {
 		field_dump(buffer, global->fdParams);
 	} // if
 
-#if 0
-
-	// band or band-interleave format
-	hedParams.format = band;
-
-	// set stride
-	hedParams.stride_x = 1; // nx = 150
-	hedParams.stride_y = 1; // ny = 150
-	hedParams.stride_z = 1;  // nz = 100
-
-	// select fields to output
-	hedParams.output_variables(	jx    | jy    | jz    | rho |
-								px    | px    | px    | ke  |
-								txx   | tyy   | tzz   |
-								tyz   | tzx   | txy );
-
+	/*--------------------------------------------------------------------------
+	 * Electron species output
+     *------------------------------------------------------------------------*/
 	if(should_dump(ehydro)) {
 		sprintf(buffer, "hydro/T.%d", step);
 		dump_mkdir(buffer);
 		sprintf(buffer, "hydro/T.%d/ehydro", step);
-		hydro_dump("ele", buffer, hedParams);
+		hydro_dump("ele", buffer, global->hedParams);
 	} // if
 
-	// band or band-interleave format
-	hHdParams.format = band;
-
-	// set stride
-	hHdParams.stride_x = 1; // nx = 150
-	hHdParams.stride_y = 1; // ny = 150
-	hHdParams.stride_z = 1;  // nz = 100
-
-	// select fields to output
-	hHdParams.output_variables(	jx    | jy    | jz    | rho |
-								px    | px    | px    | ke  |
-								txx   | tyy   | tzz   |
-								tyz   | tzx   | txy );
-
+	/*--------------------------------------------------------------------------
+	 * Ion species output
+     *------------------------------------------------------------------------*/
 	if(should_dump(Hhydro)) {
 		sprintf(buffer, "hydro/T.%d/Hhydro", step);
-		hydro_dump("ion", buffer, hHdParams);
+		hydro_dump("ion", buffer, global->hHdParams);
 	} // if
-#endif
 
-#if 0
+	/*--------------------------------------------------------------------------
+	 * Restart dump
+     *------------------------------------------------------------------------*/
 	if(step && !(step%global->restart_interval)) {
 		if(!global->rtoggle) {
 			global->rtoggle = 1;
@@ -653,6 +727,9 @@ begin_diagnostics {
 		} // if
 	} // if
 
+	/*--------------------------------------------------------------------------
+	 * Elapsed time
+     *------------------------------------------------------------------------*/
 	double elapsed = mp_elapsed(grid->mp);
 
 	if(elapsed > global->quota_sec) {
@@ -663,7 +740,6 @@ begin_diagnostics {
 		mp_finalize(grid->mp);	
 		exit(0);
 	} // if
-#endif
 } // begin_diagnostics
 
 begin_particle_injection {

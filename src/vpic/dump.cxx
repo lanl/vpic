@@ -542,6 +542,9 @@ vpic_simulation::restart( const char *fbase ) {
   species_t *sp, *last_sp;
  
 # define ABORT(cond) if( cond ) ERROR(( #cond ))
+
+  // FIXME: see vpic/initialize.cxx
+  advance_p_initialize();
  
   // Create an empty grid (creates the communicator too)
   grid  = new_grid();
@@ -937,6 +940,60 @@ static HydroInfo hydroInfo[14] = {
 	{ "txy", "float", sizeof(float) }
 }; // hydroInfo
 
+void vpic_simulation::create_field_list(char * strlist,
+	DumpParameters & dumpParams) {
+
+	strcpy(strlist, "");
+
+	for(size_t i(0); i<total_field_variables; i++) {
+		if(dumpParams.output_vars.bitset(i)) {
+			if(i>0) {
+				strcat(strlist, ", ");
+			} // if
+
+			strcat(strlist, fieldInfo[i].name);
+
+		} // if
+	} // for
+} // vpic_simulation::create_field_list
+
+void vpic_simulation::create_hydro_list(char * strlist,
+	DumpParameters & dumpParams) {
+
+	strcpy(strlist, "");
+
+	for(size_t i(0); i<total_hydro_variables; i++) {
+		if(dumpParams.output_vars.bitset(i)) {
+			if(i>0) {
+				strcat(strlist, ", ");
+			} // if
+			strcat(strlist, hydroInfo[i].name);
+		} // if
+	} // for
+} // vpic_simulation::create_field_list
+
+void vpic_simulation::global_header(const char * base) {
+	if(mp_rank(grid->mp) == 0) {
+		/*
+		 * Open the file for output
+		 */
+		char filename[256];
+		sprintf(filename, "%s.header", base);
+
+		FileIO fileIO;
+		FileIOStatus status;
+
+		status = fileIO.open(filename, io_write);
+		if(status == fail) {
+			ERROR(("Failed opening file: %s", filename));
+		} // if
+
+		WRITE_GLOBAL_HEADER(fileIO);
+
+		fileIO.close();
+	} // if
+} // vpic_simulation::global_header
+
 void vpic_simulation::field_dump(const char * fbase,
 	DumpParameters & dumpParams) {
 
@@ -1128,13 +1185,13 @@ void vpic_simulation::field_dump(const char * fbase,
 } // vpic_simulation::field_dump
 
 void vpic_simulation::hydro_dump(const char * speciesname,
-	const char * fbase, DumpParameters & dumpParams) {
+	const char * hbase, DumpParameters & dumpParams) {
 
 	/*
 	 * Open the file for output
 	 */
 	char filename[256];
-	sprintf(filename, "%s.%06d.%04d", fbase, step, mp_rank(grid->mp));
+	sprintf(filename, "%s.%06d.%04d", hbase, step, mp_rank(grid->mp));
 
 	FileIO fileIO;
 	FileIOStatus status;
@@ -1227,7 +1284,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 
 		// output variable list
 		if(step == 0 && mp_rank(grid->mp) == 0) {
-			sprintf(filename, "%s.varlist", fbase);
+			sprintf(filename, "%s.varlist", hbase);
 			FileIO varListIO;
 			status = varListIO.open(filename, io_write);
 

@@ -112,9 +112,20 @@ void vpic_simulation::output_checksum_fields() {
   if(nproc > 1) {
     const unsigned int csels = cs.length*nproc;
     unsigned char * sums = new unsigned char[cs.length*nproc];
+	MESSAGE(("cs.length*nproc %d", cs.length*nproc));
 
 	// gather sums from all ranks
 	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+
+	char tmp0[256];
+	char tmp1[256];
+	for(size_t i(0); i<cs.length*nproc; i++) {
+		sprintf(tmp0, "%02x", sums[i]);
+		strcat(tmp1, tmp0);
+	} // for
+
+	MESSAGE(("CHECKSUM: %s", tmp1));
+
     checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
 
 	if(mp_rank(grid->mp) == 0) {

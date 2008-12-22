@@ -50,7 +50,11 @@ CCS_WITH_ADDRESSING
 CCS_WITH_PPU_COMPILER
 CCS_WITH_LIBSPE2
 CCS_WITH_SPU_MODULES
-CCS_WITH_PPU_OPENSSL
+
+################################################################################
+# enable options
+################################################################################
+CCS_ENABLE_OPENSSL
 
 ################################################################################
 # C/C++ configuration
@@ -218,6 +222,13 @@ case "$buildstyle" in
 	;;
 
 esac
+
+if test "$enable_openssl" = "1" ; then
+	CCS_WITH_PPU_OPENSSL
+	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_OPENSSL_CPPFLAGS"
+	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_OPENSSL_LDFLAGS"
+	EXTRA_LIBS="$EXTRA_LIBS $PPU_OPENSSL_LIBS"
+fi
 
 AM_CONDITIONAL(USE_CELL_SPUS, $use_cell_spus)
 

@@ -218,8 +218,10 @@ private:
   /*----------------------------------------------------------------------------
    * Check Sums
    ---------------------------------------------------------------------------*/
+#if defined(ENABLE_OPENSSL)
   void output_checksum_fields();
   void output_checksum_species(const char * species);
+#endif // ENABLE_OPENSSL
 
   ///////////////
   // Dump helpers

@@ -39,6 +39,7 @@ CCS_WITH_MACHINE("$srcdir/machine")
 ################################################################################
 CCS_ENABLE_CELL
 CCS_ENABLE_HOST
+CCS_ENABLE_OPENSSL
 
 ################################################################################
 # with options
@@ -81,10 +82,6 @@ case "$buildstyle" in
 		LIB_EXTENSION="$EXTENSION"
 		ACCEL_EXTENSION="$EXTENSION"
 		MPRELAY_EXTENSION="$EXTENSION"
-		CCS_WITH_OPENSSL
-		EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $OPENSSL_CPPFLAGS"
-		EXTRA_LDFLAGS="$EXTRA_LDFLAGS $OPENSSL_LDFLAGS"
-		EXTRA_LIBS="$EXTRA_LIBS $OPENSSL_LIBS"
 	;;
 
 	standard_cell)
@@ -236,6 +233,13 @@ case "$buildstyle" in
 	;;
 
 esac
+
+if test "$enable_openssl" = "1" ; then
+	CCS_WITH_OPENSSL
+	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $OPENSSL_CPPFLAGS"
+	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $OPENSSL_LDFLAGS"
+	EXTRA_LIBS="$EXTRA_LIBS $OPENSSL_LIBS"
+fi
 
 AC_SUBST(LIB_EXTENSION)
 AC_SUBST(ACCEL_EXTENSION)

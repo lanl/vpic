@@ -103,6 +103,8 @@ vpic_simulation::inject_particle( species_t * sp,
 
 }
 
+#if defined(ENABLE_OPENSSL)
+
 void vpic_simulation::output_checksum_fields() {
   CheckSum cs;
   checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
@@ -167,3 +169,5 @@ void vpic_simulation::output_checksum_species(const char * species) {
     MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
   } // if
 } // vpic_simulation::output_checksum_species
+
+#endif // ENABLE_OPENSSL

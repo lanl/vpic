@@ -1,6 +1,8 @@
 #ifndef CheckSum_hxx
 #define CheckSum_hxx
 
+#if defined(ENABLE_OPENSSL)
+
 #include <openssl/evp.h>
 
 struct CheckSum {
@@ -48,5 +50,7 @@ void checkSumBuffer(T * buffer, size_t elements, CheckSum & sum,
 		strcat(sum.strvalue, tmp);
 	} // for
 } // checkSumBuffer
+
+#endif // ENABLE_OPENSSL
 
 #endif // CheckSum_hxx

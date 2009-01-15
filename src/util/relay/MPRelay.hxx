@@ -508,6 +508,15 @@ void MPRelay::start()
 					file_[request.id].seek(foffset, fwhence);
 					break;
 
+				case P2PTag::io_seek:
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
+					filesize = file_[request.id].size();
+
+					p2p.send(&filesize, 1, request.tag);
+					break;
+
 				case P2PTag::io_close:
 
 					/*

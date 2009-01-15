@@ -208,7 +208,6 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
   dim[2] = grid->nz+2;
-  if( mp_rank(grid->mp)==0 ) MESSAGE(("%d %d %d\n", dim[0], dim[1], dim[2]));
   WRITE_ARRAY_HEADER( field_advance->f, 3, dim, fileIO );
   fileIO.write( field_advance->f, dim[0]*dim[1]*dim[2] );
   fileIO.close();

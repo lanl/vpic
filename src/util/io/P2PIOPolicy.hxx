@@ -49,6 +49,8 @@ class P2PIOPolicy
 
 		bool isOpen() { return (id_>=0); }
 
+		uint64_t size();
+
 		void scan(const char * format, ...);
 		void print(const char * format, ...);
 
@@ -202,6 +204,20 @@ void P2PIOPolicy<swapped>::close()
 
 		id_ = -1;
 	} // P2PIOPolicy<>::close
+
+template<bool swapped>
+uint64_t P2PIOPolicy<swapped>::size()
+	{
+		assert(id_>=0);
+
+		MPRequest request(P2PTag::io_size, P2PTag::data, 1, id_);
+		P2PConnection::instance().post(request);
+
+		uint64_t tmp;
+		p2p.recv(&tmp, 1, request.tag, request.id);
+
+		return tmp;
+	} // P2PIOPolicy<>::size
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::scan(const char * format, ...)

@@ -37,7 +37,8 @@ class StandardIOPolicy
 		
 		bool isOpen() { return is_open_; }
 
-		int size();
+		// return file size in bytes
+		uint64_t size();
 
 		// ascii methods
 		void scan(const char * format, ...);
@@ -101,13 +102,13 @@ inline void StandardIOPolicy::close()
 		is_open_ = false;
 	} // StandardIOPolicy::~StandardIOPolicy
 
-inline int StandardIOPolicy::size()
+inline uint64_t StandardIOPolicy::size()
 	{
 		long current = ftell(handle_);
 		fseek(handle_, 0L, SEEK_END);
 		int size = ftell(handle_);
 		fseek(handle_, current, SEEK_SET);
-		return size;
+		return (uint64_t)size;
 	} // StandardIOPolicy::size
 
 inline void StandardIOPolicy::scan(const char * format, ...)

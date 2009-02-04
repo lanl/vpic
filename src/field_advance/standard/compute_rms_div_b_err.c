@@ -9,6 +9,9 @@ typedef struct pipeline_args {
   double err[MAX_PIPELINE+1];
 } pipeline_args_t;
 
+#define USE_PIPELINES 1
+
+#if defined(USE_PIPELINES)
 static void
 pipeline( pipeline_args_t * args,
           int pipeline_rank,
@@ -48,19 +51,28 @@ pipeline( pipeline_args_t * args,
     
   args->err[pipeline_rank] = err;
 }
+#endif
 
 double
 compute_rms_div_b_err( field_t      * ALIGNED(128) f,
                        const grid_t *              g ) {
+#if defined(USE_PIPELINES)
   pipeline_args_t args[1];
   int p;
+#endif
   
   double err = 0, local[2], global[2];
 
   if( f==NULL ) ERROR(("Bad field"));
   if( g==NULL ) ERROR(("Bad grid"));
 
-# if 0 // Original non-pipelined version
+# if !defined(USE_PIPELINES) // Original non-pipelined version
+  field_t * ALIGNED(16) f0;
+  int z, y, x;
+  int nx = g->nx;
+  int ny = g->ny;
+  int nz = g->nz;
+
   err = 0;
   for( z=1; z<=nz; z++ ) {
     for( y=1; y<=ny; y++ ) {
@@ -71,8 +83,7 @@ compute_rms_div_b_err( field_t      * ALIGNED(128) f,
       }
     }
   }
-# endif
-
+#else
   args->f = f;
   args->g = g;
 
@@ -81,6 +92,8 @@ compute_rms_div_b_err( field_t      * ALIGNED(128) f,
 
   err = 0;
   for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
+#endif
+
   local[0] = err*g->dx*g->dy*g->dz;
   local[1] = g->nx*g->ny*g->nz*g->dx*g->dy*g->dz;
   mp_allsum_d( local, global, 2, g->mp );

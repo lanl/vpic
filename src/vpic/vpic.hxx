@@ -19,6 +19,7 @@
 #include "../species_advance/standard/spa.h"
 #include <FileIO.hxx>
 #include <BitField.hxx>
+#include <vector>
  
 #include <stdio.h>
  
@@ -114,6 +115,10 @@ struct DumpParameters {
   size_t stride_z;
 
   DumpFormat format;
+
+  char name[128];
+  char baseDir[128];
+  char baseFileName[128];
 
 }; // struct DumpParameters
 
@@ -246,14 +251,15 @@ private:
   void create_field_list(char * strlist, DumpParameters & dumpParams);
   void create_hydro_list(char * strlist, DumpParameters & dumpParams);
 
-  void global_header(const char * base);
+  void global_header(const char * base,
+  	std::vector<DumpParameters *> dumpParams);
+
   void field_header(const char * fbase, DumpParameters & dumpParams);
   void hydro_header(const char * speciesname, const char * hbase,
     DumpParameters & dumpParams);
 
-  void field_dump(const char * fbase, DumpParameters & dumpParams);
-  void hydro_dump(const char * speciesname, const char * hbase,
-    DumpParameters & dumpParams);
+  void field_dump(DumpParameters & dumpParams);
+  void hydro_dump(const char * speciesname, DumpParameters & dumpParams);
 
   ///////////////
   // Grid helpers

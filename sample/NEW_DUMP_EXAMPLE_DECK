@@ -21,6 +21,7 @@ begin_globals {
 	DumpParameters fdParams;
 	DumpParameters hedParams;
 	DumpParameters hHdParams;
+	std::vector<DumpParameters *> outputParams;
 }; // begin_globals
 
 begin_initialization {
@@ -517,6 +518,12 @@ begin_initialization {
 	 *
 	 *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
      *------------------------------------------------------------------------*/
+	
+	// relative path to fields data from global header
+	sprintf(global->fdParams.baseDir, "fields");
+
+	// base file name for fields output
+	sprintf(global->fdParams.baseFileName, "fields");
 
 	// nx = 150
 	global->fdParams.stride_x = 5;
@@ -527,9 +534,18 @@ begin_initialization {
 	// nz = 100
 	global->fdParams.stride_z = 5;
 
+	// add field parameters to list
+	global->outputParams.push_back(&global->fdParams);
+
 	sim_log ( "Fields x-stride " << global->fdParams.stride_x );
 	sim_log ( "Fields y-stride " << global->fdParams.stride_y );
 	sim_log ( "Fields z-stride " << global->fdParams.stride_z );
+
+	// relative path to electron species data from global header
+	sprintf(global->hedParams.baseDir, "ehydro");
+
+	// base file name for fields output
+	sprintf(global->hedParams.baseFileName, "ehydro");
 
 	// nx = 150
 	global->hedParams.stride_x = 5;
@@ -540,9 +556,18 @@ begin_initialization {
 	// nz = 100
 	global->hedParams.stride_z = 5;
 
+	// add electron species parameters to list
+	global->outputParams.push_back(&global->hedParams);
+
 	sim_log ( "Electron species x-stride " << global->hedParams.stride_x );
 	sim_log ( "Electron species y-stride " << global->hedParams.stride_y );
 	sim_log ( "Electron species z-stride " << global->hedParams.stride_z );
+
+	// relative path to electron species data from global header
+	sprintf(global->hHdParams.baseDir, "Hhydro");
+
+	// base file name for fields output
+	sprintf(global->hHdParams.baseFileName, "Hhydro");
 
 	// nx = 150
 	global->hHdParams.stride_x = 5;
@@ -556,6 +581,9 @@ begin_initialization {
 	sim_log ( "Ion species x-stride " << global->hHdParams.stride_x );
 	sim_log ( "Ion species y-stride " << global->hHdParams.stride_y );
 	sim_log ( "Ion species z-stride " << global->hHdParams.stride_z );
+
+	// add electron species parameters to list
+	global->outputParams.push_back(&global->hHdParams);
 
     /*--------------------------------------------------------------------------
 	 * Set output fields
@@ -668,13 +696,23 @@ begin_diagnostics {
 	if(!(step%100)) sim_log("Time step: " << step);
 
 	/*--------------------------------------------------------------------------
+	 * Data output directories
+	 * WARNING: The directory list passed to "global_header" must be
+	 * consistent with the actual directories where fields and species are
+	 * output using "field_dump" and "hydro_dump".
+	 *
+	 * DIRECTORY PATHES SHOULD BE RELATIVE TO
+	 * THE LOCATION OF THE GLOBAL HEADER!!!
+     *------------------------------------------------------------------------*/
+
+	/*--------------------------------------------------------------------------
 	 * Normal rundata dump
      *------------------------------------------------------------------------*/
 	if(step==0) {
 		dump_grid("rundata/grid");
 		dump_materials("rundata/materials");
 		dump_species("rundata/species");
-		global_header("rundata/vpic");
+		global_header("rundata/vpic", global->outputParams);
 	} // if
 
 	/*--------------------------------------------------------------------------
@@ -687,30 +725,35 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Field data output
      *------------------------------------------------------------------------*/
-	char buffer[256];
 	if(step == 1 || should_dump(fields)) {
+		/*
 		sprintf(buffer, "fields/T.%d", step);
 		dump_mkdir(buffer);
 		sprintf(buffer, "fields/T.%d/fields", step);
-		field_dump(buffer, global->fdParams);
+		*/
+		field_dump(global->fdParams);
 	} // if
 
 	/*--------------------------------------------------------------------------
 	 * Electron species output
      *------------------------------------------------------------------------*/
 	if(should_dump(ehydro)) {
+		/*
 		sprintf(buffer, "hydro/T.%d", step);
 		dump_mkdir(buffer);
 		sprintf(buffer, "hydro/T.%d/ehydro", step);
-		hydro_dump("ele", buffer, global->hedParams);
+		*/
+		hydro_dump("ele", global->hedParams);
 	} // if
 
 	/*--------------------------------------------------------------------------
 	 * Ion species output
      *------------------------------------------------------------------------*/
 	if(should_dump(Hhydro)) {
+		/*
 		sprintf(buffer, "hydro/T.%d/Hhydro", step);
-		hydro_dump("ion", buffer, global->hHdParams);
+		*/
+		hydro_dump("ion", global->hHdParams);
 	} // if
 
 	/*--------------------------------------------------------------------------

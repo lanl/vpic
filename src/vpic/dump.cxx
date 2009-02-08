@@ -14,6 +14,7 @@
 #include <FileIO.hxx>
 #include <FileUtils.hxx>
 #include <BitField.hxx>
+#include <cassert>
  
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
 // COMPATIBLE WITH EXISTING EXTERNAL 3RD PARTY VISUALIZATION SOFTWARE.
@@ -971,13 +972,14 @@ void vpic_simulation::create_hydro_list(char * strlist,
 	} // for
 } // vpic_simulation::create_field_list
 
-void vpic_simulation::global_header(const char * base) {
+void vpic_simulation::global_header(const char * base,
+	std::vector<DumpParameters *> dumpParams) {
 	if(mp_rank(grid->mp) == 0) {
 		/*
 		 * Open the file for output
 		 */
 		char filename[256];
-		sprintf(filename, "%s.header", base);
+		sprintf(filename, "%s.vpc", base);
 
 		FileIO fileIO;
 		FileIOStatus status;
@@ -987,20 +989,52 @@ void vpic_simulation::global_header(const char * base) {
 			ERROR(("Failed opening file: %s", filename));
 		} // if
 
-		WRITE_GLOBAL_HEADER(fileIO);
+		fileIO.print("VPIC_HEADER_VERSION 1.0.0\n");
+		fileIO.print("DATA_HEADER_SIZE 123\n");
+
+		// Global grid inforation
+		fileIO.print("GRID_DELTA_T %f\n", grid->dt);
+		fileIO.print("GRID_CVAC %f\n", grid->cvac);
+		fileIO.print("GRID_EPS0 %f\n", grid->eps0);
+		fileIO.print("GRID_EXTENTS_X %f %f\n", grid->x0, grid->x1);
+		fileIO.print("GRID_EXTENTS_Y %f %f\n", grid->y0, grid->y1);
+		fileIO.print("GRID_EXTENTS_Z %f %f\n", grid->z0, grid->z1);
+		fileIO.print("GRID_DELTA_X %f\n", grid->dx);
+		fileIO.print("GRID_DELTA_Y %f\n", grid->dy);
+		fileIO.print("GRID_DELTA_Z %f\n", grid->dz);
+		fileIO.print("GRID_TOPOLOGY_X %d\n", grid->nx);
+		fileIO.print("GRID_TOPOLOGY_Y %d\n", grid->ny);
+		fileIO.print("GRID_TOPOLOGY_Z %d\n", grid->nz);
+
+		// Global data inforation
+		assert(dumpParams.size() >= 2);
+		fileIO.print("FIELD_DATA_DIRECTORY %s\n", dumpParams[0]->baseDir);
+
+		fileIO.print("NUM_OUTPUT_SPECIES %d\n", dumpParams.size()-1);
+		for(size_t i(1); i<dumpParams.size(); i++) {
+			fileIO.print("SPECIES_DATA_DIRECTORY %s\n",
+				dumpParams[i]->baseDir);
+		} // for
 
 		fileIO.close();
 	} // if
 } // vpic_simulation::global_header
 
-void vpic_simulation::field_dump(const char * fbase,
-	DumpParameters & dumpParams) {
+void vpic_simulation::field_dump(DumpParameters & dumpParams) {
+
+	/*
+	 * Create directory for this time step
+	 */
+	char timeDir[256];
+	sprintf(timeDir, "%s/T.%d", dumpParams.baseDir, step);
+	dump_mkdir(timeDir);
 
 	/*
 	 * Open the file for output
 	 */
  	char filename[256];
-	sprintf(filename, "%s.%06d.%04d", fbase, step, mp_rank(grid->mp));
+	sprintf(filename, "%s/T.%d/%s.%06d.%04d", dumpParams.baseDir, step,
+		dumpParams.baseFileName, step, mp_rank(grid->mp));
 
 	FileIO fileIO;
 	FileIOStatus status;
@@ -1077,6 +1111,7 @@ void vpic_simulation::field_dump(const char * fbase,
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
+#if 0
 		// output variable list
 		if(step == 0 && mp_rank(grid->mp) == 0) {
 			sprintf(filename, "%s.varlist", fbase);
@@ -1092,6 +1127,7 @@ void vpic_simulation::field_dump(const char * fbase,
 
 			varListIO.close();
 		} // if
+#endif
 		
 		/*
 		std::cerr << "var indices: ";
@@ -1184,13 +1220,21 @@ void vpic_simulation::field_dump(const char * fbase,
 } // vpic_simulation::field_dump
 
 void vpic_simulation::hydro_dump(const char * speciesname,
-	const char * hbase, DumpParameters & dumpParams) {
+	DumpParameters & dumpParams) {
+
+	/*
+	 * Create directory for this time step
+	 */
+	char timeDir[256];
+	sprintf(timeDir, "%s/T.%d", dumpParams.baseDir, step);
+	dump_mkdir(timeDir);
 
 	/*
 	 * Open the file for output
 	 */
-	char filename[256];
-	sprintf(filename, "%s.%06d.%04d", hbase, step, mp_rank(grid->mp));
+ 	char filename[256];
+	sprintf(filename, "%s/T.%d/%s.%06d.%04d", dumpParams.baseDir, step,
+		dumpParams.baseFileName, step, mp_rank(grid->mp));
 
 	FileIO fileIO;
 	FileIOStatus status;
@@ -1281,6 +1325,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
+#if 0
 		// output variable list
 		if(step == 0 && mp_rank(grid->mp) == 0) {
 			sprintf(filename, "%s.varlist", hbase);
@@ -1296,6 +1341,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 
 			varListIO.close();
 		} // if
+#endif
 		
 		/*
 		std::cerr << "var indices: ";

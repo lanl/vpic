@@ -48,11 +48,32 @@ class BitField
 		} // setbit
 
 		/*!---------------------------------------------------------------------
-		 * Check whether bit at index is set.
+		 * Check whether bits in mask are set.
+		----------------------------------------------------------------------*/
+		bool bitsset(uint32_t mask) const {
+			uint32_t tmp = 1<<mask;
+			return tmp & bits_;
+		} // setbit
+
+		/*!---------------------------------------------------------------------
+		 * Check whether bit at index is clear.
 		----------------------------------------------------------------------*/
 		bool bitclear(size_t bit) const {
 			uint32_t tmp = 1<<bit;
 			return !(tmp & bits_);
+		} // bitclear
+
+		/*!---------------------------------------------------------------------
+		 * Return the sum of the set bits in the mask.
+		----------------------------------------------------------------------*/
+		size_t bitsum(const size_t * indeces, size_t size) const {
+			size_t sum(0);
+			for(size_t i(0); i<size; i++) {
+				if(bitset(indeces[i])) {
+					++sum;
+				} // if
+			} // for
+			return sum;
 		} // bitclear
 
 		/*!---------------------------------------------------------------------

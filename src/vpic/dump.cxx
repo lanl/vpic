@@ -1039,11 +1039,14 @@ void vpic_simulation::global_header(const char * base,
 		/*
 		 * Create a variable list of field values to output.
 		 */
-		size_t numvars = std::min(dumpParams[0]->output_vars.bitsum(),
-			total_field_variables);
+		size_t numvars =
+			std::min(dumpParams[0]->output_vars.bitsum(field_indeces,
+			total_field_groups), total_field_groups);
 		size_t * varlist = new size_t[numvars];
-		for(size_t v(0), c(0); v<total_field_variables; v++) {
-			if(dumpParams[0]->output_vars.bitset(v)) { varlist[c++] = v;}
+		for(size_t v(0), c(0); v<total_field_groups; v++) {
+			if(dumpParams[0]->output_vars.bitset(field_indeces[v])) {
+				varlist[c++] = v;
+			} // if
 		} // for
 
 		// output variable list
@@ -1067,8 +1070,9 @@ void vpic_simulation::global_header(const char * base,
 		fileIO.print("NUM_OUTPUT_SPECIES %d\n\n", dumpParams.size()-1);
 		char species_comment[128];
 		for(size_t i(1); i<dumpParams.size(); i++) {
-			numvars = std::min(dumpParams[i]->output_vars.bitsum(),
-				total_hydro_variables);
+			numvars =
+				std::min(dumpParams[i]->output_vars.bitsum(hydro_indeces,
+				total_hydro_groups), total_hydro_groups);
 
 			sprintf(species_comment, "Species(%d) data information", i);
 			print_hashed_comment(fileIO, species_comment);
@@ -1078,8 +1082,10 @@ void vpic_simulation::global_header(const char * base,
 			fileIO.print("HYDRO_DATA_VARIABLES %d\n", numvars);
 
 			varlist = new size_t[numvars];
-			for(size_t v(0), c(0); v<total_hydro_variables; v++) {
-				if(dumpParams[i]->output_vars.bitset(v)) { varlist[c++] = v;}
+			for(size_t v(0), c(0); v<total_hydro_groups; v++) {
+				if(dumpParams[i]->output_vars.bitset(hydro_indeces[v])) {
+					varlist[c++] = v;
+				} // if
 			} // for
 
 			for(size_t v(0); v<numvars; v++) {
@@ -1211,11 +1217,13 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 #endif
 		
 		/*
-		std::cerr << "var indices: ";
-		for(size_t i(0); i<numvars; i++) {
-			std::cerr << varlist[i] << " ";
-		} // for
-		std::cerr << std::endl;
+		if(mp_rank(grid->mp) == 0) {
+			std::cerr << "var indices: ";
+			for(size_t i(0); i<numvars; i++) {
+				std::cerr << varlist[i] << " ";
+			} // for
+			std::cerr << std::endl;
+		} // if
 		*/
 
 		// more efficient for standard case
@@ -1425,11 +1433,13 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 #endif
 		
 		/*
-		std::cerr << "var indices: ";
-		for(size_t i(0); i<numvars; i++) {
-			std::cerr << varlist[i] << " ";
-		} // for
-		std::cerr << std::endl;
+		if(mp_rank(grid->mp) == 0) {
+			std::cerr << "var indices: ";
+			for(size_t i(0); i<numvars; i++) {
+				std::cerr << varlist[i] << " ";
+			} // for
+			std::cerr << std::endl;
+		} // if
 		*/
 
 		for(size_t v(0); v<numvars; v++) {

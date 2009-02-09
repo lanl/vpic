@@ -35,20 +35,23 @@
 typedef FileIO FILETYPE;
 
 const uint32_t all			(0xffffffff);
-const uint32_t electric		(1<<0);
-const uint32_t div_e_err	(1<<1);
-const uint32_t magnetic		(1<<2);
-const uint32_t div_b_err	(1<<3);
-const uint32_t tca			(1<<4);
-const uint32_t rhob			(1<<5);
-const uint32_t current		(1<<6);
-const uint32_t rhof			(1<<7);
-const uint32_t emat			(1<<8);
-const uint32_t nmat			(1<<9);
-const uint32_t fmat			(1<<10);
-const uint32_t cmat			(1<<11);
+const uint32_t electric		(1<<0 | 1<<1 | 1<<2);
+const uint32_t div_e_err	(1<<3);
+const uint32_t magnetic		(1<<4 | 1<<5 | 1<<6);
+const uint32_t div_b_err	(1<<7);
+const uint32_t tca			(1<<8 | 1<<9 | 1<<10);
+const uint32_t rhob			(1<<11);
+const uint32_t current		(1<<12 | 1<<13 | 1<<14);
+const uint32_t rhof			(1<<15);
+const uint32_t emat			(1<<16 | 1<<17 | 1<<18);
+const uint32_t nmat			(1<<19);
+const uint32_t fmat			(1<<20 | 1<<21 | 1<<22);
+const uint32_t cmat			(1<<23);
 
-const size_t total_field_variables(12);
+const size_t total_field_variables(24);
+const size_t total_field_groups(12); // this counts vectors, tensors etc...
+// These bits will be tested to determine which variables to output
+const size_t field_indeces[12] = { 0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23 };
 
 struct FieldInfo {
 	char name[128];
@@ -58,17 +61,20 @@ struct FieldInfo {
 	size_t size;
 }; // struct FieldInfo
 
-const uint32_t current_density			(1<<0);
-const uint32_t charge_density			(1<<1);
-const uint32_t momentum_density			(1<<2);
-const uint32_t ke_density				(1<<3);
-const uint32_t stress_tensor			(1<<4);
-/*
-const uint32_t stress_diagonal 			(1<<9);
-const uint32_t stress_offdiagonal		(1<<10);
+const uint32_t current_density	(1<<0 | 1<<1 | 1<<2);
+const uint32_t charge_density	(1<<3);
+const uint32_t momentum_density	(1<<4 | 1<<5 | 1<<6);
+const uint32_t ke_density		(1<<7);
+const uint32_t stress_tensor	(1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
+/* May want to use these instead
+const uint32_t stress_diagonal 		(1<<8 | 1<<9 | 1<<10);
+const uint32_t stress_offdiagonal	(1<<11 | 1<<12 | 1<<13);
 */
 
-const size_t total_hydro_variables(5);
+const size_t total_hydro_variables(14);
+const size_t total_hydro_groups(5); // this counts vectors, tensors etc...
+// These bits will be tested to determine which variables to output
+const size_t hydro_indeces[5] = { 0, 3, 4, 7, 8 };
 
 struct HydroInfo {
 	char name[128];

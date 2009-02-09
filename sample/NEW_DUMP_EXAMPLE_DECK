@@ -545,7 +545,7 @@ begin_initialization {
 	sprintf(global->hedParams.baseDir, "ehydro");
 
 	// base file name for fields output
-	sprintf(global->hedParams.baseFileName, "ehydro");
+	sprintf(global->hedParams.baseFileName, "electron");
 
 	// nx = 150
 	global->hedParams.stride_x = 5;
@@ -567,7 +567,7 @@ begin_initialization {
 	sprintf(global->hHdParams.baseDir, "Hhydro");
 
 	// base file name for fields output
-	sprintf(global->hHdParams.baseFileName, "Hhydro");
+	sprintf(global->hHdParams.baseFileName, "Hydrogen");
 
 	// nx = 150
 	global->hHdParams.stride_x = 5;

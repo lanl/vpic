@@ -1035,6 +1035,8 @@ void vpic_simulation::global_header(const char * base,
 
 		print_hashed_comment(fileIO, "Field data information");
 		fileIO.print("FIELD_DATA_DIRECTORY %s\n", dumpParams[0]->baseDir);
+		fileIO.print("FIELD_DATA_BASE_FILENAME %s\n",
+			dumpParams[0]->baseFileName);
 		
 		/*
 		 * Create a variable list of field values to output.
@@ -1078,6 +1080,8 @@ void vpic_simulation::global_header(const char * base,
 			print_hashed_comment(fileIO, species_comment);
 			fileIO.print("SPECIES_DATA_DIRECTORY %s\n",
 				dumpParams[i]->baseDir);
+			fileIO.print("SPECIES_DATA_BASE_FILENAME %s\n",
+				dumpParams[i]->baseFileName);
 
 			fileIO.print("HYDRO_DATA_VARIABLES %d\n", numvars);
 

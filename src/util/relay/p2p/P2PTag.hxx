@@ -45,7 +45,8 @@ struct P2PTag {
 		io_seek,
 		io_size,
 		io_close,
-		utils_mkdir
+		utils_mkdir,
+		utils_getcwd
 	}; // enum
 
 }; // class P2PTag

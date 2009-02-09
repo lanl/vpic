@@ -2,6 +2,7 @@
 #define StandardUtilsPolicy_hxx
 
 #include<sys/stat.h>
+#include<unistd.h>
 
 class StandardUtilsPolicy
 	{
@@ -12,7 +13,16 @@ class StandardUtilsPolicy
 
 		static int makeDirectory(const char * dirname) {
 			return mkdir(dirname, S_IRWXU);	
-		} // mkdir
+		} // makeDirectory
+
+		static int getCurrentWorkingDirectory(char * dirname, size_t size) {
+			if(getcwd(dirname, size) == NULL) {
+				return -1;
+			}
+			else {
+				return 0;
+			}
+		} // getCurrentWorkingDirectory
 
 	private:
 

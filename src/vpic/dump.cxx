@@ -24,6 +24,10 @@ int vpic_simulation::dump_mkdir(const char * dname) {
 	return FileUtils::makeDirectory(dname);
 } // dump_mkdir
 
+int vpic_simulation::dump_cwd(char * dname, size_t size) {
+	return FileUtils::getCurrentWorkingDirectory(dname, size);
+} // dump_mkdir
+
 /*****************************************************************************
  * ASCII dump IO
  *****************************************************************************/
@@ -896,48 +900,34 @@ vpic_simulation::modify_runparams( const char *fname ) {
 
 #include <iostream>
 
-static FieldInfo fieldInfo[24] = {
-	{ "ex", "float", sizeof(float) },
-	{ "ey", "float", sizeof(float) },
-	{ "ez", "float", sizeof(float) },
-	{ "div_e_err", "float", sizeof(float) },
-	{ "cbx", "float", sizeof(float) },
-	{ "cby", "float", sizeof(float) },
-	{ "cbz", "float", sizeof(float) },
-	{ "div_b_err", "float", sizeof(float) },
-	{ "tcax", "float", sizeof(float) },
-	{ "tcay", "float", sizeof(float) },
-	{ "tcaz", "float", sizeof(float) },
-	{ "rhob", "float", sizeof(float) },
-	{ "jfx", "float", sizeof(float) },
-	{ "jfy", "float", sizeof(float) },
-	{ "jfz", "float", sizeof(float) },
-	{ "rhof", "float", sizeof(float) },
-	{ "ematx", "int", sizeof(material_id) },
-	{ "ematy", "int", sizeof(material_id) },
-	{ "ematz", "int", sizeof(material_id) },
-	{ "nmat", "int", sizeof(material_id) },
-	{ "fmatx", "int", sizeof(material_id) },
-	{ "fmaty", "int", sizeof(material_id) },
-	{ "fmatz", "int", sizeof(material_id) },
-	{ "cmat", "int", sizeof(material_id) }
+static FieldInfo fieldInfo[12] = {
+	{ "Electric Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Electric Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
+		sizeof(float) },
+	{ "Magnetic Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Magnetic Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
+		sizeof(float) },
+	{ "TCA Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Bound Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+	{ "Free Current Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+	{ "Edge Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
+	{ "Node Material", "SCALAR", "1", "INTEGER", sizeof(material_id) },
+	{ "Face Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
+	{ "Cell Material", "SCALAR", "1", "INTEGER", sizeof(material_id) }
 }; // fieldInfo
 
-static HydroInfo hydroInfo[14] = {
-	{ "jx", "float", sizeof(float) },
-	{ "jy", "float", sizeof(float) },
-	{ "jz", "float", sizeof(float) },
-	{ "rho", "float", sizeof(float) },
-	{ "px", "float", sizeof(float) },
-	{ "py", "float", sizeof(float) },
-	{ "pz", "float", sizeof(float) },
-	{ "ke", "float", sizeof(float) },
-	{ "txx", "float", sizeof(float) },
-	{ "tyy", "float", sizeof(float) },
-	{ "tzz", "float", sizeof(float) },
-	{ "tyz", "float", sizeof(float) },
-	{ "tzx", "float", sizeof(float) },
-	{ "txy", "float", sizeof(float) }
+static HydroInfo hydroInfo[5] = {
+	{ "Current Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+	{ "Momentum Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+	{ "Kinetic Energy Density", "SCALAR", "1", "FLOATING_POINT",
+		sizeof(float) },
+	{ "Stress Tensor", "TENSOR", "6", "FLOATING_POINT", sizeof(float) }
+	/*
+	{ "STRESS_DIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
+	{ "STRESS_OFFDIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
+	*/
 }; // hydroInfo
 
 void vpic_simulation::create_field_list(char * strlist,
@@ -972,6 +962,13 @@ void vpic_simulation::create_hydro_list(char * strlist,
 	} // for
 } // vpic_simulation::create_field_list
 
+void vpic_simulation::print_hashed_comment(FileIO & fileIO,
+	const char * comment) {
+		fileIO.print("################################################################################\n");
+		fileIO.print("# %s\n", comment);
+		fileIO.print("################################################################################\n");
+} // vpic_simulation::print_hashed_comment
+
 void vpic_simulation::global_header(const char * base,
 	std::vector<DumpParameters *> dumpParams) {
 	if(mp_rank(grid->mp) == 0) {
@@ -989,31 +986,115 @@ void vpic_simulation::global_header(const char * base,
 			ERROR(("Failed opening file: %s", filename));
 		} // if
 
-		fileIO.print("VPIC_HEADER_VERSION 1.0.0\n");
-		fileIO.print("DATA_HEADER_SIZE 123\n");
+		print_hashed_comment(fileIO, "Header version information");
+		fileIO.print("VPIC_HEADER_VERSION 1.0.0\n\n");
+
+		print_hashed_comment(fileIO,
+			"Header size for data file headers in bytes");
+		fileIO.print("DATA_HEADER_SIZE 123\n\n");
 
 		// Global grid inforation
-		fileIO.print("GRID_DELTA_T %f\n", grid->dt);
-		fileIO.print("GRID_CVAC %f\n", grid->cvac);
-		fileIO.print("GRID_EPS0 %f\n", grid->eps0);
-		fileIO.print("GRID_EXTENTS_X %f %f\n", grid->x0, grid->x1);
-		fileIO.print("GRID_EXTENTS_Y %f %f\n", grid->y0, grid->y1);
-		fileIO.print("GRID_EXTENTS_Z %f %f\n", grid->z0, grid->z1);
-		fileIO.print("GRID_DELTA_X %f\n", grid->dx);
-		fileIO.print("GRID_DELTA_Y %f\n", grid->dy);
-		fileIO.print("GRID_DELTA_Z %f\n", grid->dz);
-		fileIO.print("GRID_TOPOLOGY_X %d\n", grid->nx);
-		fileIO.print("GRID_TOPOLOGY_Y %d\n", grid->ny);
-		fileIO.print("GRID_TOPOLOGY_Z %d\n", grid->nz);
+		print_hashed_comment(fileIO, "Time step increment");
+		fileIO.print("GRID_DELTA_T %f\n\n", grid->dt);
+
+		print_hashed_comment(fileIO, "GRID_CVAC");
+		fileIO.print("GRID_CVAC %f\n\n", grid->cvac);
+
+		print_hashed_comment(fileIO, "GRID_EPS0");
+		fileIO.print("GRID_EPS0 %f\n\n", grid->eps0);
+
+		print_hashed_comment(fileIO, "Grid extents in the x-dimension");
+		fileIO.print("GRID_EXTENTS_X %f %f\n\n", grid->x0, grid->x1);
+
+		print_hashed_comment(fileIO, "Grid extents in the y-dimension");
+		fileIO.print("GRID_EXTENTS_Y %f %f\n\n", grid->y0, grid->y1);
+
+		print_hashed_comment(fileIO, "Grid extents in the z-dimension");
+		fileIO.print("GRID_EXTENTS_Z %f %f\n\n", grid->z0, grid->z1);
+
+		print_hashed_comment(fileIO, "Spatial step increment in x-dimension");
+		fileIO.print("GRID_DELTA_X %f\n\n", grid->dx);
+
+		print_hashed_comment(fileIO, "Spatial step increment in y-dimension");
+		fileIO.print("GRID_DELTA_Y %f\n\n", grid->dy);
+
+		print_hashed_comment(fileIO, "Spatial step increment in z-dimension");
+		fileIO.print("GRID_DELTA_Z %f\n\n", grid->dz);
+
+		print_hashed_comment(fileIO, "Domain partitions in x-dimension");
+		fileIO.print("GRID_TOPOLOGY_X %d\n\n", grid->nx);
+
+		print_hashed_comment(fileIO, "Domain partitions in y-dimension");
+		fileIO.print("GRID_TOPOLOGY_Y %d\n\n", grid->ny);
+
+		print_hashed_comment(fileIO, "Domain partitions in z-dimension");
+		fileIO.print("GRID_TOPOLOGY_Z %d\n\n", grid->nz);
 
 		// Global data inforation
 		assert(dumpParams.size() >= 2);
-		fileIO.print("FIELD_DATA_DIRECTORY %s\n", dumpParams[0]->baseDir);
 
-		fileIO.print("NUM_OUTPUT_SPECIES %d\n", dumpParams.size()-1);
+		print_hashed_comment(fileIO, "Field data information");
+		fileIO.print("FIELD_DATA_DIRECTORY %s\n", dumpParams[0]->baseDir);
+		
+		/*
+		 * Create a variable list of field values to output.
+		 */
+		size_t numvars = std::min(dumpParams[0]->output_vars.bitsum(),
+			total_field_variables);
+		size_t * varlist = new size_t[numvars];
+		for(size_t v(0), c(0); v<total_field_variables; v++) {
+			if(dumpParams[0]->output_vars.bitset(v)) { varlist[c++] = v;}
+		} // for
+
+		// output variable list
+		fileIO.print("FIELD_DATA_VARIABLES %d\n", numvars);
+
+		for(size_t v(0); v<numvars; v++) {
+			fileIO.print("\"%s\" %s %s %s %d\n", fieldInfo[varlist[v]].name,
+			fieldInfo[varlist[v]].degree, fieldInfo[varlist[v]].elements,
+			fieldInfo[varlist[v]].type, fieldInfo[varlist[v]].size);
+		} // for
+
+		fileIO.print("\n");
+
+		delete varlist;
+		varlist = NULL;
+
+		/*
+		 * Create a variable list for each species to output
+		 */
+		print_hashed_comment(fileIO, "Number of species with output data");
+		fileIO.print("NUM_OUTPUT_SPECIES %d\n\n", dumpParams.size()-1);
+		char species_comment[128];
 		for(size_t i(1); i<dumpParams.size(); i++) {
+			numvars = std::min(dumpParams[i]->output_vars.bitsum(),
+				total_hydro_variables);
+
+			sprintf(species_comment, "Species(%d) data information", i);
+			print_hashed_comment(fileIO, species_comment);
 			fileIO.print("SPECIES_DATA_DIRECTORY %s\n",
 				dumpParams[i]->baseDir);
+
+			fileIO.print("HYDRO_DATA_VARIABLES %d\n", numvars);
+
+			varlist = new size_t[numvars];
+			for(size_t v(0), c(0); v<total_hydro_variables; v++) {
+				if(dumpParams[i]->output_vars.bitset(v)) { varlist[c++] = v;}
+			} // for
+
+			for(size_t v(0); v<numvars; v++) {
+				fileIO.print("\"%s\" %s %s %s %d\n", hydroInfo[varlist[v]].name,
+				hydroInfo[varlist[v]].degree, hydroInfo[varlist[v]].elements,
+				hydroInfo[varlist[v]].type, hydroInfo[varlist[v]].size);
+			} // for
+
+
+			delete[] varlist;
+			varlist = NULL;
+
+			if(i<dumpParams.size()-1) {
+				fileIO.print("\n");
+			} // if
 		} // for
 
 		fileIO.close();

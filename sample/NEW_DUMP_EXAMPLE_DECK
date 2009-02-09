@@ -612,27 +612,25 @@ begin_initialization {
 	
     output_variables( all );
 
-    output_variables( ex    | ey    | ez    | div_e_err |
-                      cbx   | cby   | cbz   | div_b_err |
-                      tcax  | tcay  | tcaz  | rhob |
-                      jfx   | jfy   | jfz   | rhof |
-                      ematx | ematy | ematz | nmat |
-                      fmatx | fmaty | fmatz | cmat );
+    output_variables( electric | div_e_err | magnetic | div_b_err |
+                      tca      | rhob      | current  | rhof |
+                      emat     | nmat      | fmat     | cmat );
 
-    output_variables( jx  | jy  | jz  | rho |
-                      px  | py  | pz  | ke  |
-                      txx | tyy | tzz |
-                      tyz | tzx | txy );
+    output_variables( current_density  | charge_density |
+                      momentum_density | ke_density     | stress_tensor );
 	*/
 
 	//global->fdParams.output_variables( all );
-	global->fdParams.output_variables( ex | cbx );
+	global->fdParams.output_variables( electric | magnetic );
 
 	//global->hedParams.output_variables( all );
-	global->hedParams.output_variables( jx | py );
+	//global->hedParams.output_variables( current_density | momentum_density );
+    global->hedParams.output_variables( current_density  | charge_density |
+										momentum_density | ke_density |
+										stress_tensor );
 
 	//global->hHdParams.output_variables( all );
-	global->hHdParams.output_variables( jx | py );
+	global->hHdParams.output_variables( ke_density );
 
 	/*--------------------------------------------------------------------------
 	 * Convenience functions for simlog output
@@ -709,10 +707,18 @@ begin_diagnostics {
 	 * Normal rundata dump
      *------------------------------------------------------------------------*/
 	if(step==0) {
+		dump_mkdir("fields");
+		dump_mkdir("ehydro");
+		dump_mkdir("Hhydro");
+		dump_mkdir("rundata");
+		dump_mkdir("restart");
+		dump_mkdir("particle");
+		dump_mkdir("rate");
+
 		dump_grid("rundata/grid");
 		dump_materials("rundata/materials");
 		dump_species("rundata/species");
-		global_header("rundata/vpic", global->outputParams);
+		global_header("global", global->outputParams);
 	} // if
 
 	/*--------------------------------------------------------------------------

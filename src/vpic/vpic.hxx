@@ -35,59 +35,46 @@
 typedef FileIO FILETYPE;
 
 const uint32_t all			(0xffffffff);
-const uint32_t ex			(1<<0);
-const uint32_t ey			(1<<1);
-const uint32_t ez			(1<<2);
-const uint32_t div_e_err	(1<<3);
-const uint32_t cbx			(1<<4);
-const uint32_t cby			(1<<5);
-const uint32_t cbz			(1<<6);
-const uint32_t div_b_err	(1<<7);
-const uint32_t tcax			(1<<8);
-const uint32_t tcay			(1<<9);
-const uint32_t tcaz			(1<<10);
-const uint32_t rhob			(1<<11);
-const uint32_t jfx			(1<<12);
-const uint32_t jfy			(1<<13);
-const uint32_t jfz			(1<<14);
-const uint32_t rhof			(1<<15);
-const uint32_t ematx		(1<<16);
-const uint32_t ematy		(1<<17);
-const uint32_t ematz		(1<<18);
-const uint32_t nmat			(1<<19);
-const uint32_t fmatx		(1<<20);
-const uint32_t fmaty		(1<<21);
-const uint32_t fmatz		(1<<22);
-const uint32_t cmat			(1<<23);
+const uint32_t electric		(1<<0);
+const uint32_t div_e_err	(1<<1);
+const uint32_t magnetic		(1<<2);
+const uint32_t div_b_err	(1<<3);
+const uint32_t tca			(1<<4);
+const uint32_t rhob			(1<<5);
+const uint32_t current		(1<<6);
+const uint32_t rhof			(1<<7);
+const uint32_t emat			(1<<8);
+const uint32_t nmat			(1<<9);
+const uint32_t fmat			(1<<10);
+const uint32_t cmat			(1<<11);
 
-const size_t total_field_variables(24);
+const size_t total_field_variables(12);
 
 struct FieldInfo {
-	char name[16];
-	char type[16];
+	char name[128];
+	char degree[128];
+	char elements[128];
+	char type[128];
 	size_t size;
 }; // struct FieldInfo
 
-const uint32_t jx			(1<<0);
-const uint32_t jy			(1<<1);
-const uint32_t jz			(1<<2);
-const uint32_t rho			(1<<3);
-const uint32_t px			(1<<4);
-const uint32_t py			(1<<5);
-const uint32_t pz			(1<<6);
-const uint32_t ke			(1<<7);
-const uint32_t txx			(1<<8);
-const uint32_t tyy			(1<<9);
-const uint32_t tzz			(1<<10);
-const uint32_t tyz			(1<<11);
-const uint32_t tzx			(1<<12);
-const uint32_t txy			(1<<13);
+const uint32_t current_density			(1<<0);
+const uint32_t charge_density			(1<<1);
+const uint32_t momentum_density			(1<<2);
+const uint32_t ke_density				(1<<3);
+const uint32_t stress_tensor			(1<<4);
+/*
+const uint32_t stress_diagonal 			(1<<9);
+const uint32_t stress_offdiagonal		(1<<10);
+*/
 
-const size_t total_hydro_variables(14);
+const size_t total_hydro_variables(5);
 
 struct HydroInfo {
-	char name[16];
-	char type[16];
+	char name[128];
+	char degree[128];
+	char elements[128];
+	char type[128];
 	size_t size;
 }; // struct FieldInfo
 
@@ -232,6 +219,7 @@ private:
   // Dump helpers
  
   int dump_mkdir(const char * dname);
+  int dump_cwd(char * dname, size_t size);
 
   // Text dumps
   void dump_energies( const char *fname, int append = 1 );
@@ -251,6 +239,7 @@ private:
   void create_field_list(char * strlist, DumpParameters & dumpParams);
   void create_hydro_list(char * strlist, DumpParameters & dumpParams);
 
+  void print_hashed_comment(FileIO & fileIO, const char * comment);
   void global_header(const char * base,
   	std::vector<DumpParameters *> dumpParams);
 

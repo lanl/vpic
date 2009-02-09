@@ -12,6 +12,9 @@ template<class Policy> class FileUtils_T
 		static int makeDirectory(const char * dirname)
 			{ return Policy::makeDirectory(dirname); }
 
+		static int getCurrentWorkingDirectory(char * dirname, size_t size)
+			{ return Policy::getCurrentWorkingDirectory(dirname, size); }
+
 	private:
 
 	}; // class FileUtils_T

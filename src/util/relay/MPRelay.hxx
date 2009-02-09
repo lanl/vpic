@@ -545,6 +545,15 @@ void MPRelay::start()
 					p2p.send(&utils_return, 1, request.tag);
 					break;
 
+				case P2PTag::utils_getcwd:
+					utils_return = FileUtils::getCurrentWorkingDirectory(
+							utils_buffer_.data(), request.count);
+
+					p2p.send(io_buffer_.data(), request.count,
+						request.tag);
+					p2p.send(&utils_return, 1, request.tag);
+					break;
+
 				case P2PTag::end:
 					relay = false;
 					break;

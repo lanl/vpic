@@ -507,7 +507,7 @@ begin_diagnostics {
 		field_dump(buffer, fdParams);
 	} // if
 
-#if 0
+#if 1
 	DumpParameters hedParams;
 
 	// band or band-interleave format
@@ -531,7 +531,7 @@ begin_diagnostics {
 		hydro_dump("ele", buffer, hedParams);
 	} // if
 
-	DumpParameters hHdParams;
+	DumpParameters hHdarams;
 
 	// band or band-interleave format
 	hHdParams.format = band;

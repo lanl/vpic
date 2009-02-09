@@ -63,6 +63,9 @@ typedef struct pipeline_dispatcher {
   // If the pipeline functions do not take arguments, use NULL for
   // args and 0 for the size_args.
                     
+#define register_function(name) \
+  void (*name)(void *) = thread_##name
+
   void
   (*dispatch)( pipeline_func_t pipeline,
                void * args,
@@ -130,6 +133,10 @@ extern pipeline_dispatcher_t spu;
 //
 // (3) Casts indirectly a "spe_program_handle_t *" into a
 // "pipeline_func_t."
+
+#define register_function(name) \
+	extern uint32_t spe_##name; \
+	uint32_t name = spe_##name
 
 #define SPU_PIPELINE(x) \
   ((pipeline_func_t)(uint64_t)(spe_program_handle_t *)&(x))

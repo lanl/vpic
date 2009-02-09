@@ -7,7 +7,6 @@
 */
 
 #include <spu_mfcio.h>
-#include <spe_events.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main SPU program
@@ -24,56 +23,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* overlay functions */
-extern int o1_test1(int);
-extern int o1_test2(int);
-extern int o2_test1(int);
-extern int o2_test2(int);
-
-#define TEST(x, y)                     \
-	if ((x) != (y)) {                    \
-		printf("olay func call failed! expecting %d, got %d\n", x, y);   \
-		return (1);                        \
-	}
+typedef void (*fptr)(uint64_t id, uint64_t argp, uint64_t envp);
 
 int main (uint64_t spu_id, uint64_t argp, uint64_t envp) {
-	uint32_t msg;
 
-	int rc;
+	// Read mailbox and interpret message as a function pointer
+	// in the SPE symbol space
+	fptr f = (fptr)spu_read_in_mbox();
 
-	/* bring in overlay 1 */
-	rc = o1_test1(101);
-	TEST(1,rc);
+	while(f != NULL) {
+		// Execute function
+		f(id, argp, envp);
 
-	rc = o1_test2(102);
-	TEST(2,rc);
+		// Write completion message to host
+		spu_write_out_mbox(COMPLETE);
 
-	/* bring in overlay 2 */
-	rc = o2_test1(201);
-	TEST(11, rc);
-
-	rc = o2_test2(202);
-	TEST(12, rc);
-
-	/* back to overlay 1 */
-	rc = o1_test1(301);
-	TEST(1, rc);
-
-	rc = o1_test2(302);
-	TEST(2, rc);
-
-	do {
-		msg = spu_read_in_mbox();
-
-		switch(msg) {
-			case READ_GLOBAL_ARGS:
-				//mfc_get(args, argp, sizeof(*args), 31, 0, 0);
-				//mfc_write_tag_mask((1<<31));
-				//mfc_read_tag_status_all();
-				break;
-		} // switch
-
-	} while(msg != END_EVENT_LOOP);
+		// Read next function
+		f = (fptr)spu_read_in_mbox();
+	} // while
 
 	return 0;
 } // main

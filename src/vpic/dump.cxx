@@ -547,14 +547,11 @@ vpic_simulation::restart( const char *fbase ) {
  
 # define ABORT(cond) if( cond ) ERROR(( #cond ))
 
-  // FIXME: see vpic/initialize.cxx
-  advance_p_initialize();
- 
   // Create an empty grid (creates the communicator too)
   grid  = new_grid();
   rank  = mp_rank(  grid->mp );
   nproc = mp_nproc( grid->mp );
- 
+
   // Create a random number generator seeded with the rank. This will
   // be reseeded below.
   rng = new_mt_rng( rank );
@@ -726,6 +723,8 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[0],fileIO); ABORT(dim[0]!=grid->nx+2   );
   READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->ny+2   );
   READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->nz+2   );
+
+  MESSAGE(("Field dimensions: %d %d %d", dim[0], dim[1], dim[2]));
   fileIO.read( field_advance->f, dim[0]*dim[1]*dim[2] );
  
   // species ... species_list must be put together in the same order
@@ -1076,7 +1075,8 @@ void vpic_simulation::global_header(const char * base,
 				std::min(dumpParams[i]->output_vars.bitsum(hydro_indeces,
 				total_hydro_groups), total_hydro_groups);
 
-			sprintf(species_comment, "Species(%d) data information", i);
+			sprintf(species_comment, "Species(%ld) data information",
+				uint64_t(i));
 			print_hashed_comment(fileIO, species_comment);
 			fileIO.print("SPECIES_DATA_DIRECTORY %s\n",
 				dumpParams[i]->baseDir);

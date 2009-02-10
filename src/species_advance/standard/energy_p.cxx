@@ -130,7 +130,7 @@ energy_p( const particle_t     * ALIGNED(128) p0,
   DECLARE_ALIGNED_ARRAY( energy_p_pipeline_args_t, 128, args, 1 );
   DECLARE_ALIGNED_ARRAY( double, 128, en, MAX_PIPELINE+1 );
   double local, global;
-  int rank;
+  uint32_t rank;
 
   // FIXME: p0 NULL checking
   if( np<0     ) ERROR(("Bad number of particles"));

@@ -173,6 +173,9 @@ int P2PPolicyDaCS<MP_HOST>::poll(MPRequest_T<MP_HOST> & request)
 			pending_ = true;
 			return P2PTag::pending;
 		} // if
+
+		// never reaches this
+		return 0;
 	} // P2PPolicyDaCS<>::poll
 
 template<> inline

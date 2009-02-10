@@ -15,27 +15,20 @@
 
 #if FOR_SPU
 
-//    #include <spe_events.h>
-    #define READ_ARGS_AND_ADVANCE 0
-    #define ADVANCE_COMPLETE 1
-    #define END_EVENT_LOOP 3
-
 # if defined(CELL_PPU_BUILD) 
 
     // Use SPU dispatcher on the SPU pipeline
 
-#   define INIT_PIPELINES(name,args,sz_args) \
-    spu.dispatch( SPU_PIPELINE(name##_pipeline_spu), args, sz_args );
+# define INIT_PIPELINES(name,args,sz_args)
 
-#   define EXEC_PIPELINES(name,args,sz_args) \
-	spu.signal(READ_ARGS_AND_ADVANCE); \
-    name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
+# define EXEC_PIPELINES(name,args,sz_args) \
+  spu.dispatch( (pipeline_func_t)name##_pipeline_spu, args, sz_args ); \
+  name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
 
-#   define WAIT_PIPELINES() spu.sync(ADVANCE_COMPLETE)
 
-#   define FINALIZE_PIPELINES() \
-    spu.signal(END_EVENT_LOOP); \
-    spu.wait()
+#   define WAIT_PIPELINES() spu.wait()
+
+#   define FINALIZE_PIPELINES()
 
 #   define N_PIPELINE       spu.n_pipeline
 

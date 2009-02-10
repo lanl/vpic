@@ -210,6 +210,8 @@ uint64_t P2PIOPolicy<swapped>::size()
 	{
 		assert(id_>=0);
 
+		P2PConnection & p2p = P2PConnection::instance();
+
 		MPRequest request(P2PTag::io_size, P2PTag::data, 1, id_);
 		P2PConnection::instance().post(request);
 

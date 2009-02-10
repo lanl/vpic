@@ -11,8 +11,7 @@ class P2PUtilsPolicy
 		~P2PUtilsPolicy() {}
 
 		static int makeDirectory(const char * dirname);
-		static int getCurrentWorkingDirectory(const char * dirname,
-			size_t size);
+		static int getCurrentWorkingDirectory(char * dirname, size_t size);
 
 	private:
 
@@ -33,7 +32,8 @@ inline int P2PUtilsPolicy::makeDirectory(const char * dirname)
 		return retval;
 	} // P2PUtilsPolicy::makeDirectory
 
-inline int P2PUtilsPolicy::makeDirectory(char * dirname, size_t size)
+inline int P2PUtilsPolicy::getCurrentWorkingDirectory(char * dirname,
+	size_t size)
 	{
 		P2PConnection & p2p = P2PConnection::instance();
 
@@ -42,10 +42,10 @@ inline int P2PUtilsPolicy::makeDirectory(char * dirname, size_t size)
 		MPRequest request(P2PTag::utils_mkdir, P2PTag::data, msg_size);
 
 		p2p.post(request);
-		p2p.recv(dirname, request.count, request.tag);
+		p2p.recv(dirname, size, request.count, request.tag);
 		p2p.recv(&retval, 1, request.tag, request.id);
 
 		return retval;
-	} // P2PUtilsPolicy::makeDirectory
+	} // P2PUtilsPolicy::getCurrentWorkingDirectory
 
 #endif // P2PUtilsPolicy_hxx

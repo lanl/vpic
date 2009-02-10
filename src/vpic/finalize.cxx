@@ -11,14 +11,6 @@
 #include "vpic.hxx"
 
 void vpic_simulation::finalize( void ) {
-
-  // FIXME!!!
-  // stop pipelines
-  // This is a hack to get us through the RR assessment.  At some
-  // point this will have to be re-worked to use overlays to allow
-  // for multple accelerated implementations
-  advance_p_finalize();
-
   // block for all message passing processes to finish
   mp_barrier( grid->mp );
 }

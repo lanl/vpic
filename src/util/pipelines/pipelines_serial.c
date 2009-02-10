@@ -15,8 +15,8 @@ serial_boot( int n_pipeline,
 static void
 serial_dispatch( pipeline_func_t func,
                  void * args,
-                 int size_args ) {
-  int id;
+                 uint32_t size_args ) {
+  uint32_t id;
 
   if( serial.n_pipeline==0 ) ERROR(( "Boot serial dispatcher first!" ));
   if( Busy ) ERROR(( "Pipelines are busy!" ));

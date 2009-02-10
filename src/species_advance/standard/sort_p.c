@@ -11,6 +11,12 @@
 #define IN_spa
 #include "spa_private.h"
 
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+	register_function(sort_p_pipeline_spu);
+#endif
+
+
 // FIXME: V4 ACCELERATE THIS!
 
 void

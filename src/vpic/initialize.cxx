@@ -15,13 +15,6 @@ void vpic_simulation::initialize( int argc, char **argv ) {
   species_t *sp;
   int rank;
 
-  // FIXME!!!
-  // start pipelines
-  // This is a hack to get us through the RR assessment.  At some
-  // point this will have to be re-worked to use overlays to allow
-  // for multple accelerated implementations
-  advance_p_initialize();
-
   // Create an empty grid (creates the communicator too)
   grid = new_grid();
 

@@ -5,36 +5,22 @@
 clean-local:
 	@(rm -rf `find @HOST_ACDIR@/src -name "*.timing"`)
 
-bin_PROGRAMS = advance_p_pipeline_spu simple root_segment
+bin_PROGRAMS = root_segment
 
 INCLUDES = -I@top_srcdir@/src/include -I@HOST_ACDIR@/src/include \
 	@EXTRA_CPPFLAGS@
 
-advance_p_pipeline_spu_SOURCES = \
-	@HOST_ACDIR@/src/species_advance/standard/pipelines_cell/advance_p_pipeline_spu.c
-advance_p_pipeline_spu_LDFLAGS = @EXTRA_LDFLAGS@
-advance_p_pipeline_spu_LDADD = @EXTRA_LIBS@
+SPECIES_SPE_DIR = species_advance/standard/pipelines_cell
 
-simple_SOURCES = \
-	@top_srcdir@/src/simple/simple.c \
-	@top_srcdir@/src/simple/seg1.c \
-	@top_srcdir@/src/simple/seg2.c \
-	@top_srcdir@/src/overlay_manager/overlay_manager.S
-simple_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/simple/simple.ld
-simple_LDADD = @EXTRA_LIBS@
-
-# Note: this is currently setup for debugging!!!
 root_segment_SOURCES = \
-	@top_srcdir@/src/root_segment/root_segment.c \
-	@top_srcdir@/src/simple/seg1.c \
-	@top_srcdir@/src/simple/seg2.c \
-	@top_srcdir@/src/overlay_manager/overlay_manager.S
-root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@top_srcdir@/src/root_segment/root_segment.ld
+	@HOST_ACDIR@/src/util/overlays/root_segment.c \
+	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/advance_p_overlay.c \
+	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/sort_p_overlay.c
+root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@HOST_ACDIR@/src/util/overlays/root_segment.ld
 root_segment_LDADD = @EXTRA_LIBS@
 
 if HAS_SPU_TIMING
-advance_p_pipeline_spu_DEPENDENCIES = \
-	@HOST_ACDIR@/src/species_advance/standard/pipelines_cell/advance_p_pipeline_spu.timing
-
+root_segment_DEPENDENCIES = \
+	@HOST_ACDIR@/src/species_advance/standard/pipelines_cell/advance_p_overlay.timing
 include @top_builddir@/config/rules.mk
 endif

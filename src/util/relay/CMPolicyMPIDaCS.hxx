@@ -97,7 +97,7 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		MPI_Allreduce(&children, &sum, 1, MPI_INT,
 			MPI_SUM, MPI_COMM_WORLD);
 		
-		if(sum != size_) {
+		if(sum != uint32_t(size_)) {
 			if(rank_ == 0) {
 				std::cerr << "DaCS failed to reserve children. Check output for failed hosts." << std::endl;
 			} // if

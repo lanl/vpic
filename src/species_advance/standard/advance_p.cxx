@@ -185,14 +185,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
     defined(HAS_SPU_PIPELINE)
 
-extern spe_program_handle_t advance_p_pipeline_spu;
-
-#if 0
-static void
-advance_p_pipeline_signal() {
-    spu.signal(READ_ARGS_AND_ADVANCE);
-}
-#endif
+register_function(advance_p_pipeline_spu);
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
@@ -403,14 +396,6 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
 DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
 
-void advance_p_initialize() {
-  INIT_PIPELINES( advance_p, args, 0 );
-}
-
-void advance_p_finalize() {
-  FINALIZE_PIPELINES();
-}
-
 int
 advance_p( particle_t           * ALIGNED(128) p0,
            const int                           np,
@@ -420,7 +405,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
            accumulator_t        * ALIGNED(128) a0,
            const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g ) {
-  int nm, rank;
+  uint32_t nm, rank;
 
   if( p0==NULL ) ERROR(("Bad particle array"));
   if( np<0     ) ERROR(("Bad number of particles"));

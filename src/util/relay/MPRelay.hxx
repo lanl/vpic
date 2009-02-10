@@ -77,7 +77,7 @@ void MPRelay::start()
 		bool relay(true);
 		int filesize;
 		long foffset;
-		int fwhence, file_id;
+		int fwhence;
 		int utils_return;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
@@ -508,7 +508,7 @@ void MPRelay::start()
 					file_[request.id].seek(foffset, fwhence);
 					break;
 
-				case P2PTag::io_seek:
+				case P2PTag::io_size:
 					// make sure that this id exists
 					assert(file_.find(request.id) != file_.end());
 

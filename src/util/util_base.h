@@ -106,11 +106,18 @@
 
 #define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) ) 
 
-// POW2_CEIL rounds "u" up to the nearest power of two "a".  If u is
-// zero or a power of two, its value is unchanged.  "a" should be safe
-// against multiple dereferencing and the same type as "u".
+// POW2_CEIL rounds "u" up to the nearest multiple of the power of two
+// "a".  If u is a multiple of "a", its value is unchanged.  "a" should
+// be safe against multiple dereferencing and the same type as "u".
 
-#define POW2_CEIL(u,a) ( ((u)+(a)-1) & ~((a)-1) )
+#define POW2_CEIL(u,a) ( ((u)+(a)-1) & (~((a)-1)) )
+
+// ALIGN_PTR rounds "p" up to the nearest multiple of the power of two
+// "a".  If p is a multiple of "a", its value is unchanged.  "a" should
+// be safe against multiple dereferencing.  The result is cast to a
+// pointer of type "t".
+
+#define ALIGN_PTR(t,p,a) ((t *)POW2_CEIL( (size_t)(p), (size_t)(a) ))
 
 // Workload distribution macros
 

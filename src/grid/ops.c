@@ -88,6 +88,7 @@ size_grid( grid_t * g,
         }
       }
 
+# if 0
   // Setup the space filling curve
   // FIXME: THIS IS A CRUDE HACK UNTIL A GOOD SFC CAN BE WRITTEN
   // CURRENT SFC IS GOOD FOR THREADING WITH POWER-OF-TWO NUMBER OF THREADS.
@@ -114,6 +115,7 @@ size_grid( grid_t * g,
           g->sfc[i] = off + ox + nx*( oy + ny*oz );
         }
   } while(0);
+# endif
 }
 
 void join_grid( grid_t * g, int boundary, int rank ) {

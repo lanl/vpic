@@ -29,7 +29,6 @@ delete_grid( grid_t * g ) {
   delete_mp( &(g->mp) );
   FREE_ALIGNED( g->range );
   FREE_ALIGNED( g->neighbor );
-  FREE_ALIGNED( g->sfc );
   FREE( g->boundary );
   FREE( g );
 }

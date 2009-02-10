@@ -2,7 +2,7 @@
 #define HAS_V4_PIPELINE
 #include "spa_private.h"
 
-static void
+void
 center_p_pipeline( center_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
@@ -79,7 +79,7 @@ center_p_pipeline( center_p_pipeline_args_t * args,
 
 using namespace v4;
 
-static void
+void
 center_p_pipeline_v4( center_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {

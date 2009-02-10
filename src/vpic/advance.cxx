@@ -14,7 +14,7 @@ int vpic_simulation::advance(void) {
   int rank;
   species_t *sp;
   emitter_t *emitter;
-  double overhead, err, sort_overhead;
+  double overhead, err;
 
   // Determine if we are done ... see note below why this is done here
 
@@ -33,18 +33,16 @@ int vpic_simulation::advance(void) {
   LIST_FOR_EACH(sp,species_list) {
     if( sp->sort_interval>0 && step%sp->sort_interval==0 ) {
       if( rank==0 ) MESSAGE(("Performance sorting \"%s\".",sp->name));
-	  sort_overhead = mp_wtime();
+      p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
       sort_p( sp, grid );
-	  s_time += mp_wtime() - sort_overhead;
+      s_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
     } 
     sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
                         accumulator, interpolator, grid );
   }
   if( species_list!=NULL ) reduce_accumulators( accumulator, grid );
 
-  p_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and
@@ -56,9 +54,7 @@ int vpic_simulation::advance(void) {
     (emitter->emission_model)( emitter, interpolator, field_advance->f, accumulator, field_advance->g, rng );
   user_particle_injection();
 
-  u_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // At this point, most particle positions are at r_1 and u_{1/2}. Particles
   // that had boundary interactions are now on the guard list. Process the
@@ -85,9 +81,7 @@ int vpic_simulation::advance(void) {
     unload_accumulator( field_advance->f, accumulator, field_advance->g );
   field_advance->method->synchronize_jf( field_advance->f, field_advance->g );
 
-  g_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  g_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // At this point, the particle currents are known at jf_{1/2}.
   // Let the user add their own current contributions. It is the users
@@ -98,9 +92,7 @@ int vpic_simulation::advance(void) {
 
   user_current_injection();
 
-  u_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // Half advance the magnetic field from B_0 to B_{1/2}
 
@@ -110,9 +102,7 @@ int vpic_simulation::advance(void) {
 
   field_advance->method->advance_e( field_advance->f, field_advance->m, field_advance->g );
 
-  f_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  f_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // Let the user add their own contributions to the electric field. It is the
   // users responsibility to insure injected electric fields are consistent
@@ -120,9 +110,7 @@ int vpic_simulation::advance(void) {
 
   user_field_injection();
 
-  u_time += mp_time00(grid->mp) - overhead;
-
-  overhead = mp_time00(grid->mp);
+  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // Half advance the magnetic field from B_{1/2} to B_1
 
@@ -179,9 +167,9 @@ int vpic_simulation::advance(void) {
 
   if( species_list!=NULL ) load_interpolator( interpolator, field_advance->f, field_advance->g );
 
-  step++;
-
   f_time += mp_time00(grid->mp) - overhead;
+
+  step++;
 
   // Print out status
 
@@ -189,7 +177,7 @@ int vpic_simulation::advance(void) {
     if(rank==0)
       MESSAGE(("Completed step %i of %i (p=%.2e,s=%.2e,g=%.2e,f=%.2e,u=%.2e)",
                step, num_step, p_time-s_time, s_time, g_time, f_time, u_time));
-    p_time = g_time = f_time = u_time = 0;
+    p_time = s_time = g_time = f_time = u_time = 0;
   }
 
   overhead = mp_time00(grid->mp);

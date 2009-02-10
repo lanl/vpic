@@ -2,7 +2,7 @@
 #define HAS_V4_PIPELINE
 #include "spa_private.h"
 
-static void
+void
 energy_p_pipeline( energy_p_pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
@@ -56,7 +56,7 @@ energy_p_pipeline( energy_p_pipeline_args_t * args,
 
 using namespace v4;
 
-static void
+void
 energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
@@ -130,7 +130,7 @@ energy_p( const particle_t     * ALIGNED(128) p0,
   DECLARE_ALIGNED_ARRAY( energy_p_pipeline_args_t, 128, args, 1 );
   DECLARE_ALIGNED_ARRAY( double, 128, en, MAX_PIPELINE+1 );
   double local, global;
-  uint32_t rank;
+  int rank;
 
   // FIXME: p0 NULL checking
   if( np<0     ) ERROR(("Bad number of particles"));

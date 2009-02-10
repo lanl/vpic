@@ -1,20 +1,9 @@
 #ifndef _pipelines_h_
 #define _pipelines_h_
 
-#include <util_base.h>
-
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-// FIXME: Should CELL_SPU_BUILDs include this (and if so, under what
-// conditions)?
-#include <libspe2.h> // For spe_program_handle_t
-#endif
+#include "../util_base.h"
 
 enum { MAX_PIPELINE = 16 };
-
-#if (defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)) \
-	|| defined(CELL_SPU_BUILD)
-	static const uint32_t COMPLETE = 2112;
-#endif
 
 #if !defined(CELL_SPU_BUILD)
 // FIXME: Should all these really be protected from a CELL_SPU_BUILD?
@@ -25,24 +14,15 @@ enum { MAX_PIPELINE = 16 };
 
 typedef void
 (*pipeline_func_t)( void * args,
-                    uint32_t pipeline_rank,
-                    uint32_t n_pipeline );
-
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-
-#define register_function(name) \
-	extern uint32_t root_segment_##name; \
-	uint64_t name##_expand_addr = (uint64_t)(root_segment_##name); \
-	pipeline_func_t name = (pipeline_func_t)(name##_expand_addr)
-
-#endif // THREADED BUILD
+                    int pipeline_rank,
+                    int n_pipeline );
 
 typedef struct pipeline_dispatcher {
 
   // n_pipelines indicates the number of pipelines currently running.
   // Technically, this should be read only for users!
 
-  uint32_t n_pipeline;
+  int n_pipeline;
 
   // boot creates the number of pipelines requested.  Generally, this
   // is number of cores on a node if using symmetric multiprocessing
@@ -80,7 +60,7 @@ typedef struct pipeline_dispatcher {
   void
   (*dispatch)( pipeline_func_t pipeline,
                void * args,
-               uint32_t size_args );
+               int size_args );
 
   // wait waits for the previous dispatch to complete.
 

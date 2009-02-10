@@ -98,7 +98,7 @@ function configure_autoconf {
 	echo "running make clean"
 	make clean
 	echo "running make"
-	make -j2
+	make -j4
 } # configure_autoconf
 
 #-------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ function configure_imake {
 	rm Makefile
 	imake -DMACHINE=machine/$machine_file
 	gmake clean
-	gmake -j2 all
+	gmake -j4 all
 } # configure_imake
 
 ################################################################################

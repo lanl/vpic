@@ -150,12 +150,6 @@ typedef struct grid {
                           //   rangeh = range[rank+1]-1.
                           // Note: rangeh-rangel <~ 2^31 / 6
 
-  int32_t * ALIGNED(128) sfc; // Given a local index of a voxel (on
-                              // 0:(g->nx+2)*(g->ny+2)*(g->nz+2)-1), return
-                              // the space filling curve index of that voxel.
-                              // Used in particle sorting to improve cache
-                              // locality and thread load balance.
- 
   // Enable user-defined boundary handlers
 
   int nb;                 // Number of custom boundary conditions

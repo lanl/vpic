@@ -6,7 +6,7 @@
 #define HAS_SPU_PIPELINE
 #include "spa_private.h"
 
-static void
+void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
                     int n_pipeline ) {
@@ -185,7 +185,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
     defined(HAS_SPU_PIPELINE)
 
-register_function(advance_p_pipeline_spu);
+// SPU pipeline is defined in a different compilation unit
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
@@ -195,7 +195,7 @@ using namespace v4;
 // move_p function for it as the normal move_p function will exist
 // only on the PPU.
 
-static void
+void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline ) {
@@ -405,7 +405,7 @@ advance_p( particle_t           * ALIGNED(128) p0,
            accumulator_t        * ALIGNED(128) a0,
            const interpolator_t * ALIGNED(128) f0,
            const grid_t         *              g ) {
-  uint32_t nm, rank;
+  int nm, rank;
 
   if( p0==NULL ) ERROR(("Bad particle array"));
   if( np<0     ) ERROR(("Bad number of particles"));

@@ -47,7 +47,7 @@ void
 clear_accumulators( accumulator_t * ALIGNED(128) a,
                     const grid_t  *              g ) {
   clear_accumulators_pipeline_args_t args[1];
-  uint32_t n;
+  int n;
 
   if( a==NULL ) ERROR(("Invalid accumulator"));
   if( g==NULL ) ERROR(("Invalid grid"));

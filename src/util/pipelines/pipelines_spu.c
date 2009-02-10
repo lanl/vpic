@@ -44,6 +44,9 @@
 #include <pthread.h>
 #include <libspe2.h>
 
+/* Must be same as SPU_COMPLETE in root_segment.c; Neil Peart rules!  */
+#define SPU_COMPLETE ((uint32_t)2112)
+
 static void *
 spu_control_thread( void *_id );
 
@@ -250,7 +253,7 @@ spu_halt( void ) {
  *
  ***************************************************************************/
 
-static void * // LIVES ... NEEDS TO BOOT THE ROOT SEGMENT MAIN
+static void *
 spu_control_thread( void *_this_control_thread ) {
   spu_control_state_t *this_control_thread = _this_control_thread;
   unsigned int entry;
@@ -281,8 +284,8 @@ spu_control_thread( void *_this_control_thread ) {
 static void
 spu_dispatch( pipeline_func_t func,
               void * args,
-              uint32_t sz_args ) {
-  uint32_t rank;
+              int sz_args ) {
+  int rank;
   uint32_t data_hi, data_lo;
 
   if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
@@ -301,33 +304,33 @@ spu_dispatch( pipeline_func_t func,
   for( rank=0; rank<spu.n_pipeline; rank++ ) {
     Done[rank] = 0;
 
-	// Write pipeline to SPEs
-    spe_in_mbox_write(SPU_Control_State[rank].context, &faddr,
-	  1, SPE_MBOX_ANY_NONBLOCKING);
+    // Write pipeline to SPEs
+    spe_in_mbox_write( SPU_Control_State[rank].context, &faddr,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
 
-	// get low and hi bits to send context struct to SPE thread
-	data_hi = ((uint64_t)(((char *)args) + rank*sz_args)) >> 32;
-	data_lo = ((uint64_t)(((char *)args) + rank*sz_args)) & 0xffffffff;
+    // get low and hi bits to send context struct to SPE thread
+    data_hi = ((uint64_t)(((char *)args) + rank*sz_args)) >> 32;
+    data_lo = ((uint64_t)(((char *)args) + rank*sz_args)) & 0xffffffff;
 
-	// Write context struct address to SPE thread
-    spe_in_mbox_write(SPU_Control_State[rank].context, &data_lo,
-	  1, SPE_MBOX_ANY_NONBLOCKING);
-    spe_in_mbox_write(SPU_Control_State[rank].context, &data_hi,
-	  1, SPE_MBOX_ANY_NONBLOCKING);
+    // Write context struct address to SPE thread
+    spe_in_mbox_write( SPU_Control_State[rank].context, &data_lo,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
+    spe_in_mbox_write( SPU_Control_State[rank].context, &data_hi,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
 
-	// Write pipeline_rank and n_pipeline to SPE thread
-    spe_in_mbox_write(SPU_Control_State[rank].context, &rank,
-	  1, SPE_MBOX_ANY_NONBLOCKING);
-    spe_in_mbox_write(SPU_Control_State[rank].context, &spu.n_pipeline,
-	  1, SPE_MBOX_ANY_NONBLOCKING);
+    // Write pipeline_rank and n_pipeline to SPE thread
+    spe_in_mbox_write( SPU_Control_State[rank].context, &rank,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
+    spe_in_mbox_write( SPU_Control_State[rank].context, &spu.n_pipeline,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
   }
 
   Busy = 1;
 }
                  
-static void // FIXME: POLLS MBOX FROM EACH SPE FOR COMPLETION
+static void
 spu_wait( void ) {
-  uint32_t rank;
+  int rank;
   uint32_t msg;
 
   if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
@@ -338,30 +341,23 @@ spu_wait( void ) {
   if( !Busy ) ERROR(( "Pipelines are not busy!" ));
 
   for(rank=0; rank<spu.n_pipeline; rank++) {
-    if(Done[rank]) {
-	  while(spe_out_mbox_status(SPU_Control_State[rank].context) <=0);
-
-	  spe_out_mbox_read(SPU_Control_State[rank].context, &msg, 1);
-
-	  if(msg != COMPLETE) {
-	    ERROR(("Bad SPE synchronization message"));
-	  } // if
-
-	  Done[rank] = 1;
-	} // if
+    if( !Done[rank] ) {
+      while( spe_out_mbox_status(SPU_Control_State[rank].context)<=0 );
+      spe_out_mbox_read(SPU_Control_State[rank].context, &msg, 1);
+      if( msg!=SPU_COMPLETE ) ERROR(("Bad SPE synchronization message"));
+      Done[rank] = 1;
+    } // if
   } // for
 
   Busy = 0;
 }
-
-//typedef void (*dispatcher_func_t)( pipeline_func_t, void *, int );
 
 pipeline_dispatcher_t spu = {
   0,            // n_pipeline
   spu_boot,     // boot
   spu_halt,     // halt
   spu_dispatch, // dispatch
-  spu_wait     // wait
+  spu_wait      // wait
 };
 
 #endif

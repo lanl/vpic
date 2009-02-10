@@ -433,12 +433,6 @@ vpic_simulation::dump_restart( const char *fbase,
   WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, fileIO );
   fileIO.write( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
  
-  dim[0] = grid->nx+2;
-  dim[1] = grid->ny+2;
-  dim[2] = grid->nz+2;
-  WRITE_ARRAY_HEADER( grid->sfc, 3, dim, fileIO );
-  fileIO.write( grid->sfc, dim[0]*dim[1]*dim[2] );
- 
   // fields
  
   // FIXME: THIS IS NOT COMPLETELY ROBUST.  IT IDEALLY WOULD BE BASED
@@ -698,14 +692,6 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[3],fileIO); ABORT(dim[3]!=grid->nz+2);
   MALLOC_ALIGNED( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3], 128 );
   fileIO.read( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
- 
-  READ(int,size,  fileIO); ABORT(size!=sizeof(grid->sfc[0]) );
-  READ(int,ndim,  fileIO); ABORT(ndim!=3           );
-  READ(int,dim[0],fileIO); ABORT(dim[0]!=grid->nx+2);
-  READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->ny+2);
-  READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->nz+2);
-  MALLOC_ALIGNED( grid->sfc, dim[0]*dim[1]*dim[2], 128 );
-  fileIO.read( grid->sfc, dim[0]*dim[1]*dim[2] );
  
   grid->rangel = grid->range[rank];
   grid->rangeh = grid->range[rank+1]-1;
@@ -1075,8 +1061,7 @@ void vpic_simulation::global_header(const char * base,
 				std::min(dumpParams[i]->output_vars.bitsum(hydro_indeces,
 				total_hydro_groups), total_hydro_groups);
 
-			sprintf(species_comment, "Species(%ld) data information",
-				uint64_t(i));
+			sprintf(species_comment, "Species(%d) data information", (int)i);
 			print_hashed_comment(fileIO, species_comment);
 			fileIO.print("SPECIES_DATA_DIRECTORY %s\n",
 				dumpParams[i]->baseDir);

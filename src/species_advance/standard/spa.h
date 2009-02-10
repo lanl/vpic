@@ -54,14 +54,6 @@ move_p( particle_t       * ALIGNED(128) p0,  // Particle array
 
 // In advance_p.c
 
-// added for faster SPU dispatch
-void
-advance_p_initialize();
-
-// added for faster SPU dispatch
-void
-advance_p_finalize();
-
 int // Number of particles had a boundary interaction
 advance_p( particle_t           * ALIGNED(128) p0,
            int                                 np,

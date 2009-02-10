@@ -81,6 +81,8 @@ typedef struct species {
   /**/                                //          sp->partition[ j+1 ] ]
   /**/                                // are all the particles in voxel
   /**/                                // with space filling curve index j.
+  /**/                                // Note: SFC NOT IN USE RIGHT NOW THUS
+  /**/                                // g->sfc[i]=i ABOVE.
   struct species *next;               // Next species in the list
   char name[1];                       // Name is resized on allocation
 } species_t;

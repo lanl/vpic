@@ -488,7 +488,7 @@ pipeline_mgr( void *_pipeline ) {
 static void
 thread_dispatch( pipeline_func_t func,
                  void * args,
-                 uint32_t sz_args ) {
+                 int sz_args ) {
   int id;
 
   if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));

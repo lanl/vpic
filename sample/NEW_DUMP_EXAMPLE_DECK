@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------------
  * SC08 Demo Deck
- * mkdir rundata fields hydro restart particle rate
+ * tar cvjf data.bz2 global.vpc fields ehydro Hhydro
 ------------------------------------------------------------------------------*/
 
 begin_globals {

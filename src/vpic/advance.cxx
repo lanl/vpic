@@ -44,6 +44,22 @@ int vpic_simulation::advance(void) {
 
   p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
+#if 0
+  // BJA - for particle collisions (commented out to not collide with Kevin's
+  //       and Ben's work on overlays). 
+  // 
+  // Collisions need to be done between sort and particle advance
+  // Tally collision time as user time since collision models live in the 
+  // input deck.   Collisions presently are implemented in user input 
+  // decks; count their time against "user" time. 
+  // 
+  // FIXME:  A real interface for collisions? 
+  // FIXME:  Give collisions their own time.  
+  user_particle_collisions();
+
+  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+#endif 
+
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and
   // because advance_p requires an empty guard list, particle injection must

@@ -1,6 +1,6 @@
 #define IN_spa
 #define HAS_SPU_PIPELINE
-#include <spa_private.h>
+#include "../spa_private.h"
 
 #if 0
 
@@ -12,7 +12,10 @@
 
 /* See ../sort_p.c for details. */
 #define V2P( v, P, V ) ( ((int64_t)(v)*(int64_t)(P)) / (int64_t)(V) )
-#define P2V( p, P, V ) ( ((int64_t)(p)*(int64_t)(V) + (int64_t)((P)-1)) / (int64_t)(P) )
+#define P2V( p, P, V ) ( ((int64_t)(p)*(int64_t)(V) + (int64_t)((P)-1)) / \
+                         (int64_t)(P) )
+
+#define N_BLOCK 512
 
 void
 _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
@@ -23,81 +26,71 @@ _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   mfc_write_tag_mask( 1 );
   mfc_read_tag_status_all();
 
-  /* Determine our workload */
-
-  /*const*/ double n_target = (double)args->np / (double)n_pipeline;
-  /**/      int i  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  /*const*/ int i1 = (int)( n_target*(double)(pipeline_rank+1) + 0.5 );
+  /*const*/ double n_target = (double)(args->np/4) / (double)n_pipeline;
+  /**/      int i  = 4*(int)( n_target*(double) pipeline_rank    + 0.5 );
+  /*const*/ int i1 = 4*(int)( n_target*(double)(pipeline_rank+1) + 0.5 );
   /*const*/ int n_voxel = args->n_voxel;
   MEM_PTR( const particle_t, 128 ) p_src = args->p;
   int p;
+  int * __restrict count = args->coarse_partition + pipeline_rank*n_pipeline;
 
-  /* _coarse_partition mirrors coarse_partition in memory (including
-     alignment restrictions for support of small DMA transfers).
-     count points to where this pipeline should accumulate counts in
-     the mirror (which has the same offset locally as where this
-     pipeline should store counts in main memory). */
-  DECLARE_ALIGNED_ARRAY( int, 128, _coarse_partition,
-                         MAX_PIPELINE*MAX_PIPELINE+1 );
-  int * __restrict count =
-    _coarse_partition + sizeof(int)*pipeline_rank*n_pipeline;
+  int b, n, nb, n_block[2];
+  const particle_t * __restrict ALIGNED(128) p_block;
+  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_buffer, 2*N_BLOCK );
 
-  int channel, n_channel;
-
-  /* _voxel holds voxel data loaded from particles assigned to this
-     pipeline.  It is overallocated to support restrictions on small
-     DMA transfers.  voxel is syntactic sugar to access this. */
-  DECLARE_ALIGNED_ARRAY( int32_t, 128, _voxel, 128 );
-# define voxel(n) _voxel[4*(n)+3]
-
-  /* Clear local coarse count */
+  /* Clear local count */
   for( p=0; p<n_pipeline; p++ ) count[p] = 0;
 
   /* Do local coarse count */
-  while( i<i1 ) {
+  /* FIXME: THIS IS 8X THEORETICALLY BANDWIDTH INEFFICIENT.  BUT,
+     UNKNOWN IF PRACTICALLY IT COULD BE IMPROVED MUCH WITH FINE
+     GRAINED DMA TRANSFERS. */
 
-    /* Fetch voxel indexes of the next 32 (or so) particles */
-    /* FIXME: WOULD IT BE BETTER TO DOUBLE BUFFER THIS? */
-    /* FIXME: WOULD IT BE BETTER TO WASTE BANDWIDTH AND USE FEWER DMA
-       TRANSFERS? */
+  /* Particles are assigned to pipelines in blocks of 4.  The last
+     pipeline handles stragglers. */
+  if( pipeline_rank==n_pipeline-1 ) i1 = args->np;
 
-    n_channel = i1 - i;
-    if( n_channel>32 ) n_channel = 32;
-    for( channel=0; channel<n_channel; channel++ ) /* FIXME: Duff-able? */
-      mfc_get( &voxel(channel),
-               (p_src+sizeof(particle_t)*i+12) + sizeof(particle_t)*channel,
-               sizeof(int32_t), channel, 0, 0 ); /* FIXME: Hoist invariant */
-    mfc_write_tag_mask( 0xffffffff ); /* FIXME: Need to do this every time? */
-    mfc_read_tag_status_all();
+# define READ_PBLOCK( b ) do {                                          \
+    nb = i1 - i;                                                        \
+    if( nb>N_BLOCK ) nb = N_BLOCK;                                      \
+    if( nb ) mfc_get( p_buffer + N_BLOCK*(b),                           \
+                      p_src + i*sizeof(particle_t),                     \
+                      nb*sizeof(particle_t),                            \
+                      (b), 0, 0 );                                      \
+    i += nb;                                                            \
+    n_block[b] = nb;                                                    \
+  } while(0)
+  
+# define PROCESS_PBLOCK(b) do {                                         \
+    nb = n_block[b];                                                    \
+    if( nb ) {                                                          \
+      mfc_write_tag_mask( 1<<b );                                       \
+      mfc_read_tag_status_all();                                        \
+      p_block = p_buffer + N_BLOCK*(b);                                 \
+      for( n=0; n<nb; n++ )                                             \
+        count[ V2P( p_block[n].i, n_pipeline, n_voxel ) ]++;            \
+    }                                                                   \
+  } while(0)
 
-    /* Update counts */
-
-    for( channel=0; channel<n_channel; channel++ )
-      count[ V2P( voxel(channel), n_pipeline, n_voxel ) ]++;
-
-    /* Move to the next batch of particles */
-    i += n_channel;
+  READ_PBLOCK( 0 );
+  for( b=0; n_block[b]; b=!b ) {
+    READ_PBLOCK( !b );
+    PROCESS_PBLOCK( b );
   }
 
-  /* Copy local coarse count to output */
-  /* FIXME: WOULD IT BE BETTER TO WASTE BANDWIDTH AND USE FEWER DMA
-     TRANSFERS? */
-
-  for( p=0; p<n_pipeline; p++ ) {
-    /* Wait for any pending transactions on this channel to complete
-       and then write out the count */
-    /* FIXME: IS THIS WAITING ON PENDING NECESSARY? */
-    channel = p & 31;
-    mfc_write_tag_mask( (1<<channel) );
+  /* Copy local coarse counts to the output */
+  argp += ( (uint64_t)args->coarse_partition - (uint64_t)args +
+            sizeof(int)*pipeline_rank*n_pipeline );
+  for( p=0; p<n_pipeline; p++) {
+    mfc_write_tag_mask( 1 << (p&31) );
     mfc_read_tag_status_all();
-    mfc_put( &count[p],
-             ( args->coarse_partition +
-               sizeof(int)*pipeline_rank*n_pipeline ) + sizeof(int)*p,
-             sizeof(int), channel, 0, 0 ); /* FIXME: Host invariant */
+    mfc_put( &count[p], argp + sizeof(int)*p, sizeof(int), p&31, 0, 0 );
   }
+
+  /* Make sure all DMA transfers have completed before returning */
+  mfc_write_task_mask( 0xffffffff );
+  mfc_read_tag_status_all();
 }
-
-/* FIXME: Assign in blocks of 4 particles */
 
 void
 _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
@@ -108,81 +101,62 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   mfc_write_tag_mask( 1 );
   mfc_read_tag_status_all();
 
-  /* Determine our workload */
-
-  /*const*/ double n_target = (double)args->np / (double)n_pipeline;
-  /**/      int i  = (int)( n_target*(double) pipeline_rank    + 0.5 );
-  /*const*/ int i1 = (int)( n_target*(double)(pipeline_rank+1) + 0.5 );
+  /*const*/ double n_target = (double)(args->np/4) / (double)n_pipeline;
+  /**/      int i  = 4*(int)( n_target*(double) pipeline_rank    + 0.5 );
+  /*const*/ int i1 = 4*(int)( n_target*(double)(pipeline_rank+1) + 0.5 );
   /*const*/ int n_voxel = args->n_voxel;
   MEM_PTR( const particle_t, 128 ) p_src = args->p;
   MEM_PTR(       particle_t, 128 ) p_dst = args->aux_p;
   int j, p;
+  int * __restrict next;
 
-  /* _coarse_partition mirrors coarse_partition in memory (including
-     alignment restrictions for support of small DMA transfers).  next
-     points to where this pipeline should load initial next values in
-     the mirror (which has the same offset locally as where this
-     pipeline load initial next values in main memory). */
-  DECLARE_ALIGNED_ARRAY( int, 128, _coarse_partition,
-                         MAX_PIPELINE*MAX_PIPELINE+1 );
-  int * __restrict next =
-    _coarse_partition + sizeof(int)*pipeline_rank*n_pipeline;
+  int channel, b, n, nb, n_block[2];
+  const particle_t * __restrict ALIGNED(128) p_block;
+  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_buffer, 2*N_BLOCK );
 
-  int channel, n_channel;
-
-  /* Copy this pipeline's partitioning into next */
-  /* FIXME: WOULD IT BE BETTER TO WASTE BANDWIDTH AND USE FEWER DMA
-     TRANSFERS? */
-
-  for( p=0; p<n_pipeline; p++ ) {
-    /* Wait for any pending transactions on this channel to complete
-       and then write out the count */
-    /* FIXME: IS THIS WAITING ON PENDING NECESSARY? */
-    channel = p & 31;
-    mfc_write_tag_mask( (1<<channel) );
-    mfc_read_tag_status_all();
-    mfc_get( &next[p],
-             ( args->coarse_partition +
-               sizeof(int)*pipeline_rank*n_pipeline ) + sizeof(int)*p,
-             sizeof(int), channel, 0, 0 ); /* FIXME: Host invariant */
-  }
+  /* Copy local partitioning to next array */
+  next = args->coarse_partition + pipeline_rank*n_pipeline;
 
   /* Copy particles into aux array in coarse sorted order */
 
-  channel = 2;
+  /* Particles are assigned to pipelines in blocks of 4.  The last
+     pipeline handles stragglers. */
+  if( pipeline_rank==n_pipeline-1 ) i1 = args->np;
 
 # define READ_PBLOCK( b ) do {                                          \
-    N = i1 - i;                                                         \
-    if( N>512 ) N = 512;                                                \
-    if( N ) mfc_get( p_buffer + 512*(b),                                \
-                     p_src + i*sizeof(particle_t),                      \
-                     N*sizeof(particle_t),                              \
-                     (b), 0, 0 );                                       \
-    i += N;                                                             \
-    n_block[b] = N;                                                     \
+    nb = i1 - i;                                                        \
+    if( nb>N_BLOCK ) nb = N_BLOCK;                                      \
+    if( nb ) mfc_get( p_buffer + N_BLOCK*(b),                           \
+                      p_src + i*sizeof(particle_t),                     \
+                      nb*sizeof(particle_t),                            \
+                      (b), 0, 0 );                                      \
+    i += nb;                                                            \
+    n_block[b] = nb;                                                    \
   } while(0)
   
 # define PROCESS_PBLOCK(b) do {                                         \
-    N = n_block[b];                                                     \
-    if( N ) {                                                           \
+    nb = n_block[b];                                                    \
+    if( nb ) {                                                          \
       mfc_write_tag_mask( 1<<b );                                       \
       mfc_read_tag_status_all();                                        \
-      p_block = p_buffer + 512*(b);                                     \
-      for( n=0; n<N; n++ ) {                                            \
+      p_block = p_buffer + N_BLOCK*(b);                                 \
+      for( n=0; n<nb; n++ ) {                                           \
+        p = V2P( p_block[n].i, n_pipeline, n_voxel );                   \
+        j = next[p]++;                                                  \
+        /* FIXME: IS THE WAIT NECESSARY? */                             \
         mfc_write_task_mask( 1<<channel );                              \
         mfc_read_tag_status_all();                                      \
-        mfc_put( &p_block[n],                                           \
-                 p_dst + sizeof(particle_t)*(next[ V2P( p_block[n].i ) ]++), \
-                 sizeof(particle_t),                                    \
-                 channel, 0, 0 );                                       \
+        mfc_put( &p_block[n], p_dst + j*sizeof(particle_t),             \
+                 sizeof(particle_t), channel, 0, 0 );                   \
         channel++; if( channel>31 ) channel = 2;                        \
       }                                                                 \
     }                                                                   \
   } while(0)
 
+  channel = 2;
   READ_PBLOCK( 0 );
-  for( b=0; n_block[b]; b=next[b] ) {
-    READ_PBLOCK( next[b] );
+  for( b=0; n_block[b]; b=!b ) {
+    READ_PBLOCK( !b );
     PROCESS_PBLOCK( b );
   }
 
@@ -190,6 +164,126 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   mfc_write_task_mask( 0xffffffff );
   mfc_read_tag_status_all();
 }
+
+#define CLEAR( n ) do {                                                 \
+    mfc_write_tag_mask( (1<<channel) );                                 \
+    mfc_read_tag_status_all();                                          \
+    mfc_put( zeros, d + i*sizeof(int), n*sizeof(int), channel, 0, 0 );  \
+    channel++;                                                          \
+    if( channel>31 ) channel = 0;                                       \
+    i += n;                                                             \
+  } while(0)
+#define MAX_LS_ZEROS 4096 /* 16K chunks, maximum */
+
+static void
+clear_range( MEM_PTR( int, 128 ) d,
+             int i,
+             int i1 ) {
+  int n, n_bulk, channel = 0;
+  DECLARE_ALIGNED_ARRAY( int, 128, zeros, MAX_LS_ZEROS );
+
+  /* Create a buffer of zeros on the local store for clearing the memory */
+  memset( zeros, 0,
+          sizeof(int)*( (i1-i)<MAX_LS_ZEROS ? (i1-i) : MAX_LS_ZEROS ) );
+
+  /* Clear until i is aligned at 16 bytes */
+  while( i&3 && i<i1 ) CLEAR(1);
+ 
+  /* Clear the bulk as fast as possible */
+  n_bulk = (i1-i)&(~3); /* Number of integers we can clear in 16 byte
+                           aligned chunks */
+  while( n_bulk ) {
+    n = n_bulk;
+    if( n>N_LS_ZEROS ) n = N_LS_ZEROS;
+    CLEAR(n);
+    n_bulk -= n;
+  }
+
+  /* Clear non aligned stragglers */
+  while( i<i1 ) CLEAR(1);
+
+  /* Make sure all DMA transfers have completed before returning */
+  mfc_write_task_mask( 0xffffffff );
+  mfc_read_tag_status_all();
+}
+
+#undef MAX_LS_ZEROS
+#undef CLEAR
+
+// sizeof(what) better be 1,2,4,8 or a multiple of 16.
+// FIXME: WILL THIS RUN AFOUL OF ALIGNMENT RESTRICTIONS?
+
+#define LOAD( what, ls, mem, index )                                    \
+  mfc_get( (ls), (mem) + (index)*sizeof(what), sizeof(what), 0, 0 );    \
+  mfc_write_tag_mask( 1 );                                              \
+  mfc_read_tag_status_all()
+
+#define STORE( what, ls, pmem, index )                                  \
+  mfc_put( (ls), (mem) + (index)*sizeof(what), sizeof(what), 0, 0 );    \
+  mfc_write_tag_mask( 1 );                                              \
+  mfc_read_tag_status_all()
+
+void
+_SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
+                              int pipeline_rank,
+                              int n_pipeline ) {
+  DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
+  mfc_get( args, argp, sizeof(*args), 0, 0, 0 );
+  mfc_write_tag_mask( 1 );
+  mfc_read_tag_status_all();
+
+  /* This pipeline is to sort particles in voxels [v0,v1). */
+  /*const*/ int n_voxel = args->n_voxel;
+  /*const*/ int v0 = P2V( pipeline_rank,   n_pipeline, n_voxel );
+  /*const*/ int v1 = P2V( pipeline_rank+1, n_pipeline, n_voxel );
+  
+  /* Particles in this voxel range in [i0,i1) in the aux array */
+  /*const*/ int i0 = args->coarse_partition[pipeline_rank  ];
+  /*const*/ int i1 = args->coarse_partition[pipeline_rank+1];
+  MEM_PTR( const particle_t, 128 ) p_src = args->aux_p;
+  MEM_PTR(       particle_t, 128 ) p_dst = args->p;
+
+  MEM_PTR( int, 128 ) partition = args->partition;
+  MEM_PTR( int, 128 ) next      = args->next;
+  
+  int i, j, v, sum, count;
+
+  particle_t p_i; /* FIXME: ALIGNMENT? */
+  int next_v; /* FIXME: ALIGNMENT? */
+  int partition_v;
+
+  /* Clear fine grained count */
+  clear_range( next, v0, v1 );
+
+  /* Fine grained count
+     FIXME: THIS DESPARATELY NEEDS CACHING AND BUFFERING */
+  for( i=i0; i<i1; i++ ) {
+    LOAD( particle_t, &p_i, p_src, i ); v = p_i.i;
+    LOAD( int, &next_v, next, v ); next_v++; STORE( int, &next_v, next, v );
+  }
+
+  /* Convert the fine grained count into a partitioning
+     FIXME: THIS DESPARATELY NEEDS BUFFERING */
+  sum = i0;
+  for( v=v0; v<v1; v++ ) {
+    LOAD( int, &next_v, next, v ); count = next_v;
+    next_v      = sum; STORE( int, &next_v,      next,      v );
+    partition_v = sum; STORE( int, &partition_v, partition, v );
+    sum += count;
+  }
+  partition_v = sum; STORE( int, &partition_v, partition, v );
+
+  /* Local fine grained sort */
+  /* FIXME: THIS DESPARATELY NEEDS CACHING AND BUFFERING */
+  for( i=i0; i<i1; i++ ) {
+    LOAD( particle_t, &p_i, p_src, i ); v = p_i.i;
+    LOAD( int, &next_v, next, v ); j=next_v++; STORE( int, &next_v, next, v );
+    STORE( particle_t, &p_i, p_dst, j );
+  }
+}
+
+#undef STORE
+#undef LOAD
 
 #else
 

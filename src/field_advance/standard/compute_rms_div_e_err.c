@@ -9,9 +9,6 @@ typedef struct pipeline_args {
   double err[MAX_PIPELINE+1];
 } pipeline_args_t;
 
-#define USE_PIPELINES 1
-
-#if defined(USE_PIPELINES)
 static void
 pipeline( pipeline_args_t * args,
           int pipeline_rank,
@@ -51,15 +48,12 @@ pipeline( pipeline_args_t * args,
 
   args->err[pipeline_rank] = err;
 }
-#endif // USE_PIPELINES
 
 double
 compute_rms_div_e_err( field_t      * ALIGNED(128) f,
                        const grid_t *              g ) {
-#if defined(USE_PIPELINES)
   pipeline_args_t args[1];
   int p;
-#endif // USE_PIPELINES
 
   double err, local[2], global[2];
   int x, y, z, nx, ny, nz;
@@ -70,7 +64,7 @@ compute_rms_div_e_err( field_t      * ALIGNED(128) f,
 
   err = 0;
 
-#if !defined(USE_PIPELINES)
+#if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       for( x=2; x<=nx; x++ ) {
@@ -81,14 +75,12 @@ compute_rms_div_e_err( field_t      * ALIGNED(128) f,
   }
 # endif
   
-#if defined(USE_PIPELINES)
   // Have the pipelines accumulate the interior of the local domain
   // (the host handled stragglers in the interior).
 
   args->f = f;
   args->g = g;
   EXEC_PIPELINES( pipeline, args, 0 );
-#endif // USE_PIPELINES
 
   // Have the host accumulate the exterior of the local domain
 
@@ -137,7 +129,7 @@ compute_rms_div_e_err( field_t      * ALIGNED(128) f,
 
   for( z=2; z<=nz; z++ ) {
     f0 = &f(   1,   1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
-f0 = &f(nx+1,   1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
+    f0 = &f(nx+1,   1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
     f0 = &f(   1,ny+1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
     f0 = &f(nx+1,ny+1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err;
   }
@@ -153,13 +145,11 @@ f0 = &f(nx+1,   1,   z); err += 0.25*(double)f0->div_e_err*(double)f0->div_e_err
   f0 = &f(   1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   f0 = &f(nx+1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   
-#if defined(USE_PIPELINES)
   // Reduce the results from the host and pipelines
 
   WAIT_PIPELINES();
 
   for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
-#endif
 
   // Reduce the results from all nodes
 

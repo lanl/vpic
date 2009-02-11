@@ -6,7 +6,6 @@
 #endif
 
 #include "spa.h"
-//#include "pipeline_control.h"
 
 #define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
                   ( defined(CELL_PPU_BUILD)    &&   \
@@ -22,14 +21,14 @@
 
 #   define EXEC_PIPELINES(name,args,sz_args)                      \
     spu.dispatch( (pipeline_func_t)( (size_t)                     \
-		( root_segment_##name##_pipeline_spu) ), args, sz_args ); \
+        ( root_segment_##name##_pipeline_spu) ), args, sz_args ); \
     name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 
 #   define WAIT_PIPELINES() spu.wait()
 
 #   define N_PIPELINE spu.n_pipeline
 
-#   define PROTOTYPE_PIPELINE( name, args_t ) \
+#   define PROTOTYPE_PIPELINE( name, args_t )                      \
     extern uint32_t root_segment_##name##_pipeline_spu;            \
                                                                    \
     void                                                           \
@@ -201,13 +200,13 @@ typedef struct sort_p_pipeline_args {
 
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:np-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:np-1)
-  MEM_PTR( int,        128 ) coarse_partition; // (0:N_PIPELINE^2)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
   MEM_PTR( int,        128 ) next;             // Aux partitioning (0:n_voxel)
   int np;      // Number of particles
   int n_voxel; // Number of local voxels (including ghost voxels)
+  int coarse_partition[ MAX_PIPELINE*MAX_PIPELINE + 1 ];
 
-  PAD_STRUCT( 5*SIZEOF_MEM_PTR + 2*sizeof(int) )
+  PAD_STRUCT( 5*SIZEOF_MEM_PTR + (2+MAX_PIPELINE*MAX_PIPELINE+1)*sizeof(int) )
 
 } sort_p_pipeline_args_t;
 

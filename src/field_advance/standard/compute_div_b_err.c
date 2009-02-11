@@ -43,7 +43,7 @@ pipeline( pipeline_args_t * args,
 
   for( ; n_voxel; n_voxel-- ) {
     f0->div_b_err = px*( fx->cbx - f0->cbx ) +
-	            py*( fy->cby - f0->cby ) +
+                    py*( fy->cby - f0->cby ) +
                     pz*( fz->cbz - f0->cbz );
     f0++; fx++; fy++; fz++;
     

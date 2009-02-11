@@ -112,16 +112,16 @@ clean_div_b( field_t      * ALIGNED(128) f,
   }
 # endif
 
-  args->f = f;
-  args->g = g;
-
-  EXEC_PIPELINES( pipeline, args, 0 );
-  
   // Begin setting derr ghosts
   begin_remote_ghost_div_b( f, g );
   local_ghost_div_b( f, g);
 
-  // Do left over bx
+  // Have pipelines do interior of the local domain
+  args->f = f;
+  args->g = g;
+  EXEC_PIPELINES( pipeline, args, 0 );
+  
+  // Do left over interior bx
   for( y=1; y<=ny; y++ ) {
     f0 = &f(2,y,1);
     fx = &f(1,y,1);
@@ -141,7 +141,7 @@ clean_div_b( field_t      * ALIGNED(128) f,
     }
   }
 
-  // Left over by
+  // Left over interior by
   for( z=1; z<=nz; z++ ) {
     for( y=2; y<=ny; y++ ) {
       f0 = &f(1,y,  z);
@@ -159,7 +159,7 @@ clean_div_b( field_t      * ALIGNED(128) f,
     }
   }
 
-  // Left over bz
+  // Left over interior bz
   for( z=2; z<=nz; z++ ) {
     f0 = &f(1,1,z);
     fz = &f(1,1,z-1);

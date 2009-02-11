@@ -1,6 +1,6 @@
 #define IN_spa
-#define HAS_SPU_PIPELINE // WHY???  THIS IS SPE CODE
-#include <spa_private.h>
+#define HAS_SPU_PIPELINE /* Make sure header gets assembled correctly */
+#include "../spa_private.h"
 
 #if 0
 
@@ -406,6 +406,8 @@ voxel_cache_writeback( void ) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Computational kernel
+
+// FIXME: WHAT SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION?
 
 static __inline int                                                     // Return number of movers used
 advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Particle array
@@ -915,6 +917,7 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
 // main (workload distribution and data buffering)
 
 // FIXME: Some util functionality is not compiled for the spu
+/* FIXME: WHICH SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION? */
 
 void
 _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
@@ -1066,7 +1069,7 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
     }                                                                   \
   } while(0)
   
-# define END_PUT_PBLOCK(buffer) do {                                 \
+# define END_PUT_PBLOCK(buffer) do {                                    \
     uint32_t mask = 0;                                                  \
     if( LIKELY( np_block[buffer]!=0 ) ) mask |= 1 << (2*(buffer)+0);    \
     if( LIKELY( nm_block[buffer]!=0 ) ) mask |= 1 << (2*(buffer)+1);    \

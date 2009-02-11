@@ -257,7 +257,6 @@ sort_p( species_t * sp,
   int n_voxel    = (g->nx+2)*(g->ny+2)*(g->nz+2);
   int p, q, sum, count;
 
-  DECLARE_ALIGNED_ARRAY( int, 128, coarse_partition, MAX_PIPELINE*MAX_PIPELINE+1 );
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
 
   /* FIXME: TEMPORARY HACK UNTIL SPECIES_ADVANCE API INSTALLED */
@@ -273,13 +272,12 @@ sort_p( species_t * sp,
   }
 
   /* Setup pipeline arguments */
-  args->p                = sp->p;
-  args->aux_p            = (particle_t *)scratch;
-  args->coarse_partition = coarse_partition;
-  args->partition        = sp->partition;
-  args->next             = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
-  args->np               = sp->np;
-  args->n_voxel          = n_voxel;
+  args->p         = sp->p;
+  args->aux_p     = (particle_t *)scratch;
+  args->partition = sp->partition;
+  args->next      = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
+  args->np        = sp->np;
+  args->n_voxel   = n_voxel;
 
   if( n_pipeline>1 ) {
 
@@ -291,8 +289,8 @@ sort_p( species_t * sp,
     sum = 0;
     for( p=0; p<n_pipeline; p++ )
       for( q=0; q<n_pipeline; q++ ) {
-        count = coarse_partition[ p + q*n_pipeline ];
-        coarse_partition[ p+ q*n_pipeline ] = sum;
+        count = args->coarse_partition[ p + q*n_pipeline ];
+        args->coarse_partition[ p+ q*n_pipeline ] = sum;
         sum += count;
       }
     
@@ -301,7 +299,7 @@ sort_p( species_t * sp,
     WAIT_PIPELINES();
     
     /* Do fine grained subsorts */
-    coarse_partition[n_pipeline] = sum; /* Convert coarse partition into
+    args->coarse_partition[n_pipeline] = sum; /* Convert coarse partition into
                                            the particle ranges assigned
                                            to each pipeline */
     EXEC_PIPELINES( subsort, args, 0 );
@@ -312,10 +310,10 @@ sort_p( species_t * sp,
     /* Just do the subsort when single threaded.  We need to hack the
        aux arrays and what not to make it look like coarse sorting was
        done to the subsort pipeline. */
-    args->p                      = (particle_t *)scratch;
-    args->aux_p                  = sp->p;
-    coarse_partition[0]          = 0;
-    coarse_partition[n_pipeline] = sp->np;
+    args->p                            = (particle_t *)scratch;
+    args->aux_p                        = sp->p;
+    args->coarse_partition[0]          = 0;
+    args->coarse_partition[n_pipeline] = sp->np;
     subsort_pipeline( args, 0, 1 );
 
     /* Results ended up in the wrong place as a result of the ugly

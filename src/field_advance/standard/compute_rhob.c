@@ -101,10 +101,16 @@ compute_rhob( field_t                      * ALIGNED(128) f,
   }
 # endif
 
+  // Begin setting normal e ghosts
+
+  begin_remote_ghost_norm_e( f, g );
+  local_ghost_norm_e( f, g );
+
+  // Have the pipelines work on the interior of the local domain
+
   args->f = f;
   args->m = m;
   args->g = g;
-  
   EXEC_PIPELINES( pipeline, args, 0 );
 
   // Have the host work on the exterior of the local domain
@@ -116,17 +122,9 @@ compute_rhob( field_t                      * ALIGNED(128) f,
   py = (ny>1) ? g->eps0*g->rdy : 0;
   pz = (nz>1) ? g->eps0*g->rdz : 0;
 
-  // Begin setting normal e ghosts
-
-  begin_remote_ghost_norm_e( f, g );
-
-  local_ghost_norm_e( f, g );
-
   // Finish setting normal E ghosts
 
   end_remote_ghost_norm_e( f, g );
-
-  // Compute divergence error in exterior
 
   // z faces, x edges, y edges and all corners
   for( y=1; y<=ny+1; y++ ) {

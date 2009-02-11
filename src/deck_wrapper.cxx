@@ -32,6 +32,10 @@
 #define begin_field_injection \
   void vpic_simulation::user_field_injection(void)
 
+// BJA: to add collisions
+//#define begin_particle_collisions \
+//  void vpic_simulation::user_particle_collisions(void)
+
 #define repeat(count) for( int64_t _remain=(int64_t)(count); _remain; _remain-- )
 
 #define LOCAL_CELL_ID(x,y,z) \

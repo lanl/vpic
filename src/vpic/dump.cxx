@@ -1148,26 +1148,28 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 
 	int dim[3];
 
+	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
+	nxout = (grid->nx)/istride;
+	nyout = (grid->ny)/jstride;
+	nzout = (grid->nz)/kstride;
+	dxout = (grid->dx)*istride;
+	dyout = (grid->dy)*jstride;
+	dzout = (grid->dz)*kstride;
+
 	/* IMPORTANT: this depends on nxout, nyout, nzout */
 	#define f(x,y,z) \
 		f[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
+	/*
+	 * Banded output will write data as a single block-array as opposed to
+	 * the Array-of-Structure format that is used for native storage.
+	 *
+	 * Additionally, the user can specify a stride pattern to reduce
+	 * the resolution of the data that are output.  If a stride is
+	 * specified for a particular dimension, VPIC will write the boundary
+	 * plus every "stride" elements in that dimension.
+	 */
 	if(dumpParams.format == band) {
-
-		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-		nxout = (grid->nx)/istride;
-		nyout = (grid->ny)/jstride;
-		nzout = (grid->nz)/kstride;
-		dxout = (grid->dx)*istride;
-		dyout = (grid->dy)*jstride;
-		dzout = (grid->dz)*kstride;
-
-		/*
-		std::cerr << "nxout " << nxout << " nyout " << nyout <<
-			" nzout " << nzout << std::endl;
-		std::cerr << "nxout " << dxout << " nyout " << dyout <<
-			" nzout " << dzout << std::endl;
-		*/
 
 		WRITE_HEADER_V0(dump_type::field_dump, invalid_species_id, 0, fileIO);
 	 
@@ -1186,34 +1188,6 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 		for(size_t i(0), c(0); i<total_field_variables; i++) {
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
-
-#if 0
-		// output variable list
-		if(step == 0 && mp_rank(grid->mp) == 0) {
-			sprintf(filename, "%s.varlist", fbase);
-			FileIO varListIO;
-			status = varListIO.open(filename, io_write);
-
-			varListIO.print("NUMVARS %d\n", numvars);
-
-			for(size_t v(0); v<numvars; v++) {
-				varListIO.print("%s %s %d\n", fieldInfo[varlist[v]].name,
-				fieldInfo[varlist[v]].type, fieldInfo[varlist[v]].size);
-			} // for
-
-			varListIO.close();
-		} // if
-#endif
-		
-		/*
-		if(mp_rank(grid->mp) == 0) {
-			std::cerr << "var indices: ";
-			for(size_t i(0); i<numvars; i++) {
-				std::cerr << varlist[i] << " ";
-			} // for
-			std::cerr << std::endl;
-		} // if
-		*/
 
 		// more efficient for standard case
 		if(istride == 1 && jstride == 1 && kstride == 1) {
@@ -1254,14 +1228,6 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 		delete[] varlist;
 	}
 	else { // band_interleave
-
-		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-		nxout = (grid->nx)/istride;
-		nyout = (grid->ny)/jstride;
-		nzout = (grid->nz)/kstride;
-		dxout = (grid->dx)*istride;
-		dyout = (grid->dy)*jstride;
-		dzout = (grid->dz)*kstride;
 
 		WRITE_HEADER_V0(dump_type::field_dump, invalid_species_id, 0, fileIO);
 	 
@@ -1363,26 +1329,28 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 
 	int dim[3];
 
+	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
+	nxout = (grid->nx)/istride;
+	nyout = (grid->ny)/jstride;
+	nzout = (grid->nz)/kstride;
+	dxout = (grid->dx)*istride;
+	dyout = (grid->dy)*jstride;
+	dzout = (grid->dz)*kstride;
+
 	/* IMPORTANT: this depends on nxout, nyout, nzout */
 	#define hydro(x,y,z) \
 		hydro[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
+	/*
+	 * Banded output will write data as a single block-array as opposed to
+	 * the Array-of-Structure format that is used for native storage.
+	 *
+	 * Additionally, the user can specify a stride pattern to reduce
+	 * the resolution of the data that are output.  If a stride is
+	 * specified for a particular dimension, VPIC will write the boundary
+	 * plus every "stride" elements in that dimension.
+	 */
 	if(dumpParams.format == band) {
-
-		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-		nxout = (grid->nx)/istride;
-		nyout = (grid->ny)/jstride;
-		nzout = (grid->nz)/kstride;
-		dxout = (grid->dx)*istride;
-		dyout = (grid->dy)*jstride;
-		dzout = (grid->dz)*kstride;
-
-		/*
-		std::cerr << "nxout " << nxout << " nyout " << nyout <<
-			" nzout " << nzout << std::endl;
-		std::cerr << "nxout " << dxout << " nyout " << dyout <<
-			" nzout " << dzout << std::endl;
-		*/
 
 		WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q_m, fileIO);
 	 
@@ -1390,7 +1358,6 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		dim[1] = nyout+2;
 		dim[2] = nzout+2;
 
-		// WHAT SHOULD THIS BE???
 		WRITE_ARRAY_HEADER(hydro, 3, dim, fileIO);
 
 		/*
@@ -1403,59 +1370,45 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
 		} // for
 
-#if 0
-		// output variable list
-		if(step == 0 && mp_rank(grid->mp) == 0) {
-			sprintf(filename, "%s.varlist", hbase);
-			FileIO varListIO;
-			status = varListIO.open(filename, io_write);
-
-			varListIO.print("NUMVARS %d\n", numvars);
-
+		// More efficient for standard case
+		if(istride == 1 && jstride == 1 && kstride == 1) {
 			for(size_t v(0); v<numvars; v++) {
-				varListIO.print("%s %s %d\n", hydroInfo[varlist[v]].name,
-				hydroInfo[varlist[v]].type, hydroInfo[varlist[v]].size);
-			} // for
-
-			varListIO.close();
-		} // if
-#endif
-		
-		/*
-		if(mp_rank(grid->mp) == 0) {
-			std::cerr << "var indices: ";
-			for(size_t i(0); i<numvars; i++) {
-				std::cerr << varlist[i] << " ";
-			} // for
-			std::cerr << std::endl;
-		} // if
-		*/
-
-		for(size_t v(0); v<numvars; v++) {
-			for(size_t k(0); k<nzout+2; k++) {
-				for(size_t j(0); j<nyout+2; j++) {
-					for(size_t i(0); i<nxout+2; i++) {
-
-						const uint32_t * href = reinterpret_cast<uint32_t *>(
-							&hydro(i*istride,j*jstride,k*kstride));
-
-						fileIO.write(&href[varlist[v]], 1);
+				for(size_t k(0); k<nzout+2; k++) {
+					for(size_t j(0); j<nyout+2; j++) {
+						for(size_t i(0); i<nxout+2; i++) {
+							const uint32_t * href =
+								reinterpret_cast<uint32_t *>(
+								&hydro(i,j,k));
+							fileIO.write(&href[varlist[v]], 1);
+						} // for
 					} // for
 				} // for
 			} // for
-		} // for
+		}
+		else {
+			for(size_t v(0); v<numvars; v++) {
+				for(size_t k(0); k<nzout+2; k++) {
+					if(k==0 || k==nzout+1 || k%kstride) {
+						for(size_t j(0); j<nyout+2; j++) {
+							if(j==0 || j==nyout+1 || j%jstride) {
+								for(size_t i(0); i<nxout+2; i++) {
+									if(i==0 || i==nxout+1 || i%istride) {
+										const uint32_t * href =
+											reinterpret_cast<uint32_t *>(
+											&hydro(i,j,k));
+										fileIO.write(&href[varlist[v]], 1);
+									} // if
+								} // for
+							} // if
+						} // for
+					} // if
+				} // for
+			} // for
+		} // if
 
 		delete[] varlist;
 	}
 	else { // band_interleave
-
-		/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-		nxout = grid->nx;
-		nyout = grid->ny;
-		nzout = grid->nz;
-		dxout = grid->dx;
-		dyout = grid->dy;
-		dzout = grid->dz;
 
 		WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q_m, fileIO);
 	 
@@ -1470,12 +1423,17 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		}
 		else {
 			for(size_t k(0); k<nzout; k++) {
-				for(size_t j(0); j<nyout; j++) {
-					for(size_t i(0); i<nxout; i++) {
-						fileIO.write(
-							&hydro(i*istride+1,j*jstride+1,k*kstride+1), 1);
+				if(k==0 || k==nzout+1 || k%kstride) {
+					for(size_t j(0); j<nyout; j++) {
+						if(j==0 || j==nyout+1 || j%jstride) {
+							for(size_t i(0); i<nxout; i++) {
+								if(i==0 || i==nxout+1 || i%istride) {
+									fileIO.write(&hydro(i,j,k), 1);
+								} // if
+							} // for
+						} // if
 					} // for
-				} // for
+				} // if
 			} // for
 		} // if
 	} // if

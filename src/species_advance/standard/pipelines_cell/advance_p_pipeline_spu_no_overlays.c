@@ -1,6 +1,6 @@
 #define IN_spa
 #define HAS_SPU_PIPELINE
-#include "../spa_private.h"
+#include <spa_private.h>
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
 

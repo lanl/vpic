@@ -4,12 +4,12 @@
 #
 
 # create include dir with links
-(cd src ; rm -rf include ; mkdir include ; cd include; \
-	for file in `cat ../../config/spe_header_list` ; do \
-		link=`echo $file`
-		ln -s $link .
-	done
-)
+#(cd src ; rm -rf include ; mkdir include ; cd include; \
+#	for file in `cat ../../config/spe_header_list` ; do \
+#		link=`echo $file`
+#		ln -s $link .
+#	done
+#)
 
 echo "calling libtoolize..."
 libtoolize -f --automake

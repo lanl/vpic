@@ -1,6 +1,6 @@
 #define IN_spa
-#define HAS_SPU_PIPELINE
-#include "../spa_private.h"
+#define HAS_SPU_PIPELINE // WHY???  THIS IS SPE CODE
+#include <spa_private.h>
 
 #if 0
 

@@ -21,7 +21,7 @@
     // PPU will do straggler cleanup with scalar pipeline
 
 #   define EXEC_PIPELINES(name,args,sz_args)                      \
-    spu.dispatch( (pipeline_func_t)((size_t)name##_pipeline_spu), \
+    spu.dispatch( (pipeline_func_t)(name##_pipeline_spu), \
                   args, sz_args );                                \
     name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
 
@@ -30,11 +30,12 @@
 #   define N_PIPELINE spu.n_pipeline
 
 #   define PROTOTYPE_PIPELINE( name, args_t ) \
-    extern uint32_t name##_pipeline_spu;      \
-                                              \
-    void                                      \
-    name##_pipeline( args_t * args,           \
-                     int pipeline_rank,       \
+    extern uint32_t root_segment_##name##_pipeline_spu;              \
+    size_t name##_pipeline_spu = root_segment_##name##_pipeline_spu; \
+                                                                     \
+    void                                                             \
+    name##_pipeline( args_t * args,                                  \
+                     int pipeline_rank,                              \
                      int n_pipeline )
 
 #   define PAD_STRUCT( sz ) char _pad[ PAD( (sz), 16 ) ];

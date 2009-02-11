@@ -285,7 +285,7 @@ static void
 spu_dispatch( pipeline_func_t func,
               void * args,
               int sz_args ) {
-  int rank;
+  uint32_t rank;
   uint32_t data_hi, data_lo;
 
   if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
@@ -321,7 +321,9 @@ spu_dispatch( pipeline_func_t func,
     // Write pipeline_rank and n_pipeline to SPE thread
     spe_in_mbox_write( SPU_Control_State[rank].context, &rank,
                        1, SPE_MBOX_ANY_NONBLOCKING );
-    spe_in_mbox_write( SPU_Control_State[rank].context, &spu.n_pipeline,
+	// This is klugey (Not sure why n_pipeline is not unsigned in rest of code)
+	uint32_t n_pipeline = (uint32_t)(spu.n_pipeline);
+    spe_in_mbox_write( SPU_Control_State[rank].context, &n_pipeline,
                        1, SPE_MBOX_ANY_NONBLOCKING );
   }
 

@@ -66,12 +66,13 @@ maxwellian_reflux( void * _mr,
   float ratio;  
   particle_injector_t *pi; 
 
-  static const int perm[6][3] = { { 0, 1, 2 },
-                                  { 1, 2, 0 },
-                                  { 2, 0, 1 },
-                                  { 0, 1, 2 },
-                                  { 1, 2, 0 },
-                                  { 2, 0, 1 } };
+                            // axis x  y  z 
+  static const int perm[6][3] = { { 0, 1, 2 },   // -x face
+                                  { 2, 0, 1 },   // -y face
+                                  { 1, 2, 0 },   // -z face 
+                                  { 0, 1, 2 },   // +x face
+                                  { 2, 0, 1 },   // +y face
+                                  { 1, 2, 0 } }; // +z face
   static const float scale[6] = {  M_SQRT2,  M_SQRT2,  M_SQRT2,
                                   -M_SQRT2, -M_SQRT2, -M_SQRT2 };
 

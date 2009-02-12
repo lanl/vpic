@@ -8,6 +8,8 @@
 //   Applied Physics Division
 //   Los Alamos National Lab
 // April 2004 - revised from earlier V4PIC versions
+//
+// Updated Feb 2009 to work with new deck formatting - BJA
 
 begin_globals {
   double energies_interval;
@@ -142,14 +144,13 @@ begin_initialization {
   }
 
   // Create the species (20%-50% overhead in case of non-uniformity)
-  define_species( "beam", -ec/me, 1.5*ninj*lz/(cvac*dt*nproc()), 20 );
-  define_species( "e-", -ec/me,1.2*np/nproc(), 20 );
-  define_species( "H+",  ec/mi,1.2*np/nproc(), 40 );
-  finalize_species();
+  define_species( "beam", -ec/me, 1.5*ninj*lz/(cvac*dt*nproc()), -1, 20, 1 );
+  species_t * electron = define_species( "e-",   -ec/me, 1.2*np/nproc(),                -1, 20, 1 );
+  species_t * ion      = define_species( "H+",    ec/mi, 1.2*np/nproc(),                -1, 40, 1 );
 
   // Create the materials
   define_material( "vacuum", 1 );
-  finalize_materials();
+  finalize_field_advance();
 
   // Create the initial plasma
   // Note: This assumes ranks 0 and nproc()-1 have particles in them
@@ -159,8 +160,6 @@ begin_initialization {
   double xmax = (nx==1 ? 0.5*lx-b_plas : lx-b_plas );
   double ymax = (ny==1 ? 0.5*ly-b_plas : ly-b_plas );
   double zmax = (rank()==nproc()-1 ? lz-b_plas : grid->z0+grid->dz*grid->nz);
-  species_id electron = lookup_species( "e-" );
-  species_id ion      = lookup_species( "H+" );
 
   repeat( np*(zmax-zmin)/(lz-b_plas-z_plas) ) {
     double x = uniform_rand( xmin, xmax );
@@ -169,11 +168,11 @@ begin_initialization {
     inject_particle( electron, x, y, z,
                      maxwellian_rand(ute),
                      maxwellian_rand(ute),
-                     maxwellian_rand(ute), -qp );
+                     maxwellian_rand(ute), -qp, 0, 0 );
     inject_particle( ion, x, y, z,
                      maxwellian_rand(uti),
                      maxwellian_rand(uti),
-                     maxwellian_rand(uti),  qp );
+                     maxwellian_rand(uti),  qp, 0, 0 );
   }
   
   // Output diagnostics
@@ -242,7 +241,7 @@ begin_particle_injection {
   return;
   if( rank()!=0 ) return;
 
-  species_id beam = lookup_species( "beam" );
+  species_t * beam = find_species_name( "beam", species_list );
   double ub = sqrt( global->gamma_beam*global->gamma_beam - 1 );
   double qb = 0.25*global->I_beam*grid->dt/global->ninj_beam;
   if( grid->nx==1 ) qb *= 2;
@@ -268,7 +267,7 @@ begin_particle_injection {
 
     age = uniform_rand(0,1);
 
-    inject_particle( beam, x, y, z, ux, uy, uz, qb, age );
+    inject_particle( beam, x, y, z, ux, uy, uz, qb, age, 1 );
   }
 }
 
@@ -277,3 +276,9 @@ begin_current_injection {
 
 begin_field_injection {
 }
+
+
+begin_particle_collisions { 
+  // No collisions for this simulation 
+}
+

@@ -44,7 +44,6 @@ int vpic_simulation::advance(void) {
 
   p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
-#if 0
   // BJA - for particle collisions (commented out to not collide with Kevin's
   //       and Ben's work on overlays). 
   // 
@@ -58,7 +57,6 @@ int vpic_simulation::advance(void) {
   user_particle_collisions();
 
   u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
-#endif 
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and

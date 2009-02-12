@@ -337,10 +337,10 @@ private:
  
   inline material_id
   define_material( const char *name,
-                   double epsx,   double epsy,   double epsz,
-                   double mux,    double muy,    double muz,
-                   double sigmax, double sigmay, double sigmaz,
-                   double zetax,  double zetay,  double zetaz ) {
+                   double epsx,        double epsy,       double epsz,
+                   double mux,         double muy,        double muz,
+                   double sigmax,      double sigmay,     double sigmaz,
+		   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
     return new_material( name,
 			 epsx,   epsy,   epsz,
 			 mux,    muy,    muz,
@@ -537,6 +537,7 @@ private:
   void user_current_injection(void);
   void user_field_injection(void);
   void user_diagnostics(void);
+  void user_particle_collisions(void);
 };
  
 #endif // _vpic_hxx_

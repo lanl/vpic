@@ -608,3 +608,9 @@ begin_current_injection {
   // No current injection for this simulation
 }
 
+
+begin_particle_collisions {
+  // No collisions for this simulation
+}
+
+

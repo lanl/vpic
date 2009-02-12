@@ -31,11 +31,9 @@
 
 #define begin_field_injection \
   void vpic_simulation::user_field_injection(void)
-#if 0
-// BJA: to add collisions
+
 #define begin_particle_collisions \
   void vpic_simulation::user_particle_collisions(void)
-#endif
 
 #define repeat(count) for( int64_t _remain=(int64_t)(count); _remain; _remain-- )
 
@@ -345,7 +343,7 @@
 // volume, recommend using the begin_particle_injection { }; input
 // deck segment.
 
-#define define_volume_emitter(name,sp_id,emission_model,rgn) BEGIN_PRIMITIVE {   \
+#define define_volume_emitter(name,sp,emission_model,rgn) BEGIN_PRIMITIVE {   \
   const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;  \
   const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;  \
   const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;  \
@@ -364,7 +362,7 @@
     }                                                           \
   }                                                             \
   /* Create the emitter */                                      \
-  emitter_t * _emit = new_emitter( name, species_lookup[sp_id], emission_model, _nc, &emitter_list ); \
+  emitter_t * _emit = new_emitter( name, sp emission_model, _nc, &emitter_list ); \
   if( _emit==NULL ) continue; /* Leaves primitive */            \
   _emit->n_component = _nc;                                     \
   /* Set the cells in the emitter */                            \
@@ -388,7 +386,7 @@
 // rgn = false for exterior of region
 // A surface emitter emits into the exterior of the region.
 
-#define define_surface_emitter(name,sp_id,emission_model,rgn) BEGIN_PRIMITIVE { \
+#define define_surface_emitter(name,sp,emission_model,rgn) BEGIN_PRIMITIVE { \
     const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;        \
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;        \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;        \
@@ -426,7 +424,7 @@
       }                                                                 \
     }                                                                   \
     /* Create the emitter */                                            \
-    emitter_t * _emit = new_emitter( name, species_lookup[sp_id], emission_model, _nf, &emitter_list ); \
+    emitter_t * _emit = new_emitter( name, sp, emission_model, _nf, &emitter_list ); \
     if( _emit==NULL ) continue; /* Leaves primitive */                  \
     _emit->n_component = _nf;                                           \
     /* Set the faces in the emitter */                                  \

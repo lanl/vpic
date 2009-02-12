@@ -586,3 +586,9 @@ begin_current_injection {
 
 begin_field_injection {
 } // begin_field_injection
+
+begin_particle_collisions {
+  // No collisions for this simulation
+} // begin_particle_collisions
+
+

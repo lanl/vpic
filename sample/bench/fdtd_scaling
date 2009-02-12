@@ -37,8 +37,7 @@ begin_initialization {
 
   define_material("vacuum",1.0,1.0,0.0);
 
-  finalize_materials();
-  finalize_species();
+  finalize_field_advance();
 }
 
 begin_diagnostics {
@@ -52,4 +51,8 @@ begin_current_injection {
 
 begin_field_injection {
 }
+
+begin_particle_collisions {
+}
+
 

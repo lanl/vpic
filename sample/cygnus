@@ -1,4 +1,3 @@
-// FIXME: THIS INPUT DECK NEED REVAMPED FOR NEW SOURCE TREE
 // This input deck sets up the Cygnus rod-pinch diode
 //
 // This input deck was written by:
@@ -7,6 +6,8 @@
 //   Applied Physics Division
 //   Los Alamos National Lab
 // April 2004 - original version written
+//
+// INPUT DECK REVAMPED FOR NEW SOURCE TREE - BJA Feb 2009
 
 begin_globals {
   double V_peak;
@@ -26,9 +27,9 @@ begin_initialization {
   // System of units (Rationalized MKSA)
   double cvac = 299792458;       // Speed of light (in m/s)
   double eps0 = 8.854187817e-12; // Permittivity of free space (in F/m)
-  //double ec   = 1.602176462e-19; // Fundamental charge (in C)
-  //double me   = 9.10938188e-31;  // Electron (in kg)
-  //double mi   = 1.67262158e-27;  // Hydrogen (in kg)
+  double ec   = 1.602176462e-19; // Fundamental charge (in C)
+  double me   = 9.10938188e-31;  // Electron (in kg)
+  double mi   = 1.67262158e-27;  // Hydrogen (in kg)
 
   // Important relative lengths
   double emitter_to_cap  = 2.5e-2;
@@ -105,12 +106,11 @@ begin_initialization {
   define_material( "vacuum",   1, 1, 0      );
   define_material( "copper",   1, 1, 5.98e7 );
   define_material( "tungsten", 1, 1, 1.85e7 );
-  finalize_materials();
+  finalize_field_advance();
 
   // Create the species
-  //define_species( "e-", -ec/me, 1 /*(3*nx)*(0.5*nx)*/ );
-  //define_species( "H+",  ec/mi, 1 /*(3*nz)*(0.5*nx)*/ );
-  finalize_species();
+  define_species( "e-", -ec/me, (3*nx)*(0.5*nx), -1, 20, 1 );
+  define_species( "H+",  ec/mi, (3*nz)*(0.5*nx), -1, 20, 1 );
 
   // Load the initial fields and particle boundary conditions
   set_region_material( inner_conductor, "copper",   "copper"   );
@@ -168,3 +168,10 @@ begin_field_injection {
     // FIXME: Write 3D field injection
   }
 }
+
+
+begin_particle_collisions {
+  // No collisions for this simulation
+}
+
+

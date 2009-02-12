@@ -1,4 +1,3 @@
-// FIXME: THIS INPUT DECK NEEDS REVAMPED FOR NEW SOURCE TREE
 // Demonstrate material and region selection features
 //
 // This input deck was written by:
@@ -7,6 +6,8 @@
 //   Applied Physics Division
 //   Los Alamos National Lab
 // March/April 2004 - original version
+//
+// INPUT DECK REVAMPED FOR NEW SOURCE TREE - BJA Feb. 2009
 
 // FIXME: Make this input deck do something useful.
 
@@ -48,11 +49,12 @@ begin_initialization {
 
   // Space is by default filled with first material defined
   define_material("vacuum", 1 ); // mu=1 and sigma=0 by default
-  define_material("calcite",  2.2,2.2,2.7,  1,1,1,  0,0,0);
+  define_material("calcite",  2.2, 2.2, 2.7,  
+                              1.0, 1.0, 1.0,  
+                              0.0, 0.0, 0.0);
   define_material("copper", 1, 1, 5.8e7 );
 
-  finalize_materials();
-  finalize_species();
+  finalize_field_advance();
 
   // Shapes are defined by logical equations
 # define clip_sphere y<16 && sqrt(x*x+y*y+z*z)<32
@@ -115,3 +117,9 @@ begin_current_injection {
 
 begin_field_injection {
 }
+
+begin_particle_collisions {
+  // No collisions for this simulation
+}
+
+

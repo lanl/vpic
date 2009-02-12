@@ -50,8 +50,7 @@ begin_initialization {
   // Space is by default filled with first material defined
   define_material("vacuum",1.0,1.0,0.0);
 
-  finalize_materials();
-  finalize_species();
+  finalize_field_advance();
 }
 
 begin_diagnostics {
@@ -80,4 +79,10 @@ begin_field_injection {
                             *cos((n*M_PI/grid->ny)*(y-0.5));
   }
 }
+
+
+begin_particle_collisions {
+  // No collisions for this simulation
+}
+
 

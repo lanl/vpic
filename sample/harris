@@ -402,3 +402,9 @@ begin_field_injection {
   // No field injection for this simulation
  
 }
+
+begin_particle_collisions{ 
+
+  // No collisions for this simulation 
+
+}

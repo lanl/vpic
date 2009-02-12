@@ -40,45 +40,46 @@ child_langmuir( emitter_t            *              e,      // Actual emitter
                  pi.ux, pi.uy, pi.uz, pi.q,
                  pi.dispx, pi.dispy, pi.dispz)); */
 
-#    define EMIT_PARTICLES(X,Y,Z,dir) BEGIN_PRIMITIVE {                                \
-       if( e->sp->q_m * (dir fi[i].e##X) > 0 ) {                                       \
-         float qp, age;                                                                \
-         int m = args->n_emit_per_face;                                                \
-         /* This face can emit ... compute the charge of the emitted particles */      \
-         qp = g->eps0*g->d##Y*g->d##Z*g->dt*                                           \
+#    define EMIT_PARTICLES(X,Y,Z,dir) BEGIN_PRIMITIVE {                 \
+       if( e->sp->q_m * (dir fi[i].e##X) > 0 ) {                        \
+         float qp, age;                                                 \
+         int m = args->n_emit_per_face;                                 \
+         /* This face can emit ... compute the charge */                \
+         /* of the emitted particles */                                 \
+         qp = g->eps0*g->d##Y*g->d##Z*g->dt*                            \
             sqrt((32./81.)*fabs(e->sp->q_m*fi[i].e##X*fi[i].e##X*fi[i].e##X)/g->d##X)/ \
-            (float)m;                                                                  \
-         if( e->sp->q_m<0 ) qp = -qp;                                                  \
-         if( e->sp->np+m>=e->sp->max_np ) { \
+           (float)m;                                                    \
+         if( e->sp->q_m<0 ) qp = -qp;                                   \
+         if( e->sp->np+m>=e->sp->max_np ) {                             \
            WARNING(( "Insufficent room for emission; some particles skipped" )); \
-           m = e->sp->max_np - e->sp->np; \
-           if( m<0 ) m=0; \
-         } \
-         for( ; m; m-- ) {                                                             \
-           p           = e->sp->p  + e->sp->np++; \
-           p->d##X     = -(dir 1);                                                     \
-           p->d##Y     = 2*mt_drand_c(rng)-1;                                            \
-           p->d##Z     = 2*mt_drand_c(rng)-1;                                            \
-           p->i        = i;                                                            \
-           p->u##X     = dir fabs( args->ut_para*mt_drandn(rng) );               \
-           p->u##Y     = args->ut_perp*mt_drandn(rng);                           \
-           p->u##Z     = args->ut_perp*mt_drandn(rng);                           \
-           p->q        = -qp; accumulate_rhob( f, p, g ); p->q = qp; \
-           if( e->sp->nm>=e->sp->max_nm ) { \
+           m = e->sp->max_np - e->sp->np;                               \
+           if( m<0 ) m=0;                                               \
+         }                                                              \
+         for( ; m; m-- ) {                                              \
+           p           = e->sp->p  + e->sp->np++;                       \
+           p->d##X     = -(dir 1);                                      \
+           p->d##Y     = 2*mt_drand_c(rng)-1;                           \
+           p->d##Z     = 2*mt_drand_c(rng)-1;                           \
+           p->i        = i;                                             \
+           p->u##X     = dir fabs( args->ut_para*mt_drandn(rng) );      \
+           p->u##Y     = args->ut_perp*mt_drandn(rng);                  \
+           p->u##Z     = args->ut_perp*mt_drandn(rng);                  \
+           p->q        = -qp; accumulate_rhob( f, p, g ); p->q = qp;    \
+           if( e->sp->nm>=e->sp->max_nm ) {                             \
              WARNING(( "Insufficient movers to age emitted particle" )); \
-             continue; \
-           } \
-           pm          = e->sp->pm + e->sp->nm; \
-           age         = mt_drand_c0(rng);                                                \
-           age        *= g->cvac*g->dt /                                               \
-             sqrt( p->u##X*p->u##X +p->u##Y*p->u##Y + p->u##Z*p->u##Z + 1 );          \
-           pm->disp##X = p->u##X*age/g->d##X;                                          \
-           pm->disp##Y = p->u##Y*age/g->d##Y;                                          \
-           pm->disp##Z = p->u##Z*age/g->d##Z;                                          \
-           pm->i       = e->sp->np-1; \
-           e->sp->nm  += move_p( e->sp->p, pm, a, g ); \
-         }                                                                             \
-       }                                                                               \
+             continue;                                                  \
+           }                                                            \
+           pm          = e->sp->pm + e->sp->nm;                         \
+           age         = mt_drand_c0(rng);                              \
+           age        *= g->cvac*g->dt /                                \
+             sqrt( p->u##X*p->u##X +p->u##Y*p->u##Y + p->u##Z*p->u##Z + 1 ); \
+           pm->disp##X = p->u##X*age/g->d##X;                           \
+           pm->disp##Y = p->u##Y*age/g->d##Y;                           \
+           pm->disp##Z = p->u##Z*age/g->d##Z;                           \
+           pm->i       = e->sp->np-1;                                   \
+           e->sp->nm  += move_p( e->sp->p, pm, a, g );                  \
+         }                                                              \
+       }                                                                \
      } END_PRIMITIVE
 
      switch( EXTRACT_COMPONENT_TYPE( e->component[n] ) ) {

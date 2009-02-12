@@ -852,3 +852,7 @@ begin_initialization {
 
 #endif
 
+begin_particle_collisions {
+}
+
+

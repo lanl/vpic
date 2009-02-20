@@ -799,3 +799,6 @@ begin_current_injection {
 
 begin_field_injection {
 } // begin_field_injection
+
+begin_particle_collisions {
+} // begin_particle_collisions

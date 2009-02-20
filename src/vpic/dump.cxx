@@ -920,10 +920,13 @@ void vpic_simulation::create_field_list(char * strlist,
 
 	strcpy(strlist, "");
 
-	for(size_t i(0); i<total_field_variables; i++) {
-		if(dumpParams.output_vars.bitset(i)) {
-			if(i>0) {
+	for(size_t i(0), pass(0); i<total_field_groups; i++) {
+		if(dumpParams.output_vars.bitset(field_indeces[i])) {
+			if(i>0 && pass) {
 				strcat(strlist, ", ");
+			}
+			else {	
+				pass = 1;
 			} // if
 
 			strcat(strlist, fieldInfo[i].name);
@@ -937,10 +940,13 @@ void vpic_simulation::create_hydro_list(char * strlist,
 
 	strcpy(strlist, "");
 
-	for(size_t i(0); i<total_hydro_variables; i++) {
-		if(dumpParams.output_vars.bitset(i)) {
-			if(i>0) {
+	for(size_t i(0), pass(0); i<total_hydro_groups; i++) {
+		if(dumpParams.output_vars.bitset(hydro_indeces[i])) {
+			if(i>0 && pass) {
 				strcat(strlist, ", ");
+			}
+			else {
+				pass = 1;
 			} // if
 			strcat(strlist, hydroInfo[i].name);
 		} // if

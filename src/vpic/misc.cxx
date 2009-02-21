@@ -111,30 +111,23 @@ void vpic_simulation::output_checksum_fields() {
     cs, "sha1");
 
   const int nproc = mp_nproc(grid->mp);
+
   if(nproc > 1) {
     const unsigned int csels = cs.length*nproc;
-    unsigned char * sums = new unsigned char[cs.length*nproc];
-	MESSAGE(("cs.length*nproc %d", cs.length*nproc));
+    unsigned char * sums(NULL);
+
+	if(mp_rank(grid->mp) == 0) {
+		sums = new unsigned char[csels];
+	} // if
 
 	// gather sums from all ranks
 	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
 
-	char tmp0[256];
-	char tmp1[256];
-	for(size_t i(0); i<cs.length*nproc; i++) {
-		sprintf(tmp0, "%02x", sums[i]);
-		strcat(tmp1, tmp0);
-	} // for
-
-	MESSAGE(("CHECKSUM: %s", tmp1));
-
-    checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
-
 	if(mp_rank(grid->mp) == 0) {
-      MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
-    } // if
-
-	delete[] sums;
+		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+		MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
+		delete[] sums;
+	} // if
   }
   else {
     MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
@@ -151,19 +144,23 @@ void vpic_simulation::output_checksum_species(const char * species) {
   checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
 
   const int nproc = mp_nproc(grid->mp);
+
   if(nproc > 1) {
     const unsigned int csels = cs.length*nproc;
-    unsigned char * sums = new unsigned char[cs.length*nproc];
+    unsigned char * sums(NULL);
+
+	if(mp_rank(grid->mp) == 0) {
+    	sums = new unsigned char[csels];
+	} // if
 
 	// gather sums from all ranks
 	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
-    checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
 
 	if(mp_rank(grid->mp) == 0) {
-      MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
+		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+		MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
+		delete[] sums;
     } // if
-
-	delete[] sums;
   }
   else {
     MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));

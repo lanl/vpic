@@ -455,7 +455,7 @@ struct RelayPolicy {
 
         if(mp==NULL) ERROR(( "Bad handle" ));
         if(sbuf==NULL) ERROR(( "Bad send" ));
-        if(rbuf==NULL) ERROR(( "Bad recv" ));
+        if(mp->rank == 0 && rbuf==NULL) ERROR(( "Bad recv" ));
         if(n<1) ERROR(( "Bad n" ));
 
         MPRequest request(P2PTag::gather_uc, P2PTag::data, n, 0);

@@ -367,7 +367,7 @@ mp_gather_uc_dmp( unsigned char * sbuf,
 
   if( mp==NULL   ) ERROR(( "Bad handle" ));
   if( sbuf==NULL ) ERROR(( "Bad send" ));
-  if( rbuf==NULL ) ERROR(( "Bad recv" ));
+  if( mp->rank == 0 && rbuf==NULL ) ERROR(( "Bad recv" ));
   if( n<1        ) ERROR(( "Bad n" ));
 
   // FIXME: THIS IS BROKEN

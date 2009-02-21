@@ -14,6 +14,7 @@ begin_globals {
 	int eparticle_interval;
 	int Hparticle_interval;
 	int ez_save_interval;
+	int checksum_interval;
 	int rtoggle;
 	double quota_sec;
 	double b0;
@@ -56,8 +57,9 @@ begin_initialization {
 	double theta   = M_PI/2.0;       // B0 = By
 	double taui    = 71;             // simulation wci's to run
   
-	double quota   = 1000.0;         // run quota in hours
-	double quota_sec = quota*3600;   // Run quota in seconds
+	//double quota   = 1000.0;         // run quota in hours
+	//double quota_sec = quota*3600;   // Run quota in seconds
+	double quota_sec = 30;   // Run quota in seconds
 
 	double cs   = cos(theta);
 	double sn   = sin(theta);
@@ -192,6 +194,7 @@ begin_initialization {
 	int eparticle_interval = interval;
 	int Hparticle_interval = interval;
 	int ez_save_interval = int(0.1/(wci*dt)); 
+	int checksum_interval = interval;
 
 	/*--------------------------------------------------------------------------
 	 * Setup high level simulation parameters
@@ -214,6 +217,7 @@ begin_initialization {
 	global->quota_sec          = quota_sec;  
 	global->rtoggle            = 0;  
 	global->ez_save_interval   = ez_save_interval;
+	global->checksum_interval  = checksum_interval;
 	global->b0                 = b0;              
 	global->v_A                = v_A;
 
@@ -779,8 +783,17 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Elapsed time
      *------------------------------------------------------------------------*/
-	double elapsed = mp_elapsed(grid->mp);
+	if(!(step%global->checksum_interval)) {
+		sim_log("Checksumming step " << step);
+		output_checksum_fields();
+		output_checksum_species("ele");
+		output_checksum_species("ion");
+	} // if
 
+	/*--------------------------------------------------------------------------
+	 * Elapsed time
+     *------------------------------------------------------------------------*/
+	double elapsed = mp_elapsed(grid->mp);
 	if(elapsed > global->quota_sec) {
 		dump_restart("restart/restart", 0);
 		sim_log("Restart complete");

@@ -783,12 +783,14 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Elapsed time
      *------------------------------------------------------------------------*/
+#if defined(ENABLE_OPENSSL)
 	if(!(step%global->checksum_interval)) {
 		sim_log("Checksumming step " << step);
 		output_checksum_fields();
 		output_checksum_species("ele");
 		output_checksum_species("ion");
 	} // if
+#endif
 
 	/*--------------------------------------------------------------------------
 	 * Elapsed time

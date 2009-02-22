@@ -1129,7 +1129,9 @@ void
 _SPUEAR_advance_p_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                                 int pipeline_rank,
                                 int n_pipeline ) {
+# if VERBOSE
   fprintf( stdout, "In advance_p_pipeline\n" ); fflush( stdout );
+# endif
 }
 
 #endif

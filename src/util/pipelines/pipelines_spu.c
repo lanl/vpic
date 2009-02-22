@@ -206,8 +206,12 @@ spu_halt( void ) {
 
   // Terminate the spu control threads
 
+  uint32_t abort = 0;
   for( id=0; id<spu.n_pipeline; id++ ) {
     
+    spe_in_mbox_write( SPU_Control_State[id].context, &abort,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
+
     if( pthread_join( SPU_Control_State[id].handle, NULL ) )
       ERROR(( "Unable to terminate spu control thread!" ));
 

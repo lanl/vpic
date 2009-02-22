@@ -44,6 +44,9 @@ class MPRelay
 		MPBuffer<char> cbuf_send_[max_buffers];
 		MPBuffer<char> cbuf_recv_[max_buffers];
 
+		MPBuffer<unsigned char> ucbuf_send_;
+		MPBuffer<unsigned char> ucbuf_recv_;
+
 		MPBuffer<int> ibuf_send_;
 		MPBuffer<int> ibuf_recv_;
 
@@ -288,20 +291,28 @@ void MPRelay::start()
 
 				case P2PTag::gather_uc:
 					// resize buffers if necessary
-					ibuf_send_.resize(request.count);
-					ibuf_recv_.resize(request.count*dmp.global_size());
+					ucbuf_send_.resize(request.count);
+					ucbuf_recv_.resize(request.count*dmp.global_size());
 
 					// blocking receive from point-to-point peer
-					p2p.recv(ibuf_send_.data(), request.count,
+					p2p.recv(ucbuf_send_.data(), request.count,
 						request.tag, request.id);
 
+					/*
+					std::cerr << "#### request.count: " << request.count
+						<< std::endl <<
+						"global_size: " << dmp.global_size() << std::endl;;
+					*/
+
 					// call all gather with dmp peers
-					dmp.gather(ibuf_send_.data(), ibuf_recv_.data(),
+					dmp.gather(ucbuf_send_.data(), ucbuf_recv_.data(),
 						request.count);
 
-					// blocking send result back to point-to-point peer
-					p2p.send(ibuf_recv_.data(),
-						request.count*dmp.global_size(), request.tag);
+					if(dmp.global_id() == 0) {
+						// blocking send result back to point-to-point peer
+						p2p.send(ucbuf_recv_.data(),
+							request.count*dmp.global_size(), request.tag);
+					} // if
 					break;
 
 				case P2PTag::allgather_int:

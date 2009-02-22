@@ -461,8 +461,11 @@ struct RelayPolicy {
         MPRequest request(P2PTag::gather_uc, P2PTag::data, n, 0);
         p2p.post(request);
         p2p.send(sbuf, request.count, request.tag);
-        p2p.recv(rbuf, request.count*p2p.global_size(),
-            request.tag, request.id);
+
+		if(mp->rank == 0) {
+        	p2p.recv(rbuf, request.count*p2p.global_size(),
+				request.tag, request.id);
+		} // if
 	} // mp_gather_uc
 
     inline void mp_allgather_i(int *sbuf, int *rbuf, int n,

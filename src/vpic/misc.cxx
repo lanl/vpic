@@ -116,18 +116,18 @@ void vpic_simulation::output_checksum_fields() {
     const unsigned int csels = cs.length*nproc;
     unsigned char * sums(NULL);
 
-	if(mp_rank(grid->mp) == 0) {
-		sums = new unsigned char[csels];
-	} // if
+    if(mp_rank(grid->mp) == 0) {
+      sums = new unsigned char[csels];
+    } // if
 
-	// gather sums from all ranks
-	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+    // gather sums from all ranks
+    mp_gather_uc(cs.value, sums, cs.length, grid->mp);
 
-	if(mp_rank(grid->mp) == 0) {
-		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
-		MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
-		delete[] sums;
-	} // if
+    if(mp_rank(grid->mp) == 0) {
+      checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+      MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
+      delete[] sums;
+    } // if
   }
   else {
     MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));

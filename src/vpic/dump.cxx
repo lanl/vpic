@@ -720,6 +720,8 @@ vpic_simulation::restart( const char *fbase ) {
   // CONCERN ABOUT ORDERING ... RETOOL THIS TO CREATE THE
   // LIST AND THEN FLIP INTO CORRECT ORDERING?
  
+  // FIXME: Crashes unnecessarily if we try restarting a
+  // problem without any species.
   READ(int,n,fileIO); ABORT(n<1);
   for(last_sp=NULL;n;n--) {
     char * buf;

@@ -30,33 +30,35 @@ int vpic_simulation::advance(void) {
   // Advance the particle lists.
 
   if( species_list!=NULL ) clear_accumulators( accumulator, grid );
+  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+
+  // Slight reorder of this loop to treat collisions properly. 
+
   LIST_FOR_EACH(sp,species_list) {
     if( sp->sort_interval>0 && step%sp->sort_interval==0 ) {
       if( rank==0 ) MESSAGE(("Performance sorting \"%s\".",sp->name));
-      p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
       sort_p( sp, grid );
       s_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
     } 
-    sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
-                        accumulator, interpolator, grid );
   }
-  if( species_list!=NULL ) reduce_accumulators( accumulator, grid );
 
-  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
-
-  // BJA - for particle collisions (commented out to not collide with Kevin's
-  //       and Ben's work on overlays). 
-  // 
-  // Collisions need to be done between sort and particle advance
+  // Collisions need to be done between sort and particle advance.
   // Tally collision time as user time since collision models live in the 
   // input deck.   Collisions presently are implemented in user input 
   // decks; count their time against "user" time. 
   // 
-  // FIXME:  A real interface for collisions? 
-  // FIXME:  Give collisions their own time.  
-  user_particle_collisions();
+  // FIXME:  Make a real interface for collisions? 
+  // FIXME:  Give collisions their own timer.  
 
+  user_particle_collisions();
   u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+
+  LIST_FOR_EACH(sp,species_list) {
+    sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
+                        accumulator, interpolator, grid );
+  }
+  if( species_list!=NULL ) reduce_accumulators( accumulator, grid );
+  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and

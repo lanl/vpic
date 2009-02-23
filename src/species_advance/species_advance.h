@@ -89,7 +89,7 @@ typedef struct species {
 
 BEGIN_C_DECLS
 
-// In species.c
+// In species_advance.c
 
 int
 num_species( const species_t * sp_list );

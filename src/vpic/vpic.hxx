@@ -430,12 +430,14 @@ private:
   // Particle helpers
  
   // Note: Don't use injection with aging during initialization
- 
+
+  // Defaults in the declaration below enable backwards compatibility.  
+
   void
   inject_particle( species_t * sp,
                    double x,  double y,  double z,
                    double ux, double uy, double uz,
-                   double q,  double age, int update_rhob );
+                   double q,  double age = 0, int update_rhob = 1 );
  
   // Inject particle raw is for power users!
   // No nannyism _at_ _all_:

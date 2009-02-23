@@ -47,6 +47,8 @@
 /* Must be same as SPU_COMPLETE in root_segment.c; Neil Peart rules!  */
 #define SPU_COMPLETE ((uint32_t)2112)
 
+#define VERBOSE 0
+
 static void *
 spu_control_thread( void *_id );
 
@@ -140,7 +142,9 @@ spu_boot( int num_pipe,
   Host = pthread_self();
   Id = 0;
 
+#if VERBOSE
   MESSAGE(("In spu_boot with num_pipe = %d", num_pipe));
+#endif
 
   // Initialize all the pipelines
 
@@ -262,7 +266,9 @@ spu_control_thread( void *_this_control_thread ) {
   spu_control_state_t *this_control_thread = _this_control_thread;
   unsigned int entry;
 
+#if VERBOSE
   MESSAGE(("Loading spe program"));
+#endif
   if( spe_program_load( this_control_thread->context,
                         this_control_thread->pipeline ) ) {
     ERROR(( "spe_program_load failed!" ));
@@ -270,7 +276,9 @@ spu_control_thread( void *_this_control_thread ) {
 
   entry = SPE_DEFAULT_ENTRY;
 
+#if VERBOSE
   MESSAGE(("Running spe context"));
+#endif
   if( spe_context_run( this_control_thread->context,
                        &entry,
                        0,
@@ -317,9 +325,9 @@ spu_dispatch( pipeline_func_t func,
     data_lo = ((uint64_t)(((char *)args) + rank*sz_args)) & 0xffffffff;
 
     // Write context struct address to SPE thread
-    spe_in_mbox_write( SPU_Control_State[rank].context, &data_lo,
-                       1, SPE_MBOX_ANY_NONBLOCKING );
     spe_in_mbox_write( SPU_Control_State[rank].context, &data_hi,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
+    spe_in_mbox_write( SPU_Control_State[rank].context, &data_lo,
                        1, SPE_MBOX_ANY_NONBLOCKING );
 
     // Write pipeline_rank and n_pipeline to SPE thread

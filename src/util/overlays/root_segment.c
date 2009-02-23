@@ -45,25 +45,45 @@ main( uint64_t id,
   int n_pipeline;
 
 # if VERBOSE
-  fprintf(stderr, "Spinning up SPE %lld\n", id);
+  fprintf(stderr, "######## Spinning up SPE %lld\n", id);
   fflush(stderr);
 # endif
 
   // Read mailbox and interpret message as a function pointer
   // in the SPE symbol space
   for(;;) {
+#   if VERBOSE
+	fprintf(stderr, "######## Root Segment reading function...");
+	fflush(stderr);
+#   endif
     pipeline = (spe_pipeline_t)spu_read_in_mbox();
+#   if VERBOSE
+	fprintf(stderr, "######## Root Segment read %p...", pipeline);
+	fflush(stderr);
+#   endif
     if( pipeline==NULL ) break;
 
+#   if VERBOSE
+	fprintf(stderr, "######## Root Segment reading arguments...");
+	fflush(stderr);
+#   endif
     args = (((uint64_t)spu_read_in_mbox())<<32) |
             ((uint64_t)spu_read_in_mbox());
     pipeline_rank = spu_read_in_mbox();
     n_pipeline    = spu_read_in_mbox();
 
     // Execute pipeline
+#   if VERBOSE
+	fprintf(stderr, "######## Root Segment execute pipeline...");
+	fflush(stderr);
+#   endif
     pipeline( args, pipeline_rank, n_pipeline );
 
     // Notify caller of completion
+#   if VERBOSE
+	fprintf(stderr, "######## Root Segment write completion...");
+	fflush(stderr);
+#   endif
     spu_write_out_mbox(SPU_COMPLETE);
   } // for
 

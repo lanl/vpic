@@ -14,8 +14,8 @@ SPECIES_SPE_DIR = species_advance/standard/pipelines_cell
 
 root_segment_SOURCES = \
 	@HOST_ACDIR@/src/util/overlays/root_segment.c \
-	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/advance_p_pipeline_spu.c \
-	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/sort_p_pipeline_spu.c
+	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/advance_p_pipeline_spu.c
+#	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/sort_p_pipeline_spu.c
 #	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/energy_p_pipeline_spu.c \
 #	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/center_p_pipeline_spu.c \
 #	@HOST_ACDIR@/src/${SPECIES_SPE_DIR}/uncenter_p_pipeline_spu.c

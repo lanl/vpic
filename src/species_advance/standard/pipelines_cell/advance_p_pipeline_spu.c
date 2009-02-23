@@ -2,7 +2,7 @@
 #define HAS_SPU_PIPELINE /* Make sure header gets assembled correctly */
 #include "../spa_private.h"
 
-#if 0
+#if 1
 
 #include <v4c_spu.h>
 #include <spu_mfcio.h>

@@ -56,7 +56,7 @@ SECTIONS
   .text           :
   {
     /* *(.text .stub .text.* .gnu.linkonce.t.*) */
-    *(EXCLUDE_FILE(advance_p_pipeline_spu.o sort_p_spu.o) .text .stub .text.* .gnu.linkonce.t.*)
+    *(EXCLUDE_FILE(advance_p_pipeline_spu.o /* sort_p_spu.o */) .text .stub .text.* .gnu.linkonce.t.*)
     KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
@@ -64,7 +64,7 @@ SECTIONS
   OVERLAY :
   {
     .segment1 {advance_p_pipeline_spu.o(.text)}
-    .segment2 {sort_p_pipeline_spu.o(.text)}
+    /* .segment2 {sort_p_pipeline_spu.o(.text)} */
   }
   .fini           :
   {

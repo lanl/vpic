@@ -34,7 +34,7 @@
  
 typedef FileIO FILETYPE;
 
-const uint32_t all			(0xffffffff);
+const uint32_t ALL			(0xffffffff);
 const uint32_t electric		(1<<0 | 1<<1 | 1<<2);
 const uint32_t div_e_err	(1<<3);
 const uint32_t magnetic		(1<<4 | 1<<5 | 1<<6);

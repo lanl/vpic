@@ -55,11 +55,11 @@ get_mt_rng_size( mt_rng_t * rng );
 
 void
 get_mt_rng_state( mt_rng_t * rng,
-                  char * state );
+                  void * state );
 
 void
 set_mt_rng_state( mt_rng_t * rng,
-                  const char * state,
+                  const void * state,
                   size_t sz );
 
 /**********************

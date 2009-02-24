@@ -92,7 +92,8 @@ get_mt_rng_size( mt_rng_t * rng ) {
 
 void
 get_mt_rng_state( mt_rng_t * rng,
-                  char * s ) {
+                  void * _s ) {
+  uint8_t * s = (uint8_t *)_s;
   size_t j;
 
   // Serialize rng->next
@@ -118,8 +119,9 @@ get_mt_rng_state( mt_rng_t * rng,
 
 void
 set_mt_rng_state( mt_rng_t * rng,
-                  const char * s,
+                  const void * _s,
                   size_t n ) {
+  const uint8_t * s = (const uint8_t *)_s;
   size_t j, k;
 
   // Extract rng->next

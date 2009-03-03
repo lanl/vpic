@@ -61,7 +61,6 @@ main( int argc,
     else                                    argv[m++] = argv[n];
   argv[m] = NULL; // ANSI - argv is NULL terminated
   argc = m;
-  MESSAGE(("Using %d threads per processsor.", tpp));
   
   thread.boot( tpp, 1 );
   serial.boot( tpp, 1 );

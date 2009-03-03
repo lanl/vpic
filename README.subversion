@@ -20,7 +20,7 @@ http://svnbook.red-bean.com
 
 so for the current vpic setup do:
 
-% svn co svn://taffy.lanl.gov/vpic/trunk vpic
+% svn co svn://tuxfan.lanl.gov/vpic/trunk vpic
 
 This will create the directory "vpic" in the current working directory and
 populate with the source from the main trunk.  Subsequent subversion

@@ -92,3 +92,8 @@ dacs_relay_hybrid_cell
 
 Obviously, there are some logical combinations missing.  These will be added
 as they can be tested.
+
+If you wish to specify a compiler, then put this on the ./configure line as follows:
+
+% ./configure --with-machine=[machine] CC=[path] CXX=[path]
+

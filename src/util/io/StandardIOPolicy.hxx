@@ -41,14 +41,15 @@ class StandardIOPolicy
 		uint64_t size();
 
 		// ascii methods
-		void scan(const char * format, ...);
-		void print(const char * format, ...);
+		void print(const char * format, va_list & args);
 
 		// binary methods
 		template<typename T> void read(T * data, size_t elements);
 		template<typename T> void write(const T * data, size_t elements);
 
-		void seek(long offset, int whence);
+		void seek(uint64_t offset, int32_t whence);
+		uint64_t tell();
+		void rewind();
 
 	private:
 
@@ -111,32 +112,13 @@ inline uint64_t StandardIOPolicy::size()
 		return (uint64_t)size;
 	} // StandardIOPolicy::size
 
-inline void StandardIOPolicy::scan(const char * format, ...)
+inline void StandardIOPolicy::print(const char * format, va_list & args)
 	{
-		va_list ab;
-
-		// initialize the varg list
-		va_start (ab, format);
-
 		// print to file
-		vfscanf(handle_, format, ab);
+		vfprintf(handle_, format, args);
 
 		// end list
-		va_end(ab);
-	} // StandardIOPolicy::scan
-
-inline void StandardIOPolicy::print(const char * format, ...)
-	{
-		va_list ab;
-
-		// initialize the varg list
-		va_start (ab, format);
-
-		// print to file
-		vfprintf(handle_, format, ab);
-
-		// end list
-		va_end(ab);
+		va_end(args);
 	} // StandardIOPolicy::print
 
 template<typename T>
@@ -152,9 +134,19 @@ inline void StandardIOPolicy::write(const T * data, size_t elements)
 			sizeof(T), elements, handle_);
 	} // StandardIOPolicy::write
 
-inline void StandardIOPolicy::seek(long offset, int whence)
+inline void StandardIOPolicy::seek(uint64_t offset, int32_t whence)
 	{
 		fseek(handle_, offset, whence);
 	} // StandardIOPolicy::seek
+
+inline uint64_t StandardIOPolicy::tell()
+	{
+		return uint64_t(ftell(handle_));
+	} // StandardIOPolicy::tell
+
+inline void StandardIOPolicy::rewind()
+	{
+		StandardIOPolicy::seek(uint64_t(0), SEEK_SET);
+	} // StandardIOPolicy::tell
 
 #endif // StandardIOPolicy_hxx

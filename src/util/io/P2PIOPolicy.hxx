@@ -51,13 +51,14 @@ class P2PIOPolicy
 
 		uint64_t size();
 
-		void scan(const char * format, ...);
-		void print(const char * format, ...);
+		void print(const char * format, va_list & args);
 
 		template<typename T> void read(T * data, size_t elements);
 		template<typename T> void write(const T * data, size_t elements);
 
-		void seek(long offset, int whence);
+		void seek(uint64_t offset, int32_t whence);
+		uint64_t tell();
+		void rewind();
 
 	private:
 
@@ -222,42 +223,12 @@ uint64_t P2PIOPolicy<swapped>::size()
 	} // P2PIOPolicy<>::size
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::scan(const char * format, ...)
+void P2PIOPolicy<swapped>::print(const char * format, va_list & args)
 	{
 		assert(id_>=0);
-
-		/*
-		P2PConnection & p2p = P2PConnection::instance();
-
-		MPRequest request(P2PTag::data, io_buffer_[current_].size(),
-			current_);
-
-		// request remote read
-		p2p.post(P2PTag::io_read, request);
-		p2p.recv(io_buffer_[current_].data(), request.count,
-			request.tag, request.id);
-
-		char * str = strtok(io_buffer_[current_].data(), "\n");
-
-		va_list ab;
-		va_start(ab, format);
-		vsscanf(str, format, ab);
-		str = strtok(NULL, "\n");
-		*/
-	} // P2PIOPolicy<>::scan
-
-template<bool swapped>
-void P2PIOPolicy<swapped>::print(const char * format, ...)
-	{
-		assert(id_>=0);
-
-		va_list ab;
-
-		// initialize varg list
-		va_start(ab, format);
 
 		// sprintf to local buffer
-		vsprintf(io_line_.data(), format, ab);
+		vsprintf(io_line_.data(), format, args);
 
 		/*
 		P2PConnection & p2p = P2PConnection::instance();
@@ -267,7 +238,7 @@ void P2PIOPolicy<swapped>::print(const char * format, ...)
 		
 		// use write function to do actual work
 		P2PIOPolicy::write(io_line_.data(), strlen(io_line_.data()));
-	} // P2PIOPolicy<>::scan
+	} // P2PIOPolicy<>::print
 
 template<bool swapped>
 template<typename T>
@@ -398,7 +369,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 	} // P2PIOPolicy<>::write
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::seek(long offset, int whence)
+void P2PIOPolicy<swapped>::seek(uint64_t offset, int32_t whence)
 	{
 		assert(id_>=0);
 
@@ -409,6 +380,33 @@ void P2PIOPolicy<swapped>::seek(long offset, int whence)
 		p2p.send(&offset, 1, P2PTag::data);
 		p2p.send(&whence, 1, P2PTag::data);
 	} // P2PIOPolicy<>::seek
+
+template<bool swapped>
+uint64_t P2PPolicy<swapped>::tell()
+	{
+		assert(id_>=0);
+
+		MPRequest request(P2PTag::io_tell, P2PTag::data, 0, id_);
+		P2PConnection & p2p = P2PConnection::instance();
+
+		p2p.post(request);
+
+		uint64_t offset;
+		p2p.recv(&offset, 1, P2PTag::data);
+
+		return offset;
+	} // P2PPolicy<>::tell
+
+template<bool swapped>
+void P2PPolicy<swapped>::rewind()
+	{
+		assert(id_>=0);
+
+		MPRequest request(P2PTag::io_rewind, P2PTag::data, 0, id_);
+		P2PConnection & p2p = P2PConnection::instance();
+
+		p2p.post(request);
+	} // P2PPolicy<>::rewind
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)

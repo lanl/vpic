@@ -2,7 +2,7 @@
 # top-level Makefile.am
 ################################################################################
 
-SUBDIRS = ${CELLDIR} ${HOSTDIRS}
+SUBDIRS = ${CELLDIR} ${HOSTDIRS} ${DOC}
 
 #setup: setup-host copy-samples
 setup: copy-samples
@@ -49,6 +49,9 @@ clean-mprelay-exe:
 
 clean-samples:
 	@(rm -rf @abs_top_builddir@/sample)
+
+doc: FORCE
+	@([ -d @DOC@ ] && cd @DOC@ && make doc > doc.log 2>&1)
 
 #include config/utils.mk
 

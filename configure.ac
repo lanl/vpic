@@ -20,7 +20,9 @@ AC_CONFIG_FILES(Makefile \
 	lib/Makefile \
 	mprelay/Makefile \
 	accelerator/Makefile \
-	cell/Makefile)
+	cell/Makefile \
+	doc/Makefile \
+	doc/doxygen.conf)
 AC_CONFIG_COMMANDS(setup, [make setup])
 
 ################################################################################
@@ -63,6 +65,7 @@ AC_PROG_CC
 CCS_SIMD_ISA
 CCS_TUNE_CXX
 CCS_TUNE_CC
+CCS_PROG_DOXYGEN
 
 # initialize these to empty
 EXTRA_CPPFLAGS=""
@@ -249,6 +252,11 @@ AC_SUBST(MPRELAY_EXTENSION)
 # is declared more than once
 if test "$enable_cell" = "1" ; then
 	AC_CONFIG_SUBDIRS([cell/spe cell/ppe])
+fi
+
+if test "$HAS_DOXYGEN" = "yes" ; then
+	AC_SUBST(DOC, [doc])
+	AC_CONFIG_COMMANDS([doc], [make doc])
 fi
 
 # this does auto-detection of mpi libraries using

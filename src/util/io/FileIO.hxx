@@ -12,17 +12,16 @@
 #ifndef FileIO_hxx
 #define FileIO_hxx
 
+#include <stdarg.h>
 #include "FileIOData.hxx"
 
 /*!
 	\class FileIO FileIO.h
 	\brief  provides...
 */
-template<class ReadWritePolicy> class FileIO_T
+template<class ReadWritePolicy> struct FileIO_T
 	: public ReadWritePolicy
 	{
-	public:
-
 		//! Constructor
 		FileIO_T() {}
 
@@ -37,15 +36,28 @@ template<class ReadWritePolicy> class FileIO_T
 		bool isOpen()
 			{ return ReadWritePolicy::isOpen(); }
 
-		int size()
+		uint64_t size()
 			{ return ReadWritePolicy::size(); }
 
-		template<typename T> void read(T * data, size_t elements)
-			{ return ReadWritePolicy::read(data, elements); }
-		template<typename T> void write(const T * data, size_t elements)
-			{ return ReadWritePolicy::write(data, elements); }
+		void print(const char * format, ...) {
+			va_list args;
+			va_start(args, format);
+			ReadWritePolicy::print(format, args);
+		}
 
-	private:
+		template<typename T>
+		void read(T * data, size_t elements)
+			{ ReadWritePolicy::read(data, elements); }
+		template<typename T>
+		void write(const T * data, size_t elements)
+			{ ReadWritePolicy::write(data, elements); }
+
+		void seek(uint64_t offset, int32_t whence)
+			{ return ReadWritePolicy::seek(offset, whence); }
+		uint64_t tell()
+			{ return ReadWritePolicy::tell(); }
+		void rewind()
+			{ ReadWritePolicy::rewind(); }
 
 	}; // class FileIO_T
 

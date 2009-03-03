@@ -382,7 +382,7 @@ void P2PIOPolicy<swapped>::seek(uint64_t offset, int32_t whence)
 	} // P2PIOPolicy<>::seek
 
 template<bool swapped>
-uint64_t P2PPolicy<swapped>::tell()
+uint64_t P2PIOPolicy<swapped>::tell()
 	{
 		assert(id_>=0);
 
@@ -392,13 +392,13 @@ uint64_t P2PPolicy<swapped>::tell()
 		p2p.post(request);
 
 		uint64_t offset;
-		p2p.recv(&offset, 1, P2PTag::data);
+		p2p.recv(&offset, 1, request.tag, request.id);
 
 		return offset;
-	} // P2PPolicy<>::tell
+	} // P2PIOPolicy<>::tell
 
 template<bool swapped>
-void P2PPolicy<swapped>::rewind()
+void P2PIOPolicy<swapped>::rewind()
 	{
 		assert(id_>=0);
 
@@ -406,7 +406,7 @@ void P2PPolicy<swapped>::rewind()
 		P2PConnection & p2p = P2PConnection::instance();
 
 		p2p.post(request);
-	} // P2PPolicy<>::rewind
+	} // P2PIOPolicy<>::rewind
 
 template<bool swapped>
 void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)

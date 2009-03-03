@@ -691,6 +691,18 @@ begin_diagnostics {
 	 *   // All basic types are supported.
 	 *   fileIO.write(T * data, size_t n);
 	 *
+	 *   // get current position of file stream
+	 *   uint64_t pos = fileIO.tell();
+	 *
+	 *   // set position of file stream to offset
+	 *   // in bytes starting from whence
+	 *   uint64_t offset = 0;
+	 *   int32_t whence = SEEK_SET;
+	 *   fileIO.seek(offset, whence);
+	 *
+	 *   // rewind file to the beginning
+	 *   fileIO.rewind();
+	 *
 	 *   // close file
 	 *   fileIO.close();
      *------------------------------------------------------------------------*/

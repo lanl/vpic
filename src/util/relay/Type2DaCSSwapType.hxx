@@ -35,6 +35,12 @@ template<> struct Type2DaCSSwapType<int64_t>
 			{ return DACS_BYTE_SWAP_DOUBLE_WORD; }
 	}; // struct Type2DaCSSwapType
 
+template<> struct Type2DaCSSwapType<uint64_t>
+	{
+		inline static DACS_BYTE_SWAP_T type()
+			{ return DACS_BYTE_SWAP_DOUBLE_WORD; }
+	}; // struct Type2DaCSSwapType
+
 /*
 template<> struct Type2DaCSSwapType<long>
 	{

@@ -78,10 +78,10 @@ void MPRelay::start()
 		DMPConnection & dmp = DMPConnection::instance();
 
 		bool relay(true);
-		int filesize;
-		long foffset;
-		int fwhence;
-		int utils_return;
+		uint64_t filesize;
+		uint64_t foffset;
+		int32_t fwhence;
+		int32_t utils_return;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
 
@@ -517,6 +517,21 @@ void MPRelay::start()
 					p2p.recv(&foffset, 1, request.tag, request.id);
 					p2p.recv(&fwhence, 1, request.tag, request.id);
 					file_[request.id].seek(foffset, fwhence);
+					break;
+
+				case P2PTag::io_tell:
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
+					foffset = file_[request.id].tell();
+					p2p.send(&foffset, 1, request.tag);
+					break;
+
+				case P2PTag::io_rewind:
+					// make sure that this id exists
+					assert(file_.find(request.id) != file_.end());
+
+					file_[request.id].rewind();
 					break;
 
 				case P2PTag::io_size:

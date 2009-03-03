@@ -43,6 +43,8 @@ struct P2PTag {
 		io_write,
 		io_read,
 		io_seek,
+		io_tell,
+		io_rewind,
 		io_size,
 		io_close,
 		utils_mkdir,

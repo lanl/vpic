@@ -72,6 +72,7 @@ main( int argc,
   mp_init(argc, argv);
 
   vpic_simulation simulation; 
+
   if( argc>=3 && strcmp(argv[1],"restart")==0 ) simulation.restart(argv[2]);
   else simulation.initialize(argc,argv);
   
@@ -79,6 +80,11 @@ main( int argc,
   // "on the fly"
 
   if ( argc==4 ) simulation.modify_runparams( argv[3] );  
+
+  // Put this here to avoid adding extra garbage to output
+  if( simulation.rank() == 0 ) {
+  	MESSAGE(("**** Beginning simulation advance with %d tpp ****", tpp));
+  } // if
 
   double start = mp_wtime();
   while( simulation.advance() ); 

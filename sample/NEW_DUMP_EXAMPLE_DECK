@@ -1,7 +1,8 @@
 /*------------------------------------------------------------------------------
  * SC08 Demo Deck
  * tar cvjf data.bz2 global.vpc fields ehydro Hhydro
-------------------------------------------------------------------------------*/
+ * rm -rf global.vpc fields ehydro Hhydro particle rate restart rundata sample
+ *----------------------------------------------------------------------------*/
 
 begin_globals {
 	int dump_start;

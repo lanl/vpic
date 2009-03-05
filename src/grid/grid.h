@@ -123,6 +123,8 @@ typedef struct grid {
   /**/                    // 0 ... nproc-1 ... comm boundary condition
   /**/                    // <0 ... locally applied boundary condition
 
+  int gpx, gpy, gpz;      // Global node topology
+
   // Phase 3 grid data structures
 
   // NOTE: LOCAL_CELL_ID LIMITS NUMBER OF CELLS TO 2^31 (INCLUDING

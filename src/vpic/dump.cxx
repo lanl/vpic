@@ -16,6 +16,8 @@
 #include <BitField.hxx>
 #include <cassert>
  
+#define VERBOSE 0
+
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
 // COMPATIBLE WITH EXISTING EXTERNAL 3RD PARTY VISUALIZATION SOFTWARE.
 // IN THE LONG RUN, THIS EXTERNAL SOFTWARE WILL NEED TO BE UPDATED.
@@ -1015,13 +1017,13 @@ void vpic_simulation::global_header(const char * base,
 		fileIO.print("GRID_DELTA_Z %f\n\n", grid->dz);
 
 		print_hashed_comment(fileIO, "Domain partitions in x-dimension");
-		fileIO.print("GRID_TOPOLOGY_X %d\n\n", grid->nx);
+		fileIO.print("GRID_TOPOLOGY_X %d\n\n", grid->gpx);
 
 		print_hashed_comment(fileIO, "Domain partitions in y-dimension");
-		fileIO.print("GRID_TOPOLOGY_Y %d\n\n", grid->ny);
+		fileIO.print("GRID_TOPOLOGY_Y %d\n\n", grid->gpy);
 
 		print_hashed_comment(fileIO, "Domain partitions in z-dimension");
-		fileIO.print("GRID_TOPOLOGY_Z %d\n\n", grid->nz);
+		fileIO.print("GRID_TOPOLOGY_Z %d\n\n", grid->gpz);
 
 		// Global data inforation
 		assert(dumpParams.size() >= 2);
@@ -1106,6 +1108,8 @@ void vpic_simulation::global_header(const char * base,
 
 void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 
+	int32_t rank = mp_rank(grid->mp);
+
 	/*
 	 * Create directory for this time step
 	 */
@@ -1118,14 +1122,14 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 	 */
  	char filename[256];
 	sprintf(filename, "%s/T.%d/%s.%06d.%04d", dumpParams.baseDir, step,
-		dumpParams.baseFileName, step, mp_rank(grid->mp));
+		dumpParams.baseFileName, step, rank);
 
 	FileIO fileIO;
 	FileIOStatus status;
 
 	status = fileIO.open(filename, io_write);
 	if(status == fail) {
-		if(mp_rank(grid->mp) == 0) {
+		if(rank == 0) {
 			ERROR(("Failed opening file: %s", filename));
 		} // if
 	} // if
@@ -1139,17 +1143,17 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 	 * Check stride values.
 	 */
 	if(remainder(grid->nx, istride) != 0) {
-		if(mp_rank(grid->mp) == 0) {
+		if(rank == 0) {
 			ERROR(("x stride must be an integer factor of nx"));
 		} // if
 	} // if
 	if(remainder(grid->ny, jstride) != 0) {
-		if(mp_rank(grid->mp) == 0) {
+		if(rank == 0) {
 			ERROR(("y stride must be an integer factor of ny"));
 		} // if
 	} // if
 	if(remainder(grid->nz, kstride) != 0) {
-		if(mp_rank(grid->mp) == 0) {
+		if(rank == 0) {
 			ERROR(("z stride must be an integer factor of nz"));
 		} // if
 	} // if
@@ -1185,6 +1189,15 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 		dim[1] = nyout+2;
 		dim[2] = nzout+2;
 
+#if VERBOSE
+		std::cerr << "nxout: " << nxout << std::endl;
+		std::cerr << "nyout: " << nyout << std::endl;
+		std::cerr << "nzout: " << nzout << std::endl;
+		std::cerr << "nx: " << grid->nx << std::endl;
+		std::cerr << "ny: " << grid->ny << std::endl;
+		std::cerr << "nz: " << grid->nz << std::endl;
+#endif
+
 		WRITE_ARRAY_HEADER(field_advance->f, 3, dim, fileIO);
 
 		/*
@@ -1193,8 +1206,9 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 		size_t numvars = std::min(dumpParams.output_vars.bitsum(),
 			total_field_variables);
 		size_t * varlist = new size_t[numvars];
+
 		for(size_t i(0), c(0); i<total_field_variables; i++) {
-			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i;}
+			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i; }
 		} // for
 
 		// more efficient for standard case
@@ -1207,28 +1221,52 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(i,j,k));
 							fileIO.write(&fref[varlist[v]], 1);
+#if VERBOSE
+							if(rank==1 && v==0) {
+								printf("%f ", field_advance->f(i,j,k).ex);
+							} // if
+#endif
 						} // for
+#if VERBOSE
+						if(rank==1 && v==0) { printf("\nROW_BREAK\n"); }
+#endif
 					} // for
+#if VERBOSE
+					if(rank==1 && v==0) { printf("\nPLANE_BREAK\n"); }
+#endif
 				} // for
+#if VERBOSE
+				if(rank==1 && v==0) { printf("\nBLOCK_BREAK\n"); }
+#endif
 			} // for
 		}
 		else {
 			for(size_t v(0); v<numvars; v++) {
 				for(size_t k(0); k<nzout+2; k++) {
-					if(k==0 || k==nzout+1 || k%kstride) {
-						for(size_t j(0); j<nyout+2; j++) {
-							if(j==0 || j==nyout+1 || j%jstride) {
-								for(size_t i(0); i<nxout+2; i++) {
-									if(i==0 || i==nxout+1 || i%istride) {
-										const uint32_t * fref =
-											reinterpret_cast<uint32_t *>(
-											&field_advance->f(i,j,k));
-										fileIO.write(&fref[varlist[v]], 1);
-									} // if
-								} // for
+					const size_t koff = (k == 0) ? 0 : (k == nzout+1) ?
+						grid->nz+1 : k*kstride-1;
+
+					for(size_t j(0); j<nyout+2; j++) {
+						const size_t joff = (j == 0) ? 0 : (j == nyout+1) ?
+							grid->ny+1 : j*jstride-1;
+
+						for(size_t i(0); i<nxout+2; i++) {
+							const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
+								grid->nx+1 : i*istride-1;
+
+#if VERBOSE
+							if(rank == 0) {
+								std::cout << "(" << ioff << " " <<
+									joff << " " << koff << ")" << std::endl;
 							} // if
+#endif
+
+							const uint32_t * fref =
+								reinterpret_cast<uint32_t *>(
+								&field_advance->f(ioff,joff,koff));
+							fileIO.write(&fref[varlist[v]], 1);
 						} // for
-					} // if
+					} // for
 				} // for
 			} // for
 		} // if
@@ -1250,18 +1288,20 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 		}
 		else {
 			for(size_t k(0); k<nzout+2; k++) {
-				if(k==0 || k==nzout+1 || k%kstride) {
-					for(size_t j(0); j<nyout+2; j++) {
-						if(j==0 || j==nyout+1 || j%jstride) {
-							for(size_t i(0); i<nxout+2; i++) {
-								if(i==0 || i==nxout+1 || i%istride) {
-									fileIO.write(&field_advance->f(i,j,k),
-										1);
-								} // if
-							} // for
-						} // if
+				const size_t koff = (k == 0) ? 0 : (k == nzout+1) ?
+					grid->nz+1 : k*kstride-1;
+
+				for(size_t j(0); j<nyout+2; j++) {
+					const size_t joff = (j == 0) ? 0 : (j == nyout+1) ?
+						grid->ny+1 : j*jstride-1;
+
+					for(size_t i(0); i<nxout+2; i++) {
+						const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
+							grid->nx+1 : i*istride-1;
+
+						fileIO.write(&field_advance->f(ioff,joff,koff), 1);
 					} // for
-				} // if
+				} // for
 			} // for
 		} // if
 	} // if
@@ -1396,20 +1436,23 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		else {
 			for(size_t v(0); v<numvars; v++) {
 				for(size_t k(0); k<nzout+2; k++) {
-					if(k==0 || k==nzout+1 || k%kstride) {
-						for(size_t j(0); j<nyout+2; j++) {
-							if(j==0 || j==nyout+1 || j%jstride) {
-								for(size_t i(0); i<nxout+2; i++) {
-									if(i==0 || i==nxout+1 || i%istride) {
-										const uint32_t * href =
-											reinterpret_cast<uint32_t *>(
-											&hydro(i,j,k));
-										fileIO.write(&href[varlist[v]], 1);
-									} // if
-								} // for
-							} // if
+					const size_t koff = (k == 0) ? 0 : (k == nzout+1) ?
+						grid->nz+1 : k*kstride-1;
+
+					for(size_t j(0); j<nyout+2; j++) {
+						const size_t joff = (j == 0) ? 0 : (j == nyout+1) ?
+							grid->ny+1 : j*jstride-1;
+
+						for(size_t i(0); i<nxout+2; i++) {
+							const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
+								grid->nx+1 : i*istride-1;
+
+							const uint32_t * href =
+								reinterpret_cast<uint32_t *>(
+								&hydro(ioff,joff,koff));
+							fileIO.write(&href[varlist[v]], 1);
 						} // for
-					} // if
+					} // for
 				} // for
 			} // for
 		} // if
@@ -1431,17 +1474,20 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		}
 		else {
 			for(size_t k(0); k<nzout; k++) {
-				if(k==0 || k==nzout+1 || k%kstride) {
-					for(size_t j(0); j<nyout; j++) {
-						if(j==0 || j==nyout+1 || j%jstride) {
-							for(size_t i(0); i<nxout; i++) {
-								if(i==0 || i==nxout+1 || i%istride) {
-									fileIO.write(&hydro(i,j,k), 1);
-								} // if
-							} // for
-						} // if
+				const size_t koff = (k == 0) ? 0 : (k == nzout+1) ?
+					grid->nz+1 : k*kstride-1;
+
+				for(size_t j(0); j<nyout; j++) {
+					const size_t joff = (j == 0) ? 0 : (j == nyout+1) ?
+						grid->ny+1 : j*jstride-1;
+
+					for(size_t i(0); i<nxout; i++) {
+						const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
+							grid->nx+1 : i*istride-1;
+
+						fileIO.write(&hydro(ioff,joff,koff), 1);
 					} // for
-				} // if
+				} // for
 			} // for
 		} // if
 	} // if

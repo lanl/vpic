@@ -236,20 +236,6 @@ begin_initialization {
 	grid->eps0 = eps0;
 	grid-> damp = damp;
 
-	// strided output
-	head_option = 0;
-	block_dump = 1;
-	ndfld = interval;
-	ndhyd = interval;
-	ndpar = 16600000;
-	ndhis = 10;
-	ndgrd = 10000000;
-	istride = 1;
-	jstride = 1;
-	kstride = 1;
-	stride_option = 1;
-	pstride = 10;
-
 	// Parition a periodic box among the processors sliced uniformly along y
 	define_periodic_grid( -0.5*Lx, 0,  0,  // Low corner
                           0.5*Lx, Ly, Lz,  // High corner
@@ -749,11 +735,6 @@ begin_diagnostics {
 	 * Field data output
      *------------------------------------------------------------------------*/
 	if(step == 1 || should_dump(fields)) {
-		/*
-		sprintf(buffer, "fields/T.%d", step);
-		dump_mkdir(buffer);
-		sprintf(buffer, "fields/T.%d/fields", step);
-		*/
 		field_dump(global->fdParams);
 	} // if
 
@@ -761,11 +742,6 @@ begin_diagnostics {
 	 * Electron species output
      *------------------------------------------------------------------------*/
 	if(should_dump(ehydro)) {
-		/*
-		sprintf(buffer, "hydro/T.%d", step);
-		dump_mkdir(buffer);
-		sprintf(buffer, "hydro/T.%d/ehydro", step);
-		*/
 		hydro_dump("ele", global->hedParams);
 	} // if
 
@@ -773,9 +749,6 @@ begin_diagnostics {
 	 * Ion species output
      *------------------------------------------------------------------------*/
 	if(should_dump(Hhydro)) {
-		/*
-		sprintf(buffer, "hydro/T.%d/Hhydro", step);
-		*/
 		hydro_dump("ion", global->hHdParams);
 	} // if
 

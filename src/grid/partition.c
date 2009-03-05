@@ -56,6 +56,11 @@ partition_periodic_box( grid_t * g,
   // Setup basic variables
   RANK_TO_INDEX(rank,px,py,pz);
 
+  // keep track of topology for file I/O
+  g->gpx = gpx;
+  g->gpy = gpy;
+  g->gpz = gpz;
+
   g->dx = (gx1-gx0)/(double)gnx;
   g->dy = (gy1-gy0)/(double)gny;
   g->dz = (gz1-gz0)/(double)gnz;
@@ -104,6 +109,11 @@ partition_absorbing_box( grid_t * g,
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
   RANK_TO_INDEX(rank,px,py,pz);
+
+  // keep track of topology for file I/O
+  g->gpx = gpx;
+  g->gpy = gpy;
+  g->gpz = gpz;
 
   if( px==0 && gnx>1 ) { 
     set_fbc(g,BOUNDARY(-1,0,0),absorb_fields);
@@ -157,6 +167,11 @@ partition_metal_box( grid_t * g,
   rank = mp_rank(g->mp);
   nproc = mp_nproc(g->mp);
   RANK_TO_INDEX(rank,px,py,pz);
+
+  // keep track of topology for file I/O
+  g->gpx = gpx;
+  g->gpy = gpy;
+  g->gpz = gpz;
 
   if( px==0 && gnx>1 ) {
     set_fbc(g,BOUNDARY(-1,0,0),anti_symmetric_fields);

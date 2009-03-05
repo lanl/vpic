@@ -1,9 +1,0 @@
-################################################################################
-# README for building paper from latex source
-################################################################################
-
-To build the .ps and .pdf files, simply run:
-
-./build
-
-This assumes that you have transfig installed.

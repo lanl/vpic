@@ -1017,13 +1017,13 @@ void vpic_simulation::global_header(const char * base,
 		fileIO.print("GRID_DELTA_Z %f\n\n", grid->dz);
 
 		print_hashed_comment(fileIO, "Domain partitions in x-dimension");
-		fileIO.print("GRID_TOPOLOGY_X %d\n\n", grid->gpx);
+		fileIO.print("GRID_TOPOLOGY_X %d\n\n", px);
 
 		print_hashed_comment(fileIO, "Domain partitions in y-dimension");
-		fileIO.print("GRID_TOPOLOGY_Y %d\n\n", grid->gpy);
+		fileIO.print("GRID_TOPOLOGY_Y %d\n\n", py);
 
 		print_hashed_comment(fileIO, "Domain partitions in z-dimension");
-		fileIO.print("GRID_TOPOLOGY_Z %d\n\n", grid->gpz);
+		fileIO.print("GRID_TOPOLOGY_Z %d\n\n", pz);
 
 		// Global data inforation
 		assert(dumpParams.size() >= 2);

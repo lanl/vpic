@@ -160,6 +160,7 @@ private:
   int particle_interval;
  
   size_t nxout, nyout, nzout;
+  size_t px, py, pz;
   float dxout, dyout, dzout;
 
   int ndfld;
@@ -269,6 +270,7 @@ private:
                         double xh,  double yh,  double zh,
                         double gnx, double gny, double gnz,
                         double gpx, double gpy, double gpz ) {
+	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
                             (int)gnx, (int)gny, (int)gnz,
                             (int)gpx, (int)gpy, (int)gpz );
@@ -279,6 +281,7 @@ private:
                          double xh,  double yh,  double zh,
                          double gnx, double gny, double gnz,
                          double gpx, double gpy, double gpz, int pbc ) {
+	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
                              (int)gnx, (int)gny, (int)gnz,
                              (int)gpx, (int)gpy, (int)gpz,
@@ -290,6 +293,7 @@ private:
                           double xh,  double yh,  double zh,
                           double gnx, double gny, double gnz,
                           double gpx, double gpy, double gpz ) {
+	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_metal_box( grid, xl, yl, zl, xh, yh, zh,
                          (int)gnx, (int)gny, (int)gnz,
                          (int)gpx, (int)gpy, (int)gpz );

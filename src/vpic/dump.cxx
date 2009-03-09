@@ -1226,12 +1226,10 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 				for(size_t k(0); k<nzout+2; k++) {
 					for(size_t j(0); j<nyout+2; j++) {
 						for(size_t i(0); i<nxout+2; i++) {
-							/*
 							const uint32_t * fref =
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(i,j,k));
 							fileIO.write(&fref[varlist[v]], 1);
-							*/
 #if VERBOSE
 							if(rank==VERBOSE_rank && v==VERBOSE_var) {
 								printf("%f ", field_advance->f(i,j,k).ex);
@@ -1276,12 +1274,10 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 						for(size_t i(0); i<nxout+2; i++) {
 							const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
 								grid->nx+1 : i*istride-1;
-							/*
 							const uint32_t * fref =
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(ioff,joff,koff));
 							fileIO.write(&fref[varlist[v]], 1);
-							*/
 #if VERBOSE
 							if(rank==VERBOSE_rank && v==VERBOSE_var) {
 								printf("%f ",

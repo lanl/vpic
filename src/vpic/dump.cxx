@@ -1160,6 +1160,10 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 
 	int dim[3];
 
+	/* define to do C-style indexing */
+	#define f(x,y,z) \
+		f[INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)]
+
 	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 	nxout = (grid->nx)/istride;
 	nyout = (grid->ny)/jstride;
@@ -1167,10 +1171,6 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 	dxout = (grid->dx)*istride;
 	dyout = (grid->dy)*jstride;
 	dzout = (grid->dz)*kstride;
-
-	/* IMPORTANT: this depends on nxout, nyout, nzout */
-	#define f(x,y,z) \
-		f[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
 	/*
 	 * Banded output will write data as a single block-array as opposed to
@@ -1211,32 +1211,55 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 			if(dumpParams.output_vars.bitset(i)) { varlist[c++] = i; }
 		} // for
 
+#if VERBOSE
+		int32_t VERBOSE_rank(0);
+		size_t VERBOSE_var(0);
+
+		if(rank==VERBOSE_rank) {
+			printf("\nBEGIN_OUTPUT\n");
+		} // if
+#endif
+
 		// more efficient for standard case
 		if(istride == 1 && jstride == 1 && kstride == 1) {
 			for(size_t v(0); v<numvars; v++) {
 				for(size_t k(0); k<nzout+2; k++) {
 					for(size_t j(0); j<nyout+2; j++) {
 						for(size_t i(0); i<nxout+2; i++) {
+							/*
 							const uint32_t * fref =
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(i,j,k));
 							fileIO.write(&fref[varlist[v]], 1);
+							*/
 #if VERBOSE
-							if(rank==1 && v==0) {
+							if(rank==VERBOSE_rank && v==VERBOSE_var) {
 								printf("%f ", field_advance->f(i,j,k).ex);
 							} // if
+							///*
+							if(rank==VERBOSE_rank && v==VERBOSE_var) {
+								std::cout << "(" << i << " " <<
+									j << " " << k << ")" << std::endl;
+							} // if
+							//*/
 #endif
 						} // for
 #if VERBOSE
-						if(rank==1 && v==0) { printf("\nROW_BREAK\n"); }
+						if(rank==VERBOSE_rank && v==VERBOSE_var) {
+							printf("\nROW_BREAK %d %d\n", j, k);
+						} // if
 #endif
 					} // for
 #if VERBOSE
-					if(rank==1 && v==0) { printf("\nPLANE_BREAK\n"); }
+					if(rank==VERBOSE_rank && v==VERBOSE_var) {
+						printf("\nPLANE_BREAK %d\n", k);
+					} // if
 #endif
 				} // for
 #if VERBOSE
-				if(rank==1 && v==0) { printf("\nBLOCK_BREAK\n"); }
+				if(rank==VERBOSE_rank && v==VERBOSE_var) {
+					printf("\nBLOCK_BREAK\n");
+				} // if
 #endif
 			} // for
 		}
@@ -1253,21 +1276,43 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 						for(size_t i(0); i<nxout+2; i++) {
 							const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ?
 								grid->nx+1 : i*istride-1;
-
-#if VERBOSE
-							if(rank == 0) {
-								std::cout << "(" << ioff << " " <<
-									joff << " " << koff << ")" << std::endl;
-							} // if
-#endif
-
+							/*
 							const uint32_t * fref =
 								reinterpret_cast<uint32_t *>(
 								&field_advance->f(ioff,joff,koff));
 							fileIO.write(&fref[varlist[v]], 1);
+							*/
+#if VERBOSE
+							if(rank==VERBOSE_rank && v==VERBOSE_var) {
+								printf("%f ",
+									field_advance->f(ioff,joff,koff).ex);
+							} // if
+
+							///*
+							if(rank==VERBOSE_rank && v==VERBOSE_var) {
+								std::cout << "(" << ioff << " " <<
+									joff << " " << koff << ")" << std::endl;
+							} // if
+							//*/
+#endif
 						} // for
+#if VERBOSE
+						if(rank==VERBOSE_rank && v==VERBOSE_var) {
+							printf("\nROW_BREAK %d %d\n", joff, koff);
+						} // if
+#endif
 					} // for
+#if VERBOSE
+					if(rank==VERBOSE_rank && v==VERBOSE_var) {
+						printf("\nPLANE_BREAK %d\n", koff);
+					} // if
+#endif
 				} // for
+#if VERBOSE
+				if(rank==VERBOSE_rank && v==VERBOSE_var) {
+					printf("\nBLOCK_BREAK\n");
+				} // if
+#endif
 			} // for
 		} // if
 
@@ -1377,6 +1422,10 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 
 	int dim[3];
 
+	/* define to do C-style indexing */
+	#define hydro(x,y,z) \
+		hydro[INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)]
+
 	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 	nxout = (grid->nx)/istride;
 	nyout = (grid->ny)/jstride;
@@ -1384,10 +1433,6 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 	dxout = (grid->dx)*istride;
 	dyout = (grid->dy)*jstride;
 	dzout = (grid->dz)*kstride;
-
-	/* IMPORTANT: this depends on nxout, nyout, nzout */
-	#define hydro(x,y,z) \
-		hydro[INDEX_FORTRAN_3(x,y,z,0,nxout+1,0,nyout+1,0,nzout+1)]
 
 	/*
 	 * Banded output will write data as a single block-array as opposed to

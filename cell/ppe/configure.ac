@@ -55,6 +55,7 @@ CCS_WITH_SPU_MODULES
 # enable options
 ################################################################################
 CCS_ENABLE_OPENSSL
+CCS_ENABLE_FFTW
 
 ################################################################################
 # C/C++ configuration
@@ -228,6 +229,13 @@ if test "$enable_openssl" = "1" ; then
 	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_OPENSSL_CPPFLAGS"
 	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_OPENSSL_LDFLAGS"
 	EXTRA_LIBS="$EXTRA_LIBS $PPU_OPENSSL_LIBS"
+fi
+
+if test "$enable_fftw" = "1" ; then
+	CCS_WITH_PPU_FFTW
+	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $PPU_FFTW_CPPFLAGS"
+	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $PPU_FFTW_LDFLAGS"
+	EXTRA_LIBS="$EXTRA_LIBS $PPU_FFTW_LIBS"
 fi
 
 AM_CONDITIONAL(USE_CELL_SPUS, $use_cell_spus)

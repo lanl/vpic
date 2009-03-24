@@ -64,7 +64,7 @@ class MPRelay
 		std::vector<int> pending_dmp_send_;
 		std::vector<int> pending_p2p_send_;
 
-		uint32_t file_dsc_;
+		int32_t file_dsc_;
 		std::map<int, FileIO> file_;
 		MPBuffer<char, filename_size> filename_;
 		MPBuffer<char, io_buffer_size> io_buffer_;
@@ -516,6 +516,14 @@ void MPRelay::start()
 
 					p2p.recv(&foffset, 1, request.tag, request.id);
 					p2p.recv(&fwhence, 1, request.tag, request.id);
+
+					/*
+					if(p2p.global_id() == 0) {
+					std::cerr << "seek " << foffset << " " <<
+						fwhence << std::endl;
+					} // if
+					*/
+
 					file_[request.id].seek(foffset, fwhence);
 					break;
 
@@ -523,7 +531,18 @@ void MPRelay::start()
 					// make sure that this id exists
 					assert(file_.find(request.id) != file_.end());
 
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" calling tell on " << filename_.data() << std::endl;
+					*/
+
 					foffset = file_[request.id].tell();
+
+					/*
+					std::cerr << "rank: " << p2p.global_id() <<
+						" tell value " << foffset << std::endl;
+					*/
+
 					p2p.send(&foffset, 1, request.tag);
 					break;
 

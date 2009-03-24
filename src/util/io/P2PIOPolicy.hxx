@@ -82,7 +82,7 @@ class P2PIOPolicy
 		int request_id[2];
 		MPRequest request_[2];
 
-		int file_size_;
+		uint64_t file_size_;
 		div_t read_blocks_;
 
 	}; // class P2PIOPolicy
@@ -161,9 +161,11 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 			p2p.recv(&file_size_, 1, request.tag, id_);
 			read_blocks_ = div(file_size_, io_buffer_size);
 
+			/*
 			std::cerr << "PPE rank: " << p2p.global_id() <<
 				" file size: " << file_size_ << " read blocks: " <<
 				read_blocks_.quot << std::endl;
+			*/
 
 			// request block
 			request_read_block(current_);

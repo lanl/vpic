@@ -60,7 +60,7 @@ begin_initialization {
   
 	//double quota   = 1000.0;         // run quota in hours
 	//double quota_sec = quota*3600;   // Run quota in seconds
-	double quota_sec = 30;   // Run quota in seconds
+	double quota_sec = 120;   // Run quota in seconds
 
 	double cs   = cos(theta);
 	double sn   = sin(theta);
@@ -184,7 +184,8 @@ begin_initialization {
 	// override timestep if plasma frequency limited
 	if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;
    
-	int restart_interval = 8000;
+	//int restart_interval = 8000;
+	int restart_interval = 50;
 	int energies_interval = 500;
 	int interval = int(0.5/(wci*dt)); 
 	int dump_start = int(1.0/(wci*dt));
@@ -694,7 +695,7 @@ begin_diagnostics {
 	 *   fileIO.close();
      *------------------------------------------------------------------------*/
 
-	if(!(step%100)) sim_log("Time step: " << step);
+	if(!(step%5)) sim_log("Time step: " << step);
 
 	/*--------------------------------------------------------------------------
 	 * Data output directories
@@ -755,7 +756,8 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Restart dump
      *------------------------------------------------------------------------*/
-	if(step && !(step%global->restart_interval)) {
+	if(step == 50) {
+//	if(step && !(step%global->restart_interval)) {
 		if(!global->rtoggle) {
 			global->rtoggle = 1;
 			dump_restart("restart/restart0", 0);

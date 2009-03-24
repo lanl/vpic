@@ -2,6 +2,8 @@
 
 INPUT_DECK_DIR=`pwd`
 
+deck=`echo $1 | sed 's,\.cxx,,g;s,\.cc,,g;s,\.cpp,,g'`
+
 cd @HOST_BUILDDIR@
-echo "@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@HOST_ACDIR@/src/include @HOST_ACDIR@/src/main.cxx @HOST_ACDIR@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$1.@LIB_EXTENSION@ libvpic.@LIB_EXTENSION@.a -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm"
-@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@HOST_ACDIR@/src/include @HOST_ACDIR@/src/main.cxx @HOST_ACDIR@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$1.@LIB_EXTENSION@ libvpic.@LIB_EXTENSION@.a -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm
+echo "@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@HOST_ACDIR@/src/include @HOST_ACDIR@/src/main.cxx @HOST_ACDIR@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$deck.@LIB_EXTENSION@ libvpic.@LIB_EXTENSION@.a -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm"
+@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@HOST_ACDIR@/src/include @HOST_ACDIR@/src/main.cxx @HOST_ACDIR@/src/deck_wrapper.cxx -DINPUT_DECK=$INPUT_DECK_DIR/$1 -o $INPUT_DECK_DIR/$deck.@LIB_EXTENSION@ libvpic.@LIB_EXTENSION@.a -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm

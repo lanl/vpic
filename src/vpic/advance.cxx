@@ -82,7 +82,7 @@ int vpic_simulation::advance(void) {
                 field_advance->f, accumulator, field_advance->g, rng );
 
   LIST_FOR_EACH( sp, species_list ) {
-    if( sp->nm!=0 && verbose )
+    if( sp->nm!=0 && !verbose )
       WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
                 sp->nm, sp->name ));
     sp->nm = 0;

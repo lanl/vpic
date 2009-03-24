@@ -20,6 +20,7 @@ AC_CONFIG_FILES(Makefile \
 	lib/Makefile \
 	mprelay/Makefile \
 	accelerator/Makefile \
+	utilities/Makefile \
 	cell/Makefile \
 	doc/Makefile \
 	doc/doxygen.conf)
@@ -42,6 +43,7 @@ CCS_WITH_MACHINE("$srcdir/machine")
 CCS_ENABLE_CELL
 CCS_ENABLE_HOST
 CCS_ENABLE_OPENSSL
+CCS_ENABLE_FFTW
 
 ################################################################################
 # with options
@@ -78,16 +80,32 @@ EXTRA_LIBS=""
 case "$buildstyle" in
 
 	standard)
-		AC_SUBST(HOSTDIRS, ["lib"])
+		AC_SUBST(HOSTDIRS, ["lib utilities"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
 		LIB_EXTENSION="$EXTENSION"
 		ACCEL_EXTENSION="$EXTENSION"
 		MPRELAY_EXTENSION="$EXTENSION"
+
+		if test "$enable_openssl" = "1" ; then
+			CCS_WITH_OPENSSL
+			EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $OPENSSL_CPPFLAGS"
+			EXTRA_LDFLAGS="$EXTRA_LDFLAGS $OPENSSL_LDFLAGS"
+			EXTRA_LIBS="$EXTRA_LIBS $OPENSSL_LIBS"
+		fi
+
+		if test "$enable_fftw" = "1" ; then
+			CCS_WITH_FFTW
+			EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $FFTW_CPPFLAGS"
+			EXTRA_LDFLAGS="$EXTRA_LDFLAGS $FFTW_LDFLAGS"
+			EXTRA_LIBS="$EXTRA_LIBS $FFTW_LIBS"
+		fi
+
 	;;
 
 	standard_cell)
+		AC_SUBST(HOSTDIRS, ["utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
@@ -99,6 +117,7 @@ case "$buildstyle" in
 	;;
 
 	standard_cell_ppe)
+		AC_SUBST(HOSTDIRS, ["utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
@@ -110,7 +129,7 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay)
-		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator"])
+		AC_SUBST(HOSTDIRS, ["lib mprelay accelerator utilities"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["./"])
@@ -124,6 +143,7 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_cell)
+		AC_SUBST(HOSTDIRS, ["utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
@@ -139,6 +159,7 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_cell_ppe)
+		AC_SUBST(HOSTDIRS, ["utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
@@ -154,9 +175,9 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_hybrid_cell)
+		AC_SUBST(HOSTDIRS, ["mprelay utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
@@ -170,9 +191,9 @@ case "$buildstyle" in
 	;;
 
 	ompi_relay_hybrid_cell_ppe)
+		AC_SUBST(HOSTDIRS, ["mprelay utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["ppe"])
-		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
@@ -186,9 +207,9 @@ case "$buildstyle" in
 	;;
 
 	dacs_relay_hybrid_cell)
+		AC_SUBST(HOSTDIRS, ["mprelay utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
@@ -214,9 +235,9 @@ case "$buildstyle" in
 	;;
 
 	dacs_relay_hybrid_cell_ppe)
+		AC_SUBST(HOSTDIRS, ["mprelay utilities"])
 		AC_SUBST(CELLDIR, ["cell"])
 		AC_SUBST(CELLSUBDIRS, ["spe ppe"])
-		AC_SUBST(HOSTDIRS, ["mprelay"])
 		AC_SUBST(ARCH_LIB_BUILD_PATH, ["cell/ppe"])
 		AC_SUBST(ARCH_MPRELAY_BUILD_PATH, ["./"])
 		AC_SUBST(ARCH_ACCEL_BUILD_PATH, ["cell/ppe"])
@@ -236,13 +257,6 @@ case "$buildstyle" in
 	;;
 
 esac
-
-if test "$enable_openssl" = "1" ; then
-	CCS_WITH_OPENSSL
-	EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $OPENSSL_CPPFLAGS"
-	EXTRA_LDFLAGS="$EXTRA_LDFLAGS $OPENSSL_LDFLAGS"
-	EXTRA_LIBS="$EXTRA_LIBS $OPENSSL_LIBS"
-fi
 
 AC_SUBST(LIB_EXTENSION)
 AC_SUBST(ACCEL_EXTENSION)

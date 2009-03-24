@@ -703,7 +703,16 @@ vpic_simulation::restart( const char *fbase ) {
   // FIXME: SEE NOTE IN ABOVE ABOUT THIS!
   field_advance_methods_t fam[1];
   READ(field_advance_methods_t,fam[0],fileIO);
+
   field_advance = new_field_advance( grid, material_list, fam );
+  /*
+  field_advance = new_field_advance( grid, material_list,
+  	vacuum_field_advance );
+  */
+  /*
+  field_advance = new_field_advance( grid, material_list,
+  	standard_field_advance );
+  */
   field = field_advance->f; // FIXME: Temporary hack
  
   READ(int,size,  fileIO); ABORT(size!=sizeof(field[0]));
@@ -712,7 +721,6 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[1],fileIO); ABORT(dim[1]!=grid->ny+2   );
   READ(int,dim[2],fileIO); ABORT(dim[2]!=grid->nz+2   );
 
-  MESSAGE(("Field dimensions: %d %d %d", dim[0], dim[1], dim[2]));
   fileIO.read( field_advance->f, dim[0]*dim[1]*dim[2] );
  
   // species ... species_list must be put together in the same order
@@ -1244,19 +1252,21 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 						} // for
 #if VERBOSE
 						if(rank==VERBOSE_rank && v==VERBOSE_var) {
-							printf("\nROW_BREAK %d %d\n", j, k);
+							std::cout << std::endl << "ROW_BREAK " <<
+								j << " " << k << std::endl;
 						} // if
 #endif
 					} // for
 #if VERBOSE
 					if(rank==VERBOSE_rank && v==VERBOSE_var) {
-						printf("\nPLANE_BREAK %d\n", k);
+						std::cout << std::endl << "PLANE_BREAK " <<
+							k << std::endl;
 					} // if
 #endif
 				} // for
 #if VERBOSE
 				if(rank==VERBOSE_rank && v==VERBOSE_var) {
-					printf("\nBLOCK_BREAK\n");
+					std::cout << std::endl << "BLOCK_BREAK" << std::endl;
 				} // if
 #endif
 			} // for
@@ -1294,19 +1304,21 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 						} // for
 #if VERBOSE
 						if(rank==VERBOSE_rank && v==VERBOSE_var) {
-							printf("\nROW_BREAK %d %d\n", joff, koff);
+							std::cout << std::endl << "ROW_BREAK " <<
+								joff << " " << koff << std::endl;
 						} // if
 #endif
 					} // for
 #if VERBOSE
 					if(rank==VERBOSE_rank && v==VERBOSE_var) {
-						printf("\nPLANE_BREAK %d\n", koff);
+						std::cout << std::endl << "PLANE_BREAK " <<
+							koff << std::endl;
 					} // if
 #endif
 				} // for
 #if VERBOSE
 				if(rank==VERBOSE_rank && v==VERBOSE_var) {
-					printf("\nBLOCK_BREAK\n");
+					std::cout << std::endl << "BLOCK_BREAK" << std::endl;
 				} // if
 #endif
 			} // for
@@ -1379,9 +1391,11 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 		} // if
 	} // if
 
+	/*
 	if(mp_rank(grid->mp) == 0) {
 		MESSAGE(("Dumping %s species to %s", speciesname, filename));
 	} // if
+	*/
 
 	species_t * sp = find_species_name(speciesname, species_list);
 	if(sp == NULL) {

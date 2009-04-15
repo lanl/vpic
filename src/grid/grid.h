@@ -138,6 +138,10 @@ typedef struct grid {
                           // cells owned by processor "rank".  Note:
                           // range[rank+1]-range[rank] <~ 2^31 / 6
 
+#if defined(DEBUG_BOUNDARY)
+  int64_t * ALIGNED(128) neighbor_old;
+#endif
+
   int64_t * ALIGNED(128) neighbor;
                           // (0:5,0:local_num_cells-1) FORTRAN indexed
                           // array neighbor(0:5,lidx) are the global

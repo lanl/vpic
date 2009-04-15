@@ -10,6 +10,13 @@
 
 #include "grid.h"
 
+#if 0
+#define INDEX_FORTRAN_3_64(x,y,z,xl,xh,yl,yh,zl,zh) \
+ ((x)-(xl) + ((xh)-(xl)+(int64_t)1)*((y)-(yl) + ((yh)-(yl)+(int64_t)1)*((z)-(zl))))
+#define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3_64((int64_t)x,(int64_t)y,(int64_t)z,(int64_t)0,(int64_t)lnx+(int64_t)1,(int64_t)0,(int64_t)lny+(int64_t)1,(int64_t)0,(int64_t)lnz+(int64_t)1)
+#define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3_64((int64_t)x,(int64_t)y,(int64_t)z,(int64_t)0,(int64_t)rnx+(int64_t)1,(int64_t)0,(int64_t)rny+(int64_t)1,(int64_t)0,(int64_t)rnz+(int64_t)1)
+#endif
+
 #define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3(x,y,z,0,lnx+1,0,lny+1,0,lnz+1)
 #define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3(x,y,z,0,rnx+1,0,rny+1,0,rnz+1)
 
@@ -18,7 +25,9 @@
 void
 size_grid( grid_t * g,
            int lnx, int lny, int lnz ) {
-  int rank, nproc, i, j, k, x, y, z, lnc;
+  int64_t x,y,z;
+  //int rank, nproc, i, j, k, x, y, z, lnc;
+  int rank, nproc, i, j, k, lnc;
   int64_t ii, jj, kk; 
 
   if( g==NULL )                 ERROR(("Bad grid"));
@@ -87,6 +96,11 @@ size_grid( grid_t * g,
           g->neighbor[i+5] = reflect_particles;
         }
       }
+
+#if defined(DEBUG_BOUNDARY)
+  FREE_ALIGNED( g->neighbor_old );
+  MALLOC_ALIGNED( g->neighbor_old, 6*lnc, 128 );
+#endif
 
 # if 0
   // Setup the space filling curve

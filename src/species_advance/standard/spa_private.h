@@ -133,8 +133,12 @@ typedef struct advance_p_pipeline_args {
   MEM_PTR( const int64_t,        128 ) neighbor; // Global voxel indices of
   /**/                                           // voxels adjacent to local
   /**/                                           // voxels
+#if 0
   int                                  rangel;   // First global voxel here
   int                                  rangeh;   // Last global voxel here
+#endif
+  int64_t                              rangel;   // First global voxel here
+  int64_t                              rangeh;   // Last global voxel here
 
 # endif
 
@@ -150,7 +154,8 @@ typedef struct advance_p_pipeline_args {
   int                                  nz;       // z-mesh resolution
  
 # if FOR_SPU
-  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 4*sizeof(float) + 7*sizeof(int) )
+  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 4*sizeof(float) + 5*sizeof(int) + 2*sizeof(int64_t))
+//  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 4*sizeof(float) + 7*sizeof(int) )
 # else
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 4*sizeof(float) + 5*sizeof(int) )
 # endif

@@ -14,8 +14,10 @@ IUO_add_boundary( grid_t *g,
   boundary_t * gb;
 
   if( g==NULL || handler==NULL || sz<0 || sz>MAX_BOUNDARY_DATA_SIZE ||
-     ( initial_params==NULL && sz!=0 ) )
+     ( initial_params==NULL && sz!=0 ) ) {
+	MESSAGE(("Add boundary encountered invalid boundary!!!"));
     return INVALID_BOUNDARY;
+  } // if
 
   MALLOC( gb, g->nb+1 );
   COPY( gb, g->boundary, g->nb );

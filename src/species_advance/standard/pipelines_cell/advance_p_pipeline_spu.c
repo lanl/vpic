@@ -441,9 +441,12 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
   /*const*/ vec_uint4  sign[3]        = { { 1<<31, 0,     0,     0     },
                                       { 0,     1<<31, 0,     0     },
                                       { 0,     0,     1<<31, 0     } };
-
+#if 0
   /*const*/ int rangel = args->rangel;
   /*const*/ int rangeh = args->rangeh;
+#endif
+  /*const*/ int64_t rangel = args->rangel;
+  /*const*/ int64_t rangeh = args->rangeh;
   /*const*/ int streak_type[16] = { 3 /* 0000 - Cannot happen */,
     /**/          3 /* 0001 */, 2 /* 0010 */, 3 /* 0011 */,
     1 /* 0100 */, 3 /* 0101 */, 1 /* 0110 */, 3 /* 0111 */,

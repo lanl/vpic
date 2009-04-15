@@ -101,15 +101,24 @@ boundary_p( species_t        * __restrict__ sp_list,
   ((g->bc[bound]>=0) & (g->bc[bound]<nproc) & (g->bc[bound]!=rank))
 
   const int64_t * __restrict__ ALIGNED(128) neighbor = g->neighbor;
-  const int rangel = g->rangel;
-  const int rangeh = g->rangeh;
-  const int rangem = g->range[nproc];
-  const int range0 = SHARED_REMOTELY(sf2b[0]) ? g->range[g->bc[sf2b[0]]] : 0;
-  const int range1 = SHARED_REMOTELY(sf2b[1]) ? g->range[g->bc[sf2b[1]]] : 0;
-  const int range2 = SHARED_REMOTELY(sf2b[2]) ? g->range[g->bc[sf2b[2]]] : 0;
-  const int range3 = SHARED_REMOTELY(sf2b[3]) ? g->range[g->bc[sf2b[3]]] : 0;
-  const int range4 = SHARED_REMOTELY(sf2b[4]) ? g->range[g->bc[sf2b[4]]] : 0;
-  const int range5 = SHARED_REMOTELY(sf2b[5]) ? g->range[g->bc[sf2b[5]]] : 0;
+#if defined(DEBUG_BOUNDARY)
+  const int64_t * __restrict__ ALIGNED(128) neighbor_old = g->neighbor_old;
+#endif
+  const int64_t rangel = g->rangel;
+  const int64_t rangeh = g->rangeh;
+  const int64_t rangem = g->range[nproc];
+  const int64_t range0 = SHARED_REMOTELY(sf2b[0]) ?
+    g->range[g->bc[sf2b[0]]] : 0;
+  const int64_t range1 = SHARED_REMOTELY(sf2b[1]) ?
+    g->range[g->bc[sf2b[1]]] : 0;
+  const int64_t range2 = SHARED_REMOTELY(sf2b[2]) ?
+    g->range[g->bc[sf2b[2]]] : 0;
+  const int64_t range3 = SHARED_REMOTELY(sf2b[3]) ?
+    g->range[g->bc[sf2b[3]]] : 0;
+  const int64_t range4 = SHARED_REMOTELY(sf2b[4]) ?
+    g->range[g->bc[sf2b[4]]] : 0;
+  const int64_t range5 = SHARED_REMOTELY(sf2b[5]) ?
+    g->range[g->bc[sf2b[5]]] : 0;
 
   boundary_t * __restrict__ boundary = g->boundary;
   const int                 nb       = g->nb; 
@@ -236,8 +245,8 @@ boundary_p( species_t        * __restrict__ sp_list,
             r[0] = p0[--np];                                            \
             continue;                                                   \
           }                                                             \
-          if( ((nn>=0)     & (nn< rangel)) |                            \
-              ((nn>rangeh) & (nn<=rangem)) )  {                         \
+          if( ((nn>=0)     && (nn< rangel)) ||                          \
+              ((nn>rangeh) && (nn<=rangem)) )  {                        \
             /* nn - range... is less than 2^31 / 6 */                   \
             ps##FACE[ns##FACE].dx    = ((FACE==0) | (FACE==3)) ? -dx : dx; \
             ps##FACE[ns##FACE].dy    = ((FACE==1) | (FACE==4)) ? -dy : dy; \
@@ -268,6 +277,30 @@ boundary_p( species_t        * __restrict__ sp_list,
           }                                                             \
         }
         
+/* Debug logic taken from macro */
+#if 0
+          int64_t nn_old = neighbor_old[ 6*i + FACE ];                  \
+          nn_old = -nn_old - 3;                                         \
+
+		  WARNING(( "Exceptional case:  somehow it fell through.  nn=%ld nn_old=%ld rangel=%ld rangeh=%ld rangem=%ld", -((int64_t)(3)+nn), -((int64_t)(3)+nn_old), rangel, rangeh, rangem));\
+          if(nn != nn_old) {                                            \
+		    WARNING(("nn not equal nn_old"));                           \
+          }                                                             \
+                                                                        \
+          /* new stuff:  Print physical location of particle */         \
+          {                                                             \
+            int nxp2 = g->nx+2;                                         \
+            int nyp2 = g->ny+2;                                         \
+            int iz   = i/(nxp2*nyp2);                                   \
+            int iy   = (i - iz*nxp2*nyp2)/nxp2;                         \
+            int ix   = i - nxp2*(iy+nyp2*iz);                           \
+            float px = g->x0+((ix-1)+(dx+1)*0.5)*g->dx;                 \
+            float py = g->y0+((iy-1)+(dy+1)*0.5)*g->dy;                 \
+            float pz = g->z0+((iz-1)+(dz+1)*0.5)*g->dz;                 \
+            MESSAGE(("nn = %ld, px, py, pz = (%e %e %e)", nn, px, py, pz)); \
+          }
+#endif
+
         TEST_FACE(0,(dx==-1) & (ux<0));
         TEST_FACE(1,(dy==-1) & (uy<0));
         TEST_FACE(2,(dz==-1) & (uz<0));

@@ -704,11 +704,11 @@ vpic_simulation::restart( const char *fbase ) {
   field_advance_methods_t fam[1];
   READ(field_advance_methods_t,fam[0],fileIO);
 
-  field_advance = new_field_advance( grid, material_list, fam );
-  /*
+  //field_advance = new_field_advance( grid, material_list, fam );
+  ///*
   field_advance = new_field_advance( grid, material_list,
   	vacuum_field_advance );
-  */
+  //*/
   /*
   field_advance = new_field_advance( grid, material_list,
   	standard_field_advance );
@@ -1129,7 +1129,7 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 	 * Open the file for output
 	 */
  	char filename[256];
-	sprintf(filename, "%s/T.%d/%s.%06d.%04d", dumpParams.baseDir, step,
+	sprintf(filename, "%s/T.%d/%s.%d.%d", dumpParams.baseDir, step,
 		dumpParams.baseFileName, step, rank);
 
 	FileIO fileIO;
@@ -1378,7 +1378,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 	 * Open the file for output
 	 */
  	char filename[256];
-	sprintf(filename, "%s/T.%d/%s.%06d.%04d", dumpParams.baseDir, step,
+	sprintf(filename, "%s/T.%d/%s.%d.%d", dumpParams.baseDir, step,
 		dumpParams.baseFileName, step, mp_rank(grid->mp));
 
 	FileIO fileIO;

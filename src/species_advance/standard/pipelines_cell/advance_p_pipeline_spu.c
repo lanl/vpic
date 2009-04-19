@@ -504,7 +504,9 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
   vec_float4 v0, v1, v2, v3, v4, v5;  // Vector temporaries
   float f0;                           // Scalar temporaries
 
-  int m, new_nm, line, voxel, type, face, neighbor, n_iter;
+  //int64_t voxel, neighbor;
+  int64_t voxel, neighbor;
+  int m, new_nm, line, type, face, n_iter;
 
   DECLARE_ALIGNED_ARRAY( uint32_t, 128, ln, NP_BLOCK );
 

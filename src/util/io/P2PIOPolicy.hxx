@@ -49,7 +49,7 @@ class P2PIOPolicy
 
 		bool isOpen() { return (id_>=0); }
 
-		uint64_t size();
+		int64_t size();
 
 		void print(const char * format, va_list & args);
 
@@ -82,7 +82,7 @@ class P2PIOPolicy
 		int request_id[2];
 		MPRequest request_[2];
 
-		uint64_t file_size_;
+		int64_t file_size_;
 		div_t read_blocks_;
 
 	}; // class P2PIOPolicy
@@ -209,7 +209,7 @@ void P2PIOPolicy<swapped>::close()
 	} // P2PIOPolicy<>::close
 
 template<bool swapped>
-uint64_t P2PIOPolicy<swapped>::size()
+int64_t P2PIOPolicy<swapped>::size()
 	{
 		assert(id_>=0);
 
@@ -218,7 +218,7 @@ uint64_t P2PIOPolicy<swapped>::size()
 		MPRequest request(P2PTag::io_size, P2PTag::data, 1, id_);
 		P2PConnection::instance().post(request);
 
-		uint64_t tmp;
+		int64_t tmp;
 		p2p.recv(&tmp, 1, request.tag, request.id);
 
 		return tmp;

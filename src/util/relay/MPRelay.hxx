@@ -78,7 +78,7 @@ void MPRelay::start()
 		DMPConnection & dmp = DMPConnection::instance();
 
 		bool relay(true);
-		uint64_t filesize;
+		int64_t filesize;
 		uint64_t foffset;
 		int32_t fwhence;
 		int32_t utils_return;

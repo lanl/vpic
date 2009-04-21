@@ -48,7 +48,7 @@ class StandardIOPolicy
 		template<typename T> void write(const T * data, size_t elements);
 
 		void seek(uint64_t offset, int32_t whence);
-		uint64_t tell();
+		int64_t tell();
 		void rewind();
 
 	private:
@@ -139,14 +139,14 @@ inline void StandardIOPolicy::seek(uint64_t offset, int32_t whence)
 		fseek(handle_, offset, whence);
 	} // StandardIOPolicy::seek
 
-inline uint64_t StandardIOPolicy::tell()
+inline int64_t StandardIOPolicy::tell()
 	{
-		return uint64_t(ftell(handle_));
+		return int64_t(ftell(handle_));
 	} // StandardIOPolicy::tell
 
 inline void StandardIOPolicy::rewind()
 	{
 		StandardIOPolicy::seek(uint64_t(0), SEEK_SET);
-	} // StandardIOPolicy::tell
+	} // StandardIOPolicy::rewind
 
 #endif // StandardIOPolicy_hxx

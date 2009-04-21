@@ -36,7 +36,7 @@ template<class ReadWritePolicy> struct FileIO_T
 		bool isOpen()
 			{ return ReadWritePolicy::isOpen(); }
 
-		uint64_t size()
+		int64_t size()
 			{ return ReadWritePolicy::size(); }
 
 		void print(const char * format, ...) {
@@ -54,7 +54,7 @@ template<class ReadWritePolicy> struct FileIO_T
 
 		void seek(uint64_t offset, int32_t whence)
 			{ return ReadWritePolicy::seek(offset, whence); }
-		uint64_t tell()
+		int64_t tell()
 			{ return ReadWritePolicy::tell(); }
 		void rewind()
 			{ ReadWritePolicy::rewind(); }

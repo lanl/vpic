@@ -24,6 +24,12 @@ int vpic_simulation::advance(void) {
 
   rank = mp_rank(grid->mp);
 
+#if VERBOSE
+  if(rank == 0) {
+    MESSAGE(("step %d of %d", step, num_step));
+  } // if
+#endif
+
   // At this point, fields are at E_0 and B_0 and the particle positions
   // are at r_0 and u_{-1/2}. Further the mover lists for the particles should
   // empty and all particles should be inside the local computational domain.
@@ -49,6 +55,12 @@ int vpic_simulation::advance(void) {
   // 
   // FIXME:  Make a real interface for collisions? 
   // FIXME:  Give collisions their own timer.  
+
+#if VERBOSE
+  if(rank == 0) {
+    MESSAGE(("Executing user particle collisions"));
+  } // if
+#endif
 
   user_particle_collisions();
   u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);

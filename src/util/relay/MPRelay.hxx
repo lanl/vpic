@@ -79,7 +79,7 @@ void MPRelay::start()
 
 		bool relay(true);
 		int64_t filesize;
-		uint64_t foffset;
+		int64_t foffset;
 		int32_t fwhence;
 		int32_t utils_return;
 		double wtime;

@@ -11,8 +11,8 @@ begin_globals {
 };
 
 begin_initialization {
-  double L = 1e10;
-  int npart = 21;
+  double L  = 1e10;
+  int npart = 131;
 
   grid->dt = 1;
   grid->cvac = 1;
@@ -95,10 +95,8 @@ begin_initialization {
   test_e(z,-1, 1,0,10);
   test_e(z, 1, 1,0,11);
   
-  if( failed ) sim_log( "FAIL" );
-  else         sim_log( "pass" );
-
-  abort(0);
+  if( failed ) { sim_log( "FAIL" ); abort(1); }
+  /**/           sim_log( "pass" ); exit(0);
 }
 
 begin_diagnostics {

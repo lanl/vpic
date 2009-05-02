@@ -12,13 +12,13 @@
 
 #define NX 2
 #define NY 3
-#define NZ 4
+#define NZ 5
 
 begin_globals {
 };
 
 begin_initialization {
-  const int nx = NX, ny = NY, nz = NZ, npart = 21;
+  const int nx = NX, ny = NY, nz = NZ, npart = 131;
   double drho[ (NX+2)*(NY+2)*(NZ+2) ], divj[ (NX+2)*(NY+2)*(NZ+2) ];
   int n_iter;
 
@@ -122,7 +122,7 @@ begin_initialization {
           if( div_err<0 ) div_err = -div_err;
           if( div_err>max_div_err ) max_div_err = div_err;
         }
-    if( max_div_err < 15e-7 ) num_pass++;
+    if( max_div_err < 50e-7 ) num_pass++;
     else                      num_fail++;
     if( worst_div_err < max_div_err ) worst_div_err = max_div_err;
 
@@ -132,7 +132,8 @@ begin_initialization {
               ", worst " << worst_div_err);
   }
 
-  abort(0);
+  if( num_fail ) { sim_log( "FAIL" ); abort(1); }
+  /**/             sim_log( "pass" ); exit(0);
 }
 
 begin_diagnostics {

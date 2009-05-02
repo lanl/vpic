@@ -22,8 +22,7 @@ begin_globals {
 
 begin_initialization {
   if( nproc()!=8 ) {
-    sim_log( "This test case requires 8 processors" );
-    abort(0);
+    sim_log( "This test case requires 8 processors" ); abort(1);
   }
 
   num_step = 40;
@@ -130,10 +129,8 @@ begin_diagnostics {
   if( step==40 ) {
     for( int i=0; i<8; i++ ) {
       if( rank()==i ) {
-        if( global->fail==0 )
-          sim_log_local( "pass" );
-        else
-          sim_log_local( "FAIL (" << global->fail << ")" );
+        if( global->fail ) { sim_log_local( "FAIL" ); abort(1); }
+        /**/                 sim_log_local( "pass" );
       }
       barrier();
     }

@@ -143,7 +143,7 @@ boundary_p( species_t        * __restrict__ sp_list,
   // FIXME: WE COULD BE ~7X MORE EFFICIENT IN OUR PARTICLE INJECTOR
   // SIZING HERE.  CREATE ON LOCAL INJECTOR BUFFER OF NM IN SIZE.
   // THEN WE WOULD DO INJECTION FOR ALL LOCAL AND REMOTE BOUNDARIES
-  // TO THIS BUFFER.  IN-PLACE STORE THE BUFFER, PRESERVING THE
+  // TO THIS BUFFER.  IN-PLACE SORT THE BUFFER, PRESERVING THE
   // PARTTIONING.  LOAD UP MESSAGING APPROPRIATELY.  REQUIRES SOME
   // MP REDESIGN!
 
@@ -455,6 +455,9 @@ boundary_p( species_t        * __restrict__ sp_list,
     // MEMORY HERE!
 
     for( face=0; face<7; face++ ) {
+      int np; particle_t       * __restrict__ ALIGNED(32) p;
+      int nm; particle_mover_t * __restrict__ ALIGNED(16) pm;
+
       if( face==6 ) pi = cmlist, n = ncm;
       else if( !SHARED_REMOTELY(rf2b[face]) ) continue;
       else {
@@ -474,11 +477,22 @@ boundary_p( species_t        * __restrict__ sp_list,
       pi += n-1;
       for( ; n; pi--, n-- ) {
         sp = sp_table[pi->sp_id];
-        sp->p[ sp->np]   = *(particle_t       *)(&(pi->dx   ));
-        sp->pm[sp->nm]   = *(particle_mover_t *)(&(pi->dispx));
-        sp->pm[sp->nm].i = sp->np;
-        sp->np++;
-        sp->nm += move_p( sp->p, &sp->pm[sp->nm], a0, g );
+
+        /* Note: BREAKS ALIASING RULES */
+        /*sp->p[ sp->np] = *(particle_t       *)(&(pi->dx   ));*/
+        /*sp->pm[sp->nm] = *(particle_mover_t *)(&(pi->dispx));*/
+
+        np = sp->np; p  = sp->p  + np;
+        nm = sp->nm; pm = sp->pm + nm;
+
+        p->dx = pi->dx; p->dy = pi->dy; p->dz = pi->dz; p->i = pi->i; /* FIXME: v4 accelerate */
+        p->ux = pi->ux; p->uy = pi->uy; p->uz = pi->uz; p->q = pi->q; /* FIXME: v4 accelerate */
+       
+        pm->dispx = pi->dispx; pm->dispy = pi->dispy; pm->dispz = pi->dispz; pm->i = pi->sp_id; /* FIXME: v4 accelerate */
+
+        pm->i  = np;
+        sp->np = np + 1;
+        sp->nm = nm + move_p( p, pm, a0, g );
       }
     }
     

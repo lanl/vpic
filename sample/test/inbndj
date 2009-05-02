@@ -10,7 +10,7 @@
 
 #include <time.h>
 
-#define NPART 21
+#define NPART 131
 
 begin_globals {
 };
@@ -31,106 +31,121 @@ begin_initialization {
 
   species_t * sp = define_species( "test_species", 1., NPART, NPART, 0, 0 );
 
-  float dx0[NPART], dy0[NPART], dz0[NPART], dx1[NPART], dy1[NPART], dz1[NPART];
-  float rho0[8], rho1[8], drho[8], divj[8];
-  memset( rho0, 0, sizeof(float)*8 );
-  memset( rho1, 0, sizeof(float)*8 );
-  memset( drho, 0, sizeof(float)*8 );
-  memset( divj, 0, sizeof(float)*8 );
-  for( int n=0; n<NPART; n++ ) {
-    dx0[n] = uniform_rand(-1,1);
-    dy0[n] = uniform_rand(-1,1);
-    dz0[n] = uniform_rand(-1,1);
-    
-    dx1[n] = uniform_rand(-1,1);
-    dy1[n] = uniform_rand(-1,1);
-    dz1[n] = uniform_rand(-1,1);
-
-    rho0[0] += 0.125 * ( 1 - dx0[n] ) * ( 1 - dy0[n] ) * ( 1 - dz0[n] );
-    rho0[1] += 0.125 * ( 1 + dx0[n] ) * ( 1 - dy0[n] ) * ( 1 - dz0[n] );
-    rho0[2] += 0.125 * ( 1 - dx0[n] ) * ( 1 + dy0[n] ) * ( 1 - dz0[n] );
-    rho0[3] += 0.125 * ( 1 + dx0[n] ) * ( 1 + dy0[n] ) * ( 1 - dz0[n] );
-    rho0[4] += 0.125 * ( 1 - dx0[n] ) * ( 1 - dy0[n] ) * ( 1 + dz0[n] );
-    rho0[5] += 0.125 * ( 1 + dx0[n] ) * ( 1 - dy0[n] ) * ( 1 + dz0[n] );
-    rho0[6] += 0.125 * ( 1 - dx0[n] ) * ( 1 + dy0[n] ) * ( 1 + dz0[n] );
-    rho0[7] += 0.125 * ( 1 + dx0[n] ) * ( 1 + dy0[n] ) * ( 1 + dz0[n] );
-
-    rho1[0] += 0.125 * ( 1 - dx1[n] ) * ( 1 - dy1[n] ) * ( 1 - dz1[n] );
-    rho1[1] += 0.125 * ( 1 + dx1[n] ) * ( 1 - dy1[n] ) * ( 1 - dz1[n] );
-    rho1[2] += 0.125 * ( 1 - dx1[n] ) * ( 1 + dy1[n] ) * ( 1 - dz1[n] );
-    rho1[3] += 0.125 * ( 1 + dx1[n] ) * ( 1 + dy1[n] ) * ( 1 - dz1[n] );
-    rho1[4] += 0.125 * ( 1 - dx1[n] ) * ( 1 - dy1[n] ) * ( 1 + dz1[n] );
-    rho1[5] += 0.125 * ( 1 + dx1[n] ) * ( 1 - dy1[n] ) * ( 1 + dz1[n] );
-    rho1[6] += 0.125 * ( 1 - dx1[n] ) * ( 1 + dy1[n] ) * ( 1 + dz1[n] );
-    rho1[7] += 0.125 * ( 1 + dx1[n] ) * ( 1 + dy1[n] ) * ( 1 + dz1[n] );
-  }
-  for( int n=0; n<8; n++) drho[n] = rho1[n] - rho0[n];
-
   // Hack into vpic internals
+
+  // Create the particle distribution
+
+  float dx1[NPART], dy1[NPART], dz1[NPART];
+  double cx = 0.5*(double)grid->dx/((double)grid->dt*(double)grid->cvac);
+  double cy = 0.5*(double)grid->dx/((double)grid->dt*(double)grid->cvac);
+  double cz = 0.5*(double)grid->dx/((double)grid->dt*(double)grid->cvac);
 
   sp->np = NPART;
   for( int n=0; n<NPART; n++ ) {
+    float dx0 = uniform_rand(-1,1); dx1[n] = uniform_rand(-1,1);
+    float dy0 = uniform_rand(-1,1); dy1[n] = uniform_rand(-1,1);
+    float dz0 = uniform_rand(-1,1); dz1[n] = uniform_rand(-1,1);
+    double vx_c = cx*( (double)dx1[n] - (double)dx0 );
+    double vy_c = cy*( (double)dy1[n] - (double)dy0 );
+    double vz_c = cz*( (double)dz1[n] - (double)dz0 );
+    double rgamma = sqrt( 1. - ( vx_c*vx_c + vy_c*vy_c + vz_c*vz_c ) );
     sp->p[n].i  = LOCAL_CELL_ID(1,1,1);
-    sp->p[n].dx = dx0[n];
-    sp->p[n].dy = dy0[n];
-    sp->p[n].dz = dz0[n];
-    sp->p[n].ux = grid->dx*(dx1[n] - dx0[n])/(2*grid->dt); // Velocity
-    sp->p[n].uy = grid->dy*(dy1[n] - dy0[n])/(2*grid->dt);
-    sp->p[n].uz = grid->dz*(dz1[n] - dz0[n])/(2*grid->dt);
-    float rgamma = sqrt( 1 -
-                         sp->p[n].ux*sp->p[n].ux -
-                         sp->p[n].uy*sp->p[n].uy -
-                         sp->p[n].uz*sp->p[n].uz );
-    sp->p[n].ux /= rgamma;
-    sp->p[n].uy /= rgamma;
-    sp->p[n].uz /= rgamma;
+    sp->p[n].dx = dx0;
+    sp->p[n].dy = dy0;
+    sp->p[n].dz = dz0;
+    sp->p[n].ux = vx_c/rgamma;
+    sp->p[n].uy = vy_c/rgamma;
+    sp->p[n].uz = vz_c/rgamma;
     sp->p[n].q = 1;
   }
+
+  // Compute the initial charge density
+
+  double rho0[8];
+  CLEAR( rho0, 8 );
+  for( int n=0; n<NPART; n++ ) {
+    double dx = sp->p[n].dx, dy = sp->p[n].dy, dz = sp->p[n].dz;
+    rho0[0] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho0[1] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho0[2] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho0[3] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho0[4] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho0[5] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho0[6] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
+    rho0[7] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
+  }
+
+  // Advance the particles
 
   clear_accumulators( accumulator, grid );
   advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
              accumulator,interpolator,grid);
   reduce_accumulators( accumulator, grid );
 
-  accumulator_t *a = &accumulator[LOCAL_CELL_ID(1,1,1)];
-  divj[0] = 0.25*(  a->jx[0] + a->jy[0] + a->jz[0] ); // -1,-1,-1
-  divj[1] = 0.25*( -a->jx[0] + a->jy[2] + a->jz[1] ); //  1,-1,-1
-  divj[2] = 0.25*(  a->jx[1] - a->jy[0] + a->jz[2] ); // -1, 1,-1
-  divj[3] = 0.25*( -a->jx[1] - a->jy[2] + a->jz[3] ); //  1, 1,-1
-  divj[4] = 0.25*(  a->jx[2] + a->jy[1] - a->jz[0] ); // -1,-1, 1
-  divj[5] = 0.25*( -a->jx[2] + a->jy[3] - a->jz[1] ); //  1,-1, 1
-  divj[6] = 0.25*(  a->jx[3] - a->jy[1] - a->jz[2] ); // -1, 1, 1
-  divj[7] = 0.25*( -a->jx[3] - a->jy[3] - a->jz[3] ); //  1, 1, 1
-  
-  int failed = 0;
+  // Compute the final charge density
+
+  double rho1[8];
+  CLEAR( rho1, 8 );
   for( int n=0; n<NPART; n++ ) {
-    if( fabs(dx1[n]-sp->p[n].dx)>1e-6 ||
-        fabs(dy1[n]-sp->p[n].dy)>1e-6 ||
-        fabs(dz1[n]-sp->p[n].dz)>1e-6 ) {
+    double dx = sp->p[n].dx, dy = sp->p[n].dy, dz = sp->p[n].dz;
+    rho1[0] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho1[1] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho1[2] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho1[3] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho1[4] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho1[5] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho1[6] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
+    rho1[7] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
+  }
+
+  // Compute the change in the charge density
+
+  double drho[8];
+  for( int n=0; n<8; n++) drho[n] = rho1[n] - rho0[n];
+
+  // Compute the div J
+
+  accumulator_t *a = &accumulator[LOCAL_CELL_ID(1,1,1)];
+  double divj[8];
+  divj[0] = 0.25*(  (double)a->jx[0] + (double)a->jy[0] + (double)a->jz[0] ); // -1,-1,-1
+  divj[1] = 0.25*( -(double)a->jx[0] + (double)a->jy[2] + (double)a->jz[1] ); //  1,-1,-1
+  divj[2] = 0.25*(  (double)a->jx[1] - (double)a->jy[0] + (double)a->jz[2] ); // -1, 1,-1
+  divj[3] = 0.25*( -(double)a->jx[1] - (double)a->jy[2] + (double)a->jz[3] ); //  1, 1,-1
+  divj[4] = 0.25*(  (double)a->jx[2] + (double)a->jy[1] - (double)a->jz[0] ); // -1,-1, 1
+  divj[5] = 0.25*( -(double)a->jx[2] + (double)a->jy[3] - (double)a->jz[1] ); //  1,-1, 1
+  divj[6] = 0.25*(  (double)a->jx[3] - (double)a->jy[1] - (double)a->jz[2] ); // -1, 1, 1
+  divj[7] = 0.25*( -(double)a->jx[3] - (double)a->jy[3] - (double)a->jz[3] ); //  1, 1, 1
+  
+  // Test the results
+
+  int failed = 0;
+  double tol = 4;
+  double eps = FLT_EPSILON*0.81650; // disp_mean = 0, disp_rms = sqrt(2/3)
+  for( int n=0; n<NPART; n++ ) {
+    double errx = (double)dx1[n] - (double)sp->p[n].dx;
+    double erry = (double)dy1[n] - (double)sp->p[n].dy;
+    double errz = (double)dz1[n] - (double)sp->p[n].dz;
+    if( fabs(errx) > tol*eps || fabs(erry) > tol*eps || fabs(errz) > tol*eps ) {
       failed++;
-      sim_log( n << " " <<
-               dx1[n]-sp->p[n].dx << " " <<
-               dy1[n]-sp->p[n].dy << " " <<
-               dz1[n]-sp->p[n].dz );
+      sim_log( n << " " << errx/eps << " " << erry/eps << " " << errz/eps );
     }
   }
-  if( failed ) sim_log( "pos test: FAIL" );
-  else         sim_log( "pos test: pass" );
+  if( failed ) { sim_log( "pos test: FAIL" ); abort(1); }
+  /**/           sim_log( "pos test: pass" );
 
+  // Note:  mean of drho = 0, rms of drho = sqrt(2/27-2/64) sqrt(NPART)
   failed = 0;
+  tol = 8; // ~10x worse if single precision reduction used on SPE
+  eps = FLT_EPSILON*0.20694*sqrt(NPART); // drho_mean = 0, drho_rms = sqrt(2/27-2/64)
   for( int n=0; n<8; n++ ) {
-    if( fabs(drho[n] + divj[n])>1.75e-6 ) {
+    double err = drho[n] + divj[n];
+    if( fabs(err) > tol*eps ) {
       failed++;
-      sim_log( n << " " <<
-             drho[n] << " " <<
-             -divj[n] << " " <<
-             drho[n]+divj[n] );
+      sim_log( n << " " << drho[n]  << " " << -divj[n] << " " << err/eps );
     }
   }
-  if( failed ) sim_log( "div test: FAIL" );
-  else         sim_log( "div test: pass" );
-
-  abort(0);
+  if( failed ) { sim_log( "div test: FAIL" ); abort(1); }
+  /**/           sim_log( "div test: pass" ); exit(0);
 }
 
 begin_diagnostics {

@@ -1,0 +1,52 @@
+#!/bin/bash
+
+function run() {
+  NP=$1
+  TEST=$2
+  shift 2
+
+  EXE="../../build.ppu $TEST"
+  echo "=================================================================="
+  echo "Building $EXE"
+  if $EXE; then
+    echo "----------------------------------------------------------------"
+    echo "pass"
+  else
+    echo "----------------------------------------------------------------"
+    echo "FAIL"
+    exit 1
+  fi
+
+  for TPP in 1 2
+  do
+    for SPP in 1 2 3 4 5 6 7 8
+    do
+      EXE="mpirun -np $NP ../../mprelay.op $TEST.ppu $* -tpp=$TPP -spp=$SPP"
+      echo "------------------------------------------------------------------"
+      echo "Running $EXE"
+      echo "------------------------------------------------------------------"
+      if $EXE; then
+        echo "----------------------------------------------------------------"
+        echo "pass"
+      else
+        echo "----------------------------------------------------------------"
+        echo "FAIL"
+        exit 1
+      fi
+    done
+  done
+}
+
+run 1 accel
+#run 1 cyclo # FIXME: THIS TEST NOT FIXED FOR RR YET
+run 1 inbndj
+run 1 interpe
+run 1 outbndj
+run 8 pcomm
+run 1 rngconv
+run 1 rngseq
+run 1 v4
+
+echo "===================================================================="
+echo "All tests passed"
+

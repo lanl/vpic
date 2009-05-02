@@ -15,107 +15,46 @@ begin_globals {
 
 begin_initialization {
   double d0, d1;
-  float f0, f1;
   uint32_t a0 = 0x00000000, b0 = 0x00000000;
   uint32_t a1 = 0xffffffff, b1 = 0xffffffff;
+  int n_fail = 0;
+
+# define TEST( conv, cond )                                       \
+  d0 = (float)(conv(a0)); d1 = (float)(conv(a1));                 \
+  if( cond ) printf( #conv ": pass (%.19e, %.19e)\n", d0, 1-d1 ); \
+  else       printf( #conv ": FAIL (%.19e, %.19e)\n", d0, 1-d1 ), n_fail++
  
-  /* Test frand24_c */
-  f0 = frand24_c(a0);
-  f1 = frand24_c(a1);
-  if( f0==0 && f1==1 )
-    printf( "frand24_c:  pass (%.19e, %.19e)\n", f0, 1-f1 );
-  else
-    printf( "frand24_c:  FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+  TEST( frand24_o,  0<d0 && d0<2*FLT_EPSILON && (1-2*FLT_EPSILON)<d1 && d1<1 );
+  TEST( frand24_c0, d0==0 && d1==1-0.5*FLT_EPSILON );
+  TEST( frand24_c1, d0==0.5*FLT_EPSILON && d1==1 );
+  TEST( frand24_c,  d0==0 && d1==1 );
 
-  /* Test frand24_c1 */
-  f0 = frand24_c1(a0); /* frand24_c1 operates in reverse */
-  f1 = frand24_c1(a1);
-  if( 0<f0 && f0<2*FLT_EPSILON && f1==1 )
-    printf( "frand24_c1: pass (%.19e, %.19e)\n", f0, 1-f1 );
-  else               
-    printf( "frand24_c1: FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+# undef  TEST
+# define TEST( conv, cond )                                       \
+  d0 = conv(a0); d1 = conv(a1);                                   \
+  if( cond ) printf( #conv ": pass (%.19e, %.19e)\n", d0, 1-d1 ); \
+  else       printf( #conv ": FAIL (%.19e, %.19e)\n", d0, 1-d1 ), n_fail++
 
-  /* Test frand24_c0 */
-  f0 = frand24_c0(a0);
-  f1 = frand24_c0(a1);
-  if( f0==0 && (1-2*FLT_EPSILON)<f1 && f1<1 )
-    printf( "frand24_c0: pass (%.19e, %.19e)\n", f0, 1-f1 );
-  else
-    printf( "frand24_c0: FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+  TEST( drand32_o,  0<d0 && d0<FLT_EPSILON && (1-FLT_EPSILON)<d1 && d1<1 );
+  TEST( drand32_c0, d0==0 && d1==1-0.25/(double)(1<<30) );
+  TEST( drand32_c1, d0==0.25/(double)(1<<30) && d1==1 );
+  TEST( drand32_c,  d0==0 && d1==1 );
 
-  /* Test frand24_o */
-  f0 = frand24_o(a0);
-  f1 = frand24_o(a1);
-  if( 0<f0 && f0<2*FLT_EPSILON && (1-2*FLT_EPSILON)<f1 && f1<1 )
-    printf( "frand24_o:  pass (%.19e, %.19e)\n", f0, 1-f1 );
-  else
-    printf( "frand24_o:  FAIL (%.19e, %.19e)\n", f0, 1-f1 );
+# undef  TEST
+# define TEST( conv, cond )                                       \
+  d0 = conv(a0,b0); d1 = conv(a1,b1);                             \
+  if( cond ) printf( #conv ": pass (%.19e, %.19e)\n", d0, 1-d1 ); \
+  else       printf( #conv ": FAIL (%.19e, %.19e)\n", d0, 1-d1 ), n_fail++
 
-  /* Test drand32_c */
-  d0 = drand32_c(a0);
-  d1 = drand32_c(a1);
-  if( d0==0 && d1==1 )
-    printf( "drand32_c:  pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand32_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+  TEST( drand53_o,  0<d0 && d0<2*DBL_EPSILON && (1-2*DBL_EPSILON)<d1 && d1<1 );
+  TEST( drand53_c0, d0==0 && d1==1-0.5*DBL_EPSILON );
+  TEST( drand53_c1, d0==0.5*DBL_EPSILON && d1==1 );
+  TEST( drand53_c,  d0==0 && d1==1 );
 
-  /* Test drand32_c1 */
-  d0 = drand32_c1(a0); /* drand32_c1 operates in reverse */
-  d1 = drand32_c1(a1);
-  if( 0<d0 && d0<2*FLT_EPSILON && d1==1 )
-    printf( "drand32_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else               
-    printf( "drand32_c1: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
+#undef TEST
 
-  /* Test drand32_c0 */
-  d0 = drand32_c0(a0);
-  d1 = drand32_c0(a1);
-  if( d0==0 && (1-FLT_EPSILON)<d1 && d1<1 )
-    printf( "drand32_c0: pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand32_c0: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  /* Test drand32_o */
-  d0 = drand32_o(a0);
-  d1 = drand32_o(a1);
-  if( 0<d0 && d0<FLT_EPSILON && (1-FLT_EPSILON)<d1 && d1<1 )
-    printf( "drand32_o:  pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand32_o:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  /* Test drand53_c */
-  d0 = drand53_c(a0,b0);
-  d1 = drand53_c(a1,b1);
-  if( d0==0 && d1==1 )
-    printf( "drand53_c:  pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand53_c:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  /* Test drand53_c1 */
-  d0 = drand53_c1(a0,b0); /* drand53_c1 operates in reverse */
-  d1 = drand53_c1(a1,b1);
-  if( 0<d0 && d0<2*DBL_EPSILON && d1==1 )
-    printf( "drand53_c1: pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else               
-    printf( "drand53_c1: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  /* Test drand53_c0 */
-  d0 = drand53_c0(a0,b0);
-  d1 = drand53_c0(a1,b1);
-  if( d0==0 && (1-2*DBL_EPSILON)<d1 && d1<1 )
-    printf( "drand53_c0: pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand53_c0: FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  /* Test drand53_o */
-  d0 = drand53_o(a0,b0);
-  d1 = drand53_o(a1,b1);
-  if( 0<d0 && d0<2*DBL_EPSILON && (1-2*DBL_EPSILON)<d1 && d1<1 )
-    printf( "drand53_o:  pass (%.19e, %.19e)\n", d0, 1-d1 );
-  else
-    printf( "drand53_o:  FAIL (%.19e, %.19e)\n", d0, 1-d1 );
-
-  abort(0);
+  if( n_fail ) { sim_log( "FAIL" ); abort(1); }
+  /**/           sim_log( "pass" ); exit(0);
 }
 
 begin_diagnostics {

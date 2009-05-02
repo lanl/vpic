@@ -407,6 +407,19 @@ voxel_cache_writeback( void ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Computational kernel
 
+#define USE_DOUBLE_PRECISION_REDUCTION
+
+#ifdef USE_DOUBLE_PRECISION_REDUCTION
+#undef  INCREMENT_4x1
+#define INCREMENT_4x1( p, v )                                               \
+  ( _a = *((vec_float4 *)(p)),                                              \
+    _b = (v),                                                               \
+    _c = spu_roundtf( ADD( spu_extend( _a ), spu_extend( _b ) ) ),          \
+    _b = spu_roundtf( ADD( spu_extend( PERM( _a, _a, even_odd_perm ) ),     \
+                           spu_extend( PERM( _b, _b, even_odd_perm ) ) ) ), \
+    *((vec_float4 *)(p)) = OR( _c, PERM( _b, _b, even_odd_perm ) ) )
+#endif
+
 // FIXME: WHAT SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION?
 
 static __inline int                                                     // Return number of movers used
@@ -416,6 +429,11 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
                         int np,                                         // Number of quad particle quads
                         advance_p_pipeline_args_t * __restrict ALIGNED(128) args ) { // Holds other parameters to use
   USING_V4C;
+
+# ifdef USE_DOUBLE_PRECISION_REDUCTION
+  /*const*/ vec_uchar16 even_odd_perm =
+    {  4, 5, 6, 7,  0, 1, 2, 3, 12,13,14,15,   8, 9,10,11 };
+# endif
 
   /*const*/ vec_uchar16 yzx_perm =
     {  4, 5, 6, 7,  8, 9,10,11,  0, 1, 2, 3,  12,13,14,15 };
@@ -931,7 +949,7 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
   particle_t       * ALIGNED(128) p_block[3];
   int idx[3];
   int np_block[3];
-  uint32_t msg;
+  /*uint32_t msg;*/
 
   particle_mover_t * ALIGNED(128) m_block[3];
   int nm_block[3];

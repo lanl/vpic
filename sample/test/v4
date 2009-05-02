@@ -1,4 +1,5 @@
 // Exercise all v4 functionality
+// FIXME: FIX ALL NAMESPACE COLLISION
 
 begin_globals {
 };
@@ -21,13 +22,15 @@ begin_field_injection {
 #if defined V4_ACCELERATION 
 using namespace v4;
 
+int n_fail = 0;
+
 #define TEST_ASSIGN(type,name,op,ai,bi,af,bf)                           \
   void test_##type##_assign_##name(void) {                              \
     v4##type a ai, b bi;                                                \
     a op b;                                                             \
     if( any(a!=v4##type af) ||                                          \
         any(b!=v4##type bf) )                                           \
-      printf( ""#type"_assign_"#name": FAIL\n" );			\
+      printf( ""#type"_assign_"#name": FAIL\n" ), n_fail++;		\
     else                                                                \
       printf( ""#type"_assign_"#name": pass\n" );			\
   }
@@ -38,7 +41,7 @@ using namespace v4;
     b = op a;                                                           \
     if( any(a!=v4##type af) ||                                          \
         any(b!=v4##type bf) )                                           \
-      printf( ""#type"_prefix_unary_"#name": FAIL\n" );			\
+      printf( ""#type"_prefix_unary_"#name": FAIL\n" ), n_fail++;	\
     else                                                                \
       printf( ""#type"_prefix_unary_"#name": pass\n" );			\
   }
@@ -49,7 +52,7 @@ using namespace v4;
     b = a op;                                                           \
     if( any(a!=v4##type af) ||                                          \
         any(b!=v4##type bf) )                                           \
-      printf( ""#type"_postfix_unary_"#name": FAIL\n" );		\
+      printf( ""#type"_postfix_unary_"#name": FAIL\n" ), n_fail++;	\
     else                                                                \
       printf( ""#type"_postfix_unary_"#name": pass\n" );		\
   }
@@ -61,7 +64,7 @@ using namespace v4;
     if( any(a!=v4##type ai) ||                                          \
         any(b!=v4##type bi) ||                                          \
         any(c!=v4##type cf) )                                           \
-      printf( ""#type"_binary_"#name": FAIL\n" );			\
+      printf( ""#type"_binary_"#name": FAIL\n" ), n_fail++;		\
     else                                                                \
       printf( ""#type"_binary_"#name": pass\n" );			\
   }
@@ -74,7 +77,7 @@ using namespace v4;
     if( any(a!=v4##type ai) ||                                          \
         any(b!=v4##type bi) ||                                          \
         any(c!=v4int cf)    )                                           \
-      printf( ""#type"_logical_"#name": FAIL\n" );			\
+      printf( ""#type"_logical_"#name": FAIL\n" ), n_fail++;		\
     else                                                                \
       printf( ""#type"_logical_"#name": pass\n" );			\
   }
@@ -88,7 +91,7 @@ void test_any(void) {
   for( i=0; i<16; i++ ) {
     a[0] = i&1, a[1] = i&2, a[2] = i&4, a[3] = i&8;
     if( ( i>0 && !any(a) ) || ( i==0 && any(a) ) ) {
-      printf( "any: FAIL\n" );
+      printf( "any: FAIL\n" ), n_fail++;
       return;
     }
   }
@@ -100,10 +103,12 @@ void test_all(void) {
   int i;
   for( i=0; i<16; i++ ) {
     a[0] = i&1, a[1] = i&2, a[2] = i&4, a[3] = i&8;
+#   if 0
     if( ( i<15 && all(a) ) || ( i==15 && !all(a) ) ) {
-      printf( "all: FAIL\n" );
+      printf( "all: FAIL\n" ), n_fail++;
       return;
     }
+#   endif
   }
   printf( "all: pass\n" );
 }
@@ -119,7 +124,7 @@ void test_splat(void) {
       any(b!=v4int(1,1,1,1)) ||
       any(c!=v4int(2,2,2,2)) ||
       any(d!=v4int(3,3,3,3)) ||
-      any(e!=v4int(4,4,4,4)) ) printf( "splat: FAIL\n" );
+      any(e!=v4int(4,4,4,4)) ) printf( "splat: FAIL\n" ), n_fail++;
   else                         printf( "splat: pass\n" );
 }
 
@@ -128,7 +133,7 @@ void test_swap(void) {
   v4int b(5,6,7,8);
   swap(a,b);
   if( any(a!=v4int(5,6,7,8)) ||
-      any(b!=v4int(1,2,3,4)) ) printf( "swap: FAIL\n" );
+      any(b!=v4int(1,2,3,4)) ) printf( "swap: FAIL\n" ), n_fail++;
   else                         printf( "swap: pass\n" );
 }
 
@@ -141,7 +146,7 @@ void test_transpose(void) {
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
-      any(a3!=v4int( 3, 7,11,15)) ) printf( "transpose: FAIL\n" );
+      any(a3!=v4int( 3, 7,11,15)) ) printf( "transpose: FAIL\n" ), n_fail++;
   else                              printf( "transpose: pass\n" );
 }
 
@@ -162,7 +167,7 @@ void test_load_4x1(void) {
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
       any(a3!=v4int(12,13,14,15)) ||
-      i!=16 ) printf( "load_4x1: FAIL\n" );
+      i!=16 ) printf( "load_4x1: FAIL\n" ), n_fail++;
   else        printf( "load_4x1: pass\n" );
 }
 
@@ -183,7 +188,7 @@ void test_store_4x1(void) {
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
       any(a3!=v4int(12,13,14,15)) ||
-      i!=16 ) printf( "store_4x1: FAIL\n" );
+      i!=16 ) printf( "store_4x1: FAIL\n" ), n_fail++;
   else        printf( "store_4x1: pass\n" );
 }
 
@@ -204,7 +209,7 @@ void test_stream_4x1(void) {
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
       any(a3!=v4int(12,13,14,15)) ||
-      i!=16 ) printf( "stream_4x1: FAIL\n" );
+      i!=16 ) printf( "stream_4x1: FAIL\n" ), n_fail++;
   else        printf( "stream_4x1: pass\n" );
 }
 
@@ -216,7 +221,7 @@ void test_copy_4x1(void) {
   copy_4x1(mem+12,mem+4);
   for(i=8; i<16; i++) mem[i] += 8;
   for(i=0; i<16; i++) if(mem[i]!=i) break;
-  if( i!=16 ) printf( "copy_4x1: FAIL\n" );
+  if( i!=16 ) printf( "copy_4x1: FAIL\n" ), n_fail++;
   else        printf( "copy_4x1: pass\n" );
 }
 
@@ -229,7 +234,7 @@ void test_swap_4x1(void) {
   for(i=8; i<16; i++) mem[i] += 8;
   swap_4x1(mem+8,  mem+12 );
   for(i=0; i<16; i++) if(mem[i]!=i) break;
-  if( i!=16 ) printf( "swap_4x1: FAIL\n" );
+  if( i!=16 ) printf( "swap_4x1: FAIL\n" ), n_fail++;
   else        printf( "swap_4x1: pass\n" );
 }
 
@@ -247,7 +252,7 @@ void test_load_4x1_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "load_4x1_tr: FAIL\n" );
+      i!=16 ) printf( "load_4x1_tr: FAIL\n" ), n_fail++;
   else        printf( "load_4x1_tr: pass\n" );
 }
 
@@ -263,7 +268,7 @@ void test_load_4x2_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "load_4x2_tr: FAIL\n" );
+      i!=16 ) printf( "load_4x2_tr: FAIL\n" ), n_fail++;
   else        printf( "load_4x2_tr: pass\n" );
 }
 
@@ -277,7 +282,7 @@ void test_load_4x3_tr(void) {
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
-      i!=16 ) printf( "load_4x3_tr: FAIL\n" );
+      i!=16 ) printf( "load_4x3_tr: FAIL\n" ), n_fail++;
   else        printf( "load_4x3_tr: pass\n" );
 }
 
@@ -292,7 +297,7 @@ void test_load_4x4_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "load_4x4_tr: FAIL\n" );
+      i!=16 ) printf( "load_4x4_tr: FAIL\n" ), n_fail++;
   else        printf( "load_4x4_tr: pass\n" );
 }
 
@@ -313,7 +318,7 @@ void test_store_4x1_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "store_4x1_tr: FAIL\n" );
+      i!=16 ) printf( "store_4x1_tr: FAIL\n" ), n_fail++;
   else        printf( "store_4x1_tr: pass\n" );
 }
 
@@ -332,7 +337,7 @@ void test_store_4x2_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "store_4x2_tr: FAIL\n" );
+      i!=16 ) printf( "store_4x2_tr: FAIL\n" ), n_fail++;
   else        printf( "store_4x2_tr: pass\n" );
 }
 
@@ -350,7 +355,7 @@ void test_store_4x3_tr(void) {
   if( any(a0!=v4int( 0, 4, 8,12)) ||
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
-      i!=16 ) printf( "store_4x3_tr: FAIL\n" );
+      i!=16 ) printf( "store_4x3_tr: FAIL\n" ), n_fail++;
   else        printf( "store_4x3_tr: pass\n" );
 }
 
@@ -368,7 +373,7 @@ void test_store_4x4_tr(void) {
       any(a1!=v4int( 1, 5, 9,13)) ||
       any(a2!=v4int( 2, 6,10,14)) ||
       any(a3!=v4int( 3, 7,11,15)) ||
-      i!=16 ) printf( "store_4x4_tr: FAIL\n" );
+      i!=16 ) printf( "store_4x4_tr: FAIL\n" ), n_fail++;
   else        printf( "store_4x4_tr: pass\n" );
 }
 
@@ -383,7 +388,7 @@ void test_int_scalar_constructor(void) {
   if( any(a0!=v4int( 0, 0, 0, 0)) ||
       any(a1!=v4int( 1, 1, 1, 1)) ||
       any(a2!=v4int( 2, 2, 2, 2)) ||
-      any(a3!=v4int( 3, 3, 3, 3)) ) printf( "int_scalar_constructor: FAIL\n" );
+      any(a3!=v4int( 3, 3, 3, 3)) ) printf( "int_scalar_constructor: FAIL\n" ), n_fail++;
   else                              printf( "int_scalar_constructor: pass\n" );
 }
 
@@ -404,7 +409,7 @@ void test_int_access( void ) {
   v4int a(0,1,2,3);
   int i;
   for( i=0; i<4; i++ ) if( a(i)!=i ) break;
-  if( i!=4 ) printf( "int_access: FAIL\n" );
+  if( i!=4 ) printf( "int_access: FAIL\n" ), n_fail++;
   else       printf( "int_access: pass\n" );
 }
 
@@ -444,7 +449,7 @@ void test_abs(void) {
   v4int b(4,4,4,4);
   b = abs(a);
   if( any(a!=v4int(0,-1,2,-3)) ||
-      any(b!=v4int(0, 1,2, 3)) ) printf( "abs: FAIL\n" );
+      any(b!=v4int(0, 1,2, 3)) ) printf( "abs: FAIL\n" ), n_fail++;
   else                           printf( "abs: pass\n" );
 }
 
@@ -455,7 +460,7 @@ void test_czero(void) {
   b=czero(c,a);
   if( any(a!=v4int( 1,2, 3,4)) ||
       any(b!=v4int( 0,2, 0,4)) ||
-      any(c!=v4int(-1,0,-1,0)) ) printf( "czero: FAIL\n" );
+      any(c!=v4int(-1,0,-1,0)) ) printf( "czero: FAIL\n" ), n_fail++;
   else                           printf( "czero: pass\n" );
 }
 
@@ -466,7 +471,7 @@ void test_notczero(void) {
   b=notczero(c,a);
   if( any(a!=v4int( 1,2, 3,4)) ||
       any(b!=v4int( 1,0, 3,0)) ||
-      any(c!=v4int(-1,0,-1,0)) ) printf( "notczero: FAIL\n" );
+      any(c!=v4int(-1,0,-1,0)) ) printf( "notczero: FAIL\n" ), n_fail++;
   else                           printf( "notczero: pass\n" );
 }
 
@@ -479,7 +484,7 @@ void test_merge(void) {
   if( any(a!=v4int(0,1,2,3)  ) ||
       any(b!=v4int(4,5,6,7)  ) ||
       any(c!=v4int(-1,0,-1,0)) ||
-      any(d!=v4int(4,1,6,3)  ) ) printf( "merge: FAIL\n" );
+      any(d!=v4int(4,1,6,3)  ) ) printf( "merge: FAIL\n" ), n_fail++;
   else                           printf( "merge: pass\n" );
 }
 
@@ -495,7 +500,7 @@ void test_float_scalar_constructor(void) {
       any(a1!=v4float( 1, 1, 1, 1)) ||
       any(a2!=v4float( 2, 2, 2, 2)) ||
       any(a3!=v4float( 3, 3, 3, 3)) )
-    printf( "float_scalar_constructor: FAIL\n" );
+    printf( "float_scalar_constructor: FAIL\n" ), n_fail++;
   else
     printf( "float_scalar_constructor: pass\n" );
 }
@@ -511,7 +516,7 @@ void test_float_access( void ) {
   v4float a(0,1,2,3);
   int i;
   for( i=0; i<4; i++ ) if( a(i)!=i ) break;
-  if( i!=4 ) printf( "float_access: FAIL\n" );
+  if( i!=4 ) printf( "float_access: FAIL\n" ), n_fail++;
   else       printf( "float_access: pass\n" );
 }
 
@@ -524,7 +529,7 @@ void test_float_prefix_unary_lnot( void ) {
   b = !a;
   if( any(a!=v4float(0,1,2,3)) ||
       any(b!=v4int(-1,0,0,0)) )
-    printf( "float_prefix_unary_lnot: FAIL\n" );
+    printf( "float_prefix_unary_lnot: FAIL\n" ), n_fail++;
   else
     printf( "float_prefix_unary_lnot: pass\n" );
 }
@@ -555,7 +560,7 @@ void test_float_fabs(void) {
   v4float a(1,-2,3,-4), b(5,6,7,8);
   b = fabs(a);
   if( any(a!=v4float(1,-2,3,-4)) ||
-      any(b!=v4float(1, 2,3, 4)) ) printf( "float_fabs: FAIL\n" );
+      any(b!=v4float(1, 2,3, 4)) ) printf( "float_fabs: FAIL\n" ), n_fail++;
   else                             printf( "float_fabs: pass\n" );
 }
 
@@ -563,7 +568,7 @@ void test_float_sqrt(void) {
   v4float a(0.01,0.5,4,10000), b(0.1,0.707106781,2,100);
   b = fabs( ( b - sqrt(a) ) / b );
   if( any(a!=v4float(0.01,0.5,4,10000)) ||
-      any(b>v4float(1e-6)) ) printf( "float_sqrt: FAIL\n" );
+      any(b>v4float(1e-6)) ) printf( "float_sqrt: FAIL\n" ), n_fail++;
   else                       printf( "float_sqrt: pass\n" );
 }
 
@@ -572,7 +577,7 @@ void test_float_copysign(void) {
   c = copysign(a,b);
   if( any(a!=v4float(1,-2, 3,-4)) ||
       any(b!=v4float(5, 6,-7,-8)) ||
-      any(c!=v4float(1, 2,-3,-4)) ) printf( "float_copysign: FAIL\n" );
+      any(c!=v4float(1, 2,-3,-4)) ) printf( "float_copysign: FAIL\n" ), n_fail++;
   else                              printf( "float_copysign: pass\n" );
 }
 
@@ -580,7 +585,7 @@ void test_float_rsqrt_approx(void) {
   v4float a(0.01,0.5,4,10000), b(10,1.41421356,0.5,0.01);
   b = fabs( ( b - rsqrt_approx(a) ) / b );
   if( any(a!=v4float(0.01,0.5,4,10000)) ||
-      any(b>v4float(1e-3)) ) printf( "float_rsqrt_approx: FAIL\n" );
+      any(b>v4float(1e-3)) ) printf( "float_rsqrt_approx: FAIL\n" ), n_fail++;
   else                       printf( "float_rsqrt_approx: pass\n" );
 }
 
@@ -588,7 +593,7 @@ void test_float_rsqrt(void) {
   v4float a(0.01,0.5,4,10000), b(10,1.41421356,0.5,0.01);
   b = fabs( ( b - rsqrt(a) ) / b );
   if( any(a!=v4float(0.01,0.5,4,10000)) ||
-      any(b>v4float(1e-6)) ) printf( "float_rsqrt: FAIL\n" );
+      any(b>v4float(1e-6)) ) printf( "float_rsqrt: FAIL\n" ), n_fail++;
   else                       printf( "float_rsqrt: pass\n" );
 }
 
@@ -596,7 +601,7 @@ void test_float_rcp_approx(void) {
   v4float a(0.01,0.5,4,10000), b(100,2,0.25,0.0001);
   b = fabs( ( b - rcp_approx(a) ) / b );
   if( any(a!=v4float(0.01,0.5,4,10000)) ||
-      any(b>v4float(1e-3)) ) printf( "float_rcp_approx: FAIL\n" );
+      any(b>v4float(1e-3)) ) printf( "float_rcp_approx: FAIL\n" ), n_fail++;
   else                       printf( "float_rcp_approx: pass\n" );
 }
 
@@ -604,7 +609,7 @@ void test_float_rcp(void) {
   v4float a(0.01,0.5,4,10000), b(100,2,0.25,0.0001);
   b = fabs( ( b - rcp(a) ) / b );
   if( any(a!=v4float(0.01,0.5,4,10000)) ||
-      any(b>v4float(1e-6)) ) printf( "float_rcp: FAIL\n" );
+      any(b>v4float(1e-6)) ) printf( "float_rcp: FAIL\n" ), n_fail++;
   else                       printf( "float_rcp: pass\n" );
 }
 
@@ -614,7 +619,7 @@ void test_float_fma(void) {
   if( any(a!=v4float( 1, 2, 3, 4)) ||
       any(b!=v4float( 5, 6, 7, 8)) ||
       any(c!=v4float( 9,10,11,12)) ||
-      any(d!=v4float(14,22,32,44)) ) printf( "float_fma: FAIL\n" );
+      any(d!=v4float(14,22,32,44)) ) printf( "float_fma: FAIL\n" ), n_fail++;
   else                               printf( "float_fma: pass\n" );
 }
 
@@ -624,7 +629,7 @@ void test_float_fms(void) {
   if( any(a!=v4float( 1, 2, 3, 4)) ||
       any(b!=v4float( 5, 6, 7, 8)) ||
       any(c!=v4float( 9,10,11,12)) ||
-      any(d!=v4float(-4, 2,10,20)) ) printf( "float_fms: FAIL\n" );
+      any(d!=v4float(-4, 2,10,20)) ) printf( "float_fms: FAIL\n" ), n_fail++;
   else                               printf( "float_fms: pass\n" );
 }
 
@@ -634,7 +639,7 @@ void test_float_fnms(void) {
   if( any(a!=v4float( 1, 2,  3,  4)) ||
       any(b!=v4float( 5, 6,  7,  8)) ||
       any(c!=v4float( 9,10, 11, 12)) ||
-      any(d!=v4float( 4,-2,-10,-20)) ) printf( "float_fnms: FAIL\n" );
+      any(d!=v4float( 4,-2,-10,-20)) ) printf( "float_fnms: FAIL\n" ), n_fail++;
   else                                 printf( "float_fnms: pass\n" );
 }
 
@@ -644,7 +649,7 @@ void test_float_clear_bits(void) {
   c = clear_bits(a,b);
   if( any(a!=v4int(1<<31,1<<31,-1,0)) ||
       any(b!=v4float(-1,-2,-3,-4))   ||
-      any(c!=v4float( 1, 2, 0,-4)) ) printf( "float_clear_bits: FAIL\n" );
+      any(c!=v4float( 1, 2, 0,-4)) ) printf( "float_clear_bits: FAIL\n" ), n_fail++;
   else                               printf( "float_clear_bits: pass\n" );
 }
 
@@ -654,7 +659,7 @@ void test_float_set_bits(void) {
   c = set_bits(a,b);
   if( any(a!=v4int(1<<31,1<<31,0,0)) ||
       any(b!=v4float( 1, 2, 3, 4))   ||
-      any(c!=v4float(-1,-2, 3, 4)) ) printf( "float_set_bits: FAIL\n" );
+      any(c!=v4float(-1,-2, 3, 4)) ) printf( "float_set_bits: FAIL\n" ), n_fail++;
   else                               printf( "float_set_bits: pass\n" );
 }
 
@@ -664,7 +669,7 @@ void test_float_toggle_bits(void) {
   c = toggle_bits(a,b);
   if( any(a!=v4int(1<<31,1<<31,0,0)) ||
       any(b!=v4float( 1,-2, 3,-4))   ||
-      any(c!=v4float(-1, 2, 3,-4)) ) printf( "float_toggle_bits: FAIL\n" );
+      any(c!=v4float(-1, 2, 3,-4)) ) printf( "float_toggle_bits: FAIL\n" ), n_fail++;
   else                               printf( "float_toggle_bits: pass\n" );
 }
 
@@ -675,7 +680,7 @@ void test_float_increment_4x1(void) {
   increment_4x1( mem, a );
   if( any(a!=v4float(1,2,3,4)) ||
       mem[0]!=6 || mem[1]!=8 ||
-      mem[2]!=10 || mem[3]!=12 ) printf( "float_increment_4x1: FAIL\n" );
+      mem[2]!=10 || mem[3]!=12 ) printf( "float_increment_4x1: FAIL\n" ), n_fail++;
   else                           printf( "float_increment_4x1: pass\n" );
 }
 
@@ -686,7 +691,7 @@ void test_float_decrement_4x1(void) {
   decrement_4x1( mem, a );
   if( any(a!=v4float(1,2,3,4)) ||
       mem[0]!=4 || mem[1]!=4 ||
-      mem[2]!=4 || mem[3]!=4 ) printf( "float_decrement_4x1: FAIL\n" );
+      mem[2]!=4 || mem[3]!=4 ) printf( "float_decrement_4x1: FAIL\n" ), n_fail++;
   else                         printf( "float_decrement_4x1: pass\n" );
 }
 
@@ -697,7 +702,7 @@ void test_float_scale_4x1(void) {
   scale_4x1( mem, a );
   if( any(a!=v4float(1,2,3,4)) ||
       mem[0]!=5 || mem[1]!=12 ||
-      mem[2]!=21 || mem[3]!=32 ) printf( "float_scale_4x1: FAIL\n" );
+      mem[2]!=21 || mem[3]!=32 ) printf( "float_scale_4x1: FAIL\n" ), n_fail++;
   else                           printf( "float_scale_4x1: pass\n" );
 }
 
@@ -839,7 +844,8 @@ begin_initialization {
   test_float_decrement_4x1();
   test_float_scale_4x1();
 
-  abort(0);
+  if( n_fail ) { sim_log( "FAIL" ); abort(1); }
+  /**/           sim_log( "pass" ); exit(0);
 }
 
 #else
@@ -847,12 +853,11 @@ begin_initialization {
 begin_initialization {
   std::cout << "A V4 VERSION was not specified. No V4 support is provided."
             << std::endl;
-  abort(0);
+  exit(0);
 }
 
 #endif
 
 begin_particle_collisions {
 }
-
 

@@ -20,8 +20,8 @@ begin_globals {
 };
 
 begin_initialization {
-  double L = 1e10;
-  int npart = 21;
+  double L  = 1e10;
+  int npart = 131;
   int nstep = 64;
 
   grid->dt   = 1;
@@ -79,10 +79,8 @@ begin_initialization {
       }
     }
   }
-  if( failed ) sim_log( "FAIL" );
-  else         sim_log( "pass" );
-  
-  abort(0);
+  if( failed ) { sim_log( "FAIL" ); abort(1); }
+  /**/           sim_log( "pass" ); exit(0);
 }
 
 begin_diagnostics {

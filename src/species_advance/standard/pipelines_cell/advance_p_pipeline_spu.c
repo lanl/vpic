@@ -2,8 +2,6 @@
 #define HAS_SPU_PIPELINE /* Make sure header gets assembled correctly */
 #include "../spa_private.h"
 
-#if 1
-
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
 
@@ -31,12 +29,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Particle triple buffering configuration
 
-// NP_BLOCK=512 is such that a 16Kb of particle data is located in a
+// NP_BLOCK=512 is such that a 16KB of particle data is located in a
 // particle block (the maximum amount of data that can be moved in a
 // single DMA transfer).  Triple buffering requires 3 such particle
-// blocks.  So local particle storage takes up 48Kb.  Each local
+// blocks.  So local particle storage takes up 48KB.  Each local
 // particle has a mover associated with it such that a SPU pipeline
-// cannot run out movers during particle processing.  This costs 24Kb.
+// cannot run out movers during particle processing.  This costs 24KB.
 
 #define NP_BLOCK 512
 
@@ -459,10 +457,6 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
   /*const*/ vec_uint4  sign[3]        = { { 1<<31, 0,     0,     0     },
                                       { 0,     1<<31, 0,     0     },
                                       { 0,     0,     1<<31, 0     } };
-#if 0
-  /*const*/ int rangel = args->rangel;
-  /*const*/ int rangeh = args->rangeh;
-#endif
   /*const*/ int64_t rangel = args->rangel;
   /*const*/ int64_t rangeh = args->rangeh;
   /*const*/ int streak_type[16] = { 3 /* 0000 - Cannot happen */,
@@ -1144,17 +1138,3 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
 # endif
 }
 
-#else
-
-#include <stdio.h>
-
-void
-_SPUEAR_advance_p_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
-                                int pipeline_rank,
-                                int n_pipeline ) {
-# if VERBOSE
-  fprintf( stdout, "In advance_p_pipeline\n" ); fflush( stdout );
-# endif
-}
-
-#endif

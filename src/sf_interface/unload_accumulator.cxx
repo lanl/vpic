@@ -9,7 +9,7 @@
 #define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
-static void
+void
 unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 			     int pipeline_rank,
                              int n_pipeline ) {

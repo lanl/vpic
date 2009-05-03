@@ -9,7 +9,7 @@
 #define HAS_SPU_INTERPOLATOR \
   ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
 
-static void
+void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 			    int pipeline_rank,
                             int n_pipeline ) {
@@ -152,7 +152,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
 using namespace v4;
 
-static void
+void
 load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int pipeline_rank,
                                int n_pipeline ) {

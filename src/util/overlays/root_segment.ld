@@ -1,3 +1,4 @@
+/* KJB: I DON'T EVEN WANT TO KNOW */
 /* Script for -z combreloc: combine and sort reloc sections */
 OUTPUT_FORMAT("elf32-spu", "elf32-spu",
 	      "elf32-spu")
@@ -56,7 +57,7 @@ SECTIONS
   .text           :
   {
     /* *(.text .stub .text.* .gnu.linkonce.t.*) */
-    *(EXCLUDE_FILE(advance_p_pipeline_spu.o /* sort_p_spu.o */) .text .stub .text.* .gnu.linkonce.t.*)
+    *(EXCLUDE_FILE(advance_p_pipeline_spu.o clear_accumulators_pipeline_spu.o) .text .stub .text.* .gnu.linkonce.t.*)
     KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
@@ -64,7 +65,8 @@ SECTIONS
   OVERLAY :
   {
     .segment1 {advance_p_pipeline_spu.o(.text)}
-    /* .segment2 {sort_p_pipeline_spu.o(.text)} */
+    .segment2 {clear_accumulators_pipeline_spu.o(.text)}
+    /* .segment3 {sort_p_pipeline_spu.o(.text)} */
   }
   .fini           :
   {

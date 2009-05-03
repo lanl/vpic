@@ -9,7 +9,7 @@
 
 #define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
 
-static void
+void
 reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
                               int pipeline_rank,
                               int n_pipeline ) {
@@ -64,7 +64,7 @@ reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
 
 using namespace v4;
 
-static void
+void
 reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
                                  int pipeline_rank,
                                  int n_pipeline ) {

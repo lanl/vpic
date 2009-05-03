@@ -25,10 +25,81 @@ namespace v4 {
 # define _v4_uint   __vector unsigned int
 # define _v4_float  __vector float
 
-  const __vector unsigned char _packe   = {  0, 1, 2, 3,    8, 9,10,11,
-                                            16,17,18,19,   24,25,26,27 };
-  const __vector unsigned char _packo   = {  4, 5, 6, 7,   12,13,14,15,
-                                            20,21,22,23,   28,29,30,31 };
+# define P(i0,i1,i2,i3) { 4*i0, 4*i0+1, 4*i0+2, 4*i0+3, \
+                          4*i1, 4*i1+1, 4*i1+2, 4*i1+3, \
+                          4*i2, 4*i2+1, 4*i2+2, 4*i2+3, \
+                          4*i3, 4*i3+1, 4*i3+2, 4*i3+3 }
+
+  const __vector unsigned char _perm[256] = {
+    P(0,0,0,0), P(1,0,0,0), P(2,0,0,0), P(3,0,0,0),
+    P(0,1,0,0), P(1,1,0,0), P(2,1,0,0), P(3,1,0,0),
+    P(0,2,0,0), P(1,2,0,0), P(2,2,0,0), P(3,2,0,0),
+    P(0,3,0,0), P(1,3,0,0), P(2,3,0,0), P(3,3,0,0),
+    P(0,0,1,0), P(1,0,1,0), P(2,0,1,0), P(3,0,1,0),
+    P(0,1,1,0), P(1,1,1,0), P(2,1,1,0), P(3,1,1,0),
+    P(0,2,1,0), P(1,2,1,0), P(2,2,1,0), P(3,2,1,0),
+    P(0,3,1,0), P(1,3,1,0), P(2,3,1,0), P(3,3,1,0),
+    P(0,0,2,0), P(1,0,2,0), P(2,0,2,0), P(3,0,2,0),
+    P(0,1,2,0), P(1,1,2,0), P(2,1,2,0), P(3,1,2,0),
+    P(0,2,2,0), P(1,2,2,0), P(2,2,2,0), P(3,2,2,0),
+    P(0,3,2,0), P(1,3,2,0), P(2,3,2,0), P(3,3,2,0),
+    P(0,0,3,0), P(1,0,3,0), P(2,0,3,0), P(3,0,3,0),
+    P(0,1,3,0), P(1,1,3,0), P(2,1,3,0), P(3,1,3,0),
+    P(0,2,3,0), P(1,2,3,0), P(2,2,3,0), P(3,2,3,0),
+    P(0,3,3,0), P(1,3,3,0), P(2,3,3,0), P(3,3,3,0),
+
+    P(0,0,0,1), P(1,0,0,1), P(2,0,0,1), P(3,0,0,1),
+    P(0,1,0,1), P(1,1,0,1), P(2,1,0,1), P(3,1,0,1),
+    P(0,2,0,1), P(1,2,0,1), P(2,2,0,1), P(3,2,0,1),
+    P(0,3,0,1), P(1,3,0,1), P(2,3,0,1), P(3,3,0,1),
+    P(0,0,1,1), P(1,0,1,1), P(2,0,1,1), P(3,0,1,1),
+    P(0,1,1,1), P(1,1,1,1), P(2,1,1,1), P(3,1,1,1),
+    P(0,2,1,1), P(1,2,1,1), P(2,2,1,1), P(3,2,1,1),
+    P(0,3,1,1), P(1,3,1,1), P(2,3,1,1), P(3,3,1,1),
+    P(0,0,2,1), P(1,0,2,1), P(2,0,2,1), P(3,0,2,1),
+    P(0,1,2,1), P(1,1,2,1), P(2,1,2,1), P(3,1,2,1),
+    P(0,2,2,1), P(1,2,2,1), P(2,2,2,1), P(3,2,2,1),
+    P(0,3,2,1), P(1,3,2,1), P(2,3,2,1), P(3,3,2,1),
+    P(0,0,3,1), P(1,0,3,1), P(2,0,3,1), P(3,0,3,1),
+    P(0,1,3,1), P(1,1,3,1), P(2,1,3,1), P(3,1,3,1),
+    P(0,2,3,1), P(1,2,3,1), P(2,2,3,1), P(3,2,3,1),
+    P(0,3,3,1), P(1,3,3,1), P(2,3,3,1), P(3,3,3,1),
+
+    P(0,0,0,2), P(1,0,0,2), P(2,0,0,2), P(3,0,0,2),
+    P(0,1,0,2), P(1,1,0,2), P(2,1,0,2), P(3,1,0,2),
+    P(0,2,0,2), P(1,2,0,2), P(2,2,0,2), P(3,2,0,2),
+    P(0,3,0,2), P(1,3,0,2), P(2,3,0,2), P(3,3,0,2),
+    P(0,0,1,2), P(1,0,1,2), P(2,0,1,2), P(3,0,1,2),
+    P(0,1,1,2), P(1,1,1,2), P(2,1,1,2), P(3,1,1,2),
+    P(0,2,1,2), P(1,2,1,2), P(2,2,1,2), P(3,2,1,2),
+    P(0,3,1,2), P(1,3,1,2), P(2,3,1,2), P(3,3,1,2),
+    P(0,0,2,2), P(1,0,2,2), P(2,0,2,2), P(3,0,2,2),
+    P(0,1,2,2), P(1,1,2,2), P(2,1,2,2), P(3,1,2,2),
+    P(0,2,2,2), P(1,2,2,2), P(2,2,2,2), P(3,2,2,2),
+    P(0,3,2,2), P(1,3,2,2), P(2,3,2,2), P(3,3,2,2),
+    P(0,0,3,2), P(1,0,3,2), P(2,0,3,2), P(3,0,3,2),
+    P(0,1,3,2), P(1,1,3,2), P(2,1,3,2), P(3,1,3,2),
+    P(0,2,3,2), P(1,2,3,2), P(2,2,3,2), P(3,2,3,2),
+    P(0,3,3,2), P(1,3,3,2), P(2,3,3,2), P(3,3,3,2),
+
+    P(0,0,0,3), P(1,0,0,3), P(2,0,0,3), P(3,0,0,3),
+    P(0,1,0,3), P(1,1,0,3), P(2,1,0,3), P(3,1,0,3),
+    P(0,2,0,3), P(1,2,0,3), P(2,2,0,3), P(3,2,0,3),
+    P(0,3,0,3), P(1,3,0,3), P(2,3,0,3), P(3,3,0,3),
+    P(0,0,1,3), P(1,0,1,3), P(2,0,1,3), P(3,0,1,3),
+    P(0,1,1,3), P(1,1,1,3), P(2,1,1,3), P(3,1,1,3),
+    P(0,2,1,3), P(1,2,1,3), P(2,2,1,3), P(3,2,1,3),
+    P(0,3,1,3), P(1,3,1,3), P(2,3,1,3), P(3,3,1,3),
+    P(0,0,2,3), P(1,0,2,3), P(2,0,2,3), P(3,0,2,3),
+    P(0,1,2,3), P(1,1,2,3), P(2,1,2,3), P(3,1,2,3),
+    P(0,2,2,3), P(1,2,2,3), P(2,2,2,3), P(3,2,2,3),
+    P(0,3,2,3), P(1,3,2,3), P(2,3,2,3), P(3,3,2,3),
+    P(0,0,3,3), P(1,0,3,3), P(2,0,3,3), P(3,0,3,3),
+    P(0,1,3,3), P(1,1,3,3), P(2,1,3,3), P(3,1,3,3),
+    P(0,2,3,3), P(1,2,3,3), P(2,2,3,3), P(3,2,3,3),
+    P(0,3,3,3), P(1,3,3,3), P(2,3,3,3), P(3,3,3,3) };
+
+# undef P
 
   // FIXME: IS IT FASTER TO SPLAT THESE ON THE FLY
 
@@ -55,6 +126,8 @@ namespace v4 {
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
     friend inline v4 splat( const v4 &a, const int n );
+    friend inline v4 shuffle( const v4 &a,
+                              int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -144,6 +217,14 @@ namespace v4 {
     return b;
   }
 
+  inline v4 shuffle( const v4 & a,
+                     int i0, int i1, int i2, int i3 ) {
+    _v4_float a_v = a.v;
+    v4 b;
+    b.v = vec_perm( a_v, a_v, _perm[i0 + i1*4 + i2*16 + i3*64] );
+    return b;
+  }
+
   inline void swap( v4 &a, v4 &b ) { 
     _v4_float t;
     t   = a.v;
@@ -216,13 +297,14 @@ namespace v4 {
                            const void * ALIGNED(8) pc,
                            const void * ALIGNED(8) pd,
                            v4 &a, v4 &b ) { // FIXME: UGLY!!
-    _v4_float a_v, b_v;
-    ((double *)&a_v)[0] = ((const double *)pa)[0];
-    ((double *)&a_v)[1] = ((const double *)pb)[0];
-    ((double *)&b_v)[0] = ((const double *)pc)[0];
-    ((double *)&b_v)[1] = ((const double *)pd)[0];
-    a.v = vec_perm( a_v, b_v, _packe );  // 0 1 2 3
-    b.v = vec_perm( a_v, b_v, _packo );  // 4 5 6 7
+    a.v = (_v4_float){ ((const float *)pa)[0],
+                       ((const float *)pb)[0],
+                       ((const float *)pc)[0],
+                       ((const float *)pd)[0] };
+    b.v = (_v4_float){ ((const float *)pa)[1],
+                       ((const float *)pb)[1],
+                       ((const float *)pc)[1],
+                       ((const float *)pd)[1] };
   }
   
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
@@ -279,10 +361,12 @@ namespace v4 {
                             void * pb,
                             void * pc,
                             void * pd ) {
-    ((float *)pa)[0] = ((float *)&a.v)[0];
-    ((float *)pb)[0] = ((float *)&a.v)[1];
-    ((float *)pc)[0] = ((float *)&a.v)[2];
-    ((float *)pd)[0] = ((float *)&a.v)[3];
+    union { float f[4]; _v4_float v; } t;
+    t.v = a.v;
+    ((float *)pa)[0] = t.f[0];
+    ((float *)pb)[0] = t.f[1];
+    ((float *)pc)[0] = t.f[2];
+    ((float *)pd)[0] = t.f[3];
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -290,14 +374,17 @@ namespace v4 {
                             void * ALIGNED(8) pb,
                             void * ALIGNED(8) pc,
                             void * ALIGNED(8) pd ) { // FIXME: UGLY!
-    _v4_float t = a.v;                // t =  0  1  2  3
-    _v4_float u = b.v;                // u =  4  5  6  7
-    _v4_float w = vec_mergeh( t, u ); // w =  0  4  1  5
-    u           = vec_mergel( t, u ); // u =  2  6  3  7
-    ((double *)pa)[0] = ((double *)&w)[0];
-    ((double *)pb)[0] = ((double *)&w)[1];
-    ((double *)pc)[0] = ((double *)&u)[0];
-    ((double *)pd)[0] = ((double *)&u)[1];    
+    union { float f[4]; _v4_float v; } t;
+    t.v = a.v;
+    ((float *)pa)[0] = t.f[0];
+    ((float *)pb)[0] = t.f[1];
+    ((float *)pc)[0] = t.f[2];
+    ((float *)pd)[0] = t.f[3];
+    t.v = b.v;
+    ((float *)pa)[1] = t.f[0];
+    ((float *)pb)[1] = t.f[1];
+    ((float *)pc)[1] = t.f[2];
+    ((float *)pd)[1] = t.f[3];
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
@@ -305,15 +392,22 @@ namespace v4 {
                             void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc,
                             void * ALIGNED(16) pd ) { // FIXME: UGLY!
-    _v4_float t = a.v;                // t =  0  1  2  3
-    _v4_float u = b.v;                // u =  4  5  6  7
-    _v4_float v = c.v;                // v =  8  9 10 11
-    _v4_float w = vec_mergeh( t, u ); // w =  0  4  1  5
-    u           = vec_mergel( t, u ); // u =  2  6  3  7
-    ((double *)pa)[0]=((double *)&w)[0]; ((float *)pa)[2]=((float *)&v)[0];
-    ((double *)pb)[0]=((double *)&w)[1]; ((float *)pb)[2]=((float *)&v)[1];
-    ((double *)pc)[0]=((double *)&u)[0]; ((float *)pc)[2]=((float *)&v)[2];
-    ((double *)pd)[0]=((double *)&u)[1]; ((float *)pd)[2]=((float *)&v)[3];
+    union { float f[4]; _v4_float v; } t;
+    t.v = a.v;
+    ((float *)pa)[0] = t.f[0];
+    ((float *)pb)[0] = t.f[1];
+    ((float *)pc)[0] = t.f[2];
+    ((float *)pd)[0] = t.f[3];
+    t.v = b.v;
+    ((float *)pa)[1] = t.f[0];
+    ((float *)pb)[1] = t.f[1];
+    ((float *)pc)[1] = t.f[2];
+    ((float *)pd)[1] = t.f[3];
+    t.v = c.v;
+    ((float *)pa)[2] = t.f[0];
+    ((float *)pb)[2] = t.f[1];
+    ((float *)pc)[2] = t.f[2];
+    ((float *)pd)[2] = t.f[3];
   }
   
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
@@ -448,24 +542,27 @@ namespace v4 {
     ASSIGN(=,   v = b.v )
     ASSIGN(+=,  v = (_v4_float)vec_add( (_v4_int)v, (_v4_int)b.v ) )
     ASSIGN(-=,  v = (_v4_float)vec_sub( (_v4_int)v, (_v4_int)b.v ) )
-    ASSIGN(*=,  _v4_int b_v = (_v4_int)b.v;
-                v = (_v4_float)((_v4_int)
-                  { ((int *)&v)[0] * ((int *)&b_v)[0],
-                    ((int *)&v)[1] * ((int *)&b_v)[1],
-                    ((int *)&v)[2] * ((int *)&b_v)[2],
-                    ((int *)&v)[3] * ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
-    ASSIGN(/=,  _v4_int b_v = (_v4_int)b.v;
-                v = (_v4_float)((_v4_int)
-                  { ((int *)&v)[0] / ((int *)&b_v)[0],
-                    ((int *)&v)[1] / ((int *)&b_v)[1],
-                    ((int *)&v)[2] / ((int *)&b_v)[2],
-                    ((int *)&v)[3] / ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
-    ASSIGN(%=,  _v4_int b_v = (_v4_int)b.v;
-                v = (_v4_float)((_v4_int)
-                  { ((int *)&v)[0] % ((int *)&b_v)[0],
-                    ((int *)&v)[1] % ((int *)&b_v)[1],
-                    ((int *)&v)[2] % ((int *)&b_v)[2],
-                    ((int *)&v)[3] % ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
+    ASSIGN(*=,  union { int i[4]; _v4_float v; } t;
+                union { int i[4]; _v4_float v; } u;
+                t.v = v; u.v = b.v;
+                v = (_v4_float)((_v4_int){ t.i[0]*u.i[0],
+                                           t.i[1]*u.i[1],
+                                           t.i[2]*u.i[2],
+                                           t.i[3]*u.i[3] }) ) // FIXME: Sigh ...
+    ASSIGN(/=,  union { int i[4]; _v4_float v; } t;
+                union { int i[4]; _v4_float v; } u;
+                t.v = v; u.v = b.v;
+                v = (_v4_float)((_v4_int){ t.i[0]/u.i[0],
+                                           t.i[1]/u.i[1],
+                                           t.i[2]/u.i[2],
+                                           t.i[3]/u.i[3] }) ) // FIXME: Sigh ...
+    ASSIGN(%=,  union { int i[4]; _v4_float v; } t;
+                union { int i[4]; _v4_float v; } u;
+                t.v = v; u.v = b.v;
+                v = (_v4_float)((_v4_int){ t.i[0]%u.i[0],
+                                           t.i[1]%u.i[1],
+                                           t.i[2]%u.i[2],
+                                           t.i[3]%u.i[3] }) ) // FIXME: Sigh ...
     ASSIGN(^=,  v = (_v4_float)vec_xor( (_v4_int)v, (_v4_int) b.v ) )
     ASSIGN(&=,  v = (_v4_float)vec_and( (_v4_int)v, (_v4_int) b.v ) )
     ASSIGN(|=,  v = (_v4_float)vec_or(  (_v4_int)v, (_v4_int) b.v ) )
@@ -480,7 +577,9 @@ namespace v4 {
     // a vector!
 
     inline int &operator []( const int n ) { return ((int *)&v)[n]; }
-    inline int  operator ()( const int n ) { return ((int *)&v)[n]; }
+    inline int  operator ()( const int n ) {
+      union { int i[4]; _v4_float v; } t; t.v = v; return t.i[n];
+    }
 
   };
 
@@ -547,27 +646,27 @@ namespace v4 {
 
   BINARY(+,  c.v = (_v4_float)vec_add( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(-,  c.v = (_v4_float)vec_sub( (_v4_int)a.v, (_v4_int) b.v ) )
-  BINARY(*,  _v4_int a_v = (_v4_int)a.v;
-             _v4_int b_v = (_v4_int)b.v;
-             c.v = (_v4_float)((_v4_int)
-               { ((int *)&a_v)[0] * ((int *)&b_v)[0],
-                 ((int *)&a_v)[1] * ((int *)&b_v)[1],
-                 ((int *)&a_v)[2] * ((int *)&b_v)[2],
-                 ((int *)&a_v)[3] * ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
-  BINARY(/,  _v4_int a_v = (_v4_int)a.v;
-             _v4_int b_v = (_v4_int)b.v;
-             c.v = (_v4_float)((_v4_int)
-               { ((int *)&a_v)[0] / ((int *)&b_v)[0],
-                 ((int *)&a_v)[1] / ((int *)&b_v)[1],
-                 ((int *)&a_v)[2] / ((int *)&b_v)[2],
-                 ((int *)&a_v)[3] / ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
-  BINARY(%,  _v4_int a_v = (_v4_int)a.v;
-             _v4_int b_v = (_v4_int)b.v;
-             c.v = (_v4_float)((_v4_int)
-               { ((int *)&a_v)[0] % ((int *)&b_v)[0],
-                 ((int *)&a_v)[1] % ((int *)&b_v)[1],
-                 ((int *)&a_v)[2] % ((int *)&b_v)[2],
-                 ((int *)&a_v)[3] % ((int *)&b_v)[3] }) ) // FIXME: Sigh ...
+  BINARY(*,  union { int i[4]; _v4_float v; } t;
+             union { int i[4]; _v4_float v; } u;
+             t.v = a.v; u.v = b.v;
+             c.v = (_v4_float)((_v4_int){ t.i[0]*u.i[0],
+                                          t.i[1]*u.i[1],
+                                          t.i[2]*u.i[2],
+                                          t.i[3]*u.i[3] }) ) // FIXME: Sigh ...
+  BINARY(/,  union { int i[4]; _v4_float v; } t;
+             union { int i[4]; _v4_float v; } u;
+             t.v = a.v; u.v = b.v;
+             c.v = (_v4_float)((_v4_int){ t.i[0]/u.i[0],
+                                          t.i[1]/u.i[1],
+                                          t.i[2]/u.i[2],
+                                          t.i[3]/u.i[3] }) ) // FIXME: Sigh ...
+  BINARY(%,  union { int i[4]; _v4_float v; } t;
+             union { int i[4]; _v4_float v; } u;
+             t.v = a.v; u.v = b.v;
+             c.v = (_v4_float)((_v4_int){ t.i[0]%u.i[0],
+                                          t.i[1]%u.i[1],
+                                          t.i[2]%u.i[2],
+                                          t.i[3]%u.i[3] }) ) // FIXME: Sigh ...
   BINARY(^,  c.v = (_v4_float)vec_xor( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(&,  c.v = (_v4_float)vec_and( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(|,  c.v = (_v4_float)vec_or(  (_v4_int)a.v, (_v4_int) b.v ) )
@@ -774,7 +873,9 @@ namespace v4 {
     // a vector!
 
     inline float &operator []( const int n ) { return ((float *)&v)[n]; }
-    inline float  operator ()( const int n ) { return ((float *)&v)[n]; }
+    inline float  operator ()( const int n ) {
+      union { float f[4]; _v4_float v; } t; t.v = v; return t.f[n];
+    }
 
   };
 
@@ -901,28 +1002,30 @@ namespace v4 {
 
   // v4float math library functions
 
-# define CMATH_FR1(fn)                                   \
-  inline v4float fn( const v4float &a ) {                \
-    v4float b;                                           \
-    b.v = (_v4_float){ ::fn( ((const float *)&a)[0] ),   \
-                       ::fn( ((const float *)&a)[1] ),   \
-                       ::fn( ((const float *)&a)[2] ),   \
-                       ::fn( ((const float *)&a)[3] ) }; \
-    return b;                                            \
+# define CMATH_FR1(fn)                    \
+  inline v4float fn( const v4float &a ) { \
+    union { float f[4]; _v4_float v; } t; \
+    v4float b;                            \
+    t.v = a.v;                            \
+    b.v = (_v4_float){ ::fn( t.f[0] ),    \
+                       ::fn( t.f[1] ),    \
+                       ::fn( t.f[2] ),    \
+                       ::fn( t.f[3] ) };  \
+    return b;                             \
   }
   
-# define CMATH_FR2(fn)                                                  \
-  inline v4float fn( const v4float &a, const v4float &b ) {             \
-    v4float c;                                                          \
-    c.v = (_v4_float){ ::fn( ((const float *)&a)[0],                    \
-                             ((const float *)&b)[0] ),                  \
-                       ::fn( ((const float *)&a)[1],                    \
-                             ((const float *)&b)[1] ),                  \
-                       ::fn( ((const float *)&a)[2],                    \
-                             ((const float *)&b)[2] ),                  \
-                       ::fn( ((const float *)&a)[3],                    \
-                             ((const float *)&b)[3] ) };                \
-    return c;                                                           \
+# define CMATH_FR2(fn)                                      \
+  inline v4float fn( const v4float &a, const v4float &b ) { \
+    union { float f[4]; _v4_float v; } t;                   \
+    union { float f[4]; _v4_float v; } u;                   \
+    v4float c;                                              \
+    t.v = a.v;                                              \
+    u.v = b.v;                                              \
+    c.v = (_v4_float){ ::fn( t.f[0], u.f[0] ),              \
+                       ::fn( t.f[1], u.f[1] ),              \
+                       ::fn( t.f[2], u.f[2] ),              \
+                       ::fn( t.f[3], u.f[3] ) };            \
+    return c;                                               \
   }
 
   CMATH_FR1(acos)     CMATH_FR1(asin)  CMATH_FR1(atan) CMATH_FR2(atan2)

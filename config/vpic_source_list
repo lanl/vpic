@@ -54,7 +54,7 @@ src/species_advance/standard/boundary_p.c
 src/species_advance/standard/center_p.cxx
 src/species_advance/standard/energy_p.cxx
 src/species_advance/standard/hydro_p.c
-src/species_advance/standard/move_p.c
+src/species_advance/standard/move_p.cxx
 src/species_advance/standard/rho_p.c
 src/species_advance/standard/sort_p.c
 src/species_advance/standard/uncenter_p.cxx

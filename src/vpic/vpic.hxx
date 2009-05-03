@@ -17,6 +17,7 @@
 #include "../emitter/emitter.h"
 #include "../boundary/boundary.h"
 #include "../species_advance/standard/spa.h"
+#include <unistd.h> // For sleep()
 #include <FileIO.hxx>
 #include <BitField.hxx>
 #include <vector>
@@ -512,6 +513,7 @@ private:
   }
  
   inline void abort( double code ) {
+    sleep(1);
     mp_abort((int)code,grid->mp);
   }
  

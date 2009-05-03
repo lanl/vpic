@@ -26,7 +26,7 @@
 #define SPU_COMPLETE ((uint32_t)2112)
 
 typedef void
-(*spe_pipeline_t)( MEM_PTR( void, 128 ) argp,
+(*spe_pipeline_t)( MEM_PTR( void, 128 ) args,
                    int pipeline_rank,
                    int n_pipeline );
 
@@ -35,7 +35,7 @@ main( uint64_t id,
       uint64_t argp,
       uint64_t envp ) {
   spe_pipeline_t pipeline;
-  MEM_PTR( void, 128 ) argp;
+  MEM_PTR( void, 128 ) args;
   int pipeline_rank, n_pipeline;
 
   for(;;) {
@@ -45,14 +45,14 @@ main( uint64_t id,
 
     pipeline = (spe_pipeline_t)spu_read_in_mbox();
     if( pipeline==NULL ) break; // If we get a NULL pipeline, we are done
-    argp = (((uint64_t)spu_read_in_mbox())<<32) |
+    args = (((uint64_t)spu_read_in_mbox())<<32) |
             ((uint64_t)spu_read_in_mbox());
     pipeline_rank = spu_read_in_mbox();
     n_pipeline    = spu_read_in_mbox();
 
     // Execute pipeline
 
-    pipeline( argp, pipeline_rank, n_pipeline );
+    pipeline( args, pipeline_rank, n_pipeline );
 
     // Notify caller of completion
 

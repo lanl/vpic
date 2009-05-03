@@ -40,7 +40,11 @@ clear_accumulators( accumulator_t * ALIGNED(128) a,
   n++; /* n = 1 + max( {serial,thread,spu}.n_pipeline ) */
   n *= POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
 
-  args->a = a, args->n = n;
-  EXEC_PIPELINES( clear_accumulators, args, 0 );
-  WAIT_PIPELINES();
+  if( n<clear_accumulators_n_block ) CLEAR( a, n );
+  else {
+    args->a = a, args->n = n;
+    EXEC_PIPELINES( clear_accumulators, args, 0 );
+    WAIT_PIPELINES();
+  }
 }
+

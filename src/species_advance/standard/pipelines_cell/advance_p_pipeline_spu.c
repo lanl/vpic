@@ -934,7 +934,7 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
 // main (workload distribution and data buffering)
 
 // FIXME: Some util functionality is not compiled for the spu
-/* FIXME: WHICH SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION? */
+// FIXME: WHICH SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION? 
 
 void
 _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,

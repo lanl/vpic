@@ -42,7 +42,7 @@ src/grid/grid_structors.c
 src/grid/ops.c
 src/grid/partition.c
 src/material/material.c
-src/sf_interface/clear_accumulators.cxx
+src/sf_interface/clear_accumulators.c
 src/sf_interface/hydro.c
 src/sf_interface/load_interpolator.cxx
 src/sf_interface/reduce_accumulators.cxx

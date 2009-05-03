@@ -11,8 +11,8 @@ _SPUEAR_clear_accumulators_pipeline_spu(
     MEM_PTR( clear_accumulators_pipeline_args_t, 128 ) argp,
     int pipeline_rank,
     int n_pipeline ) {
-  DECLARE_ALIGNED_ARRAY( accum_pipeline_args_t, 128, args,  1  );
-  DECLARE_ALIGNED_ARRAY( accumulator_t,         128, zeros, NB );
+  DECLARE_ALIGNED_ARRAY( clear_accumulators_pipeline_args_t, 128, args,  1  );
+  DECLARE_ALIGNED_ARRAY( accumulator_t,                      128, zeros, NB );
   MEM_PTR( accumulator_t, 128 ) a;
   int i, n, c;
 
@@ -29,7 +29,7 @@ _SPUEAR_clear_accumulators_pipeline_spu(
   // Zero out the accumulators assigned to this pipeline
   DISTRIBUTE( args->n, NB, pipeline_rank, n_pipeline, i, n );
   a = args->a + i*sizeof(accumulator_t);
-  for( c=0; n>=0; n-=NB, a+=NB*sizeof(accumulator_t), c=(c+1)&0x1f )
+  for( c=0; n>0; n-=NB, a+=NB*sizeof(accumulator_t), c=(c+1)&0x1f )
     mfc_put( zeros, a, NB*sizeof(accumulator_t), c, 0, 0 ); 
 
   // Wait for the zeroing to complete

@@ -492,7 +492,7 @@ boundary_p( species_t        * __restrict__ sp_list,
 
         pm->i  = np;
         sp->np = np + 1;
-        sp->nm = nm + move_p( p, pm, a0, g );
+        sp->nm = nm + move_p( sp->p, pm, a0, g );
       }
     }
     

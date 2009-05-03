@@ -1,0 +1,51 @@
+#!/bin/bash
+
+EXT=$1
+
+function run() {
+  NP=$1
+  TEST=$2
+  shift 2
+
+  EXE="../../build.$EXT $TEST"
+  echo "=================================================================="
+  echo "Building $EXE"
+  if $EXE; then
+    echo "------------------------------------------------------------------"
+    echo "pass"
+  else
+    echo "------------------------------------------------------------------"
+    echo "FAIL"
+    exit 1
+  fi
+
+  for TPP in 1 2 3 4
+  do
+    EXE="mpirun -np $NP $TEST.$EXT $* -tpp=$TPP"
+    echo "------------------------------------------------------------------"
+    echo "Running $EXE"
+    echo "------------------------------------------------------------------"
+    if $EXE; then
+      echo "------------------------------------------------------------------"
+      echo "pass"
+    else
+      echo "------------------------------------------------------------------"
+      echo "FAIL"
+      exit 1
+    fi
+  done
+}
+
+run 1 accel
+run 1 cyclo
+run 1 inbndj
+run 1 interpe
+run 1 outbndj
+run 8 pcomm
+run 1 rngconv
+run 1 rngseq
+run 1 v4
+
+echo "=================================================================="
+echo "All tests passed"
+

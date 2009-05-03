@@ -128,6 +128,25 @@ void test_splat(void) {
   else                         printf( "splat: pass\n" );
 }
 
+void test_shuffle(void) {
+  v4int a( 0, 1, 2, 3);
+  v4int b( 4, 8,12,16);
+  v4int c( 5, 9,13,17);
+  v4int d( 6,10,14,18);
+  v4int e( 7,11,15,19);
+
+  b = shuffle(a,1,2,3,0);
+  c = shuffle(a,2,3,0,1);
+  d = shuffle(a,3,0,1,2);
+  e = shuffle(a,3,2,1,0);
+  if( any(a!=v4int(0,1,2,3)) ||
+      any(b!=v4int(1,2,3,0)) ||
+      any(c!=v4int(2,3,0,1)) ||
+      any(d!=v4int(3,0,1,2)) ||
+      any(e!=v4int(3,2,1,0)) ) printf( "shuffle: FAIL\n" );
+  else                         printf( "shuffle: pass\n" );
+}
+
 void test_swap(void) {
   v4int a(1,2,3,4);
   v4int b(5,6,7,8);
@@ -717,6 +736,7 @@ begin_initialization {
   test_any();
   test_all();
   test_splat();
+  test_shuffle();
   test_swap();
   test_transpose();
   

@@ -514,7 +514,7 @@ private:
  
   inline void abort( double code ) {
     sleep(1);
-    mp_abort((int)code,grid->mp);
+    mp_abort((((int)code)<<17)+1,grid->mp);
   }
  
   // Truncate "a" to the nearest integer multiple of "b"

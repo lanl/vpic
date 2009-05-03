@@ -1,5 +1,4 @@
 #define IN_sf_interface
-#define HAS_V4_PIPELINE
 #include "sf_interface_private.h"
 
 // FIXME: THIS NEEDS TO REDUCE THE ACTUAL NUMBER OF ACCUMULATORS PRESENT
@@ -7,160 +6,167 @@
 // ACCUMULATORS USED DURING OTHER OPERATIONS (E.G. 8 SPU PIPELINES AND
 // 2 PPU PIPELINES!)
 
-#define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+// FIXME: N_ARRAY>1 ALWAYS BUT THIS ISN'T STRICTLY NECESSARY BECAUSE
+// HOST IS THREAD FOR THE SERIAL AND THREADED DISPATCHERS.  SHOULD
+// PROBABLY CHANGE N_ARRAY T
+// max({serial,thread}.n_pipeline,spu.n_pipeline+1)
 
 void
-reduce_accumulators_pipeline( reduce_accumulators_pipeline_args_t * args,
+reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
                               int pipeline_rank,
                               int n_pipeline ) {
-  accumulator_t * ALIGNED(128) a = args->a;
-  const grid_t  *              g = args->g;
+  int si = sizeof(accumulator_t) / sizeof(float);
+  int sj = si*args->stride;   
+  int nj = args->n_array - 1;                     
+  int i, j, k, l, i1;
 
-  const accumulator_t * ALIGNED(16) sa;
-  accumulator_t       * ALIGNED(16) da;
-  int n, x, y, z, n_voxel;
+  /* a is broken into restricted rw and ro parts to allow the compiler
+     to do more aggresive optimizations. */
+  /**/  float * __restrict a = args->a->jx;
+  const float * __restrict b = a + sj;
 
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
-  const int na = args->na;
-  const int stride = POW2_CEIL((nx+2)*(ny+2)*(nz+2),2);
+  DISTRIBUTE( args->stride, accumulators_n_block,
+              pipeline_rank, n_pipeline, i, i1 ); i1 += i;
 
-  // Process voxels assigned to this pipeline
+# if defined(V4_ACCELERATION)
 
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  using namespace v4;
 
-  da = &a(x,y,z);
+  v4float v0, v1, v2, v3, v4, v5, v6, v7;
 
-  for( ; n_voxel; n_voxel-- ) {
-
-    sa = da + stride;
-    for( n=1; n<na; n++ ) {
-      da->jx[0] += sa->jx[0]; da->jx[1] += sa->jx[1]; da->jx[2] += sa->jx[2]; da->jx[3] += sa->jx[3];
-      da->jy[0] += sa->jy[0]; da->jy[1] += sa->jy[1]; da->jy[2] += sa->jy[2]; da->jy[3] += sa->jy[3];
-      da->jz[0] += sa->jz[0]; da->jz[1] += sa->jz[1]; da->jz[2] += sa->jz[2]; da->jz[3] += sa->jz[3];
-      sa += stride;
-    }
-
-    da++;
-
-    x++;
-    if( x>nx ) {
-      x=1, y++;
-      if( y>ny ) y=1, z++;
-      da = &a(x,y,z);
-    }
+# define LOOP(_)                                \
+  for( ; i<i1; i++ ) {                          \
+    k = i*si;                                   \
+    _(k+ 0); _(k+ 4); _(k+ 8);                  \
   }
+# define A(k)    load_4x1( &a[k], v0 );
+# define B(k,j)  load_4x1( &b[k+(j-1)*sj], v##j );
+# define C(k,op) store_4x1( op, &a[k] )
+# define O1(_)A(_  )B(_,1)            C(_,  v0+v1                            )
+# define O2(_)A(_  )B(_,1)B(_,2)      C(_, (v0+v1)+ v2                       )
+# define O3(_)A(_  )B(_,1)B(_,2)B(_,3)C(_, (v0+v1)+(v2+v3)                   )
+# define O4(_)A(_  )B(_,1)B(_,2)B(_,3)                                  \
+    /**/      B(_,4)                  C(_,((v0+v1)+(v2+v3))+  v4             )
+# define O5(_)A(_  )B(_,1)B(_,2)B(_,3)                                  \
+    /**/      B(_,4)B(_,5)            C(_,((v0+v1)+(v2+v3))+ (v4+v5)         )
+# define O6(_)A(_  )B(_,1)B(_,2)B(_,3)                                  \
+    /**/      B(_,4)B(_,5)B(_,6)      C(_,((v0+v1)+(v2+v3))+((v4+v5)+ v6    ))
+# define O7(_)A(_  )B(_,1)B(_,2)B(_,3)                                  \
+    /**/      B(_,4)B(_,5)B(_,6)B(_,7)C(_,((v0+v1)+(v2+v3))+((v4+v5)+(v6+v7)))
+
+# else
+
+  float f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11;
+
+# define LOOP(_)                                \
+  for( ; i<i1; i++ ) {                          \
+    k = i*si;                                   \
+    _(k+ 0);_(k+ 1);_(k+ 2);_(k+ 3);            \
+    _(k+ 4);_(k+ 5);_(k+ 6);_(k+ 7);            \
+    _(k+ 8);_(k+ 9);_(k+10);_(k+11);            \
+  }
+# define O1(_) a[_]=  a[_     ] + b[_     ]
+# define O2(_) a[_]= (a[_     ] + b[_     ]) +  b[_+  sj]
+# define O3(_) a[_]= (a[_     ] + b[_     ]) + (b[_+  sj] + b[_+2*sj])
+# define O4(_) a[_]=((a[_     ] + b[_     ]) + (b[_+  sj] + b[_+2*sj])) + \
+    /**/              b[_+3*sj]
+# define O5(_) a[_]=((a[_     ] + b[_     ]) + (b[_+  sj] + b[_+2*sj])) + \
+    /**/             (b[_+3*sj] + b[_+4*sj])
+# define O6(_) a[_]=((a[_     ] + b[_     ]) + (b[_+  sj] + b[_+2*sj])) + \
+    /**/            ((b[_+3*sj] + b[_+4*sj]) +  b[_+5*sj]          )
+# define O7(_) a[_]=((a[_     ] + b[_     ]) + (b[_+  sj] + b[_+2*sj])) + \
+    /**/            ((b[_+3*sj] + b[_+4*sj]) + (b[_+5*sj] + b[_+6*sj]))
+
+# endif
+  
+  switch( nj ) {        
+  case 0:           break;
+  case 1: LOOP(O1); break;
+  case 2: LOOP(O2); break;
+  case 3: LOOP(O3); break;
+  case 4: LOOP(O4); break;
+  case 5: LOOP(O5); break;
+  case 6: LOOP(O6); break;
+  case 7: LOOP(O7); break;
+  default:
+#   if defined(V4_ACCELERATION)
+    for( ; i<i1; i++ ) {
+      k = i*si;
+      load_4x1(&a[k+0],v0);  load_4x1(&a[k+4],v1);  load_4x1(&a[k+8],v2);
+      for( j=0; j<nj; j++ ) {
+        l = k + j*sj;
+        load_4x1(&b[l+0],v3);  load_4x1(&b[l+4],v4);  load_4x1(&b[l+8],v5);
+        v0 += v3;              v1 += v4;              v2 += v5;
+      }
+      store_4x1(v0,&a[k+0]); store_4x1(v1,&a[k+4]); store_4x1(v2,&a[k+8]);
+    }
+#   else
+    for( ; i<i1; i++ ) {
+      k = i*si;
+      f0  = a[k+ 0]; f1  = a[k+ 1]; f2  = a[k+ 2]; f3  = a[k+ 3];
+      f4  = a[k+ 4]; f5  = a[k+ 5]; f6  = a[k+ 6]; f7  = a[k+ 7];
+      f8  = a[k+ 8]; f9  = a[k+ 9]; f10 = a[k+10]; f11 = a[k+11];
+      for( j=0; j<nj; j++ ) {
+        l = k + j*sj;
+        f0  += b[l+ 0]; f1  += b[l+ 1]; f2  += b[l+ 2]; f3  += b[l+ 3];
+        f4  += b[l+ 4]; f5  += b[l+ 5]; f6  += b[l+ 6]; f7  += b[l+ 7];
+        f8  += b[l+ 8]; f9  += b[l+ 9]; f10 += b[l+10]; f11 += b[l+11];
+      }
+      a[k+ 0] =  f0; a[k+ 1] =  f1; a[k+ 2] =  f2; a[k+ 3] =  f3;
+      a[k+ 4] =  f4; a[k+ 5] =  f5; a[k+ 6] =  f6; a[k+ 7] =  f7;
+      a[k+ 8] =  f8; a[k+ 9] =  f9; a[k+10] = f10; a[k+11] = f11;
+    }
+#   endif
+    break;
+  }
+
+# undef O7
+# undef O6
+# undef O5
+# undef O4
+# undef O3
+# undef O2
+# undef O1
+# undef C
+# undef B
+# undef A
+# undef LOOP
+
 }
 
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
     defined(HAS_SPU_PIPELINE)
 
-#error "SPU version not hooked up yet!"
+// SPU pipeline is defined in a different compilation unit
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
-using namespace v4;
-
-void
-reduce_accumulators_pipeline_v4( reduce_accumulators_pipeline_args_t * args,
-                                 int pipeline_rank,
-                                 int n_pipeline ) {
-  accumulator_t * ALIGNED(128) a = args->a;
-  const grid_t  *              g = args->g;
-
-  const accumulator_t * ALIGNED(16) sa;
-  accumulator_t       * ALIGNED(16) da;
-  int n, x, y, z, n_voxel;
-
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
-  const int na = args->na;
-  const int stride = POW2_CEIL((nx+2)*(ny+2)*(nz+2),2);
-
-  v4float vjxx, vjyy, vjzz;
-  v4float vjx,  vjy,  vjz;
-
-  // Process voxels assigned to this pipeline
-
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
-
-  da = &a(x,y,z);
-
-  for( ; n_voxel; n_voxel-- ) {
-
-    // More evil than usual---Duff inspired V4 accelerated loop.
-
-    load_4x1( da->jx, vjx );
-    load_4x1( da->jy, vjy );
-    load_4x1( da->jz, vjz );
-    sa = da + stride;
-    n = na - 1;
-
-#   define REDUCE_ACCUM()                  \
-    load_4x1( sa->jx, vjxx ); vjx += vjxx; \
-    load_4x1( sa->jy, vjyy ); vjy += vjyy; \
-    load_4x1( sa->jz, vjzz ); vjz += vjzz; \
-    sa += stride
-
-    switch( n ) {
-    default: for(;n>8;n--) { REDUCE_ACCUM(); }
-    case 8:  REDUCE_ACCUM();
-    case 7:  REDUCE_ACCUM();
-    case 6:  REDUCE_ACCUM();
-    case 5:  REDUCE_ACCUM();
-    case 4:  REDUCE_ACCUM();
-    case 3:  REDUCE_ACCUM();
-    case 2:  REDUCE_ACCUM();
-    case 1:  REDUCE_ACCUM();
-    case 0:  break;
-    }
-
-#   undef REDUCE_ACCUM
-
-    store_4x1( vjx, da->jx );
-    store_4x1( vjy, da->jy );
-    store_4x1( vjz, da->jz );
-
-    da++;
-
-    x++;
-    if( x>nx ) {
-      x=1, y++;
-      if( y>ny ) y=1, z++;
-      da = &a(x,y,z);
-    }
-  }
-}
+#error "The regular pipeline is already V4 accelerated!"
 
 #endif
 
 void
 reduce_accumulators( accumulator_t * ALIGNED(128) a,
                      const grid_t  *              g ) {
-  reduce_accumulators_pipeline_args_t args[1];
-  int na;
-  
-  if( a==NULL ) ERROR(("Bad accumulator"));
-  if( g==NULL ) ERROR(("Bad grid"));
+  accumulators_pipeline_args_t args[1];
+  int n_array, stride;
 
-  /**/                       na = serial.n_pipeline;
-  if( na<thread.n_pipeline ) na = thread.n_pipeline;
+  if( a==NULL ) ERROR(("Invalid accumulator"));
+  if( g==NULL ) ERROR(("Invalid grid"));
+
+  /**/                            n_array = serial.n_pipeline;
+  if( n_array<thread.n_pipeline ) n_array = thread.n_pipeline;
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  if( na<spu.n_pipeline    ) na = spu.n_pipeline;
+  if( n_array<spu.n_pipeline    ) n_array = spu.n_pipeline;
 # endif
-  na++; /* na = 1 + max( {serial,thread,spu}.n_pipeline ) */
+  n_array++; /* n_array = 1 + max( {serial,thread,spu}.n_pipeline ) */
 
-  args->a  = a;
-  args->g  = g;
-  args->na = na;
+  stride = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
 
+  if( n_array==1 ) return; /* Nothing to do */
+  /* FIXME: ADD SHORTCUT FOR WHEN STRIDE IS TOO SMALL TO BE WORTH
+     THREADING PARALLELIZING */
+  args->a = a, args->n_array = n_array, args->stride = stride;
   EXEC_PIPELINES( reduce_accumulators, args, 0 );
   WAIT_PIPELINES();
 }
-

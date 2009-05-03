@@ -3,11 +3,11 @@
 #include "sf_interface_private.h"
 
 void
-clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
+clear_accumulators_pipeline( accumulators_pipeline_args_t * args,
                              int pipeline_rank,
                              int n_pipeline ) {
   int i, n;
-  DISTRIBUTE( args->n, clear_accumulators_n_block,
+  DISTRIBUTE( args->n_array*args->stride, accumulators_n_block,
               pipeline_rank, n_pipeline, i, n );
   CLEAR( args->a+i, n );
 }
@@ -26,23 +26,24 @@ clear_accumulators_pipeline( clear_accumulators_pipeline_args_t * args,
 void
 clear_accumulators( accumulator_t * ALIGNED(128) a,
                     const grid_t  *              g ) {
-  clear_accumulators_pipeline_args_t args[1];
-  int n;
+  accumulators_pipeline_args_t args[1];
+  int n_array, stride;
 
   if( a==NULL ) ERROR(("Invalid accumulator"));
   if( g==NULL ) ERROR(("Invalid grid"));
 
-  /**/                      n = serial.n_pipeline;
-  if( n<thread.n_pipeline ) n = thread.n_pipeline;
+  /**/                            n_array = serial.n_pipeline;
+  if( n_array<thread.n_pipeline ) n_array = thread.n_pipeline;
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  if( n<spu.n_pipeline    ) n = spu.n_pipeline;
+  if( n_array<spu.n_pipeline    ) n_array = spu.n_pipeline;
 # endif
-  n++; /* n = 1 + max( {serial,thread,spu}.n_pipeline ) */
-  n *= POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
+  n_array++; /* n_array = 1 + max( {serial,thread,spu}.n_pipeline ) */
 
-  if( n<clear_accumulators_n_block ) CLEAR( a, n );
+  stride = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
+
+  if( stride<accumulators_n_block ) CLEAR( a, n_array*stride );
   else {
-    args->a = a, args->n = n;
+    args->a = a, args->n_array = n_array, args->stride = stride;
     EXEC_PIPELINES( clear_accumulators, args, 0 );
     WAIT_PIPELINES();
   }

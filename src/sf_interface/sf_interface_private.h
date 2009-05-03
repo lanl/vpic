@@ -125,32 +125,20 @@ PROTOTYPE_PIPELINE( load_interpolator, load_interpolator_pipeline_args_t );
 // (16KB) which is particularly convenient on Cell.  The pipeline
 // dispatcher will handle any stragglers.
 
-enum { clear_accumulators_n_block = 256 };
+enum { accumulators_n_block = 256 };
 
-typedef struct clear_accumulators_pipeline_args {
+typedef struct accumulators_pipeline_args {
 
   MEM_PTR( accumulator_t, 128) a; // Base of all the accumulators
-  int n;                          // Total number of accumulators
+  int n_array;                    // Number of accumulator arrays
+  int stride;                     // Stride between each array
 
-  PAD_STRUCT( SIZEOF_MEM_PTR + sizeof(int) )
+  PAD_STRUCT( SIZEOF_MEM_PTR + 2*sizeof(int) )
 
-} clear_accumulators_pipeline_args_t;
+} accumulators_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( clear_accumulators, clear_accumulators_pipeline_args_t );
-
-///////////////////////////////////////////////////////////////////////////////
-
-typedef struct reduce_accumulators_pipeline_args {
-
-  accumulator_t * ALIGNED(128) a;
-  const grid_t  *              g;
-  int na;                          // Number of accumulator arrays
-
-  PAD_STRUCT( 3*SIZEOF_MEM_PTR )
-
-} reduce_accumulators_pipeline_args_t;
-
-PROTOTYPE_PIPELINE( reduce_accumulators, reduce_accumulators_pipeline_args_t );
+PROTOTYPE_PIPELINE( clear_accumulators,  accumulators_pipeline_args_t );
+PROTOTYPE_PIPELINE( reduce_accumulators, accumulators_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 

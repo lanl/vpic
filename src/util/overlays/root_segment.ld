@@ -66,11 +66,12 @@ SECTIONS
   } =0
   OVERLAY :
   {
-    /* FIXME: CAN THESE BE MERGED (AND IS THERE ROOM)? */
-    .segment1 {advance_p_pipeline_spu.o(.text)}
-    .segment2 {clear_accumulators_pipeline_spu.o(.text)}
-    .segment3 {reduce_accumulators_pipeline_spu.o(.text)}
-    /* .segment4 {sort_p_pipeline_spu.o(.text)} */
+    /* Use segment1 for all these to avoid switching overlays as much
+       much as possible.  These three (barely) fit together and are
+       typically called together. */
+    .segment1 {advance_p_pipeline_spu.o(.text)
+               clear_accumulators_pipeline_spu.o(.text)
+               reduce_accumulators_pipeline_spu.o(.text)}
   }
   .fini           :
   {

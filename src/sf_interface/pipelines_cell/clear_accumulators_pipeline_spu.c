@@ -4,15 +4,15 @@
 
 #include <spu_mfcio.h>
 
-#define NB clear_accumulators_n_block
+#define NB accumulators_n_block
 
 void
 _SPUEAR_clear_accumulators_pipeline_spu(
-    MEM_PTR( clear_accumulators_pipeline_args_t, 128 ) argp,
+    MEM_PTR( accumulators_pipeline_args_t, 128 ) argp,
     int pipeline_rank,
     int n_pipeline ) {
-  DECLARE_ALIGNED_ARRAY( clear_accumulators_pipeline_args_t, 128, args,  1  );
-  DECLARE_ALIGNED_ARRAY( accumulator_t,                      128, zeros, NB );
+  DECLARE_ALIGNED_ARRAY( accumulators_pipeline_args_t, 128, args,  1  );
+  DECLARE_ALIGNED_ARRAY( accumulator_t,                128, zeros, NB );
   MEM_PTR( accumulator_t, 128 ) a;
   int i, n, c;
 
@@ -27,7 +27,7 @@ _SPUEAR_clear_accumulators_pipeline_spu(
   mfc_read_tag_status_all();
 
   // Zero out the accumulators assigned to this pipeline
-  DISTRIBUTE( args->n, NB, pipeline_rank, n_pipeline, i, n );
+  DISTRIBUTE( args->n_array*args->stride, NB, pipeline_rank, n_pipeline, i, n );
   a = args->a + i*sizeof(accumulator_t);
   for( c=0; n>0; n-=NB, a+=NB*sizeof(accumulator_t), c=(c+1)&0x1f )
     mfc_put( zeros, a, NB*sizeof(accumulator_t), c, 0, 0 ); 

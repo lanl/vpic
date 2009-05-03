@@ -45,7 +45,7 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
   // Determine which accumulators are reduced by this pipeline
 
   a  = args->a;
-  nj = args->n_array; if( nj>MAX_ARRAY ) return; /* FIXME: CORRECT METHOD? */
+  nj = args->n_array; if( nj>MAX_ARRAY ) return; // FIXME: ABORT W/ DIAGS! 
   sj = args->stride;
   DISTRIBUTE( sj, NB, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
 
@@ -57,7 +57,8 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
     // Begin loading all the single precision accumulators for this block
 
     for( j=0; j<nj; j++ )
-      mfc_get( f+4*NB*j, a+(i+j*sj)*sizeof(accumulator_t), j, 0, 0 );
+      mfc_get( f+4*NB*j, a+(i+j*sj)*sizeof(accumulator_t),
+               NB*sizeof(accumulator_t), j, 0, 0 );
 
     // Wait for block 0 to arrive and convert it to double precision
     

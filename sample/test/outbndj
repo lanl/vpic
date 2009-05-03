@@ -10,9 +10,9 @@
 #define drho(x,y,z) drho[LOCAL_CELL_ID(x,y,z)]
 #define divj(x,y,z) divj[LOCAL_CELL_ID(x,y,z)]
 
-#define NX 4
-#define NY 5
-#define NZ 6
+#define NX 2
+#define NY 3
+#define NZ 4
 
 begin_globals {
 };

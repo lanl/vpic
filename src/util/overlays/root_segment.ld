@@ -59,15 +59,18 @@ SECTIONS
     /* *(.text .stub .text.* .gnu.linkonce.t.*) */
     *(EXCLUDE_FILE(advance_p_pipeline_spu.o) .text .stub .text.* .gnu.linkonce.t.*)
     *(EXCLUDE_FILE(clear_accumulators_pipeline_spu.o) .text .stub .text.* .gnu.linkonce.t.*)
+    *(EXCLUDE_FILE(reduce_accumulators_pipeline_spu.o) .text .stub .text.* .gnu.linkonce.t.*)
     KEEP (*(.text.*personality*))
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
   } =0
   OVERLAY :
   {
+    /* FIXME: CAN THESE BE MERGED (AND IS THERE ROOM)? */
     .segment1 {advance_p_pipeline_spu.o(.text)}
     .segment2 {clear_accumulators_pipeline_spu.o(.text)}
-    /* .segment3 {sort_p_pipeline_spu.o(.text)} */
+    .segment3 {reduce_accumulators_pipeline_spu.o(.text)}
+    /* .segment4 {sort_p_pipeline_spu.o(.text)} */
   }
   .fini           :
   {

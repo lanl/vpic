@@ -1,4 +1,5 @@
 #define IN_sf_interface
+#define HAS_SPU_PIPELINE
 #include "sf_interface_private.h"
 
 // FIXME: THIS NEEDS TO REDUCE THE ACTUAL NUMBER OF ACCUMULATORS PRESENT

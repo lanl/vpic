@@ -19,7 +19,7 @@ function run() {
     exit 1
   fi
 
-  for TPP in 1 2 3 4 5 6 7 8 9
+  for TPP in 1 2 3 4
   do
     EXE="mpirun -np $NP $TEST.$EXT $* -tpp=$TPP"
     echo "------------------------------------------------------------------"

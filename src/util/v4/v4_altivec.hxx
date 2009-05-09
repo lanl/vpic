@@ -21,85 +21,10 @@ namespace v4 {
   class v4int;
   class v4float;
 
-# define _v4_int    __vector int
-# define _v4_uint   __vector unsigned int
-# define _v4_float  __vector float
-
-# define P(i0,i1,i2,i3) { 4*i0, 4*i0+1, 4*i0+2, 4*i0+3, \
-                          4*i1, 4*i1+1, 4*i1+2, 4*i1+3, \
-                          4*i2, 4*i2+1, 4*i2+2, 4*i2+3, \
-                          4*i3, 4*i3+1, 4*i3+2, 4*i3+3 }
-
-  const __vector unsigned char _perm[256] = {
-    P(0,0,0,0), P(1,0,0,0), P(2,0,0,0), P(3,0,0,0),
-    P(0,1,0,0), P(1,1,0,0), P(2,1,0,0), P(3,1,0,0),
-    P(0,2,0,0), P(1,2,0,0), P(2,2,0,0), P(3,2,0,0),
-    P(0,3,0,0), P(1,3,0,0), P(2,3,0,0), P(3,3,0,0),
-    P(0,0,1,0), P(1,0,1,0), P(2,0,1,0), P(3,0,1,0),
-    P(0,1,1,0), P(1,1,1,0), P(2,1,1,0), P(3,1,1,0),
-    P(0,2,1,0), P(1,2,1,0), P(2,2,1,0), P(3,2,1,0),
-    P(0,3,1,0), P(1,3,1,0), P(2,3,1,0), P(3,3,1,0),
-    P(0,0,2,0), P(1,0,2,0), P(2,0,2,0), P(3,0,2,0),
-    P(0,1,2,0), P(1,1,2,0), P(2,1,2,0), P(3,1,2,0),
-    P(0,2,2,0), P(1,2,2,0), P(2,2,2,0), P(3,2,2,0),
-    P(0,3,2,0), P(1,3,2,0), P(2,3,2,0), P(3,3,2,0),
-    P(0,0,3,0), P(1,0,3,0), P(2,0,3,0), P(3,0,3,0),
-    P(0,1,3,0), P(1,1,3,0), P(2,1,3,0), P(3,1,3,0),
-    P(0,2,3,0), P(1,2,3,0), P(2,2,3,0), P(3,2,3,0),
-    P(0,3,3,0), P(1,3,3,0), P(2,3,3,0), P(3,3,3,0),
-
-    P(0,0,0,1), P(1,0,0,1), P(2,0,0,1), P(3,0,0,1),
-    P(0,1,0,1), P(1,1,0,1), P(2,1,0,1), P(3,1,0,1),
-    P(0,2,0,1), P(1,2,0,1), P(2,2,0,1), P(3,2,0,1),
-    P(0,3,0,1), P(1,3,0,1), P(2,3,0,1), P(3,3,0,1),
-    P(0,0,1,1), P(1,0,1,1), P(2,0,1,1), P(3,0,1,1),
-    P(0,1,1,1), P(1,1,1,1), P(2,1,1,1), P(3,1,1,1),
-    P(0,2,1,1), P(1,2,1,1), P(2,2,1,1), P(3,2,1,1),
-    P(0,3,1,1), P(1,3,1,1), P(2,3,1,1), P(3,3,1,1),
-    P(0,0,2,1), P(1,0,2,1), P(2,0,2,1), P(3,0,2,1),
-    P(0,1,2,1), P(1,1,2,1), P(2,1,2,1), P(3,1,2,1),
-    P(0,2,2,1), P(1,2,2,1), P(2,2,2,1), P(3,2,2,1),
-    P(0,3,2,1), P(1,3,2,1), P(2,3,2,1), P(3,3,2,1),
-    P(0,0,3,1), P(1,0,3,1), P(2,0,3,1), P(3,0,3,1),
-    P(0,1,3,1), P(1,1,3,1), P(2,1,3,1), P(3,1,3,1),
-    P(0,2,3,1), P(1,2,3,1), P(2,2,3,1), P(3,2,3,1),
-    P(0,3,3,1), P(1,3,3,1), P(2,3,3,1), P(3,3,3,1),
-
-    P(0,0,0,2), P(1,0,0,2), P(2,0,0,2), P(3,0,0,2),
-    P(0,1,0,2), P(1,1,0,2), P(2,1,0,2), P(3,1,0,2),
-    P(0,2,0,2), P(1,2,0,2), P(2,2,0,2), P(3,2,0,2),
-    P(0,3,0,2), P(1,3,0,2), P(2,3,0,2), P(3,3,0,2),
-    P(0,0,1,2), P(1,0,1,2), P(2,0,1,2), P(3,0,1,2),
-    P(0,1,1,2), P(1,1,1,2), P(2,1,1,2), P(3,1,1,2),
-    P(0,2,1,2), P(1,2,1,2), P(2,2,1,2), P(3,2,1,2),
-    P(0,3,1,2), P(1,3,1,2), P(2,3,1,2), P(3,3,1,2),
-    P(0,0,2,2), P(1,0,2,2), P(2,0,2,2), P(3,0,2,2),
-    P(0,1,2,2), P(1,1,2,2), P(2,1,2,2), P(3,1,2,2),
-    P(0,2,2,2), P(1,2,2,2), P(2,2,2,2), P(3,2,2,2),
-    P(0,3,2,2), P(1,3,2,2), P(2,3,2,2), P(3,3,2,2),
-    P(0,0,3,2), P(1,0,3,2), P(2,0,3,2), P(3,0,3,2),
-    P(0,1,3,2), P(1,1,3,2), P(2,1,3,2), P(3,1,3,2),
-    P(0,2,3,2), P(1,2,3,2), P(2,2,3,2), P(3,2,3,2),
-    P(0,3,3,2), P(1,3,3,2), P(2,3,3,2), P(3,3,3,2),
-
-    P(0,0,0,3), P(1,0,0,3), P(2,0,0,3), P(3,0,0,3),
-    P(0,1,0,3), P(1,1,0,3), P(2,1,0,3), P(3,1,0,3),
-    P(0,2,0,3), P(1,2,0,3), P(2,2,0,3), P(3,2,0,3),
-    P(0,3,0,3), P(1,3,0,3), P(2,3,0,3), P(3,3,0,3),
-    P(0,0,1,3), P(1,0,1,3), P(2,0,1,3), P(3,0,1,3),
-    P(0,1,1,3), P(1,1,1,3), P(2,1,1,3), P(3,1,1,3),
-    P(0,2,1,3), P(1,2,1,3), P(2,2,1,3), P(3,2,1,3),
-    P(0,3,1,3), P(1,3,1,3), P(2,3,1,3), P(3,3,1,3),
-    P(0,0,2,3), P(1,0,2,3), P(2,0,2,3), P(3,0,2,3),
-    P(0,1,2,3), P(1,1,2,3), P(2,1,2,3), P(3,1,2,3),
-    P(0,2,2,3), P(1,2,2,3), P(2,2,2,3), P(3,2,2,3),
-    P(0,3,2,3), P(1,3,2,3), P(2,3,2,3), P(3,3,2,3),
-    P(0,0,3,3), P(1,0,3,3), P(2,0,3,3), P(3,0,3,3),
-    P(0,1,3,3), P(1,1,3,3), P(2,1,3,3), P(3,1,3,3),
-    P(0,2,3,3), P(1,2,3,3), P(2,2,3,3), P(3,2,3,3),
-    P(0,3,3,3), P(1,3,3,3), P(2,3,3,3), P(3,3,3,3) };
-
-# undef P
+# define _v4_int     __vector int
+# define _v4_uint    __vector unsigned int
+# define _v4_float   __vector float
+# define _v16_uchar  __vector unsigned char
 
   // FIXME: IS IT FASTER TO SPLAT THESE ON THE FLY
 
@@ -110,8 +35,7 @@ namespace v4 {
   const _v4_float _zero  = { 0.0f, 0.0f, 0.0f, 0.0f };
   const _v4_float _half  = { 0.5f, 0.5f, 0.5f, 0.5f };
   const _v4_float _one   = { 1.0f, 1.0f, 1.0f, 1.0f };
-  const _v4_float _sign  = (_v4_float)
-    ((_v4_int){ 1<<31, 1<<31, 1<<31, 1<<31 });
+  const _v4_float _sign  = {-0.0f,-0.0f,-0.0f,-0.0f };
 
   ////////////////
   // v4 base class
@@ -125,7 +49,7 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, const int n );
+    friend inline v4 splat( const v4 &a, int n );
     friend inline v4 shuffle( const v4 &a,
                               int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
@@ -142,6 +66,7 @@ namespace v4 {
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void clear_4x1( void * ALIGNED(16) dst );
     friend inline void copy_4x1( void * ALIGNED(16) dst,
                                  const void * ALIGNED(16) src );
     friend inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
@@ -211,7 +136,7 @@ namespace v4 {
     return vec_all_ne( (_v4_int)a.v, _false );
   }
   
-  inline v4 splat( const v4 & a, const int n ) {
+  inline v4 splat( const v4 & a, int n ) {
     v4 b;
     b.v = vec_splat( a.v, n );
     return b;
@@ -221,7 +146,11 @@ namespace v4 {
                      int i0, int i1, int i2, int i3 ) {
     _v4_float a_v = a.v;
     v4 b;
-    b.v = vec_perm( a_v, a_v, _perm[i0 + i1*4 + i2*16 + i3*64] );
+    b.v = vec_perm( a_v, a_v, (_v16_uchar)
+                    { 4*i0, 4*i0+1, 4*i0+2, 4*i0+3,
+                      4*i1, 4*i1+1, 4*i1+2, 4*i1+3,
+                      4*i2, 4*i2+1, 4*i2+2, 4*i2+3,
+                      4*i3, 4*i3+1, 4*i3+2, 4*i3+3 } );
     return b;
   }
 
@@ -265,6 +194,11 @@ namespace v4 {
 
   inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
     vec_stl( a.v, 0, (float *)p );
+  }
+
+  // FIXME: Ordering semantics
+  inline void clear_4x1( void * ALIGNED(16) d ) {
+    vec_st( _zero, (float *)d );
   }
 
   // FIXME: Ordering semantics
@@ -515,21 +449,20 @@ namespace v4 {
 
     // v4int constructors / destructors
     
-    v4int() {}                              // Default constructor
-    v4int( const v4int &a ) {               // Copy constructor
+    v4int() {}                                // Default constructor
+    v4int( const v4int &a ) {                 // Copy constructor
       v = a.v;
     }
-    v4int( const v4 &a ) {                  // Initialize from mixed
+    v4int( const v4 &a ) {                    // Init from mixed
       v = a.v;
     }
-    v4int( const int &a ) {                 // Initialize from scalar
+    v4int( int a ) {                          // Init from scalar
       v = (_v4_float)((_v4_int){ a, a, a, a });
     }
-    v4int( const int &i0, const int &i1,
-           const int &i2, const int &i3 ) { // Initialize from scalars
+    v4int( int i0, int i1, int i2, int i3 ) { // Init from scalars
       v = (_v4_float)((_v4_int){ i0, i1, i2, i3 });
     }
-    ~v4int() {}                             // Destructor
+    ~v4int() {}                               // Destructor
     
     // v4int assignment operators
   
@@ -576,8 +509,8 @@ namespace v4 {
     // FIXME: [] operation probably breaks the compiler if used to modify
     // a vector!
 
-    inline int &operator []( const int n ) { return ((int *)&v)[n]; }
-    inline int  operator ()( const int n ) {
+    inline int &operator []( int n ) { return ((int *)&v)[n]; }
+    inline int  operator ()( int n ) {
       union { int i[4]; _v4_float v; } t; t.v = v; return t.i[n];
     }
 
@@ -811,21 +744,20 @@ namespace v4 {
 
     // v4float constructors / destructors
     
-    v4float() {}                                  // Default constructor
-    v4float( const v4float &a ) {                 // Copy constructor
+    v4float() {}                                        // Default constructor
+    v4float( const v4float &a ) {                       // Copy constructor
       v = a.v;
     }
-    v4float( const v4 &a ) {                      // Initialize from mixed
+    v4float( const v4 &a ) {                            // Init from mixed
       v = a.v;
     }
-    v4float( const float &a ) {                   // Initialize from scalar
+    v4float( float a ) {                                // Init from scalar
       v = (_v4_float){ a, a, a, a };
     }
-    v4float( const float &f0, const float &f1,
-             const float &f2, const float &f3 ) { // Initialize from scalars
+    v4float( float f0, float f1, float f2, float f3 ) { // Init from scalars
       v = (_v4_float){ f0, f1, f2, f3 };
     }
-    ~v4float() {}                                 // Destructor
+    ~v4float() {}                                       // Destructor
 
     // v4float assignment operators
 
@@ -872,8 +804,8 @@ namespace v4 {
     // FIXME: [] operation probably breaks the compiler if used to modify
     // a vector!
 
-    inline float &operator []( const int n ) { return ((float *)&v)[n]; }
-    inline float  operator ()( const int n ) {
+    inline float &operator []( int n ) { return ((float *)&v)[n]; }
+    inline float  operator ()( int n ) {
       union { float f[4]; _v4_float v; } t; t.v = v; return t.f[n];
     }
 
@@ -1182,6 +1114,7 @@ namespace v4 {
 # undef _v4_int
 # undef _v4_uint
 # undef _v4_float
+# undef _v16_uchar
 
 } // namespace v4
 

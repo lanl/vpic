@@ -32,7 +32,9 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, const int n );
+    friend inline v4 splat( const v4 &a, int n );
+    friend inline v4 shuffle( const v4 &a,
+                              int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -119,12 +121,22 @@ namespace v4 {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
   
-  inline v4 splat( const v4 & a, const int n ) {
+  inline v4 splat( const v4 & a, int n ) {
     v4 b;
     b.i[0] = a.i[n];
     b.i[1] = a.i[n];
     b.i[2] = a.i[n];
     b.i[3] = a.i[n];
+    return b;
+  }
+
+  inline v4 shuffle( const v4 & a,
+                     int i0, int i1, int i2, int i3 ) {
+    v4 b;
+    b.i[0] = a.i[i0];
+    b.i[1] = a.i[i1];
+    b.i[2] = a.i[i2];
+    b.i[3] = a.i[i3];
     return b;
   }
 
@@ -168,8 +180,16 @@ namespace v4 {
     ((int * ALIGNED(16))p)[3] = a.i[3];
   }
 
+  inline void clear_4x1( void * ALIGNED(16) p ) {
+    ((int * ALIGNED(16))p)[0] = 0;
+    ((int * ALIGNED(16))p)[1] = 0;
+    ((int * ALIGNED(16))p)[2] = 0;
+    ((int * ALIGNED(16))p)[3] = 0;
+  }
+
   // FIXME: Ordering semantics
-  inline void copy_4x1( void * ALIGNED(16) dst, const void * ALIGNED(16) src ) {
+  inline void copy_4x1( void * ALIGNED(16) dst,
+                        const void * ALIGNED(16) src ) {
     ((int * ALIGNED(16))dst)[0] = ((const int * ALIGNED(16))src)[0];
     ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
     ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
@@ -370,21 +390,20 @@ namespace v4 {
 
     // v4int constructors / destructors
     
-    v4int() {}                              // Default constructor
-    v4int( const v4int &a ) {               // Copy constructor
+    v4int() {}                                // Default constructor
+    v4int( const v4int &a ) {                 // Copy constructor
       i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
     }
-    v4int( const v4 &a ) {                  // Initialize from mixed
+    v4int( const v4 &a ) {                    // Init from mixed
       i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
     }
-    v4int( const int &a ) {                 // Initialize from scalar
+    v4int( int a ) {                          // Init from scalar
       i[0] = a; i[1] = a; i[2] = a; i[3] = a;
     }
-    v4int( const int &i0, const int &i1,
-           const int &i2, const int &i3 ) { // Initialize from scalars
+    v4int( int i0, int i1, int i2, int i3 ) { // Init from scalars
       i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
     }
-    ~v4int() {}                             // Destructor
+    ~v4int() {}                               // Destructor
     
     // v4int assignment operators
   
@@ -413,8 +432,8 @@ namespace v4 {
 
     // v4int member access operator
     
-    inline int &operator []( const int n ) { return i[n]; }
-    inline int  operator ()( const int n ) { return i[n]; }
+    inline int &operator []( int n ) { return i[n]; }
+    inline int  operator ()( int n ) { return i[n]; }
 
   };
 
@@ -435,10 +454,10 @@ namespace v4 {
 
   inline v4int operator !( const v4int & a ) {
     v4int b;
-    b.i[0] = a.i[0] ? 0 : -1;
-    b.i[1] = a.i[1] ? 0 : -1;
-    b.i[2] = a.i[2] ? 0 : -1;
-    b.i[3] = a.i[3] ? 0 : -1;
+    b.i[0] = -(!a.i[0]);
+    b.i[1] = -(!a.i[1]);
+    b.i[2] = -(!a.i[2]);
+    b.i[3] = -(!a.i[3]);
     return b;
   }
 
@@ -510,10 +529,10 @@ namespace v4 {
 # define LOGICAL(op)                                           \
   inline v4int operator op( const v4int &a, const v4int &b ) { \
     v4int c;                                                   \
-    c.i[0] = (a.i[0] op b.i[0]) ? -1 : 0;                      \
-    c.i[1] = (a.i[1] op b.i[1]) ? -1 : 0;                      \
-    c.i[2] = (a.i[2] op b.i[2]) ? -1 : 0;                      \
-    c.i[3] = (a.i[3] op b.i[3]) ? -1 : 0;                      \
+    c.i[0] = -(a.i[0] op b.i[0]);                              \
+    c.i[1] = -(a.i[1] op b.i[1]);                              \
+    c.i[2] = -(a.i[2] op b.i[2]);                              \
+    c.i[3] = -(a.i[3] op b.i[3]);                              \
     return c;                                                  \
   }
 
@@ -645,21 +664,20 @@ namespace v4 {
 
     // v4float constructors / destructors
     
-    v4float() {}                                  // Default constructor
-    v4float( const v4float &a ) {                 // Copy constructor
+    v4float() {}                                        // Default constructor
+    v4float( const v4float &a ) {                       // Copy constructor
       f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3];
     }
-    v4float( const v4 &a ) {                      // Initialize from mixed
+    v4float( const v4 &a ) {                            // Init from mixed
       f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3];
     }
-    v4float( const float &a ) {                   // Initialize from scalar
+    v4float( float a ) {                                // Init from scalar
       f[0] = a; f[1] = a; f[2] = a; f[3] = a;
     }
-    v4float( const float &f0, const float &f1,
-             const float &f2, const float &f3 ) { // Initialize from scalars
+    v4float( float f0, float f1, float f2, float f3 ) { // Init from scalars
       f[0] = f0; f[1] = f1; f[2] = f2; f[3] = f3;
     }
-    ~v4float() {}                                 // Destructor
+    ~v4float() {}                                       // Destructor
 
     // v4float assignment operators
 
@@ -682,8 +700,8 @@ namespace v4 {
 
     // v4float member access operator
 
-    inline float &operator []( const int n ) { return f[n]; }
-    inline float  operator ()( const int n ) { return f[n]; }
+    inline float &operator []( int n ) { return f[n]; }
+    inline float  operator ()( int n ) { return f[n]; }
 
   };
 
@@ -762,10 +780,10 @@ namespace v4 {
 # define LOGICAL(op)                                               \
   inline v4int operator op( const v4float &a, const v4float &b ) { \
     v4int c;                                                       \
-    c.i[0] = ( a.f[0] op b.f[0] ) ? -1 : 0;                        \
-    c.i[1] = ( a.f[1] op b.f[1] ) ? -1 : 0;                        \
-    c.i[2] = ( a.f[2] op b.f[2] ) ? -1 : 0;                        \
-    c.i[3] = ( a.f[3] op b.f[3] ) ? -1 : 0;                        \
+    c.i[0] = -( a.f[0] op b.f[0] );                                \
+    c.i[1] = -( a.f[1] op b.f[1] );                                \
+    c.i[2] = -( a.f[2] op b.f[2] );                                \
+    c.i[3] = -( a.f[3] op b.f[3] );                                \
     return c;                                                      \
   }
 

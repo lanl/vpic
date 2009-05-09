@@ -82,7 +82,7 @@ int n_fail = 0;
       printf( ""#type"_logical_"#name": pass\n" );			\
   }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class v4 tests
 
 void test_any(void) {
@@ -223,13 +223,25 @@ void test_stream_4x1(void) {
   stream_4x1(a1,mem+4);
   stream_4x1(a2,mem+8);
   stream_4x1(a3,mem+12);
-  for(i=0; i<16; i++) if( mem[i]!=i) break;
+  for(i=0; i<16; i++) if( mem[i]!=i ) break;
   if( any(a0!=v4int( 0, 1, 2, 3)) ||
       any(a1!=v4int( 4, 5, 6, 7)) ||
       any(a2!=v4int( 8, 9,10,11)) ||
       any(a3!=v4int(12,13,14,15)) ||
       i!=16 ) printf( "stream_4x1: FAIL\n" ), n_fail++;
   else        printf( "stream_4x1: pass\n" );
+}
+
+void test_clear_4x1(void) {
+  v4float vmem[4]; float * mem = (float *)vmem;
+  int i;
+  for(i=0; i<16; i++) mem[i] = i;
+  clear_4x1( mem+8  );
+  clear_4x1( mem+12 );
+  for(i=8; i<16; i++) mem[i] += i;
+  for(i=0; i<16; i++) if( mem[i]!=i ) break;
+  if( i!=16 ) printf( "clear_4x1: FAIL\n" ), n_fail++;
+  else        printf( "clear_4x1: pass\n" );
 }
 
 void test_copy_4x1(void) {
@@ -396,7 +408,7 @@ void test_store_4x4_tr(void) {
   else        printf( "store_4x4_tr: pass\n" );
 }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // class v4int tests
 
 void test_int_scalar_constructor(void) {
@@ -507,7 +519,7 @@ void test_merge(void) {
   else                           printf( "merge: pass\n" );
 }
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // v4float class
 
 void test_float_scalar_constructor(void) {
@@ -743,6 +755,7 @@ begin_initialization {
   test_load_4x1();
   test_store_4x1();
   test_stream_4x1();
+  test_clear_4x1();
   test_copy_4x1();
   test_swap_4x1();
 

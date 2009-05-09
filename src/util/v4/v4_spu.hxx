@@ -43,7 +43,9 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, const int n );
+    friend inline v4 splat( const v4 &a, int n );
+    friend inline v4 shuffle( const v4 &a,
+                              int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -58,6 +60,7 @@ namespace v4 {
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void clear_4x1( void * ALIGNED(16) dst );
     friend inline void copy_4x1( void * ALIGNED(16) dst,
                                  const void * ALIGNED(16) src );
     friend inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
@@ -135,9 +138,21 @@ namespace v4 {
                         0 )==0  ? -1 : 0;
   }
   
-  inline v4 splat( const v4 & a, const int n ) {
+  inline v4 splat( const v4 & a, int n ) {
     v4 b;
     b.v = spu_splats( spu_extract( a.v, n ) );
+    return b;
+  }
+
+  inline v4 shuffle( const v4 & a,
+                     int i0, int i1, int i2, int i3 ) {
+    vec_float4 a_v = a.v;
+    v4 b;
+    b.v = spu_shuffle( a_v, a_v, (vec_uchar16)
+                       { 4*i0, 4*i0+1, 4*i0+2, 4*i0+3,
+                         4*i1, 4*i1+1, 4*i1+2, 4*i1+3,
+                         4*i2, 4*i2+1, 4*i2+2, 4*i2+3,
+                         4*i3, 4*i3+1, 4*i3+2, 4*i3+3 } );
     return b;
   }
 
@@ -180,6 +195,10 @@ namespace v4 {
 
   inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
     *((vec_float4 * ALIGNED(16))p) = a.v;
+  }
+
+  inline void clear_4x1( void * ALIGNED(16) dst ) {
+    *((vec_float4 * ALIGNED(16))dst) = spu_splats(0.f);
   }
 
   // FIXME: Ordering semantics
@@ -427,22 +446,21 @@ namespace v4 {
 
     // v4int constructors / destructors
     
-    v4int() {}                              // Default constructor
-    v4int( const v4int &a ) {               // Copy constructor
+    v4int() {}                                // Default constructor
+    v4int( const v4int &a ) {                 // Copy constructor
       v = a.v;
     }
-    v4int( const v4 &a ) {                  // Initialize from mixed
+    v4int( const v4 &a ) {                    // Initialize from mixed
       v = a.v;
     }
-    v4int( const int &a ) {                 // Initialize from scalar
+    v4int( int a ) {                          // Initialize from scalar
       v = (vec_float4)spu_splats( a );
     }
-    v4int( const int &i0, const int &i1,
-           const int &i2, const int &i3 ) { // Initialize from scalars
+    v4int( int i0, int i1, int i2, int i3 ) { // Initialize from scalars
       // FIXME: vec_int4 t = { i0, i1, i2, i3 }; segfaults gcc
       i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
     }
-    ~v4int() {}                             // Destructor
+    ~v4int() {}                               // Destructor
     
     // v4int assignment operators
   
@@ -473,8 +491,8 @@ namespace v4 {
 
     // v4int member access operator
     
-    inline int &operator []( const int n ) { return i[n]; }
-    inline int  operator ()( const int n ) {
+    inline int &operator []( int n ) { return i[n]; }
+    inline int  operator ()( int n ) {
       return spu_extract( (vec_int4)v, n );
     }
 
@@ -712,23 +730,22 @@ namespace v4 {
 
     // v4float constructors / destructors
     
-    v4float() {}                                  // Default constructor
-    v4float( const v4float &a ) {                 // Copy constructor
+    v4float() {}                                        // Default constructor
+    v4float( const v4float &a ) {                       // Copy constructor
       v = a.v;
     }
-    v4float( const v4 &a ) {                      // Initialize from mixed
+    v4float( const v4 &a ) {                            // Init from mixed
       v = a.v;
     }
-    v4float( const float &a ) {                   // Initialize from scalar
+    v4float( float a ) {                                // Init from scalar
       v = spu_splats(a);
     }
-    v4float( const float &f0, const float &f1,
-             const float &f2, const float &f3 ) { // Initalize from scalars
+    v4float( float f0, float f1, float f2, float f3 ) { // Init from scalars
       // FIXME: vec_float4 t = { f0, f1, f2, f3 };
       // ... seg faults gcc .. MAYBE NOT ANYMORE
       f[0] = f0; f[1] = f1; f[2] = f2; f[3] = f3;
     }
-    ~v4float() {}                                 // Destructor
+    ~v4float() {}                                       // Destructor
 
     // v4float assignment operators
 
@@ -771,8 +788,8 @@ namespace v4 {
 
     // v4float member access operator
 
-    inline float &operator []( const int n ) { return f[n]; }
-    inline float  operator ()( const int n ) { return spu_extract( v, n ); }
+    inline float &operator []( int n ) { return f[n]; }
+    inline float  operator ()( int n ) { return spu_extract( v, n ); }
 
   };
 

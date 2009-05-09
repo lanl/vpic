@@ -33,27 +33,22 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
         accumulator_t    * RESTRICT ALIGNED(128) a,
         const grid_t     *                       g ) {
 
-  /*const*/ v4float one_third  = v4float( 1.f / 3.f );
-  /*const*/ v4float one        = v4float( 1.f );
-  /*const*/ v4float tiny       = v4float( 1e-37f );
-  /*const*/ v4int   sign_bits  = v4int( 1<<31 );
-  /*const*/ v4int   element[3];
+  /*const*/ v4float one_third( 1.f / 3.f );
+  /*const*/ v4float one( 1.f );
+  /*const*/ v4float tiny( 1e-37f );
+  /*const*/ v4int   sign_bits( 1<<31 );
 
   v4float dr, r, u, q, q3;
   v4float sgn_dr, s, sdr;
-  v4float v0, v1, v2, v3, v4, v5, _stack_v;
-  v4int bits;
+  v4float v0, v1, v2, v3, v4, v5, _stack_vf;
+  v4int bits, _stack_vi;
 
-  float * RESTRICT ALIGNED(16) stack_v = (float *)&_stack_v;
+  float * RESTRICT ALIGNED(16) stack_vf = (float *)&_stack_vf;
+  int   * RESTRICT ALIGNED(16) stack_vi =   (int *)&_stack_vi;
   float f0, f1;
   int32_t n, voxel;
   int64_t neighbor;
-  int type, face;
-
-# define INSPECT_F(v)  MESSAGE(( #v" = %e", v ))
-# define INSPECT_I(v)  MESSAGE(( #v" = %i", v ))
-# define INSPECT_VF(v) MESSAGE(( #v" = %e %e %e %e", v(0), v(1), v(2), v(3) ))
-# define INSPECT_VI(v) MESSAGE(( #v" = %i %i %i %i", v(0), v(1), v(2), v(3) ))
+  int type;
 
   load_4x1( &pm->dispx, dr );  n     = pm->i;
   load_4x1( &p[n].dx,   r  );  voxel = p[n].i;
@@ -65,10 +60,6 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   r  = shuffle( r,  0,1,2,2 ); // r  = p_dx,  p_dy,  p_dz,  D/C
   u  = shuffle( u,  0,1,2,2 ); // u  = p_ux,  p_uy,  p_uz,  D/C
   
-  store_4x1( v4int( -1,  0,  0, 0 ), &element[0] );
-  store_4x1( v4int(  0, -1,  0, 0 ), &element[1] );
-  store_4x1( v4int(  0,  0, -1, 0 ), &element[2] );
-
   for(;;) {
 
     /* At this point:
@@ -89,7 +80,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
        Note: a divide by zero cannot occur below due to the shift of
        the denominator by tiny.  Also, the shift by tiny is large
        enough that the divide will never overflow when dr is tiny
-       (|sgn_dr-r|<=2 => 2/tiny = 2e+38 < FLT_MAX = 3.4e38).
+       (|sgn_dr-r|<=2 => 2/tiny = 2e+37 < FLT_MAX = 3.4e38).
        Likewise, due to speed of light limitations, generally dr
        cannot get much larger than 1 or so and the numerator, if not
        zero, can generally never be smaller than FLT_EPS/2.  Thus,
@@ -98,11 +89,11 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     /* FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER */
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_v );
+    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf );
     /**/                         type = 3;             f0 = 1;
-    f1 = stack_v[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; /* Branchless cmov */
-    f1 = stack_v[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
-    f1 = stack_v[2]; if( f1<f0 ) type = 2; if( f1<f0 ) f0 = f1;
+    f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
+    f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
+    f1 = stack_vf[2]; if( f1<f0 ) type = 2; if( f1<f0 ) f0 = f1;
     s = v4float( f0 );
 
     /* At this point:
@@ -140,7 +131,8 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     v0 *= v4;           // v0  = q ux(1-dy)(1-dz), ...,                 D/C
     v1 *= v4;           // v1  = q ux(1+dy)(1-dz), ...,                 D/C
 
-    v4  = ((q3*splat(sdr,0))*splat(sdr,1))*splat(sdr,2); /* FIXME: splat ambiguity in v4 prevents flattening */
+    v4  = ((q3*splat(sdr,0))*splat(sdr,1))*splat(sdr,2);
+    // FIXME: splat ambiguity in v4 prevents flattening
     /**/                // v4  = q ux uy uz/3,q ux uy uz/3,q ux uy uz/3,D/C
     v0 += v4;           // v0  = q ux[(1-dy)(1-dz)+uy uz/3], ...,       D/C
     v1 -= v4;           // v1  = q ux[(1+dy)(1-dz)-uy uz/3], ...,       D/C
@@ -169,7 +161,9 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
        this point; hitting a structure or parallel domain boundary
        should usually be a rare event. */
 
-    load_4x1( &element[type], bits );
+    clear_4x1( stack_vi );
+    stack_vi[type] = -1;
+    load_4x1( stack_vi, bits );
     r = merge( bits, sgn_dr, r ); /* Avoid roundoff fiascos--put the
                                      particle _exactly_ on the
                                      boundary. */
@@ -183,9 +177,8 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
        coordinate for the particle is guaranteed to be +/-1 _exactly_
        for the particle. */
 
-    face = type;
-    store_4x1( sgn_dr, stack_v ); if( stack_v[type]>0 ) face += 3;
-    neighbor = g->neighbor[ 6*voxel + face ];
+    store_4x1( sgn_dr, stack_vf ); if( stack_vf[type]>0 ) type += 3;
+    neighbor = g->neighbor[ 6*voxel + type ];
 
     if( neighbor>=g->rangel && neighbor<=g->rangeh ) {
 

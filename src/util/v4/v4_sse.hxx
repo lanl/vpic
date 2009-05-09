@@ -15,11 +15,8 @@
 #define ALIGNED(n)
 #endif
 
-// FIXME: IN PORTABLE AND ALTIVEC
+// FIXME: IN PORTABLE, ALTIVEC, SPU
 // - UPDATE V4INT, V4FLOAT
-// - FIX CONST INT, CONST FLOAT SILLINESS
-// - ADD SHUFFLE
-// - V4INT LOGICALS NO USE TRINARIES
 
 // This requires gcc-3.3 and up
 // Also, Bug 12902 has not been resolved on gcc-3.x.x. See README.patches for
@@ -61,6 +58,7 @@ namespace v4 {
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
+    friend inline void clear_4x1( void * ALIGNED(16) dst );
     friend inline void copy_4x1( void * ALIGNED(16) dst,
                                  const void * ALIGNED(16) src );
     friend inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
@@ -131,23 +129,15 @@ namespace v4 {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
   
+  // Note: n MUST BE AN IMMEDIATE!
   inline v4 splat( const v4 & a, int n ) {
-    __m128 a_v = a.v, b_v;
+    __m128 a_v = a.v;
     v4 b;
-    // Note: _mm_shuffle_ps has uses an imm8. Compiler can usually
-    //       optimize out this switch at compile time.
-    switch(n) {
-    case 0:  b_v = _mm_shuffle_ps( a_v, a_v, 0x00 ); break;
-    case 1:  b_v = _mm_shuffle_ps( a_v, a_v, 0x55 ); break;
-    case 2:  b_v = _mm_shuffle_ps( a_v, a_v, 0xaa ); break;
-    case 3:  b_v = _mm_shuffle_ps( a_v, a_v, 0xff ); break;
-    default: b_v = a_v;                              break;
-    }
-    b.v = b_v;
+    b.v = _mm_shuffle_ps( a_v, a_v, n*0x55 );
     return b;
   }
 
-  /* NOTE: i0:3 MUST BE IMMEDIATES! */
+  // Note: i0:3 MUST BE IMMEDIATES! */
   inline v4 shuffle( const v4 & a,
                      int i0, int i1, int i2, int i3 ) {
     __m128 a_v = a.v;
@@ -157,8 +147,7 @@ namespace v4 {
   }
 
   inline void swap( v4 &a, v4 &b ) { 
-    __m128 t = a.v, u = b.v;
-    /**/   a.v = u; b.v = t;
+    __m128 a_v = a.v; a.v = b.v; b.v = a_v;
   }
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
@@ -188,9 +177,13 @@ namespace v4 {
     _mm_stream_ps((float *)p,a.v);
   }
 
+  inline void clear_4x1( void * ALIGNED(16) p ) {
+    _mm_store_ps( (float *)p, _mm_setzero_ps() );
+  }
+
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src ) {
-    _mm_store_ps( (float *)dst, _mm_load_ps( (float *)src ) );
+    _mm_store_ps( (float *)dst, _mm_load_ps( (const float *)src ) );
   }
 
   /* FIXME: MAKE ROBUST AGAINST ALIASING ISSUES */
@@ -204,10 +197,10 @@ namespace v4 {
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3, v4 &a ) {
-    a.i[0] = ((const int *)a0)[0];
-    a.i[1] = ((const int *)a1)[0];
-    a.i[2] = ((const int *)a2)[0];
-    a.i[3] = ((const int *)a3)[0];
+    a.f[0] = ((const float *)a0)[0];
+    a.f[1] = ((const float *)a1)[0];
+    a.f[2] = ((const float *)a2)[0];
+    a.f[3] = ((const float *)a3)[0];
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
@@ -267,10 +260,10 @@ namespace v4 {
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 ) {
-    ((int *)a0)[0] = a.i[0];
-    ((int *)a1)[0] = a.i[1];
-    ((int *)a2)[0] = a.i[2];
-    ((int *)a3)[0] = a.i[3];
+    ((float *)a0)[0] = a.f[0];
+    ((float *)a1)[0] = a.f[1];
+    ((float *)a2)[0] = a.f[2];
+    ((float *)a3)[0] = a.f[3];
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -289,16 +282,16 @@ namespace v4 {
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
     __m128 a_v = a.v, b_v = b.v, t;
-    t = _mm_unpacklo_ps(a_v,b_v);             // a0 b0 a1 b1 -> t
+    t = _mm_unpacklo_ps(a_v,b_v); // a0 b0 a1 b1 -> t
     _mm_storel_pi((__m64 *)a0,t); // a0 b0       -> a0
     _mm_storeh_pi((__m64 *)a1,t); // a1 b1       -> a1
-    t = _mm_unpackhi_ps(a_v,b_v);             // a2 b2 a3 b3 -> t
+    t = _mm_unpackhi_ps(a_v,b_v); // a2 b2 a3 b3 -> t
     _mm_storel_pi((__m64 *)a2,t); // a2 b2       -> a2
     _mm_storeh_pi((__m64 *)a3,t); // a3 b3       -> a3
-    ((int *)a0)[2] = c.i[0];
-    ((int *)a1)[2] = c.i[1];
-    ((int *)a2)[2] = c.i[2];
-    ((int *)a3)[2] = c.i[3];
+    ((float *)a0)[2] = c.f[0];
+    ((float *)a1)[2] = c.f[1];
+    ((float *)a2)[2] = c.f[2];
+    ((float *)a3)[2] = c.f[3];
   }
 
   /* FIXME: IS THIS FASTER THAN THE OLD WAY (HAD MORE STORE INSTR) */
@@ -400,20 +393,20 @@ namespace v4 {
 
     // v4int constructors / destructors
     
-    v4int() {}                              // Default constructor
-    v4int( const v4int &a ) { v = a.v; }    // Copy constructor
-    v4int( const v4 &a ) { v = a.v; }       // Initialize from mixed
-    v4int( int a ) {                        // Initialize from scalar
+    v4int() {}                                // Default constructor
+    v4int( const v4int &a ) { v = a.v; }      // Copy constructor
+    v4int( const v4 &a ) { v = a.v; }         // Init from mixed
+    v4int( int a ) {                          // Init from scalar
       union { int i; float f; } u;
       u.i = a;
       v = _mm_set1_ps( u.f );
     }
-    v4int( int i0, int i1, int i2, int i3 ) { // Initialize from scalars
+    v4int( int i0, int i1, int i2, int i3 ) { // Init from scalars
       union { int i; float f; } u0, u1, u2, u3;
       u0.i = i0; u1.i = i1; u2.i = i2; u3.i = i3;
       v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
     }
-    ~v4int() {};                            // Destructor
+    ~v4int() {};                              // Destructor
     
     // v4int assignment operators
   
@@ -486,10 +479,10 @@ namespace v4 {
 
   inline v4int operator !( const v4int & a ) {
     v4int b;
-    b.i[0] = a.i[0] ? 0 : -1;
-    b.i[1] = a.i[1] ? 0 : -1;
-    b.i[2] = a.i[2] ? 0 : -1;
-    b.i[3] = a.i[3] ? 0 : -1;
+    b.i[0] = -(!a.i[0]);
+    b.i[1] = -(!a.i[1]);
+    b.i[2] = -(!a.i[2]);
+    b.i[3] = -(!a.i[3]);
     return b;
   }
 

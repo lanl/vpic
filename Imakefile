@@ -52,7 +52,7 @@ AddModule(sf_interface,src/sf_interface,load_interpolator clear_accumulators red
 
 AddModule(species_advance,src/species_advance,species_advance)
 
-AddModule(standard_particle_advance,src/species_advance/standard,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p)
+AddModule(standard_particle_advance,src/species_advance/standard,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p coarse_sort_p)
 
 AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
 

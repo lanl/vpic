@@ -196,19 +196,30 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
 
+enum {
+  coarse_block_size = 8, // Larger than 8 saturates MFC queues in SPU
+                         // course_sort
+  max_coarse_bucket = 1+4*(MAX_PIPELINE/4) // Must be a multiple of 4
+};
+
 typedef struct sort_p_pipeline_args {
 
-  MEM_PTR( particle_t, 128 ) p;                // Particles (0:np-1)
-  MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:np-1)
+  MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
+  MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
+  MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
+  /**/ // (0:max_coarse_bucket-1,0:MAX_PIPELINE)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
   MEM_PTR( int,        128 ) next;             // Aux partitioning (0:n_voxel)
-  int np;      // Number of particles
-  int n_voxel; // Number of local voxels (including ghost voxels)
-  int coarse_partition[ MAX_PIPELINE*MAX_PIPELINE + 1 ];
+  int n;               // Number of particles
+  int n_voxel;         // Number of local voxels (including ghost voxels)
+  int n_coarse_bucket; // Number of coarse sort buckets
 
-  PAD_STRUCT( 5*SIZEOF_MEM_PTR + (2+MAX_PIPELINE*MAX_PIPELINE+1)*sizeof(int) )
+  PAD_STRUCT( 5*SIZEOF_MEM_PTR + 3*sizeof(int) )
 
 } sort_p_pipeline_args_t;
+
+// FIXME: Temporary hack while SPU accelerating the sort
+void coarse_sort_p( sort_p_pipeline_args_t * ALIGNED(128) args );
 
 PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
 PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );

@@ -56,6 +56,7 @@ src/species_advance/standard/energy_p.cxx
 src/species_advance/standard/hydro_p.c
 src/species_advance/standard/move_p.cxx
 src/species_advance/standard/rho_p.c
+src/species_advance/standard/coarse_sort_p.c
 src/species_advance/standard/sort_p.c
 src/species_advance/standard/uncenter_p.cxx
 src/util/mp/dmp/mp_dmp.c

@@ -2,93 +2,63 @@
 #define HAS_SPU_PIPELINE
 #include "../spa_private.h"
 
-#if 0
-
 #include <spu_mfcio.h>
 
-#ifdef IN_HARNESS
-#include <profile.h>
-#endif
+// See ../sort_p.c for details.
+#define V2B( v, B, V ) ( ((int64_t)(v)*(int64_t)(B)) / (int64_t)(V) )
 
-/* See ../sort_p.c for details. */
-#define V2P( v, P, V ) ( ((int64_t)(v)*(int64_t)(P)) / (int64_t)(V) )
-#define P2V( p, P, V ) ( ((int64_t)(p)*(int64_t)(V) + (int64_t)((P)-1)) / \
-                         (int64_t)(P) )
-
-#define N_BLOCK 512
+#define BS coarse_block_size
+#define MB max_coarse_bucket
 
 void
 _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                                    int pipeline_rank,
                                    int n_pipeline ) {
+  MEM_PTR( const particle_t, 32 ) p_src;
+  int i, i1, n_voxel, n_coarse_bucket;
+  int b;
+
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( int, 128, voxel, BS );
+  DECLARE_ALIGNED_ARRAY( int, 128, count, MB );
+
+  // Get pipeline args and clear local coarse counts
   mfc_get( args, argp, sizeof(*args), 0, 0, 0 );
-  mfc_write_tag_mask( 1 );
+  CLEAR( count, n_coarse_bucket );
+  mfc_write_tag_mask( 1<<0 );
   mfc_read_tag_status_all();
+  p_src           = args->p;
+  DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
+  n_voxel         = args->n_voxel;
+  n_coarse_bucket = args->n_coarse_bucket;
 
-  /*const*/ double n_target = (double)(args->np/4) / (double)n_pipeline;
-  /**/      int i  = 4*(int)( n_target*(double) pipeline_rank    + 0.5 );
-  /*const*/ int i1 = 4*(int)( n_target*(double)(pipeline_rank+1) + 0.5 );
-  /*const*/ int n_voxel = args->n_voxel;
-  MEM_PTR( const particle_t, 128 ) p_src = args->p;
-  int p;
-  int * __restrict count = args->coarse_partition + pipeline_rank*n_pipeline;
+  // Begin getting the voxels for the initial particle block
+  if( i<i1 ) 
+    for( b=0; b<BS; b++ )
+      mfc_get( voxel+b, p_src+sizeof(particle_t)*(i+b)+3*sizeof(float),
+               sizeof(int32_t), b, 0, 0 );
 
-  int b, n, nb, n_block[2];
-  const particle_t * __restrict ALIGNED(128) p_block;
-  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_buffer, 2*N_BLOCK );
+  // For all particle blocks
+  for( ; i<i1; i+=BS ) {
 
-  /* Clear local count */
-  for( p=0; p<n_pipeline; p++ ) count[p] = 0;
-
-  /* Do local coarse count */
-  /* FIXME: THIS IS 8X THEORETICALLY BANDWIDTH INEFFICIENT.  BUT,
-     UNKNOWN IF PRACTICALLY IT COULD BE IMPROVED MUCH WITH FINE
-     GRAINED DMA TRANSFERS. */
-
-  /* Particles are assigned to pipelines in blocks of 4.  The last
-     pipeline handles stragglers. */
-  if( pipeline_rank==n_pipeline-1 ) i1 = args->np;
-
-# define READ_PBLOCK( b ) do {                                          \
-    nb = i1 - i;                                                        \
-    if( nb>N_BLOCK ) nb = N_BLOCK;                                      \
-    if( nb ) mfc_get( p_buffer + N_BLOCK*(b),                           \
-                      p_src + i*sizeof(particle_t),                     \
-                      nb*sizeof(particle_t),                            \
-                      (b), 0, 0 );                                      \
-    i += nb;                                                            \
-    n_block[b] = nb;                                                    \
-  } while(0)
-  
-# define PROCESS_PBLOCK(b) do {                                         \
-    nb = n_block[b];                                                    \
-    if( nb ) {                                                          \
-      mfc_write_tag_mask( 1<<b );                                       \
-      mfc_read_tag_status_all();                                        \
-      p_block = p_buffer + N_BLOCK*(b);                                 \
-      for( n=0; n<nb; n++ )                                             \
-        count[ V2P( p_block[n].i, n_pipeline, n_voxel ) ]++;            \
-    }                                                                   \
-  } while(0)
-
-  READ_PBLOCK( 0 );
-  for( b=0; n_block[b]; b=!b ) {
-    READ_PBLOCK( !b );
-    PROCESS_PBLOCK( b );
+    // For each particle in this block, wait for the particle's voxel
+    // data to arrive, update the local count and starting getting the
+    // corresponding particle voxel data in the next block
+    for( b=0; b<BS; b++ ) {
+      mfc_write_tag_mask( 1 << b );
+      mfc_reag_tag_status_all();
+      count[ V2B( voxel[b], n_coarse_bucket, n_voxel ) ]++;
+      if( i+BS<i1 )
+        mfc_get( voxel+b, p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(float),
+                 sizeof(int32_t), b, 0, 0 );
+    }
   }
 
-  /* Copy local coarse counts to the output */
-  argp += ( (uint64_t)args->coarse_partition - (uint64_t)args +
-            sizeof(int)*pipeline_rank*n_pipeline );
-  for( p=0; p<n_pipeline; p++) {
-    mfc_write_tag_mask( 1 << (p&31) );
-    mfc_read_tag_status_all();
-    mfc_put( &count[p], argp + sizeof(int)*p, sizeof(int), p&31, 0, 0 );
-  }
-
-  /* Make sure all DMA transfers have completed before returning */
-  mfc_write_task_mask( 0xffffffff );
+  // Copy local count to the output and wait for all memory
+  // transactions to complete
+  mfc_put( count, args->coarse_partition + sizeof(int)*MB*pipeline_rank,
+           sizeof(int)*MB, 31, 0, 0 );
+  mfc_write_tag_mask( 0xffffffff );
   mfc_read_tag_status_all();
 }
 
@@ -96,74 +66,89 @@ void
 _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                                   int pipeline_rank,
                                   int n_pipeline ) {
+  MEM_PTR( const particle_t, 32 ) p_src;
+  MEM_PTR(       particle_t, 32 ) p_dst;
+  int i, i1, n_voxel, n_coarse_bucket;
+  int b;
+
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_in, BS );
+  DECLARE_ALIGNED_ARRAY( int, 128, next, MB );
+
+  // Get pipeline args
   mfc_get( args, argp, sizeof(*args), 0, 0, 0 );
-  mfc_write_tag_mask( 1 );
+  mfc_write_tag_mask( 1<<0 );
   mfc_read_tag_status_all();
+  p_src           = args->p;
+  p_dst           = args->aux_p;
+  DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
+  n_voxel         = args->n_voxel;
+  n_coarse_bucket = args->n_coarse_bucket;
 
-  /*const*/ double n_target = (double)(args->np/4) / (double)n_pipeline;
-  /**/      int i  = 4*(int)( n_target*(double) pipeline_rank    + 0.5 );
-  /*const*/ int i1 = 4*(int)( n_target*(double)(pipeline_rank+1) + 0.5 );
-  /*const*/ int n_voxel = args->n_voxel;
-  MEM_PTR( const particle_t, 128 ) p_src = args->p;
-  MEM_PTR(       particle_t, 128 ) p_dst = args->aux_p;
-  int j, p;
-  int * __restrict next;
-
-  int channel, b, n, nb, n_block[2];
-  const particle_t * __restrict ALIGNED(128) p_block;
-  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_buffer, 2*N_BLOCK );
-
-  /* Copy local partitioning to next array */
-  next = args->coarse_partition + pipeline_rank*n_pipeline;
-
-  /* Copy particles into aux array in coarse sorted order */
-
-  /* Particles are assigned to pipelines in blocks of 4.  The last
-     pipeline handles stragglers. */
-  if( pipeline_rank==n_pipeline-1 ) i1 = args->np;
-
-# define READ_PBLOCK( b ) do {                                          \
-    nb = i1 - i;                                                        \
-    if( nb>N_BLOCK ) nb = N_BLOCK;                                      \
-    if( nb ) mfc_get( p_buffer + N_BLOCK*(b),                           \
-                      p_src + i*sizeof(particle_t),                     \
-                      nb*sizeof(particle_t),                            \
-                      (b), 0, 0 );                                      \
-    i += nb;                                                            \
-    n_block[b] = nb;                                                    \
-  } while(0)
+  // Get the coarse partitioning
+  mfc_get( next, args->coarse_partition + sizeof(int)*MB*pipeline_rank,
+           sizeof(int)*MB, 0, 0, 0 );
+  mfc_write_tag_mask( 1<<0 );
+  mfc_read_tag_status_all();
   
-# define PROCESS_PBLOCK(b) do {                                         \
-    nb = n_block[b];                                                    \
-    if( nb ) {                                                          \
-      mfc_write_tag_mask( 1<<b );                                       \
-      mfc_read_tag_status_all();                                        \
-      p_block = p_buffer + N_BLOCK*(b);                                 \
-      for( n=0; n<nb; n++ ) {                                           \
-        p = V2P( p_block[n].i, n_pipeline, n_voxel );                   \
-        j = next[p]++;                                                  \
-        /* FIXME: IS THE WAIT NECESSARY? */                             \
-        mfc_write_task_mask( 1<<channel );                              \
-        mfc_read_tag_status_all();                                      \
-        mfc_put( &p_block[n], p_dst + j*sizeof(particle_t),             \
-                 sizeof(particle_t), channel, 0, 0 );                   \
-        channel++; if( channel>31 ) channel = 2;                        \
-      }                                                                 \
-    }                                                                   \
-  } while(0)
+  // Begin getting the voxels for the initial particle block
+  if( i<i1 ) 
+    for( b=0; b<BS; b++ )
+      mfc_get( p_in+b, p_src+sizeof(particle_t)*(i+b), sizeof(particle_t),
+               b, 0, 0 );
 
-  channel = 2;
-  READ_PBLOCK( 0 );
-  for( b=0; n_block[b]; b=!b ) {
-    READ_PBLOCK( !b );
-    PROCESS_PBLOCK( b );
+  // For all particle blocks
+  for( ; i<i1; i+=BS ) {
+
+    // For each particle in this block, wait for the particle's load
+    // to complete, wait for the store of the corresponding particle
+    // in the previous block to compelete, determine where to store
+    // the arrived particle, copy it into a local writeback buffer,
+    // begin the load of the corresponding particle in the next block
+    // and the store of the particle in this block.
+
+    for( b=0; b<BS; b++ ) {
+      mfc_write_tag_mask( 1<<b | 1<<(b+BS) );
+      mfc_reag_tag_status_all();     
+      j = next[ V2B( p_in[b].i, n_coarse_bucket, n_voxel ) ]++;     
+      p_out[b] = p_in[b]; // FIXME: SPU accelerate?
+      mfc_put( p_out+b, p_dst+sizeof(particle_t)*j, sizeof(particle_t),
+               b+BS, 0, 0 );
+      if( i+BS<i1 )
+        mfc_get( p_in+b, p_src+sizeof(particle_t)*(i+BS+b), sizeof(particle_t),
+                 b, 0, 0 );
+    }
   }
 
-  /* Make sure all DMA transfers have completed before returning */
-  mfc_write_task_mask( 0xffffffff );
+  // Wait for all memory transactions to complete
+  mfc_write_tag_mask( 0xffffffff );
   mfc_read_tag_status_all();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 
 #define CLEAR( n ) do {                                                 \
     mfc_write_tag_mask( (1<<channel) );                                 \
@@ -284,30 +269,5 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
 
 #undef STORE
 #undef LOAD
-
-#else
-
-#include <stdio.h>
-
-void
-_SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
-                                   int pipeline_rank,
-                                   int n_pipeline ) {
-  fprintf( stdout, "In coarse_count_pipeline\n" ); fflush( stdout );
-}
-
-void
-_SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
-                                  int pipeline_rank,
-                                  int n_pipeline ) {
-  fprintf( stdout, "In coarse_sort_pipeline\n" ); fflush( stdout );
-}
-
-void
-_SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
-                              int pipeline_rank,
-                              int n_pipeline ) {
-  fprintf( stdout, "In subsort_pipeline\n" ); fflush( stdout );
-}
 
 #endif

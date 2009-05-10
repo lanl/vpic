@@ -134,7 +134,7 @@ typedef struct accumulators_pipeline_args {
   int n_array;                    // Number of accumulator arrays
   int s_array;                    // Stride between each array
 
-  PAD_STRUCT( SIZEOF_MEM_PTR + 2*sizeof(int) )
+  PAD_STRUCT( SIZEOF_MEM_PTR + 3*sizeof(int) )
 
 } accumulators_pipeline_args_t;
 

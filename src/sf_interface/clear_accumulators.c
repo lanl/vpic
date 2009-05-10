@@ -28,7 +28,7 @@ clear_accumulators_pipeline( accumulators_pipeline_args_t * args,
 void
 clear_accumulators( accumulator_t * ALIGNED(128) a,
                     const grid_t  *              g ) {
-  accumulators_pipeline_args_t args[1];
+  DECLARE_ALIGNED_ARRAY( accumulators_pipeline_args_t, 128, args, 1 );
   int i0, na;
 
   if( a==NULL ) ERROR(("Invalid accumulator"));

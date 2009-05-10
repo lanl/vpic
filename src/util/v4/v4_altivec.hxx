@@ -198,7 +198,7 @@ namespace v4 {
 
   // FIXME: Ordering semantics
   inline void clear_4x1( void * ALIGNED(16) d ) {
-    vec_st( _zero, (float *)d );
+    vec_st( _zero, 0, (float *)d );
   }
 
   // FIXME: Ordering semantics

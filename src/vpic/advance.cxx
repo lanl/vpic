@@ -10,67 +10,40 @@
 
 #include "vpic.hxx"
 
+#define FA field_advance
+
 int vpic_simulation::advance(void) {
   int rank;
   species_t *sp;
   emitter_t *emitter;
-  double overhead, err;
+  double err;
 
   // Determine if we are done ... see note below why this is done here
 
   if( num_step>0 && step>=num_step ) return 0;
 
-  overhead = mp_time00(grid->mp);
-
-  rank = mp_rank(grid->mp);
-
-#if VERBOSE
-  if(rank == 0) {
-    MESSAGE(("step %d of %d", step, num_step));
-  } // if
-#endif
+  rank = mp_rank( grid->mp );
 
   // At this point, fields are at E_0 and B_0 and the particle positions
   // are at r_0 and u_{-1/2}. Further the mover lists for the particles should
   // empty and all particles should be inside the local computational domain.
   // Advance the particle lists.
 
-  if( species_list!=NULL ) clear_accumulators( accumulator, grid );
-  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  if( species_list!=NULL ) TIC { clear_accumulators( accumulator, grid ); } TOC( clear_accumulators, 1 );
 
-  // Slight reorder of this loop to treat collisions properly. 
-
-  LIST_FOR_EACH(sp,species_list) {
-    if( sp->sort_interval>0 && step%sp->sort_interval==0 ) {
-      if( rank==0 ) MESSAGE(("Performance sorting \"%s\".",sp->name));
-      sort_p( sp, grid );
-      s_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  LIST_FOR_EACH( sp, species_list )
+    if( (sp->sort_interval>0) && ((step % sp->sort_interval)==0) ) {
+      if( rank==0 ) MESSAGE(( "Performance sorting \"%s\".", sp->name ));
+      TIC { sort_p( sp, grid ); } TOC( sort_p, 1 );
     } 
-  }
 
-  // Collisions need to be done between sort and particle advance.
-  // Tally collision time as user time since collision models live in the 
-  // input deck.   Collisions presently are implemented in user input 
-  // decks; count their time against "user" time. 
-  // 
-  // FIXME:  Make a real interface for collisions? 
-  // FIXME:  Give collisions their own timer.  
+  TIC { user_particle_collisions(); } TOC( user_particle_collisions, 1 );
 
-#if VERBOSE
-  if(rank == 0) {
-    MESSAGE(("Executing user particle collisions"));
-  } // if
-#endif
+  LIST_FOR_EACH( sp, species_list ) TIC {
+    sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm, accumulator, interpolator, grid );
+  } TOC( advance_p, 1 );
 
-  user_particle_collisions();
-  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
-
-  LIST_FOR_EACH(sp,species_list) {
-    sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
-                        accumulator, interpolator, grid );
-  }
-  if( species_list!=NULL ) reduce_accumulators( accumulator, grid );
-  p_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  if( species_list!=NULL ) TIC { reduce_accumulators( accumulator, grid ); } TOC( reduce_accumulators, 1 );
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and
@@ -78,25 +51,25 @@ int vpic_simulation::advance(void) {
   // be done after advance_p and before guard list processing. Note:
   // user_particle_injection should be a stub if species_list is empty.
 
-  LIST_FOR_EACH(emitter,emitter_list)
-    (emitter->emission_model)( emitter, interpolator, field_advance->f, accumulator, field_advance->g, rng );
-  user_particle_injection();
+  LIST_FOR_EACH( emitter, emitter_list ) TIC {
+    (emitter->emission_model)( emitter, interpolator, FA->f, accumulator, FA->g, rng );
+  } TOC( emission_model, 1 );
 
-  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  TIC { user_particle_injection(); } TOC( user_particle_injection, 1 );
 
   // At this point, most particle positions are at r_1 and u_{1/2}. Particles
   // that had boundary interactions are now on the guard list. Process the
   // guard lists. Particles that absorbed are added to rhob (using a corrected
   // local accumulation).
 
-  for( int round=0; round<num_comm_round; round++ )
-    boundary_p( species_list,
-                field_advance->f, accumulator, field_advance->g, rng );
+  TIC {
+    for( int round=0; round<num_comm_round; round++ )
+      boundary_p( species_list, FA->f, accumulator, FA->g, rng );
+  } TOC( boundary_p, num_comm_round );
 
   LIST_FOR_EACH( sp, species_list ) {
-    if( sp->nm!=0 && !verbose )
-      WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
-                sp->nm, sp->name ));
+    if( sp->nm!=0 && !verbose ) WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
+                                          sp->nm, sp->name ));
     sp->nm = 0;
   }
 
@@ -104,12 +77,9 @@ int vpic_simulation::advance(void) {
   // guard lists are empty and the accumulators on each processor are current.
   // Convert the accumulators into currents.
 
-  field_advance->method->clear_jf( field_advance->f, field_advance->g );
-  if( species_list!=NULL )
-    unload_accumulator( field_advance->f, accumulator, field_advance->g );
-  field_advance->method->synchronize_jf( field_advance->f, field_advance->g );
-
-  g_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  TIC { FA->method->clear_jf( FA->f, FA->g ); } TOC( clear_jf, 1 );
+  if( species_list!=NULL ) TIC { unload_accumulator( FA->f, accumulator, FA->g ); } TOC( unload_accumulator, 1 );
+  TIC { FA->method->synchronize_jf( FA->f, FA->g ); } TOC( synchronize_jf, 1 );
 
   // At this point, the particle currents are known at jf_{1/2}.
   // Let the user add their own current contributions. It is the users
@@ -118,103 +88,86 @@ int vpic_simulation::advance(void) {
   // rhob_1 = rhob_0 + div juser_{1/2} (corrected local accumulation) if
   // the user wants electric field divergence cleaning to work.
 
-  user_current_injection();
-
-  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  TIC { user_current_injection(); } TOC( user_current_injection, 1 );
 
   // Half advance the magnetic field from B_0 to B_{1/2}
 
-  field_advance->method->advance_b( field_advance->f, field_advance->g, 0.5 );
+  TIC { FA->method->advance_b( FA->f, FA->g, 0.5 ); } TOC( advance_b, 1 );
 
   // Advance the electric field from E_0 to E_1
 
-  field_advance->method->advance_e( field_advance->f, field_advance->m, field_advance->g );
-
-  f_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  TIC { FA->method->advance_e( FA->f, FA->m, FA->g ); } TOC( advance_e, 1 );
 
   // Let the user add their own contributions to the electric field. It is the
   // users responsibility to insure injected electric fields are consistent
   // across domains.
 
-  user_field_injection();
-
-  u_time += mp_time00(grid->mp) - overhead; overhead = mp_time00(grid->mp);
+  TIC { user_field_injection(); } TOC( user_field_injection, 1 );
 
   // Half advance the magnetic field from B_{1/2} to B_1
 
-  field_advance->method->advance_b( field_advance->f, field_advance->g, 0.5 );
+  TIC { FA->method->advance_b( FA->f, FA->g, 0.5 ); } TOC( advance_b, 1 );
 
   // Divergence clean e
 
-  if( clean_div_e_interval>0 && step%clean_div_e_interval==0 ) {
-    if( rank==0 ) MESSAGE(("Divergence cleaning electric field"));
-    field_advance->method->clear_rhof( field_advance->f, field_advance->g );
-    LIST_FOR_EACH(sp,species_list)
-      accumulate_rho_p( field_advance->f, sp->p, sp->np, field_advance->g );
-    field_advance->method->synchronize_rho( field_advance->f, field_advance->g );
-    field_advance->method->compute_div_e_err( field_advance->f, field_advance->m, field_advance->g );
-    err = field_advance->method->compute_rms_div_e_err( field_advance->f, field_advance->g );
-    if( rank==0 ) MESSAGE(("Initial rms error = %e (charge/volume)",err));
-    if( err>0 ) {
-      field_advance->method->clean_div_e( field_advance->f, field_advance->m, field_advance->g );
-      field_advance->method->compute_div_e_err( field_advance->f, field_advance->m, field_advance->g );
-      err = field_advance->method->compute_rms_div_e_err( field_advance->f, field_advance->g );
-      if( rank==0 ) MESSAGE(("Cleaned rms error = %e (charge/volume)",err));
-      if( err>0 ) field_advance->method->clean_div_e( field_advance->f, field_advance->m, field_advance->g );
+  if( (clean_div_e_interval>0) && ((step % clean_div_e_interval)==0) ) {
+    if( rank==0 ) MESSAGE(( "Divergence cleaning electric field" ));
+
+    TIC { FA->method->clear_rhof( FA->f, FA->g ); } TOC( clear_rhof,1 );
+    LIST_FOR_EACH( sp, species_list ) TIC { accumulate_rho_p( FA->f, sp->p, sp->np, FA->g ); } TOC( accumulate_rho_p, 1 );
+    TIC { FA->method->synchronize_rho( FA->f, FA->g ); } TOC( synchronize_rho, 1 );
+
+    for( int round=0; round<num_div_e_round; round++ ) {
+      TIC { FA->method->compute_div_e_err( FA->f, FA->m, FA->g ); } TOC( compute_div_e_err, 1 );
+      if( round==0 || round==num_div_e_round-1 ) {
+        TIC { err = FA->method->compute_rms_div_e_err( FA->f, FA->g ); } TOC( compute_rms_div_e_err, 1 );
+        if( rank==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
+      }
+      TIC { FA->method->clean_div_e( FA->f, FA->m, FA->g ); } TOC( clean_div_e, 1 );
     }
   }
 
   // Divergence clean b
 
-  if( clean_div_b_interval>0 && step%clean_div_b_interval==0 ) {
-    if( rank==0 ) MESSAGE(("Divergence cleaning magnetic field"));
-    field_advance->method->compute_div_b_err( field_advance->f, field_advance->g );
-    err = field_advance->method->compute_rms_div_b_err( field_advance->f, field_advance->g );
-    if( rank==0 ) MESSAGE(("Initial rms error = %e (charge/volume)",err));
-    if( err>0 ) {
-      field_advance->method->clean_div_b( field_advance->f, field_advance->g );
-      field_advance->method->compute_div_b_err( field_advance->f, field_advance->g );
-      err = field_advance->method->compute_rms_div_b_err( field_advance->f, field_advance->g );
-      if( rank==0 ) MESSAGE(("Cleaned rms error = %e (charge/volume)",err));
-      if( err>0 ) field_advance->method->clean_div_b( field_advance->f, field_advance->g );
+  if( (clean_div_b_interval>0) && ((step % clean_div_b_interval)==0) ) {
+    if( rank==0 ) MESSAGE(( "Divergence cleaning magnetic field" ));
+
+    for( int round=0; round<num_div_b_round; round++ ) {
+      TIC { FA->method->compute_div_b_err( FA->f, FA->g ); } TOC( compute_div_b_err, 1 );
+      if( round==0 || round==num_div_b_round-1 ) {
+        TIC { err = FA->method->compute_rms_div_b_err( FA->f, FA->g ); } TOC( compute_rms_div_b_err, 1 );
+        if( rank==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
+      }
+      TIC { FA->method->clean_div_b( FA->f, FA->g ); } TOC( clean_div_b, 1 );
     }
   }
 
   // Synchronize the shared faces
 
-  if( sync_shared_interval>0 && step%sync_shared_interval==0 ) {
-    if( rank==0 ) MESSAGE(("Synchronizing shared tang e, norm b, rho_b"));
-    err = field_advance->method->synchronize_tang_e_norm_b( field_advance->f, field_advance->g );
-    if( rank==0 )
-      MESSAGE(("Domain desynchronization error = %e (arb units)",err));
+  if( (sync_shared_interval>0) && ((step % sync_shared_interval)==0) ) {
+    if( rank==0 ) MESSAGE(( "Synchronizing shared tang e, norm b, rho_b" ));
+    TIC { err = FA->method->synchronize_tang_e_norm_b( FA->f, FA->g ); } TOC( synchronize_tang_e_norm_b, 1 );
+    if( rank==0 ) MESSAGE(( "Domain desynchronization error = %e (arb units)", err ));
   }
 
   // Fields are updated ... load the interpolator for next time step and
   // particle diagnostics in user_diagnostics if there are any particle
   // species to worry about
 
-  if( species_list!=NULL ) load_interpolator( interpolator, field_advance->f, field_advance->g );
-
-  f_time += mp_time00(grid->mp) - overhead;
+  if( species_list!=NULL ) TIC { load_interpolator( interpolator, FA->f, FA->g ); } TOC( load_interpolator, 1 );
 
   step++;
 
   // Print out status
 
-  if( status_interval>0 && step%status_interval==0 ) {
-    if(rank==0)
-      MESSAGE(("Completed step %i of %i (p=%.2e,s=%.2e,g=%.2e,f=%.2e,u=%.2e)",
-               step, num_step, p_time-s_time, s_time, g_time, f_time, u_time));
-    p_time = s_time = g_time = f_time = u_time = 0;
+  if( (status_interval>0) && ((step % status_interval)==0) ) {
+    if( rank==0 ) MESSAGE(( "Completed step %i of %i", step, num_step ));
+    update_profile( rank==0 );
   }
-
-  overhead = mp_time00(grid->mp);
 
   // Let the user compute diagnostics
 
-  user_diagnostics();
-
-  u_time += mp_time00(grid->mp) - overhead;
+  TIC { user_diagnostics(); } TOC( user_diagnostics, 1 );
 
   // "return step!=num_step" is more intuitive. But if a restart dump,
   // saved in the call to user_diagnostics() above, is done on the final step

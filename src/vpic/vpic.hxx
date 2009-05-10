@@ -151,7 +151,9 @@ private:
   int num_comm_round;       // Num comm round
   int status_interval;      // How often to print status messages
   int clean_div_e_interval; // How often to clean div e
+  int num_div_e_round;      // How many clean div e rounds per div e interval
   int clean_div_b_interval; // How often to clean div b
+  int num_div_b_round;      // How many clean div b rounds per div b interval
   int sync_shared_interval; // How often to synchronize shared faces
  
   double quota;
@@ -201,14 +203,6 @@ private:
   interpolator_t * ALIGNED(128) interpolator;
   accumulator_t * ALIGNED(128) accumulator;
   hydro_t * ALIGNED(128) hydro;
- 
-  // Internal use only variables; restart saved
- 
-  double p_time; // Time spent pushing particles since last status update
-  double s_time; // Time spent performance sorting particles
-  double g_time; // Time spent processing guard list since last status update
-  double f_time; // Time spent processing fields since last status update
-  double u_time; // Time spent in user functions since last status update
  
   // User defined variables; restart saved
  

@@ -63,6 +63,7 @@ src/util/mp/mp.cxx
 src/util/mtrand/mtrand.c
 src/util/pipelines/pipelines_serial.c
 src/util/pipelines/pipelines_thread.c
+src/util/profile/profile.c
 src/util/util.c
 src/vpic/advance.cxx
 src/vpic/dump.cxx

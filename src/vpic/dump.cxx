@@ -368,7 +368,9 @@ vpic_simulation::dump_restart( const char *fbase,
   WRITE( int, num_step,             fileIO );
   WRITE( int, status_interval,      fileIO );
   WRITE( int, clean_div_e_interval, fileIO );
+  WRITE( int, num_div_e_round,      fileIO );
   WRITE( int, clean_div_b_interval, fileIO );
+  WRITE( int, num_div_b_round,      fileIO );
   WRITE( int, sync_shared_interval, fileIO );
   WRITE( double, quota,             fileIO );
   WRITE( int, restart_interval,     fileIO );
@@ -478,15 +480,6 @@ vpic_simulation::dump_restart( const char *fbase,
  
   WRITE( int,        grid->nb,       fileIO );
   if( grid->nb>0 ) fileIO.write( grid->boundary, grid->nb );
- 
-  /****************************************
-   * Restart-saved internal use variables *
-   ****************************************/
- 
-  WRITE( double, p_time, fileIO );
-  WRITE( double, g_time, fileIO );
-  WRITE( double, u_time, fileIO );
-  WRITE( double, f_time, fileIO );
  
   /****************************************
    * Restart-saved user defined variables *
@@ -605,7 +598,9 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,    num_step,             fileIO);
   READ(int,    status_interval,      fileIO);
   READ(int,    clean_div_e_interval, fileIO);
+  READ(int,    num_div_e_round,      fileIO);
   READ(int,    clean_div_b_interval, fileIO);
+  READ(int,    num_div_b_round,      fileIO);
   READ(int,    sync_shared_interval, fileIO);
   READ(double, quota,                fileIO);
   READ(int,    restart_interval,     fileIO);
@@ -778,15 +773,6 @@ vpic_simulation::restart( const char *fbase ) {
     MALLOC( grid->boundary, grid->nb );
 	fileIO.read( grid->boundary, grid->nb );
   }
- 
-  /****************************************
-   * Restart-saved internal use variables *
-   ****************************************/
- 
-  READ( double, p_time, fileIO ); ABORT(p_time<0);
-  READ( double, g_time, fileIO ); ABORT(g_time<0);
-  READ( double, u_time, fileIO ); ABORT(u_time<0);
-  READ( double, f_time, fileIO ); ABORT(f_time<0);
  
   /****************************************
    * Restart-saved user defined variables *

@@ -16,8 +16,8 @@ vpic_simulation::vpic_simulation() {
   num_step = 0;
   num_comm_round = 3;
   status_interval = 0;
-  clean_div_e_interval = 0;
-  clean_div_b_interval = 0;
+  clean_div_e_interval = 0; num_div_e_round = 2;
+  clean_div_b_interval = 0; num_div_b_round = 2;
   sync_shared_interval = 0;
  
   quota=0;
@@ -36,11 +36,6 @@ vpic_simulation::vpic_simulation() {
   hydro = NULL;
   species_list = NULL;
   emitter_list = NULL;
-  p_time = 0;
-  s_time = 0;
-  g_time = 0;
-  f_time = 0;
-  u_time = 0;
  
   // Allow run-time modification of variables
   quota=11;
@@ -54,8 +49,8 @@ vpic_simulation::~vpic_simulation() {
   num_step = 0;
   num_comm_round = 3;
   status_interval = 0;
-  clean_div_e_interval = 0;
-  clean_div_b_interval = 0;
+  clean_div_e_interval = 0; num_div_e_round = 2;
+  clean_div_b_interval = 0; num_div_b_round = 2;
   sync_shared_interval = 0;
  
   quota=0;
@@ -74,11 +69,6 @@ vpic_simulation::~vpic_simulation() {
   delete_hydro( hydro );
   delete_species_list( &species_list );
   delete_emitter_list( &emitter_list );
-  p_time = 0;
-  s_time = 0;
-  g_time = 0;
-  f_time = 0;
-  u_time = 0;
   CLEAR( user_global, USER_GLOBAL_SIZE );
 }
  

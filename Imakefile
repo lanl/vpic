@@ -27,6 +27,7 @@ AddModule(relay_dmp,src/util/relay/dmp,)
 AddModule(io,src/util/io,)
 AddModule(dmp,src/util/mp/dmp,mp_dmp)
 AddModule(pipelines,src/util/pipelines,pipelines_serial pipelines_thread)
+AddModule(profile,src/util/profile,profile)
 AddModule(v4,src/util/v4,)
 
 AddModule(grid,src/grid,ops partition grid_structors grid_comm add_boundary distribute_voxels)

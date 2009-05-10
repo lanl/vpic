@@ -13,4 +13,5 @@
 void vpic_simulation::finalize( void ) {
   // block for all message passing processes to finish
   mp_barrier( grid->mp );
+  update_profile( mp_rank( grid->mp )==0 );
 }

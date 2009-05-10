@@ -7,6 +7,7 @@
 #include "mp/mp.h"
 #include "mtrand/mtrand.h"
 #include "pipelines/pipelines.h"
+#include "profile/profile.h"
 #include "v4/v4.h"
 
 #endif // _util_h_

@@ -1,78 +1,50 @@
-/* 
- * Written by:
- *   Kevin J. Bowers, Ph.D.
- *   Plasma Physics Group (X-1)
- *   Applied Physics Division
- *   Los Alamos National Lab
- * March/April 2004 - Revised and extened from earlier V4PIC versions
- *
- */
-
 #define IN_spa
+#define HAS_SPU_PIPELINE
 #include "spa_private.h"
 
 #if defined(__SSE__)
 #include <xmmintrin.h>
 #endif
 
-/* FIXME: ELIMINATE IN-PLACE / OUT-PLACE OPTIONS FROM SP FIELD */
-/* FIXME: ADD RESTRICT TO UTIL_BASE.H */
-/* FIXME: Add N_VOXEL convenience field to grid */
+// FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
+// FIXME: Add N_VOXEL convenience field to grid
+
+// FIXME: ADD RESTRICT TO UTIL_BASE.H
 #ifndef RESTRICT
 #define RESTRICT __restrict
 #endif
-
-// Given the voxel index, compute the pipeline responsible for sorting
-// particles within that voxel.  This takes into account that p*V
-// might overflow 32-bits.  This macro is robust.
-
-#define V2P( v, P, V ) ( ((int64_t)(v)*(int64_t)(P)) /  \
-                         (int64_t)(V) )
-
-// Given the pipeline rank, compute the first voxel the pipeline is
-// responsible for sorting.  This is based on:
-//   p = floor(vP/V) =>
-//   p <= vP/V < p+1 =>
-//   pV/P <= v < (p+1)V/P
-// The range of voxels which satisfy this inequality is then:
-//   [ ceil(pV/P), ceil((p+1)V/P) )
-// In integer math, the lower bound is thus:
-//   v = (p*V + P-1)/P
-// This takes into account that p*V might overflow 32-bits.  This
-// macro is mostly robust.
-
-#define P2V( p, P, V ) ( ((int64_t)(p)*(int64_t)(V) + (int64_t)((P)-1)) / \
-                         (int64_t)(P) )
 
 void
 subsort_pipeline( sort_p_pipeline_args_t * args,
                   int pipeline_rank,
                   int n_pipeline ) {
-  /* This pipeline is to sort particles in voxels [v0,v1). */
-  /*const*/ int n_voxel = args->n_voxel;
-  /*const*/ int v0 = P2V( pipeline_rank,   n_pipeline, n_voxel );
-  /*const*/ int v1 = P2V( pipeline_rank+1, n_pipeline, n_voxel );
-  
-  /* Particles in this voxel range in [i0,i1) in the aux array */
-  /*const*/ int i0 = args->coarse_partition[pipeline_rank  ];
-  /*const*/ int i1 = args->coarse_partition[pipeline_rank+1];    
-  const particle_t * RESTRICT ALIGNED(128) p_src = args->aux_p;
-  /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->p;
-  
+  const particle_t * RESTRICT ALIGNED(128) p_src;
+  /**/  particle_t * RESTRICT ALIGNED(128) p_dst;
+  int i0, i1, v0, v1, i, j, v, sum, count;
+
   int * RESTRICT ALIGNED(128) partition = args->partition;
   int * RESTRICT ALIGNED(128) next      = args->next;
-  
-  int i, j, v, sum, count;
 
-  if( pipeline_rank==n_pipeline ) return; /* No straggler cleanup needed */
+  if( pipeline_rank==n_pipeline ) return; // No straggler cleanup needed
+ 
+  // This pipeline sorts particles in this voxel range in [i0,i1) in
+  // the aux array.  These particles are in voxels [v0,v1).
+  p_src = args->aux_p;
+  p_dst = args->p;
+  i0    = args->coarse_partition[pipeline_rank  ];
+  i1    = args->coarse_partition[pipeline_rank+1];
+  v0    = P2V( pipeline_rank,   n_pipeline, args->vl, args->vh );
+  v1    = P2V( pipeline_rank+1, n_pipeline, args->vl, args->vh );
+  if( pipeline_rank==0            ) v0 = 0;
+  if( pipeline_rank==n_pipeline-1 ) v1 = args->n_voxel;
 
-  /* Clear fine grained count */
+  // Clear fine grained count
   CLEAR( &next[v0], v1-v0 );
 
-  /* Fine grained count */
+  // Fine grained count
   for( i=i0; i<i1; i++ ) next[ p_src[i].i ]++;
 
-  /* Compute the partitioning */
+  // Compute the partitioning
   sum = i0;
   for( v=v0; v<v1; v++ ) {
     count = next[v];
@@ -80,9 +52,9 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
     partition[v] = sum;
     sum += count;
   }
-  partition[v1] = sum; /* All threads who write this agree */
+  partition[v1] = sum; // All threads who write this agree
 
-  /* Local fine grained sort */
+  // Local fine grained sort
   for( i=i0; i<i1; i++ ) {
     v = p_src[i].i;
     j = next[v]++;
@@ -94,6 +66,8 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
 #   endif
   }
 }
+
+#define VOXEL(x,y,z) INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)
 
 void
 sort_p( species_t * sp,
@@ -108,7 +82,7 @@ sort_p( species_t * sp,
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
   DECLARE_ALIGNED_ARRAY( int, 128, coarse_partition,
-                         max_coarse_bucket*(MAX_PIPELINE+1) );
+                         max_subsort_pipeline*(MAX_PIPELINE+1) );
 
   // FIXME: TEMPORARY HACK UNTIL SPECIES_ADVANCE API INSTALLED
   if( sp->partition==NULL ) MALLOC_ALIGNED( sp->partition, n_voxel+1, 128 );
@@ -122,15 +96,18 @@ sort_p( species_t * sp,
     max_scratch = sz_scratch;
   }
 
-  /* Setup pipeline arguments */
-  args->p                = sp->p;
-  args->aux_p            = (particle_t *)scratch;
-  args->coarse_partition = coarse_partition;
-  args->partition        = sp->partition;
-  args->next             = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
-  args->n                = sp->np;
-  args->n_voxel          = n_voxel;
-  args->n_coarse_bucket  = n_pipeline;
+  // Setup pipeline arguments
+  // FIXME: NOTE THAT THE SPU PIPELINE DOESN'T ACTUALLY USE NEXT.
+  args->p                  = sp->p;
+  args->aux_p              = (particle_t *)scratch;
+  args->coarse_partition   = coarse_partition;
+  args->partition          = sp->partition;
+  args->next               = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
+  args->n                  = sp->np;
+  args->n_subsort_pipeline = n_pipeline;
+  args->vl                 = VOXEL(1,1,1);
+  args->vh                 = VOXEL(g->nx,g->ny,g->nz);
+  args->n_voxel            = n_voxel;
 
   if( n_pipeline>1 ) {
 

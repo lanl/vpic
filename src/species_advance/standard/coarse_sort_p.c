@@ -12,35 +12,33 @@
 #define RESTRICT __restrict
 #endif
 
-// See sort_p.c for details.
-#define V2B( v, B, V ) ( ((int64_t)(v)*(int64_t)(B)) / (int64_t)(V) )
-
-#define BS coarse_block_size
-#define MB max_coarse_bucket
+#define BS sort_block_size
+#define MP max_subsort_pipeline
 
 void
 coarse_count_pipeline( sort_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline ) {
   const particle_t * RESTRICT ALIGNED(128) p_src;
-  int i, i1, n_voxel, n_coarse_bucket;
+  int i, i1, n_subsort_pipeline, vl, vh;
 
-  int count[ MB ]; // On pipe stack to avoid cache hot spots
+  int count[ MP ]; // On pipe stack to avoid cache hot spots
 
   // Get pipeline args
-  p_src           = args->p;
+  p_src              = args->p;
   DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
-  n_voxel         = args->n_voxel;
-  n_coarse_bucket = args->n_coarse_bucket;
+  n_subsort_pipeline = args->n_subsort_pipeline;
+  vl                 = args->vl;
+  vh                 = args->vh;
   
   // Clear local coarse count
-  CLEAR( count, n_coarse_bucket );
+  CLEAR( count, n_subsort_pipeline );
   
   // Local coarse count input particles
-  for( ; i<i1; i++ ) count[ V2B( p_src[i].i, n_coarse_bucket, n_voxel ) ]++;
+  for( ; i<i1; i++ ) count[ V2P( p_src[i].i, n_subsort_pipeline, vl, vh ) ]++;
   
   // Copy local coarse count to output
-  COPY( args->coarse_partition + MB*pipeline_rank, count, n_coarse_bucket );
+  COPY( args->coarse_partition + MP*pipeline_rank, count, n_subsort_pipeline );
 }
 
 void
@@ -49,26 +47,27 @@ coarse_sort_pipeline( sort_p_pipeline_args_t * args,
                       int n_pipeline ) {
   const particle_t * RESTRICT ALIGNED(128) p_src;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst;
-  int i, i1, n_voxel, n_coarse_bucket;
+  int i, i1, n_subsort_pipeline, vl, vh;
   int j;
 
-  int next[ MB ]; // On pipeline stack to avoid cache hot spots and to
+  int next[ MP ]; // On pipeline stack to avoid cache hot spots and to
                   // allow reuse of coarse partitioning for fine sort
                   // stage.
 
   // Get pipeline args
-  p_src           = args->p;
-  p_dst           = args->aux_p;
+  p_src              = args->p;
+  p_dst              = args->aux_p;
   DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
-  n_voxel         = args->n_voxel;
-  n_coarse_bucket = args->n_coarse_bucket;
+  n_subsort_pipeline = args->n_subsort_pipeline;
+  vl                 = args->vl;
+  vh                 = args->vh;
   
   // Load local coarse partitioning to next
-  COPY( next, args->coarse_partition + MB*pipeline_rank, n_coarse_bucket );
+  COPY( next, args->coarse_partition + MP*pipeline_rank, n_subsort_pipeline );
 
   // Copy particles into aux array in coarse sorted order
   for( ; i<i1; i++ ) {
-    j = next[ V2B( p_src[i].i, n_coarse_bucket, n_voxel ) ]++;
+    j = next[ V2P( p_src[i].i, n_subsort_pipeline, vl, vh ) ]++;
 #   if defined(__SSE__)
     _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
     _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
@@ -81,7 +80,7 @@ coarse_sort_pipeline( sort_p_pipeline_args_t * args,
 void
 coarse_sort_p( sort_p_pipeline_args_t * ALIGNED(128) args ) { 
   int * ALIGNED(128) coarse_partition = args->coarse_partition;
-  int b, n_coarse_bucket = args->n_coarse_bucket;
+  int b, n_subsort_pipeline = args->n_subsort_pipeline;
   int p, n_pipeline = N_PIPELINE + 1; // Include straggler cleanup pipeline
   int count, sum = 0;
 
@@ -90,10 +89,10 @@ coarse_sort_p( sort_p_pipeline_args_t * ALIGNED(128) args ) {
   WAIT_PIPELINES();
   
   // Convert the coarse count into a coarse partitioning
-  for( b=0; b<n_coarse_bucket; b++ )
+  for( b=0; b<n_subsort_pipeline; b++ )
     for( p=0; p<n_pipeline; p++ ) {
-      count = coarse_partition[ b + MB*p ];
-      coarse_partition[ b + MB*p ] = sum;
+      count = coarse_partition[ b + MP*p ];
+      coarse_partition[ b + MP*p ] = sum;
       sum += count;
     }
   

@@ -46,7 +46,7 @@ _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
     // data to arrive, update the local count and starting getting the
     // corresponding particle voxel data in the next block
     for( b=0; b<BS; b++ ) {
-      mfc_write_tag_mask( 1 << b );
+      mfc_write_tag_mask( 1<<b );
       mfc_read_tag_status_all();
       count[ V2P( voxel[4*b+3], n_subsort_pipeline, vl, vh ) ]++;
       if( i+BS<i1 )
@@ -112,9 +112,9 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
     // the store of the particle in this block.
 
     for( b=0; b<BS; b++ ) {
-      mfc_write_tag_mask( 1<<b | 1<<(b+BS) );
+      mfc_write_tag_mask( (1<<b) | (1<<(b+BS)) );
       mfc_read_tag_status_all();     
-      j = next[ V2P( p_in[b].i, n_subsort_pipeline, n_voxel ) ]++;     
+      j = next[ V2P( p_in[b].i, n_subsort_pipeline, vl, vh ) ]++;     
       p_out[b] = p_in[b]; // FIXME: SPU accelerate?
       mfc_put( p_out+b, p_dst+sizeof(particle_t)*j, sizeof(particle_t),
                b+BS, 0, 0 );
@@ -129,18 +129,18 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   mfc_read_tag_status_all();
 }
 
-
 void
 _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                               int pipeline_rank,
                               int n_pipeline ) {
   MEM_PTR( const particle_t, 128 ) p_src;
   MEM_PTR(       particle_t, 128 ) p_dst;
+  int * __restrict partition;
   int i0, i1, v0, v1, i, j, v, sum, count;
-  int b;
+  int b, nb;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args,      1    );
-  DECLARE_ALIGNED_ARRAY( int,                    128, partition, MV+1 );
+  DECLARE_ALIGNED_ARRAY( int,                    128, _partition, MV+1+3 );
   DECLARE_ALIGNED_ARRAY( int,                    128, next,      MV+1 );
   DECLARE_ALIGNED_ARRAY( particle_t,             128, p_in,      BS   );
   DECLARE_ALIGNED_ARRAY( particle_t,             128, p_out,     BS   );
@@ -168,7 +168,10 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   v1 = P2V( pipeline_rank+1, n_pipeline, args->vl, args->vh );
   if( pipeline_rank==0            ) v0 = 0;
   if( pipeline_rank==n_pipeline-1 ) v1 = args->n_voxel;
+  if( v1-v0 > MV ) return; // FIXME: DIAGNOSTIC ABORT
   
+  partition = _partition;
+
   // Begin getting the voxels for the initial particle block
   nb = i1-i0; if( nb>BS ) nb = BS;
   for( b=0; b<nb; b++ )
@@ -177,20 +180,19 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
              sizeof(int32_t), b, 0, 0 );
 
   // Clear fine grained count
-  CLEAR( next, v1-v0 );
+  CLEAR( next, v1-v0+1 );
 
   // Fine grained count
   // For all particle blocks
   for( i=i0; i<i1; i+=BS ) {
-
     // For each particle in this block, wait for the particle's voxel
     // data to arrive, update the fine grained count and start getting
     // the corresponding particle voxel data in the next block
-    nb = i1-i0; if( nb>BS ) nb = BS;
+    nb = i1-i; if( nb>BS ) nb = BS;
     for( b=0; b<nb; b++ ) {
-      mfc_write_tag_mask( 1 << b );
+      mfc_write_tag_mask( 1<<b );
       mfc_read_tag_status_all();
-      next[ partition[4*b+3] ]++;
+      next[ partition[4*b+3]-v0 ]++;
       if( i+BS+b<i1 )
         mfc_get( partition+4*b+3,
                  p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(float),
@@ -199,6 +201,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   }
 
   // Compute the partitioning
+  partition += (v0&3); // Align LS partition with EA partition
   sum = i0;
   for( v=v0; v<v1; v++ ) {
     count = next[v-v0];
@@ -209,7 +212,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   partition[v1-v0] = sum; // All pipelines who write this agree
   b = 0;
   for( v=v0; v<=v1; v+=nb ) {
-    nb = v1-v; // Number of ints remaining to transfer
+    nb = v1+1-v; // Number of ints remaining to transfer
     if(      (v &  1 ) || (nb< 2) ) nb =  1;  //  1-int txfr ( 1-int aligned)
     else if( (v &  3 ) || (nb< 4) ) nb =  2;  //  2-int txfr ( 2-int aligned)
     else if( (v &  7 ) || (nb< 8) ) nb =  4;  //  4-int txfr ( 4-int aligned)
@@ -220,7 +223,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
       if( nb>4096 ) nb = 4096;
     }
     mfc_put( partition+v-v0, args->partition+sizeof(int)*v, sizeof(int)*nb,
-             b, 0, 0 ); v += nb; b = (b+1) & 31;
+             b, 0, 0 ); b = (b+1) & 31;
   }
 
   // Begin getting particles for the initial particle block
@@ -228,20 +231,19 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   for( b=0; b<nb; b++ )
     mfc_get( p_in+b, p_src+sizeof(particle_t)*(i0+b), sizeof(particle_t),
              b, 0, 0 );
-  
+
   // Fine grained sort
   // For all particle blocks
-  for( ; i<i1; i+=BS ) {
-
+  for( i=i0; i<i1; i+=BS ) {
     // For each particle in this block, wait for the particle's load
     // to complete, wait for the store of the corresponding particle
     // in the previous block to complete, determine where to store the
     // arrived particle, copy it into a local writeback buffer, begin
     // the load of the corresponding particle in the next block and
     // the store of the particle in this block.
-    nb = i1-i0; if( nb>BS ) nb = BS;
+    nb = i1-i; if( nb>BS ) nb = BS;
     for( b=0; b<nb; b++ ) {
-      mfc_write_tag_mask( 1<<b | 1<<(b+BS) );
+      mfc_write_tag_mask( (1<<b) | (1<<(b+BS)) );
       mfc_read_tag_status_all();     
       j = next[ p_in[b].i-v0 ]++;     
       p_out[b] = p_in[b]; // FIXME: SPU accelerate?
@@ -253,6 +255,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
     }
   }
 
+  // Complete all memory transactions
   mfc_write_tag_mask( 0xffffffff );
   mfc_read_tag_status_all();
 }

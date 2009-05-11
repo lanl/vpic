@@ -1,5 +1,5 @@
 #define IN_spa
-#define HAS_SPU_PIPELINE
+//#define HAS_SPU_PIPELINE
 #include "spa_private.h"
 
 #if defined(__SSE__)

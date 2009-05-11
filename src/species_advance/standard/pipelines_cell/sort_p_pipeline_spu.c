@@ -19,12 +19,11 @@ _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   int b;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
-  DECLARE_ALIGNED_ARRAY( int, 128, voxel, BS );
+  DECLARE_ALIGNED_ARRAY( int, 128, voxel, 4*BS );
   DECLARE_ALIGNED_ARRAY( int, 128, count, MB );
 
-  // Get pipeline args and clear local coarse counts
+  // Get pipeline args
   mfc_get( args, argp, sizeof(*args), 0, 0, 0 );
-  CLEAR( count, n_coarse_bucket );
   mfc_write_tag_mask( 1<<0 );
   mfc_read_tag_status_all();
   p_src           = args->p;
@@ -35,8 +34,11 @@ _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   // Begin getting the voxels for the initial particle block
   if( i<i1 ) 
     for( b=0; b<BS; b++ )
-      mfc_get( voxel+b, p_src+sizeof(particle_t)*(i+b)+3*sizeof(float),
+      mfc_get( voxel+4*b+3, p_src+sizeof(particle_t)*(i+b)+3*sizeof(int32_t),
                sizeof(int32_t), b, 0, 0 );
+
+  // Clear the local coarse counts
+  CLEAR( count, n_coarse_bucket );
 
   // For all particle blocks
   for( ; i<i1; i+=BS ) {
@@ -46,13 +48,14 @@ _SPUEAR_coarse_count_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
     // corresponding particle voxel data in the next block
     for( b=0; b<BS; b++ ) {
       mfc_write_tag_mask( 1 << b );
-      mfc_reag_tag_status_all();
-      count[ V2B( voxel[b], n_coarse_bucket, n_voxel ) ]++;
+      mfc_read_tag_status_all();
+      count[ V2B( voxel[4*b+3], n_coarse_bucket, n_voxel ) ]++;
       if( i+BS<i1 )
-        mfc_get( voxel+b, p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(float),
+        mfc_get( voxel+4*b+3, p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(float),
                  sizeof(int32_t), b, 0, 0 );
     }
   }
+
 
   // Copy local count to the output and wait for all memory
   // transactions to complete
@@ -69,10 +72,11 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   MEM_PTR( const particle_t, 32 ) p_src;
   MEM_PTR(       particle_t, 32 ) p_dst;
   int i, i1, n_voxel, n_coarse_bucket;
-  int b;
+  int b, j;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
-  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_in, BS );
+  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_in,  BS );
+  DECLARE_ALIGNED_ARRAY( particle_t, 128, p_out, BS );
   DECLARE_ALIGNED_ARRAY( int, 128, next, MB );
 
   // Get pipeline args
@@ -85,7 +89,7 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   n_voxel         = args->n_voxel;
   n_coarse_bucket = args->n_coarse_bucket;
 
-  // Get the coarse partitioning
+  // Get the local coarse partitioning
   mfc_get( next, args->coarse_partition + sizeof(int)*MB*pipeline_rank,
            sizeof(int)*MB, 0, 0, 0 );
   mfc_write_tag_mask( 1<<0 );
@@ -109,7 +113,7 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
 
     for( b=0; b<BS; b++ ) {
       mfc_write_tag_mask( 1<<b | 1<<(b+BS) );
-      mfc_reag_tag_status_all();     
+      mfc_read_tag_status_all();     
       j = next[ V2B( p_in[b].i, n_coarse_bucket, n_voxel ) ]++;     
       p_out[b] = p_in[b]; // FIXME: SPU accelerate?
       mfc_put( p_out+b, p_dst+sizeof(particle_t)*j, sizeof(particle_t),

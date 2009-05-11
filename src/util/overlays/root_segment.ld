@@ -72,6 +72,7 @@ SECTIONS
     .segment1 {advance_p_pipeline_spu.o(.text)
                clear_accumulators_pipeline_spu.o(.text)
                reduce_accumulators_pipeline_spu.o(.text)}
+    .segment2 {sort_p_pipeline_spu.o(.text)}
   }
   .fini           :
   {

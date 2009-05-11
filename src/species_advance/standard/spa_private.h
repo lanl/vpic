@@ -199,7 +199,7 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 enum {
   coarse_block_size = 8, // Larger than 8 saturates MFC queues in SPU
                          // course_sort
-  max_coarse_bucket = 1+4*(MAX_PIPELINE/4) // Must be a multiple of 4
+  max_coarse_bucket = 4*((MAX_PIPELINE+3)/4) // Must be a multiple of 4
 };
 
 typedef struct sort_p_pipeline_args {

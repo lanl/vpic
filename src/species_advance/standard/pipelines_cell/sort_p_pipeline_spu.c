@@ -135,13 +135,14 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                               int n_pipeline ) {
   MEM_PTR( const particle_t, 128 ) p_src;
   MEM_PTR(       particle_t, 128 ) p_dst;
-  int * __restrict partition;
   int i0, i1, v0, v1, i, j, v, sum, count;
   int b, nb;
 
+  int * __restrict partition;
+
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args,      1    );
   DECLARE_ALIGNED_ARRAY( int,                    128, _partition, MV+1+3 );
-  DECLARE_ALIGNED_ARRAY( int,                    128, next,      MV+1 );
+  DECLARE_ALIGNED_ARRAY( int,                    128, next,      MV   );
   DECLARE_ALIGNED_ARRAY( particle_t,             128, p_in,      BS   );
   DECLARE_ALIGNED_ARRAY( particle_t,             128, p_out,     BS   );
 
@@ -169,10 +170,9 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   if( pipeline_rank==0            ) v0 = 0;
   if( pipeline_rank==n_pipeline-1 ) v1 = args->n_voxel;
   if( v1-v0 > MV ) return; // FIXME: DIAGNOSTIC ABORT
-  
-  partition = _partition;
 
   // Begin getting the voxels for the initial particle block
+  partition = _partition;
   nb = i1-i0; if( nb>BS ) nb = BS;
   for( b=0; b<nb; b++ )
     mfc_get( partition+4*b+3,
@@ -180,7 +180,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
              sizeof(int32_t), b, 0, 0 );
 
   // Clear fine grained count
-  CLEAR( next, v1-v0+1 );
+  CLEAR( next, v1-v0 );
 
   // Fine grained count
   // For all particle blocks
@@ -195,7 +195,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
       next[ partition[4*b+3]-v0 ]++;
       if( i+BS+b<i1 )
         mfc_get( partition+4*b+3,
-                 p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(float),
+                 p_src+sizeof(particle_t)*(i+BS+b)+3*sizeof(int32_t),
                  sizeof(int32_t), b, 0, 0 );
     }
   }
@@ -213,11 +213,11 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   b = 0;
   for( v=v0; v<=v1; v+=nb ) {
     nb = v1+1-v; // Number of ints remaining to transfer
-    if(      (v &  1 ) || (nb< 2) ) nb =  1;  //  1-int txfr ( 1-int aligned)
-    else if( (v &  3 ) || (nb< 4) ) nb =  2;  //  2-int txfr ( 2-int aligned)
-    else if( (v &  7 ) || (nb< 8) ) nb =  4;  //  4-int txfr ( 4-int aligned)
-    else if( (v & 15 ) || (nb<16) ) nb =  8;  //  8-int txfr ( 8-int aligned)
-    else if( (v & 31 ) || (nb<32) ) nb = 16;  // 16-int txfr (16-int aligned)
+    if(      (v &  1) || (nb< 2) ) nb =  1;  //  1-int txfr ( 1-int aligned)
+    else if( (v &  3) || (nb< 4) ) nb =  2;  //  2-int txfr ( 2-int aligned)
+    else if( (v &  7) || (nb< 8) ) nb =  4;  //  4-int txfr ( 4-int aligned)
+    else if( (v & 15) || (nb<16) ) nb =  8;  //  8-int txfr ( 8-int aligned)
+    else if( (v & 31) || (nb<32) ) nb = 16;  // 16-int txfr (16-int aligned)
     else { // Large txfr (32-int aligned, 4-int multiple, under 16KB)
       nb &= ~3;
       if( nb>4096 ) nb = 4096;

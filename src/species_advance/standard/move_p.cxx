@@ -17,13 +17,9 @@
    not check its input arguments. Higher level routines are
    responsible for insuring valid arguments. */
 
-#if defined(V4_ACCELERATION)
+#if 0 // defined(V4_ACCELERATION)
 
 /* High performance variant based on SPE accelerated version */
-
-#ifndef RESTRICT
-#define RESTRICT __restrict
-#endif 
 
 using namespace v4;
 
@@ -90,7 +86,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
     store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf );
-    /**/                         type = 3;             f0 = 1;
+    /**/                          type = 3;             f0 = 1;
     f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
     f1 = stack_vf[2]; if( f1<f0 ) type = 2; if( f1<f0 ) f0 = f1;

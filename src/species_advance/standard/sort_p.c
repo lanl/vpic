@@ -10,11 +10,6 @@
 #include <xmmintrin.h>
 #endif
 
-// FIXME: ADD RESTRICT TO UTIL_BASE.H
-#ifndef RESTRICT
-#define RESTRICT __restrict
-#endif
-
 #define BS sort_block_size
 #define MP max_subsort
 
@@ -118,7 +113,7 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
     partition[v] = sum;
     sum += count;
   }
-  partition[v1] = sum; // All threads who write this agree
+  partition[v1] = sum; // All subsorts who write this agree
 
   // Local fine grained sort
   for( i=i0; i<i1; i++ ) {
@@ -231,13 +226,13 @@ void
 sort_p( species_t * sp,
         const grid_t * g ) {
   particle_t * ALIGNED(128) p = sp->p;
-  //const int32_t * __restrict ALIGNED(128) sfc = g->sfc;
+  //const int32_t * RESTRICT ALIGNED(128) sfc = g->sfc;
   const int np                = sp->np; 
   const int nc                = (g->nx+2)*(g->ny+2)*(g->nz+2);
   const int nc1               = nc+1;
-  int * __restrict ALIGNED(128) partition = sp->partition;
+  int * RESTRICT ALIGNED(128) partition = sp->partition;
 
-  static int * __restrict ALIGNED(128) next = NULL;
+  static int * RESTRICT ALIGNED(128) next = NULL;
   static int max_nc1 = 0;
 
   int i, j;
@@ -252,7 +247,7 @@ sort_p( species_t * sp,
   // Making this into a static is done to avoid heap shredding
  
   if( max_nc1<nc1 ) {
-    int * tmp = next; // Hack around __restrict__ issues
+    int * tmp = next; // Hack around RESTRICT issues
     FREE_ALIGNED(   tmp );
     MALLOC_ALIGNED( tmp, nc1, 128 );
     next    = tmp;
@@ -277,8 +272,8 @@ sort_p( species_t * sp,
     // Throw down the particle array in order
 
     particle_t * ALIGNED(128) new_p;
-    const particle_t * __restrict ALIGNED(32) in_p;
-    /**/  particle_t * __restrict ALIGNED(32) out_p;
+    const particle_t * RESTRICT ALIGNED(32) in_p;
+    /**/  particle_t * RESTRICT ALIGNED(32) out_p;
 
     MALLOC_ALIGNED( new_p, sp->max_np, 128 );
 

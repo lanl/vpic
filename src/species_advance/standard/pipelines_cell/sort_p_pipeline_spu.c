@@ -131,14 +131,6 @@ _SPUEAR_coarse_sort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   mfc_read_tag_status_all();
 }
 
-#if 0
-#include <stdio.h>
-#undef  CHECKPOINT
-#define CHECKPOINT() do {\
-  if( pipeline_rank==0 ) printf( __FILE__"(%i)[%i]: Checkpoint\n", __LINE__, pipeline_rank ), fflush(stdout); \
-} while(0)
-#endif
-
 void
 _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
                               int pipeline_rank,
@@ -148,7 +140,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
   int i0, i1, v0, v1, i, j, v, sum, count;
   int b, nb;
 
-  int * __restrict partition;
+  int * RESTRICT partition;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args,      1    );
   DECLARE_ALIGNED_ARRAY( int,                    128, _partition, MV+1+3 );
@@ -219,7 +211,7 @@ _SPUEAR_subsort_pipeline_spu( MEM_PTR( sort_p_pipeline_args_t, 128 ) argp,
     partition[v-v0] = sum;
     sum += count;
   }
-  partition[v1-v0] = sum; // All pipelines who write this agree
+  partition[v1-v0] = sum; // All subsorts who write this agree
   b = 0;
   for( v=v0; v<=v1; v+=nb ) {
     nb = v1+1-v; // Number of ints remaining to transfer

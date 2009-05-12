@@ -63,21 +63,21 @@ static MEM_PTR( accumulator_t,        128 ) a_cache_mem;
 // enough room in the cache to accomodate the worst case situation of
 // every particle in a particle block being in a different voxel.
 
-static interpolator_t * __restrict ALIGNED(128) i_cache; /* VOXEL_CACHE_N_LINE */
-static accumulator_t  * __restrict ALIGNED(128) a_cache; /* VOXEL_CACHE_N_LINE */
+static interpolator_t * RESTRICT ALIGNED(128) i_cache; /* VOXEL_CACHE_N_LINE */
+static accumulator_t  * RESTRICT ALIGNED(128) a_cache; /* VOXEL_CACHE_N_LINE */
 
 // The voxel cache tags.  voxel_cache_addr[i] gives the external
 // address (actually a local voxel index) of the interpolator and
 // accumulator data that is cached at line i.  It is 0xffffffff if the
 // cache line is empty.
 
-static uint32_t * __restrict ALIGNED(128) voxel_cache_addr; /* VOXEL_CACHE_N_LINE */
+static uint32_t * RESTRICT ALIGNED(128) voxel_cache_addr; /* VOXEL_CACHE_N_LINE */
 
 // The voxel cache line replacment order.  voxel_cache_{prev,next}[i]
 // gives the cache line that will be replaced {before,after} line i.
 
-static uint32_t * __restrict ALIGNED(128) voxel_cache_prev; /* VOXEL_CACHE_N_LINE */
-static uint32_t * __restrict ALIGNED(128) voxel_cache_next; /* VOXEL_CACHE_N_LINE */
+static uint32_t * RESTRICT ALIGNED(128) voxel_cache_prev; /* VOXEL_CACHE_N_LINE */
+static uint32_t * RESTRICT ALIGNED(128) voxel_cache_next; /* VOXEL_CACHE_N_LINE */
 static uint32_t voxel_cache_lru;
 
 // The voxel cache hash table.  This provides a hash table that maps
@@ -96,8 +96,8 @@ static uint32_t voxel_cache_lru;
 #define VOXEL_CACHE_N_HASH 4096
 #define VOXEL_CACHE_HASH(addr) ((addr)&(VOXEL_CACHE_N_HASH-1))
 
-static uint32_t * __restrict ALIGNED(128) voxel_cache_key; /* VOXEL CACHE_N_HASH */
-static uint32_t * __restrict ALIGNED(128) voxel_cache_val; /* VOXEL CACHE_N_HASH */
+static uint32_t * RESTRICT ALIGNED(128) voxel_cache_key; /* VOXEL CACHE_N_HASH */
+static uint32_t * RESTRICT ALIGNED(128) voxel_cache_val; /* VOXEL CACHE_N_HASH */
 
 // Voxel Cache misc.  {I,A}_CACHE_{FIRST,LAST}_DMA_CHANNEL give the
 // {FIRST,LAST} DMA channel that {interpolator,accumulator} operations
@@ -132,7 +132,7 @@ static uint32_t i_cache_dma_channel;
 #define A_CACHE_DMA_CHANNEL_LAST  21
 #define A_CACHE_DMA_CHANNEL(addr) ( A_CACHE_DMA_CHANNEL_FIRST + \
     ( (addr) & ( A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST ) ) )
-static accumulator_t * __restrict ALIGNED(128) a_cache_writeback; /* A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST + 1 */
+static accumulator_t * RESTRICT ALIGNED(128) a_cache_writeback; /* A_CACHE_DMA_CHANNEL_LAST - A_CACHE_DMA_CHANNEL_FIRST + 1 */
 
 // voxel_cache_init initializes the interpolator/accumulator cache
 // data structures.
@@ -421,11 +421,11 @@ voxel_cache_writeback( void ) {
 // FIXME: WHAT SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION?
 
 static __inline int                                                     // Return number of movers used
-advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Particle array
-                        particle_mover_t * __restrict ALIGNED(16)  pm,  // Mover array
+advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particle array
+                        particle_mover_t * RESTRICT ALIGNED(16)  pm,  // Mover array
                         int idx,                                        // Index of first particle
                         int np,                                         // Number of quad particle quads
-                        advance_p_pipeline_args_t * __restrict ALIGNED(128) args ) { // Holds other parameters to use
+                        advance_p_pipeline_args_t * RESTRICT ALIGNED(128) args ) { // Holds other parameters to use
   USING_V4C;
 
 # ifdef USE_DOUBLE_PRECISION_REDUCTION
@@ -502,8 +502,8 @@ advance_p_pipeline_spu( particle_t       * __restrict ALIGNED(128) p,   // Parti
   vec_float4 a0y,   a1y,   a2y,   a3y,   a4y;                                    vec_float4 a0y_1, a1y_1, a2y_1, a3y_1, a4y_1;                                  vec_float4 a0y_2, a1y_2, a2y_2, a3y_2, a4y_2;                                  vec_float4 a0y_3, a1y_3, a2y_3, a3y_3, a4y_3;
   vec_float4 a0z,   a1z,   a2z,   a3z,   a4z;                                    vec_float4 a0z_1, a1z_1, a2z_1, a3z_1, a4z_1;                                  vec_float4 a0z_2, a1z_2, a2z_2, a3z_2, a4z_2;                                  vec_float4 a0z_3, a1z_3, a2z_3, a3z_3, a4z_3;
 
-  const interpolator_t * __restrict ALIGNED(128) fi;
-  accumulator_t        * __restrict ALIGNED(64)  ja;
+  const interpolator_t * RESTRICT ALIGNED(128) fi;
+  accumulator_t        * RESTRICT ALIGNED(64)  ja;
 
   int n, nm;
 

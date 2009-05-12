@@ -7,9 +7,9 @@
 // FIXME: THIS FUNCTION DOESN'T BELONG HERE ANYMORE!
 
 void
-accumulate_rhob( field_t          * __restrict__ ALIGNED(128) f,
-                 const particle_t * __restrict__ ALIGNED(32)  p,
-                 const grid_t     * __restrict__              g ) {
+accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
+                 const particle_t * RESTRICT ALIGNED(32)  p,
+                 const grid_t     * RESTRICT              g ) {
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, j, k;
   float *rhob;
@@ -75,10 +75,10 @@ accumulate_rhob( field_t          * __restrict__ ALIGNED(128) f,
 // REINJECT ALL ABSORBED PARTICLES IN THE SAME DOMAIN!
 
 void
-boundary_p( species_t        * __restrict__ sp_list,
-            field_t          * __restrict__ ALIGNED(128) f,
-            accumulator_t    * __restrict__ ALIGNED(128) a0,
-            const grid_t     * __restrict__ g,
+boundary_p( species_t        * RESTRICT sp_list,
+            field_t          * RESTRICT ALIGNED(128) f,
+            accumulator_t    * RESTRICT ALIGNED(128) a0,
+            const grid_t     * RESTRICT g,
             mt_rng_t         *              rng ) {
   const int sf2b[6] = { BOUNDARY(-1, 0, 0),
                         BOUNDARY( 0,-1, 0),
@@ -100,9 +100,9 @@ boundary_p( species_t        * __restrict__ sp_list,
 # define SHARED_REMOTELY(bound) \
   ((g->bc[bound]>=0) & (g->bc[bound]<nproc) & (g->bc[bound]!=rank))
 
-  const int64_t * __restrict__ ALIGNED(128) neighbor = g->neighbor;
+  const int64_t * RESTRICT ALIGNED(128) neighbor = g->neighbor;
 #if defined(DEBUG_BOUNDARY)
-  const int64_t * __restrict__ ALIGNED(128) neighbor_old = g->neighbor_old;
+  const int64_t * RESTRICT ALIGNED(128) neighbor_old = g->neighbor_old;
 #endif
   const int64_t rangel = g->rangel;
   const int64_t rangeh = g->rangeh;
@@ -120,13 +120,13 @@ boundary_p( species_t        * __restrict__ sp_list,
   const int64_t range5 = SHARED_REMOTELY(sf2b[5]) ?
     g->range[g->bc[sf2b[5]]] : 0;
 
-  boundary_t * __restrict__ boundary = g->boundary;
+  boundary_t * RESTRICT boundary = g->boundary;
   const int                 nb       = g->nb; 
 
-  species_t * __restrict__ sp;
+  species_t * RESTRICT sp;
   int face, ns[6], ncm;
 
-  static particle_injector_t * __restrict__ ALIGNED(16) cmlist = NULL;
+  static particle_injector_t * RESTRICT ALIGNED(16) cmlist = NULL;
   static int cmlist_size = 0;
 
   // Presize various buffers
@@ -157,7 +157,7 @@ boundary_p( species_t        * __restrict__ sp_list,
                              g->mp );
     
     if( cmlist_size<nm ) {
-      particle_injector_t * tmp = cmlist; // Hack around __restrict__
+      particle_injector_t * tmp = cmlist; // Hack around RESTRICT
       FREE_ALIGNED( tmp );
       MALLOC_ALIGNED( tmp, nm, 16 );
       cmlist      = tmp;
@@ -176,30 +176,30 @@ boundary_p( species_t        * __restrict__ sp_list,
   // and before this
   
   do {
-    particle_injector_t * __restrict__ ALIGNED(16) ps0 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps0 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[0],g->mp))+16 );
-    particle_injector_t * __restrict__ ALIGNED(16) ps1 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps1 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[1],g->mp))+16 );
-    particle_injector_t * __restrict__ ALIGNED(16) ps2 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps2 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[2],g->mp))+16 );
-    particle_injector_t * __restrict__ ALIGNED(16) ps3 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps3 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[3],g->mp))+16 );
-    particle_injector_t * __restrict__ ALIGNED(16) ps4 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps4 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[4],g->mp))+16 );
-    particle_injector_t * __restrict__ ALIGNED(16) ps5 =
+    particle_injector_t * RESTRICT ALIGNED(16) ps5 =
       (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[5],g->mp))+16 );
-    particle_injector_t * /*__restrict__*/ ALIGNED(16) cm  = cmlist;
+    particle_injector_t * /*RESTRICT*/ ALIGNED(16) cm  = cmlist;
     int ns0 = 0, ns1 = 0, ns2 = 0, ns3 = 0, ns4 = 0, ns5 = 0;
     
     LIST_FOR_EACH( sp, sp_list ) {
-      particle_t       * __restrict__ ALIGNED(128) p0 = sp->p;
-      particle_mover_t * __restrict__ ALIGNED(16)  pm = sp->pm + sp->nm - 1;
+      particle_t       * RESTRICT ALIGNED(128) p0 = sp->p;
+      particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
       const int32_t sp_id = sp->id;
       int np = sp->np;
       int nm = sp->nm;
       
       for( ; nm; pm--, nm-- ) {
-        particle_t * __restrict__ ALIGNED(32) r = p0 + pm->i;
+        particle_t * RESTRICT ALIGNED(32) r = p0 + pm->i;
         float   dx = r->dx;
         float   dy = r->dy;
         float   dz = r->dz;
@@ -386,7 +386,7 @@ boundary_p( species_t        * __restrict__ sp_list,
   // Inject received particles
   
   do {
-    particle_injector_t * __restrict__ ALIGNED(16) pi;
+    particle_injector_t * RESTRICT ALIGNED(16) pi;
     species_t * sp_table[ 64 ];
     int n, n_inj[ 64 ];
     
@@ -455,8 +455,8 @@ boundary_p( species_t        * __restrict__ sp_list,
     // MEMORY HERE!
 
     for( face=0; face<7; face++ ) {
-      int np; particle_t       * __restrict__ ALIGNED(32) p;
-      int nm; particle_mover_t * __restrict__ ALIGNED(16) pm;
+      int np; particle_t       * RESTRICT ALIGNED(32) p;
+      int nm; particle_mover_t * RESTRICT ALIGNED(16) pm;
 
       if( face==6 ) pi = cmlist, n = ncm;
       else if( !SHARED_REMOTELY(rf2b[face]) ) continue;

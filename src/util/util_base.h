@@ -46,9 +46,23 @@
 #define ALIGNED(a)
 #endif
 
+// Restrict macros
+
+// This pointer modifier indicates that a pointer is restricted in
+// the C99 sense.  This is added to allow C++ code (which technically
+// does not have restricted pointers) to use this optimization.
+
+// FIXME: THE MACHINE DESCRIPTIONS SHOULD BE RESPONSIBLE FOR DEFINING
+// THIS TO A NON-TRIVIAL VALUE IF THE PLATFORM COMPILER SUPPORTS
+// RESTRICTED POINTER OPTIMIZATIONS
+
+#ifndef RESTRICT
+#define RESTRICT __restrict
+#endif 
+
 // Normal pointers (e.g. a *) are in whatever address space the given
 // compile unit uses.  However, sometimes it is necessary to declare
-// pointers that are understable in multiple address spaces.  The
+// pointers that are understandable in multiple address spaces.  The
 // MEM_PTR macro declares a pointer to external memory with the
 // specified alignment.  This allows declaractions to be compiled on
 // both the SPU and PPU with appropriate annotations to necessary

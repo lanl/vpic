@@ -47,16 +47,16 @@
 
 void
 maxwellian_reflux( void * _mr,
-                   particle_t * __restrict__ r, 
-                   particle_mover_t * __restrict__ pm,
-                   field_t * __restrict__ f,
-                   accumulator_t * __restrict__ a, 
-                   const grid_t * __restrict__ g,
-                   species_t * __restrict__ s, 
-                   particle_injector_t **ppi,
-                   mt_rng_t * __restrict__ rng,
+                   particle_t           * RESTRICT r, 
+                   particle_mover_t     * RESTRICT pm,
+                   field_t              * RESTRICT f,
+                   accumulator_t        * RESTRICT a, 
+                   const grid_t         * RESTRICT g,
+                   species_t            * RESTRICT s, 
+                   particle_injector_t ** RESTRICT ppi,
+                   mt_rng_t             * RESTRICT rng,
                    int face ) {
-  maxwellian_reflux_t * __restrict__ mr = (maxwellian_reflux_t *)_mr;
+  maxwellian_reflux_t * RESTRICT mr = (maxwellian_reflux_t *)_mr;
   int32_t sp_id = s->id;
   float ut_para = mr->ut_para[sp_id]; 
   float ut_perp = mr->ut_perp[sp_id];
@@ -64,9 +64,9 @@ maxwellian_reflux( void * _mr,
   float ux, uy, uz;          // x, y, z normalized momenta
   float dispx, dispy, dispz; // Particle displacement
   float ratio;  
-  particle_injector_t *pi; 
+  particle_injector_t * RESTRICT pi; 
 
-                            // axis x  y  z 
+  /**/                      // axis x  y  z 
   static const int perm[6][3] = { { 0, 1, 2 },   // -x face
                                   { 2, 0, 1 },   // -y face
                                   { 1, 2, 0 },   // -z face 

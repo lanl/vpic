@@ -1,18 +1,84 @@
 #define IN_spa
-//#define HAS_SPU_PIPELINE
+#define HAS_SPU_PIPELINE
 #include "spa_private.h"
-
-#if defined(__SSE__)
-#include <xmmintrin.h>
-#endif
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
 // FIXME: Add N_VOXEL convenience field to grid
+
+// FIXME: ALTIVEC ACCELERATE!
+#if defined(__SSE__)
+#include <xmmintrin.h>
+#endif
 
 // FIXME: ADD RESTRICT TO UTIL_BASE.H
 #ifndef RESTRICT
 #define RESTRICT __restrict
 #endif
+
+#define BS sort_block_size
+#define MP max_subsort
+
+void
+coarse_count_pipeline( sort_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline ) {
+  const particle_t * RESTRICT ALIGNED(128) p_src;
+  int i, i1, n_subsort, vl, vh;
+
+  int count[ MP ]; // On pipe stack to avoid cache hot spots
+
+  // Get pipeline args
+  p_src     = args->p;
+  DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
+  n_subsort = args->n_subsort;
+  vl        = args->vl;
+  vh        = args->vh;
+  
+  // Clear local coarse count
+  CLEAR( count, n_subsort );
+  
+  // Local coarse count input particles
+  for( ; i<i1; i++ ) count[ V2P( p_src[i].i, n_subsort, vl, vh ) ]++;
+  
+  // Copy local coarse count to output
+  COPY( args->coarse_partition + MP*pipeline_rank, count, n_subsort );
+}
+
+void
+coarse_sort_pipeline( sort_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline ) {
+  const particle_t * RESTRICT ALIGNED(128) p_src;
+  /**/  particle_t * RESTRICT ALIGNED(128) p_dst;
+  int i, i1, n_subsort, vl, vh;
+  int j;
+
+  int next[ MP ]; // On pipeline stack to avoid cache hot spots and to
+                  // allow reuse of coarse partitioning for fine sort
+                  // stage.
+
+  // Get pipeline args
+  p_src     = args->p;
+  p_dst     = args->aux_p;
+  DISTRIBUTE( args->n, BS, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
+  n_subsort = args->n_subsort;
+  vl        = args->vl;
+  vh        = args->vh;
+  
+  // Load local coarse partitioning to next
+  COPY( next, args->coarse_partition + MP*pipeline_rank, n_subsort );
+
+  // Copy particles into aux array in coarse sorted order
+  for( ; i<i1; i++ ) {
+    j = next[ V2P( p_src[i].i, n_subsort, vl, vh ) ]++;
+#   if defined(__SSE__)
+    _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
+    _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
+#   else
+    p_dst[j] = p_src[i];
+#   endif
+  }
+}
 
 void
 subsort_pipeline( sort_p_pipeline_args_t * args,
@@ -77,19 +143,22 @@ sort_p( species_t * sp,
   static size_t max_scratch = 0;
   size_t sz_scratch;
 
-  int n_pipeline = N_PIPELINE;
-  int n_voxel    = (g->nx+2)*(g->ny+2)*(g->nz+2);
+  int n_coarse_pipeline = N_PIPELINE + 1; // Include the straggler cleanup
+  int n_subsort         = N_PIPELINE;
+  int n_voxel           = (g->nx+2)*(g->ny+2)*(g->nz+2);
+  int p, q, count, sum;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
   DECLARE_ALIGNED_ARRAY( int, 128, coarse_partition,
-                         max_subsort_pipeline*(MAX_PIPELINE+1) );
+                         max_subsort*(MAX_PIPELINE+1) );
 
   // FIXME: TEMPORARY HACK UNTIL SPECIES_ADVANCE API INSTALLED
   if( sp->partition==NULL ) MALLOC_ALIGNED( sp->partition, n_voxel+1, 128 );
 
   // Insure enough scratch space is allocated for the sorting
-  sz_scratch = ( sizeof(args->aux_p[0])*sp->np +            /* For aux_p */
-                 128 + sizeof(args->next[0])*(n_voxel+1) ); /* For next */
+  // FIXME: NOTE THAT THE SPU PIPELINE DOESN'T ACTUALLY USE NEXT.
+  sz_scratch = ( sizeof(args->aux_p[0])*sp->np +        /* For aux_p */
+                 128 + sizeof(args->next[0])*n_voxel ); /* For next */
   if( sz_scratch > max_scratch ) {
     FREE_ALIGNED( scratch );
     MALLOC_ALIGNED( scratch, sz_scratch, 128 );
@@ -97,26 +166,39 @@ sort_p( species_t * sp,
   }
 
   // Setup pipeline arguments
-  // FIXME: NOTE THAT THE SPU PIPELINE DOESN'T ACTUALLY USE NEXT.
-  args->p                  = sp->p;
-  args->aux_p              = (particle_t *)scratch;
-  args->coarse_partition   = coarse_partition;
-  args->partition          = sp->partition;
-  args->next               = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
-  args->n                  = sp->np;
-  args->n_subsort_pipeline = n_pipeline;
-  args->vl                 = VOXEL(1,1,1);
-  args->vh                 = VOXEL(g->nx,g->ny,g->nz);
-  args->n_voxel            = n_voxel;
+  args->p                = sp->p;
+  args->aux_p            = (particle_t *)scratch;
+  args->coarse_partition = coarse_partition;
+  args->partition        = sp->partition;
+  args->next             = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
+  args->n                = sp->np;
+  args->n_subsort        = n_subsort;
+  args->vl               = VOXEL(1,1,1);
+  args->vh               = VOXEL(g->nx,g->ny,g->nz);
+  args->n_voxel          = n_voxel;
 
-  if( n_pipeline>1 ) {
+  if( n_subsort>1 ) {
 
-    // Do coarse sort
-    coarse_sort_p( args );
+    // Do the coarse count
+    EXEC_PIPELINES( coarse_count, args, 0 );
+    WAIT_PIPELINES();
+
+    // Convert the coarse count into a coarse partitioning
+    sum = 0;
+    for( q=0; q<n_subsort; q++ )
+      for( p=0; p<n_coarse_pipeline; p++ ) {
+        count = coarse_partition[ q + MP*p ];
+        coarse_partition[ q + MP*p ] = sum;
+        sum += count;
+      }
+
+    // Do the coarse sort
+    EXEC_PIPELINES( coarse_sort, args, 0 );
+    WAIT_PIPELINES();
 
     // Convert the coarse_partitioning used durign the coarse sort
-    // into the partitioning of the particle list by coarse bucket
-    coarse_partition[ n_pipeline ] = sp->np;
+    // into the partitioning of the particle list by subsort pipelines
+    coarse_partition[ n_subsort ] = sp->np;
 
     // Do fine grained subsorts
     EXEC_PIPELINES( subsort, args, 0 );
@@ -127,8 +209,8 @@ sort_p( species_t * sp,
     // Just do the subsort when single threaded.  We need to hack the
     // aux arrays and what not to make it look like coarse sorting was
     // done to the subsort pipeline.
-    coarse_partition[0]          = 0;
-    coarse_partition[n_pipeline] = sp->np;
+    coarse_partition[ 0 ]         = 0;
+    coarse_partition[ n_subsort ] = sp->np;
     args->p     = (particle_t *)scratch;
     args->aux_p = sp->p;
     subsort_pipeline( args, 0, 1 );

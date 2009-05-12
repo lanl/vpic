@@ -196,16 +196,16 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
 
-// Given the voxel index, compute the pipeline responsible for sorting
-// particles within that voxel.  This takes into account that p*V
-// might overflow 32-bits and that only voxels [vl,vh] may contain
-// particles.
+// Given the voxel index, compute which subsort is responsible for
+// sorting particles within that voxel.  This takes into account
+// that v*P might overflow 32-bits and that only voxels [vl,vh]
+// may contain particles.  This macro is mostly robust.
 
-#define V2P( v, P, vl, vh ) ( ((int64_t)((v)-(vl))*(int64_t)(P)) /      \
-                              (int64_t)((vh)-(vl)+1) )
+#define V2P( v, P, vl, vh ) ( (((int64_t)((v )-(vl)  ))*((int64_t)(P))) / \
+                               ((int64_t)((vh)-(vl)+1)) )
 
-// Given the pipeline rank, compute the first voxel the pipeline is
-// responsible for sorting.  This is based on:
+// Given the pipeline rank, compute the first voxel a subsort is
+// responsible for handling.  This is based on:
 //   p = floor(vP/V) =>
 //   p <= vP/V < p+1 =>
 //   pV/P <= v < (p+1)V/P
@@ -216,24 +216,24 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 // where v above is v-vl and V = vh-vl+1.  This takes into account
 // that p*V might overflow 32-bits.  This macro is mostly robust.
 
-#define P2V( p, P, vl, vh )                                             \
-  ((vl)+( ((int64_t)(p)*(int64_t)((vh)-(vl)+1) + (int64_t)((P)-1)) /    \
-          (int64_t)(P) ))
+#define P2V( p, P, vl, vh )                                               \
+  ((vl)+((((int64_t)(p))*((int64_t)((vh)-(vl)+1)) + ((int64_t)((P)-1))) / \
+          ((int64_t)(P))))
 
 enum {
-  sort_block_size      = 8, // Larger than 8 saturates MFC in SPU pipes
-                            // Larger than 16 saturaes MFC channels
-
-  max_subsort_pipeline = 4*((MAX_PIPELINE+3)/4), // Must be a multiple of 4
+  sort_block_size   = 8, // Larger than 8 saturates MFC queues
+                         // Larger than 16 saturates MFC channels
+  max_subsort       = 4*((MAX_PIPELINE+3)/4), // Must be a multiple of 4
 
   // max_subsort_voxel limits local copies of segments of the next and
-  // partition arrays in SPU subsort pipeline to using at most 224KB
-  // of local store.  This restriction could be eliminated with a more
-  // complex coarse sorting and high level logic but is not expected
-  // to be an issue in practice (using 8 SPU, this corresponds to a
-  // 476^2 local domains in 2d and 59^3 local domains 3d).
+  // partition arrays in SPU subsort pipeline to using at most 208KB
+  // of local store.  This restriction could be using more subsorts
+  // than SPE and having each SPE process multiple subsorts.  But this
+  // is not expected to be an issue in practice---using 8 SPU, this
+  // corresponds to ~459^2 local domains in 2d and ~57^3 local domains
+  // in 3d).
 
-  max_subsort_voxel = 28672
+  max_subsort_voxel = 26624
 };
 
 typedef struct sort_p_pipeline_args {
@@ -241,20 +241,17 @@ typedef struct sort_p_pipeline_args {
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
   MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
-  /**/ // (0:max_subsort_pipeline-1,0:MAX_PIPELINE)
+  /**/ // (0:max_subsort-1,0:MAX_PIPELINE)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
   MEM_PTR( int,        128 ) next;             // Aux partitioning (0:n_voxel)
-  int n;                  // Number of particles
-  int n_subsort_pipeline; // Number of pipelines to be used for subsorts
-  int vl, vh;             // Particles may be contained in voxels [vl,vh].
-  int n_voxel;            // Number of voxels total (including ghosts)
+  int n;         // Number of particles
+  int n_subsort; // Number of pipelines to be used for subsorts
+  int vl, vh;    // Particles may be contained in voxels [vl,vh].
+  int n_voxel;   // Number of voxels total (including ghosts)
 
   PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
 
 } sort_p_pipeline_args_t;
-
-// FIXME: Temporary hack while SPU accelerating the sort
-void coarse_sort_p( sort_p_pipeline_args_t * ALIGNED(128) args );
 
 PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
 PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );

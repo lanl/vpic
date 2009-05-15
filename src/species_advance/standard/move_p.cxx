@@ -17,7 +17,11 @@
    not check its input arguments. Higher level routines are
    responsible for insuring valid arguments. */
 
-#if 0 // defined(V4_ACCELERATION)
+#if defined(V4_ACCELERATION) && !defined(V4_ALTIVEC_ACCELERATION)
+/* FIXME: STRONGLY SUSPECT A ROUNDOFF ISSUE IN THE ALTIVEC VERSION OF
+   DIVISION (OR IN LIEU OF THAT, A COMPILER BUG).  UNTIL THIS CAN BE
+   INVESTIGATED MORE CAREFULLY, USE THE REGULAR VERSION ON ALTIVEC
+   PLATFORMS. */
 
 /* High performance variant based on SPE accelerated version */
 
@@ -85,7 +89,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     /* FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER */
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf );
+    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf ); // FIXME: IS THIS DIVISION SAFE ON ALTIVEC?!
     /**/                          type = 3;             f0 = 1;
     f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;

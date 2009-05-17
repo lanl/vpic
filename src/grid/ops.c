@@ -10,15 +10,8 @@
 
 #include "grid.h"
 
-#if 0
-#define INDEX_FORTRAN_3_64(x,y,z,xl,xh,yl,yh,zl,zh) \
- ((x)-(xl) + ((xh)-(xl)+(int64_t)1)*((y)-(yl) + ((yh)-(yl)+(int64_t)1)*((z)-(zl))))
-#define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3_64((int64_t)x,(int64_t)y,(int64_t)z,(int64_t)0,(int64_t)lnx+(int64_t)1,(int64_t)0,(int64_t)lny+(int64_t)1,(int64_t)0,(int64_t)lnz+(int64_t)1)
-#define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3_64((int64_t)x,(int64_t)y,(int64_t)z,(int64_t)0,(int64_t)rnx+(int64_t)1,(int64_t)0,(int64_t)rny+(int64_t)1,(int64_t)0,(int64_t)rnz+(int64_t)1)
-#endif
-
-#define LOCAL_CELL_ID(x,y,z)  INDEX_FORTRAN_3(x,y,z,0,lnx+1,0,lny+1,0,lnz+1)
-#define REMOTE_CELL_ID(x,y,z) INDEX_FORTRAN_3(x,y,z,0,rnx+1,0,rny+1,0,rnz+1)
+#define LOCAL_CELL_ID(x,y,z)  VOXEL(x,y,z, lnx,lny,lnz)
+#define REMOTE_CELL_ID(x,y,z) VOXEL(x,y,z, rnx,rny,rnz)
 
 // Everybody must size their local grid in parallel
 

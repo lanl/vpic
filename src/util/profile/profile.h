@@ -48,17 +48,15 @@
 // A TIC/TOC block is semantically a single statement (so it works
 // fine as the body of a for loop or an if statement.
 
-// FIXME: USE A REAL HPC CLOCK HERE.  TIME00 IS PART OF VPIC.HXX
-
 #define TIC                                                           \
   do {                                                                \
-    double _profile_tic = time00();                                   \
+    double _profile_tic = wallclock();                                \
     do
 
 #define TOC(timer,n_calls)                                            \
     while(0);                                                         \
     profile_internal_use_only[profile_internal_use_only_##timer].t += \
-      time00() - _profile_tic;                                        \
+      wallclock() - _profile_tic;                                     \
     profile_internal_use_only[profile_internal_use_only_##timer].n += \
       (n_calls);                                                      \
   } while(0)
@@ -88,6 +86,12 @@ BEGIN_C_DECLS
 
 void
 update_profile( int dump );
+
+// Returns a local wallclock in seconds.  Only relative values are
+// accurate, and then only within same "short run".
+
+double
+wallclock( void );
 
 END_C_DECLS
 

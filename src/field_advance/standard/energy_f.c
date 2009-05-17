@@ -1,7 +1,7 @@
 #define IN_sfa
 #include "sfa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 typedef struct pipeline_args {
   const field_t                * ALIGNED(128) f;

@@ -1,7 +1,7 @@
 #define IN_spa
 #include "spa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, g->nx,g->ny,g->nz) ]
 
 // Accumulate particle to rhob with locally adjusted accumulation.
 // FIXME: THIS FUNCTION DOESN'T BELONG HERE ANYMORE!
@@ -42,8 +42,9 @@ accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
   // Adjust the weights for a corrected local accumulation of rhob
   // See note in synchronize_rho why we must do this for rhob and
   // not for rhof.
+  // FIXME: GRID SHOULD PROVIDE v TO x,y,z FUNCTIONALITY
 
-  i  = p->i;        // i = INDEX_FORTRAN_3(ix,iy,iz,0,nx+1,0,ny+1,0,nz+1)
+  i  = p->i;        // i = VOXEL(ix,iy,iz, nx,ny,nz)
   /**/              //   = ix + (nx+2)*( iy + (ny+2)*iz )
   j  = i/(g->nx+2); // j = iy + (ny+2)*iz
   i -= j*(g->nx+2); // i = ix

@@ -10,7 +10,7 @@
 
 #include "sf_interface.h"
 
-#define hydro(x,y,z) hydro[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define hydro(x,y,z) hydro[ VOXEL(x,y,z, nx,ny,nz) ]
 
 // Generic looping
 #define XYZ_LOOP(xl,xh,yl,yh,zl,zh) \

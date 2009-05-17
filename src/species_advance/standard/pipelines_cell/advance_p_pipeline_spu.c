@@ -5,27 +5,6 @@
 #include <v4c_spu.h>
 #include <spu_mfcio.h>
 
-#ifdef IN_HARNESS
-#include <profile.h>
-#endif
-
-#ifndef LIKELY
-#define LIKELY(_c)   __builtin_expect((_c),1)
-#endif
-
-#ifndef UNLIKELY
-#define UNLIKELY(_c) __builtin_expect((_c),0)
-#endif
-
-#if 0
-#include <stdio.h>
-#define INSPECT(v) printf( "%i: "#v " = %e %e %e %e\n", __LINE__, \
-                           EXTRACT(v,0), \
-                           EXTRACT(v,1), \
-                           EXTRACT(v,2), \
-                           EXTRACT(v,3) )
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // Particle triple buffering configuration
 
@@ -943,7 +922,6 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
   particle_t       * ALIGNED(128) p_block[3];
   int idx[3];
   int np_block[3];
-  /*uint32_t msg;*/
 
   particle_mover_t * ALIGNED(128) m_block[3];
   int nm_block[3];
@@ -981,11 +959,6 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
   DECLARE_ALIGNED_ARRAY( accumulator_t, 128, _a_cache_writeback,
                          A_CACHE_DMA_CHANNEL_LAST -
                          A_CACHE_DMA_CHANNEL_FIRST + 1 );
-
-# ifdef IN_HARNESS
-  prof_clear();
-  prof_start();
-# endif
 
   // Publish the addresses of file scope globals actually located on
   // the stack (yes, this is an ugly kludge but so are overlays).
@@ -1132,9 +1105,6 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
            31, 0, 0 );
   mfc_write_tag_mask( (1<<31) );
   mfc_read_tag_status_all();
-  
-# ifdef IN_HARNESS
-  prof_stop();
-# endif
+ 
 }
 

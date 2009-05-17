@@ -3,7 +3,7 @@
 #define IN_vfa
 #include "vfa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 #define UPDATE_TCAX() f0->tcax = py*(f0->cbz-fy->cbz) - pz*(f0->cby-fz->cby)
 #define UPDATE_TCAY() f0->tcay = pz*(f0->cbx-fz->cbx) - px*(f0->cbz-fx->cbz)

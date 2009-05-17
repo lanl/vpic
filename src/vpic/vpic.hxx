@@ -498,10 +498,12 @@ private:
     return (double)mp_nproc(grid->mp);
   }
  
+  // FIXME: ELIMINATE THIS AND THE CORRESPONDING CALLS IN MP
   inline double time00( void ) {
     return mp_time00(grid->mp);
   }
  
+  // FIXME: ELIMINATE THIS AND THE CORRESPONDING CALLS IN MP
   inline double elapsed( void ) {
     return mp_elapsed(grid->mp);
   }

@@ -110,9 +110,12 @@ typedef struct load_interpolator_pipeline_args {
 
   interpolator_t * ALIGNED(128) fi;
   const field_t  * ALIGNED(128) f;
-  const grid_t   *              g;
+  const int64_t  * ALIGNED(128) nb;
+  int nx;
+  int ny;
+  int nz;
 
-  PAD_STRUCT( 3*SIZEOF_MEM_PTR )
+  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 3*sizeof(int) )
 
 } load_interpolator_pipeline_args_t;
 

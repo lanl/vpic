@@ -158,7 +158,7 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 
 #endif
 
-#define VOXEL(x,y,z) INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)
+#define VOX(x,y,z) VOXEL(x,y,z, g->nx,g->ny,g->nz)
 
 void
 reduce_accumulators( accumulator_t * ALIGNED(128) a,
@@ -170,7 +170,7 @@ reduce_accumulators( accumulator_t * ALIGNED(128) a,
   if( g==NULL ) ERROR(("Invalid grid"));
 
   // FIXME: POW2_FLOOR HERE
-  i0 = (VOXEL(1,1,1)/2)*2; // Round i0 down to even for 128B align on Cell
+  i0 = (VOX(1,1,1)/2)*2; // Round i0 down to even for 128B align on Cell
 
   /**/                       na = serial.n_pipeline;
   if( na<thread.n_pipeline ) na = thread.n_pipeline;
@@ -180,7 +180,7 @@ reduce_accumulators( accumulator_t * ALIGNED(128) a,
   na++; /* 1 + max( {serial,thread,spu}.n_pipeline ) */
 
   args->a       = a + i0;
-  args->n       = (((VOXEL(g->nx,g->ny,g->nz) - i0 + 1 )+1)/2)*2;
+  args->n       = (((VOX(g->nx,g->ny,g->nz) - i0 + 1 )+1)/2)*2;
   args->n_array = na;
   args->s_array = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
 

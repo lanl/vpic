@@ -133,54 +133,6 @@ partition_absorbing_box( grid_t * g,
     set_fbc(g,BOUNDARY(0,0, 1),absorb_fields);
     set_pbc(g,BOUNDARY(0,0, 1),pbc);
   }
-
-#if defined(DEBUG_BOUNDARY)
-  int i, x, y, z;
-#define LOCAL_CELL_ID(x,y,z) \
-	INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)
-
-  for(z=0; z<=g->nz+1; z++) {
-    for(y=0; y<=g->ny+1; y++) {
-      for(x=0; x<=g->nx+1; x++) {
-	    i = 6*LOCAL_CELL_ID(x,y,z);
-
-	    g->neighbor_old[i+0] = g->neighbor[i+0];
-	    g->neighbor_old[i+1] = g->neighbor[i+1];
-	    g->neighbor_old[i+2] = g->neighbor[i+2];
-	    g->neighbor_old[i+3] = g->neighbor[i+3];
-	    g->neighbor_old[i+4] = g->neighbor[i+4];
-	    g->neighbor_old[i+5] = g->neighbor[i+5];
-
-		if((x>1 && x<g->nx) &&
-		   (y>1 && y<g->ny) &&
-		   (z>1 && z<g->nz)) {
-
-	       if((g->neighbor[i+0] < g->rangel) ||
-	         (g->neighbor[i+1]  < g->rangel) ||
-	         (g->neighbor[i+2]  < g->rangel) ||
-	         (g->neighbor[i+3]  < g->rangel) ||
-	         (g->neighbor[i+4]  < g->rangel) ||
-	         (g->neighbor[i+5] < g->rangel)) {
-			 ERROR(("Invalid id in boundary(low): %ld %ld %ld %ld %ld %ld %ld, (%d, %d, %d)",
-			 	g->rangel, g->neighbor[i+0], g->neighbor[i+1], g->neighbor[i+2],
-				g->neighbor[i+3], g->neighbor[i+4], g->neighbor[i+5], x, y, z));
-		   } // if 
-
-	       if((g->neighbor[i+0] >= g->rangeh) ||
-	         (g->neighbor[i+1]  >= g->rangeh) ||
-	         (g->neighbor[i+2]  >= g->rangeh) ||
-	         (g->neighbor[i+3]  >= g->rangeh) ||
-	         (g->neighbor[i+4]  >= g->rangeh) ||
-	         (g->neighbor[i+5] >= g->rangeh)) {
-			 ERROR(("Invalid id in boundary(high): %ld %ld %ld %ld %ld %ld %ld",
-			 	g->rangeh, g->neighbor[i+0], g->neighbor[i+1], g->neighbor[i+2],
-				g->neighbor[i+3], g->neighbor[i+4], g->neighbor[i+5]));
-		   } // if 
-		} // if
-      } // for
-    } // for
-  } // for
-#endif
 }
 
 // FIXME: HANDLE 1D and 2D SIMULATIONS IN PARTITION_METAL_BOX

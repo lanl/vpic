@@ -1,4 +1,5 @@
 #include "profile.h"
+#include <sys/time.h>
 
 profile_internal_use_only_timer_t profile_internal_use_only[] = {
 # define PROFILE_TIMER_INIT( timer ) { #timer, 0., 0., 0, 0 },
@@ -44,4 +45,11 @@ update_profile( int dump ) {
     p->t = 0;
     p->n = 0;
   }
+}
+
+double
+wallclock( void ) {
+  struct timeval tv[1];
+  gettimeofday( tv, NULL );
+  return (double)(tv->tv_sec) + 1e-6*(double)(tv->tv_usec);
 }

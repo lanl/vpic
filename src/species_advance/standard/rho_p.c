@@ -18,7 +18,7 @@
 // computational domain; see note in synchronize_rhob about why this
 // is done this way.  All particles on the list must be inbounds.
 
-#define f(x,y,z) f0[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
+#define f(x,y,z) f0[ VOXEL(x,y,z, g->nx,g->ny,g->nz) ]
 
 void
 accumulate_rho_p( field_t          * ALIGNED(16)  f0,

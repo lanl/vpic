@@ -2,12 +2,13 @@
 #define HAS_V4_PIPELINE
 #include "sf_interface_private.h"
 
-#define fi(x,y,z) fi[  INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-#define f(x,y,z)  f [  INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-#define nb(x,y,z) nb[6*INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define fi(x,y,z) fi[   VOXEL(x,y,z, nx,ny,nz) ]
+#define f(x,y,z)  f [   VOXEL(x,y,z, nx,ny,nz) ]
+#define nb(x,y,z) nb[ 6*VOXEL(x,y,z, nx,ny,nz) ]
 
-#define HAS_SPU_INTERPOLATOR \
-  ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
+#define HAS_SPU_INTERPOLATOR                                \
+  ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && \
+  defined(USE_CELL_SPUS)
 
 void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
@@ -15,11 +16,10 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
                             int n_pipeline ) {
   interpolator_t * ALIGNED(128) fi = args->fi;
   const field_t  * ALIGNED(128) f  = args->f;
-  const grid_t   *              g  = args->g;
 
 # if HAS_SPU_INTERPOLATOR
-  const int64_t * ALIGNED(128) nb = args->g->neighbor;
-  const int64_t * ALIGNED(16)  pnb;
+  const int64_t * ALIGNED(128) nb = args->nb;
+  const int64_t * ALIGNED(16) pnb;
 # endif
 
   interpolator_t * ALIGNED(16) pi;
@@ -29,9 +29,9 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   const field_t  * ALIGNED(16) pfyz, * ALIGNED(16) pfzx, * ALIGNED(16) pfxy;
   int x, y, z, n_voxel;
 
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
+  const int nx = args->nx;
+  const int ny = args->ny;
+  const int nz = args->nz;
 
   const float fourth = 0.25;
   const float half   = 0.5;
@@ -158,10 +158,9 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int n_pipeline ) {
   interpolator_t * ALIGNED(128) fi = args->fi;
   const field_t  * ALIGNED(128) f  = args->f;
-  const grid_t   *              g  = args->g;
 
 # if HAS_SPU_INTERPOLATOR
-  const int64_t * ALIGNED(128) nb = args->g->neighbor;
+  const int64_t * ALIGNED(128) nb = args->nb;
   const int64_t * ALIGNED(16) pnb;
 # endif
 
@@ -172,9 +171,9 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   const field_t * ALIGNED(16) pfyz, * ALIGNED(16) pfzx, * ALIGNED(16) pfxy;
   int x, y, z, n_voxel;
 
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
+  const int nx = args->nx;
+  const int ny = args->ny;
+  const int nz = args->nz;
 
   const v4float fourth(0.25);
   const v4float half(  0.5 );
@@ -362,7 +361,10 @@ load_interpolator( interpolator_t * ALIGNED(128) fi,
 
   args->fi = fi;
   args->f  = f;
-  args->g  = g;
+  args->nb = g->neighbor;
+  args->nx = g->nx;
+  args->ny = g->ny;
+  args->nz = g->nz;
 
   EXEC_PIPELINES( load_interpolator, args, 0 );
   WAIT_PIPELINES();

@@ -37,8 +37,7 @@
 
 #define repeat(count) for( int64_t _remain=(int64_t)(count); _remain; _remain-- )
 
-#define LOCAL_CELL_ID(x,y,z) \
-  INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)
+#define LOCAL_CELL_ID(x,y,z) VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)
 
 #define field(x,y,z) field[LOCAL_CELL_ID(x,y,z)]
 

@@ -1,7 +1,7 @@
 #define IN_vfa
 #include "vfa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 #define MARDER_EX() f0->ex += px*(fx->div_e_err-f0->div_e_err)
 #define MARDER_EY() f0->ey += py*(fy->div_e_err-f0->div_e_err)

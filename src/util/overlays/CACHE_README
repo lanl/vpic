@@ -1,0 +1,60 @@
+- Binary distribution of the code should retain the IBM copyright notice that
+  can be found in the headers in the accompanying materials.
+
+- This was modified from IBM's Cell-SDK implementation to support 64-bit
+  addressing.  The API now allows caching memory any 4GB window into the 64-bit
+  address space.  The base of this Window must be at least 16-byte aligned,
+  though 128-byte aligned is preferable.
+
+- This was modified from IBM's Cell-SDK implementation to be friendly for
+  overlays.  Specifically, the cache memory is no longer on the data segment
+  and declaring a cache should use, at most, 24 bytes of the data segment
+  (which presumably would be located in the root overlay segment).  Further,
+  caches are only visible in the compile unit in which they were declared.
+  Lastly, now caches have a well-defined lifetime (so that overlay switches do
+  not mess up the cache).
+
+- For technical reasons involving the hacky way IBM wrote cache-api and the
+  even hackier way I made it work with overlays and 64-bit addressing, a minor
+  restriction has appeared.  If multiple distinct caches are declared in the
+  same compile unit, that much have the same settings for CACHE_LOG2NWAY and
+  CACHE_STATS.  I don't ever expect this to be an issue (but could be corrected
+  with much nashing of teeth if the need arose).
+
+Basic usage:
+
+    ...
+
+    /* Caches are declared in the usual way. */
+
+    #define CACHE_NAME foo_cache
+    #define CACHED_TYPE foo_t
+    #include "../../util/spu/cache-api.h"
+
+    /* The cache is now visible to all in this compile unit.
+       Less than 24 bytes has been added to the data segment */
+
+    ...
+
+    void
+    _SPUEAR_foo_pipeline_spu( MEM_PTR( foo_pipeline_args_t, 128 ) argp,
+                              int pipeline_rank,
+                              int n_pipeline ) {
+
+      /* This is the entry point where the above cache will be used.  The
+         cache is not yet ready for use. */
+
+      ... Load pipeline args into args (including ea_base to use) ...
+
+      cache_init( foo_cache, ea_base );
+
+      /* This cache is available for use and empty.  All other cache APIs can
+         be used exactly like previously.  However, any ea passed to these
+         is now relative to args->base.  Thus, if you pass 0 to cache_init,
+         all other cache APIs behave _exactly_ like previously. */
+
+      ... Do things ...
+
+      return; /* The cache is no longer avaiable for use */
+    }
+

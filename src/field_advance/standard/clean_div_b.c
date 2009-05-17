@@ -1,7 +1,7 @@
 #define IN_sfa
 #include "sfa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 #define MARDER_CBX() f0->cbx += px*( f0->div_b_err - fx->div_b_err )
 #define MARDER_CBY() f0->cby += py*( f0->div_b_err - fy->div_b_err )

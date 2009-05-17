@@ -2,7 +2,7 @@
 #define IN_vfa
 #include "vfa_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 #define UPDATE_DERR_E() f0->div_e_err = ( ( ( px*( f0->ex - fx->ex ) +   \
                                               py*( f0->ey - fy->ey ) ) + \

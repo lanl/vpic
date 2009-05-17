@@ -6,8 +6,8 @@
 #define IN_sf_interface
 #include "sf_interface_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
-#define a(x,y,z) a[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
+#define a(x,y,z) a[ VOXEL(x,y,z, nx,ny,nz) ]
 
 void
 unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,

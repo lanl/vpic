@@ -1155,8 +1155,7 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 	int dim[3];
 
 	/* define to do C-style indexing */
-	#define f(x,y,z) \
-		f[INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)]
+#       define f(x,y,z) f[ VOXEL(x,y,z, grid->nx,grid->ny,grid->nz) ]
 
 	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 	nxout = (grid->nx)/istride;
@@ -1419,8 +1418,7 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 	int dim[3];
 
 	/* define to do C-style indexing */
-	#define hydro(x,y,z) \
-		hydro[INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)]
+#       define hydro(x,y,z) hydro[ VOXEL(x,y,z, grid->nx,grid->ny,grid->nz) ]
 
 	/* IMPORTANT: these values are written in WRITE_HEADER_V0 */
 	nxout = (grid->nx)/istride;

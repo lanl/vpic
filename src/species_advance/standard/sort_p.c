@@ -128,7 +128,7 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
   }
 }
 
-#define VOXEL(x,y,z) INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)
+#define VOX(x,y,z) VOXEL(x,y,z,g->nx,g->ny,g->nz)
 
 void
 sort_p( species_t * sp,
@@ -168,8 +168,8 @@ sort_p( species_t * sp,
   args->next             = (int *)( args->aux_p + sp->np );//ALIGN_PTR( int, args->aux_p + sp->np, 128 );
   args->n                = sp->np;
   args->n_subsort        = n_subsort;
-  args->vl               = VOXEL(1,1,1);
-  args->vh               = VOXEL(g->nx,g->ny,g->nz);
+  args->vl               = VOX(1,1,1);
+  args->vh               = VOX(g->nx,g->ny,g->nz);
   args->n_voxel          = n_voxel;
 
   if( n_subsort>1 ) {

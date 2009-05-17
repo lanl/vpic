@@ -48,7 +48,7 @@ typedef struct boundary {
  char params[MAX_BOUNDARY_DATA_SIZE]; 
 } boundary_t;
 
-#define BOUNDARY(i,j,k) INDEX_FORTRAN_3(i,j,k,-1,1,-1,1,-1,1)
+#define BOUNDARY(i,j,k) (13+(i)+3*(j)+9*(k)) /* FORTRAN -1:1,-1:1,-1:1 */
 
 enum grid_enums {
 
@@ -68,11 +68,11 @@ enum grid_enums {
   // sign
   //
   // Anti-symmetric -> Image charges are opposite signed (ideal metal)
-  //                   Boundary rho/j are accumulated over partial cell+image
+  //                   Boundary rho/j are accumulated over partial voxel+image
   // Symmetric      -> Image charges are same signed (symmetry plane or pmc)
-  //                   Boundary rho/j are accumulated over partial cell+image
+  //                   Boundary rho/j are accumulated over partial voxel+image
   // Absorbing      -> No image charges
-  //                   Boundary rho/j are accumulated over partial cell only
+  //                   Boundary rho/j are accumulated over partial voxel only
   //
   // rho     -> Anti-symmetric      | rho     -> Symmetric
   // jf_tang -> Anti-symmetric      | jf_tang -> Symmetric
@@ -111,31 +111,34 @@ typedef struct grid {
   float damp;             // Radiation damping parameter
                           // FIXME: DOESN'T GO HERE
 
-  /* Phase 2 grid data structures */
-  float x0, y0, z0;       // Min corner local domain (must be coherent) */
-  float x1, y1, z1;       // Max corner local domain (must be coherent) */
+  // Phase 2 grid data structures 
+  float x0, y0, z0;       // Min corner local domain (must be coherent)
+  float x1, y1, z1;       // Max corner local domain (must be coherent)
   float dx, dy, dz;       // Cell dimensions (CONVENIENCE ... USE
                           // x0,x1 WHEN DECIDING WHICH NODE TO USE!)
-  float rdx, rdy, rdz;    // Inverse cell dimensions (CONVENIENCE)
-  int   nx, ny, nz;       // Number of cells in domain */
+  float rdx, rdy, rdz;    // Inverse voxel dimensions (CONVENIENCE)
+  int   nx, ny, nz;       // Local voxel mesh resolution.  Voxels are
+                          // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
+                          // with voxels 1:nx,1:ny,1:nz being non-ghost
+                          // voxels.
   int   bc[27];           // (-1:1,-1:1,-1:1) FORTRAN indexed array of
-  /**/                    // boundary conditions to apply at domain edge
-  /**/                    // 0 ... nproc-1 ... comm boundary condition
-  /**/                    // <0 ... locally applied boundary condition
+                          // boundary conditions to apply at domain edge
+                          // 0 ... nproc-1 ... comm boundary condition
+                          // <0 ... locally applied boundary condition
 
   // Phase 3 grid data structures
 
-  // NOTE: LOCAL_CELL_ID LIMITS NUMBER OF CELLS TO 2^31 (INCLUDING
-  // GHOSTS) PER NODE.  CELL ADJACENCY INDEXING FURTHER LIMITS TO
-  // (2^31)/6.  THE EMITTER COMPONENT ID STRATEGY FURTHER LIMITS TO
-  // 2^27 PER NODE.  THE LIMIT IS 2^64 OVER ALL NODES THOUGH. */
+  // NOTE: VOXEL INDEXING LIMITS NUMBER OF VOXELS TO 2^31 (INCLUDING
+  // GHOSTS) PER NODE.  NEIGHBOR INDEXING FURTHER LIMITS TO
+  // (2^31)/6.  THE EMITTER COMPONENT ID INDEXING FURTHER LIMITS TO
+  // 2^27 PER NODE.  THE LIMIT IS 2^64 OVER ALL NODES THOUGH.
 
   int64_t * ALIGNED(16) range;
                           // (0:nproc) indexed array giving range of
-                          // global indexes of cells owned by each
+                          // global indexes of voxel owned by each
                           // processor.  Replicated on each processor.
                           // (range[rank]:range[rank+1]-1) are global
-                          // cells owned by processor "rank".  Note:
+                          // voxels owned by processor "rank".  Note:
                           // range[rank+1]-range[rank] <~ 2^31 / 6
 
 #if defined(DEBUG_BOUNDARY)
@@ -143,11 +146,11 @@ typedef struct grid {
 #endif
 
   int64_t * ALIGNED(128) neighbor;
-                          // (0:5,0:local_num_cells-1) FORTRAN indexed
+                          // (0:5,0:local_num_voxel-1) FORTRAN indexed
                           // array neighbor(0:5,lidx) are the global
-                          // indexes of neighboring cells of the cell
-                          // with local index "lidx".  Negative if
-                          // neighbor is a boundary condition.
+                          // indexes of neighboring voxels of the
+                          // voxel with local index "lidx".  Negative
+                          // if neighbor is a boundary condition.
 
   int64_t rangel, rangeh; // Redundant for move_p performance reasons:
                           //   rangel = range[rank]
@@ -161,6 +164,37 @@ typedef struct grid {
                           // FIXME: DOESN'T GO HERE!
 
 } grid_t;
+
+// Given a voxel mesh coordinates (on 0:nx+1,0:ny+1,0:nz+1) and
+// voxel mesh resolution (nx,ny,nz), return the index of that voxel.
+
+#define VOXEL(x,y,z, nx,ny,nz) ((x) + ((nx)+2)*((y) + ((ny)+2)*(z)))
+
+// Advance the voxel mesh index (v) and corresponding voxel mesh
+// coordinates (x,y,z) in a region with min- and max-corners of
+// (xl,yl,zl) and (xh,yh,zh) of a (nx,ny,nz) resolution voxel mesh in
+// FORTRAN ordering.  Results will not be valid (v,x,y,z) are not in
+// the region or if (v,x,y,z) is the last voxel in that region.
+//
+// This macro is not robust.  Macro arguments should be safe against
+// multiple evaluation.  Further, this macro is not semantically a
+// single statement.  (It is meant for use in high performance stencil
+// inner loops.)
+//
+// This is written with seeming extraneously if tests in order to get
+// the compiler to generate branceless conditional move and add 
+// instructions (none of the branches below are actual branches in
+// assembly).
+
+#define NEXT_VOXEL(v,x,y,z, xl,xh, yl,yh, zl,zh, nx,ny,nz) \
+  (v)++;                                                   \
+  (x)++;                                                   \
+  if( (x)>(xh) ) (v) +=  (nx)-(xh)+(xl)+1;                 \
+  if( (x)>(xh) ) (y)++;                                    \
+  if( (x)>(xh) ) (x) = (xl);                               \
+  if( (y)>(yh) ) (v) += ((ny)-(yh)+(yl)+1)*((nx)+2);       \
+  if( (y)>(yh) ) (z)++;                                    \
+  if( (y)>(yh) ) (y) = (yl)
 
 BEGIN_C_DECLS
 
@@ -225,18 +259,18 @@ set_pbc( grid_t *g, int bound, int pbc );
 // x-boundary condition is local.  Similarly for y- and z-.
 //
 // (2) If this node has ownership of the point, compute the relative
-// cell and offset of the x-coordinate via
+// voxel and offset of the x-coordinate via
 // g->nx*((x-g->x0)/(g->x1-g->x0)), _NOT_ (x-g->x0)/g->dx and _NOT_
 // (x-g->x0)*(1/g->dx)!  Similarly for y and z.
 //
-// (3) Break the cell and offsets into integer and fractional parts.
+// (3) Break the voxel and offsets into integer and fractional parts.
 // Particles exactly on the far wall should have their fractional
 // particles set to 1 and their integer parts subtracted by 1.  Double
-// the fractional part and subtract by one to get the cell centered
-// offset.  Convert the local cell coordinates into a local cell index
-// using FORTRAN indexing.
+// the fractional part and subtract by one to get the voxel centered
+// offset.  Convert the local voxel coordinates into a local voxel index
+// using VOXEL above.
 //
-// Reverse this protocol to robustly convert from cell+offset to
+// Reverse this protocol to robustly convert from voxel+offset to
 // global coordinates.  Due to the vagaries of floating point, the
 // inverse process may not be exact.
 
@@ -326,20 +360,19 @@ end_send_port( int i, // x port coord ([-1,0,1])
 // In distribute_voxels.c
 
 // Given a block of voxels to be processed, determine the number of
-// voxels and the first voxel a particular job assigned to a pipeline
-// should process.  The return voxel is the number of voxels to
-// process.
+// the first voxel (v,x,y,z) a particular job assigned to a pipeline
+// should process and return the number of voxels to process.
 //
 // It is assumed that the pipelines will process voxels in FORTRAN
 // ordering (e.g. inner loop increments x-index).
 //
 // jobs are indexed from 0 to n_job-1.  jobs are _always_ have the
 // number of voxels an integer multiple of the bundle size.  If job 
-// is set to n_job, this function will compute the voxel index of
-// the first voxel in the final incomplete bundle and return the
-// number of voxels in the final incomplete bundle.
-
-// FIXME: MACROIZE THIS SO BOTH PPE AND SPE CAN USE IT!
+// is set to n_job, this function will determine the parameters of
+// the final incomplete bundle.
+//
+// FIXME: To acccomodate PPE and SPE builds, the distribute_voxels
+// function is deprecated.  Use the macro instead.
 
 int
 distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
@@ -348,6 +381,25 @@ distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
                    int bundle,         // number of voxels in a bundle
                    int job, int n_job, // job ... on [0,n_job-1]
                    int * _x, int * _y, int * _z );
+
+#define DISTRIBUTE_VOXELS( x0,x1, y0,y1, z0,z1, b, p,P, v,x,y,z,nv ) do { \
+    int _x0=(x0), _y0=(y0), _z0=(z0), _b=(b), _p=(p), _P=(P);           \
+    int _nx = (x1)-_x0+1, _ny = (y1)-_y0+1, _nv = _nx*_ny*((z1)-_z0+1); \
+    double _t = (double)( _nv/_b ) / (double)_P;                        \
+    int          _v=_b*(int)( _t*(double)(_p  ) + 0.5 ), _x=_v, _y, _z; \
+    if( _p<_P ) _nv=_b*(int)( _t*(double)(_p+1) + 0.5 );                \
+    _nv -= _v;                                                          \
+    /**/           /* x = (x-x0) + nx*( (y-y0) + ny*(z-z0) ) */         \
+    _y   = _x/_nx; /* y =               (y-y0) + ny*(z-z0)   */         \
+    _z   = _y/_ny; /* z =                           (z-z0)   */         \
+    _x  -= _y*_nx; /* x = (x-x0)                             */         \
+    _y  -= _z*_ny; /* y =               (y-y0)               */         \
+    (v)  = _v;                                                          \
+    (x)  = _x+_x0;                                                      \
+    (y)  = _y+_y0;                                                      \
+    (z)  = _z+_z0;                                                      \
+    (nv) = _nv;                                                         \
+  } while(0)
 
 END_C_DECLS
 

@@ -34,7 +34,24 @@
 #define _UTIL_STRINGIFY(s)#s
 #define EXPAND_AND_STRINGIFY(s)_UTIL_STRINGIFY(s)
 
-// Alignment macros
+// Conditional annotations
+
+// LIKELY and UNLIKELY allow the programmer to annotate the likelihood
+// of a given conditional being true.
+
+// FIXME: THE MACHINE DESCRIPTIONS SHOULD BE RESPONSIBLE FOR DEFINING
+// THIS TO A NON-TRIVIAL VALUE IF THE PLATFORM COMPILER SUPPORTS
+// SUCH.
+
+#ifndef LIKELY
+#define LIKELY(_c)   __builtin_expect((_c),1)
+#endif
+
+#ifndef UNLIKELY
+#define UNLIKELY(_c) __builtin_expect((_c),0)
+#endif
+
+// Pointer qualifiers
 
 // This pointer modifier indicates that a pointer can be assumed to
 // have at least the given power-of-two alignment.
@@ -45,8 +62,6 @@
 #ifndef ALIGNED
 #define ALIGNED(a)
 #endif
-
-// Restrict macros
 
 // This pointer modifier indicates that a pointer is restricted in
 // the C99 sense.  This is added to allow C++ code (which technically

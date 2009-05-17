@@ -19,7 +19,7 @@
 // hydro jx,jy,jz are for diagnostic purposes only; they are not
 // accumulated with a charge conserving algorithm.
 
-#define h(x,y,z) h0[INDEX_FORTRAN_3(x,y,z,0,g->nx+1,0,g->ny+1,0,g->nz+1)]
+#define h(x,y,z) h0[ VOXEL(x,y,z, g->nx,g->ny,g->nz) ]
 
 void
 accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,

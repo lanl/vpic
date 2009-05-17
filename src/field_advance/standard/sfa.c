@@ -183,7 +183,7 @@ delete_material_coefficients( material_coefficient_t * ALIGNED(128) mc ) {
 
 /*****************************************************************************/
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 void
 clear_jf( field_t      * ALIGNED(128) f,

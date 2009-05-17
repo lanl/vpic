@@ -1,7 +1,7 @@
 #define IN_vfa_v4
 #include "vfa_v4_private.h"
 
-#define f(x,y,z) f[INDEX_FORTRAN_3(x,y,z,0,nx+1,0,ny+1,0,nz+1)]
+#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 #define UPDATE_EX() f0->ex += ( ( py*(f0->cbz-fy->cbz) - pz*(f0->cby-fz->cby) ) - cj*f0->jfx )
 #define UPDATE_EY() f0->ey += ( ( pz*(f0->cbx-fz->cbx) - px*(f0->cbz-fx->cbz) ) - cj*f0->jfy )

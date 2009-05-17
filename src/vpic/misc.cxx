@@ -78,7 +78,7 @@ vpic_simulation::inject_particle( species_t * sp,
   p->dx = (float)x; // Note: Might be rounded to be on [-1,1]
   p->dy = (float)y; // Note: Might be rounded to be on [-1,1]
   p->dz = (float)z; // Note: Might be rounded to be on [-1,1]
-  p->i  = INDEX_FORTRAN_3(ix,iy,iz,0,nx+1,0,ny+1,0,nz+1);
+  p->i  = VOXEL(ix,iy,iz, nx,ny,nz);
   p->ux = (float)ux;
   p->uy = (float)uy;
   p->uz = (float)uz;

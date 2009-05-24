@@ -166,16 +166,19 @@ __cache_line_lookup (unsigned int set, unsigned int ea)
 
 #else
 
-#define __cache_replace_cntr		CACHE_VAR (cache_replace_cntr)
-static unsigned * __attribute__ ((aligned (16))) __cache_replace_cntr;
+#define __cache_replace_cntr CACHE_VAR (cache_replace_cntr)
+static unsigned * RESTRICT __attribute__ ((aligned (16))) __cache_replace_cntr;
 
-/* FIXME: ALL INDIVIDUAL CACHES MUST BE EITHER 1 WAY OR 4 WAY IN A
-   FILE DUE TO HACKERY SURROUNDING DECLARIONS AND SO FORTH. */
-#define __cache_4way_init(name,base) /* Safe outside these headers */   \
-  unsigned CACHE_SYM(name,stack_replace_cntr)[ CACHE_SYM(name,cache_nsets) ] \
-  __attribute__ ((aligned (16)));                                       \
-  CACHE_SYM(name,cache_replace_cntr) = CACHE_SYM(name,stack_replace_cntr); \
-  CACHE_SYM(name,cache_ea_base)      = (base)
+/* Instead of clearing this during init, we could use CACHE_NWAY_MASK
+   in code which accesses this. */
+/* FIXME: DUE TO EVIL HACKERY INVOLVED HERE, ALL CACHES IN A FILE MUST
+   BE EITHER 4-WAY OR 1-WAY. */
+#define __cache_4way_init(name,base) /* Safe outside these headers */ \
+  SPU_MALLOC( CACHE_SYM(name,cache_replace_cntr),                     \
+              CACHE_SYM(name,cache_nsets), 16 );                      \
+  CLEAR( CACHE_SYM(name,cache_replace_cntr),                          \
+         CACHE_SYM(name,cache_nsets) );                               \
+  CACHE_SYM(name,cache_ea_base) = (base)
 
 /* Lookup EA in set directory. */
 static inline vec_uint4
@@ -287,8 +290,7 @@ __cache_rd_miss (unsigned int ea_aligned, int set)
 
 /* Look up EA and return cached value. */
 static inline CACHED_TYPE
-__cache_rd (unsigned int ea)
-{
+__cache_rd (unsigned int ea) {
     unsigned int ea_aligned = ea & CACHE_ALIGN_MASK;
     int set  = __cache_set_num (ea);
 #if (CACHE_NWAY == 1)
@@ -297,30 +299,22 @@ __cache_rd (unsigned int ea)
     int lnum = __cache_line_lookup (set, spu_splats (ea_aligned));
 #endif
     int byte = __cacheline_byte_offset (ea);
-
-    CACHED_TYPE ret = *CACHE_ADDR (lnum, byte);
-
-    if (unlikely (lnum < 0))
-    {
+    if (unlikely (lnum < 0)) {
 	CACHE_STATS_RD_MISS (set);
 	lnum = __cache_rd_miss (ea_aligned, set);
-    unsigned int old_tag_mask;
-    old_tag_mask = spu_readch(MFC_RdTagMask);
-	spu_writech (MFC_WrTagMask, __cache_tagmask (set));
-	spu_mfcstat (MFC_TAG_UPDATE_ALL);
-    spu_writech(MFC_WrTagMask, old_tag_mask);
-	return *CACHE_ADDR (lnum, byte);
+	spu_writech(MFC_WrTagMask, __cache_tagmask (set));
+	spu_mfcstat(MFC_TAG_UPDATE_ALL);
     }
 #ifdef CACHE_STATS
     else {
 	CACHE_STATS_RD_HIT (set);
     }
 #endif
-    return ret;
+    return *CACHE_ADDR (lnum, byte);
 }
 
 static inline CACHED_TYPE *
-__cache_rw (unsigned int ea, unsigned wait)
+__cache_rw (unsigned int ea, unsigned hit_wait, unsigned miss_wait)
 {
     unsigned int ea_aligned = ea & CACHE_ALIGN_MASK;
     int set  = __cache_set_num (ea);
@@ -337,23 +331,24 @@ __cache_rw (unsigned int ea, unsigned wait)
     {
 	CACHE_STATS_RD_MISS(set);
 	lnum = __cache_rd_miss (ea_aligned, set);
-	if (likely (wait)) {
-        unsigned int old_tag_mask;
-        old_tag_mask = spu_readch(MFC_RdTagMask);
+	if( miss_wait ) {
 	    spu_writech (MFC_WrTagMask, __cache_tagmask (set));
 	    spu_mfcstat (MFC_TAG_UPDATE_ALL);
-        spu_writech(MFC_WrTagMask, old_tag_mask);
 	}
 #if (CACHE_TYPE == CACHE_TYPE_RW)
 	CACHELINE_SETMOD (lnum);
 #endif
 	return CACHE_ADDR (lnum, byte);
     }
-#ifdef CACHE_STATS
     else {
+        if( hit_wait ) {
+	    spu_writech (MFC_WrTagMask, __cache_tagmask (set));
+	    spu_mfcstat (MFC_TAG_UPDATE_ALL);
+        }
+#ifdef CACHE_STATS
 	CACHE_STATS_RD_HIT (set);
-    }
 #endif
+    }
 #if (CACHE_TYPE == CACHE_TYPE_RW)
     CACHELINE_SETMOD (lnum);
 #endif
@@ -362,14 +357,10 @@ __cache_rw (unsigned int ea, unsigned wait)
 
 /* wait for a previous touch to finish */
 static inline void
-__cache_wait (unsigned lsa __attribute__ ((unused)))
-{
-    unsigned int old_tag_mask;
-    old_tag_mask = spu_readch(MFC_RdTagMask);
+__cache_wait (unsigned lsa __attribute__ ((unused))) {
     spu_writech (MFC_WrTagMask,
             __cache_tagmask (CACHE_ADDR2LNUM(lsa) >> CACHE_NWAY_SHIFT));
     spu_mfcstat (MFC_TAG_UPDATE_ALL);
-    spu_writech(MFC_WrTagMask, old_tag_mask);
 }
 
 #if (CACHE_TYPE == CACHE_TYPE_RW)
@@ -390,11 +381,8 @@ __cache_wr(unsigned int ea, CACHED_TYPE val)
     {
 	CACHE_STATS_WR_MISS (set);
 	lnum = __cache_rd_miss (ea_aligned, set);
-    unsigned int old_tag_mask;
-    old_tag_mask = spu_readch(MFC_RdTagMask);
 	spu_writech (MFC_WrTagMask, __cache_tagmask (set));
 	spu_mfcstat (MFC_TAG_UPDATE_ALL);
-    spu_writech(MFC_WrTagMask, old_tag_mask);
 	__cache_value (ea_aligned, lnum, byte, val);
 	return;
     }
@@ -412,8 +400,6 @@ static inline void
 __cache_flush()
 {
     unsigned lnum = 0;
-    unsigned int old_tag_mask;
-    old_tag_mask = spu_readch(MFC_RdTagMask);
     while (likely (lnum < CACHE_NWAY*CACHE_NSETS)) {
 	if ((CACHELINE_ISMOD(lnum)))
 	{
@@ -425,7 +411,6 @@ __cache_flush()
 	}
 	lnum++;
     }
-    spu_writech(MFC_WrTagMask, old_tag_mask);
 }
 #endif /* r/w */
 
@@ -596,11 +581,8 @@ __cache_rd_x4 (vec_uint4 ea_x4)
 	CACHELINE_UNLOCK (lnum1);
 	CACHELINE_UNLOCK (lnum2);
 
-    unsigned int old_tag_mask;
-    old_tag_mask = spu_readch(MFC_RdTagMask);
 	spu_writech (MFC_WrTagMask, tagmask);
 	spu_mfcstat (MFC_TAG_UPDATE_ALL);
-    spu_writech(MFC_WrTagMask, old_tag_mask);
 
 	/* all 4 lines now in cache */
 

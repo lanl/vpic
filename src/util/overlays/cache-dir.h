@@ -98,16 +98,13 @@
 /*
  * The cache directory
  */
-static unsigned * __attribute__ ((aligned (16))) __cache_dir;
+static unsigned * RESTRICT __attribute__ ((aligned (16))) __cache_dir;
 
-#include <string.h> /* For memset */
-#define __cache_dir_init(name) /* Safe outside these headers */         \
-  unsigned CACHE_SYM(name,stack_dir)[ CACHE_SYM(name,cache_nsets) *     \
-                                      CACHE_SYM(name,cache_nway) ]      \
-  __attribute__ ((aligned (16)));                                       \
-  memset( CACHE_SYM(name,stack_dir), 0,                                 \
-          sizeof(CACHE_SYM(name,stack_dir)) ); /* Mark cache empty */   \
-  CACHE_SYM(name,cache_dir) = CACHE_SYM(name,stack_dir)
+#define __cache_dir_init(name) /* Safe outside these headers */             \
+  SPU_MALLOC( CACHE_SYM(name,cache_dir),                                    \
+              CACHE_SYM(name,cache_nsets)*CACHE_SYM(name,cache_nway), 16 ); \
+  CLEAR( CACHE_SYM(name,cache_dir), /* Mark cache empty */                  \
+         CACHE_SYM(name,cache_nsets)*CACHE_SYM(name,cache_nway) )           \
 
 static inline void
  __cache_lock(unsigned lsa)

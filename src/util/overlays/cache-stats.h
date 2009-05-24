@@ -99,14 +99,13 @@ struct cache_metrics {
 
 #define cache_pr_stats(name)	    (name ## _cache_pr_stats())
 
-static struct cache_metrics * __cache_stats;
+static struct cache_metrics * RESTRICT __cache_stats;
 
 /* FIXME: ALL INDIVIDUAL CACHES MUST BE USE STATS OR NOT USE STATS IN
    A FILE DUE TO HACKERY SURROUNDING DECLARIONS AND SO FORTH. */
-#define __cache_stats_init(name) /* Safe outside these headers */       \
-  struct cache_metrics CACHE_SYM(name,stack_stats)                      \
-    [ CACHE_SYM(name,cache_nsets) ];                                    \
-  CACHE_SYM(name,cache_dir) = CACHE_SYM(name,stack_stats)
+#define __cache_stats_init(name) /* Safe outside these headers */             \
+  SPU_MALLOC( CACHE_SYM(name,cache_stats), CACHE_SYM(name,cache_nsets), 16 ); \
+  CLEAR(      CACHE_SYM(name,cache_stats), CACHE_SYM(name,cache_nsets) )
 
 static inline void
 __cache_pr_stats(void)

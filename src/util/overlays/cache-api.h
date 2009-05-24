@@ -100,10 +100,11 @@
 
 /* external interfaces */
 #define cache_rd(name, ea)	(name ## _cache_rd((unsigned)(ea)))
-#define cache_rw(name, ea)      (name ## _cache_rw((unsigned)(ea), 1))
-#define cache_touch(name, ea)   (name ## _cache_rw((unsigned)(ea), 0))
+#define cache_rw(name, ea)      (name ## _cache_rw((unsigned)(ea), 0, 1))
+#define cache_touch(name, ea)   (name ## _cache_rw((unsigned)(ea), 0, 0))
+#define cache_wait_rw(name, ea) (name ## _cache_rw((unsigned)(ea), 1, 1))
 #define cache_wr(name, ea, val) (name ## _cache_wr((unsigned)(ea), (val)))
-#define cache_wait(name, ea)	(name ## _cache_wait((unsigned)(ea)))
+#define cache_wait(name, lsa)	(name ## _cache_wait((unsigned)(lsa)))
 #define cache_flush(name)	(name ## _cache_flush())
 #define cache_lock(name, lsa)	(name ## _cache_lock((unsigned)(lsa)))
 #define cache_unlock(name, lsa)	(name ## _cache_unlock((unsigned)(lsa)))
@@ -202,12 +203,11 @@ enum {
 #define __cache_mem	CACHE_VAR (cache_mem)
 static char * __attribute__ ((aligned (128))) __cache_mem;
 
-#define __cache_api_init(name) /* Safe outside these heaers */          \
-  char CACHE_SYM(name,stack_mem)[ CACHE_SYM(name,cache_nsets) *         \
-                                  CACHE_SYM(name,cache_nway) *          \
-                                  CACHE_SYM(name,cacheline_size) ]      \
-  __attribute__ ((aligned (128)));                                      \
-  CACHE_SYM(name,cache_mem) = CACHE_SYM(name,stack_mem)
+#define __cache_api_init(name) /* Safe outside these headers */ \
+  SPU_MALLOC( CACHE_SYM(name,cache_mem),                        \
+              CACHE_SYM(name,cache_nsets) *                     \
+              CACHE_SYM(name,cache_nway) *                      \
+              CACHE_SYM(name,cacheline_size), 128 )
 
 /* the cache directory */
 #include "cache-dir.h"

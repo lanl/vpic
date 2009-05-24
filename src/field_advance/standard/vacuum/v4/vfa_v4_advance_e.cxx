@@ -1,4 +1,5 @@
 #define IN_vfa_v4
+#define HAS_V4_PIPELINE
 #include "vfa_v4_private.h"
 
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
@@ -7,67 +8,22 @@
 #define UPDATE_EY() f0->ey += ( ( pz*(f0->cbx-fz->cbx) - px*(f0->cbz-fx->cbz) ) - cj*f0->jfy )
 #define UPDATE_EZ() f0->ez += ( ( px*(f0->cby-fx->cby) - py*(f0->cbx-fy->cbx) ) - cj*f0->jfz )
 
+// FIXME: MERGE WITH ABOVE DIRECTORY TO ELIMINATE THIS HIDEOUESNESS
+
 typedef struct pipeline_args {
   field_t                      * ALIGNED(128) f;
   const grid_t                 *              g;
 } pipeline_args_t;
 
-static void
-pipeline( pipeline_args_t * args,
-          int pipeline_rank,
-          int n_pipeline ) {
-  field_t                      * ALIGNED(128) f = args->f;
-  const grid_t                 *              g = args->g;
-
-  field_t * ALIGNED(16) f0;
-  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
-  int x, y, z, n_voxel;
-
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
-
-  const float px = (nx>1) ? g->cvac*g->dt*g->rdx : 0;
-  const float py = (ny>1) ? g->cvac*g->dt*g->rdy : 0;
-  const float pz = (nz>1) ? g->cvac*g->dt*g->rdz : 0;
-  const float cj = g->dt/g->eps0;
-
-  // Process the voxels assigned to this pipeline
-  
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
-
-# define LOAD_STENCIL() \
-  f0 = &f(x,  y,  z  ); \
-  fx = &f(x-1,y,  z  ); \
-  fy = &f(x,  y-1,z  ); \
-  fz = &f(x,  y,  z-1)
-
-  LOAD_STENCIL();
-  
-  for( ; n_voxel; n_voxel-- ) {
-    UPDATE_EX();
-    UPDATE_EY();
-    UPDATE_EZ(); 
-    f0++; fx++;	fy++; fz++;
-    
-    x++;
-    if( x>nx ) {
-      x=2, y++;
-      if( y>ny ) y=2, z++;
-      LOAD_STENCIL();
-    }
-  }
-
-# undef LOAD_STENCIL
-
-}
+extern "C" void
+vfa_advance_e_pipeline( pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
 
 static void
-v4_pipeline( pipeline_args_t * args,
-             int pipeline_rank,
-             int n_pipeline ) {
+vfa_advance_e_pipeline_v4( pipeline_args_t * args,
+                           int pipeline_rank,
+                           int n_pipeline ) {
 
   using namespace v4;
 
@@ -224,7 +180,7 @@ vfa_v4_advance_e( field_t                      * ALIGNED(128) f,
   args->f = f;
   args->g = g;
 
-  EXEC_PIPELINES( pipeline, args, 0 );
+  EXEC_PIPELINES( vfa_advance_e, args, 0 );
   
   // Do left over interior ex
   for( z=2; z<=nz; z++ ) {

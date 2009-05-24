@@ -31,6 +31,10 @@ src/util/mtrand/drandn_table.h
 src/util/mtrand/frandn_table.h
 src/util/mtrand/mtrand.h
 src/util/mtrand/mtrand_conv.h
+src/util/overlays/cache-api.h
+src/util/overlays/cache-dir.h
+src/util/overlays/cache-stats.h
+src/util/overlays/cache-4way.h
 src/util/profile/profile.h
 src/util/pipelines/pipelines.h
 src/util/relay/CMPolicyDaCS.hxx

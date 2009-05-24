@@ -912,14 +912,11 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
 ///////////////////////////////////////////////////////////////////////////////
 // main (workload distribution and data buffering)
 
-// FIXME: Some util functionality is not compiled for the spu
-// FIXME: WHICH SEGMENT HOLDS INITIALIZERS IN THIS FUNCTION? 
-
 void
-_SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
+_SPUEAR_advance_p_pipeline_spu( advance_p_pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  particle_t       * ALIGNED(128) p_block[3];
+  particle_t * ALIGNED(128) p_block[3];
   int idx[3];
   int np_block[3];
 
@@ -932,54 +929,23 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
 
   int np, next_idx, itmp;
 
-  // Pipeline Input / Output arguments
-  DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
-  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t,      128, seg,  1 );
-
-  // Particle and particle mover buffers
-  DECLARE_ALIGNED_ARRAY( particle_t,       128, p_stream, 3*NP_BLOCK );
-  DECLARE_ALIGNED_ARRAY( particle_mover_t, 128, m_stream, 3*NP_BLOCK );
-
-  // Voxel cache storage
-  DECLARE_ALIGNED_ARRAY( interpolator_t,   128, _i_cache, VOXEL_CACHE_N_LINE );
-  DECLARE_ALIGNED_ARRAY( accumulator_t,    128, _a_cache, VOXEL_CACHE_N_LINE );
-
-  // Voxel cache tags
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, _voxel_cache_addr, VOXEL_CACHE_N_LINE );
-
-  // Voxel cache line replacement order
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, _voxel_cache_prev, VOXEL_CACHE_N_LINE );
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, _voxel_cache_next, VOXEL_CACHE_N_LINE );
-
-  // Voxel cache addr to line hash
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, _voxel_cache_key, VOXEL_CACHE_N_HASH );
-  DECLARE_ALIGNED_ARRAY( uint32_t, 128, _voxel_cache_val, VOXEL_CACHE_N_HASH );
-
-  // Voxel cache accumulator writeback buffer storage
-  DECLARE_ALIGNED_ARRAY( accumulator_t, 128, _a_cache_writeback,
-                         A_CACHE_DMA_CHANNEL_LAST -
-                         A_CACHE_DMA_CHANNEL_FIRST + 1 );
+  particle_mover_seg_t * RESTRICT ALIGNED(128) seg; SPU_MALLOC( seg, 1, 128 );
 
   // Publish the addresses of file scope globals actually located on
   // the stack (yes, this is an ugly kludge but so are overlays).
-  i_cache           = _i_cache;
-  a_cache           = _a_cache;
-  voxel_cache_addr  = _voxel_cache_addr;
-  voxel_cache_prev  = _voxel_cache_prev;
-  voxel_cache_next  = _voxel_cache_next;
-  voxel_cache_key   = _voxel_cache_key;
-  voxel_cache_val   = _voxel_cache_val;
-  a_cache_writeback = _a_cache_writeback;
-      
-  // Get the pipeline arguments from the dispatcher
-  mfc_get( args,
-           argp,
-           sizeof(*args),
-           31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
   
+  SPU_MALLOC( i_cache,           VOXEL_CACHE_N_LINE, 128 );
+  SPU_MALLOC( a_cache,           VOXEL_CACHE_N_LINE, 128 );
+  SPU_MALLOC( voxel_cache_addr,  VOXEL_CACHE_N_LINE, 128 );
+  SPU_MALLOC( voxel_cache_prev,  VOXEL_CACHE_N_LINE, 128 );
+  SPU_MALLOC( voxel_cache_next,  VOXEL_CACHE_N_LINE, 128 );
+  SPU_MALLOC( voxel_cache_key,   VOXEL_CACHE_N_HASH, 128 );
+  SPU_MALLOC( voxel_cache_val,   VOXEL_CACHE_N_HASH, 128 );
+  SPU_MALLOC( a_cache_writeback, A_CACHE_DMA_CHANNEL_LAST -
+                                 A_CACHE_DMA_CHANNEL_FIRST + 1, 128 );
+
   // Determine which particle quads this pipeline processes
+
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, next_idx, np );
   
   // Determine which movers are reserved for this pipeline.
@@ -987,16 +953,17 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
   // 8 such that the set of particle movers reserved for a
   // pipeline is 128-byte aligned and a multiple of 128-bytes in
   // size.
+
   args->max_nm -= args->np&15; // Insure host gets enough
   if( args->max_nm<0 ) args->max_nm = 0;
-  DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline,
-              itmp, seg->max_nm );
+  DISTRIBUTE( args->max_nm, 8, pipeline_rank, n_pipeline, itmp, seg->max_nm );
   seg->pm        = args->pm + itmp*sizeof(particle_mover_t);
   seg->nm        = 0;
   seg->n_ignored = 0;
   
   // Determine which interpolator and accumulator arrays this
   // pipeline should use
+
   i_cache_mem = args->f0;
   a_cache_mem = args->a0 + sizeof(accumulator_t)*(1+pipeline_rank)*
     POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
@@ -1072,14 +1039,14 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
     nm_block[buffer] = 0;                                               \
   } while(0)
   
-  p_block[0] = p_stream;              np_block[0] = 0;
-  p_block[1] = p_stream + NP_BLOCK;   np_block[1] = 0;
-  p_block[2] = p_stream + NP_BLOCK*2; np_block[2] = 0;
-  
-  m_block[0] = m_stream;              nm_block[0] = 0;
-  m_block[1] = m_stream + NP_BLOCK;   nm_block[1] = 0;
-  m_block[2] = m_stream + NP_BLOCK*2; nm_block[2] = 0;
-  
+  SPU_MALLOC( p_block[0], NP_BLOCK, 128 ); np_block[0] = 0;
+  SPU_MALLOC( p_block[1], NP_BLOCK, 128 ); np_block[1] = 0;
+  SPU_MALLOC( p_block[2], NP_BLOCK, 128 ); np_block[2] = 0;
+
+  SPU_MALLOC( m_block[0], NP_BLOCK, 128 ); nm_block[0] = 0;
+  SPU_MALLOC( m_block[1], NP_BLOCK, 128 ); nm_block[1] = 0;
+  SPU_MALLOC( m_block[2], NP_BLOCK, 128 ); nm_block[2] = 0;
+
   voxel_cache_init();
   
   BEGIN_GET_PBLOCK(0);
@@ -1099,12 +1066,7 @@ _SPUEAR_advance_p_pipeline_spu( MEM_PTR( advance_p_pipeline_args_t, 128 ) argp,
   
   // Write the pipeline return values back
   
-  mfc_put( seg,
-           args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
-           sizeof(particle_mover_seg_t),
-           31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
- 
+  mfc_put( seg, args->seg + pipeline_rank*sizeof(particle_mover_seg_t),
+           sizeof(particle_mover_seg_t), 31, 0, 0 );
 }
 

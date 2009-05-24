@@ -7,100 +7,6 @@
 
 #include "spa.h"
 
-#define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
-                  ( defined(CELL_PPU_BUILD)    &&   \
-                     defined(USE_CELL_SPUS)    &&   \
-                     defined(HAS_SPU_PIPELINE) ) )
-
-#if FOR_SPU
-
-# if defined(CELL_PPU_BUILD) 
-
-    // Use SPU dispatcher on the SPU pipeline
-    // PPU will do straggler cleanup with scalar pipeline
-
-#   define EXEC_PIPELINES(name,args,sz_args)                      \
-    spu.dispatch( (pipeline_func_t)( (size_t)                     \
-        ( root_segment_##name##_pipeline_spu) ), args, sz_args ); \
-    name##_pipeline( args, spu.n_pipeline, spu.n_pipeline )
-
-#   define WAIT_PIPELINES() spu.wait()
-
-#   define N_PIPELINE spu.n_pipeline
-
-#   define PROTOTYPE_PIPELINE( name, args_t )                      \
-    extern uint32_t root_segment_##name##_pipeline_spu;            \
-                                                                   \
-    void                                                           \
-    name##_pipeline( args_t * args,                                \
-                     int pipeline_rank,                            \
-                     int n_pipeline )
-
-#   define PAD_STRUCT( sz ) char _pad[ PAD( (sz), 16 ) ];
-
-# else
-
-    // SPUs cannot dispatch pipelines
-
-#   define PROTOTYPE_PIPELINE( name, args_t )                   \
-    void                                                        \
-    _SPUEAR_##name##_pipeline_spu( MEM_PTR( args_t, 128 ) argp, \
-                                   int pipeline_rank,           \
-                                   int n_pipeline )
-
-#   define PAD_STRUCT( sz ) char _pad[ PAD( (sz), 16 ) ];
-
-# endif
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-  // Use thread dispatcher on the v4 pipeline
-  // Caller will do straggler cleanup with scalar pipeline
-
-# define EXEC_PIPELINES(name,args,sz_args)                               \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v4, args, sz_args ); \
-  name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define N_PIPELINE thread.n_pipeline
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v4( args_t * args,        \
-                      int pipeline_rank,    \
-                      int n_pipeline );     \
-                                            \
-  void                                      \
-  name##_pipeline( args_t * args,           \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-# define PAD_STRUCT( sz )
-
-#else
-
-  // Use thread dispatcher on the scalar pipeline
-  // Caller will do straggler cleanup with scalar pipeline
-
-# define EXEC_PIPELINES(name,args,sz_args)                              \
-  thread.dispatch( (pipeline_func_t)name##_pipeline, args, sz_args );   \
-  name##_pipeline( args, thread.n_pipeline, thread.n_pipeline )
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define N_PIPELINE thread.n_pipeline
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline( args_t * args,           \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-# define PAD_STRUCT( sz )
-
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // advance_p_pipeline interface
 
@@ -221,19 +127,7 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
           ((int64_t)(P))))
 
 enum {
-  sort_block_size   = 8, // Larger than 8 saturates MFC queues
-                         // Larger than 16 saturates MFC channels
-  max_subsort       = 4*((MAX_PIPELINE+3)/4), // Must be a multiple of 4
-
-  // max_subsort_voxel limits local copies of segments of the next and
-  // partition arrays in SPU subsort pipeline to using at most 208KB
-  // of local store.  This restriction could be using more subsorts
-  // than SPE and having each SPE process multiple subsorts.  But this
-  // is not expected to be an issue in practice---using 8 SPU, this
-  // corresponds to ~459^2 local domains in 2d and ~57^3 local domains
-  // in 3d).
-
-  max_subsort_voxel = 26624
+  max_subsort = 4*((MAX_PIPELINE+3)/4) // Must be a multiple of 4
 };
 
 typedef struct sort_p_pipeline_args {
@@ -241,7 +135,7 @@ typedef struct sort_p_pipeline_args {
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
   MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
-  /**/ // (0:max_subsort-1,0:MAX_PIPELINE)
+  /**/ // (0:max_subsort-1,0:MAX_PIPELINE-1)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
   MEM_PTR( int,        128 ) next;             // Aux partitioning (0:n_voxel)
   int n;         // Number of particles

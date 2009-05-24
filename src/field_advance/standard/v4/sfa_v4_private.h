@@ -10,19 +10,6 @@
 #define IN_sfa
 #include "../sfa_private.h"
 
-// Use the thread dispatcher on the scalar pipeline
-
-#undef  EXEC_PIPELINES
-#define EXEC_PIPELINES(name,args,sz_args)                       \
-  thread.dispatch( (pipeline_func_t)v4_##name, args, sz_args ); \
-  name( args, thread.n_pipeline, thread.n_pipeline )
-
-#undef  WAIT_PIPELINES
-#define WAIT_PIPELINES() thread.wait()
-
-#undef  N_PIPELINE
-#define N_PIPELINE       thread.n_pipeline
-
 // FIXME: THE HOST PROCESSED FIELD KERNELS SHOULD BE UPDATED TO USE
 // SCALAR FMA INSTRUCTIONS WITH COMMENSURATE ROUND-OFF PROPERTIES TO
 // THE FMA INSTRUCTIONS USED ON THE PIPELINE PROCESSED FIELDS!

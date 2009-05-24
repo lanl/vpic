@@ -15,14 +15,15 @@ serial_boot( int n_pipeline,
 static void
 serial_dispatch( pipeline_func_t func,
                  void * args,
-                 int size_args ) {
+                 int sz,
+                 int str ) {
   int id;
 
   if( serial.n_pipeline==0 ) ERROR(( "Boot serial dispatcher first!" ));
   if( Busy ) ERROR(( "Pipelines are busy!" ));
   Busy = 1;
   for( id=0; id<serial.n_pipeline; id++ )
-    if( func ) func( ((char *)args) + id*size_args, id, serial.n_pipeline );
+    if( func ) func( ((char *)args) + id*sz*str, id, serial.n_pipeline );
 }
 
 static void

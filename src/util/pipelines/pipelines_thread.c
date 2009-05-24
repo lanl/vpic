@@ -488,7 +488,8 @@ pipeline_mgr( void *_pipeline ) {
 static void
 thread_dispatch( pipeline_func_t func,
                  void * args,
-                 int sz_args ) {
+                 int sz,
+                 int str ) {
   int id;
 
   if( thread.n_pipeline==0 ) ERROR(( "Boot the thread dispatcher first!" ));
@@ -502,7 +503,7 @@ thread_dispatch( pipeline_func_t func,
   for( id=0; id<thread.n_pipeline-Dispatch_To_Host; id++ ) {
     Done[id] = 0;
     parallel_execute( func,
-                      ((char *)args) + id*sz_args,
+                      ((char *)args) + id*sz*str,
                       id,
                       thread.n_pipeline,
                       &Done[id] );
@@ -510,7 +511,7 @@ thread_dispatch( pipeline_func_t func,
 
   if( Dispatch_To_Host ) {
     Done[id] = 0;
-    if( func ) func( ((char *)args) + id*sz_args, id, thread.n_pipeline );
+    if( func ) func( ((char *)args) + id*sz*str, id, thread.n_pipeline );
     Done[id] = 1;
   }
 }

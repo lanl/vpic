@@ -296,19 +296,18 @@ spu_control_thread( void *_this_control_thread ) {
 static void
 spu_dispatch( pipeline_func_t func,
               void * args,
-              int sz_args ) {
+              int sz,
+              int str ) {
   uint32_t rank;
   uint32_t data_hi, data_lo;
 
   if( spu.n_pipeline==0 ) ERROR(( "Boot the spu dispatcher first!" ));
-
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may call spu_dispatch" ));
+  if( Busy ) ERROR(( "Pipelines are busy!" ));
 
   if( (uint64_t)args & 15 ) ERROR(( "args must be 16-byte aligned" ));
-  if( sz_args & 15 )        ERROR(( "size must be a multiple of 16" ));
-
-  if( Busy ) ERROR(( "Pipelines are busy!" ));
+  if( sz & 15 ) ERROR(( "size must be a multiple of 16" ));
 
   // Put address into a form that we can send over to the SPE threads
   uint32_t faddr = ((uint64_t)(func)) & 0xffffffff;
@@ -320,22 +319,21 @@ spu_dispatch( pipeline_func_t func,
     spe_in_mbox_write( SPU_Control_State[rank].context, &faddr,
                        1, SPE_MBOX_ANY_NONBLOCKING );
 
-    // get low and hi bits to send context struct to SPE thread
-    data_hi = ((uint64_t)(((char *)args) + rank*sz_args)) >> 32;
-    data_lo = ((uint64_t)(((char *)args) + rank*sz_args)) & 0xffffffff;
-
     // Write context struct address to SPE thread
+    data_hi = ((uint64_t)(((char *)args) + rank*sz*str)) >> 32;
+    data_lo = ((uint64_t)(((char *)args) + rank*sz*str)) & 0xffffffff;
     spe_in_mbox_write( SPU_Control_State[rank].context, &data_hi,
                        1, SPE_MBOX_ANY_NONBLOCKING );
     spe_in_mbox_write( SPU_Control_State[rank].context, &data_lo,
+                       1, SPE_MBOX_ANY_NONBLOCKING );
+    spe_in_mbox_write( SPU_Control_State[rank].context, (uint32_t *)&sz,
                        1, SPE_MBOX_ANY_NONBLOCKING );
 
     // Write pipeline_rank and n_pipeline to SPE thread
     spe_in_mbox_write( SPU_Control_State[rank].context, &rank,
                        1, SPE_MBOX_ANY_NONBLOCKING );
-	// This is klugey (Not sure why n_pipeline is not unsigned in rest of code)
-	uint32_t n_pipeline = (uint32_t)(spu.n_pipeline);
-    spe_in_mbox_write( SPU_Control_State[rank].context, &n_pipeline,
+    spe_in_mbox_write( SPU_Control_State[rank].context,
+                       (uint32_t *)&spu.n_pipeline,
                        1, SPE_MBOX_ANY_NONBLOCKING );
   }
 

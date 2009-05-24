@@ -1,5 +1,6 @@
 #define IN_sf_interface
 #define HAS_V4_PIPELINE
+#define HAS_SPU_PIPELINE
 #include "sf_interface_private.h"
 
 #define fi(x,y,z) fi[   VOXEL(x,y,z, nx,ny,nz) ]
@@ -40,9 +41,9 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
   // Process the voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  if( pipeline_rank==n_pipeline ) return; // No straggler cleanup needed
+  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 1,
+                               pipeline_rank, n_pipeline, &x, &y, &z );
 
 # if HAS_SPU_INTERPOLATOR
 # define LOAD_STENCIL()    \
@@ -146,7 +147,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
     defined(HAS_SPU_PIPELINE)
 
-#error "SPU version not hooked up yet!"
+// SPU pipeline is defined in a different compilation unit
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
@@ -186,8 +187,9 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   v4float w0, w1, w2, w3;
 
   // Process the voxels assigned to this pipeline
-  
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 16,
+
+  if( pipeline_rank==n_pipeline ) return; // No straggler cleanup needed
+  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 1,
                                pipeline_rank, n_pipeline,
                                &x, &y, &z );
   

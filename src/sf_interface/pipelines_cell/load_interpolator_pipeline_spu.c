@@ -16,7 +16,7 @@ typedef struct local_interpolator {
 // Stencil cache setup
 
 #define CACHED_TYPE        local_field_t
-#define CACHE_NAME         stencil_cache
+#define CACHE_NAME         stencil
 #define CACHELINE_LOG2SIZE 5  /* 1 local field per line */
 #define CACHE_LOG2NSETS    10 /* 1024 line per way */
 #define CACHE_LOG2NWAY     2  /* 4-way (one way per non-unit stride) */
@@ -27,14 +27,14 @@ typedef struct local_interpolator {
 #define CACHE_EA_BASE      args->f
 #define CACHE_EA_STRIDE    sizeof(field_t)
 
-#define CACHE_INIT() cache_init( stencil_cache, CACHE_EA_BASE )
-#define CACHE_RD(i)  cache_rd(   stencil_cache, (i)*CACHE_EA_STRIDE )
+#define CACHE_INIT() cache_init( stencil, CACHE_EA_BASE )
+#define CACHE_RD(i)  (*cache_wait_rw( stencil, (i)*CACHE_EA_STRIDE ))
 
 // Stencil prefetch setup
 
 #define PREFETCH_LOOKAHEAD 16
 
-#define PREFETCH(i) cache_touch( stencil_cache, (i)*CACHE_EA_STRIDE )
+#define PREFETCH(i) cache_touch( stencil, (i)*CACHE_EA_STRIDE )
 
 // Output writeback setup
 
@@ -52,102 +52,108 @@ typedef struct local_interpolator {
 
 // Spu fun stuff (FIXME: PROBABLY SHOULD BE MOVED TO A COMMON PLACE)
 
-#define PERM4( a, b, i, j, k, l )                                          \
-  spu_shuffle( (a), (b), (vec_uchar16){ 4*(i), 4*(i)+1, 4*(i)+2, 4*(i)+3,  \
-                                        4*(j), 4*(j)+1, 4*(j)+2, 4*(j)+3,  \
-                                        4*(k), 4*(k)+1, 4*(k)+2, 4*(k)+3,  \
-                                        4*(l), 4*(l)+1, 4*(l)+2, 4*(l)+3 } )
+#define PERM4( a, b, i, j, k, l ) spu_shuffle( (a), (b), ((vec_uchar16)   \
+  { 4*(i), 4*(i)+1, 4*(i)+2, 4*(i)+3, 4*(j), 4*(j)+1, 4*(j)+2, 4*(j)+3,   \
+    4*(k), 4*(k)+1, 4*(k)+2, 4*(k)+3, 4*(l), 4*(l)+1, 4*(l)+2, 4*(l)+3 }) )
 
-#define PERM2( a, b, i, j )                                                  \
-  spu_shuffle( (a), (b), (vec_uchar16)                                       \
-    { 8*(i), 8*(i)+1, 8*(i)+2, 8*(i)+3, 8*(i)+4, 8*(i)+5, 8*(i)+6, 8*(i)+7,  \
-      8*(j), 8*(j)+1, 8*(j)+2, 8*(j)+3, 8*(j)+4, 8*(j)+5, 8*(j)+6, 8*(j)+7 } )
+#define PERM2( a, b, i, j ) spu_shuffle( (a), (b), ((vec_uchar16)           \
+  { 8*(i), 8*(i)+1, 8*(i)+2, 8*(i)+3, 8*(i)+4, 8*(i)+5, 8*(i)+6, 8*(i)+7,   \
+    8*(j), 8*(j)+1, 8*(j)+2, 8*(j)+3, 8*(j)+4, 8*(j)+5, 8*(j)+6, 8*(j)+7 }) )
 
-#define NEG2( a, s0, s1 ) spu_xor( (a), (vec_double2){ s0##0., s1##0.} )
+#define pos +0.
+#define neg -0.
+#define NEG2( a, s0, s1 ) spu_xor( (a), ((vec_double2){ s0, s1 }) )
 
-#define VEC_DOUBLE2( a,i, b,j ) spu_extend( PERM4(a,b,(i),(i),(j)+4,(j)+4) )
+#define VEC_DOUBLE2( a,i, b,j ) spu_extend( PERM4((a),(b),(i),(i),(j)+4,(j)+4) )
+
+#if 0
+#include <stdio.h>
+#define DELAY() for( volatile int delay[1]={1000000}; delay[0]; delay[0]-- )
+#define INSPECT_F(v) do { printf( #v"=%f\n", v ); fflush(stdout); DELAY(); } while(0)
+#define INSPECT_I(v) do { printf( #v"=%i\n", v ); fflush(stdout); DELAY(); } while(0)
+#define INSPECT_VF(v) do { printf( #v"=%f %f %f %f\n", spu_extract(v,0), spu_extract(v,1), spu_extract(v,2), spu_extract(v,3) ); fflush(stdout); DELAY(); } while(0)
+#define INSPECT_VD(v) do { printf( #v"=%f %f\n", spu_extract(v,0), spu_extract(v,1) ); fflush(stdout); DELAY(); } while(0)
+#endif
 
 void
 _SPUEAR_load_interpolator_pipeline_spu(
-    MEM_PTR( load_interpolator_pipeline_args_t, 128 ) argp,
+    load_interpolator_pipeline_args_t * args,
     int pipeline_rank,
     int n_pipeline ) {
-  MEM_PTR( interpolator_t, 128 ) fi;
-  MEM_PTR( int64_t,        128 ) nb;
+  MEM_PTR( interpolator_t, 128 ) fi = args->fi;
+  MEM_PTR( int64_t,        128 ) nb = args->nb;
 
-  int nx, sx, ny, sy, nz, sz;
+  local_interpolator_t * RESTRICT ALIGNED(128) local_fi;
+
+  local_field_t f0;
+  local_field_t fx, fy, fz;
+  local_field_t fyz, fzx, fxy;
   int x, y, z, v, n_voxel;
-  int X, Y, Z, V, pf;
-  int b;
 
-  local_field_t f0, fx, fy, fz, fyz, fzx, fxy;
+  const int nx = args->nx, sx = 1;
+  const int ny = args->ny, sy = (nx+2)*sx;
+  const int nz = args->nz, sz = (ny+2)*sy;
+
+  vec_float4 fourth = (vec_float4){ 0.25f, 0.25f, 0.25f, 0.25f };
+  vec_float4 half   = (vec_float4){ 0.5f,  0.5f,  0.5f,  0.5f  };
 
   vec_double2 vd0, vd1, vd2, vd3, s30, d30, s12, d12;
   vec_float4  vf0, vf1, vf2, vf3;
   vec_float4  ex, ey, ez, bxy, bz;
-  vec_float4 fourth = (vec_float4){ 0.25f, 0.25f, 0.25f, 0.25f };
-  vec_float4 half   = (vec_float4){ 0.5f,  0.5f,  0.5f,  0.5f  };
-
-  DECLARE_ALIGNED_ARRAY( load_interpolator_pipeline_args_t, 128, args, 1 );
-  DECLARE_ALIGNED_ARRAY( local_interpolator_t, 128, local_fi, WB_N_BUF );
   vec_llong2 local_nb[3];
 
-  // Get pipeline args from the dispatcher
-  
-  mfc_get( args, argp, sizeof(*args), 31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
+  int X, Y, Z, V, b;
 
-  fi = args->fi;
-  nb = args->nb;
-  nx = args->nx; sx = 1;         // x-stride
-  ny = args->ny; sy = (nx+2)*sx; // y-stride
-  nz = args->nz; sz = (ny+2)*sy; // z-stride
+  // Process voxels assigned to this pipeline
 
-  // Determine which voxels were assigned to this pipeline
-
-  DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16, pipeline_rank, n_pipeline,
-                     v,x,y,z, n_voxel );
+  DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 1, pipeline_rank, n_pipeline,
+                     x,y,z,n_voxel ); v = VOXEL(x,y,z, nx,ny,nz);
 # define VOXEL_INC(v,x,y,z) NEXT_VOXEL(v,x,y,z, 1,nx, 1,ny, 1,nz, nx,ny,nz)
 
   // Setup cache, prefetching and writebacks
-
   CACHE_INIT();
-  X = x; Y = y; Z = z; V = v;
-  for( pf=0; pf<PREFETCH_LOOKAHEAD; pf++ ) { VOXEL_INC(V,X,Y,Z); }
+  V = v; X = x; Y = y; Z = z;
+  for( b=0; b<PREFETCH_LOOKAHEAD; b++ )
+    if( LIKELY( b<n_voxel ) ) {
+      PREFETCH( V           );
+      PREFETCH( V + sy      );
+      PREFETCH( V + sz      );
+      PREFETCH( V + sy + sz );
+      VOXEL_INC(V,X,Y,Z);
+    }
+  SPU_MALLOC( local_fi, WB_N_BUF, 128 );
   b = 0;
-
-  // For all blocks of voxels reduced by this pipeline
 
   for( ; n_voxel; n_voxel-- ) {
     mfc_get( local_nb, nb+6*sizeof(int64_t)*v, 6*sizeof(int64_t), 31, 0, 0 );
 
     // Prefetch voxels likely to be used in the future
-
     if( LIKELY( n_voxel>PREFETCH_LOOKAHEAD ) ) {
-      PREFETCH( V                );
-      PREFETCH( V      + sy      );
-      PREFETCH( V           + sz );
-      PREFETCH( V      + sy + sz );
+      PREFETCH( V           );
+      PREFETCH( V + sy      );
+      PREFETCH( V + sz      );
+      PREFETCH( V + sy + sz );
       VOXEL_INC(V,X,Y,Z);
     }
 
     // Read stencil inputs
+    f0  = CACHE_RD( v           ); fx  = CACHE_RD( v + sx           );
+    fy  = CACHE_RD( v + sy      ); fxy = CACHE_RD( v + sx + sy      );
+    fz  = CACHE_RD( v      + sz ); fzx = CACHE_RD( v + sx      + sz );
+    fyz = CACHE_RD( v + sy + sz );
 
-    f0  = CACHE_RD( v                );
-    fx  = CACHE_RD( v + sx           );
-    fy  = CACHE_RD( v      + sy      );
-    fz  = CACHE_RD( v           + sz );
-    fyz = CACHE_RD( v      + sy + sz );
-    fzx = CACHE_RD( v + sx      + sz );
-    fxy = CACHE_RD( v + sx + sy      );
+#   if 0
+    INSPECT_I( v ); INSPECT_I( x ); INSPECT_I( y ); INSPECT_I( z );
+    INSPECT_I( sx); INSPECT_I( sy); INSPECT_I( sz);
+    INSPECT_I( nx); INSPECT_I( ny); INSPECT_I( nz);
+    INSPECT_VF( f0.e ); INSPECT_VF( fy.e ); INSPECT_VF( fz.e ); INSPECT_VF( fyz.e );
+#   endif
 
 #   define x 0
 #   define y 1
 #   define z 2
 
     // Compute ex and ez interpolation coefficients
-
     vd0 =  spu_extend(  f0.e            );        //       w0x               w0z
     vd1 = VEC_DOUBLE2(  fy.e,x,  fx.e,z );        //       w1x               w1z
     vd2 = VEC_DOUBLE2(  fz.e,x,  fy.e,z );        //       w2x               w2z
@@ -166,7 +172,6 @@ _SPUEAR_load_interpolator_pipeline_spu(
     ez  = spu_mul( fourth, PERM4(vf0,vf1, 2,3,6,7) );
 
     // Compute ey interpolation coefficients
-
     vd0 = VEC_DOUBLE2( fzx.e,y,  fz.e,y );        //       w3y               w1y
     vd1 = VEC_DOUBLE2(  f0.e,y,  fx.e,y );        //       w0y               w2y
     vd2 = spu_add( vd0, vd1 );                    //     w3y+w0y           w1y+w2y
@@ -178,17 +183,15 @@ _SPUEAR_load_interpolator_pipeline_spu(
     ey  = spu_mul( fourth, PERM4(vf0,vf1, 0,2,6,4) );
 
     // Compute bx and by interpolation coefficients
-
     vd0 = VEC_DOUBLE2(  f0.b,x,  f0.b,y );        //       w0x               w0y
     vd1 = VEC_DOUBLE2(  fx.b,x,  fy.b,y );        //       w1x               w1y
     vf0 = spu_roundtf( spu_add( vd1, vd0 ) );     //    cbx      0        cby      0
     vf1 = spu_roundtf( spu_sub( vd1, vd0 ) );     //   dcbdx     0       dcbydy    0
     bxy = spu_mul( half, PERM4(vf0,vf1, 0,4,2,6) );
-  
-    // Compute bz interpolation coefficients
 
-    vd0 = VEC_DOUBLE2(  f0.cb,z,  fz.cb,z );      //       w0z               w1z
-    vd1 = NEG2( PERM2(vd0,vd0, 1,0), +,- );       //       w1z              -w0z
+    // Compute bz interpolation coefficients
+    vd0 = VEC_DOUBLE2(  f0.b,z,  fz.b,z );        //       w0z               w1z
+    vd1 = NEG2( PERM2(vd0,vd0, 1,0), pos,neg );   //       w1z              -w0z
     vf0 = spu_roundtf( spu_add( vd0, vd1 ) );     //    cbz      0       dcbzdz    0
     bz  = spu_mul( half, PERM4(vf0,vf0, 0,2,1,3) );
 
@@ -197,29 +200,19 @@ _SPUEAR_load_interpolator_pipeline_spu(
 #   undef x
 
     // Write stencil outputs
-
     WB_END(b);
-
     local_fi[b].ex  = ex;
     local_fi[b].ey  = ey;
     local_fi[b].ez  = ez;
     local_fi[b].bxy = bxy;
     local_fi[b].bz  = bz;
-    mfc_write_tag_mask( 1 << 31 );
-    mfc_read_tag_status_all();
+    mfc_write_tag_mask( 1 << 31 ); mfc_read_tag_status_all();
     local_fi[b].n01 = local_nb[0];
     local_fi[b].n23 = local_nb[1];
     local_fi[b].n45 = local_nb[2];
-
-    WB_BEGIN(b,v); WB_INC();
+    WB_BEGIN(b,v); WB_INC(b);
 
     // Advance to the next voxel
-
     VOXEL_INC(v,x,y,z);
   }
-
-  // Wait for all memory transactions to complete
-
-  mfc_write_tag_mask( 0xffffffff );
-  mfc_read_tag_status_all();
 }

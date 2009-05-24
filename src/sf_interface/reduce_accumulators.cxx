@@ -20,7 +20,7 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 
   // a is broken into restricted rw and ro parts to allow the compiler
   // to do more aggresive optimizations
-  // FIXME: RESTRICT CLEANUP
+
   /**/  float * RESTRICT ALIGNED(16) a = args->a->jx;
   const float * RESTRICT ALIGNED(16) b = a + sr;
 

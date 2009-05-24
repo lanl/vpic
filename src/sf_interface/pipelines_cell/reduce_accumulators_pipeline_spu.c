@@ -20,40 +20,31 @@
 // ---- A[0] -------------------------   ----- A[1] --------
 
 void
-_SPUEAR_reduce_accumulators_pipeline_spu(
-    MEM_PTR( accumulators_pipeline_args_t, 128 ) argp,
-    int pipeline_rank,
-    int n_pipeline ) {
+_SPUEAR_reduce_accumulators_pipeline_spu( accumulators_pipeline_args_t * args,
+                                          int pipeline_rank,
+                                          int n_pipeline ) {
+  int i, i1, si = sizeof(accumulator_t);
+  int r, na = args->n_array, sa = si*args->s_array;
+  int k, n;
+
+  DISTRIBUTE( args->n, NB, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
+
+  MEM_PTR( accumulator_t, 128 ) a = args->a;
+
+  if( na>MAX_ARRAY ) return; // FIXME: ABORT W/ DIAGS! 
+  if( na<2         ) return; // Nothing to do
+
+  vec_float4  * ALIGNED(128) f; SPU_MALLOC( f, 4*NB*MAX_ARRAY, 128 ); // 176KiB
+  vec_float4  * ALIGNED(128) g; SPU_MALLOC( g, 4*NB,           128 ); //  16KiB
+  vec_double2 * ALIGNED(128) d; SPU_MALLOC( d, 6*NB,           128 ); //  24KiB
 
   vec_uchar16 perm = {  4, 5, 6, 7,  0, 1, 2, 3, 12,13,14,15,   8, 9,10,11 };
   vec_float4 f0, f1, f2;
-  MEM_PTR( accumulator_t, 128 ) a;
-  int i, i1, si = sizeof(accumulator_t);
-  int r, nr, sr;
-  int k, n;
-
-  DECLARE_ALIGNED_ARRAY( accumulators_pipeline_args_t, 128, args, 1 );
-  DECLARE_ALIGNED_ARRAY( vec_float4,  128, f, 4*NB*MAX_ARRAY ); // 176KB
-  DECLARE_ALIGNED_ARRAY( vec_float4,  128, g, 4*NB           ); //  16KB
-  DECLARE_ALIGNED_ARRAY( vec_double2, 128, d, 6*NB           ); //  24KB
-
-  // Get pipeline args from the dispatcher
-  
-  mfc_get( args, argp, sizeof(*args), 31, 0, 0 );
-  mfc_write_tag_mask( (1<<31) );
-  mfc_read_tag_status_all();
-
-  // Determine which accumulators are reduced by this pipeline
-
-  a  = args->a;
-  DISTRIBUTE( args->n, NB, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
-  nr = args->n_array; if( nr>MAX_ARRAY ) return; // FIXME: ABORT W/ DIAGS! 
-  sr = args->s_array*si;
 
   // Begin loading the accumulators for the initial block
 
   if( i<i1 )
-    for( r=0; r<nr; r++ ) mfc_get( f+4*NB*r, a+i*si+r*sr, NB*si, r, 0, 0 );
+    for( r=0; r<na; r++ ) mfc_get( f+4*NB*r, a+i*si+r*sa, NB*si, r, 0, 0 );
 
   // For all blocks of voxels reduced by this pipeline
 
@@ -81,11 +72,11 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
     if( i+NB<i1 ) mfc_get( f, a+(i+NB)*si, NB*si, 0, 0, 0 );
 
     // For each remaining array, wait for it's accumulators in this block
-    // to arrive (in f_r), sum them in double precision with the array 0's
+    // to arrive (in f_r), sum them in double precision with array 0's
     // accumulators (in d) and begin loading its accumulators in the
     // next block.
  
-    for( r=1; r<nr; r++ ) {
+    for( r=1; r<na; r++ ) {
 
       mfc_write_tag_mask( 1<<r );
       mfc_read_tag_status_all();
@@ -103,7 +94,7 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
         d[6*n+5] = spu_add( d[6*n+5], spu_extend( spu_shuffle(f2,f2,perm) ) );
       }
 
-      if( i+NB<i1 ) mfc_get( f+4*NB*r, a+(i+NB)*si+r*sr, NB*si, r, 0, 0 );
+      if( i+NB<i1 ) mfc_get( f+4*NB*r, a+(i+NB)*si+r*sa, NB*si, r, 0, 0 );
     }
 
     // Wait for the reduced accumulators in the previous block (in g) to
@@ -111,7 +102,7 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
     // in this block (in d) to single precision (in g) and begin writing
     // them out.
 
-    mfc_write_tag_mask( 1<<nr );
+    mfc_write_tag_mask( 1<<na );
     mfc_read_tag_status_all();
     
     for( n=0; n<NB; n++ ) {
@@ -123,12 +114,7 @@ _SPUEAR_reduce_accumulators_pipeline_spu(
       g[4*n+2] = spu_or( spu_roundtf( d[6*n+4] ), spu_shuffle(f2,f2,perm) );
     }
 
-    mfc_put( g, a+i*si, NB*si, nr, 0, 0 );
+    mfc_put( g, a+i*si, NB*si, na, 0, 0 );
   }
-  
-  // Wait for all memory transactions to complete
-
-  mfc_write_tag_mask( 0xffffffff );
-  mfc_read_tag_status_all();
 }
 

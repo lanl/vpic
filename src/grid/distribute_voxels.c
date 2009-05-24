@@ -7,8 +7,8 @@ distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
                    int bundle,         // number of voxels in a bundle
                    int job, int n_job, // job ... on [0,n_job-1]
                    int * x, int * y, int * z ) {
-  int v, n_voxel;
+  int nv;
   DISTRIBUTE_VOXELS( x0,x1, y0,y1, z0,z1, bundle, job,n_job,
-                     v,*x,*y,*z,n_voxel );
-  return n_voxel;
+                     *x,*y,*z,nv );
+  return nv;
 }

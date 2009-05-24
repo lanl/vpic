@@ -382,19 +382,17 @@ distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
                    int job, int n_job, // job ... on [0,n_job-1]
                    int * _x, int * _y, int * _z );
 
-#define DISTRIBUTE_VOXELS( x0,x1, y0,y1, z0,z1, b, p,P, v,x,y,z,nv ) do { \
+#define DISTRIBUTE_VOXELS( x0,x1, y0,y1, z0,z1, b, p,P, x,y,z,nv ) do { \
     int _x0=(x0), _y0=(y0), _z0=(z0), _b=(b), _p=(p), _P=(P);           \
     int _nx = (x1)-_x0+1, _ny = (y1)-_y0+1, _nv = _nx*_ny*((z1)-_z0+1); \
     double _t = (double)( _nv/_b ) / (double)_P;                        \
-    int          _v=_b*(int)( _t*(double)(_p  ) + 0.5 ), _x=_v, _y, _z; \
+    int          _x=_b*(int)( _t*(double)(_p  ) + 0.5 ), _y, _z;        \
     if( _p<_P ) _nv=_b*(int)( _t*(double)(_p+1) + 0.5 );                \
-    _nv -= _v;                                                          \
-    /**/           /* x = (x-x0) + nx*( (y-y0) + ny*(z-z0) ) */         \
+    _nv -= _x;     /* x = (x-x0) + nx*( (y-y0) + ny*(z-z0) ) */         \
     _y   = _x/_nx; /* y =               (y-y0) + ny*(z-z0)   */         \
     _z   = _y/_ny; /* z =                           (z-z0)   */         \
     _x  -= _y*_nx; /* x = (x-x0)                             */         \
     _y  -= _z*_ny; /* y =               (y-y0)               */         \
-    (v)  = _v;                                                          \
     (x)  = _x+_x0;                                                      \
     (y)  = _y+_y0;                                                      \
     (z)  = _z+_z0;                                                      \

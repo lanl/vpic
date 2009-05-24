@@ -209,6 +209,8 @@
 #define MASK_BIT_RANGE(type,f,l) \
   ( ( ( ((type)1) << ( (l) - (f) + 1 ) ) - 1 ) << (f) )
 
+#ifndef __SPU__
+
 // The following macros give a provide a simple logging capabilty. Due
 // to the way they work, usage needs double parenthesis. That is:
 //
@@ -247,6 +249,8 @@
   exit(1);                                                 \
 } END_PRIMITIVE
 
+#endif
+
 // Element wise (rather than byte wise) mem{cpy,move,set} semantics
 
 #define COPY(  d, s, n ) do { size_t _sz = (n)*sizeof(*(d)); if( _sz>0 ) memcpy(  (d), (s), _sz ); } while(0)
@@ -254,6 +258,8 @@
 #define CLEAR( d,    n ) do { size_t _sz = (n)*sizeof(*(d)); if( _sz>0 ) memset(  (d),   0, _sz ); } while(0)
 
 BEGIN_C_DECLS
+
+#ifndef __SPU__
 
 // In util.c
 
@@ -318,6 +324,32 @@ print_log( const char *fmt, ... );
 #define nanodelay(i) ((void)_nanodelay(i))
 uint32_t
 _nanodelay( uint32_t i );
+
+#else
+
+extern char _spu_heap[];
+extern size_t _spu_heap_free;
+
+// SPU_MALLOC allocates n objects off the SPU heap.  The first 
+// object will have the power-of-two alignment a.  This macro
+// is not robust and will not check if you have enough heap
+// for this operation or if a is a power-of-two.  The heap
+// is 224KiB in size.
+
+#define SPU_MALLOC(p,n,a)                                        \
+  ( _spu_heap_free = ((_spu_heap_free + ((a)-1)) & (~((a)-1))) + \
+                     (n)*sizeof(*(p)),                           \
+    (p) = (__typeof__(p))(_spu_heap_free - (n)*sizeof(*(p))) )
+
+// SPU_FREE_ALL frees all objects allocated on the SPU heap.
+// Note that before any pipeline is dispatched, this is called
+// to guarantee all previous pipelines have cleaned up.  (As
+// such, pipelines only need to call this to free up memory for
+// their reuse.)
+
+#define SPU_FREE_ALL() do _spu_heap_free = (size_t)_spu_heap; while(0)
+
+#endif
 
 END_C_DECLS
 

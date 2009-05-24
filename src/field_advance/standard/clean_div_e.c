@@ -19,9 +19,9 @@ typedef struct pipeline_args {
 } pipeline_args_t;
 
 static void
-pipeline( pipeline_args_t * args,
-          int pipeline_rank,
-          int n_pipeline ) {
+clean_div_e_pipeline( pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline ) {
   field_t                      * ALIGNED(128) f = args->f;
   const material_coefficient_t * ALIGNED(128) m = args->m;
   const grid_t                 *              g = args->g;
@@ -114,7 +114,7 @@ clean_div_e( field_t                      * ALIGNED(128) f,
   args->m = m;
   args->g = g;
 
-  EXEC_PIPELINES( pipeline, args, 0 );
+  EXEC_PIPELINES( clean_div_e, args, 0 );
   
   // Do left over field components on the host
 

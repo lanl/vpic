@@ -17,9 +17,9 @@ typedef struct pipeline_args {
 } pipeline_args_t;
 
 static void
-pipeline( pipeline_args_t * args,
-          int pipeline_rank,
-          int n_pipeline ) {
+compute_div_e_err_pipeline( pipeline_args_t * args,
+                            int pipeline_rank,
+                            int n_pipeline ) {
   field_t                      * ALIGNED(128) f = args->f;
   const material_coefficient_t * ALIGNED(128) m = args->m;
   const grid_t                 *              g = args->g;
@@ -111,7 +111,7 @@ compute_div_e_err( field_t                      * ALIGNED(128) f,
   args->f = f;
   args->m = m;
   args->g = g;
-  EXEC_PIPELINES( pipeline, args, 0 );
+  EXEC_PIPELINES( compute_div_e_err, args, 0 );
 
   // Have host compute the exterior of the local domain
 

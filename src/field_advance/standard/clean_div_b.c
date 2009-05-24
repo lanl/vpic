@@ -12,10 +12,10 @@ typedef struct pipeline_args {
   const grid_t *              g;
 } pipeline_args_t;
 
-static void
-pipeline( pipeline_args_t * args,
-          int pipeline_rank,
-          int n_pipeline ) {
+void
+clean_div_b_pipeline( pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline ) {
   field_t      * ALIGNED(128) f = args->f;
   const grid_t *              g = args->g;
   
@@ -119,7 +119,7 @@ clean_div_b( field_t      * ALIGNED(128) f,
   // Have pipelines do interior of the local domain
   args->f = f;
   args->g = g;
-  EXEC_PIPELINES( pipeline, args, 0 );
+  EXEC_PIPELINES( clean_div_b, args, 0 );
   
   // Do left over interior bx
   for( y=1; y<=ny; y++ ) {

@@ -9,16 +9,6 @@
 #error "Do not include sfa_private.h; include field_advance.h"
 #endif
 
-// How should this field solver dispatch pipelines
-
-#define EXEC_PIPELINES(name,args,sz_args)                  \
-  thread.dispatch( (pipeline_func_t)name, args, sz_args ); \
-  name( args, thread.n_pipeline, thread.n_pipeline )
-
-#define WAIT_PIPELINES() thread.wait()
-
-#define N_PIPELINE       thread.n_pipeline
-
 // Define this opaque datatype
 
 struct material_coefficient {

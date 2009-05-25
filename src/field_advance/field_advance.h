@@ -159,6 +159,8 @@ typedef struct field {
   material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
   material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
 # if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
+  // FIXME: I BET THIS PADDING CAN BE COMPLETELY ELIMIATED WITH MORE WORK
+  // CURRENTLY, THIS PADDING CAN BE CUT DOWN TO 4 (32-byte ALIGN).
   float _pad[12];                  // 128-byte align (next power of two)
 # else
   /**/                             // 16-byte align

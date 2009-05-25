@@ -48,8 +48,9 @@ SECTIONS
     }
     .ovly_field_advance {
       :clear_accumulators_pipeline_spu.o (.text._SPUEAR_clear_accumulators_pipeline_spu)
-      :load_interpolator_pipeline_spu.o (.text._SPUEAR_load_interpolator_pipeline_spu)
       :reduce_accumulators_pipeline_spu.o (.text._SPUEAR_reduce_accumulators_pipeline_spu)
+      :unload_accumulator_pipeline_spu.o (.text._SPUEAR_unload_accumulator_pipeline_spu)
+      :load_interpolator_pipeline_spu.o (.text._SPUEAR_load_interpolator_pipeline_spu)
     }
     .ovly_other {
       :sort_p_pipeline_spu.o (.text._SPUEAR_coarse_sort_pipeline_spu)

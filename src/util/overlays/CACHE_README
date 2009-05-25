@@ -14,9 +14,13 @@
   declared.  Lastly, now caches have a well-defined lifetime (so that overlay
   switches do not mess up the cache).
 
-- A new cache API was added:  cache_wait_rw( name, ea ).  This performs
+- A new cache API was added:  cache_wait_rd( name, ea, r ).  This performs
   a wait for an pending touches on the ea to complete and then returns the
-  desired local store pointer that contains ea.
+  desired data.  If r is true, the data will be removed from the cache as
+  well.  This API is very helpful for writing SPE accelerated stencil
+  calculations.  IF THE CACHE IS RW, EA IS IN CACHE AND THE CACHE LINE IS
+  MODIFIED, THAT CACHE LINE WILL NOT BE WRITTEN BACK TO MAIN MEMORY IF R
+  IS SET.
 
 - For technical reasons involving the hacky way IBM wrote cache-api and the
   even hackier way I made it work with overlays and 64-bit addressing, a minor

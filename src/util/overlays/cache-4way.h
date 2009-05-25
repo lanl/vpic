@@ -290,7 +290,7 @@ __cache_rd_miss (unsigned int ea_aligned, int set)
 
 /* Look up EA and return cached value. */
 static inline CACHED_TYPE
-__cache_rd (unsigned int ea) {
+__cache_rd (unsigned int ea, unsigned hit_wait, unsigned discard) {
     unsigned int ea_aligned = ea & CACHE_ALIGN_MASK;
     int set  = __cache_set_num (ea);
 #if (CACHE_NWAY == 1)
@@ -300,21 +300,23 @@ __cache_rd (unsigned int ea) {
 #endif
     int byte = __cacheline_byte_offset (ea);
     if (unlikely (lnum < 0)) {
-	CACHE_STATS_RD_MISS (set);
 	lnum = __cache_rd_miss (ea_aligned, set);
 	spu_writech(MFC_WrTagMask, __cache_tagmask (set));
 	spu_mfcstat(MFC_TAG_UPDATE_ALL);
+    } else if( hit_wait ) {
+	spu_writech (MFC_WrTagMask, __cache_tagmask (set));
+	spu_mfcstat (MFC_TAG_UPDATE_ALL);
     }
+    if( discard ) __cache_dir[lnum] = 0;
 #ifdef CACHE_STATS
-    else {
-	CACHE_STATS_RD_HIT (set);
-    }
+    if( lnum>=0 ) CACHE_STATS_RD_HIT (set);
+    else          CACHE_STATS_RD_MISS (set);
 #endif
     return *CACHE_ADDR (lnum, byte);
 }
 
 static inline CACHED_TYPE *
-__cache_rw (unsigned int ea, unsigned hit_wait, unsigned miss_wait)
+__cache_rw (unsigned int ea, unsigned wait)
 {
     unsigned int ea_aligned = ea & CACHE_ALIGN_MASK;
     int set  = __cache_set_num (ea);
@@ -325,34 +327,22 @@ __cache_rw (unsigned int ea, unsigned hit_wait, unsigned miss_wait)
 #endif
     int byte = __cacheline_byte_offset (ea);
 
-    CACHED_TYPE *ret = CACHE_ADDR (lnum, byte);
-
-    if (unlikely (lnum < 0))
-    {
+    if (unlikely (lnum < 0)) {
 	CACHE_STATS_RD_MISS(set);
 	lnum = __cache_rd_miss (ea_aligned, set);
-	if( miss_wait ) {
+	if( wait ) {
 	    spu_writech (MFC_WrTagMask, __cache_tagmask (set));
 	    spu_mfcstat (MFC_TAG_UPDATE_ALL);
 	}
-#if (CACHE_TYPE == CACHE_TYPE_RW)
-	CACHELINE_SETMOD (lnum);
-#endif
-	return CACHE_ADDR (lnum, byte);
     }
-    else {
-        if( hit_wait ) {
-	    spu_writech (MFC_WrTagMask, __cache_tagmask (set));
-	    spu_mfcstat (MFC_TAG_UPDATE_ALL);
-        }
 #ifdef CACHE_STATS
-	CACHE_STATS_RD_HIT (set);
+    if( lnum>=0 ) CACHE_STATS_RD_HIT (set);
+    else          CACHE_STATS_RD_MISS (set);
 #endif
-    }
 #if (CACHE_TYPE == CACHE_TYPE_RW)
     CACHELINE_SETMOD (lnum);
 #endif
-    return ret;
+    return CACHE_ADDR (lnum, byte);
 }
 
 /* wait for a previous touch to finish */

@@ -4,18 +4,33 @@
 
 #include <spu_mfcio.h>
 
-typedef struct local_field {
-  vec_float4 e, b;
-} local_field_t;
+// DMA tag usage:
+// Tags  0:15 - stencil cache
+// Tags 16:23 -  input stream
+// Tags 24:31 - output stream
 
-typedef struct local_interpolator {
+// Define the buffered I/O streams
+
+#define IN_TAG(b)   (16+(b))
+#define OUT_TAG(b)  (24+(b))
+#define N_BUF 8 /* Must be a power of two */
+
+typedef struct ls_neighbor {
+  vec_llong2 n01, n23, n45;
+} ls_neighbor_t;
+
+typedef struct ls_interp {
   vec_float4 ex, ey, ez, bxy, bz;
   vec_llong2 n01, n23, n45;
-} local_interpolator_t;
+} ls_interp_t;
 
-// Stencil cache setup
+// Define the stencil cache
 
-#define CACHED_TYPE        local_field_t
+typedef struct ls_field {
+  vec_float4 e, b;
+} ls_field_t;
+
+#define CACHED_TYPE        ls_field_t
 #define CACHE_NAME         stencil
 #define CACHELINE_LOG2SIZE 5  /* 1 local field per line */
 #define CACHE_LOG2NSETS    10 /* 1024 line per way */
@@ -24,47 +39,19 @@ typedef struct local_interpolator {
 #define CACHE_SET_TAGID(set) ((set)&0xf) /* Cache will use channels 0:15 */
 #include "../../util/overlays/cache-api.h"
 
-#define CACHE_EA_BASE      args->f
-#define CACHE_EA_STRIDE    sizeof(field_t)
-
-#define CACHE_INIT() cache_init( stencil, CACHE_EA_BASE )
-#define CACHE_RD(i)  (*cache_wait_rw( stencil, (i)*CACHE_EA_STRIDE ))
-
-// Stencil prefetch setup
-
-#define PREFETCH_LOOKAHEAD 16
-
-#define PREFETCH(i) cache_touch( stencil, (i)*CACHE_EA_STRIDE )
-
-// Output writeback setup
-
-#define WB_BUF       local_fi /* Local writeback buffers */
-#define WB_N_BUF     4        /* Number of writeback buffers */
-#define WB_EA_BASE   fi       /* Writeback base external address */
-#define WB_EA_STRIDE sizeof(interpolator_t) /* Writeback ext byte stride */
-#define WB_TAG_BASE  16       /* Use tags WB_TAG:WB_TAG+WB_N_BUF-1 */
-
-#define WB_BEGIN(b,i) mfc_put( &WB_BUF[(b)], WB_EA_BASE+(i)*WB_EA_STRIDE, \
-                               sizeof(WB_BUF[0]), WB_TAG_BASE+(b), 0, 0 )
-#define WB_END(b)     mfc_write_tag_mask( 1 << (WB_TAG_BASE+(b)) );     \
-                      mfc_read_tag_status_all()
-#define WB_INC(b)     b++; if( b==WB_N_BUF ) b=0
-
 // Spu fun stuff (FIXME: PROBABLY SHOULD BE MOVED TO A COMMON PLACE)
 
-#define PERM4( a, b, i, j, k, l ) spu_shuffle( (a), (b), ((vec_uchar16)   \
-  { 4*(i), 4*(i)+1, 4*(i)+2, 4*(i)+3, 4*(j), 4*(j)+1, 4*(j)+2, 4*(j)+3,   \
-    4*(k), 4*(k)+1, 4*(k)+2, 4*(k)+3, 4*(l), 4*(l)+1, 4*(l)+2, 4*(l)+3 }) )
+#define OFFSET_OF(t,f) ((size_t)(&(((t *)(NULL))->f)))
 
-#define PERM2( a, b, i, j ) spu_shuffle( (a), (b), ((vec_uchar16)           \
-  { 8*(i), 8*(i)+1, 8*(i)+2, 8*(i)+3, 8*(i)+4, 8*(i)+5, 8*(i)+6, 8*(i)+7,   \
-    8*(j), 8*(j)+1, 8*(j)+2, 8*(j)+3, 8*(j)+4, 8*(j)+5, 8*(j)+6, 8*(j)+7 }) )
+#define PERM4(a,b, i,j,k,l) spu_shuffle( (a), (b), ((vec_uchar16)           \
+    { 4*(i), 4*(i)+1, 4*(i)+2, 4*(i)+3, 4*(j), 4*(j)+1, 4*(j)+2, 4*(j)+3,   \
+      4*(k), 4*(k)+1, 4*(k)+2, 4*(k)+3, 4*(l), 4*(l)+1, 4*(l)+2, 4*(l)+3 }) )
 
-#define pos +0.
-#define neg -0.
-#define NEG2( a, s0, s1 ) spu_xor( (a), ((vec_double2){ s0, s1 }) )
+#define PERM2(a,b, i,j) spu_shuffle( (a), (b), ((vec_uchar16)                 \
+    { 8*(i), 8*(i)+1, 8*(i)+2, 8*(i)+3, 8*(i)+4, 8*(i)+5, 8*(i)+6, 8*(i)+7,   \
+      8*(j), 8*(j)+1, 8*(j)+2, 8*(j)+3, 8*(j)+4, 8*(j)+5, 8*(j)+6, 8*(j)+7 }) )
 
-#define VEC_DOUBLE2( a,i, b,j ) spu_extend( PERM4((a),(b),(i),(i),(j)+4,(j)+4) )
+#define VEC_DOUBLE2(a,i, b,j) spu_extend( PERM4((a),(b),(i),(i),(j)+4,(j)+4) )
 
 void
 _SPUEAR_load_interpolator_pipeline_spu(
@@ -73,17 +60,19 @@ _SPUEAR_load_interpolator_pipeline_spu(
     int n_pipeline ) {
   MEM_PTR( interpolator_t, 128 ) fi = args->fi;
   MEM_PTR( int64_t,        128 ) nb = args->nb;
+  cache_init( stencil, args->f + OFFSET_OF(field_t,ex) );
 
-  local_interpolator_t * RESTRICT ALIGNED(128) local_fi;
+  ls_neighbor_t * RESTRICT ALIGNED(128) nb_in;  SPU_MALLOC(nb_in, N_BUF,128);
+  ls_interp_t   * RESTRICT ALIGNED(128) fi_out; SPU_MALLOC(fi_out,N_BUF,128);
 
-  local_field_t f0;
-  local_field_t fx, fy, fz;
-  local_field_t fyz, fzx, fxy;
-  int x, y, z, v, n_voxel;
+  ls_field_t f0;
+  ls_field_t fx, fy, fz;
+  ls_field_t fyz, fzx, fxy;
+  int v, x, y, z, n_voxel;
 
-  const int nx = args->nx, sx = 1;
-  const int ny = args->ny, sy = (nx+2)*sx;
-  const int nz = args->nz, sz = (ny+2)*sy;
+  int nx = args->nx, sx = 1;
+  int ny = args->ny, sy = (nx+2)*sx;
+  int nz = args->nz, sz = (ny+2)*sy;
 
   vec_float4 fourth = (vec_float4){ 0.25f, 0.25f, 0.25f, 0.25f };
   vec_float4 half   = (vec_float4){ 0.5f,  0.5f,  0.5f,  0.5f  };
@@ -91,47 +80,45 @@ _SPUEAR_load_interpolator_pipeline_spu(
   vec_double2 vd0, vd1, vd2, vd3, s30, d30, s12, d12;
   vec_float4  vf0, vf1, vf2, vf3;
   vec_float4  ex, ey, ez, bxy, bz;
-  vec_llong2 local_nb[3];
 
-  int X, Y, Z, V, b;
+  int V, X, Y, Z, b;
 
-  // Process voxels assigned to this pipeline
+  // Determine which voxels are assigned here
 
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 1, pipeline_rank, n_pipeline,
                      x,y,z,n_voxel ); v = VOXEL(x,y,z, nx,ny,nz);
 # define VOXEL_INC(v,x,y,z) NEXT_VOXEL(v,x,y,z, 1,nx, 1,ny, 1,nz, nx,ny,nz)
 
-  // Setup cache, prefetching and writebacks
-  CACHE_INIT();
+  // Fill up the voxel pipeline
+
   V = v; X = x; Y = y; Z = z;
-  for( b=0; b<PREFETCH_LOOKAHEAD; b++ )
-    if( LIKELY( b<n_voxel ) ) {
-      PREFETCH( V           );
-      PREFETCH( V + sy      );
-      PREFETCH( V + sz      );
-      PREFETCH( V + sy + sz );
+  for( b=0; b<N_BUF; b++ )
+    if( LIKELY( n_voxel>b ) ) {
+      mfc_get( nb_in + b, nb + V*6*sizeof(int64_t),
+               6*sizeof(int64_t), IN_TAG(b), 0, 0 );
+      cache_touch( stencil,  V       *sizeof(field_t) );
+      cache_touch( stencil, (V+sy   )*sizeof(field_t) );
+      cache_touch( stencil, (V   +sz)*sizeof(field_t) );
+      cache_touch( stencil, (V+sy+sz)*sizeof(field_t) );
       VOXEL_INC(V,X,Y,Z);
     }
-  SPU_MALLOC( local_fi, WB_N_BUF, 128 );
+
+  // For each voxel assigned here
+
   b = 0;
-
   for( ; n_voxel; n_voxel-- ) {
-    mfc_get( local_nb, nb+6*sizeof(int64_t)*v, 6*sizeof(int64_t), 31, 0, 0 );
 
-    // Prefetch voxels likely to be used in the future
-    if( LIKELY( n_voxel>PREFETCH_LOOKAHEAD ) ) {
-      PREFETCH( V           );
-      PREFETCH( V + sy      );
-      PREFETCH( V + sz      );
-      PREFETCH( V + sy + sz );
-      VOXEL_INC(V,X,Y,Z);
-    }
+    // Load the stencil inputs
 
-    // Read stencil inputs
-    f0  = CACHE_RD( v           ); fx  = CACHE_RD( v + sx           );
-    fy  = CACHE_RD( v + sy      ); fxy = CACHE_RD( v + sx + sy      );
-    fz  = CACHE_RD( v      + sz ); fzx = CACHE_RD( v + sx      + sz );
-    fyz = CACHE_RD( v + sy + sz );
+    f0  = cache_wait_rd( stencil,  v          *sizeof(field_t), 1 );
+    fx  = cache_wait_rd( stencil, (v+sx      )*sizeof(field_t), 0 );
+    fy  = cache_wait_rd( stencil, (v   +sy   )*sizeof(field_t), 0 );
+    fxy = cache_wait_rd( stencil, (v+sx+sy   )*sizeof(field_t), 0 );
+    fz  = cache_wait_rd( stencil, (v      +sz)*sizeof(field_t), 0 );
+    fzx = cache_wait_rd( stencil, (v+sx   +sz)*sizeof(field_t), 0 );
+    fyz = cache_wait_rd( stencil, (v   +sy+sz)*sizeof(field_t), 0 );
+
+    // Compute the stencil values
 
 #   define x 0
 #   define y 1
@@ -175,7 +162,8 @@ _SPUEAR_load_interpolator_pipeline_spu(
 
     // Compute bz interpolation coefficients
     vd0 = VEC_DOUBLE2(  f0.b,z,  fz.b,z );        //       w0z               w1z
-    vd1 = NEG2( PERM2(vd0,vd0, 1,0), pos,neg );   //       w1z              -w0z
+    vd1 = spu_xor( PERM2(vd0,vd0, 1,0),
+                   ((vec_double2){ +0.,-0.}) );   //       w1z              -w0z
     vf0 = spu_roundtf( spu_add( vd0, vd1 ) );     //    cbz      0       dcbzdz    0
     bz  = spu_mul( half, PERM4(vf0,vf0, 0,2,1,3) );
 
@@ -183,20 +171,33 @@ _SPUEAR_load_interpolator_pipeline_spu(
 #   undef y
 #   undef x
 
-    // Write stencil outputs
-    WB_END(b);
-    local_fi[b].ex  = ex;
-    local_fi[b].ey  = ey;
-    local_fi[b].ez  = ez;
-    local_fi[b].bxy = bxy;
-    local_fi[b].bz  = bz;
-    mfc_write_tag_mask( 1 << 31 ); mfc_read_tag_status_all();
-    local_fi[b].n01 = local_nb[0];
-    local_fi[b].n23 = local_nb[1];
-    local_fi[b].n45 = local_nb[2];
-    WB_BEGIN(b,v); WB_INC(b);
+    // Finishing reading in the input voxel data, reduce the stencil
+    // values to it and starting writing the output voxel data
+
+    mfc_write_tag_mask( (1<<IN_TAG(b)) | (1<<OUT_TAG(b)) );
+    mfc_read_tag_status_all();
+    fi_out[b].ex  = ex;
+    fi_out[b].ey  = ey;
+    fi_out[b].ez  = ez;
+    fi_out[b].bxy = bxy;
+    fi_out[b].bz  = bz;
+    fi_out[b].n01 = nb_in[b].n01;
+    fi_out[b].n23 = nb_in[b].n23;
+    fi_out[b].n45 = nb_in[b].n45;
+    mfc_put( fi_out + b, fi + v*sizeof(interpolator_t),
+             sizeof(interpolator_t), OUT_TAG(b), 0, 0 );
+    if( LIKELY( n_voxel>N_BUF ) ) {
+      mfc_get( nb_in + b, nb + V*6*sizeof(int64_t),
+               6*sizeof(int64_t), IN_TAG(b), 0, 0 );
+      cache_touch( stencil,  V       *sizeof(field_t) );
+      cache_touch( stencil, (V+sy   )*sizeof(field_t) );
+      cache_touch( stencil, (V   +sz)*sizeof(field_t) );
+      cache_touch( stencil, (V+sy+sz)*sizeof(field_t) );
+      VOXEL_INC(V,X,Y,Z);
+    }
 
     // Advance to the next voxel
-    VOXEL_INC(v,x,y,z);
+
+    VOXEL_INC(v,x,y,z); b = (b+1) & (N_BUF-1);
   }
 }

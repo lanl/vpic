@@ -52,11 +52,16 @@ PROTOTYPE_PIPELINE( reduce_accumulators, accumulators_pipeline_args_t );
 
 typedef struct unload_accumulator_pipeline_args {
 
-  field_t             * ALIGNED(128) f;
-  const accumulator_t * ALIGNED(128) a;
-  const grid_t        *              g;
+  MEM_PTR( field_t, 128 ) f;             // Reduce accumulators to this
+  MEM_PTR( const accumulator_t, 128 ) a; // Accumulator array to reduce
+  int nx;                                // Local domain x-resolution
+  int ny;                                // Local domain y-resolution
+  int nz;                                // Local domain z-resolution
+  float cx;                              // x-axis coupling constant
+  float cy;                              // y-axis coupling constant
+  float cz;                              // z-axis coupling constant
 
-  PAD_STRUCT( 3*SIZEOF_MEM_PTR )
+  PAD_STRUCT( 2*SIZEOF_MEM_PTR + 3*sizeof(int) + 3*sizeof(float) )
 
 } unload_accumulator_pipeline_args_t;
 

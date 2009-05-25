@@ -66,15 +66,6 @@ typedef struct local_interpolator {
 
 #define VEC_DOUBLE2( a,i, b,j ) spu_extend( PERM4((a),(b),(i),(i),(j)+4,(j)+4) )
 
-#if 0
-#include <stdio.h>
-#define DELAY() for( volatile int delay[1]={1000000}; delay[0]; delay[0]-- )
-#define INSPECT_F(v) do { printf( #v"=%f\n", v ); fflush(stdout); DELAY(); } while(0)
-#define INSPECT_I(v) do { printf( #v"=%i\n", v ); fflush(stdout); DELAY(); } while(0)
-#define INSPECT_VF(v) do { printf( #v"=%f %f %f %f\n", spu_extract(v,0), spu_extract(v,1), spu_extract(v,2), spu_extract(v,3) ); fflush(stdout); DELAY(); } while(0)
-#define INSPECT_VD(v) do { printf( #v"=%f %f\n", spu_extract(v,0), spu_extract(v,1) ); fflush(stdout); DELAY(); } while(0)
-#endif
-
 void
 _SPUEAR_load_interpolator_pipeline_spu(
     load_interpolator_pipeline_args_t * args,
@@ -141,13 +132,6 @@ _SPUEAR_load_interpolator_pipeline_spu(
     fy  = CACHE_RD( v + sy      ); fxy = CACHE_RD( v + sx + sy      );
     fz  = CACHE_RD( v      + sz ); fzx = CACHE_RD( v + sx      + sz );
     fyz = CACHE_RD( v + sy + sz );
-
-#   if 0
-    INSPECT_I( v ); INSPECT_I( x ); INSPECT_I( y ); INSPECT_I( z );
-    INSPECT_I( sx); INSPECT_I( sy); INSPECT_I( sz);
-    INSPECT_I( nx); INSPECT_I( ny); INSPECT_I( nz);
-    INSPECT_VF( f0.e ); INSPECT_VF( fy.e ); INSPECT_VF( fz.e ); INSPECT_VF( fyz.e );
-#   endif
 
 #   define x 0
 #   define y 1

@@ -15,7 +15,6 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
                              int n_pipeline ) {
   field_t             * ALIGNED(128) f = args->f;
   const accumulator_t * ALIGNED(128) a = args->a;
-  const grid_t        *              g = args->g;
   
   const accumulator_t * ALIGNED(16) a0;
   const accumulator_t * ALIGNED(16) ax,  * ALIGNED(16) ay,  * ALIGNED(16) az;
@@ -23,19 +22,19 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
   field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
   
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
+  const int nx = args->nx;
+  const int ny = args->ny;
+  const int nz = args->nz;
 
-  const float cx = 0.25*g->rdy*g->rdz/g->dt;
-  const float cy = 0.25*g->rdz*g->rdx/g->dt;
-  const float cz = 0.25*g->rdx*g->rdy/g->dt;
+  const float cx = args->cx;
+  const float cy = args->cy;
+  const float cz = args->cz;
 
   // Process the voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 1,nx+1, 1,ny+1, 1,nz+1, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  if( pipeline_rank==n_pipeline ) return; // No need for straggler cleanup
+  n_voxel = distribute_voxels( 1,nx+1, 1,ny+1, 1,nz+1, 1,
+                               pipeline_rank, n_pipeline, &x, &y, &z );
 
 # define LOAD_STENCIL()                                                 \
   f0  = &f(x,  y,  z  );                                                \
@@ -69,7 +68,7 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 #if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
     defined(HAS_SPU_PIPELINE)
 
-#error "SPU version not hooked up yet!"
+// SPU pipeline defined in a different compile unit
 
 #elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
@@ -112,9 +111,14 @@ unload_accumulator( field_t             * ALIGNED(128) f,
 
 # endif
 
-  args->f = f;
-  args->a = a;
-  args->g = g;
+  args->f  = f;
+  args->a  = a;
+  args->nx = g->nx;
+  args->ny = g->ny;
+  args->nz = g->nz;
+  args->cx = 0.25*g->rdy*g->rdz/g->dt;
+  args->cy = 0.25*g->rdz*g->rdx/g->dt;
+  args->cz = 0.25*g->rdx*g->rdy/g->dt;
 
   EXEC_PIPELINES( unload_accumulator, args, 0 );
   WAIT_PIPELINES();

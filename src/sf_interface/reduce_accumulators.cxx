@@ -177,10 +177,12 @@ reduce_accumulators( accumulator_t * ALIGNED(128) a,
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
   if( na<spu.n_pipeline    ) na = spu.n_pipeline;
 # endif
-  na++; /* 1 + max( {serial,thread,spu}.n_pipeline ) */
+  na++; // 1 + max( {serial,thread,spu}.n_pipeline ) 
 
-  args->a       = a + i0;
-  args->n       = (((VOX(g->nx,g->ny,g->nz) - i0 + 1 )+1)/2)*2;
+  //args->a       = a + i0;
+  //args->n       = (((VOX(g->nx,g->ny,g->nz) - i0 + 1 )+1)/2)*2;
+  args->a       = a;
+  args->n       = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
   args->n_array = na;
   args->s_array = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
 

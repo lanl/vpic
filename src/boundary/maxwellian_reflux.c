@@ -15,7 +15,7 @@
 // of id[], ut_para[], ut_perp[] for each particle species.  The
 // routine creates a particle injector from the particle data passed
 // to it.  Particle injection from custom boundary handlers is
-// processed in boundary_p() in boundary_p.c after particles are
+// processed in boundary_p() in boundary_p.cxx after particles are
 // exchanged between processors across domain boundaries.
 //
 // Note that the way maxwellian_reflux_t is defined we have a hard

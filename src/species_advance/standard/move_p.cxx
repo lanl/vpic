@@ -17,12 +17,7 @@
 // not check its input arguments. Higher level routines are
 // responsible for insuring valid arguments.
 
-#if defined(V4_ACCELERATION) && !defined(V4_ALTIVEC_ACCELERATION)
-
-// FIXME: STRONGLY SUSPECT A ROUNDOFF ISSUE IN THE ALTIVEC VERSION OF
-// DIVISION (OR IN LIEU OF THAT, A COMPILER BUG).  UNTIL THIS CAN BE
-// INVESTIGATED MORE CAREFULLY, USE THE REGULAR VERSION ON ALTIVEC
-// PLATFORMS.
+#if defined(V4_ACCELERATION)
 
 // High performance variant based on SPE accelerated version
 
@@ -43,6 +38,11 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   v4float sgn_dr, s, sdr;
   v4float v0, v1, v2, v3, v4, v5, _stack_vf;
   v4int bits, _stack_vi;
+
+# if defined(V4_ALTIVEC_ACCELERATION)
+  v4float _stack_vg;
+  float * RESTRICT ALIGNED(16) stack_vg = (float *)&_stack_vg;
+# endif
 
   float * RESTRICT ALIGNED(16) stack_vf = (float *)&_stack_vf;
   int   * RESTRICT ALIGNED(16) stack_vi =   (int *)&_stack_vi;
@@ -90,7 +90,15 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER 
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf ); // FIXME: IS THIS DIVISION SAFE ON ALTIVEC?!
+#   if defined(V4_ALTIVEC_ACCELERATION ) 
+    store_4x1( sgn_dr - r, stack_vf );
+    store_4x1( (dr+dr)+v0, stack_vg );
+    stack_vf[0] /= stack_vg[0];
+    stack_vf[1] /= stack_vg[1];
+    stack_vf[2] /= stack_vg[2];
+#   else // FIXME: The below division doesn't seem to work right on Altivec
+    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf );
+#   endif
     /**/                          type = 3;             f0 = 1;
     f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;

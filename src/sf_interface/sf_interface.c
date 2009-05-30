@@ -72,7 +72,7 @@ new_accumulators( grid_t * g ) {
   req *= POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
 
   MALLOC_ALIGNED( a, req, 128 );
-  clear_accumulators( a, g );
+  CLEAR( a, req );
 
   return a;
 }

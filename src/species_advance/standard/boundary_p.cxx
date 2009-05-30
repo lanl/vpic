@@ -81,54 +81,45 @@ boundary_p( species_t        * RESTRICT sp_list,
             accumulator_t    * RESTRICT ALIGNED(128) a0,
             const grid_t     * RESTRICT g,
             mt_rng_t         *              rng ) {
-  const int sf2b[6] = { BOUNDARY(-1, 0, 0),
-                        BOUNDARY( 0,-1, 0),
-                        BOUNDARY( 0, 0,-1),
-                        BOUNDARY( 1, 0, 0),
-                        BOUNDARY( 0, 1, 0),
-                        BOUNDARY( 0, 0, 1) };
-
-  const int rf2b[6] = { BOUNDARY( 1, 0, 0),
-                        BOUNDARY( 0, 1, 0),
-                        BOUNDARY( 0, 0, 1),
-                        BOUNDARY(-1, 0, 0),
-                        BOUNDARY( 0,-1, 0),
-                        BOUNDARY( 0, 0,-1) };
+  static const int sf2b[6] = { BOUNDARY(-1, 0, 0),
+                               BOUNDARY( 0,-1, 0),
+                               BOUNDARY( 0, 0,-1),
+                               BOUNDARY( 1, 0, 0),
+                               BOUNDARY( 0, 1, 0),
+                               BOUNDARY( 0, 0, 1) };
+  
+  static const int rf2b[6] = { BOUNDARY( 1, 0, 0),
+                               BOUNDARY( 0, 1, 0),
+                               BOUNDARY( 0, 0, 1),
+                               BOUNDARY(-1, 0, 0),
+                               BOUNDARY( 0,-1, 0),
+                               BOUNDARY( 0, 0,-1) };
 
   const int rank  = mp_rank(g->mp);
   const int nproc = mp_nproc(g->mp);
 
-# define SHARED_REMOTELY(bound) \
-  ((g->bc[bound]>=0) & (g->bc[bound]<nproc) & (g->bc[bound]!=rank))
-
   const int64_t * RESTRICT ALIGNED(128) neighbor = g->neighbor;
-#if defined(DEBUG_BOUNDARY)
-  const int64_t * RESTRICT ALIGNED(128) neighbor_old = g->neighbor_old;
-#endif
   const int64_t rangel = g->rangel;
   const int64_t rangeh = g->rangeh;
-  const int64_t rangem = g->range[nproc];
-  const int64_t range0 = SHARED_REMOTELY(sf2b[0]) ?
-    g->range[g->bc[sf2b[0]]] : 0;
-  const int64_t range1 = SHARED_REMOTELY(sf2b[1]) ?
-    g->range[g->bc[sf2b[1]]] : 0;
-  const int64_t range2 = SHARED_REMOTELY(sf2b[2]) ?
-    g->range[g->bc[sf2b[2]]] : 0;
-  const int64_t range3 = SHARED_REMOTELY(sf2b[3]) ?
-    g->range[g->bc[sf2b[3]]] : 0;
-  const int64_t range4 = SHARED_REMOTELY(sf2b[4]) ?
-    g->range[g->bc[sf2b[4]]] : 0;
-  const int64_t range5 = SHARED_REMOTELY(sf2b[5]) ?
-    g->range[g->bc[sf2b[5]]] : 0;
+  const int64_t rangem = g->range[nproc]; 
+  /*const*/ int range[6], shared[6], rshared[6]; // FIXME: MERGE [r]shared
 
   boundary_t * RESTRICT boundary = g->boundary;
-  const int                 nb       = g->nb; 
+  const int nb                   = g->nb; 
 
   species_t * RESTRICT sp;
   int face, ns[6], ncm;
 
   static particle_injector_t * RESTRICT ALIGNED(16) cmlist = NULL;
-  static int cmlist_size = 0;
+  static int max_cmlist = 0;
+
+  for( face=0; face<6; face++ ) {
+    int bc = g->bc[sf2b[face]];
+    shared[face] = (bc>=0) && (bc<nproc) && (bc!=rank);
+    range[face]  = shared[face] ? g->range[bc] : 0;
+    bc = g->bc[rf2b[face]];
+    rshared[face] = (bc>=0) && (bc<nproc) && (bc!=rank);
+  }
 
   // Presize various buffers
   //
@@ -143,26 +134,25 @@ boundary_p( species_t        * RESTRICT sp_list,
   //
   // FIXME: WE COULD BE ~7X MORE EFFICIENT IN OUR PARTICLE INJECTOR
   // SIZING HERE.  CREATE ON LOCAL INJECTOR BUFFER OF NM IN SIZE.
-  // THEN WE WOULD DO INJECTION FOR ALL LOCAL AND REMOTE BOUNDARIES
-  // TO THIS BUFFER.  IN-PLACE SORT THE BUFFER, PRESERVING THE
-  // PARTTIONING.  LOAD UP MESSAGING APPROPRIATELY.  REQUIRES SOME
-  // MP REDESIGN!
+  // THEN WE WOULD DO INJECTION FOR ALL LOCAL AND REMOTE BOUNDARIES TO
+  // THIS BUFFER.  IN-PLACE SORT THE BUFFER, PRESERVING THE
+  // PARTITIONING.  LOAD UP MESSAGING APPROPRIATELY.  REQUIRES SOME MP
+  // REDESIGN!
+
 
   do {
     int nm = 0; LIST_FOR_EACH( sp, sp_list ) nm += sp->nm;
-    
     for( face=0; face<6; face++ )
-      if( SHARED_REMOTELY(sf2b[face] ) )
+      if( shared[face] )
         mp_size_send_buffer( sf2b[face],
-                             16 + nm*sizeof(particle_injector_t),
+                             16+nm*sizeof(particle_injector_t),
                              g->mp );
-    
-    if( cmlist_size<nm ) {
+    if( max_cmlist<nm ) {
       particle_injector_t * tmp = cmlist; // Hack around RESTRICT
       FREE_ALIGNED( tmp );
       MALLOC_ALIGNED( tmp, nm, 16 );
-      cmlist      = tmp;
-      cmlist_size = nm;
+      cmlist     = tmp;
+      max_cmlist = nm;
     }
   } while(0);
   
@@ -177,20 +167,17 @@ boundary_p( species_t        * RESTRICT sp_list,
   // and before this
   
   do {
-    particle_injector_t * RESTRICT ALIGNED(16) ps0 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[0],g->mp))+16 );
-    particle_injector_t * RESTRICT ALIGNED(16) ps1 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[1],g->mp))+16 );
-    particle_injector_t * RESTRICT ALIGNED(16) ps2 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[2],g->mp))+16 );
-    particle_injector_t * RESTRICT ALIGNED(16) ps3 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[3],g->mp))+16 );
-    particle_injector_t * RESTRICT ALIGNED(16) ps4 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[4],g->mp))+16 );
-    particle_injector_t * RESTRICT ALIGNED(16) ps5 =
-      (particle_injector_t *)( ((char *)mp_send_buffer(sf2b[5],g->mp))+16 );
-    particle_injector_t * /*RESTRICT*/ ALIGNED(16) cm  = cmlist;
-    int ns0 = 0, ns1 = 0, ns2 = 0, ns3 = 0, ns4 = 0, ns5 = 0;
+    static const int  axis[6] = { 0, 1, 2,  0,  1,  2 };
+    static const float dir[6] = { 1, 1, 1, -1, -1, -1 };
+    particle_injector_t * ALIGNED(16) ps[6];
+    particle_injector_t * ALIGNED(16) cm  = cmlist;
+    particle_injector_t * /*RESTRICT*/ ALIGNED(16) pi;
+
+    for( face=0; face<6; face++ ) {
+      ps[face] = (particle_injector_t *)
+        (((char *)mp_send_buffer(sf2b[face],g->mp))+16);
+      ns[face] = 0;
+    }
     
     LIST_FOR_EACH( sp, sp_list ) {
       particle_t       * RESTRICT ALIGNED(128) p0 = sp->p;
@@ -201,31 +188,46 @@ boundary_p( species_t        * RESTRICT sp_list,
       
       for( ; nm; pm--, nm-- ) {
         particle_t * RESTRICT ALIGNED(32) r = p0 + pm->i;
-        float   dx = r->dx;
-        float   dy = r->dy;
-        float   dz = r->dz;
-        int32_t i  = r->i;
-        float   ux = r->ux;
-        float   uy = r->uy;
-        float   uz = r->uz;
-        float   q  = r->q;
+        int32_t i = r->i; face = i & 7; i >>= 3;
+        int64_t nn = neighbor[ 6*i + face ];
+        r->i = i;
         
-        // FIXME: HAVE SPE HANDLER INDICATE THE FACE IN THE MOVER
-        // E.G. LIKE pm->i == 8*cell + FACE.  THIS ELIMINATES THE
-        // NEED TO TEST FACES FOR INTERACTION AT ALL!
-        
+        // Absorb
+
+        if( nn==absorb_particles ) {
+          accumulate_rhob( f, r, g );
+          r[0] = p0[--np];
+          continue;
+        }
+
+        // Send to a neighboring node
+
+        if( ((nn>=0) & (nn< rangel)) | ((nn>rangeh) & (nn<=rangem)) ) {
+          // FIXME: SSE accelerate
+          pi = &ps[face][ns[face]++];
+          ((particle_t *)(&pi->dx))[0] = r[0];
+          (&pi->dx)[axis[face]] = dir[face];
+          pi->i = nn - range[face];
+          ((particle_mover_t *)(&pi->dispx))[0] = pm[0];
+          pi->sp_id = sp_id;
+          r[0] = p0[--np];
+          continue;
+        }
+
+        // User-defined handling
+
         // FIXME: BOUNDARY_HANDLERS SHOULD RETURN THE NUMBER OF
         // INJECTORS THEY USED.  CM CAN THEN BE ELIMINATED TOO.
         
         // FIXME: Currently, after a particle interacts with a
-        // boundary it is removed from the local particle list.
-        // Thus, if a boundary handler does not want a particle
-        // destroyed, it is the boundary handler's job to append the
-        // destroyed particle to the list of particles to inject.
+        // boundary it is removed from the local particle list.  Thus,
+        // if a boundary handler does not want a particle destroyed,
+        // it is the boundary handler's job to append the destroyed
+        // particle to the list of particles to inject.
         //
-        // Note that these destructing and creation processes do
-        // _not_ adjust rhob by default.  Thus, a boundary handler
-        // is responsible for insuring that the rhob is updated
+        // Note that these destructing and creation processes do _not_
+        // adjust rhob by default.  Thus, a boundary handler is
+        // responsible for insuring that the rhob is updated
         // appropriate for the incident particle it destroys and for
         // any particles it as a result too.
         //
@@ -233,83 +235,21 @@ boundary_p( species_t        * RESTRICT sp_list,
         // charge neutral, this means most boundary handlers do
         // nothing to rhob.
         //
-        // In the future, the boundary handlers should be adjusted
-        // to determine whether or not the interacting particle
-        // should be removed in addition to keeping the charge
-        // conservation books.
-        
-#       define TEST_FACE(FACE,cond)                                     \
-        if(cond) {                                                      \
-          int64_t nn = neighbor[ 6*i + FACE ];                          \
-          if( nn==absorb_particles ) {                                  \
-            accumulate_rhob( f, r, g );                                 \
-            r[0] = p0[--np];                                            \
-            continue;                                                   \
-          }                                                             \
-          if( ((nn>=0)     && (nn< rangel)) ||                          \
-              ((nn>rangeh) && (nn<=rangem)) )  {                        \
-            /* nn - range... is less than 2^31 / 6 */                   \
-            ps##FACE[ns##FACE].dx    = ((FACE==0) | (FACE==3)) ? -dx : dx; \
-            ps##FACE[ns##FACE].dy    = ((FACE==1) | (FACE==4)) ? -dy : dy; \
-            ps##FACE[ns##FACE].dz    = ((FACE==2) | (FACE==5)) ? -dz : dz; \
-            ps##FACE[ns##FACE].i     = nn - range##FACE;                \
-            ps##FACE[ns##FACE].ux    = ux;                              \
-            ps##FACE[ns##FACE].uy    = uy;                              \
-            ps##FACE[ns##FACE].uz    = uz;                              \
-            ps##FACE[ns##FACE].q     = q;                               \
-            ps##FACE[ns##FACE].dispx = pm->dispx;                       \
-            ps##FACE[ns##FACE].dispy = pm->dispy;                       \
-            ps##FACE[ns##FACE].dispz = pm->dispz;                       \
-            ps##FACE[ns##FACE].sp_id = sp_id;                           \
-            ns##FACE++;                                                 \
-            r[0] = p0[--np];                                            \
-            continue;                                                   \
-          }                                                             \
-                                                                        \
-          /* Test for user-defined boundary handler.          */        \
-          /* Note: Particle is destroyed after it is handled. */        \
-                                                                        \
-          nn = -nn - 3; /* Assumes reflecting/absorbing are -1, -2 */   \
-          if( (nn>=0) & (nn<nb) ) {                                     \
-            boundary[nn].handler( boundary[nn].params,                  \
-                                  r, pm, f, a0, g, sp, &cm, rng, FACE ); \
-            r[0] = p0[--np];                                            \
-            continue;                                                   \
-          }                                                             \
+        // In the future, the boundary handlers should be adjusted to
+        // determine whether or not the interacting particle should be
+        // removed in addition to keeping the charge conservation
+        // books.
+
+        nn = -nn - 3; // Assumes reflective/absorbing are -1, -2
+        if( (nn>=0) & (nn<nb) ) {
+          boundary[nn].handler( boundary[nn].params,
+                                r, pm, f, a0, g, sp, &cm, rng, face );
+          r[0] = p0[--np];
+          continue;
         }
-        
-/* Debug logic taken from macro */
-#if 0
-          int64_t nn_old = neighbor_old[ 6*i + FACE ];                  \
-          nn_old = -nn_old - 3;                                         \
 
-		  WARNING(( "Exceptional case:  somehow it fell through.  nn=%ld nn_old=%ld rangel=%ld rangeh=%ld rangem=%ld", -((int64_t)(3)+nn), -((int64_t)(3)+nn_old), rangel, rangeh, rangem));\
-          if(nn != nn_old) {                                            \
-		    WARNING(("nn not equal nn_old"));                           \
-          }                                                             \
-                                                                        \
-          /* new stuff:  Print physical location of particle */         \
-          {                                                             \
-            int nxp2 = g->nx+2;                                         \
-            int nyp2 = g->ny+2;                                         \
-            int iz   = i/(nxp2*nyp2);                                   \
-            int iy   = (i - iz*nxp2*nyp2)/nxp2;                         \
-            int ix   = i - nxp2*(iy+nyp2*iz);                           \
-            float px = g->x0+((ix-1)+(dx+1)*0.5)*g->dx;                 \
-            float py = g->y0+((iy-1)+(dy+1)*0.5)*g->dy;                 \
-            float pz = g->z0+((iz-1)+(dz+1)*0.5)*g->dz;                 \
-            MESSAGE(("nn = %ld, px, py, pz = (%e %e %e)", nn, px, py, pz)); \
-          }
-#endif
+        // Uh-oh: We fell through
 
-        TEST_FACE(0,(dx==-1) & (ux<0));
-        TEST_FACE(1,(dy==-1) & (uy<0));
-        TEST_FACE(2,(dz==-1) & (uz<0));
-        TEST_FACE(3,(dx== 1) & (ux>0));
-        TEST_FACE(4,(dy== 1) & (uy>0));
-        TEST_FACE(5,(dz== 1) & (uz>0));
-#       undef TEST_FACE
-        
         WARNING(( "Unknown boundary interaction ... using absorption "
                   "(species=%s, rank=%i)", sp->name, rank ));
         accumulate_rhob( f, r, g );
@@ -320,18 +260,12 @@ boundary_p( species_t        * RESTRICT sp_list,
       sp->nm = 0;
     }
 
-    ns[0] = ns0;
-    ns[1] = ns1;
-    ns[2] = ns2;
-    ns[3] = ns3;
-    ns[4] = ns4;
-    ns[5] = ns5;
     ncm   = cm - cmlist;
   } while(0);
 
   // Exchange particle counts
   
-  // FIXME: WASTEFULL OF COMMUNICATIONS HERE.  COULD AT LEAST NOT DO
+  // FIXME: WASTEFUL OF COMMUNICATIONS HERE.  COULD AT LEAST NOT DO
   // THE SECOND COMMUNICATION IF NO DATA TO SEND (BOTH ENDS KNOW
   // THIS!)  BETTER WOULD BE TO USE EITHER PRESIZED BUFFERS OR A
   // STATEFUL PROTOCOL TO PERMIT ONE MESSAGE PER FACE TO BE SENT
@@ -340,7 +274,7 @@ boundary_p( species_t        * RESTRICT sp_list,
   // FIXME: ARE MP_SIZES HERE REALLY NECESSARY??
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(sf2b[face]) ) {
+    if( shared[face] ) {
       *((int *)mp_send_buffer( sf2b[face], g->mp )) = ns[face];
       mp_begin_send( sf2b[face],
                      sizeof(int),
@@ -350,7 +284,7 @@ boundary_p( species_t        * RESTRICT sp_list,
     }
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(rf2b[face]) ) {
+    if( rshared[face] ) {
       mp_size_recv_buffer( rf2b[face], sizeof(int), g->mp );
       mp_begin_recv( rf2b[face],
                      sizeof(int),
@@ -360,21 +294,21 @@ boundary_p( species_t        * RESTRICT sp_list,
     }
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(rf2b[face]) ) mp_end_recv( rf2b[face], g->mp );
+    if( rshared[face] ) mp_end_recv( rf2b[face], g->mp );
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(sf2b[face]) ) mp_end_send( sf2b[face], g->mp );
+    if( shared[face] ) mp_end_send( sf2b[face], g->mp );
   
   // Exchange particles
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(sf2b[face]) )
+    if( shared[face] )
       mp_begin_send( sf2b[face],
                      16 + ns[face]*sizeof(particle_injector_t),
                      g->bc[sf2b[face]], sf2b[face], g->mp );
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(rf2b[face]) ) {
+    if( rshared[face] ) {
       int sz = *((int *)mp_recv_buffer( rf2b[face], g->mp ));
       sz = 16 + sz*sizeof(particle_injector_t);
       mp_size_recv_buffer( rf2b[face], sz, g->mp );
@@ -382,7 +316,7 @@ boundary_p( species_t        * RESTRICT sp_list,
     }
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(rf2b[face]) ) mp_end_recv( rf2b[face], g->mp );
+    if( rshared[face] ) mp_end_recv( rf2b[face], g->mp );
   
   // Inject received particles
   
@@ -401,13 +335,12 @@ boundary_p( species_t        * RESTRICT sp_list,
     
     for( face=0; face<7; face++ ) {
       if( face==6 ) pi = cmlist, n = ncm;
-      else if( !SHARED_REMOTELY(rf2b[face]) ) continue;
+      else if( !rshared[face] ) continue;
       else {
         char * buf = (char *)mp_recv_buffer( rf2b[face], g->mp );
         pi = (particle_injector_t *)( buf + 16 );
         n  = *((int *)buf);
       }
-      
       for( ; n; pi++, n-- ) n_inj[ pi->sp_id ]++;
     }
     
@@ -460,11 +393,11 @@ boundary_p( species_t        * RESTRICT sp_list,
       int nm; particle_mover_t * RESTRICT ALIGNED(16) pm;
 
       if( face==6 ) pi = cmlist, n = ncm;
-      else if( !SHARED_REMOTELY(rf2b[face]) ) continue;
+      else if( !rshared[face] ) continue;
       else {
         char * buf = (char *)mp_recv_buffer( rf2b[face], g->mp );
         pi = (particle_injector_t *)( buf + 16 );
-        n     = *((int *)buf);
+        n  = *((int *)buf);
       }
       
       // Reverse order injection is done to reduce thrashing of the
@@ -477,23 +410,15 @@ boundary_p( species_t        * RESTRICT sp_list,
 
       pi += n-1;
       for( ; n; pi--, n-- ) {
+        // FIXME: HAVE p, pm, np, nm PREUNPACKED INTO SP_ID TABLE!
         sp = sp_table[pi->sp_id];
-
-        /* Note: BREAKS ALIASING RULES */
-        /*sp->p[ sp->np] = *(particle_t       *)(&(pi->dx   ));*/
-        /*sp->pm[sp->nm] = *(particle_mover_t *)(&(pi->dispx));*/
-
-        np = sp->np; p  = sp->p  + np;
-        nm = sp->nm; pm = sp->pm + nm;
-
-        p->dx = pi->dx; p->dy = pi->dy; p->dz = pi->dz; p->i = pi->i; /* FIXME: v4 accelerate */
-        p->ux = pi->ux; p->uy = pi->uy; p->uz = pi->uz; p->q = pi->q; /* FIXME: v4 accelerate */
-       
-        pm->dispx = pi->dispx; pm->dispy = pi->dispy; pm->dispz = pi->dispz; pm->i = pi->sp_id; /* FIXME: v4 accelerate */
-
-        pm->i  = np;
-        sp->np = np + 1;
-        sp->nm = nm + move_p( sp->p, pm, a0, g );
+        p  = sp->p;  np = sp->np;
+        pm = sp->pm; nm = sp->nm;
+        // FIXME: SSE accelerate
+        p[np]  = ((particle_t       *)(&(pi->dx   )))[0];
+        pm[nm] = ((particle_mover_t *)(&(pi->dispx)))[0]; pm[nm].i = np;
+        sp->np = np+1;
+        sp->nm = nm + move_p( p, pm+nm, a0, g );
       }
     }
     
@@ -502,5 +427,5 @@ boundary_p( species_t        * RESTRICT sp_list,
   // Communication wrap up
   
   for( face=0; face<6; face++ )
-    if( SHARED_REMOTELY(sf2b[face]) ) mp_end_send( sf2b[face], g->mp );
+    if( shared[face] ) mp_end_send( sf2b[face], g->mp );
 }

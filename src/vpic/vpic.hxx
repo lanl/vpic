@@ -448,22 +448,22 @@ private:
   // This injection is _ultra_ _fast_.
  
   inline void
-  inject_particle_raw( species_t * sp,
+  inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float q ) {
-    particle_t * p = sp->p + (sp->np++);
+    particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
   }
  
   inline void
-  inject_particle_raw( species_t * sp,
+  inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float q,
                        float dispx, float dispy, float dispz,
                        int update_rhob ) {
-    particle_t       * p  = sp->p  + (sp->np++);
-    particle_mover_t * pm = sp->pm + sp->nm;
+    particle_t       * RESTRICT p  = sp->p  + (sp->np++);
+    particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;

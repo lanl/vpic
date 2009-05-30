@@ -865,44 +865,38 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
       // entry / exit coordinate for the particle is guaranteed to be
       // +/-1 _exactly_ for the particle.
 
-      face = type;
-      if( f0>0 ) face += 3;
+      face = type; if( f0>0 ) face += 3;
       neighbor = i_cache[line].neighbor[face];
 
-      if( LIKELY( (neighbor>=rangel) &
-                  (neighbor<=rangeh) ) ) { // Yes, bit ops!
-        
-        // Crossed into a normal voxel
-        
-        voxel = neighbor - rangel;
-        r = XOR( r, (vec_float4)sign[type] ); // Convert coordinate system
-        
-      } else if( UNLIKELY( neighbor==reflect_particles ) ) {
-        
+      if( UNLIKELY( neighbor==reflect_particles ) ) {
         // Hit a reflecting boundary condition.  Reflect the particle
         // momentum and remaining displacement and keep moving the
         // particle.
-        
         v0 = (vec_float4)sign[type];
-        dr = XOR( dr, v0 );
         u  = XOR( u,  v0 );
+        dr = XOR( dr, v0 );
         STORE_4x1( u, &p[n].ux );
-        
-      } else {
-        
+        continue;
+      }
+
+      if( UNLIKELY( (neighbor<rangel) |
+                    (neighbor>rangeh) ) ) { // Yes, bit ops!
         // Cannot handle the boundary condition here.  Save the
-        // remaining particle displacement into a mover for later
-        // processing.
-        
+        // remaining particle displacement and interacting face
+        // in a mover for later processing.
+        voxel = 8*voxel + face;
         STORE_4x1( (vec_float4)INSERT( idx+n, (vec_int4)dr, 3 ),
                    &pm[new_nm++].dispx );
         break;
-        
       }
+
+      // Crossed into a normal voxel.  Update the voxel index, convert
+      // the particle coordinate system and keep moving the particle.
+      voxel = neighbor - rangel;
+      r = XOR( r, (vec_float4)sign[type] );
     }
 
     // Save the moved particle position
-
     STORE_4x1( (vec_float4)INSERT( voxel, (vec_int4)r, 3 ), &p[n].dx );
   }
 

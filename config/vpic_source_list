@@ -50,7 +50,7 @@ src/sf_interface/sf_interface.c
 src/sf_interface/unload_accumulator.cxx
 src/species_advance/species_advance.c
 src/species_advance/standard/advance_p.cxx
-src/species_advance/standard/boundary_p.c
+src/species_advance/standard/boundary_p.cxx
 src/species_advance/standard/center_p.cxx
 src/species_advance/standard/energy_p.cxx
 src/species_advance/standard/hydro_p.c

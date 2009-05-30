@@ -126,9 +126,10 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
   ((vl)+((((int64_t)(p))*((int64_t)((vh)-(vl)+1)) + ((int64_t)((P)-1))) / \
           ((int64_t)(P))))
 
-enum {
-  max_subsort = 4*((MAX_PIPELINE+3)/4) // Must be a multiple of 4
-};
+// SPU can only subsort so large a voxel range.  The below value
+// reserves 208KiB of the SPU heap in the fine subsort pipeline.
+
+enum { max_subsort_voxel = 26624 };
 
 typedef struct sort_p_pipeline_args {
 

@@ -45,16 +45,16 @@
  
 // FIXME: MIGHT WANT TO CHECK THAT SP_ID DOESN'T OVERFLOW
 
-void
+int
 maxwellian_reflux( void * _mr,
-                   particle_t           * RESTRICT r, 
-                   particle_mover_t     * RESTRICT pm,
-                   field_t              * RESTRICT f,
-                   accumulator_t        * RESTRICT a, 
-                   const grid_t         * RESTRICT g,
-                   species_t            * RESTRICT s, 
-                   particle_injector_t ** RESTRICT ppi,
-                   mt_rng_t             * RESTRICT rng,
+                   particle_t          * RESTRICT r, 
+                   particle_mover_t    * RESTRICT pm,
+                   field_t             * RESTRICT f,
+                   accumulator_t       * RESTRICT a, 
+                   const grid_t        * RESTRICT g,
+                   species_t           * RESTRICT s, 
+                   particle_injector_t * RESTRICT pi,
+                   mt_rng_t            * RESTRICT rng,
                    int face ) {
   maxwellian_reflux_t * RESTRICT mr = (maxwellian_reflux_t *)_mr;
   int32_t sp_id = s->id;
@@ -64,7 +64,6 @@ maxwellian_reflux( void * _mr,
   float ux, uy, uz;          // x, y, z normalized momenta
   float dispx, dispy, dispz; // Particle displacement
   float ratio;  
-  particle_injector_t * RESTRICT pi; 
 
   /**/                      // axis x  y  z 
   static const int perm[6][3] = { { 0, 1, 2 },   // -x face
@@ -161,7 +160,6 @@ maxwellian_reflux( void * _mr,
   // if( ratio<=0 || ratio>=g->dt*g->cvac )
   //   WARNING(( "Bizarre behavior detected in maxwellian_reflux" ));
 
-  pi        = (*ppi)++;
   pi->dx    = r->dx;
   pi->dy    = r->dy;
   pi->dz    = r->dz;
@@ -174,5 +172,6 @@ maxwellian_reflux( void * _mr,
   pi->dispy = dispy;
   pi->dispz = dispz;
   pi->sp_id = sp_id;
+  return 1;
 }
 

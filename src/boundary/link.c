@@ -14,7 +14,7 @@
 // 
 // Written by: Brian J. Albright, X-1, LANL January, 2006
 
-void
+int
 link_boundary( void * _lb,
                particle_t *r, 
                particle_mover_t *pm,
@@ -22,7 +22,7 @@ link_boundary( void * _lb,
                accumulator_t *a, 
                const grid_t *g,
                species_t *s, 
-               particle_injector_t **ppi,
+               particle_injector_t *pi,
                mt_rng_t *rng,
                int face ) {
   link_boundary_t * lb = (link_boundary_t *)_lb;
@@ -70,4 +70,5 @@ link_boundary( void * _lb,
   lb->n_out++;
 
   accumulate_rhob( f, r, g );
+  return 0;
 }

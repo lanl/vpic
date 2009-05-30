@@ -25,16 +25,17 @@ struct grid;
 struct species;
 struct particle_injector;
 
-typedef void (*boundary_handler_t)( void                  * params,
-                                    struct particle       * r,
-                                    struct particle_mover * pm,       
-                                    struct field          * f,
-                                    struct accumulator    * a,
-                                    const struct grid     * g,
-                                    struct species        * s, 
-                                    struct particle_injector ** ppi, 
-                                    mt_rng_t              * rng, 
-                                    int           face );
+typedef int
+(*boundary_handler_t)( void                     * params,
+                       struct particle          * r,
+                       struct particle_mover    * pm,       
+                       struct field             * f,
+                       struct accumulator       * a,
+                       const struct grid        * g,
+                       struct species           * s, 
+                       struct particle_injector * ppi, 
+                       mt_rng_t                 * rng, 
+                       int                        face );
 
 enum boundary_handler_enums {
   INVALID_BOUNDARY       = 0xBADF00D,
@@ -141,10 +142,6 @@ typedef struct grid {
                           // voxels owned by processor "rank".  Note:
                           // range[rank+1]-range[rank] <~ 2^31 / 6
 
-#if defined(DEBUG_BOUNDARY)
-  int64_t * ALIGNED(128) neighbor_old;
-#endif
-
   int64_t * ALIGNED(128) neighbor;
                           // (0:5,0:local_num_voxel-1) FORTRAN indexed
                           // array neighbor(0:5,lidx) are the global
@@ -210,9 +207,9 @@ BEGIN_C_DECLS
 //   bc.ux[0]      = sqrt(k*T/(m*c^2))
 //   ...
 //   reflux_boundary = add_boundary( g, reflux_handler, &bc );
+// FIXME: WHY MAKE USER PASS &bc ... SILLY
+#define add_boundary(g,bh,ip) IUO_add_boundary((g),(bh),(ip),sizeof(*(ip)))
 
-#define add_boundary(g,bh,ip) \
-  IUO_add_boundary((g),(bh),(ip),sizeof(*(ip)))
 int
 IUO_add_boundary( grid_t *g,
 		  boundary_handler_t bh,

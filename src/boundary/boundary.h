@@ -14,7 +14,7 @@ typedef struct maxwellian_reflux {
   float ut_para[32]; // array of parallel thermal velocities
 } maxwellian_reflux_t; 
 
-void
+int
 maxwellian_reflux( void * params,
                    particle_t *r,
                    particle_mover_t *pm, 
@@ -22,7 +22,7 @@ maxwellian_reflux( void * params,
                    accumulator_t *a,
                    const grid_t *g,
                    species_t *s,
-                   particle_injector_t **ppi,
+                   particle_injector_t *pi,
                    mt_rng_t *rng,
                    int face ); 
 
@@ -34,7 +34,7 @@ typedef struct absorb_tally {
   int nabs[32];      // array of numbers of particles absorbed
 } absorb_tally_t; 
 
-void
+int
 absorb_tally( void * params,
               particle_t *r,
               particle_mover_t *pm, 
@@ -42,7 +42,7 @@ absorb_tally( void * params,
               accumulator_t *a,
               const grid_t *g,
               species_t *s,
-              particle_injector_t **ppi,
+              particle_injector_t *pi,
               mt_rng_t *rng,
               int face ); 
 
@@ -54,7 +54,7 @@ typedef struct link_boundary {
                    // accomodate long long runs)
 } link_boundary_t;
 
-void
+int
 link_boundary( void * params,
                particle_t *r,
                particle_mover_t *pm, 
@@ -62,7 +62,7 @@ link_boundary( void * params,
                accumulator_t *a,
                const grid_t *g,
                species_t *s,
-               particle_injector_t **ppi,
+               particle_injector_t *pi,
                mt_rng_t *rng,
                int face ); 
 

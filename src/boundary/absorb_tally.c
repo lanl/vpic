@@ -5,7 +5,7 @@
 //
 // Written by:  Brian J. Albright, X-1, LANL   July, 2005
 
-void
+int
 absorb_tally( void * params,
               particle_t *r, 
               particle_mover_t *pm,
@@ -13,7 +13,7 @@ absorb_tally( void * params,
               accumulator_t *a, 
               const grid_t *g,
               species_t *s, 
-              particle_injector_t **ppi,
+              particle_injector_t *pi,
               mt_rng_t *rng,
               int face ) {
   absorb_tally_t * absorb_tally_data = (absorb_tally_t *)params;
@@ -29,4 +29,5 @@ absorb_tally( void * params,
   ++(absorb_tally_data->nabs[ispec]);
 
   accumulate_rhob( f, r, g );
+  return 0;
 }

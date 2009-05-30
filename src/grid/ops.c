@@ -23,7 +23,7 @@ size_grid( grid_t * g,
   int rank, nproc, i, j, k, lnc;
   int64_t ii, jj, kk; 
 
-  if( g==NULL )                 ERROR(("Bad grid"));
+  if( g==NULL                 ) ERROR(("Bad grid"));
   if( g->mp==NULL             ) ERROR(("Bad mp"));
   if( lnx<1 || lny<1 || lnz<1 ) ERROR(("Bad local grid size"));
 
@@ -89,11 +89,6 @@ size_grid( grid_t * g,
           g->neighbor[i+5] = reflect_particles;
         }
       }
-
-#if defined(DEBUG_BOUNDARY)
-  FREE_ALIGNED( g->neighbor_old );
-  MALLOC_ALIGNED( g->neighbor_old, 6*lnc, 128 );
-#endif
 
 # if 0
   // Setup the space filling curve

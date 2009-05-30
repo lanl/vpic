@@ -6,7 +6,7 @@
 #include "../../relay/ConnectionManager.hxx"
 #include "../../relay/p2p/P2PConnection.hxx"
 
-static const double RESIZE_FACTOR = 1.1;
+static const double RESIZE_FACTOR = 1.3125; // "silver ratio"
 
 struct mp_t {
     int rank;

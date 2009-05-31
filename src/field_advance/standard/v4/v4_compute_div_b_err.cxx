@@ -86,9 +86,9 @@ compute_div_b_err_pipeline_v4( pipeline_args_t * args,
 
     load_4x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
 
-    load_4x1_tr( &fx0->cbx, &fx1->cbx, &fx2->cbx, &fx3->cbx, fx_cbx );
-    load_4x1_tr( &fy0->cby, &fy1->cby, &fy2->cby, &fy3->cby, fy_cby );
-    load_4x1_tr( &fz0->cbz, &fz1->cbz, &fz2->cbz, &fz3->cbz, fz_cbz );
+    fx_cbx = v4float( fx0->cbx, fx1->cbx, fx2->cbx, fx3->cbx );
+    fy_cby = v4float( fy0->cby, fy1->cby, fy2->cby, fy3->cby );
+    fz_cbz = v4float( fz0->cbz, fz1->cbz, fz2->cbz, fz3->cbz );
 
     f0_div_b_err = fma( vpx,fx_cbx-f0_cbx, fma( vpy,fy_cby-f0_cby, vpz*(fz_cbz-f0_cbz) ) );
 

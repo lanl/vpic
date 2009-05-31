@@ -1,74 +1,58 @@
 #define IN_spa
 #include "spa_private.h"
 
-#define f(x,y,z) f[ VOXEL(x,y,z, g->nx,g->ny,g->nz) ]
-
 // Accumulate particle to rhob with locally adjusted accumulation.
 // FIXME: THIS FUNCTION DOESN'T BELONG HERE ANYMORE!
+
+// FIXME: BOUNDARY_P SHOULD BATCH ALL RHOB ACCUMULATIONS TOGETHER.
+// WOULD BE LOWER OVERHEAD
+
+using namespace v4;
+
+// Note: If part of the body of accumulate_rhob, under the hood
+// there is a checked for initialization that occurs everytime
+// accumulate_rhob is called!
+
+static const v4float ax[4] = { v4float(1,1,1,1), v4float(2,1,2,1),
+                               v4float(1,2,1,2), v4float(2,2,2,2) };
+static const v4float ay[4] = { v4float(1,1,1,1), v4float(2,2,1,1),
+                               v4float(1,1,2,2), v4float(2,2,2,2) };
 
 void
 accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
                  const particle_t * RESTRICT ALIGNED(32)  p,
                  const grid_t     * RESTRICT              g ) {
-  float w0, w1, w2, w3, w4, w5, w6, w7, t;
-  int i, j, k;
-  float *rhob;
+  v4float q, wl, wh, rl, rh;
+  int v, sy = g->sy, sz = g->sz;
+  int i, j;
+
+  // Gather rhob for this voxel
+  v = p->i;
+  rl = v4float( f[v      ].rhob, f[v      +1].rhob,
+                f[v   +sy].rhob, f[v   +sy+1].rhob);
+  rh = v4float( f[v+sz   ].rhob, f[v+sz   +1].rhob,
+                f[v+sz+sy].rhob, f[v+sz+sy+1].rhob);
 
   // Compute the trilinear weights
-  t   = p->dx;                      // t  = x
-  w0  = 0.125*p->q*g->rdx*g->rdy*g->rdz; // w0 = w/8
-  t  *= w0;                         // t  = wx/8
-  w1  = w0+t;                       // w1 = w/8 + wx/8 = (w/8)(1+x)
-  w0 -= t;                          // w0 = w/8 - wx/8 = (w/8)(1-x)
-  t   = p->dy;                      // t  = y
-  w3  = 1+t;                        // w3 = 1+y
-  w2  = w0*w3;                      // w2 = (w/8)(1-x)(1+y)
-  w3 *= w1;                         // w3 = (w/8)(1+x)(1+y)
-  t   = 1-t;                        // t  = 1-y
-  w0 *= t;                          // w0 = (w/8)(1-x)(1-y)
-  w1 *= t;                          // w1 = (w/8)(1+x)(1-y)
-  t   = p->dz;                      // t  = z
-  w7  = 1+t;                        // w7 = 1+z
-  w4  = w0*w7;                      // w4 = (w/8)(1-x)(1-y)(1+z) *Done
-  w5  = w1*w7;                      // w5 = (w/8)(1+x)(1-y)(1+z) *Done
-  w6  = w2*w7;                      // w6 = (w/8)(1-x)(1+y)(1+z) *Done
-  w7 *= w3;                         // w7 = (w/8)(1+x)(1+y)(1+z) *Done
-  t   = 1-t;                        // t  = 1-z
-  w0 *= t;                          // w0 = (w/8)(1-x)(1-y)(1-z) *Done
-  w1 *= t;                          // w1 = (w/8)(1+x)(1-y)(1-z) *Done
-  w2 *= t;                          // w2 = (w/8)(1-x)(1+y)(1-z) *Done
-  w3 *= t;                          // w3 = (w/8)(1+x)(1+y)(1-z) *Done
-  
-  // Adjust the weights for a corrected local accumulation of rhob
-  // See note in synchronize_rho why we must do this for rhob and
-  // not for rhof.
-  // FIXME: GRID SHOULD PROVIDE v TO x,y,z FUNCTIONALITY
+  load_4x1( &p->dx, wl );
+  trilinear( wl, wh );
 
-  i  = p->i;        // i = VOXEL(ix,iy,iz, nx,ny,nz)
-  /**/              //   = ix + (nx+2)*( iy + (ny+2)*iz )
-  j  = i/(g->nx+2); // j = iy + (ny+2)*iz
-  i -= j*(g->nx+2); // i = ix
-  k  = j/(g->ny+2); // k = iz
-  j -= k*(g->ny+2); // j = iy
-  if( i==1     ) w0 += w0, w2 += w2, w4 += w4, w6 += w6;
-  if( i==g->nx ) w1 += w1, w3 += w3, w5 += w5, w7 += w7;
-  if( j==1     ) w0 += w0, w1 += w1, w4 += w4, w5 += w5;
-  if( j==g->ny ) w2 += w2, w3 += w3, w6 += w6, w7 += w7;
-  if( k==1     ) w0 += w0, w1 += w1, w2 += w2, w3 += w3;
-  if( k==g->nz ) w4 += w4, w5 += w5, w6 += w6, w7 += w7;
-  
-  // Update rhob
-  i = &f(1,0,0).rhob - &f(0,0,0).rhob;
-  j = &f(0,1,0).rhob - &f(1,0,0).rhob;
-  k = &f(0,0,1).rhob - &f(1,1,0).rhob;
-  rhob = &f[p->i].rhob; *rhob += w0;
-  rhob += i;            *rhob += w1;
-  rhob += j;            *rhob += w2;
-  rhob += i;            *rhob += w3;
-  rhob += k;            *rhob += w4;
-  rhob += i;            *rhob += w5;
-  rhob += j;            *rhob += w6;
-  rhob += i;            *rhob += w7;
+  // Adjust the weights for a corrected local accumulation of rhob.
+  // See note in synchronize_rho why we must do this for rhob and not
+  // for rhof.  Why yes, this code snippet is branchless and evil.
+  i = v;
+  j = i/sz; i -= sz*j;       load_4x1( &ax[(j==1    )?3:0], q ); wl *= q;
+  /**/                       load_4x1( &ax[(j==g->nz)?3:0], q ); wh *= q;
+  j = i/sy; i -= sy*j;
+  j = (j==1) + 2*(j==g->ny); load_4x1( &ay[j], q ); wl *= q; wh *= q;
+  i = (i==1) + 2*(i==g->nx); load_4x1( &ax[i], q ); wl *= q; wh *= q;
+
+  // Reduce the particle charge to rhof and scatter the result
+  q = v4float( g->r8V*p->q );
+  store_4x1_tr( fma(q,wl,rl), &f[v      ].rhob, &f[v      +1].rhob,
+                              &f[v   +sy].rhob, &f[v   +sy+1].rhob );
+  store_4x1_tr( fma(q,wh,rh), &f[v+sz   ].rhob, &f[v+sz   +1].rhob,
+                              &f[v+sz+sy].rhob, &f[v+sz+sy+1].rhob );
 }
 
 // FIXME: ARCHITECTURAL FLAW!  CUSTOM BCS AND SHARED FACES CANNOT

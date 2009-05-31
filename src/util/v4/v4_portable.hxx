@@ -659,6 +659,7 @@ namespace v4 {
     friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
+    friend inline void trilinear( v4float & wl, v4float & wh );
     
   public:
 
@@ -950,6 +951,18 @@ namespace v4 {
     p[1] *= a.f[1];
     p[2] *= a.f[2];
     p[3] *= a.f[3];
+  }
+
+  inline void trilinear( v4float & wl, v4float & wh ) {
+    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
+    wl.f[0] = ((1-x)*(1-y))*(1-z);
+    wl.f[1] = ((1+x)*(1-y))*(1-z);
+    wl.f[2] = ((1-x)*(1+y))*(1-z);
+    wl.f[3] = ((1+x)*(1+y))*(1-z);
+    wh.f[0] = ((1-x)*(1-y))*(1+z);
+    wh.f[1] = ((1+x)*(1-y))*(1+z);
+    wh.f[2] = ((1-x)*(1+y))*(1+z);
+    wh.f[3] = ((1+x)*(1+y))*(1+z);
   }
 
 } // namespace v4

@@ -14,7 +14,6 @@ grid_t *
 new_grid( void ) {
   grid_t *g;
   int i;
-
   MALLOC( g, 1 );
   CLEAR( g, 1 );
   g->mp = new_mp();

@@ -217,6 +217,8 @@ namespace v4 {
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3, v4 &a ) {
+    // FIXME: vec_float4 t = { f0, f1, f2, f3 };
+    // ... seg faults gcc .. MAYBE NOT ANYMORE
     a.f[0] = ((const float *)a0)[0];
     a.f[1] = ((const float *)a1)[0];
     a.f[2] = ((const float *)a2)[0];
@@ -297,10 +299,11 @@ namespace v4 {
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 ) {
-    ((float *)a0)[0] = a.f[0];
-    ((float *)a1)[0] = a.f[1];
-    ((float *)a2)[0] = a.f[2];
-    ((float *)a3)[0] = a.f[3];
+    vec_float4 v = a.v;
+    ((float *)a0)[0] = spu_extract( v, 0 );
+    ((float *)a1)[0] = spu_extract( v, 1 );
+    ((float *)a2)[0] = spu_extract( v, 2 );
+    ((float *)a3)[0] = spu_extract( v, 3 );
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,

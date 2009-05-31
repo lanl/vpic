@@ -60,9 +60,12 @@ partition_periodic_box( grid_t * g,
   g->dy = (gy1-gy0)/(double)gny;
   g->dz = (gz1-gz0)/(double)gnz;
 
-  g->rdx = (double)gnx/(gx1-gx0);
-  g->rdy = (double)gny/(gy1-gy0);
-  g->rdz = (double)gnz/(gz1-gz0);
+  g->rdx =  (double)gnx/(gx1-gx0);
+  g->rdy =  (double)gny/(gy1-gy0);
+  g->rdz =  (double)gnz/(gz1-gz0);
+  g->r8V = ((double)gnx/(gx1-gx0))*
+           ((double)gny/(gy1-gy0))*
+           ((double)gnz/(gz1-gz0))*0.125;
 
   f = (double) px   /(double)gpx; g->x0 = gx0*(1-f) + gx1*f;
   f = (double) py   /(double)gpy; g->y0 = gy0*(1-f) + gy1*f;

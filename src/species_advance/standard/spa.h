@@ -104,7 +104,7 @@ energy_p( const particle_t     * ALIGNED(128) p0,
           const interpolator_t * ALIGNED(128) f0,
           const grid_t         *              g );
 
-// In rho_p.c
+// In rho_p.cxx
 
 void
 accumulate_rho_p( field_t          * ALIGNED(128)  f,

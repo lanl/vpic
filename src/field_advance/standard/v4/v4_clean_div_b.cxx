@@ -97,9 +97,9 @@ clean_div_b_pipeline_v4( pipeline_args_t * args,
 
     load_4x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
 
-    load_4x1_tr( &fx0->div_b_err, &fx1->div_b_err, &fx2->div_b_err, &fx3->div_b_err, fx_div_b_err );
-    load_4x1_tr( &fy0->div_b_err, &fy1->div_b_err, &fy2->div_b_err, &fy3->div_b_err, fy_div_b_err );
-    load_4x1_tr( &fz0->div_b_err, &fz1->div_b_err, &fz2->div_b_err, &fz3->div_b_err, fz_div_b_err );
+    fx_div_b_err = v4float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err );
+    fy_div_b_err = v4float( fy0->div_b_err, fy1->div_b_err, fy2->div_b_err, fy3->div_b_err );
+    fz_div_b_err = v4float( fz0->div_b_err, fz1->div_b_err, fz2->div_b_err, fz3->div_b_err );
 
     f0_cbx = fma( f0_div_b_err-fx_div_b_err, px, f0_cbx );
     f0_cby = fma( f0_div_b_err-fy_div_b_err, py, f0_cby );

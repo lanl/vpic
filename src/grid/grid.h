@@ -118,6 +118,8 @@ typedef struct grid {
   float dx, dy, dz;       // Cell dimensions (CONVENIENCE ... USE
                           // x0,x1 WHEN DECIDING WHICH NODE TO USE!)
   float rdx, rdy, rdz;    // Inverse voxel dimensions (CONVENIENCE)
+  float r8V;              // One eight inverse voxel volume (CONVENIENCE)
+  int   sy, sz;           // Voxel indexing y- and z- stridesl (CONVENIENCE)
   int   nx, ny, nz;       // Local voxel mesh resolution.  Voxels are
                           // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
                           // with voxels 1:nx,1:ny,1:nz being non-ghost

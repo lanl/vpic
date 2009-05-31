@@ -154,11 +154,10 @@ advance_e_pipeline_v4( pipeline_args_t * args,
     load_4x3_tr( &fy0->cbx,  &fy1->cbx,  &fy2->cbx,  &fy3->cbx,  fy_cbx,  dummy,   fy_cbz         );
     load_4x2_tr( &fz0->cbx,  &fz1->cbx,  &fz2->cbx,  &fz3->cbx,  fz_cbx,  fz_cby   /**/           );
 
-#   define LOAD_RMU( V, D ) load_4x1_tr( &m[f##V##0->fmat##D].rmu##D, \
-                                         &m[f##V##1->fmat##D].rmu##D, \
-                                         &m[f##V##2->fmat##D].rmu##D, \
-                                         &m[f##V##3->fmat##D].rmu##D, \
-                                         m_f##V##_rmu##D )
+#   define LOAD_RMU(V,D) m_f##V##_rmu##D=v4float( m[f##V##0->fmat##D].rmu##D, \
+                                                  m[f##V##1->fmat##D].rmu##D, \
+                                                  m[f##V##2->fmat##D].rmu##D, \
+                                                  m[f##V##3->fmat##D].rmu##D )
 
     LOAD_RMU(0,x); LOAD_RMU(0,y); LOAD_RMU(0,z);
     /**/           LOAD_RMU(x,y); LOAD_RMU(x,z);

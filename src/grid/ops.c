@@ -31,6 +31,8 @@ size_grid( grid_t * g,
   nproc = mp_nproc(g->mp);
 
   // Setup phase 2 data structures
+  g->sy =  lnx+2;
+  g->sz = (lny+2)*g->sy;
   g->nx = lnx;
   g->ny = lny;
   g->nz = lnz;

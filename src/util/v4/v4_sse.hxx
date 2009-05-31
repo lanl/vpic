@@ -28,6 +28,8 @@ namespace v4 {
   class v4;
   class v4int;
   class v4float;
+
+# define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
   
   ////////////////
   // v4 base class
@@ -133,7 +135,7 @@ namespace v4 {
   inline v4 splat( const v4 & a, int n ) {
     __m128 a_v = a.v;
     v4 b;
-    b.v = _mm_shuffle_ps( a_v, a_v, n*0x55 );
+    b.v = _mm_shuffle_ps( a_v, a_v, n*PERM(1,1,1,1) );
     return b;
   }
 
@@ -142,7 +144,7 @@ namespace v4 {
                      int i0, int i1, int i2, int i3 ) {
     __m128 a_v = a.v;
     v4 b;
-    b.v = _mm_shuffle_ps( a_v, a_v, i0 + i1*4 + i2*16 + i3*64 );
+    b.v = _mm_shuffle_ps( a_v, a_v, PERM(i0,i1,i2,i3) );
     return b;
   }
 
@@ -197,10 +199,10 @@ namespace v4 {
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3, v4 &a ) {
-    a.f[0] = ((const float *)a0)[0];
-    a.f[1] = ((const float *)a1)[0];
-    a.f[2] = ((const float *)a2)[0];
-    a.f[3] = ((const float *)a3)[0];
+    a.v = _mm_setr_ps( ((const float *)a0)[0],
+                       ((const float *)a1)[0],
+                       ((const float *)a2)[0],
+                       ((const float *)a3)[0] );
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
@@ -698,22 +700,22 @@ namespace v4 {
     friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
+    friend inline void trilinear( v4float &wl, v4float &wh );
     
   public:
 
     // v4float constructors / destructors
     
-    v4float() {}                                  // Default constructor
-    v4float( const v4float &a ) { v = a.v; }      // Copy constructor
-    v4float( const v4 &a ) { v = a.v; }           // Initialize from mixed
-    v4float( float a ) {                          // Initialize from scalar
+    v4float() {}                                        // Default constructor
+    v4float( const v4float &a ) { v = a.v; }            // Copy constructor
+    v4float( const v4 &a ) { v = a.v; }                 // Init from mixed
+    v4float( float a ) {                                // Init from scalar
       v = _mm_set1_ps( a );
     }
-    v4float( float f0, float f1,
-             float f2, float f3 ) {               // Initalize from scalars
+    v4float( float f0, float f1, float f2, float f3 ) { // Init from scalars
       v = _mm_setr_ps( f0, f1, f2, f3 );
     }
-    ~v4float() {}                                 // Destructor
+    ~v4float() {}                                       // Destructor
 
     // v4float assignment operators
 
@@ -978,6 +980,22 @@ namespace v4 {
   inline void scale_4x1( float * ALIGNED(16) p, const v4float &a ) {
     _mm_store_ps( p, _mm_mul_ps( _mm_load_ps( p ), a.v ) );
   }
+
+  // Given wl = x y z w, compute:
+  // wl = (1-x)(1-y)(1-z) (1+x)(1-y)(1-z) (1-x)(1+y)(1-z) (1+x)(1+y)(1-z)
+  // wh = (1-x)(1-y)(1+z) (1+x)(1-y)(1+z) (1-x)(1+y)(1+z) (1+x)(1+y)(1+z)
+  inline void trilinear( v4float &wl, v4float &wh ) {
+    __m128 l = _mm_set1_ps(1), s = _mm_setr_ps(-0.f,+0.f,-0.f,+0.f);
+    __m128 z = wl.v, xy;
+    xy = _mm_add_ps( l, _mm_xor_ps( s, _mm_shuffle_ps( z,z, PERM(0,0,1,1) ) ) );
+    z  = _mm_add_ps( l, _mm_xor_ps( s, _mm_shuffle_ps( z,z, PERM(2,2,2,2) ) ) );
+    xy = _mm_mul_ps( _mm_shuffle_ps( xy,xy, PERM(0,1,0,1) ),
+                     _mm_shuffle_ps( xy,xy, PERM(2,2,3,3) ) );
+    wl.v = _mm_mul_ps( xy, _mm_shuffle_ps( z,z, PERM(0,0,0,0) ) );
+    wh.v = _mm_mul_ps( xy, _mm_shuffle_ps( z,z, PERM(1,1,1,1) ) );
+  }
+
+# undef PERM
 
 } // namespace v4
 

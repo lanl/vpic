@@ -1,3 +1,5 @@
+// FIXME: V4 ACCELERATE THIS!  COULD BE BASED OFF ENERGY_P.
+
 /* 
  * Written by:
  *   Kevin J. Bowers, Ph.D.

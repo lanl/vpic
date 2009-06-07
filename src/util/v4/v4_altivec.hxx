@@ -26,6 +26,12 @@ namespace v4 {
 # define _v4_float   __vector float
 # define _v16_uchar  __vector unsigned char
 
+# define _PERM(i0,i1,i2,i3)                              \
+    ((_v16_uchar){ 4*(i0), 4*(i0)+1, 4*(i0)+2, 4*(i0)+3, \
+                   4*(i1), 4*(i1)+1, 4*(i1)+2, 4*(i1)+3, \
+                   4*(i2), 4*(i2)+1, 4*(i2)+2, 4*(i2)+3, \
+                   4*(i3), 4*(i3)+1, 4*(i3)+2, 4*(i3)+3 })
+
   // FIXME: IS IT FASTER TO SPLAT THESE ON THE FLY
 
   const _v4_int   _false = {  0,  0,  0,  0 };
@@ -36,6 +42,7 @@ namespace v4 {
   const _v4_float _half  = { 0.5f, 0.5f, 0.5f, 0.5f };
   const _v4_float _one   = { 1.0f, 1.0f, 1.0f, 1.0f };
   const _v4_float _sign  = {-0.0f,-0.0f,-0.0f,-0.0f };
+  const _v4_float _n02   = {-0.0f,+0.0f,-0.0f,+0.0f };
 
   ////////////////
   // v4 base class
@@ -146,11 +153,7 @@ namespace v4 {
                      int i0, int i1, int i2, int i3 ) {
     _v4_float a_v = a.v;
     v4 b;
-    b.v = vec_perm( a_v, a_v, (_v16_uchar)
-                    { 4*i0, 4*i0+1, 4*i0+2, 4*i0+3,
-                      4*i1, 4*i1+1, 4*i1+2, 4*i1+3,
-                      4*i2, 4*i2+1, 4*i2+2, 4*i2+3,
-                      4*i3, 4*i3+1, 4*i3+2, 4*i3+3 } );
+    b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
     return b;
   }
 
@@ -295,53 +298,54 @@ namespace v4 {
                             void * pb,
                             void * pc,
                             void * pd ) {
-    union { float f[4]; _v4_float v; } t;
-    t.v = a.v;
-    ((float *)pa)[0] = t.f[0];
-    ((float *)pb)[0] = t.f[1];
-    ((float *)pc)[0] = t.f[2];
-    ((float *)pd)[0] = t.f[3];
+    _v4_float a_v = a.v;
+    vec_ste( vec_splat(a_v,0), 0, (float *)pa );
+    vec_ste( vec_splat(a_v,1), 0, (float *)pb );
+    vec_ste( vec_splat(a_v,2), 0, (float *)pc );
+    vec_ste( vec_splat(a_v,3), 0, (float *)pd );
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
                             void * ALIGNED(8) pa,
                             void * ALIGNED(8) pb,
                             void * ALIGNED(8) pc,
-                            void * ALIGNED(8) pd ) { // FIXME: UGLY!
-    union { float f[4]; _v4_float v; } t;
-    t.v = a.v;
-    ((float *)pa)[0] = t.f[0];
-    ((float *)pb)[0] = t.f[1];
-    ((float *)pc)[0] = t.f[2];
-    ((float *)pd)[0] = t.f[3];
-    t.v = b.v;
-    ((float *)pa)[1] = t.f[0];
-    ((float *)pb)[1] = t.f[1];
-    ((float *)pc)[1] = t.f[2];
-    ((float *)pd)[1] = t.f[3];
+                            void * ALIGNED(8) pd ) { 
+    _v4_float t, a_v = a.v, b_v = b.v;
+    t = vec_perm( a_v, b_v, _PERM(0,4,0,4) ); vec_ste( t, 0, (float *)pa );
+                                              vec_ste( t, 4, (float *)pa );
+    t = vec_perm( a_v, b_v, _PERM(1,5,1,5) ); vec_ste( t, 0, (float *)pb );
+                                              vec_ste( t, 4, (float *)pb );
+    t = vec_perm( a_v, b_v, _PERM(2,6,2,6) ); vec_ste( t, 0, (float *)pc );
+                                              vec_ste( t, 4, (float *)pc );
+    t = vec_perm( a_v, b_v, _PERM(3,7,3,7) ); vec_ste( t, 0, (float *)pd );
+                                              vec_ste( t, 4, (float *)pd );
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
                             void * ALIGNED(16) pa,
                             void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc,
-                            void * ALIGNED(16) pd ) { // FIXME: UGLY!
-    union { float f[4]; _v4_float v; } t;
-    t.v = a.v;
-    ((float *)pa)[0] = t.f[0];
-    ((float *)pb)[0] = t.f[1];
-    ((float *)pc)[0] = t.f[2];
-    ((float *)pd)[0] = t.f[3];
-    t.v = b.v;
-    ((float *)pa)[1] = t.f[0];
-    ((float *)pb)[1] = t.f[1];
-    ((float *)pc)[1] = t.f[2];
-    ((float *)pd)[1] = t.f[3];
-    t.v = c.v;
-    ((float *)pa)[2] = t.f[0];
-    ((float *)pb)[2] = t.f[1];
-    ((float *)pc)[2] = t.f[2];
-    ((float *)pd)[2] = t.f[3];
+                            void * ALIGNED(16) pd ) { 
+    _v4_float a_v = a.v;        // a =  0  1  2  3
+    _v4_float b_v = b.v;        // b =  4  5  6  7
+    _v4_float c_v = c.v;        // c =  8  9 10 11
+    _v4_float t, u, v;
+    t = vec_mergeh( a_v, c_v ); // t =  0  8  1  9
+    u = vec_mergeh( b_v, b_v ); // u =  4  x  5  x
+    v = vec_mergeh( t, u ); vec_ste( v, 0, (float *)pa );
+                            vec_ste( v, 4, (float *)pa );
+                            vec_ste( v, 8, (float *)pa );
+    v = vec_mergel( t, u ); vec_ste( v, 0, (float *)pb );
+                            vec_ste( v, 4, (float *)pb );
+                            vec_ste( v, 8, (float *)pb );
+    t = vec_mergel( a_v, c_v ); // t =  2 10  3 11
+    u = vec_mergel( b_v, b_v ); // u =  6  x  7  x
+    v = vec_mergeh( t, u ); vec_ste( v, 0, (float *)pc );
+                            vec_ste( v, 4, (float *)pc );
+                            vec_ste( v, 8, (float *)pc );
+    v = vec_mergel( t, u ); vec_ste( v, 0, (float *)pd );
+                            vec_ste( v, 4, (float *)pd );
+                            vec_ste( v, 8, (float *)pd );
   }
   
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
@@ -739,6 +743,7 @@ namespace v4 {
     friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
+    friend inline void trilinear( v4float & wl, v4float & wh );
     
   public:
 
@@ -1111,10 +1116,21 @@ namespace v4 {
     vec_st( vec_madd( vec_ld( 0, p ), a.v, _zero ), 0, p );
   }
 
+  inline void trilinear( v4float & wl, v4float & wh ) {
+    _v4_float z = wl.v, xy;
+    xy = vec_add( _one, vec_xor( _n02, vec_mergeh(z,z) ) );
+    z  = vec_add( _one, vec_xor( _n02, vec_splat(z,2) ) );
+    xy = vec_madd( vec_perm(xy,xy,_PERM(0,1,0,1)), vec_mergel(xy,xy), _zero );
+    wl.v = vec_madd( xy, vec_splat(z,0), _zero );
+    wh.v = vec_madd( xy, vec_splat(z,1), _zero );
+  }
+
 # undef _v4_int
 # undef _v4_uint
 # undef _v4_float
 # undef _v16_uchar
+
+# undef _PERM
 
 } // namespace v4
 

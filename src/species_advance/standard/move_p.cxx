@@ -17,7 +17,7 @@
 // not check its input arguments. Higher level routines are
 // responsible for insuring valid arguments.
 
-#if 0 //defined(V4_ACCELERATION)
+#if defined(V4_ACCELERATION)
 
 // High performance variant based on SPE accelerated version
 

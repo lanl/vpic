@@ -39,7 +39,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   v4float v0, v1, v2, v3, v4, v5, _stack_vf;
   v4int bits, _stack_vi;
 
-# if defined(V4_ALTIVEC_ACCELERATION)
+# if 0 //defined(V4_ALTIVEC_ACCELERATION)
   v4float _stack_vg;
   float * RESTRICT ALIGNED(16) stack_vg = (float *)&_stack_vg;
 # endif
@@ -89,7 +89,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER 
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-#   if defined(V4_ALTIVEC_ACCELERATION ) 
+#   if 0 //defined(V4_ALTIVEC_ACCELERATION ) 
     store_4x1( sgn_dr - r, stack_vf );
     store_4x1( (dr+dr)+v0, stack_vg );
     stack_vf[0] /= stack_vg[0];

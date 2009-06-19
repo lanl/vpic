@@ -17,7 +17,7 @@
 // not check its input arguments. Higher level routines are
 // responsible for insuring valid arguments.
 
-#if defined(V4_ACCELERATION)
+#if 0 //defined(V4_ACCELERATION)
 
 // High performance variant based on SPE accelerated version
 
@@ -59,7 +59,6 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   q3 = one_third*q;            // q3 = p_q/3, p_q/3, p_q/3, D/C
   dr = shuffle( dr, 0,1,2,2 ); // dr = p_ddx, p_ddy, p_ddz, D/C 
   r  = shuffle( r,  0,1,2,2 ); // r  = p_dx,  p_dy,  p_dz,  D/C
-  u  = shuffle( u,  0,1,2,2 ); // u  = p_ux,  p_uy,  p_uz,  D/C
   
   for(;;) {
 

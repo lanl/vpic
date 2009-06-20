@@ -387,11 +387,11 @@ distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
     double _t = (double)( _nv/_b ) / (double)_P;                        \
     int          _x=_b*(int)( _t*(double)(_p  ) + 0.5 ), _y, _z;        \
     if( _p<_P ) _nv=_b*(int)( _t*(double)(_p+1) + 0.5 );                \
-    _nv -= _x;     /* x = (x-x0) + nx*( (y-y0) + ny*(z-z0) ) */         \
-    _y   = _x/_nx; /* y =               (y-y0) + ny*(z-z0)   */         \
-    _z   = _y/_ny; /* z =                           (z-z0)   */         \
-    _x  -= _y*_nx; /* x = (x-x0)                             */         \
-    _y  -= _z*_ny; /* y =               (y-y0)               */         \
+    _nv -= _x;                 /* x = (x-x0) + nx*((y-y0) + ny*(z-z0)) */ \
+    _y   = _nx ? (_x/_nx) : 0; /* y =              (y-y0) + ny*(z-z0)  */ \
+    _z   = _ny ? (_y/_ny) : 0; /* z =                          (z-z0)  */ \
+    _x  -= _y*_nx;             /* x = (x-x0)                           */ \
+    _y  -= _z*_ny;             /* y =              (y-y0)              */ \
     (x)  = _x+_x0;                                                      \
     (y)  = _y+_y0;                                                      \
     (z)  = _z+_z0;                                                      \

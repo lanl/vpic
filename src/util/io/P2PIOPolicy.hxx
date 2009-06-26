@@ -30,8 +30,8 @@ class P2PIOPolicy
 
 		//! Constructor
 		P2PIOPolicy()
-			: id_(-1), current_(0),
-			buffer_offset_(0), file_size_(0)
+			: id_(-1), mode_(io_closed), current_(0),
+			write_buffer_offset_(0), read_buffer_offset_(0), file_size_(0)
 			{
 				pending_[0] = false;
 				pending_[1] = false;
@@ -59,6 +59,7 @@ class P2PIOPolicy
 		void seek(uint64_t offset, int32_t whence);
 		uint64_t tell();
 		void rewind();
+		void flush();
 
 	private:
 
@@ -66,7 +67,6 @@ class P2PIOPolicy
 
 		void send_write_block(uint32_t buffer);
 		void wait_write_block(uint32_t buffer);
-		void flush();
 
 		void request_read_block(uint32_t buffer);
 		void wait_read_block(uint32_t buffer);
@@ -75,8 +75,10 @@ class P2PIOPolicy
 		MPBuffer<char, io_line_size, 1> io_line_;
 
 		int32_t id_;
+		FileIOMode mode_;
 		uint32_t current_;
-		uint64_t buffer_offset_;
+		uint64_t write_buffer_offset_;
+		uint64_t read_buffer_offset_;
 		uint64_t buffer_fill_[2];
 		bool pending_[2];
 		int request_id[2];
@@ -103,7 +105,8 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 		MPRequest request;
 
 		// re-initialize some values
-		buffer_offset_ = 0;
+		write_buffer_offset_ = 0;
+		read_buffer_offset_ = 0;
 		pending_[0] = false;
 		pending_[1] = false;
 		buffer_fill_[0] = 0;
@@ -150,6 +153,9 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 
 		} // switch
 
+		// save this for flush logic
+		mode_ = mode;
+
 		// send the filename to peer
 		p2p.send(const_cast<char *>(filename), request.count, request.tag);
 
@@ -157,7 +163,7 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 		p2p.recv(&id_, 1, request.tag, request.id);
 		assert(id_>=0);
 
-		if(mode == io_read || mode == io_read_write) {
+		if(mode_ == io_read || mode_ == io_read_write) {
 			p2p.recv(&file_size_, 1, request.tag, id_);
 			read_blocks_ = ldiv(file_size_, io_buffer_size);
 
@@ -193,7 +199,7 @@ void P2PIOPolicy<swapped>::close()
 		*/
 
 		// force write if current block hasn't been written
-		if(buffer_offset_ > 0) {
+		if(write_buffer_offset_ > 0) {
 			flush();
 		} // if
 
@@ -254,16 +260,17 @@ void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 		uint64_t bdata_offset(0);
 
 		do {
-			const int64_t over_run = (buffer_offset_ + bytes) -
+			const int64_t over_run = (read_buffer_offset_ + bytes) -
 				buffer_fill_[current_];
 
 			if(over_run > 0) {
 				const uint64_t under_run =
-					buffer_fill_[current_] - buffer_offset_;
+					buffer_fill_[current_] - read_buffer_offset_;
 
 				// copy remainder of current buffer to data
 				memcpy(bdata + bdata_offset,
-					io_buffer_[current_].data() + buffer_offset_, under_run);
+					io_buffer_[current_].data() + read_buffer_offset_,
+					under_run);
 				bdata_offset += under_run;
 				bytes -= under_run;
 
@@ -273,12 +280,12 @@ void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 				if(pending_[current_]) {
 					wait_read_block(current_);
 				} // if
-				buffer_offset_ = 0;
+				read_buffer_offset_ = 0;
 			}
 			else {
 				memcpy(bdata + bdata_offset,
-					io_buffer_[current_].data() + buffer_offset_, bytes);
-				buffer_offset_ += bytes;
+					io_buffer_[current_].data() + read_buffer_offset_, bytes);
+				read_buffer_offset_ += bytes;
 				bytes = 0;
 			} // if
 		} while(bytes > 0);
@@ -293,6 +300,7 @@ template<typename T>
 void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 	{
 		assert(id_>=0);
+		assert(mode_ != io_read);
 
 		// book-keeping is done in bytes
 		uint64_t bytes(elements*sizeof(T));
@@ -305,7 +313,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 			" bytes " << bytes << std::endl;
 		*/
 		do {
-			const int64_t over_run = (buffer_offset_ + bytes) -
+			const int64_t over_run = (write_buffer_offset_ + bytes) -
 				io_buffer_[current_].size();
 
 			/*
@@ -314,7 +322,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 			*/
 			if(over_run > 0) {
 				const uint64_t under_run =
-					io_buffer_[current_].size() - buffer_offset_;
+					io_buffer_[current_].size() - write_buffer_offset_;
 
 				// because of the possiblity of byte swapping
 				// we need to make sure that only even multiples
@@ -324,47 +332,47 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				/*
 				printf("PPE rank: %d dst %p src %p bytes %ld\n",
 					p2p.global_id(),
-					io_buffer_[current_].data() + buffer_offset_,
+					io_buffer_[current_].data() + write_buffer_offset_,
 					bdata + bdata_offset, copy_bytes);
 				*/
 
-				memcpy(io_buffer_[current_].data() + buffer_offset_,
+				memcpy(io_buffer_[current_].data() + write_buffer_offset_,
 					bdata + bdata_offset, copy_bytes);
 
 				// need to force type here to get correct swapping
 				swap_bytes<T>(reinterpret_cast<T *>
-					(io_buffer_[current_].data() + buffer_offset_),
+					(io_buffer_[current_].data() + write_buffer_offset_),
 					copy_bytes/sizeof(T));
 
 				bdata_offset += copy_bytes;
 				bytes -= copy_bytes;
 
 				request_[current_].set(P2PTag::io_write, P2PTag::data,
-					buffer_offset_ + copy_bytes, id_);
+					write_buffer_offset_ + copy_bytes, id_);
 				send_write_block(current_);
 				current_^=1;
 				if(pending_[current_]) {
 					wait_write_block(current_);
 				} // if
-				buffer_offset_ = 0;
+				write_buffer_offset_ = 0;
 			}
 			else {
 				/*
 				printf("PPE rank: %d dst %p src %p bytes %ld\n",
 					p2p.global_id(),
-					io_buffer_[current_].data() + buffer_offset_,
+					io_buffer_[current_].data() + write_buffer_offset_,
 					bdata + bdata_offset, bytes);
 				*/
 
-				memcpy(io_buffer_[current_].data() + buffer_offset_,
+				memcpy(io_buffer_[current_].data() + write_buffer_offset_,
 					bdata + bdata_offset, bytes);
 
 				// need to force type here to get correct swapping
 				swap_bytes(reinterpret_cast<T *>
-					(io_buffer_[current_].data() + buffer_offset_),
+					(io_buffer_[current_].data() + write_buffer_offset_),
 					bytes/sizeof(T));
 
-				buffer_offset_ += bytes;
+				write_buffer_offset_ += bytes;
 				bytes = 0;
 			} // if
 		} while(bytes > 0);
@@ -490,18 +498,27 @@ void P2PIOPolicy<swapped>::flush()
 		/*
 		P2PConnection & p2p = P2PConnection::instance();
 		std::cerr << "PPE rank: " << p2p.global_id() <<
-			" buffer_offset_: " << buffer_offset_ << std::endl;
+			" write_buffer_offset_: " << write_buffer_offset_ << std::endl;
 		*/
 
-		// request remote write
-		request_[current_].set(P2PTag::io_write, P2PTag::data,
-			buffer_offset_, id_);
-		send_write_block(current_);
-		current_ ^= 1;
+		// check to see if we need to flush the current buffer
+		if(write_buffer_offset_ > 0) {
+			request_[current_].set(P2PTag::io_write, P2PTag::data,
+				write_buffer_offset_, id_);
+			send_write_block(current_);
 
+			current_ ^= 1;
+		} // if
+
+
+		// wait on the other buffer if it is in flight
 		if(pending_[current_]) {
 			wait_write_block(current_);
 		} // if
+
+		// wait on the one we just sent
+		current_ ^= 1;
+		wait_write_block(current_);
 	} // P2PIOPolicy<>::flush
 
 template<>

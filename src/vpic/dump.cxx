@@ -701,13 +701,14 @@ vpic_simulation::restart( const char *fbase ) {
 
   //field_advance = new_field_advance( grid, material_list, fam );
   ///*
+#if defined(FIELD_ADVANCE_VACUUM)
   field_advance = new_field_advance( grid, material_list,
   	vacuum_field_advance );
-  //*/
-  /*
+#else
   field_advance = new_field_advance( grid, material_list,
   	standard_field_advance );
-  */
+#endif
+
   field = field_advance->f; // FIXME: Temporary hack
  
   READ(int,size,  fileIO); ABORT(size!=sizeof(field[0]));

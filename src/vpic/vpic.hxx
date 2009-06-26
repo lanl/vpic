@@ -20,6 +20,7 @@
 #include <unistd.h> // For sleep()
 #include <FileIO.hxx>
 #include <BitField.hxx>
+#include <SystemRAM.hxx>
 #include <vector>
  
 #include <stdio.h>
@@ -216,6 +217,10 @@ private:
   void output_checksum_fields();
   void output_checksum_species(const char * species);
 #endif // ENABLE_OPENSSL
+
+  void print_available_ram() {
+    SystemRAM::print_available();
+  } // print_available_ram
 
   ///////////////
   // Dump helpers

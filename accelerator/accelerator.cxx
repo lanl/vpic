@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
 	request.set(P2PTag::wtime, 0, 1);
 	p2p.post(request);
 	p2p.recv(&wtime, request.count, request.tag, request.id);
+	double start = wtime;
 	std::cout << "wtime " << wtime << std::endl;
 
 	// initialize integer arrays
@@ -201,10 +202,12 @@ int main(int argc, char *argv[]) {
 
 #endif // 0
 
+	sleep(5);
 	request.set(P2PTag::wtime, 0, 1);
 	p2p.post(request);
 	p2p.recv(&wtime, request.count, request.tag, request.id);
 	std::cout << "wtime " << wtime << std::endl;
+	std::cout << "time: " << wtime-start << std::endl;
 
 	// ask relay to stop
 	p2p.post(P2PTag::end);

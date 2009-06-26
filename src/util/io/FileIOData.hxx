@@ -15,6 +15,7 @@
 #include<cstddef>
 
 enum FileIOMode {
+	io_closed,
 	io_read,
 	io_read_write,
 	io_write,

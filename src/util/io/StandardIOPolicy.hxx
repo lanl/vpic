@@ -50,6 +50,7 @@ class StandardIOPolicy
 		void seek(uint64_t offset, int32_t whence);
 		int64_t tell();
 		void rewind();
+		void flush();
 
 	private:
 
@@ -86,6 +87,9 @@ StandardIOPolicy::open(const char * filename, FileIOMode mode)
 			case io_append_read:
 				handle_ = fopen(filename, "a+");
 				break;
+
+			default:
+				return fail;
 
 		} // switch
 
@@ -147,6 +151,11 @@ inline int64_t StandardIOPolicy::tell()
 inline void StandardIOPolicy::rewind()
 	{
 		StandardIOPolicy::seek(uint64_t(0), SEEK_SET);
+	} // StandardIOPolicy::rewind
+
+inline void StandardIOPolicy::flush()
+	{
+		fflush(handle_);
 	} // StandardIOPolicy::rewind
 
 #endif // StandardIOPolicy_hxx

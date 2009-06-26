@@ -19,6 +19,8 @@
 #include <string>
 #include <cstdlib>
 
+#include <util_base.h>
+
 // String to type conversion
 template <typename T>
 bool from_string(T & t, const std::string & s,
@@ -35,24 +37,29 @@ bool from_string(T & t, const std::string & s,
 struct SystemRAM
 	{
 		static inline void print_available() {
-			std::cerr << "Available RAM (kilobytes): " <<
-				available() << std::endl;
+			MESSAGE(("Available RAM (kilobytes): %ld", available()));
 		} // print_available
 
 		//! Report the available RAM on the system in kilobytes.
-		static inline size_t available() {
+		static inline uint64_t available() {
+			
+			#if !__linux__
+				ERROR(("SystemRAM: Unsupported Operating System!!!"));
+			#endif
+
 			char buffer[81];
 			std::ifstream meminfo("/proc/meminfo", std::ifstream::in);
 			
 			// Make sure that we were able to open the file
 			if(meminfo.fail()) {
-				std::cerr << "Failed opening /proc/meminfo file!!!" << std::endl;
-				exit(1);
+				ERROR(("Failed opening /proc/meminfo file!!!"));
 			} // if
 
 			// Get the MemFree line
 			meminfo.getline(buffer, 81);
 			meminfo.getline(buffer, 81);
+
+			meminfo.close();
 
 			// Parse out the free mem in kilobytes
 			std::string memfree = buffer;
@@ -60,11 +67,11 @@ struct SystemRAM
 			size_t end = memfree.find(" ", begin);
 
 			// Convert to size_t
-			size_t kilobytes;
-			if(!from_string<size_t>(kilobytes, memfree.substr(begin, end-begin),
+			uint64_t kilobytes;
+			if(!from_string<uint64_t>(kilobytes,
+				memfree.substr(begin, end-begin),
 				std::dec)) {
-				std::cerr << "Failed opening /proc/meminfo file!!!" << std::endl;
-				exit(1);
+				ERROR(("String conversion to size_t failed!!!"));
 			} // if
 
 			return kilobytes;

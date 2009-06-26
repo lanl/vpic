@@ -237,6 +237,8 @@ begin_initialization {
 	grid->eps0 = eps0;
 	grid-> damp = damp;
 
+	print_available_ram();
+
 	// Parition a periodic box among the processors sliced uniformly along y
 	define_periodic_grid( -0.5*Lx, 0,  0,  // Low corner
                           0.5*Lx, Ly, Lz,  // High corner
@@ -650,6 +652,8 @@ begin_initialization {
 #include <FileIO.hxx>
 
 begin_diagnostics {
+
+	print_available_ram();
 
 	/*--------------------------------------------------------------------------
 	 * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE

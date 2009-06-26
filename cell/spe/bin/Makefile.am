@@ -20,7 +20,7 @@ root_segment_SOURCES = \
 	@HOST_ACDIR@/src/sf_interface/pipelines_cell/unload_accumulator_pipeline_spu.c
 # Use -Wl,--auto-overlay=spu_overlay.ld,--auto-relink to generate a skeleton
 # overlay file.  It won't be good but it will work.
-root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,spu_overlay.ld
+root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,-T,@HOST_ACDIR@/cell/spe/bin/spu_overlay.ld
 #root_segment_LDFLAGS = @EXTRA_LDFLAGS@ -Wl,--auto-overlay=auto_overlay.ld,--auto-relink
 root_segment_LDADD = @EXTRA_LIBS@
 root_segment_DEPENDENCIES = @HOST_ACDIR@/cell/spe/bin/spu_overlay.ld

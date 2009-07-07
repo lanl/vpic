@@ -30,7 +30,7 @@ template<class ReadWritePolicy> struct FileIO_T
 
 		FileIOStatus open(const char * filename, FileIOMode mode)
 			{ return ReadWritePolicy::open(filename, mode); }
-		void close()
+		int32_t close()
 			{ return ReadWritePolicy::close(); }
 
 		bool isOpen()

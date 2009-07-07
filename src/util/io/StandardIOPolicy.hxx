@@ -33,7 +33,7 @@ class StandardIOPolicy
 
 		// open/close methods
 		FileIOStatus open(const char * filename, FileIOMode mode);
-		void close();
+		int32_t close();
 		
 		bool isOpen() { return is_open_; }
 
@@ -101,10 +101,11 @@ StandardIOPolicy::open(const char * filename, FileIOMode mode)
 		return ok;
 	} // StandardIOPolicy::StandardIOPolicy
 
-inline void StandardIOPolicy::close()
+inline int32_t StandardIOPolicy::close()
 	{
-		fclose(handle_);
+		int32_t status = fclose(handle_);
 		is_open_ = false;
+		return status;
 	} // StandardIOPolicy::~StandardIOPolicy
 
 inline int64_t StandardIOPolicy::size()

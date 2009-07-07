@@ -45,7 +45,7 @@ class P2PIOPolicy
 		~P2PIOPolicy() {}
 
 		FileIOStatus open(const char * filename, FileIOMode mode);
-		void close();
+		int32_t close();
 
 		bool isOpen() { return (id_>=0); }
 
@@ -189,11 +189,11 @@ FileIOStatus P2PIOPolicy<swapped>::open(const char * filename, FileIOMode mode)
 	} // P2PIOPolicy<>::open
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::close()
+int32_t P2PIOPolicy<swapped>::close()
 	{
 
-		/*
 		P2PConnection & p2p = P2PConnection::instance();
+		/*
 		std::cerr << "PPE rank: " << p2p.global_id() <<
 			" closing file" << std::endl;
 		*/
@@ -209,9 +209,14 @@ void P2PIOPolicy<swapped>::close()
 		*/
 
 		MPRequest request(P2PTag::io_close, P2PTag::data, 1, id_);
-		P2PConnection::instance().post(request);
+		p2p.post(request);
+
+		int32_t status(0);
+		p2p.recv(&status, 1, request.tag, request.id);
 
 		id_ = -1;
+
+		return status;
 	} // P2PIOPolicy<>::close
 
 template<bool swapped>

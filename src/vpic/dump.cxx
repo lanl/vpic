@@ -507,7 +507,9 @@ vpic_simulation::dump_restart( const char *fbase,
   WRITE( int, stepdigit, fileIO );
   WRITE( int, rankdigit, fileIO );
  
-  fileIO.close();
+  if(fileIO.close() != 0) {
+  	ERROR(("File close failed on restart!!!"));
+  } // if
  
   // Synchronize here in case to prevent ranks who immediately
   // terminate after a restart dump from disrupting ranks still in the

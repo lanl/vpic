@@ -82,6 +82,7 @@ void MPRelay::start()
 		int64_t foffset;
 		int32_t fwhence;
 		int32_t utils_return;
+		int32_t fclose_return;
 		double wtime;
 		MPRequest_T<MP_HOST> request;
 
@@ -578,7 +579,8 @@ void MPRelay::start()
 						std::endl;
 					*/
 
-					file_[request.id].close();
+					fclose_return = file_[request.id].close();
+					p2p.send(&fclose_return, 1, request.tag);
 					file_.erase(request.id);
 					break;
 

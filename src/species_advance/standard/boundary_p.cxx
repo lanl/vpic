@@ -362,14 +362,18 @@ boundary_p( species_t     * RESTRICT sp_list,
     particle_t       * RESTRICT ALIGNED(32) sp_p[ 64]; int sp_np[64];
     particle_mover_t * RESTRICT ALIGNED(32) sp_pm[64]; int sp_nm[64];
     species_t * sp;
-    int n, max_inj;
+    int n;
     
+#   ifdef DISABLE_DYNAMIC_RESIZING
+    int sp_max_np[64], n_dropped_particles[64];
+    int sp_max_nm[64], n_dropped_movers[64];
+#   else
     // Resize each species's particle and mover storage to be large
     // enough to guarantee successful injection.  (If we broke down
     // the n_recv[face] by species before sending it, we could be
     // tighter on memory footprint here.)
     
-    max_inj = n_ci;
+    int max_inj = n_ci;
     for( face=0; face<6; face++ )
       if( shared[face] ) max_inj += n_recv[face];
 
@@ -402,6 +406,7 @@ boundary_p( species_t     * RESTRICT sp_list,
         sp->pm = new_pm, sp->max_nm = n;
       }
     }
+#   endif
 
     // Inject particles.  We do custom local injection first to
     // increase message overlap opportunities.
@@ -410,6 +415,10 @@ boundary_p( species_t     * RESTRICT sp_list,
       if( sp->id<0 || sp->id>=64 ) ERROR(( "Invalid sp->id" ));
       sp_p[ sp->id]=sp->p,  sp_pm[sp->id]=sp->pm;
       sp_np[sp->id]=sp->np, sp_nm[sp->id]=sp->nm;
+#     ifdef DISABLE_DYNAMIC_RESIZING
+      sp_max_np[sp->id]=sp->max_np, sp_max_nm[sp->id]=sp->max_nm;
+      n_dropped_particles[sp->id]=0, n_dropped_movers[sp->id]=0;
+#     endif
     }
 
     face = 5;
@@ -440,15 +449,37 @@ boundary_p( species_t     * RESTRICT sp_list,
         id = pi->sp_id;
         p  = sp_p[id];  np = sp_np[id];
         pm = sp_pm[id]; nm = sp_nm[id];
+#       ifdef DISABLE_DYNAMIC_RESIZING
+        if( np>=sp_max_np[id] ) { n_dropped_particles[id]++; continue; }
+#       endif
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
-        copy_4x1( &pm[nm].dispx, &pi->dispx ); pm[nm].i = np;
         sp_np[id] = np+1;
+#       ifdef DISABLE_DYNAMIC_RESIZING
+        if( nm>=sp_max_nm[id] ) { n_dropped_movers[id]++;    continue; }
+#       endif
+        copy_4x1( &pm[nm].dispx, &pi->dispx ); pm[nm].i = np;
         sp_nm[id] = nm + move_p( p, pm+nm, a0, g );
       }
     } while(face!=5);
 
-    LIST_FOR_EACH( sp, sp_list ) sp->np=sp_np[sp->id], sp->nm=sp_nm[sp->id];
+    LIST_FOR_EACH( sp, sp_list ) {
+#     ifdef DISABLE_DYNAMIC_RESIZING
+      if( n_dropped_particles[sp->id] )
+        WARNING(( "Dropped %i particles from species \"%s\".  Use a larger "
+                  "local particle allocation in your simulation setup for "
+                  "this species on this node.",
+                  n_dropped_particles[sp->id], sp->name ));
+
+      if( n_dropped_movers[sp->id] )
+        WARNING(( "%i particles were not completed moved to their final "
+                  "location this timestep for species \"%s\".  Use a larger "
+                  "local particle mover buffer in your simulation setup "
+                  "for this species on this node.",
+                  n_dropped_movers[sp->id], sp->name ));
+#     endif
+      sp->np=sp_np[sp->id], sp->nm=sp_nm[sp->id];
+    }
 
   } while(0);
   

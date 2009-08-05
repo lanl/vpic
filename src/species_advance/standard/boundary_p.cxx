@@ -7,6 +7,10 @@
 // FIXME: BOUNDARY_P SHOULD BATCH ALL RHOB ACCUMULATIONS TOGETHER.
 // WOULD BE LOWER OVERHEAD
 
+// If this is defined particle and mover buffers will not resize dynamically
+// (This is the common case for the users)
+#define DISABLE_DYNAMIC_RESIZING 1
+
 #if 0
 using namespace v4;
 

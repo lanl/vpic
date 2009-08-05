@@ -1,4 +1,5 @@
 src/vpic/advance.cxx
+src/vpic/diagnostics.cxx
 src/vpic/finalize.cxx
 src/vpic/initialize.cxx
 src/vpic/vpic.cxx

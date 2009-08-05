@@ -9,7 +9,6 @@
  */
 
 #include "vpic.hxx"
-#include <CheckSum.hxx>
 
 // FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
 
@@ -105,6 +104,30 @@ vpic_simulation::inject_particle( species_t * sp,
 
 #if defined(ENABLE_OPENSSL)
 
+void vpic_simulation::checksum_fields(CheckSum & cs) {
+  checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
+    cs, "sha1");
+
+  const int nproc = mp_nproc(grid->mp);
+
+  if(nproc > 1) {
+    const unsigned int csels = cs.length*nproc;
+    unsigned char * sums(NULL);
+
+    if(mp_rank(grid->mp) == 0) {
+      sums = new unsigned char[csels];
+    } // if
+
+    // gather sums from all ranks
+    mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+
+    if(mp_rank(grid->mp) == 0) {
+      checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+      delete[] sums;
+    } // if
+  } // if
+} // vpic_simulation::output_checksum_fields
+
 void vpic_simulation::output_checksum_fields() {
   CheckSum cs;
   checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
@@ -133,6 +156,35 @@ void vpic_simulation::output_checksum_fields() {
     MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
   } // if
 } // vpic_simulation::output_checksum_fields
+
+void vpic_simulation::checksum_species(const char * species, CheckSum & cs) {
+  species_t * sp = find_species_name(species, species_list);
+  if(sp == NULL) {
+    ERROR(("Invalid species name \"%s\".", species));
+  } // if
+  
+  checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
+
+  const int nproc = mp_nproc(grid->mp);
+
+  if(nproc > 1) {
+    const unsigned int csels = cs.length*nproc;
+    unsigned char * sums(NULL);
+
+	if(mp_rank(grid->mp) == 0) {
+    	sums = new unsigned char[csels];
+	} // if
+
+	// gather sums from all ranks
+	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+
+	if(mp_rank(grid->mp) == 0) {
+		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
+		MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
+		delete[] sums;
+    } // if
+  } // if
+} // vpic_simulation::checksum_species
 
 void vpic_simulation::output_checksum_species(const char * species) {
   species_t * sp = find_species_name(species, species_list);

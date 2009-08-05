@@ -11,6 +11,7 @@
 #include "util_base.h" // Declarations
 #include <stdio.h>     // For vfprintf
 #include <stdarg.h>    // For va_list, va_start, va_end
+#include <unistd.h>
 
 void
 util_malloc( const char * err,
@@ -42,6 +43,12 @@ util_free( void * mem_ref ) {
   *(char **)mem_ref = NULL;
 }
 
+// FIXME TEMPORARY HACK
+// FIXME: This is a hack to make the current processor rank available to the
+// Error output messages during memory allocation.  This should never
+// appear in production code.
+int err_rank;
+
 void
 util_malloc_aligned( const char * err,
                      void * mem_ref, 
@@ -66,7 +73,25 @@ util_malloc_aligned( const char * err,
 
   // Allocate the raw unaligned memory ... abort if the allocation fails 
   mem_u = (char *)malloc( n + a + sizeof(char *) );
-  if( mem_u==NULL ) ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  if( mem_u==NULL ) {
+
+// This is a temporary diagnostic for use in debugging Roadrunner memory
+// allocation errors.  This ensures that, in the case of memory allocation
+// failure, the code will hang without exiting, so that node state can be
+// determined.
+#define TEMPORARY_HACK 1
+#if TEMPORARY_HACK
+    char hostname[256];
+	gethostname(hostname, 256);
+	WARNING(("Memory allocation failed on rank %d (host %s)", err_rank,
+	  hostname));
+    while(1) {
+	  sleep(1);
+	} // while
+#endif
+
+    ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  } // if
 
   // Compute the pointer to the aligned memory and save a pointer to the
   // raw unaligned memory for use on free_aligned 

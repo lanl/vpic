@@ -20,6 +20,7 @@
 #include <unistd.h> // For sleep()
 #include <FileIO.hxx>
 #include <BitField.hxx>
+#include <CheckSum.hxx>
 #include <SystemRAM.hxx>
 #include <vector>
  
@@ -211,11 +212,18 @@ private:
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
  
   /*----------------------------------------------------------------------------
+   * Diagnostics
+   ---------------------------------------------------------------------------*/
+  double poynting_flux(double e0);		
+
+  /*----------------------------------------------------------------------------
    * Check Sums
    ---------------------------------------------------------------------------*/
 #if defined(ENABLE_OPENSSL)
   void output_checksum_fields();
+  void checksum_fields(CheckSum & cs);
   void output_checksum_species(const char * species);
+  void checksum_species(const char * species, CheckSum & cs);
 #endif // ENABLE_OPENSSL
 
   void print_available_ram() {

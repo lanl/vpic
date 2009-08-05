@@ -73,7 +73,10 @@ vpic_simulation::dump_energies( const char *fname,
  
   if( rank==0 && status!=fail ) {
     fileIO.print( "\n" );
-    fileIO.close();
+
+    if(fileIO.close() != 0) {
+      ERROR(("File close failed on dump energies!!!"));
+    } // if
   }
 }
  
@@ -96,7 +99,10 @@ vpic_simulation::dump_species( const char *fname ) {
  
   LIST_FOR_EACH(sp,species_list)
     fileIO.print( "%s\n%i\n%e\n", sp->name, sp->id, sp->q_m );
-  fileIO.close();
+
+  if(fileIO.close() != 0) {
+    ERROR(("File close failed on dump species!!!"));
+  } // if
 }
  
 void
@@ -115,7 +121,9 @@ vpic_simulation::dump_materials( const char *fname ) {
                m->epsx,   m->epsy,   m->epsz,
                m->mux,    m->muy,    m->muz,
                m->sigmax, m->sigmay, m->sigmaz );
-    fileIO.close();
+    if(fileIO.close() != 0) {
+      ERROR(("File close failed on dump materials!!!"));
+    } // if
   }
 }
  
@@ -183,7 +191,9 @@ vpic_simulation::dump_grid( const char *fbase ) {
   WRITE_ARRAY_HEADER( grid->neighbor, 4, dim, fileIO );
   fileIO.write( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
  
-  fileIO.close();
+  if(fileIO.close() != 0) {
+    ERROR(("File close failed on dump grid!!!"));
+  } // if
 }
  
 void
@@ -217,7 +227,9 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   dim[2] = grid->nz+2;
   WRITE_ARRAY_HEADER( field_advance->f, 3, dim, fileIO );
   fileIO.write( field_advance->f, dim[0]*dim[1]*dim[2] );
-  fileIO.close();
+  if(fileIO.close() != 0) {
+    ERROR(("File close failed on dump fields!!!"));
+  } // if
 }
  
 void
@@ -261,7 +273,9 @@ vpic_simulation::dump_hydro( const char *sp_name,
   dim[2] = grid->nz+2;
   WRITE_ARRAY_HEADER( hydro, 3, dim, fileIO );
   fileIO.write( hydro, dim[0]*dim[1]*dim[2] );
-  fileIO.close();
+  if(fileIO.close() != 0) {
+    ERROR(("File close failed on dump hydro!!!"));
+  } // if
 }
  
 void
@@ -319,7 +333,9 @@ vpic_simulation::dump_particles( const char *sp_name,
     fileIO.write( p_buf, n_buf );
   }
  
-  fileIO.close();
+  if(fileIO.close() != 0) {
+    ERROR(("File close failed on dump particles!!!"));
+  } // if
 }
  
 // FIXME: dump_restart and restart would be much cleaner if the
@@ -786,7 +802,9 @@ vpic_simulation::restart( const char *fbase ) {
   READ(int,dim[0],fileIO); ABORT(dim[0]!=USER_GLOBAL_SIZE   );
   fileIO.read( user_global, dim[0] );
  
-  fileIO.close();
+  if(fileIO.close() != 0) {
+  	ERROR(("File close failed on restart!!!"));
+  } // if
  
   /**********************************
    * Recreate other data structures *
@@ -812,6 +830,10 @@ vpic_simulation::restart( const char *fbase ) {
   mp_barrier(grid->mp);
 }
  
+////////////////////////////////////////
+// FIXME take out direct call to fclose
+////////////////////////////////////////
+
 // Add capability to modify certain fields "on the fly" so that one
 // can, e.g., extend a run, change a quota, or modify a dump interval
 // without having to rerun from the start.
@@ -847,6 +869,8 @@ vpic_simulation::modify_runparams( const char *fname ) {
   int iarg=0;
   double darg=0;
  
+
+
   // Open the modfile
   if( mp_rank(grid->mp)==0 ) MESSAGE(("Modifying run parameters from file \"%s\"", fname));
   handle = fopen( fname, "r" );
@@ -1099,7 +1123,9 @@ void vpic_simulation::global_header(const char * base,
 			} // if
 		} // for
 
-		fileIO.close();
+        if(fileIO.close() != 0) {
+          ERROR(("File close failed on global header!!!"));
+        } // if
 	} // if
 } // vpic_simulation::global_header
 
@@ -1349,7 +1375,9 @@ void vpic_simulation::field_dump(DumpParameters & dumpParams) {
 
 	#undef f
 
-	fileIO.close();
+    if(fileIO.close() != 0) {
+      ERROR(("File close failed on field dump!!!"));
+    } // if
 } // vpic_simulation::field_dump
 
 void vpic_simulation::hydro_dump(const char * speciesname,
@@ -1536,7 +1564,9 @@ void vpic_simulation::hydro_dump(const char * speciesname,
 
 	#undef hydro
 
-	fileIO.close();
+    if(fileIO.close() != 0) {
+      ERROR(("File close failed on hydro dump!!!"));
+    } // if
 } // vpic_simulation::hydro_dump
 
 #undef SETIVAR

@@ -6,6 +6,11 @@
 #include "../../relay/ConnectionManager.hxx"
 #include "../../relay/p2p/P2PConnection.hxx"
 
+// FIXME TEMPORARY HACK
+// FIXME: This is a hack to make the current processor rank available to the
+// Error output messages during memory allocation.
+extern int err_rank;
+
 static const double RESIZE_FACTOR = 1.3125; // "silver ratio"
 
 struct mp_t {
@@ -46,6 +51,11 @@ struct RelayPolicy {
         // get rank and size from point-to-point connection
         mp->rank = p2p.global_id();
         mp->nproc = p2p.global_size();
+
+		// FIXME TEMPORARY HACK
+		// FIXME: This is a hack to make the current processor rank
+		// available to the Error output messages during memory allocation.
+		err_rank = p2p.global_id();
 
         mp->elapsed_ref = mp_wtime();
 

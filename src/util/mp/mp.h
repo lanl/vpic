@@ -1,185 +1,155 @@
+// FIXME: THIS API SHOULD NOT BE HARDWIRED TO USE ONLY THE WORLD
+// COMM. FIXME: THIS API NEEDS A SERIOUS REVAMP (BUT AT LEAST IT IS
+// LESS A HOUSE OF SHAME THAN PREVIOUSLY).
+
 #ifndef _mp_h_
 #define _mp_h_
 
-#include "mp.hxx"
+#include "../util_base.h"
 
-// FIXME-KJB: It is unclear to me what purpose this wrapper layer
-// serves.  Regardless, the mp API is in serious need of an overhaul.
+/* Opaque handle to the message passing buffers */
 
-// Note: mp module assumes homogeneous cluster (in particular,
-// bit-for-bit compatible data layouts between nodes
+struct mp;
+typedef struct mp mp_t;
+
+/* Define a "turnstile".  At most up to n_turnstile processes can be
+   in the turnstile at any given time.  Use this to implement
+   critical sections and do other tricks liking limiting the number
+   of simultaneous I/O operatorions on large jobs.  These macros use
+   blocking send/receives to serialize writes.
+  
+   For example, to set up a turnstile that allows at most N
+   simultaneous writes:
+  
+   BEGIN_TURNSTILE( N ) {
+     ... do write ...
+   } END_TURNSTILE
+  
+   BEGIN_TURNSTILE(1) (i.e., one turnstile) effectively serializes the
+   code.  This construct is robust.  Turnstiles should not be nested.
+   Code in turnstiles should not attempt to communicate with other
+   processes.
+  
+   If everything were perfectly synchronous, then, when
+   using a 10 turnstiles, processes 0:9 would enter the turnstile,
+   followed by 10:19, followed by 20:29, ... */
+
+#define BEGIN_TURNSTILE(n_turnstile) do {               \
+   int _n_turnstile = (n_turnstile), _baton;            \
+   if( world_rank>=_n_turnstile )                       \
+      mp_recv_i( &_baton, 1, world_rank-_n_turnstile ); \
+   do
+
+#define END_TURNSTILE while(0);                         \
+   if( world_rank+_n_turnstile < world_size )           \
+     mp_send_i( &_baton, 1, world_rank+_n_turnstile );  \
+ } while(0)
 
 BEGIN_C_DECLS
 
-static inline void
-mp_init( int argc,
-         char ** argv ) {
-  mp_init_cxx( argc, argv );
-} // mp_init
+void
+boot_mp( int * pargc,
+         char *** pargv );
 
-static inline void
-mp_finalize( mp_handle h ) {
-  mp_finalize_cxx( h );
-} // mp_finalize
+void
+halt_mp( void );
 
-static inline mp_handle
-new_mp( void ) {
-  return new_mp_cxx();
-} // new_mp
+void
+mp_abort( int reason );
 
-static inline void
-delete_mp( mp_handle *h ) {
-  delete_mp_cxx( h );
-} // delete_mp
+/* Collective commucations */
 
-static inline int
-mp_rank( mp_handle h ) {
-  return mp_rank_cxx( h );
-} // mp_rank
+void
+mp_barrier( void );
 
-static inline int
-mp_nproc( mp_handle h ) {
-  return mp_nproc_cxx( h );
-} // mp_nproc
+void
+mp_allsum_d( double * local,
+             double * global,
+             int n );
 
-static inline void * ALIGNED(16)
-mp_recv_buffer( int rbuf,
-                mp_handle h ) {
-  return mp_recv_buffer_cxx( rbuf, h );
-} // mp_recv_buffer
+void
+mp_allsum_i( int * local,
+             int * global,
+             int n );
 
-static inline void * ALIGNED(16)
-mp_send_buffer( int sbuf,
-                mp_handle h ) {
-  return mp_send_buffer_cxx( sbuf, h );
-} // mp_send_buffer
+void
+mp_allgather_i( int * sbuf,
+                int * rbuf,
+                int n );
 
-static inline void
-mp_abort( int reason,
-          mp_handle h ) {
-  mp_abort_cxx( reason, h );
-} // mp_abort
+void
+mp_allgather_i64( int64_t * sbuf,
+                  int64_t * rbuf,
+                  int n );
 
-static inline void
-mp_barrier( mp_handle h ) {
-  mp_barrier_cxx( h );
-} // mp_barrier
-
-static inline double
-mp_elapsed( mp_handle h ) {
-  return mp_elapsed_cxx( h );
-} // mp_elapsed
-
-static inline double
-mp_time00( mp_handle h ) {
-  return mp_time00_cxx( h );
-} // mp_time00
-
-static inline double
-mp_wtime( void ) {
-  return mp_wtime_cxx();
-} // mp_wtime
-
-static inline void
-mp_size_recv_buffer( int rbuf,
-                     int size,
-                     mp_handle h ) {
-  mp_size_recv_buffer_cxx( rbuf, size, h );
-} // mp_size_recv_buffer
-
-static inline void
-mp_size_send_buffer( int sbuf,
-                     int size,
-                     mp_handle h ) {
-  mp_size_send_buffer_cxx( sbuf, size, h );
-} // mp_size_send_buffer
-
-static inline void
-mp_begin_recv( int rbuf,
-               int size,
-               int sender,
-               int tag,
-               mp_handle h ) {
-  mp_begin_recv_cxx( rbuf, size, sender, tag, h );
-} // mp_begin_recv
-
-static inline void
-mp_begin_send( int sbuf,
-               int size,
-               int receiver,
-               int tag,
-               mp_handle h ) {
-  mp_begin_send_cxx( sbuf, size, receiver, tag, h );
-} // mp_begin_send
-
-static inline void
-mp_end_recv( int rbuf,
-             mp_handle h ) {
-  mp_end_recv_cxx( rbuf, h );
-} // mp_end_recv
-
-static inline void
-mp_end_send( int sbuf,
-             mp_handle h ) {
-  mp_end_send_cxx( sbuf, h );
-} // mp_end_send
-
-static inline void
-mp_allsum_d( double *local,
-             double *global,
-             int n,
-             mp_handle h ) {
-  mp_allsum_d_cxx( local, global, n, h );
-} // mp_allsum_d
-
-static inline void
-mp_allsum_i( int *local,
-             int *global,
-             int n,
-             mp_handle h ) {
-  mp_allsum_i_cxx( local, global, n, h );
-} // mp_allsum_i
-
-static inline void
-mp_allgather_i( int *sbuf,
-                int *rbuf,
-                int n,
-                mp_handle h ) {
-  mp_allgather_i_cxx( sbuf, rbuf, n, h );
-} // mp_allgather_i
-
-static inline void
-mp_allgather_i64( int64_t *sbuf,
-                  int64_t *rbuf,
-                  int n,
-                  mp_handle h ) {
-  mp_allgather_i64_cxx( sbuf, rbuf, n, h );
-} // mp_allgather_i64
-
-static inline void
+// FIXME: THIS API SHOULD TAKE THE ROOT NODE
+void
 mp_gather_uc( unsigned char * sbuf,
               unsigned char * rbuf,
-			  int n,
-			  mp_handle h) {
-  mp_gather_uc_cxx( sbuf, rbuf, n, h);
-} // mp_gather_uc
+              int n );
 
-static inline void
-mp_send_i( int *buf,
-           int n,
-           int dst,
-           mp_handle h ) {
-  mp_send_i_cxx( buf, n, dst, h );
-} // mp_send_i
+/* Turnstile communication primitives */
+// FIXME: MESSAGE TAGGING ISSUES?
 
-static inline void
-mp_recv_i( int *buf,
+void
+mp_send_i( int * buf,
            int n,
-           int src,
-           mp_handle h ) {
-  mp_recv_i_cxx( buf, n, src, h );
-} // mp_recv_i
+           int dst );
+
+void
+mp_recv_i( int * buf,
+           int n,
+           int src );
+
+/* Buffered non-blocking point-to-point communications */
+
+mp_t *
+new_mp( int n_port );
+
+void
+delete_mp( mp_t * mp );
+
+void * ALIGNED(128)
+mp_recv_buffer( mp_t * mp,
+                int port );
+
+void * ALIGNED(128)
+mp_send_buffer( mp_t * mp,
+                int port );
+
+void
+mp_size_recv_buffer( mp_t * mp,
+                     int port,
+                     int size );
+
+void
+mp_size_send_buffer( mp_t * mp,
+                     int port,
+                     int size );
+
+// FIXME: MP REALLY SHOULD HANDLE THE MESSAGE TAGGING
+void
+mp_begin_recv( mp_t * mp,
+               int port,
+               int sz,
+               int src,
+               int tag );
+
+void
+mp_begin_send( mp_t * mp,
+               int port,
+               int sz,
+               int dst,
+               int tag );
+
+void
+mp_end_recv( mp_t * mp,
+             int rbuf );
+
+void
+mp_end_send( mp_t * mp,
+             int sbuf );
 
 END_C_DECLS
 
-#endif
+#endif /* _mp_h_ */

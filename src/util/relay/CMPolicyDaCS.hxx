@@ -26,7 +26,7 @@ class CMPolicyDaCS
 	{
 	public:
 
-		inline void init(int argc, char ** argv);
+		inline void init(int * pargc, char *** pargv);
 		inline void finalize();
 
 		inline int global_id() { return id_; }
@@ -56,7 +56,7 @@ class CMPolicyDaCS
 
 	}; // class CMPolicyDaCS
 
-void CMPolicyDaCS::init(int argc, char ** argv)
+void CMPolicyDaCS::init(int * pargc, char *** pargv)
 	{
 		// initialize runtime environment
 		//errcode_ = dacs_runtime_init(NULL, NULL);	

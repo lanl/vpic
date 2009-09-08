@@ -28,7 +28,7 @@ class CMPolicyMPIDaCS
 	{
 	public:
 
-		void init(int argc, char ** argv);
+		void init(int * pargc, char *** pargv);
 		void finalize();
 
 		inline int global_id() { return rank_; }
@@ -59,17 +59,17 @@ class CMPolicyMPIDaCS
 
 	}; // class CMPolicyMPIDaCS
 
-void CMPolicyMPIDaCS::init(int argc, char ** argv)
+void CMPolicyMPIDaCS::init(int * pargc, char *** pargv)
 	{
 		// check command-line arguments
-		if(argc < 2) {
-			std::cerr << "Usage: " << argv[0] <<
+		if( (*pargc)<2 ) {
+			std::cerr << "Usage: " << (*pargv)[0] <<
 				" PPE executable (with full path)" << std::endl;
 			exit(1);
 		} // if
 
 		// MPI initialization
-		MPI_Init(&argc, &argv);
+		MPI_Init( pargc, pargv );
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
 		MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
@@ -119,8 +119,8 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		process_dacs_errcode(errcode_, __FILE__, __LINE__);
 
 		// get args to pass on to child
-		const char ** args = argc > 2 ?
-			const_cast<const char **>(&argv[2]) : NULL;
+		const char ** args = (*pargc) > 2 ?
+			const_cast<const char **>(&(*pargv)[2]) : NULL;
 
 		// environment
 		const char * envp[1000];
@@ -140,10 +140,10 @@ void CMPolicyMPIDaCS::init(int argc, char ** argv)
 		do {
 			usleep(sleeptime);
 #if !defined(DACS_FILE_REMOTE)
-			errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
+			errcode_ = dacs_de_start(peer_de_, (*pargv)[1], args, envp,
 				DACS_PROC_LOCAL_FILE, &peer_pid_);	
 #else
-			errcode_ = dacs_de_start(peer_de_, argv[1], args, envp,
+			errcode_ = dacs_de_start(peer_de_, (*pargv)[1], args, envp,
 				DACS_PROC_REMOTE_FILE, &peer_pid_);	
 #endif
 			if(errcode_ == DACS_SUCCESS) {

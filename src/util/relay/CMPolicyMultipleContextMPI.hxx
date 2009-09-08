@@ -30,7 +30,7 @@ template<int ROLE> class CMPolicyMultipleContextMPI_T
 			return mpi;
 		} // instance
 
-		void init(int argc, char ** argv);
+		void init(int * pargc, char *** pargv);
 		void finalize();
 
 		// return local id and size
@@ -79,10 +79,10 @@ template<int ROLE> class CMPolicyMultipleContextMPI_T
 	}; // class CMPolicyMultipleContextMPI_T
 
 template<int ROLE>
-void CMPolicyMultipleContextMPI_T<ROLE>::init(int argc, char ** argv)
+void CMPolicyMultipleContextMPI_T<ROLE>::init(int * pargc, char *** pargv)
 	{
 		// initialize mpi
-		MPI_Init(&argc, &argv);
+		MPI_Init(pargc, pargv);
 
 		// get world rank
 		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank_);

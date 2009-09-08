@@ -10,6 +10,7 @@
 
 #include "mtrand.h"
 #include "mtrand_conv.h" // For drand53_o, drand53_c0, drand53_c1, ...
+#include "../checkpt/checkpt.h"
 
 /*******************************************************
  * Mersenne-Twister 19937 Random Number Generator Core *
@@ -49,16 +50,34 @@ mt_next_state( mt_rng_t * rng ) {
  * Constructors and destructors                                              *
  *****************************************************************************/
 
+/* Though the checkpt/restore functions are not part of the public
+   API, they must not be declared static */
+
+void
+checkpt_mt_rng( const mt_rng_t * rng ) {
+  CHECKPT( rng, 1 );
+}
+
+mt_rng_t *
+restore_mt_rng( void ) {
+  mt_rng_t * rng;
+  RESTORE( rng );
+  return rng;
+}
+
 mt_rng_t *
 new_mt_rng( unsigned int seed ) {
   mt_rng_t * rng;
   MALLOC( rng, 1 );
   seed_mt_rng( rng, seed );
+  REGISTER_OBJECT( rng, checkpt_mt_rng, restore_mt_rng, NULL );
   return rng;
 }
 
 void
 delete_mt_rng( mt_rng_t * rng ) {
+  if( rng==NULL ) return;
+  UNREGISTER_OBJECT( rng );
   FREE( rng );
 }
 
@@ -370,26 +389,26 @@ DBL_RNG( drand_c,  drand53_c  )
    number of bits in j, the computation of z is exact and yields a
    full precision float.
 
-    Note that given all the above:
-      v     = r f(r) + exp(-r^2/2) / r
-      x_N   = v/f(r)
-      x_N-1 = r
-      x_i   = inverse_f( f(x_{i+1}) + v/x_{i+1} )
-      x_0   = 0
-    and r can be found iteratively.  Letting:
-      N        = 64
-      R        = x_{N-1}
-      scale    = 1/2^32
-      zig_x[i] = x_i
-      zig_y[i] = f(x_i)
-    yields the freaky efficient algorithm below.  The vast majority of
-    the normals are generated with a single u32, some quick table
-    lookups and floating point multiplies.
+   Note that given all the above:
+     v     = r f(r) + exp(-r^2/2) / r
+     x_N   = v/f(r)
+     x_N-1 = r
+     x_i   = inverse_f( f(x_{i+1}) + v/x_{i+1} )
+     x_0   = 0
+   and r can be found iteratively.  Letting:
+     N        = 64
+     R        = x_{N-1}
+     scale    = 1/2^32
+     zig_x[i] = x_i
+     zig_y[i] = f(x_i)
+   yields the freaky efficient algorithm below.  The vast majority of
+   the normals are generated with a single u32, some quick table
+   lookups and floating point multiplies.
 
-    Similarly considerations hold for the double precision variant.
-    There a 64-bit rand is used instead of a 32-bit rand to generate a
-    53-bit trapezoid rand, 8-bit index, 1 bit sign and N = 256 and
-    scale = 1/2^64. */
+   Similarly considerations hold for the double precision variant.
+   There a 64-bit rand is used instead of a 32-bit rand to generate a
+   53-bit trapezoid rand, 8-bit index, 1 bit sign and N = 256 and
+   scale = 1/2^64. */
 
 double
 mt_drandn( mt_rng_t * rng ) {
@@ -402,7 +421,7 @@ mt_drandn( mt_rng_t * rng ) {
 
   for(;;) {
 
-    // Extract components of a 32-bit rand 
+    // Extract components of a 64-bit rand 
 
     URAND32( rng, a );
     URAND32( rng, b );

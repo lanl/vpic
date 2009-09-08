@@ -3,6 +3,43 @@
 #define HAS_SPU_PIPELINE
 #include "sf_interface_private.h"
 
+void
+checkpt_interpolator_array( const interpolator_array_t * ia ) {
+  CHECKPT( ia, 1 );
+  CHECKPT_ALIGNED( ia->i, (ia->g->nx+2)*(ia->g->ny+2)*(ia->g->nz+2), 128 );
+  CHECKPT_PTR( ia->g );
+}
+
+interpolator_array_t *
+restore_interpolator_array( void ) {
+  interpolator_array_t * ia;
+  RESTORE( ia );
+  RESTORE_ALIGNED( ia->i );
+  RESTORE_PTR( ia->g );
+  return ia;
+}
+
+interpolator_array_t *
+new_interpolator_array( grid_t * g ) {
+  interpolator_array_t * ia;
+  if( g==NULL ) ERROR(( "NULL grid" ));
+  MALLOC( ia, 1 );
+  MALLOC_ALIGNED( ia->i, (g->nx+2)*(g->ny+2)*(g->nz+2), 128 );
+  CLEAR( ia->i, (g->nx+2)*(g->ny+2)*(g->nz+2) );
+  ia->g = g;
+  REGISTER_OBJECT( ia, checkpt_interpolator_array, restore_interpolator_array,
+                   NULL );
+  return ia;
+}
+
+void
+delete_interpolator_array( interpolator_array_t * ia ) {
+  if( ia==NULL ) return;
+  UNREGISTER_OBJECT( ia );
+  FREE_ALIGNED( ia->i );
+  FREE( ia );
+}
+
 #define fi(x,y,z) fi[   VOXEL(x,y,z, nx,ny,nz) ]
 #define f(x,y,z)  f [   VOXEL(x,y,z, nx,ny,nz) ]
 #define nb(x,y,z) nb[ 6*VOXEL(x,y,z, nx,ny,nz) ]
@@ -283,14 +320,11 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 #endif
 
 void
-load_interpolator( interpolator_t * ALIGNED(128) fi,
-                   const field_t  * ALIGNED(128) f,
-                   const grid_t   *              g ) {
-  load_interpolator_pipeline_args_t args[1];
+load_interpolator_array( /**/  interpolator_array_t * RESTRICT ia,
+                         const field_array_t        * RESTRICT fa ) {
+  DECLARE_ALIGNED_ARRAY( load_interpolator_pipeline_args_t, 128, args, 1 );
 
-  if( fi==NULL ) ERROR(("Bad interpolator"));
-  if( f==NULL )  ERROR(("Bad field"));
-  if( g==NULL )  ERROR(("Bad grid"));
+  if( !ia || !fa || ia->g!=fa->g ) ERROR(( "Bad args" ));
 
 # if 0 // Original non-pipelined version
   for( z=1; z<=nz; z++ ) {
@@ -361,12 +395,12 @@ load_interpolator( interpolator_t * ALIGNED(128) fi,
   }
 # endif
 
-  args->fi = fi;
-  args->f  = f;
-  args->nb = g->neighbor;
-  args->nx = g->nx;
-  args->ny = g->ny;
-  args->nz = g->nz;
+  args->fi = ia->i;
+  args->f  = fa->f;
+  args->nb = ia->g->neighbor;
+  args->nx = ia->g->nx;
+  args->ny = ia->g->ny;
+  args->nz = ia->g->nz;
 
   EXEC_PIPELINES( load_interpolator, args, 0 );
   WAIT_PIPELINES();

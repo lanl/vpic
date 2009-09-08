@@ -10,7 +10,52 @@
 
 #include "sf_interface.h"
 
-#define hydro(x,y,z) hydro[ VOXEL(x,y,z, nx,ny,nz) ]
+/* Though the checkpt/restore functions are not part of the public
+   API, they must not be declared as static. */
+
+void
+checkpt_hydro_array( const hydro_array_t * ha ) {
+  CHECKPT( ha, 1 );
+  CHECKPT_ALIGNED( ha->h, (ha->g->nx+2)*(ha->g->ny+2)*(ha->g->nz+2), 128 );
+  CHECKPT_PTR( ha->g );
+}
+
+hydro_array_t *
+restore_hydro_array( void ) {
+  hydro_array_t * ha;
+  RESTORE( ha );
+  RESTORE_ALIGNED( ha->h );
+  RESTORE_PTR( ha->g );
+  return ha;
+}
+
+hydro_array_t *
+new_hydro_array( grid_t * g ) {
+  hydro_array_t * ha;
+  if( g==NULL ) ERROR(( "NULL grid" ));
+  MALLOC( ha, 1 );
+  MALLOC_ALIGNED( ha->h, (g->nx+2)*(g->ny+2)*(g->nz+2), 128 );
+  ha->g = g;
+  clear_hydro_array( ha );
+  REGISTER_OBJECT( ha, checkpt_hydro_array, restore_hydro_array, NULL );
+  return ha;
+}
+
+void
+delete_hydro_array( hydro_array_t * ha ) {
+  if( ha==NULL ) return;
+  UNREGISTER_OBJECT( ha );
+  FREE_ALIGNED( ha->h );
+  FREE( ha );
+}
+
+void
+clear_hydro_array( hydro_array_t * ha ) {
+  if( ha==NULL ) ERROR(( "NULL hydro array" ));
+  CLEAR( ha->h, (ha->g->nx+2)*(ha->g->ny+2)*(ha->g->nz+2) ); // FIXME: SPU THIS?
+}
+
+#define hydro(x,y,z) h0[ VOXEL(x,y,z, nx,ny,nz) ]
 
 // Generic looping
 #define XYZ_LOOP(xl,xh,yl,yh,zl,zh) \
@@ -23,24 +68,59 @@
 #define y_NODE_LOOP(y) XYZ_LOOP(1,nx+1,y,y,1,nz+1)
 #define z_NODE_LOOP(z) XYZ_LOOP(1,nx+1,1,ny+1,z,z)
 
-// Note: synchronize_hydro assumes that hydro has not been adjusted at
-// the local domain boundary to account for partial cells
-
 void
-synchronize_hydro( hydro_t      * ALIGNED(128) hydro,
-                   const grid_t *              g ) {
-  int size, face, x, y, z, nx, ny, nz;
+synchronize_hydro_array( hydro_array_t * ha ) {
+  int size, face, bc, x, y, z, nx, ny, nz;
   float *p, lw, rw;
-  hydro_t *h;
+  hydro_t * h0, * h;
+  grid_t * g;
 
-  if( hydro==NULL ) ERROR(("Bad hydro"));
-  if( g==NULL     ) ERROR(("Bad grid"));
+  if( ha==NULL ) ERROR(( "NULL hydro array" ));
 
-  local_adjust_hydro( hydro, g );
-
+  h0 = ha->h;
+  g  = ha->g;
   nx = g->nx;
   ny = g->ny;
   nz = g->nz;
+
+  // Note: synchronize_hydro assumes that hydro has not been adjusted
+  // at the local domain boundary. Because hydro fields are purely
+  // diagnostic, correct the hydro along local boundaries to account
+  // for accumulations over partial cell volumes
+
+# define ADJUST_HYDRO(i,j,k,X,Y,Z)              \
+  do {                                          \
+    bc = g->bc[BOUNDARY(i,j,k)];                \
+    if( bc<0 || bc>=world_size ) {              \
+      face = (i+j+k)<0 ? 1 : n##X+1;            \
+      X##_NODE_LOOP(face) {                     \
+        h = &hydro(x,y,z);                      \
+        h->jx  *= 2;                            \
+        h->jy  *= 2;                            \
+        h->jz  *= 2;                            \
+        h->rho *= 2;                            \
+        h->px  *= 2;                            \
+        h->py  *= 2;                            \
+        h->pz  *= 2;                            \
+        h->ke  *= 2;                            \
+        h->txx *= 2;                            \
+        h->tyy *= 2;                            \
+        h->tzz *= 2;                            \
+        h->tyz *= 2;                            \
+        h->tzx *= 2;                            \
+        h->txy *= 2;                            \
+      }                                         \
+    }                                           \
+  } while(0)
+  
+  ADJUST_HYDRO(-1, 0, 0,x,y,z);
+  ADJUST_HYDRO( 0,-1, 0,y,z,x);
+  ADJUST_HYDRO( 0, 0,-1,z,x,y);
+  ADJUST_HYDRO( 1, 0, 0,x,y,z);
+  ADJUST_HYDRO( 0, 1, 0,y,z,x);
+  ADJUST_HYDRO( 0, 0, 1,z,x,y);
+
+# undef ADJUST_HYDRO
 
 # define BEGIN_RECV(i,j,k,X,Y,Z) \
   begin_recv_port(i,j,k,( 1 + 14*(n##Y+1)*(n##Z+1) )*sizeof(float),g)
@@ -140,45 +220,3 @@ synchronize_hydro( hydro_t      * ALIGNED(128) hydro,
 # undef END_SEND
 }
 
-// Because hydro fields are purely diagnostic, correct the hydro along
-// local boundaries for particle cell accumulations
-
-void
-local_adjust_hydro( hydro_t      * ALIGNED(128) hydro,
-                    const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
-  int bc, face, x, y, z;
-  hydro_t *h;
-
-# define ADJUST_HYDRO(i,j,k,X,Y,Z)              \
-  do {                                          \
-    bc = g->bc[BOUNDARY(i,j,k)];                \
-    if( bc<0 || bc>nproc) {                     \
-      face = (i+j+k)<0 ? 1 : n##X+1;            \
-      X##_NODE_LOOP(face) {                     \
-        h = &hydro(x,y,z);                      \
-        h->jx  *= 2;                            \
-        h->jy  *= 2;                            \
-        h->jz  *= 2;                            \
-        h->rho *= 2;                            \
-        h->px  *= 2;                            \
-        h->py  *= 2;                            \
-        h->pz  *= 2;                            \
-        h->ke  *= 2;                            \
-        h->txx *= 2;                            \
-        h->tyy *= 2;                            \
-        h->tzz *= 2;                            \
-        h->tyz *= 2;                            \
-        h->tzx *= 2;                            \
-        h->txy *= 2;                            \
-      }                                         \
-    }                                           \
-  } while(0)
-  
-  ADJUST_HYDRO(-1, 0, 0,x,y,z);
-  ADJUST_HYDRO( 0,-1, 0,y,z,x);
-  ADJUST_HYDRO( 0, 0,-1,z,x,y);
-  ADJUST_HYDRO( 1, 0, 0,x,y,z);
-  ADJUST_HYDRO( 0, 1, 0,y,z,x);
-  ADJUST_HYDRO( 0, 0, 1,z,x,y);
-}

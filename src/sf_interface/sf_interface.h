@@ -16,22 +16,7 @@
 #include "../field_advance/field_advance.h"
 // FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
-// Hydro arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation indexed
-// FORTRAN style from (0:nx+1,0:ny+1,0:nz+1).  Hydros for voxels on
-// the surface of the local domain (for example h(0,:,:) or
-// h(nx+1,:,:)) are not used.
-
-typedef struct hydro {
-  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
-  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
-  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
-  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
-# if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
-  float _pad[2];         // 64-byte align (next power of two)
-# else
-  float _pad[2];         // 16-byte align
-# endif
-} hydro_t;
+/*****************************************************************************/
 
 // Interpolator arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation
 // indexed FORTRAN style from (0:nx+1,0:ny+1,0:nz+1). Interpolators
@@ -53,6 +38,36 @@ typedef struct interpolator {
 # endif
 } interpolator_t;
 
+typedef struct interpolator_array {
+  interpolator_t * ALIGNED(128) i;
+  grid_t * g;
+} interpolator_array_t;
+
+BEGIN_C_DECLS
+
+// In interpolator_array.cxx
+
+interpolator_array_t *
+new_interpolator_array( grid_t * g );
+
+void
+delete_interpolator_array( interpolator_array_t * ALIGNED(128) ia );
+
+// Going into load_interpolator, the field array f contains the
+// current information such that the fields can be interpolated to
+// particles within the local domain.  Load interpolate computes the
+// field array into a set of interpolation coefficients for each voxel
+// inside the local domain suitable for use by the particle update
+// functions.
+
+void
+load_interpolator_array( /**/  interpolator_array_t * RESTRICT ia,
+                         const field_array_t        * RESTRICT fa );
+
+END_C_DECLS
+
+/*****************************************************************************/
+
 // Accumulator arrays shall be a
 //   POW2_CEIL((nx+2)x(ny+2)x(nz+2),2)x(1+n_pipeline)
 // allocation indexed FORTRAN style.  That is, the accumulator array
@@ -72,65 +87,40 @@ typedef struct accumulator {
 # endif
 } accumulator_t;
 
+typedef struct accumulator_array {
+  accumulator_t * ALIGNED(128) a;
+  int n_pipeline; // Number of pipelines supported by this accumulator
+  int stride;     // Stride be each pipeline's accumulator array
+  grid_t * g;
+} accumulator_array_t;
+
 BEGIN_C_DECLS
 
 // In sf_structors.c
 
-hydro_t * ALIGNED(128)
-new_hydro( grid_t * g );
+accumulator_array_t *
+new_accumulator_array( grid_t * g );
 
 void
-delete_hydro( hydro_t * ALIGNED(128) h );
-
-void
-clear_hydro( hydro_t       * ALIGNED(128) h,
-             const grid_t  *              g );
-
-interpolator_t * ALIGNED(128)
-new_interpolator( grid_t * g );
-
-void
-delete_interpolator( interpolator_t * ALIGNED(128) fi );
-
-accumulator_t * ALIGNED(128)
-new_accumulators( grid_t * g );
-
-void
-delete_accumulators( accumulator_t * ALIGNED(128) a );
-
-// In load_interpolator.c
-
-// Going into load_interpolator, the field array f contains the
-// current information such that the fields can be interpolated to
-// particles within the local domain.  Load interpolate computes the
-// field array into a set of interpolation coefficients for each voxel
-// inside the local domain suitable for use by the particle update
-// functions.
-
-void
-load_interpolator( interpolator_t * ALIGNED(128) fi,
-                   const field_t  * ALIGNED(128) f,
-                   const grid_t   *              g );
+delete_accumulator_array( accumulator_array_t * a );
 
 // In clear_accumulators.c
 
 // This zeros out all the accumulator arrays in a pipelined fashion.
 
 void
-clear_accumulators( accumulator_t * ALIGNED(128) a,
-                    const grid_t  *              g );
+clear_accumulator_array( accumulator_array_t * RESTRICT a );
 
 // In reduce_accumulators.c
 
-// Going into reduce_accumulators, the host processor and the pipeline
-// processors have each accumulated values to their personal
+// Going into reduce_accumulators, the host cores and the pipeline
+// cores have each accumulated values to their personal
 // accumulators.  This reduces the pipeline accumulators into the host
 // accumulator with a pipelined horizontal reduction (a deterministic
 // reduction).
 
 void
-reduce_accumulators( accumulator_t * ALIGNED(128) a,
-                     const grid_t  *              g );
+reduce_accumulator_array( accumulator_array_t * RESTRICT a );
 
 // In unload_accumulator.c
 
@@ -144,19 +134,61 @@ reduce_accumulators( accumulator_t * ALIGNED(128) a,
 // accumulators have been reduced into the host accumulator.
 
 void
-unload_accumulator( field_t             * ALIGNED(128) f, 
-                    const accumulator_t * ALIGNED(128) a,
-                    const grid_t        *              g );
+unload_accumulator_array( /**/  field_array_t       * RESTRICT fa, 
+                          const accumulator_array_t * RESTRICT aa );
 
-// In hydro.c
+END_C_DECLS
+
+/*****************************************************************************/
+
+// Hydro arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation indexed
+// FORTRAN style from (0:nx+1,0:ny+1,0:nz+1).  Hydros for voxels on
+// the surface of the local domain (for example h(0,:,:) or
+// h(nx+1,:,:)) are not used.
+
+typedef struct hydro {
+  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
+  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
+  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
+# if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
+  float _pad[2];         // 64-byte align (next power of two)
+# else
+  float _pad[2];         // 16-byte align
+# endif
+} hydro_t;
+
+typedef struct hydro_array {
+  hydro_t * ALIGNED(128) h;
+  grid_t * g;
+} hydro_array_t;
+
+BEGIN_C_DECLS
+
+// In hydro_array.c
+
+// Construct a hydro array suitable for the grid
+
+hydro_array_t *
+new_hydro_array( grid_t * g );
+
+// Destruct a hydro array
 
 void
-synchronize_hydro( hydro_t      * ALIGNED(128) hydro,
-                   const grid_t *              g );
-             
+delete_hydro_array( hydro_array_t * ha );
+
+// Zero out the hydro array.  Use before accumulating species to
+// a hydro array.
+
 void
-local_adjust_hydro( hydro_t      * ALIGNED(128) h,
-                    const grid_t *              g );
+clear_hydro_array( hydro_array_t * ha );
+
+// Synchronize the hydro array with local boundary conditions and
+// neighboring processes.  Use after all species have been
+// accumulated to the hydro array.
+
+void
+synchronize_hydro_array( hydro_array_t * ha );
 
 END_C_DECLS
 

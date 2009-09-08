@@ -23,31 +23,21 @@ clear_accumulators_pipeline( accumulators_pipeline_args_t * args,
 
 #endif
 
-#define VOX(x,y,z) VOXEL(x,y,z, g->nx,g->ny,g->nz)
+#define VOX(x,y,z) VOXEL(x,y,z, aa->g->nx,aa->g->ny,aa->g->nz)
 
 void
-clear_accumulators( accumulator_t * ALIGNED(128) a,
-                    const grid_t  *              g ) {
+clear_accumulator_array( accumulator_array_t * RESTRICT aa ) {
   DECLARE_ALIGNED_ARRAY( accumulators_pipeline_args_t, 128, args, 1 );
-  int i0, na;
+  int i0;
 
-  if( a==NULL ) ERROR(("Invalid accumulator"));
-  if( g==NULL ) ERROR(("Invalid grid"));
+  if( aa==NULL ) ERROR(( "Bad args" ));
 
   i0 = (VOX(1,1,1)/2)*2; // Round i0 down to even for 128B align on Cell */
 
-  /**/                       na = serial.n_pipeline;
-  if( na<thread.n_pipeline ) na = thread.n_pipeline;
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  if( na<spu.n_pipeline    ) na = spu.n_pipeline;
-# endif
-  na++; // 1 + max( {serial,thread,spu}.n_pipeline ) 
-
-  args->a       = a + i0;
-  args->n       = ((( VOX(g->nx,g->ny,g->nz) - i0 + 1 )+1)/2)*2;
-  args->n_array = na;
-  args->s_array = POW2_CEIL((g->nx+2)*(g->ny+2)*(g->nz+2),2);
-
+  args->a       = aa->a + i0;
+  args->n       = ((( VOX(aa->g->nx,aa->g->ny,aa->g->nz) - i0 + 1 )+1)/2)*2;
+  args->n_array = aa->n_pipeline + 1;
+  args->s_array = aa->stride;
   EXEC_PIPELINES( clear_accumulators, args, 0 );
   WAIT_PIPELINES();
 }

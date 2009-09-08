@@ -78,14 +78,11 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 #endif
 
 void
-unload_accumulator( field_t             * ALIGNED(128) f,
-                    const accumulator_t * ALIGNED(128) a,
-                    const grid_t        * g ) {
+unload_accumulator_array( /**/  field_array_t       * RESTRICT fa,
+                          const accumulator_array_t * RESTRICT aa ) {
   unload_accumulator_pipeline_args_t args[1];
 
-  if( f==NULL ) ERROR(("Bad field"));
-  if( a==NULL ) ERROR(("Bad accumulator"));
-  if( g==NULL ) ERROR(("Bad grid"));
+  if( fa==NULL || aa==NULL || fa->g!=aa->g ) ERROR(( "Bad args" ));
 
 # if 0 // Original non-pipelined version
 
@@ -112,14 +109,14 @@ unload_accumulator( field_t             * ALIGNED(128) f,
 
 # endif
 
-  args->f  = f;
-  args->a  = a;
-  args->nx = g->nx;
-  args->ny = g->ny;
-  args->nz = g->nz;
-  args->cx = 0.25*g->rdy*g->rdz/g->dt;
-  args->cy = 0.25*g->rdz*g->rdx/g->dt;
-  args->cz = 0.25*g->rdx*g->rdy/g->dt;
+  args->f  = fa->f;
+  args->a  = aa->a;
+  args->nx = fa->g->nx;
+  args->ny = fa->g->ny;
+  args->nz = fa->g->nz;
+  args->cx = 0.25*fa->g->rdy*fa->g->rdz/fa->g->dt;
+  args->cy = 0.25*fa->g->rdz*fa->g->rdx/fa->g->dt;
+  args->cz = 0.25*fa->g->rdx*fa->g->rdy/fa->g->dt;
 
   EXEC_PIPELINES( unload_accumulator, args, 0 );
   WAIT_PIPELINES();

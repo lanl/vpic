@@ -29,11 +29,10 @@
  *****************************************************************************/
 
 enum {
-  max_num_materials   = 65535, // Valid materials are numbered 0...65534
-  invalid_material_id = 65535
+  max_material = 32768 // Valid materials are numbered 0...32767
 };
 
-typedef uint16_t material_id;
+typedef int16_t material_id;
 
 typedef struct material {
   material_id id;               // Unique identifier for material
@@ -50,9 +49,9 @@ BEGIN_C_DECLS
 // In material.c
 
 int
-num_materials( const material_t * m_list );
+num_material( const material_t * m_list );
 
-material_id
+material_t *
 new_material( const char * name,
               float epsx,   float epsy,   float epsz,
               float mux,    float muy,    float muz,

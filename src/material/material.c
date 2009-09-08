@@ -10,6 +10,23 @@
 
 #include "material.h"
 
+/* These checkpt/restore functions are not part of the public API
+   but must not be declared as static. */
+
+void
+checkpt_material( const material_t * m ) {
+  CHECKPT( (const char *)m, sizeof(*m) + strlen(m->name) );
+  CHECKPT_PTR( m->next );
+}
+
+material_t *
+restore_material( void ) {
+  material_t * m;
+  RESTORE( m );
+  RESTORE_PTR( m->next );
+  return m;
+}
+
 // Note: new_material added the created species to the head of the
 // species list. Further the species ids are simply incremented from
 // the previous head of the list. The first species is numbered 0. As
@@ -17,12 +34,12 @@
 // of the species at the head of the list plus one.
 
 int
-num_materials( const material_t *m_list ) {
+num_material( const material_t *m_list ) {
   if( m_list==NULL ) return 0;
   return m_list->id+1;
 }
 
-material_id
+material_t *
 new_material( const char * name,
               float epsx,   float epsy,   float epsz,
               float mux,    float muy,    float muz,
@@ -31,8 +48,7 @@ new_material( const char * name,
               material_t ** m_list ) {
   char * buf;
   material_t *m;
-  material_id id;
-  int len;
+  int id, len;
 
   if( m_list==NULL ) ERROR(("Invalid material list."));
   // Note: strlen does not include terminating NULL
@@ -40,8 +56,8 @@ new_material( const char * name,
   if( len<=0 ) ERROR(("Cannot create a nameless material."));
   if( find_material_name(name,*m_list)!=NULL )
     ERROR(("There is already a material named \"%s\".", name));
-  id = num_materials(*m_list);
-  if( id==max_num_materials )
+  id = num_material( *m_list );
+  if( id==max_material )
     ERROR(("Cannot create material \"%s\"; too many materials.", name));
   
   // Note: Since a m->name is declared as a 1-element char array, the
@@ -54,9 +70,16 @@ new_material( const char * name,
   m->zetax  = zetax,  m->zetay  = zetay,  m->zetaz  = zetaz;
   m->next   = *m_list;
   strcpy( m->name, name );
-  
   *m_list = m;
-  return m->id;
+  REGISTER_OBJECT( m, checkpt_material, restore_material, NULL );
+  return m;
+}
+
+static void
+delete_material( material_t * m ) {
+  if( m==NULL ) return;
+  UNREGISTER_OBJECT( m );
+  FREE( m );
 }
 
 void
@@ -65,8 +88,8 @@ delete_material_list( material_t ** m_list ) {
   if( m_list==NULL ) return;
   while( *m_list!=NULL ) {
     m = *m_list;
-    *m_list = (*m_list)->next;
-    FREE( m );
+    *m_list = m->next;
+    delete_material( m );
   }
 }
 

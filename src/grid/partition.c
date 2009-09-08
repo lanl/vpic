@@ -10,27 +10,27 @@
 
 #include "grid.h"
 
-#define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {  \
-  int _ix, _iy, _iz;                                    \
-  _ix  = (rank);  /* ix = ix + gpx*( iy + gpy*iz ) */   \
-  _iy  = _ix/gpx; /* iy = iy + gpy*iz */                \
-  _ix -= _iy*gpx; /* ix = ix */                         \
-  _iz  = _iy/gpy; /* iz = iz */                         \
-  _iy -= _iz*gpy; /* iy = iy */                         \
-  (ix) = _ix;                                           \
-  (iy) = _iy;                                           \
-  (iz) = _iz;                                           \
-} END_PRIMITIVE
+#define RANK_TO_INDEX(rank,ix,iy,iz) do {               \
+    int _ix, _iy, _iz;                                  \
+    _ix  = (rank);  /* ix = ix + gpx*( iy + gpy*iz ) */ \
+    _iy  = _ix/gpx; /* iy = iy + gpy*iz */              \
+    _ix -= _iy*gpx; /* ix = ix */                       \
+    _iz  = _iy/gpy; /* iz = iz */                       \
+    _iy -= _iz*gpy; /* iy = iy */                       \
+    (ix) = _ix;                                         \
+    (iy) = _iy;                                         \
+    (iz) = _iz;                                         \
+  } while(0)
 
-#define INDEX_TO_RANK(ix,iy,iz,rank) BEGIN_PRIMITIVE {  \
-  int _ix, _iy, _iz;                                    \
-   /* Wrap processor index periodically */              \
-   _ix = (ix) % gpx; while(_ix<0) _ix += gpx;           \
-   _iy = (iy) % gpy; while(_iy<0) _iy += gpy;           \
-   _iz = (iz) % gpz; while(_iz<0) _iz += gpz;           \
-   /* Compute the rank */                               \
-  (rank) = _ix + gpx*( _iy + gpy*_iz );                 \
-} END_PRIMITIVE
+#define INDEX_TO_RANK(ix,iy,iz,rank) do {            \
+    int _ix = (ix), _iy = (iy), _iz = (iz);          \
+    /* Wrap processor index periodically */          \
+    while(_ix>=gpx) _ix-=gpx; while(_ix<0) _ix+=gpx; \
+    while(_iy>=gpy) _iy-=gpy; while(_iy<0) _iy+=gpy; \
+    while(_iz>=gpz) _iz-=gpz; while(_iz<0) _iz+=gpz; \
+    /* Compute the rank */                           \
+    (rank) = _ix + gpx*( _iy + gpy*_iz );            \
+  } while(0)
 
 void
 partition_periodic_box( grid_t * g,
@@ -39,26 +39,28 @@ partition_periodic_box( grid_t * g,
                         int gnx, int gny, int gnz,
                         int gpx, int gpy, int gpz ) {
   double f;
-  int rank, nproc, px, py, pz; 
+  int rank, px, py, pz; 
 
   // Make sure the grid can be setup
-  if( g==NULL                      ) ERROR(("Bad grid"));
-  if( g->mp==NULL                  ) ERROR(("Bad mp"));
-  if( gpx<1 || gpy<1 || gpz<1 ||
-      gpx*gpy*gpz!=mp_nproc(g->mp) ) ERROR(("Bad topology"));
-  if( gnx<1 || gny<1 || gnz<1      ) ERROR(("Bad res"));
-  if( gnx%gpx!=0 ||
-      gny%gpy!=0 ||
-      gnz%gpz!=0                   ) ERROR(("Incompatible res"));
-  rank = mp_rank(g->mp);
-  nproc = mp_nproc(g->mp);
+
+  if( !g ) ERROR(( "NULL grid" ));
+
+  if( gpx<1 || gpy<1 || gpz<1 || gpx*gpy*gpz!=world_size )
+    ERROR(( "Bad domain decompostion (%ix%ix%i)", gpx, gpy, gpz ));
+
+  if( gnx<1 || gny<1 || gnz<1 || gnx%gpx!=0 || gny%gpy!=0 || gnz%gpz!=0 )
+    ERROR(( "Bad resolution (%ix%ix%i) for domain decomposition",
+            gnx, gny, gnz, gpx, gpy, gpz ));
 
   // Setup basic variables
-  RANK_TO_INDEX(rank,px,py,pz);
+  RANK_TO_INDEX( world_rank, px,py,pz );
 
   g->dx = (gx1-gx0)/(double)gnx;
   g->dy = (gy1-gy0)/(double)gny;
   g->dz = (gz1-gz0)/(double)gnz;
+  g->dV = ((gx1-gx0)/(double)gnz)*
+          ((gy1-gy0)/(double)gnz)*
+          ((gz1-gz0)/(double)gnz);
 
   g->rdx =  (double)gnx/(gx1-gx0);
   g->rdy =  (double)gny/(gy1-gy0);
@@ -94,7 +96,7 @@ partition_absorbing_box( grid_t * g,
                          int gnx, int gny, int gnz,
                          int gpx, int gpy, int gpz,
                          int pbc ) {
-  int rank, nproc, px, py, pz; 
+  int px, py, pz; 
 
   partition_periodic_box( g,
                           gx0, gy0, gz0,
@@ -104,14 +106,13 @@ partition_absorbing_box( grid_t * g,
 
   // Override periodic boundary conditions
 
-  rank = mp_rank(g->mp);
-  nproc = mp_nproc(g->mp);
-  RANK_TO_INDEX(rank,px,py,pz);
+  RANK_TO_INDEX( world_rank, px,py,pz );
 
   if( px==0 && gnx>1 ) { 
     set_fbc(g,BOUNDARY(-1,0,0),absorb_fields);
     set_pbc(g,BOUNDARY(-1,0,0),pbc);
   } 
+
   if( px==gpx-1 && gnx>1 ) {
     set_fbc(g,BOUNDARY( 1,0,0),absorb_fields);
     set_pbc(g,BOUNDARY( 1,0,0),pbc);
@@ -147,7 +148,7 @@ partition_metal_box( grid_t * g,
                      double gx1, double gy1, double gz1,
                      int gnx, int gny, int gnz,
                      int gpx, int gpy, int gpz ) {
-  int rank, nproc, px, py, pz; 
+  int px, py, pz; 
 
   partition_periodic_box( g,
                           gx0, gy0, gz0,
@@ -157,9 +158,7 @@ partition_metal_box( grid_t * g,
 
   // Override periodic boundary conditions
 
-  rank = mp_rank(g->mp);
-  nproc = mp_nproc(g->mp);
-  RANK_TO_INDEX(rank,px,py,pz);
+  RANK_TO_INDEX( world_rank, px,py,pz );
 
   if( px==0 && gnx>1 ) {
     set_fbc(g,BOUNDARY(-1,0,0),anti_symmetric_fields);

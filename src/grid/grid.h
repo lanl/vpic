@@ -13,42 +13,6 @@
 
 #include "../util/util.h"
 
-// Define a "pointer to boundary handler function" type.
-
-// FIXME: THESE PREDECLARATIONS ARE UGLY AND MAKE BABY JESUS CRY
-
-struct particle;
-struct particle_mover;
-struct field;
-struct accumulator;
-struct grid;
-struct species;
-struct particle_injector;
-
-typedef int
-(*boundary_handler_t)( void                     * params,
-                       struct particle          * r,
-                       struct particle_mover    * pm,       
-                       struct field             * f,
-                       struct accumulator       * a,
-                       const struct grid        * g,
-                       struct species           * s, 
-                       struct particle_injector * ppi, 
-                       mt_rng_t                 * rng, 
-                       int                        face );
-
-enum boundary_handler_enums {
-  INVALID_BOUNDARY       = 0xBADF00D,
-  MAX_BOUNDARY_DATA_SIZE = 1024 // Sized to hold data characterizing a boundary model.
-};
-
-// FIXME: MODEL_PARAMETER DOES NOT HAVE GUARANTEED NICE ALIGNMENT
-
-typedef struct boundary {
- boundary_handler_t handler;
- char params[MAX_BOUNDARY_DATA_SIZE]; 
-} boundary_t;
-
 #define BOUNDARY(i,j,k) (13+(i)+3*(j)+9*(k)) /* FORTRAN -1:1,-1:1,-1:1 */
 
 enum grid_enums {
@@ -107,35 +71,40 @@ enum grid_enums {
 };
 
 typedef struct grid {
-  mp_handle mp;           // Communications handle
-  float dt, cvac, eps0;   // System of units
-  float damp;             // Radiation damping parameter
-                          // FIXME: DOESN'T GO HERE
+
+  // System of units
+  float dt, cvac, eps0;
+
+  // Time stepper.  The simulation time is given by
+  // t = g->t0 + (double)g->dt*(double)g->step
+  int64_t step;             // Current timestep
+  double t0;                // Simulation time corresponding to step 0
 
   // Phase 2 grid data structures 
-  float x0, y0, z0;       // Min corner local domain (must be coherent)
-  float x1, y1, z1;       // Max corner local domain (must be coherent)
-  float dx, dy, dz;       // Cell dimensions (CONVENIENCE ... USE
-                          // x0,x1 WHEN DECIDING WHICH NODE TO USE!)
-  float rdx, rdy, rdz;    // Inverse voxel dimensions (CONVENIENCE)
-  float r8V;              // One eight inverse voxel volume (CONVENIENCE)
-  int   sy, sz;           // Voxel indexing y- and z- stridesl (CONVENIENCE)
-  int   nx, ny, nz;       // Local voxel mesh resolution.  Voxels are
-                          // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
-                          // with voxels 1:nx,1:ny,1:nz being non-ghost
-                          // voxels.
-  int   bc[27];           // (-1:1,-1:1,-1:1) FORTRAN indexed array of
-                          // boundary conditions to apply at domain edge
-                          // 0 ... nproc-1 ... comm boundary condition
-                          // <0 ... locally applied boundary condition
+  float x0, y0, z0;         // Min corner local domain (must be coherent)
+  float x1, y1, z1;         // Max corner local domain (must be coherent)
+  int   nx, ny, nz;         // Local voxel mesh resolution.  Voxels are
+                            // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
+                            // with voxels 1:nx,1:ny,1:nz being non-ghost
+                            // voxels.
+  float dx, dy, dz, dV;     // Cell dimensions and volume (CONVENIENCE ...
+                            // USE x0,x1 WHEN DECIDING WHICH NODE TO USE!)
+  float rdx, rdy, rdz, r8V; // Inverse voxel dimensions and one over
+                            // eight times the voxel volume (CONVENIENCE)
+  int   sx, sy, sz, nv;     // Voxel indexing x-, y-,z- strides and the
+                            // number of local voxels (including ghosts,
+                            // (nx+2)(ny+2)(nz+2)), (CONVENIENCE)
+  int   bc[27];             // (-1:1,-1:1,-1:1) FORTRAN indexed array of
+                            // boundary conditions to apply at domain edge
+                            // 0 ... nproc-1 ... comm boundary condition
+                            // <0 ... locally applied boundary condition
 
   // Phase 3 grid data structures
-
   // NOTE: VOXEL INDEXING LIMITS NUMBER OF VOXELS TO 2^31 (INCLUDING
   // GHOSTS) PER NODE.  NEIGHBOR INDEXING FURTHER LIMITS TO
-  // (2^31)/6.  THE EMITTER COMPONENT ID INDEXING FURTHER LIMITS TO
-  // 2^27 PER NODE.  THE LIMIT IS 2^64 OVER ALL NODES THOUGH.
-
+  // (2^31)/6.  BOUNDARY CONDITION HANDLING LIMITS TO 2^28 PER NODE
+  // EMITTER COMPONENT ID INDEXING FURTHER LIMITS TO 2^26 PER NODE.
+  // THE LIMIT IS 2^63 OVER ALL NODES THOUGH.
   int64_t * ALIGNED(16) range;
                           // (0:nproc) indexed array giving range of
                           // global indexes of voxel owned by each
@@ -154,13 +123,10 @@ typedef struct grid {
   int64_t rangel, rangeh; // Redundant for move_p performance reasons:
                           //   rangel = range[rank]
                           //   rangeh = range[rank+1]-1.
-                          // Note: rangeh-rangel <~ 2^31 / 6
+                          // Note: rangeh-rangel <~ 2^26
 
-  // Enable user-defined boundary handlers
-
-  int nb;                 // Number of custom boundary conditions
-  boundary_t * boundary;  // Head of array of boundary_t.
-                          // FIXME: DOESN'T GO HERE!
+  // Nearest neighbor communications ports
+  mp_t * mp;
 
 } grid_t;
 
@@ -196,27 +162,6 @@ typedef struct grid {
   if( (y)>(yh) ) (y) = (yl)
 
 BEGIN_C_DECLS
-
-// In boundary_handler.c
-
-// Note that boundaries _copy_ the state given by ip into their own
-// storage.  Thus, to change the state of a given boundary, one has to
-// look up the boundary and change it there.  Example usage:
-//
-//   reflux_boundary_params_t bc;
-//
-//   bc.species[0] = ion;
-//   bc.ux[0]      = sqrt(k*T/(m*c^2))
-//   ...
-//   reflux_boundary = add_boundary( g, reflux_handler, &bc );
-// FIXME: WHY MAKE USER PASS &bc ... SILLY
-#define add_boundary(g,bh,ip) IUO_add_boundary((g),(bh),(ip),sizeof(*(ip)))
-
-int
-IUO_add_boundary( grid_t *g,
-		  boundary_handler_t bh,
-		  const void * initial_params,
-		  int sz );
 
 // In grid_structors.c
 
@@ -314,7 +259,7 @@ begin_recv_port( int i,    // x port coord ([-1,0,1])
 // room for size bytes.  This is only valid to call if no sends on
 // that port are pending.
 
-void * ALIGNED(16)
+void * ALIGNED(128)
 size_send_port( int i,    // x port coord ([-1,0,1])
                 int j,    // y port coord ([-1,0,1])
                 int k,    // z port coord ([-1,0,1])
@@ -338,7 +283,7 @@ begin_send_port( int i,    // x port coord ([-1,0,1])
 // the received data.  (FIXME: WHAT HAPPENS IF EXPECTED RECV SIZE
 // GIVEN IN BEGIN_RECV DOES NOT MATCH END_RECV??)
 
-void * ALIGNED(16)
+void * ALIGNED(128)
 end_recv_port( int i, // x port coord ([-1,0,1])
                int j, // y port coord ([-1,0,1])
                int k, // z port coord ([-1,0,1])

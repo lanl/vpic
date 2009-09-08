@@ -19,48 +19,41 @@ void
 size_grid( grid_t * g,
            int lnx, int lny, int lnz ) {
   int64_t x,y,z;
-  //int rank, nproc, i, j, k, x, y, z, lnc;
-  int rank, nproc, i, j, k, lnc;
+  int i, j, k;
   int64_t ii, jj, kk; 
 
-  if( g==NULL                 ) ERROR(("Bad grid"));
-  if( g->mp==NULL             ) ERROR(("Bad mp"));
-  if( lnx<1 || lny<1 || lnz<1 ) ERROR(("Bad local grid size"));
-
-  rank = mp_rank(g->mp);
-  nproc = mp_nproc(g->mp);
+  if( !g || lnx<1 || lny<1 || lnz<1 ) ERROR(( "Bad args" ));
 
   // Setup phase 2 data structures
-  g->sy =  lnx+2;
+  g->sx =  1;
+  g->sy = (lnx+2)*g->sx;
   g->sz = (lny+2)*g->sy;
-  g->nx = lnx;
-  g->ny = lny;
-  g->nz = lnz;
+  g->nv = (lnz+2)*g->sz;
+  g->nx = lnx; g->ny = lny; g->nz = lnz;
   for( k=-1; k<=1; k++ )
     for( j=-1; j<=1; j++ )
       for( i=-1; i<=1; i++ ) 
         g->bc[ BOUNDARY(i,j,k) ] = pec_fields;
-  g->bc[ BOUNDARY(0,0,0) ] = rank;
+  g->bc[ BOUNDARY(0,0,0) ] = world_rank;
 
   // Setup phase 3 data structures.  This is an ugly kludge to
   // interface phase 2 and phase 3 data structures
-  lnc = (lnx+2)*(lny+2)*(lnz+2);
   FREE_ALIGNED( g->range );
-  MALLOC_ALIGNED( g->range, nproc+1, 16 );
-  ii = lnc; // lnc is not 64-bits
-  mp_allgather_i64(&ii,g->range,1,g->mp);
+  MALLOC_ALIGNED( g->range, world_size+1, 16 );
+  ii = g->nv; // nv is not 64-bits
+  mp_allgather_i64( &ii, g->range, 1 );
   jj = 0;
-  g->range[nproc] = 0;
-  for( i=0; i<=nproc; i++ ) {
+  g->range[world_size] = 0;
+  for( i=0; i<=world_size; i++ ) {
     kk = g->range[i];
     g->range[i] = jj;
     jj += kk;
   }
-  g->rangel = g->range[rank];
-  g->rangeh = g->range[rank+1]-1;
+  g->rangel = g->range[world_rank];
+  g->rangeh = g->range[world_rank+1]-1;
 
   FREE_ALIGNED( g->neighbor );
-  MALLOC_ALIGNED( g->neighbor, 6*lnc, 128 );
+  MALLOC_ALIGNED( g->neighbor, 6*g->nv, 128 );
 
   for( z=0; z<=lnz+1; z++ )
     for( y=0; y<=lny+1; y++ )
@@ -99,7 +92,7 @@ size_grid( grid_t * g,
   // UP TO AND INCLUDING 8 THREADS.
 
   FREE_ALIGNED( g->sfc );
-  MALLOC_ALIGNED( g->sfc, lnc, 128 );
+  MALLOC_ALIGNED( g->sfc, g->nv, 128 );
 
   do {
     int off;
@@ -122,16 +115,14 @@ size_grid( grid_t * g,
 # endif
 }
 
-void join_grid( grid_t * g, int boundary, int rank ) {
+void
+join_grid( grid_t * g,
+           int boundary,
+           int rank ) {
   int lx, ly, lz, lnx, lny, lnz, rx, ry, rz, rnx, rny, rnz, rnc;
 
-  if( g==NULL                   ) ERROR(("Bad grid"));
-  if( g->mp==NULL               ) ERROR(("Bad mp"));
-  if( boundary<0 ||
-      boundary>=27 ||
-      boundary==BOUNDARY(0,0,0) ) ERROR(("Bad boundary"));
-  if( rank<0 ||
-      rank>=mp_nproc(g->mp)     ) ERROR(("Bad rank"));
+  if( !g || boundary<0 || boundary>=27 || boundary==BOUNDARY(0,0,0) ||
+      rank<0 || rank>=world_size ) ERROR(( "Bad args" ));
 
   // Join phase 2 data structures
   g->bc[boundary] = rank;
@@ -169,34 +160,31 @@ void join_grid( grid_t * g, int boundary, int rank ) {
   GLUE_FACE(3, 1, 0, 0,x,y,z);
   GLUE_FACE(4, 0, 1, 0,y,z,x);
   GLUE_FACE(5, 0, 0, 1,z,x,y);
+
+# undef GLUE_FACE
 }
 
-void set_fbc( grid_t *g, int boundary, int fbc ) {
-  if( g==NULL                       ) ERROR(("Bad grid"));
-  if( g->mp==NULL                   ) ERROR(("Bad mp"));
-  if( boundary<0 ||
-      boundary>=27 ||
-      boundary==BOUNDARY(0,0,0)     ) ERROR(("Bad boundary"));
-  if( fbc>=0 &&
-      fbc<mp_nproc(g->mp)           ) ERROR(("Use join_grid"));
-  if( fbc!=anti_symmetric_fields &&
-      fbc!=symmetric_fields      &&
-      fbc!=pmc_fields            &&
-      fbc!=absorb_fields            ) ERROR(("Bad field bc"));
+void
+set_fbc( grid_t * g,
+         int boundary,
+         int fbc ) {
+
+  if( !g || boundary<0 || boundary>=27 || boundary==BOUNDARY(0,0,0) ||
+      ( fbc!=anti_symmetric_fields && fbc!=symmetric_fields &&
+        fbc!=pmc_fields            && fbc!=absorb_fields    ) )
+    ERROR(( "Bad args" ));
+
   g->bc[boundary] = fbc;
 }
 
-void set_pbc( grid_t *g, int boundary, int pbc ) {
+void
+set_pbc( grid_t * g,
+         int boundary,
+         int pbc ) {
   int lx, ly, lz, lnx, lny, lnz;
 
-  if( g==NULL                       ) ERROR(("Bad grid"));
-  if( g->mp==NULL                   ) ERROR(("Bad mp"));
-  if( boundary<0 ||
-      boundary>=27 ||
-      boundary==BOUNDARY(0,0,0)     ) ERROR(("Bad boundary"));
-  if( pbc>=0 && pbc<mp_nproc(g->mp) ) ERROR(("Use join_grid"));
-  if( pbc!=absorb_particles && pbc!=reflect_particles && 
-      (-pbc-3<0 || -pbc-3>=g->nb) ) ERROR(("Bad particle bc")); 
+  if( !g || boundary<0 || boundary>=27 || boundary==BOUNDARY(0,0,0) || pbc>=0 )
+    ERROR(( "Bad args" ));
 
   lnx = g->nx;
   lny = g->ny;
@@ -218,6 +206,7 @@ void set_pbc( grid_t *g, int boundary, int pbc ) {
   SET_PBC(3, 1, 0, 0,x,y,z);
   SET_PBC(4, 0, 1, 0,y,z,x);
   SET_PBC(5, 0, 0, 1,z,x,y);
-}
 
+# undef SET_PBC
+}
 

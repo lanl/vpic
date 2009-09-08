@@ -14,102 +14,72 @@
 // a (-1:1,-1:1,-1:1) FORTRAN style indexing calculation. Note that
 // this allows distinctions like which side of a cell a face is on.
 
-#define COMPONENT_ID(local_cell,component_type) \
+#define COMPONENT_ID( local_cell, component_type ) \
   (((local_cell)<<5) | (component_type))
-#define EXTRACT_LOCAL_CELL(component_id)        ((component_id)>>5)
-#define EXTRACT_COMPONENT_TYPE(component_id)    ((component_id)&31)
-
-#define MAX_EMISSION_MODEL_SIZE 1024
+#define EXTRACT_LOCAL_CELL( component_id )     ((component_id)>>5)
+#define EXTRACT_COMPONENT_TYPE( component_id ) ((component_id)&31)
 
 struct emitter;
 
 typedef void
-(*emission_model_t)( struct emitter       *              e,
-                     const interpolator_t * ALIGNED(128) fi,
-                     field_t              * ALIGNED(16)  f, 
-                     accumulator_t        * ALIGNED(128) a, 
-                     grid_t               *              g, 
-                     mt_rng_t             *              rng );
+(*emit_func_t)( struct emitter * RESTRICT e );
+
+typedef void
+(*delete_emitter_func_t)( struct emitter * RESTRICT e );
 
 typedef struct emitter {
-  int * ALIGNED(16) component;
-  int n_component, max_component;
-  species_t * sp;                  // Species to emit
-  emission_model_t emission_model;
-  char model_parameters[MAX_EMISSION_MODEL_SIZE]; 
+  emit_func_t emit;
+  void * params;
+  delete_emitter_func_t delete_e;
+  int * ALIGNED(128) component;
+  int n_component;
   struct emitter * next;
-  char name[1];                    // Terminal zero of string
 } emitter_t;
 
 BEGIN_C_DECLS
 
 // In structors.c
 
-emitter_t *
-new_emitter( const char * name,
-             species_t * sp,
-             emission_model_t emission_model,
-             int max_component,
-             emitter_t ** e_list );
+int
+num_emitter( const emitter_t * e_list );
 
 void
-delete_emitter_list( emitter_t ** e );
+delete_emitter_list( emitter_t ** e_list );
 
-emitter_t *
-find_emitter_name( const char * name,
-                   emitter_t * e_list );
+// Each emittered must be sized once and only once
+
+void
+size_emitter( emitter_t * e,
+              int n_component );
+
+// FIXME: WRITE SIMPLE EMITTERS FOR THINGS LIKE CONSTANT CURRENT PARTICLE
+// BEAMS OFF SURFACES
+
+// In child_langmuir.c
+
+// FIXME: COULD ADJUST API OF THESE TO DO MULTIPLE SPECIES OF EMISSION
+// FROM THE SAME EMITTER
 
 // In child-langmuir.c
 
-typedef struct child_langmuir {
-  int   n_emit_per_face; // How many particles to emit per face
-  float ut_perp;         // Perpendicular normalized thermal momentum
-  float ut_para;         // Parallel normalized thermal momentum
-} child_langmuir_t;
+#define CHILD_LANGMUIR sqrt(32./81.)
+#define CCUBE          sqrt(1./6.)
+#define IVORY          sqrt(1./6.)
 
-void
-child_langmuir( emitter_t            *              e,
-                const interpolator_t * ALIGNED(128) fi,    // For field interp
-                field_t              * ALIGNED(16)  f,     // For rhob accum
-                accumulator_t        * ALIGNED(128) a,     // For J accum
-                grid_t               *              g,     // Underlying grid
-                mt_rng_t             *              rng ); // Random numbers
-
-// In ccube.c
-
-typedef struct ccube {
-  int   n_emit_per_face; // How many particles to emit per face
-  float ut_perp;         // Perpendicular normalized thermal momentum
-  float ut_para;         // Parallel normalized thermal momentum
-  float thresh_e_norm;   // Only emit particles if |E| > thresh_e_norm.
-} ccube_t;
-
-void
-ccube( emitter_t            *              e,
-       const interpolator_t * ALIGNED(128) fi,    // For field interp
-       field_t              * ALIGNED(16)  f,     // For rhob accum
-       accumulator_t        * ALIGNED(128) a,     // For J accum
-       grid_t               *              g,     // Underlying grid
-       mt_rng_t             *              rng ); // Random numbers
-
-// In ivory.c
-
-typedef struct ivory {
-  int   n_emit_per_face; // How many particles to emit per face 
-  float ut_perp;         // Perpendicular normalized thermal momentum 
-  float ut_para;         // Parallel normalized thermal momentum 
-  float thresh_e_norm;   // Only emit particles if |E| > thresh_e_norm
-} ivory_t;
-
-void
-ivory( emitter_t            *              e,
-       const interpolator_t * ALIGNED(128) fi,    // For field interp
-       field_t              * ALIGNED(16)  f,     // For rhob accum
-       accumulator_t        * ALIGNED(128) a,     // For J accum
-       grid_t               *              g,     // Underlying grid
-       mt_rng_t             *              rng ); // Random numbers
+emitter_t *
+new_child_langmuir_emitter(
+  /**/  species_t            * RESTRICT sp,  // Species to emit
+  const interpolator_array_t * RESTRICT ia,  // For field interpolation
+  /**/  field_array_t        * RESTRICT fa,  // For rhob accum (injection)
+  /**/  accumulator_array_t  * RESTRICT aa,  // For Jf accum (aging)
+  /**/  mt_rng_t             * RESTRICT rng, // Random number source
+  int   n_emit_per_face, // How many particles to emit per face per step
+  float ut_perp,         // Perpendicular normalized thermal momentum
+  float ut_para,         // Parallel normalized thermal momentum
+  float thresh_e_norm,   // Only emit if E_norm>thresh_e_norm
+  float norm,            // Child-langmuir normalization
+  emitter_t ** e_list ); // Emitter list
 
 END_C_DECLS
 
 #endif // _emitter_h_
-

@@ -1,73 +1,86 @@
 #include "emitter.h"
 
-emitter_t *
-new_emitter( const char * name,
-             species_t * sp,
-             emission_model_t emission_model,
-             int max_component,
-             emitter_t **e_list ) {
-  char * buf;
+int
+num_emitter( const emitter_t * RESTRICT e_list ) {
+  const emitter_t * RESTRICT e;
+  int n = 0;
+  LIST_FOR_EACH( e, e_list ) n++;
+  return n;
+}
+
+void
+delete_emitter_list( emitter_t ** e_list ) {
   emitter_t * e;
-  int len;
-
-  if( e_list==NULL ) ERROR(("Invalid emitter list."));
-  len = (name==NULL) ? 0 : strlen(name);
-  if( len<=0 ) ERROR(("Cannot create a nameless emitter."));
-  if( find_emitter_name(name,*e_list)!=NULL )
-    ERROR(("There is already a emitter named \"%s\".",name)); 
-  if( max_component<1 ) {
-
-    // BJA: commented ERROR() out for the following reason: If an
-    // emitter is localized and does not reside on a given processor,
-    // then the number of faces will be 0 on processors which don't
-    // contain the emitter.  The proper behavior should be to silently
-    // return NULL rather than throw an error condition.
-
-    // FIXME: KJB-BOTH BEHAVIORS ARE UNCOOL.  I'LL FIX THIS LATER.
-
-    // ERROR(("Invalid max_component requested for emitter \"%s\".",name));
-    return NULL;
+  if( !e_list ) return;
+  while( *e_list ) {
+    e = (*e_list);
+    (*e_list) = e->next;
+    e->delete_e( e );
   }
+}
 
-  // Create the emitter
+void
+size_emitter( emitter_t * RESTRICT e,
+              int n_component ) {
+  if( !e || e->n_component || n_component<0 ) ERROR(( "Bad args" ));
+  MALLOC_ALIGNED( e->component, n_component, 128 );
+  e->n_component = n_component;
+}
 
-  // sizeof(e[0]) includes the termininating null of name
-  MALLOC( buf, sizeof(e[0])+len ); e = (emitter_t *)buf;
+/******************************************************************************/
 
-  // Initialize the emitter
+void
+checkpt_emitter_internal( const emitter_t * RESTRICT e ) {
+  CHECKPT( e, 1 );
+  CHECKPT_SYM( e->emit );
+  /* e->params will be checkpted by the specific handler */
+  CHECKPT_SYM( e->delete_e );
+  CHECKPT_ALIGNED( e->component, e->n_component, 128 );
+  CHECKPT_PTR( e->next );
+}
 
-  e->sp             = sp;
-  e->emission_model = emission_model;
-  CLEAR( e->model_parameters, MAX_EMISSION_MODEL_SIZE );
-  MALLOC_ALIGNED( e->component, max_component, 16 );
-  e->n_component   = 0;
-  e->max_component = max_component;
+emitter_t *
+restore_emitter_internal( void ) {
+  emitter_t * e;
+  RESTORE( e );
+  RESTORE_SYM( e->emit );
+  /* e->params will be restored by the specific handler */
+  RESTORE_SYM( e->delete_e );
+  RESTORE_ALIGNED( e->component );
+  RESTORE_PTR( e->next );
+  return e;
+}
 
-  e->next = *e_list;
-  strcpy( e->name, name );
+emitter_t *
+new_emitter_internal( emitter_t ** e_list,
+                      emit_func_t emit,
+                      delete_emitter_func_t delete_e,
+                      void * params,
+                      checkpt_func_t checkpt,
+                      restore_func_t restore,
+                      reanimate_func_t reanimate ) {
+  emitter_t * e;
 
+  if( !e_list || !emit || !delete_e ) ERROR(( "Bad args" ));
+
+  MALLOC( e, 1 );
+  CLEAR( e, 1 );
+
+  e->emit     = emit;
+  e->delete_e = delete_e;
+  e->params   = params;
+  e->next     = *e_list;
+
+  REGISTER_OBJECT( e, checkpt, restore, reanimate );
   *e_list = e;
   return e;
 }
 
 void
-delete_emitter_list( emitter_t **e ) {
-  emitter_t * next;
-
-  if( e==NULL ) return;
-  while( *e!=NULL ) {
-    next = (*e)->next;
-    FREE_ALIGNED( (*e)->component );
-    FREE( (*e) );
-    (*e) = next;
-  }
-}
-
-emitter_t *
-find_emitter_name( const char *name, emitter_t *e_list ) {
-  emitter_t *e;
-  if( name==NULL ) return NULL;
-  LIST_FIND_FIRST(e,e_list,strcmp(e->name,name)==0);
-  return e;
+delete_emitter_internal( emitter_t * e ) {
+  if( !e ) return;
+  UNREGISTER_OBJECT( e );
+  FREE_ALIGNED( e->component );
+  FREE( e );
 }
 

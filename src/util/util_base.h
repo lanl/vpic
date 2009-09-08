@@ -26,6 +26,11 @@
 #include <limits.h> // For integer limits
 #include <float.h>  // For floating point limits
 
+// Opaque handle of a  set of communicating processes
+
+struct collective;
+typedef struct collective collective_t;
+
 // These macros facilitate doing evil tricks
 
 #define BEGIN_PRIMITIVE do
@@ -198,8 +203,11 @@
 
 #define LIST_FOR_EACH(node,list)        \
   for((node)=(list); (node)!=NULL; (node)=(node)->next)
-#define LIST_FIND_FIRST(node,list,cond) \
-  for((node)=(list); (node)!=NULL; (node)=(node)->next) if(cond) break
+
+#define LIST_FIND_FIRST(node,list,cond) do {              \
+    for((node)=(list); (node)!=NULL; (node)=(node)->next) \
+      if(cond) break;                                     \
+  } while(0)
 
 // Given an integer data type "type", MASK_BIT_RANGE returns a bit
 // field of that type for which bits [f,l] inclusive are 1 and all
@@ -223,31 +231,32 @@
 //
 // Note: Error messages are abortive but MESSAGE and WARNING are not
 
-// FIXME: SHOULD PRINT THE WORLD RANK!
+#define _LOG_HDR __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)")"
 
-#define CHECKPOINT() BEGIN_PRIMITIVE {		           \
-  print_log( "%s(%i): Checkpoint\n", __FILE__, __LINE__ ); \
-} END_PRIMITIVE
+#define CHECKPOINT() log_printf( _LOG_HDR"[%i]: Checkpoint\n", world_rank )
 
-#define MESSAGE(args) BEGIN_PRIMITIVE {		\
-  print_log( "%s(%i): ", __FILE__, __LINE__ );	\
-  print_log args;			        \
-  print_log( "\n" );                            \
-} END_PRIMITIVE
+// FIXME: USE ONLY ONE LOG_PRINTF PER MESSAGE TO TRY AND MAKE THIS
+// ATOMIC WHEN MULTIPLE RANKS USE SIMULTANEOUSLY
 
-#define WARNING(args) BEGIN_PRIMITIVE {			     \
-  print_log( "Warning at %s(%i):\n\t", __FILE__, __LINE__ ); \
-  print_log args;                                            \
-  print_log( "\n" );                                         \
-} END_PRIMITIVE
+#define MESSAGE(args) do {                      \
+    log_printf( _LOG_HDR"[%i]: ", world_rank ); \
+    log_printf args;                            \
+    log_printf( "\n" );                         \
+  } while(0)
 
-#define ERROR(args) BEGIN_PRIMITIVE {			   \
-  print_log( "Error at %s(%i):\n\t", __FILE__, __LINE__ ); \
-  print_log args;					   \
-  print_log( "\n" );                                       \
-  nanodelay( 1000000000 );                                 \
-  exit(1);                                                 \
-} END_PRIMITIVE
+#define WARNING(args) do {                                      \
+    log_printf( "Warning at "_LOG_HDR"[%i]:\n\t", world_rank ); \
+    log_printf args;                                            \
+    log_printf( "\n" );                                         \
+  } while(0)
+
+#define ERROR(args) do {                                      \
+    log_printf( "Error at "_LOG_HDR"[%i]:\n\t", world_rank ); \
+    log_printf args;                                          \
+    log_printf( "\n" );                                       \
+    nanodelay( 1000000000 ); /* Let the message out */        \
+    exit(1);                                                  \
+  } while(0)
 
 #endif
 
@@ -260,6 +269,58 @@
 BEGIN_C_DECLS
 
 #ifndef __SPU__
+
+// These variables indicate the world communicator, the number of
+// processes in it and the rank of this process in it.
+// (The macros turn these into rvals that can't be modified
+// by users accidentically).
+
+#define world      ((collective_t *)_world)
+extern collective_t * _world;
+
+#define world_size ((int)_world_size)
+extern int _world_size;
+
+#define world_rank ((int)_world_rank)
+extern int _world_rank;
+
+// Strip all instances of key from the command line. Returns the
+// number of times key was found.
+
+int
+strip_cmdline( int * pargc,
+               char *** pargv,
+               const char * key );
+
+// Strip all instances of "key val" from the command line.  Returns
+// val as an int of the last complete "key val" pair (if the last
+// argument on the command line is "key", it too stripped but
+// otherwise ignored).  If there are no instances of "key val" on
+// the command line, returns default_val.
+
+int
+strip_cmdline_int( int * pargc,
+                   char *** pargv,
+                   const char * key,
+                   int default_val );
+
+// Same as strip_cmdline_int, but for doubles
+
+double
+strip_cmdline_double( int * pargc,
+                      char *** pargv,
+                      const char * key,
+                      double default_val );
+
+// Same as strip_cmdline_int, but for strings.  The lifetime of the
+// returned '\0'-terminated string is the shorter of the lifetime of
+// default_val or pargv.
+
+const char *
+strip_cmdline_string( int * pargc,
+                      char *** pargv,
+                      const char * key,
+                      const char * default_val );
 
 // In util.c
 
@@ -315,7 +376,7 @@ void
 util_free_aligned( void * mem_ref );
 
 void
-print_log( const char *fmt, ... );
+log_printf( const char *fmt, ... );
 
 // This function returns a value to prevent the compiler from
 // optimizing it away the function body.  The caller should not use it

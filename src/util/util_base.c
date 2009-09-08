@@ -11,7 +11,42 @@
 #include "util_base.h" // Declarations
 #include <stdio.h>     // For vfprintf
 #include <stdarg.h>    // For va_list, va_start, va_end
-#include <unistd.h>
+
+/****************************************************************************/
+
+#define STRIP_CMDLINE( what, T, convert )                         \
+T                                                                 \
+strip_cmdline_##what( int * pargc,                                \
+                      char *** pargv,                             \
+                      const char * key,                           \
+                      T val ) {                                   \
+  int i, n = 0;                                                   \
+  for( i=0; i<(*pargc); i++ )                                     \
+    if( strcmp( (*pargv)[i], key ) ) (*pargv)[n++] = (*pargv)[i]; \
+    else if( (++i)<(*pargc) ) val = convert( (*pargv)[i] );       \
+  (*pargv)[n] = NULL, (*pargc) = n; /* ANSI -argv is NULL terminated */ \
+  return val;                                                     \
+}
+
+int
+strip_cmdline( int * pargc,
+               char *** pargv,
+               const char * key ) {
+  int i, n = 0, val = 0;
+  for( i=0; i<(*pargc); i++ )
+    if( strcmp( (*pargv)[i], key ) ) (*pargv)[n++] = (*pargv)[i];
+    else val++;
+  (*pargv)[n] = NULL, (*pargc) = n; /* ANSI - argv is NULL terminated */
+  return val;
+}
+
+STRIP_CMDLINE( int,    int,          atoi )
+STRIP_CMDLINE( double, double,       atof )
+STRIP_CMDLINE( string, const char *,      )
+
+#undef STRIP_CMDLINE
+
+/****************************************************************************/
 
 void
 util_malloc( const char * err,
@@ -43,12 +78,6 @@ util_free( void * mem_ref ) {
   *(char **)mem_ref = NULL;
 }
 
-// FIXME TEMPORARY HACK
-// FIXME: This is a hack to make the current processor rank available to the
-// Error output messages during memory allocation.  This should never
-// appear in production code.
-int err_rank;
-
 void
 util_malloc_aligned( const char * err,
                      void * mem_ref, 
@@ -73,25 +102,7 @@ util_malloc_aligned( const char * err,
 
   // Allocate the raw unaligned memory ... abort if the allocation fails 
   mem_u = (char *)malloc( n + a + sizeof(char *) );
-  if( mem_u==NULL ) {
-
-// This is a temporary diagnostic for use in debugging Roadrunner memory
-// allocation errors.  This ensures that, in the case of memory allocation
-// failure, the code will hang without exiting, so that node state can be
-// determined.
-#define TEMPORARY_HACK 1
-#if TEMPORARY_HACK
-    char hostname[256];
-	gethostname(hostname, 256);
-	WARNING(("Memory allocation failed on rank %d (host %s)", err_rank,
-	  hostname));
-    while(1) {
-	  sleep(1);
-	} // while
-#endif
-
-    ERROR(( err, (unsigned long)n, (unsigned long)a ));
-  } // if
+  if( mem_u==NULL ) ERROR(( err, (unsigned long)n, (unsigned long)a ));
 
   // Compute the pointer to the aligned memory and save a pointer to the
   // raw unaligned memory for use on free_aligned 
@@ -115,7 +126,10 @@ util_free_aligned( void * mem_ref ) {
   *(char **)mem_ref = NULL;
 }
 
-void print_log( const char *fmt, ... ) {
+/*****************************************************************************/
+
+void
+log_printf( const char *fmt, ... ) {
   va_list ap;
   va_start( ap, fmt );
   vfprintf( stderr, fmt, ap );

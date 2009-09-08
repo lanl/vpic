@@ -123,8 +123,9 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
 }
 
 void
-sort_p( species_t * sp,
-        const grid_t * g ) {
+sort_p( species_t * sp ) {
+  
+  // FIXME: CHECK ARGS
 
   static char * ALIGNED(128) scratch = NULL;
   static size_t max_scratch = 0;
@@ -134,11 +135,11 @@ sort_p( species_t * sp,
   particle_t * RESTRICT ALIGNED(128) aux_p;
   int n_particle = sp->np;
 
-  int * RESTRICT ALIGNED(128) partition;
+  int * RESTRICT ALIGNED(128) partition = sp->partition;
   int * RESTRICT ALIGNED(128) next;
-  int vl      =  VOXEL(1,1,1,             g->nx,g->ny,g->nz);
-  int vh      =  VOXEL(g->nx,g->ny,g->nz, g->nx,g->ny,g->nz);
-  int n_voxel = (g->nx+2)*(g->ny+2)*(g->nz+2);
+  int vl = VOXEL(1,1,1,                         sp->g->nx,sp->g->ny,sp->g->nz);
+  int vh = VOXEL(sp->g->nx,sp->g->ny,sp->g->nz, sp->g->nx,sp->g->ny,sp->g->nz);
+  int n_voxel = (sp->g->nx+2)*(sp->g->ny+2)*(sp->g->nz+2);
 
   int * RESTRICT ALIGNED(128) coarse_partition;
   int n_pipeline = N_PIPELINE;
@@ -154,10 +155,6 @@ sort_p( species_t * sp,
   int i, pipeline_rank, subsort, count, sum;
 
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
-
-  // FIXME: TEMPORARY HACK UNTIL SPECIES_ADVANCE API INSTALLED
-  if( sp->partition==NULL ) MALLOC_ALIGNED( sp->partition, n_voxel+1, 128 );
-  partition = sp->partition;
 
   // Insure enough scratch space is allocated for the sorting
   // FIXME: NOTE THAT THE SPU PIPELINE DOESN'T ACTUALLY USE NEXT.
@@ -243,12 +240,11 @@ sort_p( species_t * sp,
 #if 0 // In-place, single threaded legacy version
 
 void
-sort_p( species_t * sp,
-        const grid_t * g ) {
+sort_p( species_t * sp ) {
   particle_t * ALIGNED(128) p = sp->p;
   //const int32_t * RESTRICT ALIGNED(128) sfc = g->sfc;
   const int np                = sp->np; 
-  const int nc                = (g->nx+2)*(g->ny+2)*(g->nz+2);
+  const int nc                = (sp->g->nx+2)*(sp->g->ny+2)*(sp->g->nz+2);
   const int nc1               = nc+1;
   int * RESTRICT ALIGNED(128) partition = sp->partition;
 
@@ -256,10 +252,6 @@ sort_p( species_t * sp,
   static int max_nc1 = 0;
 
   int i, j;
-
-  // FIXME: TEMPORARY HACK UNTIL SPECIES_ADVANCE API INSTALLED
-  if( sp->partition==NULL ) MALLOC_ALIGNED( sp->partition, nc1, 128 );
-  partition = sp->partition;
 
   if( np==0 ) return; // Do not need to sort
 

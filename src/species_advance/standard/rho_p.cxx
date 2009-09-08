@@ -19,10 +19,17 @@
 // is done this way.  All particles on the list must be inbounds.
 
 void
-accumulate_rho_p( field_t          * RESTRICT ALIGNED(16)  f,
-                  const particle_t * RESTRICT ALIGNED(128) p,
-                  int                                      n,
-                  const grid_t     * RESTRICT              g ) {
+accumulate_rho_p( /**/  field_array_t * RESTRICT fa,
+                  const species_t     * RESTRICT sp ) {
+  if( !fa || !sp || fa->g!=sp->g ) ERROR(( "Bad args" ));
+
+  /**/  field_t    * RESTRICT ALIGNED(128) f = fa->f;
+  const particle_t * RESTRICT ALIGNED(128) p = sp->p;
+
+  const float q_8V = sp->q*sp->g->r8V;
+  const int np = sp->np;
+  const int sy = sp->g->sy;
+  const int sz = sp->g->sz;
 
 # if 1
   float w0, w1, w2, w3, w4, w5, w6, w7, dz;
@@ -31,20 +38,11 @@ accumulate_rho_p( field_t          * RESTRICT ALIGNED(16)  f,
   v4float q, wl, wh, rl, rh;
 # endif
 
-  float r8V;
-  int i, v, sy, sz;
-
-  if( f==NULL ) ERROR(("Bad field"));
-  if( p==NULL ) ERROR(("Bad particle array"));
-  if( n<0     ) ERROR(("Bad number of particles"));
-  if( g==NULL ) ERROR(("Bad grid"));
+  int n, v;
 
   // Load the grid data
-  r8V = g->r8V;
-  sy  = g->sy;
-  sz  = g->sz;
 
-  for( i=0; i<n; i++ ) {
+  for( n=0; n<np; n++ ) {
 
 #   if 1
     // After detailed experiments and studying of assembly dumps, it was
@@ -55,11 +53,11 @@ accumulate_rho_p( field_t          * RESTRICT ALIGNED(16)  f,
  
     // Load the particle data
 
-    w0 = p[i].dx;
-    w1 = p[i].dy;
-    dz = p[i].dz;
-    v  = p[i].i;
-    w7 = p[i].q*r8V;
+    w0 = p[n].dx;
+    w1 = p[n].dy;
+    dz = p[n].dz;
+    v  = p[n].i;
+    w7 = p[n].w*q_8V;
 
     // Compute the trilinear weights
     // Though the PPE should have hardware fma/fmaf support, it was
@@ -88,7 +86,7 @@ accumulate_rho_p( field_t          * RESTRICT ALIGNED(16)  f,
 
     // Gather rhof for this voxel
 
-    v = p[i].i;
+    v = p[n].i;
     rl = v4float( f[v      ].rhof, f[v      +1].rhof,
                   f[v   +sy].rhof, f[v   +sy+1].rhof);
     rh = v4float( f[v+sz   ].rhof, f[v+sz   +1].rhof,
@@ -96,12 +94,12 @@ accumulate_rho_p( field_t          * RESTRICT ALIGNED(16)  f,
 
     // Compute the trilinear weights
 
-    load_4x1( &p[i].dx, wl );
+    load_4x1( &p[n].dx, wl );
     trilinear( wl, wh );
     
     // Reduce the particle charge to rhof and scatter the result
 
-    q = v4float( r8V*p[i].q );
+    q = v4float( p[n].w*q_8V );
     store_4x1_tr( fma(q,wl,rl), &f[v      ].rhof, &f[v      +1].rhof,
                                 &f[v   +sy].rhof, &f[v   +sy+1].rhof );
     store_4x1_tr( fma(q,wh,rh), &f[v+sz   ].rhof, &f[v+sz   +1].rhof,

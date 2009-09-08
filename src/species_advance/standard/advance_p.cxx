@@ -24,6 +24,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float cdt_dx         = args->cdt_dx;
   const float cdt_dy         = args->cdt_dy;
   const float cdt_dz         = args->cdt_dz;
+  const float qsp            = args->qsp;
   const float one            = 1.;
   const float one_third      = 1./3.;
   const float two_fifteenths = 2./15.;
@@ -83,7 +84,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     ux   = p->ux;                             // Load momentum
     uy   = p->uy;
     uz   = p->uz;
-    q    = p->q;
+    q    = p->w;
     ux  += hax;                               // Half advance E
     uy  += hay;
     uz  += haz;
@@ -121,6 +122,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     v4   = v1 + uy;
     v5   = v2 + uz;
 
+    // FIXME-KJB: COULD SHORT CIRCUIT ACCUMULATION IN THE CASE WHERE QSP==0!
     if(  v3<=one &&  v4<=one &&  v5<=one &&   // Check if inbnds
         -v3<=one && -v4<=one && -v5<=one ) {
 
@@ -128,6 +130,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
       // the total physical charge that passed through the appropriate
       // current quadrant in a time-step
 
+      q *= qsp;
       p->dx = v3;                             // Store new position
       p->dy = v4;
       p->dz = v5;
@@ -168,7 +171,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
       local_pm->dispy = uy;
       local_pm->dispz = uz;
       local_pm->i     = p - p0;
-      if( move_p( p0, local_pm, a0, g ) ) {     // Unlikely
+      if( move_p( p0, local_pm, a0, g, qsp ) ) { // Unlikely
         if( nm<max_nm ) pm[nm++] = local_pm[0];
         else            itmp++;                 // Unlikely
       }
@@ -215,10 +218,13 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   const v4float cdt_dx(args->cdt_dx);
   const v4float cdt_dy(args->cdt_dy);
   const v4float cdt_dz(args->cdt_dz);
+  const v4float qsp(args->qsp);
   const v4float one(1.);
   const v4float one_third(1./3.);
   const v4float two_fifteenths(2./15.);
   const v4float neg_one(-1.);
+
+  const float _qsp = args->qsp;
 
   v4float dx, dy, dz, ux, uy, uz, q;
   v4float hax, hay, haz, cbx, cby, cbz;
@@ -325,7 +331,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
-    q  = czero(outbnd,q);          // Do not accumulate outbnd particles
+    q  = czero(outbnd,q*qsp);       // Do not accumulate outbnd particles
     dx = v0;                       // Streak midpoint (valid for inbnd only)
     dy = v1;
     dz = v2;
@@ -370,7 +376,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
       local_pm->dispy = uy(N);                                          \
       local_pm->dispz = uz(N);                                          \
       local_pm->i     = (p - p0) + N;                                   \
-      if( move_p( p0, local_pm, a0, g ) ) { /* Unlikely */              \
+      if( move_p( p0, local_pm, a0, g, _qsp ) ) { /* Unlikely */        \
         if( nm<max_nm ) copy_4x1( &pm[nm++], local_pm );                \
         else            itmp++;             /* Unlikely */              \
       }                                                                 \
@@ -392,52 +398,42 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 }
 
 #endif
+          
+void
+advance_p( /**/  species_t            * RESTRICT sp,
+           /**/  accumulator_array_t  * RESTRICT aa,
+           const interpolator_array_t * RESTRICT ia ) {
+  DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
+  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
+  int rank;
 
-DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
-DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
+  if( !sp || !aa || !ia || sp->g!=aa->g || sp->g!=ia->g )
+    ERROR(( "Bad args" ));
 
-int
-advance_p( particle_t           * ALIGNED(128) p0,
-           const int                           np,
-           const float                         q_m,
-           particle_mover_t     * ALIGNED(128) pm,
-           int                                 max_nm,       
-           accumulator_t        * ALIGNED(128) a0,
-           const interpolator_t * ALIGNED(128) f0,
-           const grid_t         *              g ) {
-  int nm, rank;
-
-  if( p0==NULL ) ERROR(("Bad particle array"));
-  if( np<0     ) ERROR(("Bad number of particles"));
-  if( pm==NULL ) ERROR(("Bad particle mover"));
-  if( max_nm<0 ) ERROR(("Bad number of movers"));
-  if( a0==NULL ) ERROR(("Bad accumulator"));
-  if( f0==NULL ) ERROR(("Bad interpolator"));
-  if( g==NULL  ) ERROR(("Bad grid"));
-
-  args->p0       = p0;
-  args->pm       = pm;
-  args->a0       = a0;
-  args->f0       = f0;
+  args->p0       = sp->p;
+  args->pm       = sp->pm;
+  args->a0       = aa->a;
+  args->f0       = ia->i;
   args->seg      = seg;
-  args->g        = g;
+  args->g        = sp->g;
 
-  args->qdt_2mc  = 0.5*q_m*g->dt/g->cvac;
-  args->cdt_dx   = g->cvac*g->dt*g->rdx;
-  args->cdt_dy   = g->cvac*g->dt*g->rdy;
-  args->cdt_dz   = g->cvac*g->dt*g->rdz;
+  args->qdt_2mc  = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->cdt_dx   = sp->g->cvac*sp->g->dt*sp->g->rdx;
+  args->cdt_dy   = sp->g->cvac*sp->g->dt*sp->g->rdy;
+  args->cdt_dz   = sp->g->cvac*sp->g->dt*sp->g->rdz;
+  args->qsp      = sp->q;
 
-  args->np       = np;
-  args->max_nm   = max_nm;
-  args->nx       = g->nx;
-  args->ny       = g->ny;
-  args->nz       = g->nz;
+  args->np       = sp->np;
+  args->max_nm   = sp->max_nm;
+  args->nx       = sp->g->nx;
+  args->ny       = sp->g->ny;
+  args->nz       = sp->g->nz;
 
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
      defined(HAS_SPU_PIPELINE)
-  args->neighbor = g->neighbor;
-  args->rangel   = g->rangel;
-  args->rangeh   = g->rangeh;
+  args->neighbor = sp->g->neighbor;
+  args->rangel   = sp->g->rangel;
+  args->rangeh   = sp->g->rangeh;
 # endif
 
   // Have the host processor do the last incomplete bundle if necessary.
@@ -458,15 +454,13 @@ advance_p( particle_t           * ALIGNED(128) p0,
   // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE
   // MOVERS TO ELIMINATE HOLES FROM THE PIPELINING.
 
-  nm = 0;
+  sp->nm = 0;
   for( rank=0; rank<=N_PIPELINE; rank++ ) {
     if( args->seg[rank].n_ignored )
       WARNING(( "Pipeline %i ran out of storage for %i movers",
                 rank, args->seg[rank].n_ignored ));
-    if( pm+nm!=args->seg[rank].pm )
-      MOVE( pm+nm, args->seg[rank].pm, args->seg[rank].nm );
-    nm += args->seg[rank].nm;
+    if( sp->pm+sp->nm != args->seg[rank].pm )
+      MOVE( sp->pm+sp->nm, args->seg[rank].pm, args->seg[rank].nm );
+    sp->nm += args->seg[rank].nm;
   }
-  
-  return nm;
 }

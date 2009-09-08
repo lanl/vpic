@@ -152,25 +152,19 @@ center_p_pipeline_v4( center_p_pipeline_args_t * args,
 #endif
 
 void
-center_p( particle_t           * ALIGNED(128) p0,
-          const int                           np,
-          const float                         q_m,
-          const interpolator_t * ALIGNED(128) f0,
-          const grid_t         *              g ) {
+center_p( /**/  species_t            * RESTRICT sp,
+          const interpolator_array_t * RESTRICT ia ) {
   DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
-  // FIXME: p0 NULL checking
-  if( np<0     ) ERROR(("Bad number of particles"));
-  if( f0==NULL ) ERROR(("Bad interpolator"));
-  if( g==NULL  ) ERROR(("Bad grid"));
+  if( sp==NULL || ia==NULL || sp->g!=ia->g ) ERROR(( "Bad args" ));
 
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.
 
-  args->p0      = p0;
-  args->f0      = f0;
-  args->qdt_2mc = 0.5*q_m*g->dt/g->cvac;
-  args->np      = np;
+  args->p0      = sp->p;
+  args->f0      = ia->i;
+  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->np      = sp->np;
 
   EXEC_PIPELINES( center_p, args, 0 );
   WAIT_PIPELINES();

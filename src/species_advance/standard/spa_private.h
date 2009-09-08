@@ -48,6 +48,7 @@ typedef struct advance_p_pipeline_args {
   float                                cdt_dx;   // x-space/time coupling
   float                                cdt_dy;   // y-space/time coupling
   float                                cdt_dz;   // z-space/time coupling
+  float                                qsp;      // Species particle charge
 
   int                                  np;       // Number of particles
   int                                  max_nm;   // Number of movers
@@ -56,9 +57,9 @@ typedef struct advance_p_pipeline_args {
   int                                  nz;       // z-mesh resolution
  
 # if FOR_SPU
-  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 4*sizeof(float) + 5*sizeof(int) + 2*sizeof(int64_t))
+  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) + 2*sizeof(int64_t))
 # else
-  PAD_STRUCT( 6*SIZEOF_MEM_PTR + 4*sizeof(float) + 5*sizeof(int) )
+  PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
 # endif
 
 } advance_p_pipeline_args_t;
@@ -87,13 +88,14 @@ PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
 
 typedef struct energy_p_pipeline_args {
 
-  MEM_PTR( const particle_t,     128 ) p0;      // Particle array
-  MEM_PTR( const interpolator_t, 128 ) f0;      // Interpolator array
+  MEM_PTR( const particle_t,     128 ) p;       // Particle array
+  MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
   MEM_PTR( double,               128 ) en;      // Return values
   float                                qdt_2mc; // Particle/field coupling
+  float                                msp;     // Species particle rest mass
   int                                  np;      // Number of particles
 
-  PAD_STRUCT( 3*SIZEOF_MEM_PTR + sizeof(float) + sizeof(int) )
+  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + sizeof(int) )
 
 } energy_p_pipeline_args_t;
 

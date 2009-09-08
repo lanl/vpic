@@ -27,9 +27,9 @@ int
 move_p( particle_t       * RESTRICT ALIGNED(128) p,
         particle_mover_t * RESTRICT ALIGNED(16)  pm,
         accumulator_t    * RESTRICT ALIGNED(128) a,
-        const grid_t     *                       g ) {
+        const grid_t     *                       g,
+        const float                              qsp ) {
 
-  /*const*/ v4float one_third( 1.f / 3.f );
   /*const*/ v4float one( 1.f );
   /*const*/ v4float tiny( 1e-37f );
   /*const*/ v4int   sign_bits( 1<<31 );
@@ -38,11 +38,6 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   v4float sgn_dr, s, sdr;
   v4float v0, v1, v2, v3, v4, v5, _stack_vf;
   v4int bits, _stack_vi;
-
-# if 0 //defined(V4_ALTIVEC_ACCELERATION)
-  v4float _stack_vg;
-  float * RESTRICT ALIGNED(16) stack_vg = (float *)&_stack_vg;
-# endif
 
   float * RESTRICT ALIGNED(16) stack_vf = (float *)&_stack_vf;
   int   * RESTRICT ALIGNED(16) stack_vi =   (int *)&_stack_vi;
@@ -55,10 +50,10 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   load_4x1( &p[n].dx,   r  );  voxel = p[n].i;
   load_4x1( &p[n].ux,   u  );
 
-  q  = splat( u, 3 );          // q  = p_q,   p_q,   p_q,   D/C
-  q3 = one_third*q;            // q3 = p_q/3, p_q/3, p_q/3, D/C
-  dr = shuffle( dr, 0,1,2,2 ); // dr = p_ddx, p_ddy, p_ddz, D/C 
-  r  = shuffle( r,  0,1,2,2 ); // r  = p_dx,  p_dy,  p_dz,  D/C
+  q  = v4float(qsp)*splat(u,3); // q  = p_q,   p_q,   p_q,   D/C
+  q3 = v4float(1.f/3.f)*q;      // q3 = p_q/3, p_q/3, p_q/3, D/C
+  dr = shuffle( dr, 0,1,2,2 );  // dr = p_ddx, p_ddy, p_ddz, D/C 
+  r  = shuffle( r,  0,1,2,2 );  // r  = p_dx,  p_dy,  p_dz,  D/C
   
   for(;;) {
 
@@ -84,20 +79,12 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // Likewise, due to speed of light limitations, generally dr
     // cannot get much larger than 1 or so and the numerator, if not
     // zero, can generally never be smaller than FLT_EPS/2.  Thus,
-    // likewise, the divide will never underflow either. */
+    // likewise, the divide will never underflow either. 
 
     // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER 
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-#   if 0 //defined(V4_ALTIVEC_ACCELERATION ) 
-    store_4x1( sgn_dr - r, stack_vf );
-    store_4x1( (dr+dr)+v0, stack_vg );
-    stack_vf[0] /= stack_vg[0];
-    stack_vf[1] /= stack_vg[1];
-    stack_vf[2] /= stack_vg[2];
-#   else // FIXME: The below division doesn't seem to work right on Altivec
-    store_4x1( (sgn_dr - r) / ( (dr+dr)+v0 ), stack_vf );
-#   endif
+    store_4x1( (sgn_dr-r) / ((dr+dr)+v0), stack_vf );
     /**/                          type = 3;             f0 = 1;
     f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
@@ -208,7 +195,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
       return 1; // Mover still in use
     }
 
-    // Crossed into a normal voxel.  Update the voxel indexm convert the
+    // Crossed into a normal voxel.  Update the voxel index, convert the
     // particle coordinate system and keep moving the particle.
       
     voxel = (int32_t)( neighbor - g->rangel );
@@ -224,15 +211,18 @@ int
 move_p( particle_t       * ALIGNED(128) p0,
         particle_mover_t * ALIGNED(16)  pm,
         accumulator_t    * ALIGNED(128) a0,
-        const grid_t     *              g ) {
+        const grid_t     *              g,
+        const float                     qsp ) {
   float s_midx, s_midy, s_midz;
   float s_dispx, s_dispy, s_dispz;
   float s_dir[3];
-  float v0, v1, v2, v3, v4, v5;
+  float v0, v1, v2, v3, v4, v5, q;
   int axis, face;
   int64_t neighbor;
   float *a;
   particle_t * ALIGNED(32) p = p0 + pm->i;
+
+  q = qsp*p->w;
 
   for(;;) {
     s_midx = p->dx;
@@ -276,10 +266,10 @@ move_p( particle_t       * ALIGNED(128) p0,
     // Accumulate the streak.  Note: accumulator values are 4 times
     // the total physical charge that passed through the appropriate
     // current quadrant in a time-step
-    v5 = p->q*s_dispx*s_dispy*s_dispz*(1./3.);
+    v5 = q*s_dispx*s_dispy*s_dispz*(1./3.);
     a = (float *)(a0 + p->i);
 #   define accumulate_j(X,Y,Z)                                        \
-    v4  = p->q*s_disp##X; /* v2 = q ux                            */  \
+    v4  = q*s_disp##X;    /* v2 = q ux                            */  \
     v1  = v4*s_mid##Y;    /* v1 = q ux dy                         */  \
     v0  = v4-v1;          /* v0 = q ux (1-dy)                     */  \
     v1 += v4;             /* v1 = q ux (1+dy)                     */  \

@@ -1,4 +1,6 @@
-// FIXME: V4 ACCELERATE THIS!  COULD BE BASED OFF ENERGY_P.
+// FIXME: THREAD THIS! HYDRO MEM SEMANTICS WILL NEED UPDATING.
+// FIXME: V4 ACCELERATE THIS.  COULD BE BASED OFF ENERGY_P.
+// FIXME: SPE ACCELERATE THIS.
 
 /* 
  * Written by:
@@ -21,62 +23,63 @@
 // hydro jx,jy,jz are for diagnostic purposes only; they are not
 // accumulated with a charge conserving algorithm.
 
-#define h(x,y,z) h0[ VOXEL(x,y,z, g->nx,g->ny,g->nz) ]
-
 void
-accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
-                    const particle_t     * ALIGNED(128) p0,
-                    int                                 n,
-                    float                               q_m,
-                    const interpolator_t * ALIGNED(128) f0,
-                    const grid_t         *              g ) {
-  float dx, dy, dz; int ii;
-  float ux, uy, uz, q;
-  float vx, vy, vz, ke_mc;
-  float w0, w1, w2, w3, w4, w5, w6, w7;
-  float qdt_2mc, qdt_4mc2, c, r8V, mc_q;
-  const particle_t     * ALIGNED(32) p;
-  const interpolator_t * ALIGNED(16) f;
-  hydro_t              * ALIGNED(16) h;
-  int stride_10, stride_21, stride_43;
+accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
+                    const species_t            * RESTRICT sp,
+                    const interpolator_array_t * RESTRICT ia ) {
+  /**/  hydro_t        * RESTRICT ALIGNED(128) h;
+  const particle_t     * RESTRICT ALIGNED(128) p;
+  const interpolator_t * RESTRICT ALIGNED(128) f;
+  float c, qsp, mspc, qdt_2mc, qdt_4mc2, r8V;
+  int np, stride_10, stride_21, stride_43;
 
-  if( h0==NULL ) ERROR(("Bad hydro"));
-  if( p0==NULL ) ERROR(("Bad particle array"));
-  if( n<0      ) ERROR(("Bad number of particles"));
-  if( f0==NULL ) ERROR(("Bad field"));
-  if( g==NULL  ) ERROR(("Bad grid"));
-  
-  qdt_2mc  = 0.5*q_m*g->dt/g->cvac;
-  qdt_4mc2 = 0.25*q_m*g->dt/(g->cvac*g->cvac);
-  c = g->cvac;
-  r8V = 0.125*g->rdx*g->rdy*g->rdz;
-  mc_q = g->cvac/q_m;
+  float dx, dy, dz, ux, uy, uz, w, vx, vy, vz, ke_mc;
+  float w0, w1, w2, w3, w4, w5, w6, w7, t;
+  int i, n;
 
-  stride_10 = &h(1,0,0) - &h(0,0,0);
-  stride_21 = &h(0,1,0) - &h(1,0,0);
-  stride_43 = &h(0,0,1) - &h(1,1,0);
+  if( ha==NULL || sp==NULL || ia==NULL || ha->g!=sp->g || ha->g!=ia->g )
+    ERROR(( "Bad args" ));
 
-  for( p=p0; n; n--, p++ ) {
+  h = ha->h;
+  p = sp->p;
+  f = ia->i;
+
+  c        = sp->g->cvac;
+  qsp      = sp->q;
+  mspc     = sp->m*c;
+  qdt_2mc  = (qsp*sp->g->dt)/(2*mspc);
+  qdt_4mc2 = qdt_2mc / (2*c);
+  r8V      = sp->g->r8V;
+
+  np        = sp->np;
+  stride_10 = VOXEL(1,0,0, sp->g->nx,sp->g->ny,sp->g->nz) -
+              VOXEL(0,0,0, sp->g->nx,sp->g->ny,sp->g->nz);
+  stride_21 = VOXEL(0,1,0, sp->g->nx,sp->g->ny,sp->g->nz) -
+              VOXEL(1,0,0, sp->g->nx,sp->g->ny,sp->g->nz);
+  stride_43 = VOXEL(0,0,1, sp->g->nx,sp->g->ny,sp->g->nz) -
+              VOXEL(1,1,0, sp->g->nx,sp->g->ny,sp->g->nz);
+
+  for( n=0; n<np; n++ ) {
+
     // Load the particle
-    dx = p->dx;
-    dy = p->dy;
-    dz = p->dz;
-    ii = p->i;
-    ux = p->ux;
-    uy = p->uy;
-    uz = p->uz;
-    q  = p->q;
+    dx = p[n].dx;
+    dy = p[n].dy;
+    dz = p[n].dz;
+    i  = p[n].i;
+    ux = p[n].ux;
+    uy = p[n].uy;
+    uz = p[n].uz;
+    w  = p[n].w;
     
     // Half advance E
-    f  = f0 + ii;
-    ux += qdt_2mc*((f->ex+dy*f->dexdy) + dz*(f->dexdz+dy*f->d2exdydz));
-    uy += qdt_2mc*((f->ey+dz*f->deydz) + dx*(f->deydx+dz*f->d2eydzdx));
-    uz += qdt_2mc*((f->ez+dx*f->dezdx) + dy*(f->dezdy+dx*f->d2ezdxdy));
+    ux += qdt_2mc*((f[i].ex+dy*f[i].dexdy) + dz*(f[i].dexdz+dy*f[i].d2exdydz));
+    uy += qdt_2mc*((f[i].ey+dz*f[i].deydz) + dx*(f[i].deydx+dz*f[i].d2eydzdx));
+    uz += qdt_2mc*((f[i].ez+dx*f[i].dezdx) + dy*(f[i].dezdy+dx*f[i].d2ezdxdy));
 
     // Boris rotation - Interpolate B field
-    w5 = f->cbx + dx*f->dcbxdx;
-    w6 = f->cby + dy*f->dcbydy;
-    w7 = f->cbz + dz*f->dcbzdz;
+    w5 = f[i].cbx + dx*f[i].dcbxdx;
+    w6 = f[i].cby + dy*f[i].dcbydy;
+    w7 = f[i].cbz + dz*f[i].dcbzdz;
 
     // Boris rotation - curl scalars (0.5 in v0 for half rotate) and
     // kinetic energy computation. Note: gamma-1 = |u|^2 / (gamma+1)
@@ -107,56 +110,57 @@ accumulate_hydro_p( hydro_t              * ALIGNED(16)  h0,
     vz *= uz;
 
     // Compute the trilinear coefficients
-    w0  = r8V*q;    // w0 = q/(8V) = w/8
-    dx *= w0;       // dx = wx
-    w1  = w0+dx;    // w1 = w/8 + wx/8 = (w/8)(1+x)
-    w0 -= dx;       // w0 = w/8 - wx/8 = (w/8)(1-x)
+    w0  = r8V*w;    // w0 = (1/8)(w/V)
+    dx *= w0;       // dx = (1/8)(w/V) x
+    w1  = w0+dx;    // w1 = (1/8)(w/V) + (1/8)(w/V)x = (1/8)(w/V)(1+x)
+    w0 -= dx;       // w0 = (1/8)(w/V) - (1/8)(w/V)x = (1/8)(w/V)(1-x)
     w3  = 1+dy;     // w3 = 1+y
-    w2  = w0*w3;    // w2 = (w/8)(1-x)(1+y)
-    w3 *= w1;       // w3 = (w/8)(1+x)(1+y)
+    w2  = w0*w3;    // w2 = (1/8)(w/V)(1-x)(1+y)
+    w3 *= w1;       // w3 = (1/8)(w/V)(1+x)(1+y)
     dy  = 1-dy;     // dy = 1-y
-    w0 *= dy;       // w0 = (w/8)(1-x)(1-y)
-    w1 *= dy;       // w1 = (w/8)(1+x)(1-y)
+    w0 *= dy;       // w0 = (1/8)(w/V)(1-x)(1-y)
+    w1 *= dy;       // w1 = (1/8)(w/V)(1+x)(1-y)
     w7  = 1+dz;     // w7 = 1+z
-    w4  = w0*w7;    // w4 = (w/8)(1-x)(1-y)(1+z) *Done
-    w5  = w1*w7;    // w5 = (w/8)(1+x)(1-y)(1+z) *Done
-    w6  = w2*w7;    // w6 = (w/8)(1-x)(1+y)(1+z) *Done
-    w7 *= w3;       // w7 = (w/8)(1+x)(1+y)(1+z) *Done
+    w4  = w0*w7;    // w4 = (1/8)(w/V)(1-x)(1-y)(1+z) = (w/V) trilin_0 *Done
+    w5  = w1*w7;    // w5 = (1/8)(w/V)(1+x)(1-y)(1+z) = (w/V) trilin_1 *Done
+    w6  = w2*w7;    // w6 = (1/8)(w/V)(1-x)(1+y)(1+z) = (w/V) trilin_2 *Done
+    w7 *= w3;       // w7 = (1/8)(w/V)(1+x)(1+y)(1+z) = (w/V) trilin_3 *Done
     dz  = 1-dz;     // dz = 1-z
-    w0 *= dz;       // w0 = (w/8)(1-x)(1-y)(1-z) *Done
-    w1 *= dz;       // w1 = (w/8)(1+x)(1-y)(1-z) *Done
-    w2 *= dz;       // w2 = (w/8)(1-x)(1+y)(1-z) *Done
-    w3 *= dz;       // w3 = (w/8)(1+x)(1+y)(1-z) *Done
+    w0 *= dz;       // w0 = (1/8)(w/V)(1-x)(1-y)(1-z) = (w/V) trilin_4 *Done
+    w1 *= dz;       // w1 = (1/8)(w/V)(1+x)(1-y)(1-z) = (w/V) trilin_5 *Done
+    w2 *= dz;       // w2 = (1/8)(w/V)(1-x)(1+y)(1-z) = (w/V) trilin_6 *Done
+    w3 *= dz;       // w3 = (1/8)(w/V)(1+x)(1+y)(1-z) = (w/V) trilin_7 *Done
 
     // Accumulate the hydro fields
-#   define ACCUM_HYDRO(wn)           \
-    h->jx  += wn*vx;                 \
-    h->jy  += wn*vy;                 \
-    h->jz  += wn*vz;                 \
-    h->rho += wn;    /* wn = q/V */  \
-    wn *= mc_q;      /* wn = mc/V */ \
-    dx = wn*ux;      /* dx = px/V */ \
-    dy = wn*uy;                      \
-    dz = wn*uz;                      \
-    h->px  += dx;                    \
-    h->py  += dy;                    \
-    h->pz  += dz;                    \
-    h->ke  += wn*ke_mc;              \
-    h->txx += dx*vx;                 \
-    h->tyy += dy*vy;                 \
-    h->tzz += dz*vz;                 \
-    h->tyz += dy*vz;                 \
-    h->tzx += dz*vx;                 \
-    h->txy += dx*vy
+#   define ACCUM_HYDRO( wn)                             \
+    t  = qsp*wn;        /* t  = (qsp w/V) trilin_n */   \
+    h[i].jx  += t*vx;                                   \
+    h[i].jy  += t*vy;                                   \
+    h[i].jz  += t*vz;                                   \
+    h[i].rho += t;                                      \
+    t  = mspc*wn;       /* t = (msp c w/V) trilin_n */  \
+    dx = t*ux;          /* dx = (px w/V) trilin_n */    \
+    dy = t*uy;                                          \
+    dz = t*uz;                                          \
+    h[i].px  += dx;                                     \
+    h[i].py  += dy;                                     \
+    h[i].pz  += dz;                                     \
+    h[i].ke  += t*ke_mc;                                \
+    h[i].txx += dx*vx;                                  \
+    h[i].tyy += dy*vy;                                  \
+    h[i].tzz += dz*vz;                                  \
+    h[i].tyz += dy*vz;                                  \
+    h[i].tzx += dz*vx;                                  \
+    h[i].txy += dx*vy
 
-    h = h0 + ii;    ACCUM_HYDRO(w0); // Cell i,j,k
-    h += stride_10; ACCUM_HYDRO(w1); // Cell i+1,j,k
-    h += stride_21; ACCUM_HYDRO(w2); // Cell i,j+1,k
-    h += stride_10; ACCUM_HYDRO(w3); // Cell i+1,j+1,k
-    h += stride_43; ACCUM_HYDRO(w4); // Cell i,j,k+1
-    h += stride_10; ACCUM_HYDRO(w5); // Cell i+1,j,k+1
-    h += stride_21; ACCUM_HYDRO(w6); // Cell i,j+1,k+1
-    h += stride_10; ACCUM_HYDRO(w7); // Cell i+1,j+1,k+1
+    /**/            ACCUM_HYDRO(w0); // Cell i,j,k
+    i += stride_10; ACCUM_HYDRO(w1); // Cell i+1,j,k
+    i += stride_21; ACCUM_HYDRO(w2); // Cell i,j+1,k
+    i += stride_10; ACCUM_HYDRO(w3); // Cell i+1,j+1,k
+    i += stride_43; ACCUM_HYDRO(w4); // Cell i,j,k+1
+    i += stride_10; ACCUM_HYDRO(w5); // Cell i+1,j,k+1
+    i += stride_21; ACCUM_HYDRO(w6); // Cell i,j+1,k+1
+    i += stride_10; ACCUM_HYDRO(w7); // Cell i+1,j+1,k+1
 
 #   undef ACCUM_HYDRO
   }

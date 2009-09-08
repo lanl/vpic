@@ -117,19 +117,14 @@ typedef struct pipeline_dispatcher {
 
   int n_pipeline;
 
-  // boot creates the number of pipelines requested.  Generally, this
-  // is number of cores on a node if using symmetric multiprocessing
-  // or the number of pipeline processors if using heterogeneous
-  // multiprocessing.  Dispatch to host is used to indicate whether
-  // or not the host (e.g. the thread which call this) should be
-  // used to process pipeline threads.  On some dispatchers, this
-  // flag is meaningless (e.g. in the serial dispatcher, all pipelines
-  // are executed on the host) or invalid to set (e.g. in the SPU
-  // dispatcher ... pipelines physically cannot be executed on the
-  // host).
+  // boot creates the number of pipelines requested (in the command
+  // line args).  Generally, this is number of cores on a node if
+  // using symmetric multiprocessing or the number of pipeline
+  // processors if using heterogeneous multiprocessing.
 
-  void (*boot)( int n_pipeline,
-                int dispatch_to_host );
+  void
+  (*boot)( int * pargc,
+           char *** pargv );
 
   // halt destroys all the resources used by the dispatcher created
   // in boot.

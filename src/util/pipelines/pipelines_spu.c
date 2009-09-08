@@ -67,6 +67,25 @@ static volatile int Done[ MAX_PIPELINE ];
 static int Id = 0;
 static int Busy = 0;
 
+/****************************************************************************/
+
+#include "../checkpt/checkpt.h"
+
+void
+checkpt_spu( const pipeline_dispatcher_t * _spu ) {
+  CHECKPT_VAL( int, spu.n_pipeline );
+}
+
+pipeline_dispatcher_t *
+restore_spu( void ) {
+  int n_pipeline;
+  RESTORE_VAL( int, n_pipeline );
+  if( spu.n_pipeline!=n_pipeline )
+    ERROR(( "--spp changed between checkpt (%i) and restore (%i)",
+            n_pipeline, spu.n_pipeline ));
+  return &spu;
+}
+
 /****************************************************************************
  *
  * SPU pipeline dispatcher notes:
@@ -125,30 +144,26 @@ static int Busy = 0;
  ***************************************************************************/
 
 static void 
-spu_boot( int num_pipe,
-          int dispatch_to_host ) {
-  size_t i;
+spu_boot( int * pargc,
+          char *** pargv ) {
+  int i, n_pipeline;
 
   // Check if arguments are valid and dispatcher isn't already initialized
 
   if( spu.n_pipeline != 0 ) ERROR(( "Halt the spu dispatcher first!" ));
-  if( num_pipe < 1 || num_pipe > MAX_PIPELINE )
-    ERROR(( "Invalid number of pipelines requested" ));
-  if( dispatch_to_host )
-    ERROR(( "SPU pipelines cannot be dispatched to the host" ));
+
+  n_pipeline = strip_cmdline_int( pargc, pargv, "--spp", 8 );
+  if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
+    ERROR(( "Invalid number of SPU pipelines requested (%i)", n_pipeline ));
 
   // Initialize some global variables. Note: spu.n_pipeline = 0 here
 
   Host = pthread_self();
   Id = 0;
 
-#if VERBOSE
-  MESSAGE(("In spu_boot with num_pipe = %d", num_pipe));
-#endif
-
   // Initialize all the pipelines
 
-  for( i=0; i<num_pipe; i++ ) {
+  for( i=0; i<n_pipeline; i++ ) {
 
 	// Create SPE context
     if( ( SPU_Control_State[i].context=spe_context_create( 0, NULL ) )==NULL )
@@ -168,8 +183,9 @@ spu_boot( int num_pipe,
     // Nothing to do. After pthread returns we're done.
   }
 
-  spu.n_pipeline = num_pipe;
+  spu.n_pipeline = n_pipeline;
   Busy = 0;
+  REGISTER_OBJECT( &spu, checkpt_spu, restore_spu, NULL );
 }
 
 /****************************************************************************
@@ -207,6 +223,8 @@ spu_halt( void ) {
   if( !spu.n_pipeline ) ERROR(( "Boot the spu dispatcher first!" ));
   if( !pthread_equal( Host, pthread_self() ) )
     ERROR(( "Only the host may halt the spu dispatcher!" ));
+
+  UNREGISTER_OBJECT( &spu );
 
   // Terminate the spu control threads
 

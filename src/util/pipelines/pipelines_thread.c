@@ -69,6 +69,25 @@ static int Id = 0;
 static int Busy = 0;
 static int Dispatch_To_Host = 0;
 
+/****************************************************************************/
+
+#include "../checkpt/checkpt.h"
+
+void
+checkpt_thread( const pipeline_dispatcher_t * _thread ) {
+  CHECKPT_VAL( int, thread.n_pipeline );
+}
+
+pipeline_dispatcher_t *
+restore_thread( void ) {
+  int n_pipeline;
+  RESTORE_VAL( int, n_pipeline );
+  if( thread.n_pipeline!=n_pipeline )
+    ERROR(( "--tpp changed between checkpt (%i) and restore (%i)",
+            n_pipeline, thread.n_pipeline ));
+  return &thread;
+}
+
 /****************************************************************************
  *
  * Thread dispatcher notes:
@@ -144,23 +163,25 @@ static int Dispatch_To_Host = 0;
  ***************************************************************************/
 
 static void
-thread_boot( int n_pipeline,
-             int dispatch_to_host ) {
-  int i;
+thread_boot( int * pargc,
+             char *** pargv ) {
+  int i, n_pipeline;
 
   // Check if arguments are valid and dispatcher isn't already initialized
 
   if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
 
+  n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
+  Dispatch_To_Host = strip_cmdline_int( pargc, pargv, "--dispatch_to_host", 1 );
+
   if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
-    ERROR(( "Invalid number of pipelines requested" ));
+    ERROR(( "Invalid number of pipelines requested (%i)", n_pipeline ));
 
   // Initialize some global variables. Note: thread.n_pipeline = 0 here 
 
-  Id               = 0;
-  Busy             = 0;
-  Dispatch_To_Host = ( dispatch_to_host ? 1 : 0 );
-  Host             = pthread_self();
+  Id   = 0;
+  Busy = 0;
+  Host = pthread_self();
 
   // Initialize all the pipelines
 
@@ -201,6 +222,7 @@ thread_boot( int n_pipeline,
   }
 
   thread.n_pipeline = n_pipeline;
+  REGISTER_OBJECT( &thread, checkpt_thread, restore_thread, NULL );
 }
 
 /****************************************************************************
@@ -246,6 +268,8 @@ thread_halt( void ) {
     ERROR(( "Only the host may halt the thread dispatcher!" ));
 
   if( Busy ) ERROR(( "Pipelines are busy!" ));
+
+  UNREGISTER_OBJECT( &thread );
 
   // Terminate the threads
 

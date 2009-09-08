@@ -2,13 +2,35 @@
 
 static int Busy = 0;
 
+/*****************************************************************************/
+
+#include "../checkpt/checkpt.h"
+
+void
+checkpt_serial( const pipeline_dispatcher_t * _serial ) {
+  CHECKPT_VAL( int, serial.n_pipeline );
+}
+
+pipeline_dispatcher_t *
+restore_serial( void ) {
+  int n_pipeline;
+  RESTORE_VAL( int, n_pipeline );
+  if( serial.n_pipeline!=n_pipeline )
+    ERROR(( "--serial.n_pipeline changed between checkpt (%i) and "
+            "restore (%i)", serial.n_pipeline, n_pipeline ));
+  return &serial;
+}
+
+/*****************************************************************************/
+
 static void
-serial_boot( int n_pipeline,
-             int dispatch_to_host ) {
+serial_boot( int * pargc,
+             char *** pargv ) {
   if( serial.n_pipeline!=0 ) ERROR(( "Serial dispatcher already booted!" ));
-  if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
-    ERROR(( "Invalid number of pipelines requested" ));
-  serial.n_pipeline = n_pipeline;
+  serial.n_pipeline = strip_cmdline_int(pargc,pargv,"--serial.n_pipeline",1);
+  if( serial.n_pipeline<1 || serial.n_pipeline>MAX_PIPELINE )
+    ERROR(( "Invalid number of pipelines requested (%i)", serial.n_pipeline ));
+  REGISTER_OBJECT( &serial, checkpt_serial, restore_serial, NULL );
   Busy = 0;
 }
 
@@ -37,6 +59,7 @@ static void
 serial_halt( void ) {
   if( serial.n_pipeline==0 ) ERROR(( "Boot serial dispatcher first!" ));
   if( Busy ) ERROR(( "Pipelines are busy!" ));
+  UNREGISTER_OBJECT( &serial );
   serial.n_pipeline = 0;
 }
 

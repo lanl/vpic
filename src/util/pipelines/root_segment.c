@@ -9,8 +9,6 @@
 #include <spu_mfcio.h>
 #include "../pipelines/pipelines.h"
 
-// FIXME: THIS MODULE ALMOST CERTAINLY SHOULD BE MERGED WITH UTIL/PIPELINES
-
 ////////////////////////////////////////////////////////////////////////////////
 // Main SPU program
 //

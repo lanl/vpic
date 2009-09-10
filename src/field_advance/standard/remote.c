@@ -296,15 +296,16 @@ end_remote_ghost_div_b( field_t      * ALIGNED(128) field,
  *****************************************************************************/
 
 double
-synchronize_tang_e_norm_b( field_t      * ALIGNED(128) field,
-                           const grid_t *              g ) {
-  int size, face, x, y, z, nx, ny, nz;
-  float *p;
+synchronize_tang_e_norm_b( field_array_t * RESTRICT fa ) {
+  field_t * field, * f;
+  grid_t * RESTRICT g;
+  float * p;
   double w1, w2, err = 0, gerr;
-  field_t *f;
+  int size, face, x, y, z, nx, ny, nz;
 
-  if( field==NULL ) ERROR(("Bad field"));
-  if( g==NULL     ) ERROR(("Bad grid"));
+  if( !fa ) ERROR(( "Bad args" ));
+  field = fa->f;
+  g     = fa->g;
 
   local_adjust_tang_e( field, g );
   local_adjust_norm_b( field, g );
@@ -409,19 +410,20 @@ synchronize_tang_e_norm_b( field_t      * ALIGNED(128) field,
 # undef END_RECV
 # undef END_SEND
 
-  mp_allsum_d( &err, &gerr, 1, g->mp );
+  mp_allsum_d( &err, &gerr, 1 );
   return gerr;
 }
 
 void
-synchronize_jf( field_t      * ALIGNED(128) field,
-                const grid_t *              g ) {
+synchronize_jf( field_array_t * RESTRICT fa ) {
+  field_t * field, * f;
+  grid_t * RESTRICT g;
   int size, face, x, y, z, nx, ny, nz;
   float *p, lw, rw;
-  field_t *f;
 
-  if( field==NULL ) ERROR(("Bad field"));
-  if( g==NULL     ) ERROR(("Bad grid"));
+  if( fa==NULL ) ERROR(( "Bad args" ));
+  field = fa->f;
+  g     = fa->g;
 
   local_adjust_jf( field, g );
 
@@ -530,14 +532,15 @@ synchronize_jf( field_t      * ALIGNED(128) field,
 // form.
 
 void
-synchronize_rho( field_t      * ALIGNED(128) field,
-                 const grid_t *              g ) {
+synchronize_rho( field_array_t * RESTRICT fa ) {
+  field_t * field, * f;
+  grid_t * RESTRICT g;
   int size, face, x, y, z, nx, ny, nz;
   float *p, hlw, hrw, lw, rw;
-  field_t *f;
 
-  if( field==NULL ) ERROR(("Bad field"));
-  if( g==NULL     ) ERROR(("Bad grid"));
+  if( !fa ) ERROR(( "Bad args" ));
+  field = fa->f;
+  g     = fa->g;
 
   local_adjust_rhof( field, g );
   local_adjust_rhob( field, g );

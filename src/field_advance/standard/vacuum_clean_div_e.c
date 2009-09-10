@@ -17,9 +17,9 @@ typedef struct pipeline_args {
   const float _rdy = (ny>1) ? g->rdy : 0;                                \
   const float _rdz = (nz>1) ? g->rdz : 0;                                \
   const float alphadt = 0.3888889/( _rdx*_rdx + _rdy*_rdy + _rdz*_rdz ); \
-  const float px   = alphadt*_rdx;                                       \
-  const float py   = alphadt*_rdy;                                       \
-  const float pz   = alphadt*_rdz;                                       \
+  const float px   = (alphadt*_rdx)*m->drivex;                           \
+  const float py   = (alphadt*_rdy)*m->drivey;                           \
+  const float pz   = (alphadt*_rdz)*m->drivez;                           \
                                                                          \
   field_t * ALIGNED(16) f0;                                              \
   field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;          \
@@ -41,17 +41,14 @@ typedef struct pipeline_args {
     INIT_STENCIL();                   \
   }
 
-#define MARDER_EX() \
-    f0->ex += m[f0->ematx].drivex*px*(fx->div_e_err-f0->div_e_err)
-#define MARDER_EY() \
-    f0->ey += m[f0->ematy].drivey*py*(fy->div_e_err-f0->div_e_err)
-#define MARDER_EZ() \
-    f0->ez += m[f0->ematz].drivez*pz*(fz->div_e_err-f0->div_e_err)
+#define MARDER_EX() f0->ex += px*(fx->div_e_err-f0->div_e_err)
+#define MARDER_EY() f0->ey += py*(fy->div_e_err-f0->div_e_err)
+#define MARDER_EZ() f0->ez += pz*(fz->div_e_err-f0->div_e_err)
 
 static void
-clean_div_e_pipeline( pipeline_args_t * args,
-                      int pipeline_rank,
-                      int n_pipeline ) {
+vacuum_clean_div_e_pipeline( pipeline_args_t * args,
+                             int pipeline_rank,
+                             int n_pipeline ) {
   DECLARE_STENCIL();
   
   int n_voxel;
@@ -78,7 +75,7 @@ clean_div_e_pipeline( pipeline_args_t * args,
 #endif
 
 void
-clean_div_e( field_array_t * fa ) {
+vacuum_clean_div_e( field_array_t * fa ) {
   if( !fa ) ERROR(( "Bad args" ));
 
   // Do majority of field components in single pass on the pipelines.
@@ -88,65 +85,63 @@ clean_div_e( field_array_t * fa ) {
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;
-  EXEC_PIPELINES( clean_div_e, args, 0 );
+  EXEC_PIPELINES( vacuum_clean_div_e, args, 0 );
 
   // While pipelines are busy, do left overs on the host
 
-  do {
-    DECLARE_STENCIL();
-    
-    // Do left over ex
-    for( y=1; y<=ny+1; y++ ) {
-      f0 = &f(1,y,nz+1);
-      fx = &f(2,y,nz+1);
-      for( x=1; x<=nx; x++ ) {
-        MARDER_EX();
-        f0++; fx++;
-      }
-    }
-    for( z=1; z<=nz; z++ ) {
-      f0 = &f(1,ny+1,z);
-      fx = &f(2,ny+1,z);
-      for( x=1; x<=nx; x++ ) {
-        MARDER_EX();
-        f0++; fx++;
-      }
-    }
+  DECLARE_STENCIL();
   
-    // Do left over ey
-    for( z=1; z<=nz+1; z++ ) {
-      for( y=1; y<=ny; y++ ) {
-        f0 = &f(nx+1,y,  z);
-        fy = &f(nx+1,y+1,z);
-        MARDER_EY();
-      }
+  // Do left over ex
+  for( y=1; y<=ny+1; y++ ) {
+    f0 = &f(1,y,nz+1);
+    fx = &f(2,y,nz+1);
+    for( x=1; x<=nx; x++ ) {
+      MARDER_EX();
+      f0++; fx++;
     }
+  }
+  for( z=1; z<=nz; z++ ) {
+    f0 = &f(1,ny+1,z);
+    fx = &f(2,ny+1,z);
+    for( x=1; x<=nx; x++ ) {
+      MARDER_EX();
+      f0++; fx++;
+    }
+  }
+
+  // Do left over ey
+  for( z=1; z<=nz+1; z++ ) {
     for( y=1; y<=ny; y++ ) {
-      f0 = &f(1,y,  nz+1);
-      fy = &f(1,y+1,nz+1);
-      for( x=1; x<=nx; x++ ) {
-        MARDER_EY();
-        f0++; fy++;
-      }
+      f0 = &f(nx+1,y,  z);
+      fy = &f(nx+1,y+1,z);
+      MARDER_EY();
     }
-  
-    // Do left over ez
-    for( z=1; z<=nz; z++ ) {
-      f0 = &f(1,ny+1,z);
-      fz = &f(1,ny+1,z+1);
-      for( x=1; x<=nx+1; x++ ) {
-        MARDER_EZ();
-        f0++; fz++;
-      }
+  }
+  for( y=1; y<=ny; y++ ) {
+    f0 = &f(1,y,  nz+1);
+    fy = &f(1,y+1,nz+1);
+    for( x=1; x<=nx; x++ ) {
+      MARDER_EY();
+      f0++; fy++;
     }
-    for( z=1; z<=nz; z++ ) {
-      for( y=1; y<=ny; y++ ) {
-        f0 = &f(nx+1,y,z);
-        fz = &f(nx+1,y,z+1);
-        MARDER_EZ();
-      }
+  }
+
+  // Do left over ez
+  for( z=1; z<=nz; z++ ) {
+    f0 = &f(1,ny+1,z);
+    fz = &f(1,ny+1,z+1);
+    for( x=1; x<=nx+1; x++ ) {
+      MARDER_EZ();
+      f0++; fz++;
     }
-  } while(0);
+  }
+  for( z=1; z<=nz; z++ ) {
+    for( y=1; y<=ny; y++ ) {
+      f0 = &f(nx+1,y,z);
+      fz = &f(nx+1,y,z+1);
+      MARDER_EZ();
+    }
+  }
 
   WAIT_PIPELINES();
 

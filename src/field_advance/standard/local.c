@@ -50,7 +50,7 @@
 void
 local_ghost_tang_b( field_t      * ALIGNED(128) f,
                     const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   const float cdt_dx = g->cvac*g->dt*g->rdx;
   const float cdt_dy = g->cvac*g->dt*g->rdy;
   const float cdt_dz = g->cvac*g->dt*g->rdz;
@@ -67,7 +67,7 @@ local_ghost_tang_b( field_t      * ALIGNED(128) f,
 # define APPLY_LOCAL_TANG_B(i,j,k,X,Y,Z)                                 \
   do {                                                                   \
     bc = g->bc[BOUNDARY(i,j,k)];                                         \
-    if( bc<0 || bc>nproc) {                                              \
+    if( bc<0 || bc>=world_size ) {                                       \
       ghost = (i+j+k)<0 ? 0 : n##X+1;                                    \
       face  = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                       \
@@ -128,14 +128,14 @@ local_ghost_tang_b( field_t      * ALIGNED(128) f,
 void
 local_ghost_norm_e( field_t      * ALIGNED(128) f,
                     const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
   field_t * ALIGNED(16) f0, * ALIGNED(16) f1, * ALIGNED(16) f2;
 
 # define APPLY_LOCAL_NORM_E(i,j,k,X,Y,Z)                        \
   do {                                                          \
     bc = g->bc[BOUNDARY(i,j,k)];                                \
-    if( bc<0 || bc>nproc) {                                     \
+    if( bc<0 || bc>=world_size ) {                              \
       face = (i+j+k)<0 ? 0 : n##X+1;                            \
       switch(bc) {                                              \
       case anti_symmetric_fields:                               \
@@ -181,13 +181,13 @@ local_ghost_norm_e( field_t      * ALIGNED(128) f,
 void
 local_ghost_div_b( field_t      * ALIGNED(128) f,
                    const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define APPLY_LOCAL_DIV_B(i,j,k,X,Y,Z)					    \
   do {									    \
     bc = g->bc[BOUNDARY(i,j,k)];					    \
-    if( bc<0 || bc>nproc) {						    \
+    if( bc<0 || bc>=world_size ) {                                          \
       face = (i+j+k)<0 ? 0 : n##X+1;					    \
       switch(bc) {							    \
       case anti_symmetric_fields:					    \
@@ -224,14 +224,14 @@ local_ghost_div_b( field_t      * ALIGNED(128) f,
 void
 local_adjust_tang_e( field_t      * ALIGNED(128) f,
                      const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
   field_t *fs;
 
 # define ADJUST_TANG_E(i,j,k,X,Y,Z)                                     \
   do {                                                                  \
     bc = g->bc[BOUNDARY(i,j,k)];                                        \
-    if( bc<0 || bc>nproc) {                                             \
+    if( bc<0 || bc>=world_size ) {                                      \
       face = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                      \
       case anti_symmetric_fields:                                       \
@@ -266,13 +266,13 @@ local_adjust_tang_e( field_t      * ALIGNED(128) f,
 void
 local_adjust_norm_b( field_t      * ALIGNED(128) f,
                      const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define ADJUST_NORM_B(i,j,k,X,Y,Z)                                     \
   do {                                                                  \
     bc = g->bc[BOUNDARY(i,j,k)];                                        \
-    if( bc<0 || bc>nproc) {                                             \
+    if( bc<0 || bc>=world_size ) {                                      \
       face = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                      \
       case anti_symmetric_fields: case pmc_fields: case absorb_fields:  \
@@ -298,13 +298,13 @@ local_adjust_norm_b( field_t      * ALIGNED(128) f,
 void
 local_adjust_div_e( field_t      * ALIGNED(128) f,
                     const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define ADJUST_DIV_E_ERR(i,j,k,X,Y,Z)			         \
   do {							         \
     bc = g->bc[BOUNDARY(i,j,k)];				 \
-    if( bc<0 || bc>nproc) {					 \
+    if( bc<0 || bc>=world_size ) {				 \
       face = (i+j+k)<0 ? 1 : n##X+1;				 \
       switch(bc) {						 \
       case anti_symmetric_fields: case absorb_fields:		 \
@@ -335,13 +335,13 @@ local_adjust_div_e( field_t      * ALIGNED(128) f,
 void
 local_adjust_jf( field_t      * ALIGNED(128) f,
                  const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define ADJUST_JF(i,j,k,X,Y,Z)                                         \
   do {                                                                  \
     bc = g->bc[BOUNDARY(i,j,k)];                                        \
-    if( bc<0 || bc>nproc) {                                             \
+    if( bc<0 || bc>=world_size ) {                                      \
       face = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                      \
       case anti_symmetric_fields:                                       \
@@ -376,13 +376,13 @@ local_adjust_jf( field_t      * ALIGNED(128) f,
 void
 local_adjust_rhof( field_t      * ALIGNED(128) f,
                    const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define ADJUST_RHOF(i,j,k,X,Y,Z)                                       \
   do {                                                                  \
     bc = g->bc[BOUNDARY(i,j,k)];                                        \
-    if( bc<0 || bc>nproc) {                                             \
+    if( bc<0 || bc>=world_size ) {                                      \
       face = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                      \
       case anti_symmetric_fields:                                       \
@@ -414,13 +414,13 @@ local_adjust_rhof( field_t      * ALIGNED(128) f,
 void
 local_adjust_rhob( field_t      * ALIGNED(128) f,
                    const grid_t *              g ) {
-  const int nx = g->nx, ny = g->ny, nz = g->nz, nproc = mp_nproc(g->mp);
+  const int nx = g->nx, ny = g->ny, nz = g->nz;
   int bc, face, x, y, z;
 
 # define ADJUST_RHOB(i,j,k,X,Y,Z)                                       \
   do {                                                                  \
     bc = g->bc[BOUNDARY(i,j,k)];                                        \
-    if( bc<0 || bc>nproc) {                                             \
+    if( bc<0 || bc>=world_size ) {                                      \
       face = (i+j+k)<0 ? 1 : n##X+1;                                    \
       switch(bc) {                                                      \
       case anti_symmetric_fields:                                       \

@@ -4,8 +4,8 @@
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 typedef struct pipeline_args {
-  field_t      * ALIGNED(128) f;
-  const grid_t *              g;
+  const field_t * ALIGNED(128) f;
+  const grid_t  *              g;
   double err[MAX_PIPELINE+1];
 } pipeline_args_t;
 
@@ -13,10 +13,10 @@ static void
 compute_rms_div_b_err_pipeline( pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  field_t      * ALIGNED(128) f = args->f;
-  const grid_t *              g = args->g;
+  const field_t * ALIGNED(128) f = args->f;
+  const grid_t  *              g = args->g;
                              
-  field_t * ALIGNED(16) f0;
+  const field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -50,15 +50,13 @@ compute_rms_div_b_err_pipeline( pipeline_args_t * args,
 }
 
 double
-compute_rms_div_b_err( field_t      * ALIGNED(128) f,
-                       const grid_t *              g ) {
+compute_rms_div_b_err( const field_array_t * fa ) {
   pipeline_args_t args[1];
   int p;
   
   double err = 0, local[2], global[2];
 
-  if( f==NULL ) ERROR(("Bad field"));
-  if( g==NULL ) ERROR(("Bad grid"));
+  if( !fa ) ERROR(( "Bad args"));
 
 # if 0 // Original non-pipelined version
   field_t * ALIGNED(16) f0;
@@ -79,8 +77,8 @@ compute_rms_div_b_err( field_t      * ALIGNED(128) f,
   }
 # endif
 
-  args->f = f;
-  args->g = g;
+  args->f = fa->f;
+  args->g = fa->g;
 
   EXEC_PIPELINES( compute_rms_div_b_err, args, 0 );
   WAIT_PIPELINES();
@@ -88,8 +86,8 @@ compute_rms_div_b_err( field_t      * ALIGNED(128) f,
   err = 0;
   for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
 
-  local[0] = err*g->dx*g->dy*g->dz;
-  local[1] = g->nx*g->ny*g->nz*g->dx*g->dy*g->dz;
-  mp_allsum_d( local, global, 2, g->mp );
-  return g->eps0*sqrt(global[0]/global[1]);
+  local[0] = err*fa->g->dV;
+  local[1] = (fa->g->nx*fa->g->ny*fa->g->nz)*fa->g->dV;
+  mp_allsum_d( local, global, 2 );
+  return fa->g->eps0*sqrt(global[0]/global[1]);
 }

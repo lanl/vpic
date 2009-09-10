@@ -4,8 +4,8 @@
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 typedef struct pipeline_args {
-  field_t      * ALIGNED(128) f;
-  const grid_t *              g;
+  const field_t * ALIGNED(128) f;
+  const grid_t  *              g;
   double err[MAX_PIPELINE+1];
 } pipeline_args_t;
 
@@ -13,10 +13,10 @@ static void
 compute_rms_div_e_err_pipeline( pipeline_args_t * args,
                                 int pipeline_rank,
                                 int n_pipeline ) {
-  field_t      * ALIGNED(128) f = args->f;
-  const grid_t *              g = args->g;
+  const field_t * ALIGNED(128) f = args->f;
+  const grid_t  *              g = args->g;
   
-  field_t * ALIGNED(16) f0;
+  const field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
   const int nx = g->nx;
@@ -50,19 +50,16 @@ compute_rms_div_e_err_pipeline( pipeline_args_t * args,
 }
 
 double
-compute_rms_div_e_err( field_t      * ALIGNED(128) f,
-                       const grid_t *              g ) {
+compute_rms_div_e_err( const field_array_t * RESTRICT fa ) {
   pipeline_args_t args[1];
-  int p;
+  const field_t * f, * f0;
+  const grid_t * RESTRICT g;
+  double err = 0, local[2], global[2];
+  int x, y, z, nx, ny, nz, p;
 
-  double err, local[2], global[2];
-  int x, y, z, nx, ny, nz;
-  field_t * ALIGNED(16) f0;
-
-  if( f==NULL ) ERROR(("Bad field"));
-  if( g==NULL ) ERROR(("Bad grid"));
-
-  err = 0;
+  if( !fa ) ERROR(( "Bad args" ));
+  f = fa->f;
+  g = fa->g; 
 
 #if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
@@ -153,8 +150,8 @@ compute_rms_div_e_err( field_t      * ALIGNED(128) f,
 
   // Reduce the results from all nodes
 
-  local[0] = err*g->dx*g->dy*g->dz;
-  local[1] = g->nx*g->ny*g->nz*g->dx*g->dy*g->dz;
-  mp_allsum_d( local, global, 2, g->mp );
+  local[0] = err*g->dV;
+  local[1] = (g->nx*g->ny*g->nz)*g->dV;
+  mp_allsum_d( local, global, 2 );
   return g->eps0*sqrt(global[0]/global[1]);
 }

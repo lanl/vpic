@@ -1,4 +1,4 @@
-// FIXME: USE THE DISCRETIZED VARIATIONAL PRINCIPLE DEFINITION OF ENERGY
+// FIXME: USE THE DISCRETIZED VARIATIONAL DEFINITION OF ENERGY
 
 #define IN_sfa
 #include "sfa_private.h"
@@ -15,6 +15,13 @@ typedef struct pipeline_args {
   const material_coefficient_t * ALIGNED(128) m = args->p->mc;             \
   const grid_t                 *              g = args->g;                 \
   const int nx = g->nx, ny = g->ny, nz = g->nz;                            \
+                                                                           \
+  const float qepsx = 0.25*m->epsx;                                        \
+  const float qepsy = 0.25*m->epsy;                                        \
+  const float qepsz = 0.25*m->epsz;                                        \
+  const float hrmux = 0.25*m->rmux;                                        \
+  const float hrmuy = 0.25*m->rmuy;                                        \
+  const float hrmuz = 0.25*m->rmuz;                                        \
                                                                            \
   const field_t * ALIGNED(16) f0;                                          \
   const field_t * ALIGNED(16) fx,  * ALIGNED(16) fy,  * ALIGNED(16) fz;    \
@@ -41,30 +48,30 @@ typedef struct pipeline_args {
     INIT_STENCIL();                                 \
   }
 
-#define REDUCE_EN()                                       \
-  en_ex += 0.25*( m[ f0->ematx].epsx* f0->ex * f0->ex +   \
-                  m[ fy->ematx].epsx* fy->ex * fy->ex +   \
-                  m[ fz->ematx].epsx* fz->ex * fz->ex +   \
-                  m[fyz->ematx].epsx*fyz->ex *fyz->ex );  \
-  en_ey += 0.25*( m[ f0->ematy].epsy* f0->ey * f0->ey +   \
-                  m[ fz->ematy].epsy* fz->ey * fz->ey +   \
-                  m[ fx->ematy].epsy* fx->ey * fx->ey +   \
-                  m[fzx->ematy].epsy*fzx->ey *fzx->ey );  \
-  en_ez += 0.25*( m[ f0->ematz].epsz* f0->ez * f0->ez +   \
-                  m[ fx->ematz].epsz* fx->ez * fx->ez +   \
-                  m[ fy->ematz].epsz* fy->ez * fy->ez +   \
-                  m[fxy->ematz].epsz*fxy->ez *fxy->ez );  \
-  en_bx += 0.5 *( m[ f0->fmatx].rmux* f0->cbx* f0->cbx +  \
-                  m[ fx->fmatx].rmux* fx->cbx* fx->cbx ); \
-  en_by += 0.5 *( m[ f0->fmaty].rmuy* f0->cby* f0->cby +  \
-                  m[ fy->fmaty].rmuy* fy->cby* fy->cby ); \
-  en_bz += 0.5 *( m[ f0->fmatz].rmuz* f0->cbz* f0->cbz +  \
-                  m[ fz->fmatz].rmuz* fz->cbz* fz->cbz )
+#define REDUCE_EN()                     \
+  en_ex += qepsx*(  f0->ex * f0->ex +   \
+                    fy->ex * fy->ex +   \
+                    fz->ex * fz->ex +   \
+                   fyz->ex *fyz->ex );  \
+  en_ey += qepsy*(  f0->ey * f0->ey +   \
+                    fz->ey * fz->ey +   \
+                    fx->ey * fx->ey +   \
+                   fzx->ey *fzx->ey );  \
+  en_ez += qepsz*(  f0->ez * f0->ez +   \
+                    fx->ez * fx->ez +   \
+                    fy->ez * fy->ez +   \
+                   fxy->ez *fxy->ez );  \
+  en_bx += hrmux*(  f0->cbx* f0->cbx +  \
+                    fx->cbx* fx->cbx ); \
+  en_by += hrmuy*(  f0->cby* f0->cby +  \
+                    fy->cby* fy->cby ); \
+  en_bz += hrmuz*(  f0->cbz* f0->cbz +  \
+                    fz->cbz* fz->cbz )
  
 void
-energy_f_pipeline( pipeline_args_t * args,
-                   int pipeline_rank,
-                   int n_pipeline ) {
+vacuum_energy_f_pipeline( pipeline_args_t * args,
+                          int pipeline_rank,
+                          int n_pipeline ) {
   DECLARE_STENCIL();
   
   int n_voxel;
@@ -98,8 +105,8 @@ energy_f_pipeline( pipeline_args_t * args,
 #endif
 
 void
-energy_f( double              *          global,
-          const field_array_t * RESTRICT fa ) {
+vacuum_energy_f( double              *          global,
+                 const field_array_t * RESTRICT fa ) {
   if( !global || !fa ) ERROR(( "Bad args" ));
 
   // Have each pipeline and the host handle a portion of the
@@ -109,7 +116,7 @@ energy_f( double              *          global,
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;
-  EXEC_PIPELINES( energy_f, args, 0 );
+  EXEC_PIPELINES( vacuum_energy_f, args, 0 );
   WAIT_PIPELINES();
 
   // Reduce results from each pipelines

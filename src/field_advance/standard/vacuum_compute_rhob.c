@@ -1,4 +1,4 @@
-// Note: This is virtually identical to compute_rhob
+// Note: This is virtually identical to vacuum_compute_div_e_err
 #define IN_sfa
 #include "sfa_private.h"
 
@@ -14,10 +14,10 @@ typedef struct pipeline_args {
   const grid_t                 *              g = args->g;      \
   const int nx = g->nx, ny = g->ny, nz = g->nz;                 \
                                                                 \
-  const float px = (nx>1) ? g->rdx : 0;                         \
-  const float py = (ny>1) ? g->rdy : 0;                         \
-  const float pz = (nz>1) ? g->rdz : 0;                         \
-  const float cj = 1./g->eps0;                                  \
+  const float nc = m->nonconductive;                            \
+  const float px = (nx>1) ? g->eps0*m->epsx*g->rdx : 0;         \
+  const float py = (ny>1) ? g->eps0*m->epsy*g->rdy : 0;         \
+  const float pz = (nz>1) ? g->eps0*m->epsz*g->rdz : 0;         \
                                                                 \
   field_t * ALIGNED(16) f0;                                     \
   field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz; \
@@ -39,16 +39,14 @@ typedef struct pipeline_args {
     INIT_STENCIL();                   \
   }
 
-#define UPDATE_DERR_E() f0->div_e_err = m[f0->nmat].nonconductive * \
-  ( px*( m[f0->ematx].epsx*f0->ex - m[fx->ematx].epsx*fx->ex ) +    \
-    py*( m[f0->ematy].epsy*f0->ey - m[fy->ematy].epsy*fy->ey ) +    \
-    pz*( m[f0->ematz].epsz*f0->ez - m[fz->ematz].epsz*fz->ez ) -    \
-    cj*( f0->rhof + f0->rhob ) )
+#define UPDATE_DERR_E() f0->rhob = nc*( px*( f0->ex - fx->ex ) + \
+                                        py*( f0->ey - fy->ey ) + \
+                                        pz*( f0->ez - fz->ez ) - f0->rhof )
 
 void
-compute_div_e_err_pipeline( pipeline_args_t * args,
-                            int pipeline_rank,
-                            int n_pipeline ) {
+vacuum_compute_rhob_pipeline( pipeline_args_t * args,
+                              int pipeline_rank,
+                              int n_pipeline ) {
   DECLARE_STENCIL();
 
   int n_voxel;
@@ -75,7 +73,7 @@ compute_div_e_err_pipeline( pipeline_args_t * args,
 #endif
 
 void
-compute_div_e_err( field_array_t * RESTRICT fa ) {
+vacuum_compute_rhob( field_array_t * RESTRICT fa ) {
   if( !fa ) ERROR(( "Bad args" ));
 
   // Have pipelines compute the interior of local domain (the host
@@ -92,7 +90,7 @@ compute_div_e_err( field_array_t * RESTRICT fa ) {
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;
-  EXEC_PIPELINES( compute_div_e_err, args, 0 );
+  EXEC_PIPELINES( vacuum_compute_rhob, args, 0 );
 
   // While pipelines are busy, have host compute the exterior
   // of the local domain
@@ -178,5 +176,5 @@ compute_div_e_err( field_array_t * RESTRICT fa ) {
 
   WAIT_PIPELINES();
 
-  local_adjust_div_e( fa->f, fa->g );
+  local_adjust_rhob( fa->f, fa->g );
 }

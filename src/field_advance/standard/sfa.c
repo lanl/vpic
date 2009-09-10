@@ -1,18 +1,11 @@
 #define IN_sfa
 #include "sfa_private.h"
 
-field_advance_methods_t
-_standard_field_advance[1] = { {
+static field_advance_kernels_t sfa_kernels = {
 
-  // Field array construction / destruction
+  // Destructor
 
-  new_field,
-  delete_field,
-
-  // Materal coefficient construction / destruction
-
-  new_material_coefficients,
-  delete_material_coefficients,
+  delete_standard_field_array,
 
   // Time stepping interfaces
 
@@ -49,94 +42,72 @@ _standard_field_advance[1] = { {
   compute_rms_div_b_err,
   clean_div_b
 
-} };
+};
 
-/*****************************************************************************/
-
-field_t * ALIGNED(128)
-new_field( grid_t * g ) {
-  field_t * ALIGNED(128) f;
-
-  if( g==NULL ) ERROR(("Bad grid."));
-  if( g->nx<1 || g->ny<1 || g->nz<1 ) ERROR(("Bad resolution."));
-
-  MALLOC_ALIGNED( f, (g->nx+2)*(g->ny+2)*(g->nz+2), 128 );
-  CLEAR( f, (g->nx+2)*(g->ny+2)*(g->nz+2) );
-
-  return f;
-}
-
-void
-delete_field( field_t * ALIGNED(128) f ) {
-  FREE_ALIGNED(f);
-}
-
-/*****************************************************************************/
-
-static float minf( float a, float b ) {
+static float
+minf( float a, 
+      float b ) {
   return a<b ? a : b;
 }
 
-material_coefficient_t * ALIGNED(128)
-new_material_coefficients( grid_t * g,
-                           material_t * m_list ) {
+static sfa_params_t *
+create_sfa_params( grid_t           * g,
+                   const material_t * m_list,
+                   float              damp ) {
+  sfa_params_t * p;
   float ax, ay, az, cg2;
-  material_coefficient_t *mc, *material_coefficient;
+  material_coefficient_t *mc;
   const material_t *m;
-  int n_mat;
-
-  // Check the input parameters
-  if( g==NULL ) ERROR(("Invalid grid."));
-  if( m_list==NULL ) ERROR(("Empty material list."));
+  int n_mc;
 
   // Run sanity checks on the material list
+
   ax = g->nx>1 ? g->cvac*g->dt*g->rdx : 0; ax *= ax;
   ay = g->ny>1 ? g->cvac*g->dt*g->rdy : 0; ay *= ay;
   az = g->nz>1 ? g->cvac*g->dt*g->rdz : 0; az *= az;
-  n_mat = 0;
+  n_mc = 0;
   LIST_FOR_EACH(m,m_list) {
     if( m->sigmax/m->epsx<0 )
-      WARNING(("Material \"%s\" is an active medium along x", m->name));
+      WARNING(("\"%s\" is an active medium along x", m->name));
     if( m->epsy*m->muz<0 )
-      WARNING(("Material \"%s\" has an imaginary x speed of light (ey)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary x speed of light (ey)", m->name));
     if( m->epsz*m->muy<0 )
-      WARNING(("Material \"%s\" has an imaginary x speed of light (ez)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary x speed of light (ez)", m->name));
     if( m->sigmay/m->epsy<0 )
-      WARNING(("Material \"%s\" is an active medium along y", m->name));
+      WARNING(("\"%s\" is an active medium along y", m->name));
     if( m->epsz*m->mux<0 )
-      WARNING(("Material \"%s\" has an imaginary y speed of light (ez)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary y speed of light (ez)", m->name));
     if( m->epsx*m->muz<0 )
-      WARNING(("Material \"%s\" has an imaginary y speed of light (ex)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary y speed of light (ex)", m->name));
     if( m->sigmaz/m->epsz<0 )
-      WARNING(("Material \"%s\" is an an active medium along z", m->name));
+      WARNING(("\"%s\" is an an active medium along z", m->name));
     if( m->epsx*m->muy<0 )
-      WARNING(("Material \"%s\" has an imaginary z speed of light (ex)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary z speed of light (ex)", m->name));
     if( m->epsy*m->mux<0 )
-      WARNING(("Material \"%s\" has an imaginary z speed of light (ey)",
-               m->name));
+      WARNING(("\"%s\" has an imaginary z speed of light (ey)", m->name));
     cg2 = ax/minf(m->epsy*m->muz,m->epsz*m->muy) +
           ay/minf(m->epsz*m->mux,m->epsx*m->muz) +
           az/minf(m->epsx*m->muy,m->epsy*m->mux);
     if( cg2>=1 )
-      WARNING(( "Material \"%s\" Courant condition estimate = %e",
-                m->name, sqrt(cg2) ));
+      WARNING(( "\"%s\" Courant condition estimate = %e", m->name, sqrt(cg2) ));
     if( m->zetax!=0 || m->zetay!=0 || m->zetaz!=0 )
-      WARNING(( "Standard field advance does not support magnetic conductivity yet." ));
-
-    n_mat++;
+      WARNING(( "\"%s\" magnetic conductivity is not supported" ));
+    n_mc++;
   }
 
-  // Allocate the material coefficients
-  MALLOC_ALIGNED( material_coefficient, n_mat, 128 );
+  // Allocate the sfa parameters
+
+  MALLOC( p, 1 );
+  MALLOC_ALIGNED( p->mc, n_mc+2, 128 );
+  p->n_mc = n_mc;
+  p->damp = damp;
 
   // Fill up the material coefficient array
+  // FIXME: THIS IMPLICITLY ASSUMES MATERIALS ARE NUMBERED CONSECUTIVELY FROM
+  // O.
+
   LIST_FOR_EACH( m, m_list ) {
-    mc = material_coefficient + m->id;
+    mc = p->mc + m->id;
 
     // Advance E coefficients
     // Note: m ->sigma{x,y,z} = 0 -> Non conductive
@@ -173,12 +144,77 @@ new_material_coefficients( grid_t * g,
     mc->epsz = m->epsz;
   }
 
-  return material_coefficient;  
+  return p;
 }
 
 void
-delete_material_coefficients( material_coefficient_t * ALIGNED(128) mc ) {
-  FREE_ALIGNED(mc);
+destroy_sfa_params( sfa_params_t * p ) {
+  FREE_ALIGNED( p->mc );
+  FREE( p );
+}
+
+/*****************************************************************************/
+
+void
+checkpt_standard_field_array( const field_array_t * fa ) {
+  sfa_params_t * p = (sfa_params_t *)fa->params; 
+  CHECKPT( fa, 1 );
+  CHECKPT_ALIGNED( fa->f, fa->g->nv, 128 );
+  CHECKPT_PTR( fa->g );
+  CHECKPT( p, 1 );
+  CHECKPT_ALIGNED( p->mc, p->n_mc, 128 );
+  checkpt_field_advance_kernels( fa->kernel );
+}
+
+field_array_t *
+restore_standard_field_array( void ) {
+  field_array_t * fa; 
+  sfa_params_t * p;
+  RESTORE( fa );
+  RESTORE_ALIGNED( fa->f );
+  RESTORE_PTR( fa->g );
+  RESTORE( p );
+  RESTORE_ALIGNED( p->mc );
+  fa->params = p;
+  restore_field_advance_kernels( fa->kernel );
+  return fa;
+}
+
+field_array_t *
+new_standard_field_array( grid_t           * RESTRICT g,
+                          const material_t * RESTRICT m_list,
+                          float                       damp ) {
+  field_array_t * fa;
+  if( !g || !m_list || damp<0 ) ERROR(( "Bad args" ));
+  MALLOC( fa, 1 );
+  MALLOC_ALIGNED( fa->f, g->nv, 128 );
+  CLEAR( fa->f, g->nv );
+  fa->g = g;
+  fa->params = create_sfa_params( g, m_list, damp );
+  fa->kernel[0] = sfa_kernels;
+  if( !m_list->next ) {
+    /* If there is only one material, then this material permeates all
+       space and we can use high performance versions of some kernels. */
+    fa->kernel->advance_e         = vacuum_advance_e;
+    fa->kernel->energy_f          = vacuum_energy_f;
+    fa->kernel->compute_rhob      = vacuum_compute_rhob;
+    fa->kernel->compute_curl_b    = vacuum_compute_curl_b;
+    fa->kernel->compute_div_e_err = vacuum_compute_div_e_err;
+    fa->kernel->clean_div_e       = vacuum_clean_div_e;
+  }
+
+  REGISTER_OBJECT( fa, checkpt_standard_field_array,
+                       restore_standard_field_array, NULL );
+  return fa;
+}
+
+void
+delete_standard_field_array( field_array_t * fa ) {
+  if( !fa ) return;
+  UNREGISTER_OBJECT( fa );
+  destroy_sfa_params( (sfa_params_t *)fa->params );
+  FREE_ALIGNED( fa->f );
+  FREE( fa );
 }
 
 /*****************************************************************************/
@@ -186,51 +222,20 @@ delete_material_coefficients( material_coefficient_t * ALIGNED(128) mc ) {
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 void
-clear_jf( field_t      * ALIGNED(128) f,
-          const grid_t *              g ) {
-  int nx, ny, nz, x, y, z;
-  field_t *f0;
-
-  if( f==NULL ) ERROR(("Bad field")); 
-  if( g==NULL ) ERROR(("Bad grid"));
-
-  nx = g->nx;
-  ny = g->ny;
-  nz = g->nz;
-  for( z=0; z<=nz+1; z++ ) {
-    for( y=0; y<=ny+1; y++ ) {
-      f0 = &f(0,y,z);
-      for( x=0; x<=nx+1; x++ ) {
-	f0->jfx = 0;
-	f0->jfy = 0;
-	f0->jfz = 0;
-	f0++;
-      }
-    }
-  }
+clear_jf( field_array_t * RESTRICT fa ) {
+  if( !fa ) ERROR(( "Bad args" ));
+  field_t * RESTRICT ALIGNED(128) f = fa->f;
+  const int nv = fa->g->nv;
+  for( int v=0; v<nv; v++ ) f[v].jfx = 0, f[v].jfy = 0, f[v].jfz = 0;
 }
 
 void
-clear_rhof( field_t      * ALIGNED(128) f,
-            const grid_t *              g ) {
-  int nx, ny, nz, x, y, z;
-  field_t *f0;
-
-  if( f==NULL ) ERROR(("Bad field"));
-  if( g==NULL ) ERROR(("Bad grid"));
-
-  nx = g->nx;
-  ny = g->ny;
-  nz = g->nz;
-  for( z=0; z<=nz+1; z++ ) {
-    for( y=0; y<=ny+1; y++ ) {
-      f0 = &f(0,y,z);
-      for( x=0; x<=nx+1; x++ ) {
-	f0->rhof = 0;
-	f0++;
-      }
-    }
-  }
+clear_rhof( field_array_t * RESTRICT fa ) {
+  if( !fa ) ERROR(( "Bad args" )); 
+  field_t * RESTRICT ALIGNED(128) f = fa->f;
+  const int nv = fa->g->nv;
+  for( int v=0; v<nv; v++ ) f[v].rhof = 0;
 }
 
-// FIXME: clear_jf_and_rhof CALL? OR MERGE ABOVE (MORE EFFICIENT TOO).
+// FIXME: ADD clear_jf_and_rhof CALL AND/OR ELIMINATE SOME OF THE ABOVE
+// (MORE EFFICIENT TOO).

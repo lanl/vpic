@@ -1,53 +1,43 @@
 #ifndef _sfa_private_h_
 #define _sfa_private_h_
 
-#include "../field_advance.h"
-
 // Standard field advance implementation
 
 #ifndef IN_sfa
 #error "Do not include sfa_private.h; include field_advance.h"
 #endif
 
-// Define this opaque datatype
+#define IN_field_advance
+#include "../field_advance_private.h"
 
-struct material_coefficient {
+typedef struct material_coefficient {
   float decayx, drivex;         // Decay of ex and drive of (curl H)x and Jx
   float decayy, drivey;         // Decay of ey and drive of (curl H)y and Jy
   float decayz, drivez;         // Decay of ez and drive of (curl H)z and Jz
   float rmux, rmuy, rmuz;       // Reciprocle of relative permeability
   float nonconductive;          // Divergence cleaning related coefficients
   float epsx, epsy, epsz; 
-  float pad[3];                 // For alignment and future expansion
-};
+  float pad[3];                 // For 64-byte alignment and future expansion
+} material_coefficient_t;
 
-// FIXME: NULL POINTER CHECKS AND WHAT NOT ARE SILLY FOR SUCH AS THIS IS NOW
-// A STRICTLY INTERNAL INTERFACE.
+typedef struct sfa_params {
+  material_coefficient_t * mc;
+  int n_mc;
+  float damp;
+} sfa_params_t;
 
 BEGIN_C_DECLS
 
 // In standard_field_advance.c
 
-field_t * ALIGNED(128)
-new_field( grid_t * g );
+void
+delete_standard_field_array( field_array_t * RESTRICT fa );
 
 void
-delete_field( field_t * ALIGNED(128) f );
-
-material_coefficient_t * ALIGNED(128)
-new_material_coefficients( grid_t * g,
-                           material_t * m_list );
+clear_jf( field_array_t * RESTRICT fa );
 
 void
-delete_material_coefficients( material_coefficient_t * ALIGNED(128) mc );
-
-void
-clear_jf( field_t      * ALIGNED(128) f,
-          const grid_t *              g );
-
-void
-clear_rhof( field_t      * ALIGNED(128) f,
-            const grid_t *              g );
+clear_rhof( field_array_t * RESTRICT fa );
 
 // In advance_b.c
 
@@ -55,9 +45,8 @@ clear_rhof( field_t      * ALIGNED(128) f,
 //   c B_new = c B_old - frac c dt curl E
 
 void
-advance_b( field_t      * ALIGNED(128) f,
-           const grid_t *              g,
-           float                       frac );
+advance_b( field_array_t * RESTRICT fa,
+           float                    frac );
 
 // In advance_e.c
 
@@ -73,11 +62,18 @@ advance_b( field_t      * ALIGNED(128) f,
 //     sigma is the conductivity (J_c = sigma E)
 // Note: advance_e is structurally the same as compute_curl_b.
 // Updates to one likely should be replicated in the other.
+//
+// vacuum_advance_e is the high performance version for uniform regions
+//
+// FIXME: Currently, frac must be 1.
 
 void
-advance_e( field_t                      * ALIGNED(128) f,
-           const material_coefficient_t * ALIGNED(128) m,
-           const grid_t                 *              g );
+advance_e( field_array_t * RESTRICT fa,
+           float                    frac );
+
+void
+vacuum_advance_e( field_array_t * RESTRICT fa,
+                  float                    frac );
 
 // In energy_f.c
 
@@ -91,14 +87,16 @@ advance_e( field_t                      * ALIGNED(128) f,
 //   energy[5] = integral_volume 0.5 Hz Bz d^3 r ... Bz field energy
 // Thus, sum energy = 0.5 integral_volume ( D.E + H.B ) d^3 r
 // All nodes get the same result.
-
-// FIXME: Should this function perform the global reduce?
+//
+// vacuum_energy_f is the high performance version for uniform regions
 
 void
-energy_f( double                       *             energy, // 6 elem array
-          const field_t                * ALIGNED(128) f,
-          const material_coefficient_t * ALIGNED(128) m,
-          const grid_t                 *              g );
+energy_f( /**/  double        * RESTRICT en, // 6 elem array
+          const field_array_t * RESTRICT fa );
+
+void
+vacuum_energy_f( /**/  double        * RESTRICT en, // 6 elem array
+                 const field_array_t * RESTRICT fa );
 
 // In compute_curl_b.c
 
@@ -107,11 +105,14 @@ energy_f( double                       *             energy, // 6 elem array
 //   tca = c dt curl ( c B / mu_r )
 // Note: compute_curl_b is structurally the same as advance_e; updates
 // to one likely should be replicated in the other.
+//
+// vacuum_compute_curl_b is the high performance version for uniform regions
 
 void
-compute_curl_b( field_t                      * ALIGNED(128) f,
-                const material_coefficient_t * ALIGNED(128) m,
-                const grid_t                 *              g );
+compute_curl_b( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_curl_b( field_array_t * RESTRICT fa );
 
 // The theory behind the Marder correction is that the Ampere and
 // Faraday equations can be modified as follows:
@@ -232,11 +233,14 @@ compute_curl_b( field_t                      * ALIGNED(128) f,
 // Note: The structure of this routine is identical to
 // compute_div_e_err, so updates to one should likely be replicated in
 // the other.
+//
+// vacuum_compute_rhob is the high performance version for uniform regions
 
 void
-compute_rhob( field_t                      * ALIGNED(128) f,
-              const material_coefficient_t * ALIGNED(128) m,
-              const grid_t                 *              g ); 
+compute_rhob( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_rhob( field_array_t * RESTRICT fa );
 
 // In compute_div_e_err.c
 
@@ -244,11 +248,14 @@ compute_rhob( field_t                      * ALIGNED(128) f,
 //   div_e_err = nonconductive [ ( div eps_r E ) - ( rho_f + rho_b )/eps_0 ]
 // Note: The structure of this routine is identical to compute_rhob,
 // so updates to one should likely be replicated in the other.
+//
+// vacuum_compute_div_e_err is the high performance version for uniform regions
 
 void
-compute_div_e_err( field_t                      * ALIGNED(128) f,
-                   const material_coefficient_t * ALIGNED(128) m,
-                   const grid_t                 *              g );
+compute_div_e_err( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_div_e_err( field_array_t * RESTRICT fa );
 
 // In compute_rms_div_e_err.c
 
@@ -259,22 +266,22 @@ compute_div_e_err( field_t                      * ALIGNED(128) f,
 // domains.  Every processor gets the same value.  Note that this
 // function does _not_ update or recompute div_e_err.
 
-// FIXME: Should this function do the global reduce?
-
 double
-compute_rms_div_e_err( field_t      * ALIGNED(128) f,
-                       const grid_t *              g );
+compute_rms_div_e_err( const field_array_t * RESTRICT fa );
 
 // In clean_div_e.c
 
 // clean_div_e applies the following difference equation:
 //   E_new = E_old + drive alpha dt grad div_e_err
 // div_e_err is not updated or recomputed by this function.
+//
+// vacuum_clean_div_e is the high performance version for uniform regions
 
 void
-clean_div_e( field_t                      * ALIGNED(128) f,
-             const material_coefficient_t * ALIGNED(128) m,
-	     const grid_t                 *              g );
+clean_div_e( field_array_t * RESTRICT fa );
+
+void
+vacuum_clean_div_e( field_array_t * RESTRICT fa );
 
 // In compute_div_b_err.c
 
@@ -282,8 +289,7 @@ clean_div_e( field_t                      * ALIGNED(128) f,
 //   div_b_err = div cB
 
 void
-compute_div_b_err( field_t      * ALIGNED(128) f,
-                   const grid_t *              g );
+compute_div_b_err( field_array_t * RESTRICT fa );
 
 // In compute_rms_div_b_err.c
 
@@ -295,11 +301,8 @@ compute_div_b_err( field_t      * ALIGNED(128) f,
 // value.  Uses the value of div_b_err already stored.  It _does_
 // _not_ recompute div_b_err.
 
-// FIXME: Should this function do the global reduction?
-
 double
-compute_rms_div_b_err( field_t      * ALIGNED(128) f,
-                       const grid_t *              g );
+compute_rms_div_b_err( const field_array_t * RESTRICT fa );
 
 // In clean_div_b.c
 
@@ -308,24 +311,20 @@ compute_rms_div_b_err( field_t      * ALIGNED(128) f,
 // alpha is picked to rapidly reduce the rms_div_b_err
 
 void
-clean_div_b( field_t      * ALIGNED(128) f,
-             const grid_t *              g );
+clean_div_b( field_array_t * RESTRICT fa );
 
 // Internode functions
 
 // In remote.c
 
 double
-synchronize_tang_e_norm_b( field_t      * ALIGNED(128) f,
-                           const grid_t *              g );
+synchronize_tang_e_norm_b( field_array_t * RESTRICT fa );
 
 void
-synchronize_jf( field_t      * ALIGNED(128) f,
-                const grid_t *              g );
+synchronize_jf( field_array_t * RESTRICT fa );
 
 void
-synchronize_rho( field_t      * ALIGNED(128) f,
-                 const grid_t *              g );
+synchronize_rho( field_array_t * RESTRICT fa );
 
 // In local.c
 

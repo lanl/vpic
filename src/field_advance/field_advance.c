@@ -1,28 +1,51 @@
-#include "field_advance.h"
+#define IN_field_advance
+#include "field_advance_private.h"
 
-field_advance_t *
-new_field_advance( grid_t * g,
-                   material_t * m_list,
-                   field_advance_methods_t * fam ) {
-  field_advance_t * fa;
-
-  // FIXME: MORE ROBUST CHECKING OF FAM
-  if( g==NULL || m_list==NULL || fam==NULL )  ERROR(( "Bad args" ));
-
-  MALLOC( fa, 1 );
-
-  fa->method[0] = fam[0];
-  fa->f = fa->method->new_field( g );
-  fa->m = fa->method->new_material_coefficients( g, m_list );
-  fa->g = g;
-
-  return fa;
+void
+delete_field_array( field_array_t * fa ) {
+  if( fa==NULL ) return;
+  fa->kernel->delete_fa( fa );
 }
 
 void
-delete_field_advance( field_advance_t * fa ) {
-  if( fa==NULL ) return; // Do nothing request
-  fa->method->delete_material_coefficients( fa->m );
-  fa->method->delete_field( fa->f );
-  FREE( fa );
+checkpt_field_advance_kernels( const field_advance_kernels_t * kernel ) {
+  CHECKPT_SYM( kernel->delete_fa                 );
+  CHECKPT_SYM( kernel->advance_b                 );
+  CHECKPT_SYM( kernel->advance_e                 );
+  CHECKPT_SYM( kernel->energy_f                  );
+  CHECKPT_SYM( kernel->clear_jf                  );
+  CHECKPT_SYM( kernel->synchronize_jf            );
+  CHECKPT_SYM( kernel->clear_rhof                );
+  CHECKPT_SYM( kernel->synchronize_rho           );
+  CHECKPT_SYM( kernel->compute_rhob              );
+  CHECKPT_SYM( kernel->compute_curl_b            );
+  CHECKPT_SYM( kernel->synchronize_tang_e_norm_b );
+  CHECKPT_SYM( kernel->compute_div_e_err         );
+  CHECKPT_SYM( kernel->compute_rms_div_e_err     );
+  CHECKPT_SYM( kernel->clean_div_e               );
+  CHECKPT_SYM( kernel->compute_div_b_err         );
+  CHECKPT_SYM( kernel->compute_rms_div_b_err     );
+  CHECKPT_SYM( kernel->clean_div_b               );
 }
+
+void
+restore_field_advance_kernels( field_advance_kernels_t * kernel ) {
+  RESTORE_SYM( kernel->delete_fa                 );
+  RESTORE_SYM( kernel->advance_b                 );
+  RESTORE_SYM( kernel->advance_e                 );
+  RESTORE_SYM( kernel->energy_f                  );
+  RESTORE_SYM( kernel->clear_jf                  );
+  RESTORE_SYM( kernel->synchronize_jf            );
+  RESTORE_SYM( kernel->clear_rhof                );
+  RESTORE_SYM( kernel->synchronize_rho           );
+  RESTORE_SYM( kernel->compute_rhob              );
+  RESTORE_SYM( kernel->compute_curl_b            );
+  RESTORE_SYM( kernel->synchronize_tang_e_norm_b );
+  RESTORE_SYM( kernel->compute_div_e_err         );
+  RESTORE_SYM( kernel->compute_rms_div_e_err     );
+  RESTORE_SYM( kernel->clean_div_e               );
+  RESTORE_SYM( kernel->compute_div_b_err         );
+  RESTORE_SYM( kernel->compute_rms_div_b_err     );
+  RESTORE_SYM( kernel->clean_div_b               );
+}
+

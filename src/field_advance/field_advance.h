@@ -11,7 +11,7 @@
 
 // FIXME: EXTERNAL DIAGNOSTICS THAT READ THESE WILL NEED TO BE UPDATED
 // TO REFLECT SPU USAGE ALIGNMENT CHANGES.
-  
+
 #include "../grid/grid.h"
 #include "../material/material.h"
 
@@ -167,181 +167,83 @@ typedef struct field {
 # endif
 } field_t;
 
-// Opaque datatype used by specific field advance implementations to
-// hold precomputed material coefficients
-
-struct material_coefficient;
-typedef struct material_coefficient material_coefficient_t;
-
-// field_advance_methods holds all the function pointers to all the
+// field_advance_kernels holds all the function pointers to all the
 // kernels used by a specific field_advance instance.
 
 // FIXME: DOCUMENT THESE INTERFACES HERE AND NOT IN STANDARD FIELD
 // ADVANCE PRIVATE
 
-typedef struct field_advance_methods {
+struct field_array;
 
-  // FIXME: MAKE ALL INTERFACES MORE GENERIC
+typedef struct field_advance_kernels {
 
-  // FIXME: DIAGNOSTIC DUMP AND CHECKPOINT/RESTART INTERFACES SHOULD
-  // BE ADDED TO THIS
+  // FIXME: DUMP.CXX SHOULD BE DECENTRALIZED AND DIAGNOSTIC DUMP
+  // FOR FIELDS SHOULD BE ADDED TO THIS
+  // FIXME: FOR SYSTEMS WITH MAGNETIC CURRENTS (E.G. PML LAYERS)
+  // WOULD INTERFACES FOR xif,kf BE USEFUL?
 
-  // Field array structors
-
-  field_t * ALIGNED(128)
-  (*new_field)( grid_t * g );
-
-  void
-  (*delete_field)( field_t * ALIGNED(128) f );
-
-  // Material coefficient structors
-
-  material_coefficient_t * ALIGNED(128)
-  (*new_material_coefficients)( grid_t * g,
-                                material_t * m_list );
-
-  void
-  (*delete_material_coefficients)( material_coefficient_t * ALIGNED(128) mc );
+  void (*delete_fa)( struct field_array * RESTRICT fa );
 
   // Time stepping interface
 
-  void
-  (*advance_b)( field_t      * ALIGNED(128) f,
-                const grid_t *              g,
-                float                       frac );
-
-  void
-  (*advance_e)( field_t                      * ALIGNED(128) f,
-                const material_coefficient_t * ALIGNED(128) m,
-                const grid_t                 *              g );
+  void (*advance_b)( struct field_array * RESTRICT fa, float frac );
+  void (*advance_e)( struct field_array * RESTRICT fa, float frac );
 
   // Diagnostic interface
   // FIXME: MAY NEED MORE CAREFUL THOUGHT FOR CURVILINEAR SYSTEMS
 
-  void
-  (*energy_f)( double                       *             energy, // 6 elem
-               const field_t                * ALIGNED(128) f,
-               const material_coefficient_t * ALIGNED(128) m,
-               const grid_t                 *              g );
+  void (*energy_f)( /**/  double        * RESTRICT en, // 6 elem
+                    const struct field_array * RESTRICT fa );
 
-  // Accumulator interface?
-  // FIXME: DOES THIS BELONG HERE?
+  // Accumulator interface
 
-  void
-  (*clear_jf)( field_t      * ALIGNED(128) f,
-               const grid_t *              g );
+  void (*clear_jf       )( struct field_array * RESTRICT fa );
+  void (*synchronize_jf )( struct field_array * RESTRICT fa );
+  void (*clear_rhof     )( struct field_array * RESTRICT fa );
+  void (*synchronize_rho)( struct field_array * RESTRICT fa );
 
-  void
-  (*synchronize_jf)( field_t      * ALIGNED(128) f,
-                     const grid_t *              g );
+  // Initialization interface
 
-  void
-  (*clear_rhof)( field_t      * ALIGNED(128) f,
-                 const grid_t *              g );
-
-  void
-  (*synchronize_rho)( field_t      * ALIGNED(128) f,
-                      const grid_t *              g );
-
-  // FIXME: FOR SYSTEMS WITH MAGNETIC CURRENTS (E.G. PML LAYERS)
-  // WOULD INTERFACES FOR xif,kf BE USEFUL?
-
-  // Initialization interface?
-  // FIXME: SHOULD COMPUTE_RHOB BE RECAST AS AN ACCUMULATOR INTERFACE? 
-  // (PROBABLY NOT).
-
-  void
-  (*compute_rhob)( field_t                      * ALIGNED(128) f,
-                   const material_coefficient_t * ALIGNED(128) m,
-                   const grid_t                 *              g ); 
-
-  void
-  (*compute_curl_b)( field_t                      * ALIGNED(128) f,
-                     const material_coefficient_t * ALIGNED(128) m,
-                     const grid_t                 *              g );
+  void (*compute_rhob  )( struct field_array * RESTRICT fa );
+  void (*compute_curl_b)( struct field_array * RESTRICT fa );
 
   // Local/remote shared face cleaning
 
-  double
-  (*synchronize_tang_e_norm_b)( field_t      * ALIGNED(128) f,
-                                const grid_t *              g );
+  double (*synchronize_tang_e_norm_b)( struct field_array * RESTRICT fa );
 
   // Electric field divergence cleaning interface
 
-  void
-  (*compute_div_e_err)( field_t                      * ALIGNED(128) f,
-                        const material_coefficient_t * ALIGNED(128) m,
-                        const grid_t                 *              g );
+  void   (*compute_div_e_err    )( /**/  struct field_array * RESTRICT fa );
+  double (*compute_rms_div_e_err)( const struct field_array * RESTRICT fa );
+  void   (*clean_div_e          )( /**/  struct field_array * RESTRICT fa );
 
-  double
-  (*compute_rms_div_e_err)( field_t      * ALIGNED(128) f,
-                            const grid_t *              g );
+  // Magnetic field divergence cleaning interface
 
-  void
-  (*clean_div_e)( field_t                      * ALIGNED(128) f,
-                  const material_coefficient_t * ALIGNED(128) m,
-                  const grid_t                 *              g );
+  void   (*compute_div_b_err    )( /**/  struct field_array * RESTRICT fa );
+  double (*compute_rms_div_b_err)( const struct field_array * RESTRICT fa );
+  void   (*clean_div_b          )( /**/  struct field_array * RESTRICT fa );
 
-  // Magnetic field divergencing interface
+} field_advance_kernels_t;
 
-  void
-  (*compute_div_b_err)( field_t      * ALIGNED(128) f,
-                        const grid_t *              g );
-
-  double
-  (*compute_rms_div_b_err)( field_t      * ALIGNED(128) f,
-                            const grid_t *              g );
-
-  void
-  (*clean_div_b)( field_t      * ALIGNED(128) f,
-                  const grid_t *              g );
-
-} field_advance_methods_t;
-
-// A field_advance holds all the field quanties and pointers to
+// A field_array holds all the field quanties and pointers to
 // kernels used to advance them.
 
-typedef struct field_advance {
-  field_t                * ALIGNED(128) f; // Local field data
-  material_coefficient_t * ALIGNED(128) m; // Field advance material data
-  grid_t                 *              g; // Parent grid (FIXME: CONST?)
-  field_advance_methods_t method[1];       // Field advance kernels
-} field_advance_t;
+typedef struct field_array {
+  field_t * ALIGNED(128) f;          // Local field data
+  grid_t  * g;                       // Underlying grid
+  void    * params;                  // Field advance specific parameters
+  field_advance_kernels_t kernel[1]; // Field advance kernels
+} field_array_t;
 
 BEGIN_C_DECLS
 
-// In field_advance.c
-
-field_advance_t *
-new_field_advance( grid_t * g,
-                   material_t * m_list,
-                   field_advance_methods_t * fam );
+field_array_t *
+new_standard_field_array( grid_t           * RESTRICT g,
+                          const material_t * RESTRICT m_list,
+                          float                       damp );
 
 void
-delete_field_advance( field_advance_t * fa );
-
-// Expose already installed field advance methods
-
-// In standard/sfa.c
-extern field_advance_methods_t _standard_field_advance[1];
-
-// In standard/vacuum/vfa.c
-extern field_advance_methods_t _vacuum_field_advance[1];
-
-#ifndef V4_ACCELERATION
-#define standard_field_advance _standard_field_advance
-#define vacuum_field_advance   _vacuum_field_advance
-#else
-
-// In standard/v4/sfa_v4.c
-extern field_advance_methods_t _standard_v4_field_advance[1];
-#define standard_field_advance _standard_v4_field_advance
-
-// In standard/vacuum/v4/vfa_v4.c
-extern field_advance_methods_t _vacuum_v4_field_advance[1];
-#define vacuum_field_advance   _vacuum_v4_field_advance
-
-#endif
+delete_field_array( field_array_t * fa );
 
 END_C_DECLS
 

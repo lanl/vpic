@@ -115,12 +115,11 @@ delete_species( species_t * sp ) {
 }
 
 void
-delete_species_list( species_t ** sp_list ) {
+delete_species_list( species_t * sp_list ) {
   species_t * sp;
-  if( sp_list==NULL ) return;
-  while( *sp_list!=NULL ) {
-    sp = *sp_list;
-    *sp_list = sp->next;
+  while( sp_list ) {
+    sp = sp_list;
+    sp_list = sp_list->next;
     delete_species( sp );
   }
 }

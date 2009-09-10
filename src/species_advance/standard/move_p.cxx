@@ -13,9 +13,12 @@
 // displacement. The displacements are the physical displacments
 // normalized current cell size.
 //
-// Because move_p is internal use only and frequently called, it does
-// not check its input arguments. Higher level routines are
-// responsible for insuring valid arguments.
+// Because move_p is frequently called, it does not check its input
+// arguments. Higher level routines are responsible for insuring valid
+// arguments.
+//
+// Note: changes here likely need to be reflected in SPE accelerated
+// version as well.
 
 #if defined(V4_ACCELERATION)
 

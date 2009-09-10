@@ -14,7 +14,6 @@
 
 #include "../sf_interface/sf_interface.h"
 
-// FIXME: IS THIS USEFUL?
 typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 
 // FIXME: Eventually particle_t (definitely) and ther other formats
@@ -115,7 +114,7 @@ new_species( const char * name,
              species_t ** sp_list );
 
 void
-delete_species_list( species_t ** sp_list );
+delete_species_list( species_t * sp_list );
 
 species_t *
 find_species_id( species_id id,
@@ -124,6 +123,25 @@ find_species_id( species_id id,
 species_t *
 find_species_name( const char * name,
                    species_t * sp_list );
+
+// FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
+// CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS
+// (THESE TWO FUNCTIONS ARE NECESSARY FOR HIGHER LEVEL
+// PARTICLE EMITTING CODE
+
+void
+accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
+                 const particle_t * RESTRICT ALIGNED(32)  p,
+                 const grid_t     * RESTRICT              g,
+                 const float                              qsp );
+
+int
+move_p( particle_t       * ALIGNED(128) p0,    // Particle array
+        particle_mover_t * ALIGNED(16)  m,     // Particle mover to apply
+        accumulator_t    * ALIGNED(128) a0,    // Accumulator to use
+        const grid_t     *              g,     // Grid parameters
+        const float                     qsp ); // Species particle charge
+
 
 END_C_DECLS
 

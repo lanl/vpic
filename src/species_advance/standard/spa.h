@@ -18,37 +18,6 @@
 
 BEGIN_C_DECLS
 
-// In move_p.cxx
-
-// Note: changes to move_p likely need to be reflected in the SPU
-// move_p implementation as well!
-
-int
-move_p( particle_t       * ALIGNED(128) p0,    // Particle array
-        particle_mover_t * ALIGNED(16)  m,     // Particle mover to apply
-        accumulator_t    * ALIGNED(128) a0,    // Accumulator to use
-        const grid_t     *              g,     // Grid parameters
-        const float                     qsp ); // Species particle charge
-
-// In boundary_p.cxx
-
-void
-accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,     // Field data
-                 const particle_t * RESTRICT ALIGNED(32)  p,     // Particle to remove
-                 const grid_t     * RESTRICT              g,     // Grid
-                 const float                              qsp ); // Species charge
-
-// FIXME: THIS FUNCTION BELONGS IN BOUNDARY
-struct particle_bc;
-typedef struct particle_bc particle_bc_t;
-void
-boundary_p( species_t           * RESTRICT sp_list,  // Species to handle
-            particle_bc_t       * RESTRICT pbc_list, // Particle boundary conds
-            field_array_t       * RESTRICT fa,       // For rhob accum and/or
-                                                     // custom pbcs i.e. field
-                                                     // emission
-            accumulator_array_t * RESTRICT aa );     // For j accum
-
 // In sort_p.c
 
 void

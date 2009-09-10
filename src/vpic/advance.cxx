@@ -10,40 +10,38 @@
 
 #include "vpic.hxx"
 
-#define FA field_advance
+#define FAK field_array->kernel
 
 int vpic_simulation::advance(void) {
-  int rank;
   species_t *sp;
   emitter_t *emitter;
   double err;
 
   // Determine if we are done ... see note below why this is done here
 
-  if( num_step>0 && step>=num_step ) return 0;
-
-  rank = mp_rank( grid->mp );
+  if( num_step>0 && step()>=num_step ) return 0;
 
   // At this point, fields are at E_0 and B_0 and the particle positions
   // are at r_0 and u_{-1/2}. Further the mover lists for the particles should
   // empty and all particles should be inside the local computational domain.
   // Advance the particle lists.
 
-  if( species_list!=NULL ) TIC { clear_accumulators( accumulator, grid ); } TOC( clear_accumulators, 1 );
+  if( species_list )
+    TIC clear_accumulator_array( accumulator_array ); TOC( clear_accumulators, 1 );
 
   LIST_FOR_EACH( sp, species_list )
-    if( (sp->sort_interval>0) && ((step % sp->sort_interval)==0) ) {
-      if( rank==0 ) MESSAGE(( "Performance sorting \"%s\".", sp->name ));
-      TIC { sort_p( sp, grid ); } TOC( sort_p, 1 );
+    if( (sp->sort_interval>0) && ((step() % sp->sort_interval)==0) ) {
+      if( rank()==0 ) MESSAGE(( "Performance sorting \"%s\"", sp->name ));
+      TIC sort_p( sp ); TOC( sort_p, 1 );
     } 
 
-  TIC { user_particle_collisions(); } TOC( user_particle_collisions, 1 );
+  TIC user_particle_collisions(); TOC( user_particle_collisions, 1 );
 
-  LIST_FOR_EACH( sp, species_list ) TIC {
-    sp->nm = advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm, accumulator, interpolator, grid );
-  } TOC( advance_p, 1 );
+  LIST_FOR_EACH( sp, species_list )
+    TIC advance_p( sp, accumulator_array, interpolator_array ); TOC( advance_p, 1 );
 
-  if( species_list!=NULL ) TIC { reduce_accumulators( accumulator, grid ); } TOC( reduce_accumulators, 1 );
+  if( species_list )
+    TIC reduce_accumulator_array( accumulator_array ); TOC( reduce_accumulators, 1 );
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and
@@ -51,25 +49,24 @@ int vpic_simulation::advance(void) {
   // be done after advance_p and before guard list processing. Note:
   // user_particle_injection should be a stub if species_list is empty.
 
-  LIST_FOR_EACH( emitter, emitter_list ) TIC {
-    (emitter->emission_model)( emitter, interpolator, FA->f, accumulator, FA->g, rng );
-  } TOC( emission_model, 1 );
-
-  TIC { user_particle_injection(); } TOC( user_particle_injection, 1 );
+  LIST_FOR_EACH( emitter, emitter_list )
+    TIC emitter->emit( emitter->params, emitter->component, emitter->n_component ); TOC( emission_model, 1 );
+  TIC user_particle_injection(); TOC( user_particle_injection, 1 );
 
   // At this point, most particle positions are at r_1 and u_{1/2}. Particles
   // that had boundary interactions are now on the guard list. Process the
   // guard lists. Particles that absorbed are added to rhob (using a corrected
   // local accumulation).
 
-  TIC {
+  TIC
     for( int round=0; round<num_comm_round; round++ )
-      boundary_p( species_list, FA->f, accumulator, FA->g, rng );
-  } TOC( boundary_p, num_comm_round );
-
+      boundary_p( particle_bc_list, species_list,
+                  field_array, accumulator_array );
+  TOC( boundary_p, num_comm_round );
   LIST_FOR_EACH( sp, species_list ) {
-    if( sp->nm!=0 && !verbose ) WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
-                                          sp->nm, sp->name ));
+    if( sp->nm && verbose )
+      WARNING(( "Ignoring %i unprocessed %s movers (increase num_comm_round)",
+                sp->nm, sp->name ));
     sp->nm = 0;
   }
 
@@ -77,9 +74,10 @@ int vpic_simulation::advance(void) {
   // guard lists are empty and the accumulators on each processor are current.
   // Convert the accumulators into currents.
 
-  TIC { FA->method->clear_jf( FA->f, FA->g ); } TOC( clear_jf, 1 );
-  if( species_list!=NULL ) TIC { unload_accumulator( FA->f, accumulator, FA->g ); } TOC( unload_accumulator, 1 );
-  TIC { FA->method->synchronize_jf( FA->f, FA->g ); } TOC( synchronize_jf, 1 );
+  TIC FAK->clear_jf( field_array ); TOC( clear_jf, 1 );
+  if( species_list )
+    TIC unload_accumulator_array( field_array, accumulator_array ); TOC( unload_accumulator, 1 );
+  TIC FAK->synchronize_jf( field_array ); TOC( synchronize_jf, 1 );
 
   // At this point, the particle currents are known at jf_{1/2}.
   // Let the user add their own current contributions. It is the users
@@ -88,92 +86,93 @@ int vpic_simulation::advance(void) {
   // rhob_1 = rhob_0 + div juser_{1/2} (corrected local accumulation) if
   // the user wants electric field divergence cleaning to work.
 
-  TIC { user_current_injection(); } TOC( user_current_injection, 1 );
+  TIC user_current_injection(); TOC( user_current_injection, 1 );
 
   // Half advance the magnetic field from B_0 to B_{1/2}
 
-  TIC { FA->method->advance_b( FA->f, FA->g, 0.5 ); } TOC( advance_b, 1 );
+  TIC FAK->advance_b( field_array, 0.5 ); TOC( advance_b, 1 );
 
   // Advance the electric field from E_0 to E_1
 
-  TIC { FA->method->advance_e( FA->f, FA->m, FA->g ); } TOC( advance_e, 1 );
+  TIC FAK->advance_e( field_array, 1.0 ); TOC( advance_e, 1 );
 
   // Let the user add their own contributions to the electric field. It is the
   // users responsibility to insure injected electric fields are consistent
   // across domains.
 
-  TIC { user_field_injection(); } TOC( user_field_injection, 1 );
+  TIC user_field_injection(); TOC( user_field_injection, 1 );
 
   // Half advance the magnetic field from B_{1/2} to B_1
 
-  TIC { FA->method->advance_b( FA->f, FA->g, 0.5 ); } TOC( advance_b, 1 );
+  TIC FAK->advance_b( field_array, 0.5 ); TOC( advance_b, 1 );
 
   // Divergence clean e
 
-  if( (clean_div_e_interval>0) && ((step % clean_div_e_interval)==0) ) {
-    if( rank==0 ) MESSAGE(( "Divergence cleaning electric field" ));
+  if( (clean_div_e_interval>0) && ((step() % clean_div_e_interval)==0) ) {
+    if( rank()==0 ) MESSAGE(( "Divergence cleaning electric field" ));
 
-    TIC { FA->method->clear_rhof( FA->f, FA->g ); } TOC( clear_rhof,1 );
-    LIST_FOR_EACH( sp, species_list ) TIC { accumulate_rho_p( FA->f, sp->p, sp->np, FA->g ); } TOC( accumulate_rho_p, 1 );
-    TIC { FA->method->synchronize_rho( FA->f, FA->g ); } TOC( synchronize_rho, 1 );
+    TIC FAK->clear_rhof( field_array ); TOC( clear_rhof,1 );
+    if( species_list ) TIC LIST_FOR_EACH( sp, species_list ) accumulate_rho_p( field_array, sp ); TOC( accumulate_rho_p, species_list->id );
+    TIC FAK->synchronize_rho( field_array ); TOC( synchronize_rho, 1 );
 
     for( int round=0; round<num_div_e_round; round++ ) {
-      TIC { FA->method->compute_div_e_err( FA->f, FA->m, FA->g ); } TOC( compute_div_e_err, 1 );
+      TIC FAK->compute_div_e_err( field_array ); TOC( compute_div_e_err, 1 );
       if( round==0 || round==num_div_e_round-1 ) {
-        TIC { err = FA->method->compute_rms_div_e_err( FA->f, FA->g ); } TOC( compute_rms_div_e_err, 1 );
-        if( rank==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
+        TIC err = FAK->compute_rms_div_e_err( field_array ); TOC( compute_rms_div_e_err, 1 );
+        if( rank()==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
       }
-      TIC { FA->method->clean_div_e( FA->f, FA->m, FA->g ); } TOC( clean_div_e, 1 );
+      TIC FAK->clean_div_e( field_array ); TOC( clean_div_e, 1 );
     }
   }
 
   // Divergence clean b
 
-  if( (clean_div_b_interval>0) && ((step % clean_div_b_interval)==0) ) {
-    if( rank==0 ) MESSAGE(( "Divergence cleaning magnetic field" ));
+  if( (clean_div_b_interval>0) && ((step() % clean_div_b_interval)==0) ) {
+    if( rank()==0 ) MESSAGE(( "Divergence cleaning magnetic field" ));
 
     for( int round=0; round<num_div_b_round; round++ ) {
-      TIC { FA->method->compute_div_b_err( FA->f, FA->g ); } TOC( compute_div_b_err, 1 );
+      TIC FAK->compute_div_b_err( field_array ); TOC( compute_div_b_err, 1 );
       if( round==0 || round==num_div_b_round-1 ) {
-        TIC { err = FA->method->compute_rms_div_b_err( FA->f, FA->g ); } TOC( compute_rms_div_b_err, 1 );
-        if( rank==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
+        TIC err = FAK->compute_rms_div_b_err( field_array ); TOC( compute_rms_div_b_err, 1 );
+        if( rank()==0 ) MESSAGE(( "%s rms error = %e (charge/volume)", round==0 ? "Initial" : "Cleaned", err ));
       }
-      TIC { FA->method->clean_div_b( FA->f, FA->g ); } TOC( clean_div_b, 1 );
+      TIC FAK->clean_div_b( field_array ); TOC( clean_div_b, 1 );
     }
   }
 
   // Synchronize the shared faces
 
-  if( (sync_shared_interval>0) && ((step % sync_shared_interval)==0) ) {
-    if( rank==0 ) MESSAGE(( "Synchronizing shared tang e, norm b, rho_b" ));
-    TIC { err = FA->method->synchronize_tang_e_norm_b( FA->f, FA->g ); } TOC( synchronize_tang_e_norm_b, 1 );
-    if( rank==0 ) MESSAGE(( "Domain desynchronization error = %e (arb units)", err ));
+  if( (sync_shared_interval>0) && ((step() % sync_shared_interval)==0) ) {
+    if( rank()==0 ) MESSAGE(( "Synchronizing shared tang e, norm b, rho_b" ));
+    TIC err = FAK->synchronize_tang_e_norm_b( field_array ); TOC( synchronize_tang_e_norm_b, 1 );
+    if( rank()==0 ) MESSAGE(( "Domain desynchronization error = %e (arb units)", err ));
   }
 
   // Fields are updated ... load the interpolator for next time step and
   // particle diagnostics in user_diagnostics if there are any particle
   // species to worry about
 
-  if( species_list!=NULL ) TIC { load_interpolator( interpolator, FA->f, FA->g ); } TOC( load_interpolator, 1 );
+  if( species_list ) TIC load_interpolator_array( interpolator_array, field_array ); TOC( load_interpolator, 1 );
 
-  step++;
+  step()++;
 
   // Print out status
 
-  if( (status_interval>0) && ((step % status_interval)==0) ) {
-    if( rank==0 ) MESSAGE(( "Completed step %i of %i", step, num_step ));
-    update_profile( rank==0 );
+  if( (status_interval>0) && ((step() % status_interval)==0) ) {
+    if( rank()==0 ) MESSAGE(( "Completed step %i of %i", step(), num_step ));
+    update_profile( rank()==0 );
   }
 
   // Let the user compute diagnostics
 
-  TIC { user_diagnostics(); } TOC( user_diagnostics, 1 );
+  TIC user_diagnostics(); TOC( user_diagnostics, 1 );
 
-  // "return step!=num_step" is more intuitive. But if a restart dump,
+  // "return step()!=num_step" is more intuitive. But if a checkpt
   // saved in the call to user_diagnostics() above, is done on the final step
-  // (silly but it might happen), the test will be skipped on the restart. We
-  // return true here so that the first call to advance after a restart dump
+  // (silly but it might happen), the test will be skipped on the restore. We
+  // return true here so that the first call to advance after a restore
   // will act properly for this edge case.
 
   return 1;
 }
+

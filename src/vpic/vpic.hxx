@@ -123,32 +123,15 @@ public:
   vpic_simulation();
   ~vpic_simulation();
   void initialize( int argc, char **argv );
-  void restart( const char *filebase );
-  void modify_runparams( const char *fname );
+  void modify( const char *fname );
   int advance( void );
   void finalize( void );
  
-  // some helpers that need to be exposed to
-  // remove direct MPI calls
- 
-  inline double rank(void) {
-    return (double)mp_rank(grid->mp);
-  }
- 
-  inline void barrier(void) {
-    mp_barrier(grid->mp);
-  }
- 
-  inline void * grid_mp(void) {
-  	return (void *)grid->mp;
-  }
- 
 private:
  
-  // Directly initialized by user; saved in a restart dump
+  // Directly initialized by user
  
   int verbose;              // Should system be verbose
-  int step;                 // Number of steps taken so far
   int num_step;             // Number of steps to take
   int num_comm_round;       // Num comm round
   int status_interval;      // How often to print status messages
@@ -158,8 +141,11 @@ private:
   int num_div_b_round;      // How many clean div b rounds per div b interval
   int sync_shared_interval; // How often to synchronize shared faces
  
+  // FIXME: THESE INTERVALS SHOULDN'T BE PART OF vpic_simulation
+  // THE BIG LIST FOLLOWING IT SHOULD BE CLEANED UP TOO
+
   double quota;
-  int restart_interval;
+  int checkpt_interval;
   int hydro_interval;
   int field_interval;
   int particle_interval;
@@ -187,29 +173,26 @@ private:
   int rankdigit;
   int ifenergies;
  
-  // Helper initialized by user; restart-saved
+  // Helper initialized by user
  
-  mt_rng_t *rng;               // Random helpers (seed defaults to rank)
-  material_t *material_list;   // Material helpers
-  grid_t *grid;                // Grid helpers
-  species_t *species_list;     // Species helpers / particle helpers
-  emitter_t *emitter_list;     // Particle emitters
-  field_advance_t * field_advance;
- 
-  // FIXME: Backward compatible hacks
-  field_t * ALIGNED(128) field;
- 
-  // Helper initialized by user; not restart-saved (can be derived from above)
- 
-  /**/
-  interpolator_t * ALIGNED(128) interpolator;
-  accumulator_t * ALIGNED(128) accumulator;
-  hydro_t * ALIGNED(128) hydro;
- 
-  // User defined variables; restart saved
+  mt_rng_t             * rng;                // seed_rng (seed defaults to rank)
+  grid_t               * grid;               // define_*_grid et al
+  material_t           * material_list;      // define_material
+  field_array_t        * field_array;        // define_field_array
+  interpolator_array_t * interpolator_array; // define_field_array
+  accumulator_array_t  * accumulator_array;  // define_field_array
+  hydro_array_t        * hydro_array;        // define_field_array
+  species_t            * species_list;       // define_species /
+                                             // species helpers
+  particle_bc_t        * particle_bc_list;   // define_particle_bc /
+                                             // boundary helpers
+  emitter_t            * emitter_list;       // define_emitter /
+                                             // emitter helpers
+
+  // User defined checkpt preserved variables
+  // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
  
   char user_global[USER_GLOBAL_SIZE];
-  // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
  
   /*----------------------------------------------------------------------------
    * Diagnostics
@@ -248,7 +231,6 @@ private:
                    int fname_tag = 1 );
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
-  void dump_restart( const char *fbase, int fname_tag = 1 );
  
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);
@@ -265,13 +247,82 @@ private:
   void field_dump(DumpParameters & dumpParams);
   void hydro_dump(const char * speciesname, DumpParameters & dumpParams);
 
+  ///////////////////
+  // Useful accessors
+
+  inline int
+  rank() { return world_rank; }
+
+  inline int
+  nproc() { return world_size; }
+
+  inline void
+  barrier() { mp_barrier(); }
+
+  inline double
+  time() {
+    return grid->t0 + (double)grid->dt*(double)grid->step;
+  }
+
+  inline int64_t &
+  step() {
+   return grid->step;
+  }
+
+  inline field_t &
+  field( const int v ) {
+    return field_array->f[ v ];
+  }
+
+  inline int
+  voxel( const int ix, const int iy, const int iz ) {
+    return ix + grid->sy*iy + grid->sz*iz;
+  }
+
+  inline field_t &
+  field( const int ix, const int iy, const int iz ) {
+    return field_array->f[ voxel(ix,iy,iz) ];
+  }
+
+  inline interpolator_t &
+  interpolator( const int v ) {
+    return interpolator_array->i[ v ];
+  }
+
+  inline interpolator_t &
+  interpolator( const int ix, const int iy, const int iz ) {
+    return interpolator_array->i[ voxel(ix,iy,iz) ];
+  }
+
+  inline hydro_t &
+  hydro( const int v ) {
+    return hydro_array->h[ v ];
+  }
+
+  inline hydro_t &
+  hydro( const int ix, const int iy, const int iz ) {
+    return hydro_array->h[ voxel(ix,iy,iz) ];
+  }
+
   ///////////////
   // Grid helpers
- 
+
+  inline void
+  define_units( float cvac,
+                float eps0 ) {
+    grid->cvac = cvac;
+    grid->eps0 = eps0;
+  }
+
+  inline void
+  define_timestep( float dt, double t0 = 0, int64_t step = 0 ) {
+    grid->t0   = t0;
+    grid->dt   = (float)dt;
+    grid->step = step;
+  }
+
   // The below functions automatically create partition simple grids with
   // simple boundary conditions on the edges.
- 
-  // FIXME: THE TIMESTEP SHOULD HAVE HELPERS LIKE THIS
  
   inline void
   define_periodic_grid( double xl,  double yl,  double zl,
@@ -333,7 +384,7 @@ private:
   ///////////////////
   // Material helpers
  
-  inline material_id
+  inline material_t *
   define_material( const char *name,
                    double eps,
                    double mu = 1,
@@ -347,7 +398,7 @@ private:
 			 &material_list );
   }
  
-  inline material_id
+  inline material_t *
   define_material( const char *name,
                    double epsx,        double epsy,       double epsz,
                    double mux,         double muy,        double muz,
@@ -361,43 +412,57 @@ private:
 			 &material_list );
   }
  
-  inline material_id
+  inline material_t *
   lookup_material( const char * name ) {
-    material_t *m = find_material_name(name,material_list);
-    return m==NULL ? invalid_material_id : m->id;
+    return find_material_name( name, material_list );
+  }
+
+  inline material_t *
+  lookup_material( material_id id ) {
+    return find_material_id( id, material_list );
   }
  
   //////////////////////
-  // Setup field advance
+  // Field array helpers
  
+  // If fa is provided, define_field_advance will use it (and take ownership
+  // of the it).  Otherwise the standard field array will be used with the
+  // optionally provided radition damping parameter.
+
   inline void
-  finalize_field_advance( field_advance_methods_t * fam = standard_field_advance ) {
+  define_field_array( field_array_t * fa = NULL, double damp = 0 ) {
     int nx1 = grid->nx + 1, ny1 = grid->ny+1, nz1 = grid->nz+1;
  
-    field_advance = new_field_advance( grid, material_list, fam );
-    field        = field_advance->f; // FIXME: Temporary hack
+    if( grid->nx<1 || grid->ny<1 || grid->nz<1 )
+      ERROR(( "Define your grid before defining the field array" ));
+    if( !material_list )
+      ERROR(( "Define your materials before defining the field array" ));
+
+    field_array        = fa ? fa :
+                         new_standard_field_array( grid, material_list, damp );
+    interpolator_array = new_interpolator_array( grid );
+    accumulator_array  = new_accumulator_array( grid );
+    hydro_array        = new_hydro_array( grid );
  
-    interpolator = new_interpolator(grid);
-    accumulator  = new_accumulators(grid);
-    hydro        = new_hydro(grid);
+    // Pre-size communications buffers. This is done to get most memory
+    // allocation over with before the simulation starts running
+
+    mp_size_recv_buffer(grid->mp,BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp,BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp,BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t));
  
-    // Pre-size communications buffers
-    // This is done to get 99.9% of memory allocation over with before
-    // the simulation starts running
-    mp_size_recv_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
-    mp_size_recv_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
-    mp_size_recv_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
-    mp_size_recv_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
-    mp_size_recv_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro[0]),grid->mp);
-    mp_size_recv_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro[0]),grid->mp);
- 
-    mp_size_send_buffer(BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
-    mp_size_send_buffer(BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro[0]),grid->mp);
-    mp_size_send_buffer(BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
-    mp_size_send_buffer(BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro[0]),grid->mp);
-    mp_size_send_buffer(BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro[0]),grid->mp);
-    mp_size_send_buffer(BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro[0]),grid->mp);
+    mp_size_send_buffer(grid->mp,BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp,BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp,BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t));
   }
+
+  // Other field helpers are provided by macros in deck_wrapper.cxx
  
   //////////////////
   // Species helpers
@@ -405,7 +470,8 @@ private:
   // FIXME: SILLY PROMOTIONS
   inline species_t *
   define_species( const char *name,
-                  double q_m,
+                  double q,
+                  double m,
                   double max_local_np,
                   double max_local_nm,
                   double sort_interval,
@@ -413,30 +479,26 @@ private:
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
-    if( max_local_nm<=-1 ) {
+    if( max_local_nm<0 ) {
       max_local_nm = 2*max_local_np/25;
       if( max_local_nm<16*(MAX_PIPELINE+1) )
         max_local_nm = 16*(MAX_PIPELINE+1);
     }
-    return new_species( name, (float)q_m, (int)max_local_np, (int)max_local_nm,
-			(int)sort_interval, (int)sort_out_of_place, &species_list );
+    return new_species( name, (float)q, (float)m,
+                        (int)max_local_np, (int)max_local_nm,
+			(int)sort_interval, (int)sort_out_of_place,
+                        grid, &species_list );
   }
- 
-  // BJA - Putting this here in first cut of collisionality addition in
-  // order to facilitate implementation of collision models in input deck.
-  // This is a first cut at the problem; eventually, we will redesign this
-  // so that it is more user-transparent and supports user-defined collision
-  // operators.
  
   inline species_t *
   find_species( const char *name ) {
      return find_species_name( name, species_list );
   }
- 
-  ////////////////
-  // Field helpers
- 
-  // Field helpers are provided by macros in deck_wrapper.cxx
+
+  inline species_t *
+  find_species( int32_t id ) {
+     return find_species_id( id, species_list );
+  }
  
   ///////////////////
   // Particle helpers
@@ -449,7 +511,7 @@ private:
   inject_particle( species_t * sp,
                    double x,  double y,  double z,
                    double ux, double uy, double uz,
-                   double q,  double age = 0, int update_rhob = 1 );
+                   double w,  double age = 0, int update_rhob = 1 );
  
   // Inject particle raw is for power users!
   // No nannyism _at_ _all_:
@@ -463,27 +525,28 @@ private:
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float q ) {
+                       float ux, float uy, float uz, float w ) {
     particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
-    p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
+    p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
   }
  
+  // This variant does a raw inject and moves the particles
+
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float q,
+                       float ux, float uy, float uz, float w,
                        float dispx, float dispy, float dispz,
                        int update_rhob ) {
     particle_t       * RESTRICT p  = sp->p  + (sp->np++);
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
-    p->ux = ux; p->uy = uy; p->uz = uz; p->q = q;
+    p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
-    if( update_rhob ) { p->q=-q; accumulate_rhob( field, p, grid ); p->q=q; }
-    sp->nm += move_p( sp->p, pm, accumulator, grid );
+    if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
+    sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
   }
- 
  
   //////////////////////////////////
   // Random number generator helpers
@@ -504,37 +567,56 @@ private:
     return dev*mt_drandn(rng);
   }
  
+  /////////////////////////////////
+  // Emitter and particle bc helpers
+
+  // We only add an emitter if has not been added
+  // This allows things like:
+  //
+  // define_surface_emitter( my_emitter( ... ), rgn )
+  // ... or ...
+  // my_emit_t * e = my_emit( ... )
+  // define_surface_emitter( e, rgn )
+  // ... or ...
+  // my_emit_t * e = define_emitter( my_emit( ... ) )
+  // define_surface_emitter( e, rng )
+  // ...
+  // All to work
+
+  emitter_t * 
+  define_emitter( emitter_t * e ) {
+    if( !e ) ERROR(( "Bad args" ));
+    emitter_t * ee;
+    LIST_FOR_EACH( ee, emitter_list ) if( e==ee ) break;
+    if( !ee ) {
+      e->next = emitter_list;
+      emitter_list = e;
+    }    
+    return e;
+  }
+
+  particle_bc_t *
+  define_particle_bc( particle_bc_t * pbc ) {
+    if( !pbc ) ERROR(( "Bad args" ));
+    pbc->id   = -3 - num_particle_bc( particle_bc_list );
+    pbc->next = particle_bc_list;
+    particle_bc_list = pbc;
+    return pbc;
+  }
+
   ////////////////////////
   // Miscellaneous helpers
  
-  inline double nproc(void) {
-    return (double)mp_nproc(grid->mp);
-  }
- 
-  // FIXME: ELIMINATE THIS AND THE CORRESPONDING CALLS IN MP
-  inline double time00( void ) {
-    return mp_time00(grid->mp);
-  }
- 
-  // FIXME: ELIMINATE THIS AND THE CORRESPONDING CALLS IN MP
-  inline double elapsed( void ) {
-    return mp_elapsed(grid->mp);
-  }
- 
   inline void abort( double code ) {
-    sleep(1);
-    mp_abort((((int)code)<<17)+1,grid->mp);
+    sleep(1); mp_abort((((int)code)<<17)+1);
   }
  
   // Truncate "a" to the nearest integer multiple of "b"
-  inline double trunc_granular( double a, double b ) {
-    return b*int(a/b);
-  }
+  inline double trunc_granular( double a, double b ) { return b*int(a/b); }
  
   // Compute the remainder of a/b
-  inline double remainder( double a, double b ) {
-    return drem(a,b);   // remainder(a,b);
-  }
+  inline double remainder( double a, double b ) { return drem(a,b); }
+  // remainder(a,b);
  
   // Compute the Courant length on a regular mesh
   inline double courant_length( double lx, double ly, double lz,
@@ -546,6 +628,13 @@ private:
     return sqrt(1/w1);
   }
  
+  //////////////////////////////////////////////////////////
+  // These friends are used by the checkpt / restore service
+
+  friend void checkpt_vpic_simulation( const vpic_simulation * vpic );
+  friend vpic_simulation * restore_vpic_simulation( void );
+  friend void reanimate_vpic_simulation( vpic_simulation * vpic );
+
   ////////////////////////////////////////////////////////////
   // User input deck provided functions (see deck_wrapper.cxx)
  

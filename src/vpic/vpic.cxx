@@ -10,65 +10,88 @@
  
 #include "vpic.hxx"
  
+/* Note that, when a vpic_simulation is created (and thus registered
+   with the checkpt service), it is created empty; none of the simulation
+   objects on which it depends have been created yet. (These get created
+   as the simulation configuration is assembled in the input deck.) As
+   such, vpic_simulation pointers do not point to older objects.  We
+   thus need to use the checkpt_fptr functions and write a reanimator.
+
+   FIXME: We could avoid this by giving each one of the objects pointed
+   to proper resize semantics so we could then create the objects during
+   vpic_simulation construction (as opposed to after it). */
+
+void
+checkpt_vpic_simulation( const vpic_simulation * vpic ) {
+  CHECKPT( vpic, 1 );
+  CHECKPT_PTR( vpic->rng );
+  CHECKPT_PTR( vpic->grid );
+  CHECKPT_FPTR( vpic->material_list );
+  CHECKPT_FPTR( vpic->field_array );
+  CHECKPT_FPTR( vpic->interpolator_array );
+  CHECKPT_FPTR( vpic->accumulator_array );
+  CHECKPT_FPTR( vpic->hydro_array );
+  CHECKPT_FPTR( vpic->species_list );
+  CHECKPT_FPTR( vpic->particle_bc_list );
+  CHECKPT_FPTR( vpic->emitter_list );
+}
+
+vpic_simulation *
+restore_vpic_simulation( void ) {
+  vpic_simulation * vpic;
+  RESTORE( vpic );
+  RESTORE_PTR( vpic->rng );
+  RESTORE_PTR( vpic->grid );
+  RESTORE_FPTR( vpic->material_list );
+  RESTORE_FPTR( vpic->field_array );
+  RESTORE_FPTR( vpic->interpolator_array );
+  RESTORE_FPTR( vpic->accumulator_array );
+  RESTORE_FPTR( vpic->hydro_array );
+  RESTORE_FPTR( vpic->species_list );
+  RESTORE_FPTR( vpic->particle_bc_list );
+  RESTORE_FPTR( vpic->emitter_list );
+  return vpic;
+}
+
+void
+reanimate_vpic_simulation( vpic_simulation * vpic ) {
+  REANIMATE_FPTR( vpic->material_list );
+  REANIMATE_FPTR( vpic->field_array );
+  REANIMATE_FPTR( vpic->interpolator_array );
+  REANIMATE_FPTR( vpic->accumulator_array );
+  REANIMATE_FPTR( vpic->hydro_array );
+  REANIMATE_FPTR( vpic->species_list );
+  REANIMATE_FPTR( vpic->particle_bc_list );
+  REANIMATE_FPTR( vpic->emitter_list );
+}
+
 vpic_simulation::vpic_simulation() {
+  CLEAR( this, 1 );
+
+  /* Set non-zero defaults */
   verbose = 1;
-  step = 0;
-  num_step = 0;
   num_comm_round = 3;
-  status_interval = 0;
-  clean_div_e_interval = 0; num_div_e_round = 2;
-  clean_div_b_interval = 0; num_div_b_round = 2;
-  sync_shared_interval = 0;
- 
-  quota=0;
-  restart_interval=0;
-  hydro_interval=0;
-  field_interval=0;
-  particle_interval=0;
- 
-  rng = NULL;
-  material_list = NULL;
-  grid = NULL;
-  field_advance = NULL;
-  field = NULL; // FIXME: TEMPORARY HACKS
-  interpolator = NULL;
-  accumulator = NULL;
-  hydro = NULL;
-  species_list = NULL;
-  emitter_list = NULL;
- 
-  // Allow run-time modification of variables
-  quota=11;
- 
-  CLEAR( user_global, USER_GLOBAL_SIZE );
+  num_div_e_round = 2;
+  num_div_b_round = 2;
+
+  grid = new_grid();
+  rng  = new_mt_rng( rank() );
+
+  REGISTER_OBJECT( this, checkpt_vpic_simulation,
+                   restore_vpic_simulation, reanimate_vpic_simulation );
 }
  
 vpic_simulation::~vpic_simulation() {
-  verbose = 1;
-  step = 0;
-  num_step = 0;
-  num_comm_round = 3;
-  status_interval = 0;
-  clean_div_e_interval = 0; num_div_e_round = 2;
-  clean_div_b_interval = 0; num_div_b_round = 2;
-  sync_shared_interval = 0;
- 
-  quota=0;
-  restart_interval=0;
-  hydro_interval=0;
-  field_interval=0;
-  particle_interval=0;
- 
-  // FIXME: SHOULD DO REVERSE ORDER DELETION!
-  delete_mt_rng( rng );
-  delete_material_list( &material_list );
+  UNREGISTER_OBJECT( this );
+  delete_emitter_list( emitter_list );
+  delete_particle_bc_list( particle_bc_list );
+  delete_species_list( species_list );
+  delete_hydro_array( hydro_array );
+  delete_accumulator_array( accumulator_array );
+  delete_interpolator_array( interpolator_array );
+  delete_field_array( field_array );
+  delete_material_list( material_list );
   delete_grid( grid );
-  delete_field_advance( field_advance );
-  delete_interpolator( interpolator );
-  delete_accumulators( accumulator );
-  delete_hydro( hydro );
-  delete_species_list( &species_list );
-  delete_emitter_list( &emitter_list );
-  CLEAR( user_global, USER_GLOBAL_SIZE );
+  delete_mt_rng( rng );
 }
  

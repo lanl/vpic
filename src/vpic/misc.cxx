@@ -16,14 +16,13 @@ void
 vpic_simulation::inject_particle( species_t * sp,
                                   double x,  double y,  double z,
                                   double ux, double uy, double uz,
-                                  double q,  double age,
+                                  double w,  double age,
                                   int update_rhob ) {
   int ix, iy, iz;
 
   // Check input parameters
-  if( grid==NULL        ) ERROR(( "Grid not setup yet" ));
-  if( accumulator==NULL ) ERROR(( "Accumulator not setup yet" ));
-  if( sp==NULL          ) ERROR(( "Invalid species" ));
+  if( !accumulator_array ) ERROR(( "Accumulator not setup yet" ));
+  if( !sp                ) ERROR(( "Invalid species" ));
 
   const double x0 = (double)grid->x0, y0 = (double)grid->y0, z0 = (double)grid->z0;
   const double x1 = (double)grid->x1, y1 = (double)grid->y1, z1 = (double)grid->z1;
@@ -81,28 +80,98 @@ vpic_simulation::inject_particle( species_t * sp,
   p->ux = (float)ux;
   p->uy = (float)uy;
   p->uz = (float)uz;
-  p->q  = q;
+  p->w  = w;
 
-  if( update_rhob ) {
-    p->q = -q;
-    accumulate_rhob( field, p, grid );
-    p->q =  q;
-  }
+  if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
 
   if( age!=0 ) {
-    if( sp->nm>=sp->max_nm ) WARNING(( "No movers available to age particle" ));
+    if( sp->nm>=sp->max_nm )
+      WARNING(( "No movers available to age injected  particle" ));
     particle_mover_t * pm = sp->pm + sp->nm;
     age *= grid->cvac*grid->dt/sqrt( ux*ux + uy*uy + uz*uz + 1 );
     pm->dispx = ux*age*grid->rdx;
     pm->dispy = uy*age*grid->rdy;
     pm->dispz = uz*age*grid->rdz;
     pm->i     = sp->np-1;
-    sp->nm += move_p( sp->p, pm, accumulator, grid );
+    sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
   }
 
 }
+ 
+// Add capability to modify certain fields "on the fly" so that one
+// can, e.g., extend a run, change a quota, or modify a dump interval
+// without having to rerun from the start.
+//
+// File is specified in arg 3 slot in command line inputs.  File is in
+// ASCII format with each field in the form: field val [newline].
+//
+// Allowable values of field variables are: num_steps, quota,
+// checkpt_interval, hydro_interval, field_interval, particle_interval
+// ndfld, ndhyd, ndpar, ndhis, ndgrd, head_option,
+// istride, jstride, kstride, stride_option, pstride
+//
+// [x]_interval sets interval value for dump type [x].  Set interval
+// to zero to turn off dump type.
+//
+// FIXME-KJB: STRIP_CMDLINE ALLOWS SOMETHING CLEANER AND MORE POWERFUL
+ 
+#define SETIVAR( V, A, S ) do {                                          \
+    V=(A);                                                               \
+    if ( rank()==0 ) log_printf( "*** Modifying %s to value %d", S, A ); \
+  } while(0)
+
+#define SETDVAR( V, A, S ) do {                                           \
+    V=(A);                                                                \
+    if ( rank()==0 ) log_printf( "*** Modifying %s to value %le", S, A ); \
+  } while(0)
+
+#define ITEST( V, N, A ) \
+  if( sscanf( line, N " %d",  &iarg )==1 ) SETIVAR( V, A, N )
+
+#define DTEST( V, N, A ) \
+  if( sscanf( line, N " %le", &darg )==1 ) SETDVAR( V, A, N )
+ 
+void
+vpic_simulation::modify( const char *fname ) {
+  FILE *handle=NULL;
+  char line[128];
+  int iarg=0;
+  double darg=0;
+ 
+  // Open the modfile
+  handle = fopen( fname, "r" );
+  if( handle==NULL ) ERROR(( "Modfile read failed" ));
+  // Parse modfile
+  while( fgets( line, 127, handle ) ) {
+    DTEST( quota,             "quota",             darg );
+    ITEST( num_step,          "num_step",          iarg );
+    ITEST( checkpt_interval,  "checkpt_interval",  (iarg<0 ? 0 : iarg) );
+    ITEST( hydro_interval,    "hydro_interval",    (iarg<0 ? 0 : iarg) );
+    ITEST( field_interval,    "field_interval",    (iarg<0 ? 0 : iarg) );
+    ITEST( particle_interval, "particle_interval", (iarg<0 ? 0 : iarg) );
+    ITEST( ndfld, "ndfld", (iarg<0 ? 0 : iarg) );
+    ITEST( ndhyd, "ndhyd", (iarg<0 ? 0 : iarg) );
+    ITEST( ndpar, "ndpar", (iarg<0 ? 0 : iarg) );
+    ITEST( ndhis, "ndhis", (iarg<0 ? 0 : iarg) );
+    ITEST( ndgrd, "ndgrd", (iarg<0 ? 0 : iarg) );
+    ITEST( head_option, "head_option", (iarg<0 ? 0 : iarg) );
+    ITEST( istride, "istride", (iarg<1 ? 1 : iarg) );
+    ITEST( jstride, "jstride", (iarg<1 ? 1 : iarg) );
+    ITEST( kstride, "kstride", (iarg<1 ? 1 : iarg) );
+    ITEST( stride_option, "stride_option", (iarg<1 ? 1 : iarg) );
+    ITEST( pstride, "pstride", (iarg<1 ? 1 : iarg) );
+    ITEST( stepdigit, "stepdigit", (iarg<0 ? 0 : iarg) );
+    ITEST( rankdigit, "rankdigit", (iarg<0 ? 0 : iarg) );
+  }
+}
+
+#undef SETIVAR
+#undef SETDVAR
+#undef ITEST
+#undef DTEST
 
 #if defined(ENABLE_OPENSSL)
+#include <CheckSum.hxx>
 
 void vpic_simulation::checksum_fields(CheckSum & cs) {
   checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
@@ -133,20 +202,18 @@ void vpic_simulation::output_checksum_fields() {
   checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
     cs, "sha1");
 
-  const int nproc = mp_nproc(grid->mp);
-
-  if(nproc > 1) {
-    const unsigned int csels = cs.length*nproc;
+  if(nproc() > 1) {
+    const unsigned int csels = cs.length*nproc();
     unsigned char * sums(NULL);
 
-    if(mp_rank(grid->mp) == 0) {
+    if( rank() == 0) {
       sums = new unsigned char[csels];
     } // if
 
     // gather sums from all ranks
     mp_gather_uc(cs.value, sums, cs.length, grid->mp);
 
-    if(mp_rank(grid->mp) == 0) {
+    if( rank() == 0) {
       checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
       MESSAGE(("FIELDS SHA1CHECKSUM: %s", cs.strvalue));
       delete[] sums;
@@ -195,20 +262,18 @@ void vpic_simulation::output_checksum_species(const char * species) {
   CheckSum cs;
   checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
 
-  const int nproc = mp_nproc(grid->mp);
-
-  if(nproc > 1) {
-    const unsigned int csels = cs.length*nproc;
+  if(nproc() > 1) {
+    const unsigned int csels = cs.length*nproc();
     unsigned char * sums(NULL);
 
-	if(mp_rank(grid->mp) == 0) {
+	if( rank() == 0) {
     	sums = new unsigned char[csels];
 	} // if
 
 	// gather sums from all ranks
 	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
 
-	if(mp_rank(grid->mp) == 0) {
+	if( rank() == 0) {
 		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
 		MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
 		delete[] sums;

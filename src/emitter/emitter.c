@@ -9,12 +9,11 @@ num_emitter( const emitter_t * RESTRICT e_list ) {
 }
 
 void
-delete_emitter_list( emitter_t ** e_list ) {
+delete_emitter_list( emitter_t * e_list ) {
   emitter_t * e;
-  if( !e_list ) return;
-  while( *e_list ) {
-    e = (*e_list);
-    (*e_list) = e->next;
+  while( e_list ) {
+    e = e_list;
+    e_list = e_list->next;
     e->delete_e( e );
   }
 }
@@ -33,21 +32,20 @@ void
 checkpt_emitter_internal( const emitter_t * RESTRICT e ) {
   CHECKPT( e, 1 );
   CHECKPT_SYM( e->emit );
-  /* e->params will be checkpted by the specific handler */
   CHECKPT_SYM( e->delete_e );
   CHECKPT_ALIGNED( e->component, e->n_component, 128 );
   CHECKPT_PTR( e->next );
 }
 
 emitter_t *
-restore_emitter_internal( void ) {
+restore_emitter_internal( void * params ) {
   emitter_t * e;
   RESTORE( e );
   RESTORE_SYM( e->emit );
-  /* e->params will be restored by the specific handler */
   RESTORE_SYM( e->delete_e );
   RESTORE_ALIGNED( e->component );
   RESTORE_PTR( e->next );
+  e->params = params;
   return e;
 }
 
@@ -69,10 +67,9 @@ new_emitter_internal( emitter_t ** e_list,
   e->emit     = emit;
   e->delete_e = delete_e;
   e->params   = params;
-  e->next     = *e_list;
+  e->next     = NULL;     /* Set by define_emitter */
 
   REGISTER_OBJECT( e, checkpt, restore, reanimate );
-  *e_list = e;
   return e;
 }
 

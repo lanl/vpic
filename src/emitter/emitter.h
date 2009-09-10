@@ -19,10 +19,12 @@
 #define EXTRACT_LOCAL_CELL( component_id )     ((component_id)>>5)
 #define EXTRACT_COMPONENT_TYPE( component_id ) ((component_id)&31)
 
-struct emitter;
-
 typedef void
-(*emit_func_t)( struct emitter * RESTRICT e );
+(*emit_func_t)( /**/  void * RESTRICT              params,
+                const int  * RESTRICT ALIGNED(128) component,
+                int                                n_component );
+
+struct emitter;
 
 typedef void
 (*delete_emitter_func_t)( struct emitter * RESTRICT e );
@@ -44,7 +46,7 @@ int
 num_emitter( const emitter_t * e_list );
 
 void
-delete_emitter_list( emitter_t ** e_list );
+delete_emitter_list( emitter_t * e_list );
 
 // Each emittered must be sized once and only once
 
@@ -53,7 +55,7 @@ size_emitter( emitter_t * e,
               int n_component );
 
 // FIXME: WRITE SIMPLE EMITTERS FOR THINGS LIKE CONSTANT CURRENT PARTICLE
-// BEAMS OFF SURFACES
+// BEAMS
 
 // In child_langmuir.c
 
@@ -66,19 +68,21 @@ size_emitter( emitter_t * e,
 #define CCUBE          sqrt(1./6.)
 #define IVORY          sqrt(1./6.)
 
+// Must call define_emitter to actually add this to the simulation
+// Note: define_{surface,volume}_emitter will do this for you
+// automatically if you haven't already
+
 emitter_t *
-new_child_langmuir_emitter(
-  /**/  species_t            * RESTRICT sp,  // Species to emit
-  const interpolator_array_t * RESTRICT ia,  // For field interpolation
-  /**/  field_array_t        * RESTRICT fa,  // For rhob accum (injection)
-  /**/  accumulator_array_t  * RESTRICT aa,  // For Jf accum (aging)
-  /**/  mt_rng_t             * RESTRICT rng, // Random number source
-  int   n_emit_per_face, // How many particles to emit per face per step
-  float ut_perp,         // Perpendicular normalized thermal momentum
-  float ut_para,         // Parallel normalized thermal momentum
-  float thresh_e_norm,   // Only emit if E_norm>thresh_e_norm
-  float norm,            // Child-langmuir normalization
-  emitter_t ** e_list ); // Emitter list
+child_langmuir( /**/  species_t            * RESTRICT sp,  // Species to emit
+                const interpolator_array_t * RESTRICT ia,  // For field interpolation
+                /**/  field_array_t        * RESTRICT fa,  // For rhob accum (inject)
+                /**/  accumulator_array_t  * RESTRICT aa,  // For Jf accum (aging)
+                /**/  mt_rng_t             * RESTRICT rng, // Random number source
+                int   n_emit_per_face, // Particles to emit per face per step
+                float ut_perp,         // Perpendicular normalized thermal momentum
+                float ut_para,         // Parallel normalized thermal momentum
+                float thresh_e_norm,   // Only emit if E_norm>thresh_e_norm
+                float norm );          // Child-langmuir normalization
 
 END_C_DECLS
 

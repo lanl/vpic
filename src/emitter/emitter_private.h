@@ -15,11 +15,10 @@ void
 checkpt_emitter_internal( const emitter_t * e );
 
 emitter_t *
-restore_emitter_internal( void );
+restore_emitter_internal( void * params );
 
 emitter_t *
-new_emitter_internal( emitter_t ** e_list,
-                      emit_func_t emit,
+new_emitter_internal( emit_func_t emit,
                       void * params,
                       delete_emitter_func_t delete_e,
                       checkpt_func_t checkpt,

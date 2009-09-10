@@ -30,22 +30,19 @@ typedef struct child_langmuir {
 //   and have random ages.
 
 void
-emit_child_langmuir_emitter( emitter_t * RESTRICT e ) {
-  if( !e ) ERROR(( "Bad args" ));
+emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
+                     const int        * RESTRICT ALIGNED(128) component,
+                     int                                      n_component ) {
+  /**/  species_t * RESTRICT sp = cl->sp;
+  const interpolator_t   * RESTRICT ALIGNED(128) fi  = cl->ia->i;
+  /**/  field_t          * RESTRICT ALIGNED(128) f   = cl->fa->f;
+  /**/  accumulator_t    * RESTRICT ALIGNED(128) a   = cl->aa->a;
+  /**/  mt_rng_t         * RESTRICT              rng = cl->rng;
 
-  child_langmuir_t * RESTRICT cl = (child_langmuir_t *)e->params;
-  species_t        * RESTRICT sp = cl->sp;
-  grid_t           * RESTRICT g  = cl->sp->g;
+  /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
+  /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
+  /**/  grid_t           * RESTRICT              g   = sp->g;
 
-  const int              * RESTRICT ALIGNED(128) component = e->component;
-  /**/  particle_t       * RESTRICT ALIGNED(128) p         = sp->p;
-  /**/  particle_mover_t * RESTRICT ALIGNED(128) pm        = sp->pm;
-  const interpolator_t   * RESTRICT ALIGNED(128) fi        = cl->ia->i;
-  /**/  field_t          * RESTRICT ALIGNED(128) f         = cl->fa->f;
-  /**/  accumulator_t    * RESTRICT ALIGNED(128) a         = cl->aa->a;
-  /**/  mt_rng_t         * RESTRICT              rng       = cl->rng;
-
-  const int nc               = e->n_component;
   const int max_np           = sp->max_np;
   const int max_nm           = sp->max_nm;
   const int np_emit_per_face = cl->n_emit_per_face;
@@ -72,7 +69,7 @@ emit_child_langmuir_emitter( emitter_t * RESTRICT e ) {
 
   // Loop over all components of the region
 
-  for( c=0; c<nc; c++ ) {
+  for( c=0; c<n_component; c++ ) {
     cc = component[c];
     i  = EXTRACT_LOCAL_CELL( cc );
 
@@ -141,18 +138,17 @@ emit_child_langmuir_emitter( emitter_t * RESTRICT e ) {
 void
 checkpt_child_langmuir( const emitter_t * e ) {
   const child_langmuir_t * cl = (const child_langmuir_t *)e->params;
-  checkpt_emitter_internal( e );
   CHECKPT( cl, 1 );
   CHECKPT_PTR( cl->sp );
   CHECKPT_PTR( cl->ia );
   CHECKPT_PTR( cl->fa );
   CHECKPT_PTR( cl->aa );
   CHECKPT_PTR( cl->rng );
+  checkpt_emitter_internal( e );
 }
 
 emitter_t *
 restore_child_langmuir( void ) {
-  emitter_t * e = restore_emitter_internal();
   child_langmuir_t * cl;
   RESTORE( cl );
   RESTORE_PTR( cl->sp );
@@ -160,29 +156,28 @@ restore_child_langmuir( void ) {
   RESTORE_PTR( cl->fa );
   RESTORE_PTR( cl->aa );
   RESTORE_PTR( cl->rng );
-  e->params = cl;
-  return e;
+  return restore_emitter_internal( cl );
 }
 
 void
-delete_child_langmuir_emitter( emitter_t * e ) {
+delete_child_langmuir( emitter_t * e ) {
   if( !e ) return;
-  FREE( e->params );
+  child_langmuir_t * cl = (child_langmuir_t *)e->params;
   delete_emitter_internal( e );
+  FREE( cl );
 }
 
 emitter_t *
-new_child_langmuir_emitter( /**/  species_t            * RESTRICT sp,
-                            const interpolator_array_t * RESTRICT ia,
-                            /**/  field_array_t        * RESTRICT fa,
-                            /**/  accumulator_array_t  * RESTRICT aa,
-                            /**/  mt_rng_t             * RESTRICT rng,
-                            int n_emit_per_face,
-                            float ut_para,
-                            float ut_perp,
-                            float thresh_e_norm,
-                            float norm,
-                            emitter_t ** e_list ) {
+child_langmuir( /**/  species_t            * RESTRICT sp,
+                const interpolator_array_t * RESTRICT ia,
+                /**/  field_array_t        * RESTRICT fa,
+                /**/  accumulator_array_t  * RESTRICT aa,
+                /**/  mt_rng_t             * RESTRICT rng,
+                int n_emit_per_face,
+                float ut_para,
+                float ut_perp,
+                float thresh_e_norm,
+                float norm ) {
   child_langmuir_t * cl;
 
   if( !sp || !ia || !fa || !aa || !rng ||
@@ -201,14 +196,11 @@ new_child_langmuir_emitter( /**/  species_t            * RESTRICT sp,
   cl->ut_perp         = ut_perp;
   cl->thresh_e_norm   = thresh_e_norm;
   cl->norm            = norm;
-
-  return new_emitter_internal( e_list,
-                               emit_child_langmuir_emitter,
+  return new_emitter_internal( (emit_func_t)emit_child_langmuir,
                                cl,
-                               delete_child_langmuir_emitter,
+                               delete_child_langmuir,
                                (checkpt_func_t)checkpt_child_langmuir,
                                (restore_func_t)restore_child_langmuir,
                                NULL );
 }
-
 

@@ -1,5 +1,3 @@
-#include "boundary.h"
-
 // Refluxing boundary condition on particles.  Calculate normalized
 // momenta from the various perp and para temperatures.  Then, sample
 // Maxwellian specra from Maxwellian distributsions that have the
@@ -37,29 +35,40 @@
 // dx_new = dx_old * (ux_new/ux_old) * sqrt((1+|u_old|**2)/(1+|u_new|**2))
 //
 // Written by:  Brian J. Albright, X-1, LANL   April, 2005
-// Revamped by KJB, May 2008
+// Revamped by KJB, May 2008, Sep 2009
+
+#define IN_boundary
+#include "boundary_private.h"
+ 
+/* Private interface ********************************************************/
+
+typedef struct maxwellian_reflux {
+  species_t * sp_list;
+  mt_rng_t  * rng;
+  float     * ut_para;
+  float     * ut_perp;
+} maxwellian_reflux_t;
 
 #ifndef M_SQRT2
 #define M_SQRT2 (1.4142135623730950488016887242096981)
 #endif
- 
-// FIXME: MIGHT WANT TO CHECK THAT SP_ID DOESN'T OVERFLOW
 
+/* FIXME: DON'T IGNORE MAX_PI */
 int
-maxwellian_reflux( void * _mr,
-                   particle_t          * RESTRICT r, 
-                   particle_mover_t    * RESTRICT pm,
-                   field_t             * RESTRICT f,
-                   accumulator_t       * RESTRICT a, 
-                   const grid_t        * RESTRICT g,
-                   species_t           * RESTRICT s, 
-                   particle_injector_t * RESTRICT pi,
-                   mt_rng_t            * RESTRICT rng,
-                   int face ) {
-  maxwellian_reflux_t * RESTRICT mr = (maxwellian_reflux_t *)_mr;
-  int32_t sp_id = s->id;
-  float ut_para = mr->ut_para[sp_id]; 
-  float ut_perp = mr->ut_perp[sp_id];
+interact_maxwellian_reflux( maxwellian_reflux_t * RESTRICT mr,
+                            species_t           * RESTRICT sp,
+                            particle_t          * RESTRICT p, 
+                            particle_mover_t    * RESTRICT pm,
+                            particle_injector_t * RESTRICT pi,
+                            int                            max_pi,
+                            int                            face ) {
+  const grid_t   * RESTRICT g   = sp->g;
+  /**/  mt_rng_t * RESTRICT rng = mr->rng;
+
+  const int32_t sp_id   = sp->id;
+  const float   ut_para = mr->ut_para[sp_id]; 
+  const float   ut_perp = mr->ut_perp[sp_id];
+
   float u[3];                // u0 = para, u1 & u2 = perp
   float ux, uy, uz;          // x, y, z normalized momenta
   float dispx, dispy, dispz; // Particle displacement
@@ -146,7 +155,7 @@ maxwellian_reflux( void * _mr,
   dispx = g->dx * pm->dispx;
   dispy = g->dy * pm->dispy;
   dispz = g->dz * pm->dispz;
-  ratio = r->ux*r->ux + r->uy*r->uy + r->uz*r->uz;
+  ratio = p->ux*p->ux + p->uy*p->uy + p->uz*p->uz;
   ratio = sqrtf( ( ( 1+ratio )*( dispx*dispx + dispy*dispy + dispz*dispz ) ) /
                  ( ( 1+(ux*ux+uy*uy+uz*uz) )*( FLT_MIN+ratio ) ) );
   dispx = ux * ratio * g->rdx;
@@ -160,18 +169,83 @@ maxwellian_reflux( void * _mr,
   // if( ratio<=0 || ratio>=g->dt*g->cvac )
   //   WARNING(( "Bizarre behavior detected in maxwellian_reflux" ));
 
-  pi->dx    = r->dx;
-  pi->dy    = r->dy;
-  pi->dz    = r->dz;
-  pi->i     = r->i;
+  pi->dx    = p->dx;
+  pi->dy    = p->dy;
+  pi->dz    = p->dz;
+  pi->i     = p->i;
   pi->ux    = ux;
   pi->uy    = uy;
   pi->uz    = uz;
-  pi->q     = r->q;
+  pi->w     = p->w;
   pi->dispx = dispx;
   pi->dispy = dispy;
   pi->dispz = dispz;
   pi->sp_id = sp_id;
   return 1;
+}
+
+void
+checkpt_maxwellian_reflux( const particle_bc_t * RESTRICT pbc ) {
+  const maxwellian_reflux_t * RESTRICT mr =
+    (const maxwellian_reflux_t *)pbc->params;
+  CHECKPT( mr, 1 );
+  CHECKPT_PTR( mr->sp_list );
+  CHECKPT_PTR( mr->rng     );
+  CHECKPT( mr->ut_para, num_species( mr->sp_list ) );
+  CHECKPT( mr->ut_perp, num_species( mr->sp_list ) );
+  checkpt_particle_bc_internal( pbc );
+}
+
+particle_bc_t *
+restore_maxwellian_reflux( void ) {
+  maxwellian_reflux_t * mr;
+  RESTORE( mr );
+  RESTORE_PTR( mr->sp_list );
+  RESTORE_PTR( mr->rng     );
+  RESTORE( mr->ut_para );
+  RESTORE( mr->ut_perp );
+  return restore_particle_bc_internal( mr );
+}
+
+void
+delete_maxwellian_reflux( particle_bc_t * RESTRICT pbc ) {
+  if( !pbc ) return;
+  maxwellian_reflux_t * mr = (maxwellian_reflux_t *)pbc->params;
+  delete_particle_bc_internal( pbc );
+  FREE( mr );
+}
+
+/* Public interface *********************************************************/
+
+particle_bc_t *
+maxwellian_reflux( species_t * RESTRICT sp_list,
+                   mt_rng_t  * RESTRICT rng ) {
+  if( !sp_list || !rng ) ERROR(( "Bad args" ));
+  maxwellian_reflux_t * mr;
+  MALLOC( mr, 1 );
+  mr->sp_list = sp_list;
+  mr->rng     = rng;
+  MALLOC( mr->ut_para, num_species( mr->sp_list ) );
+  MALLOC( mr->ut_perp, num_species( mr->sp_list ) );
+  CLEAR( mr->ut_para, num_species( mr->sp_list ) );
+  CLEAR( mr->ut_perp, num_species( mr->sp_list ) );
+  return new_particle_bc_internal( (particle_bc_func_t)interact_maxwellian_reflux,
+                                   mr,
+                                   delete_maxwellian_reflux,
+                                   (checkpt_func_t)checkpt_maxwellian_reflux,
+                                   (restore_func_t)restore_maxwellian_reflux,
+                                   NULL );
+}
+
+/* FIXME: NOMINALLY, THIS INTERFACE SHOULD TAKE kT */
+void
+set_reflux_temp( /**/  particle_bc_t * RESTRICT pbc,
+                 const species_t     * RESTRICT sp,
+                 float ut_para,
+                 float ut_perp ) {
+  if( !pbc || !sp || ut_para<0 || ut_perp<0 ) ERROR(( "Bad args" ));
+  maxwellian_reflux_t * RESTRICT mr = (maxwellian_reflux_t *)pbc->params;
+  mr->ut_para[sp->id] = ut_para;
+  mr->ut_perp[sp->id] = ut_perp;
 }
 

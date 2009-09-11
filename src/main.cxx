@@ -10,107 +10,88 @@
 
 #include "vpic/vpic.hxx"
 
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-#include <fenv.h>
+/* The simulation variable is set up this way so both the checkpt
+   service and main can see it.  This allows main to find where
+   the restored objects are after a restore. */
 
-#ifndef PPE_ROUNDING_MODE
-#define PPE_ROUNDING_MODE FE_TONEAREST
-#endif
+vpic_simulation * simulation = NULL;
 
-# endif
+void
+checkpt_main( vpic_simulation ** _simulation ) {
+  CHECKPT_PTR( simulation );
+}
+
+vpic_simulation **
+restore_main( void ) {
+  RESTORE_PTR( simulation );
+  return &simulation;
+}
 
 int
 main( int argc,
       char **argv ) {
-  int m, n;
+  boot_services( &argc, &argv );
+ 
+  const char * fbase = strip_cmdline_string(&argc, &argv, "--restore", NULL);
+  if( fbase ) {
 
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
+    // We are restoring from a checkpoint.  Determine checkpt file
+    // for this process, restore all the objects in that file,
+    // wait for all other processes to finishing restoring (such
+    // that communication within reanimate functions is safe),
+    // reanimate all the objects and issue a final barrier to
+    // so that all processes come of a restore together.
 
-  // set PPU rounding mode
-  // FIXME: IS THIS SAFE (I.E. DO LIBRARIES LIKE LIBM EXPECT US TO CHANGE
-  // THIS GLOBALLY?)
-  // FIXME: ALTIVEC ROUNDING MODE SHOULD BE SET TO MATCH IF USING
-  // ALTIVEC!
-  fesetround(PPE_ROUNDING_MODE);
+    if( world_rank==0 ) log_printf( "*** Restoring from \"%s\"\n", fbase );
+    char fname[256];
+    sprintf( fname, "%s.%i", fbase, world_rank );
+    restore_objects( fname );
+    mp_barrier();
+    reanimate_objects();
+    mp_barrier();
 
-  // Allow processing of SPU-accelerated pipeline workloads on the 8 SPUs
+  } else {
 
-  // Strip threads-per-process arguments from the argument list
+    // We are initializing from scratch.
 
-  int spp = 8;
-  for( m=n=0; n<argc; n++ )
-    if( strncmp( argv[n], "-spp=", 5 )==0 ) spp = atoi( argv[n]+5 );
-    else                                    argv[m++] = argv[n];
-  argv[m] = NULL; // ANSI - argv is NULL terminated
-  argc = m;
+    if( world_rank==0 ) log_printf( "*** Initializing\n" );
+    simulation = new vpic_simulation;
+    simulation->initialize( argc, argv );
+    REGISTER_OBJECT( &simulation, checkpt_main, restore_main, NULL );
 
-  spu.boot( spp, // Total number of SPUs for processing pipeline workloads
-            0 ); // This PPU thread physically cannot process SPU workloads!
+  }
+ 
+  // Do any post init/restore simulation modifications
+  // FIXME-KJB: STRIP_CMDLINE COULD MAKE THIS CLEANER AND MORE POWERFUL.
+ 
+  fbase = strip_cmdline_string( &argc, &argv, "--modify", NULL );
+  if( fbase ) {
+    if( world_rank==0 ) log_printf( "*** Modifying from \"%s\"\n", fbase );
+    simulation->modify( fbase );  
+  }
+ 
+  // Advance the simulation
 
-# endif
+  if( world_rank==0 ) log_printf( "*** Advancing\n" );
+  double elapsed = wallclock();
+  while( simulation->advance() ); 
+  elapsed = wallclock() - elapsed;
+  if( world_rank==0 ) {
+    int  s = (int)elapsed, m  = s/60, h  = m/60, d  = m/24, w = d/ 7;
+    /**/ s -= m*60,        m -= h*60, h -= d*24, d -= w*7;
+    log_printf( "*** Done (%gs / %iw:%id:%ih:%im:%is elapsed)\n",
+                elapsed, w, d, m, h, s );
+  }
 
-  // Strip threads-per-process arguments from the argument list
+  // Cleaning up
+ 
+  if( world_rank==0 ) log_printf( "*** Cleaning up\n" );
+  UNREGISTER_OBJECT( &simulation );
+  simulation->finalize();
+  delete simulation;
+  if( world_rank==0 ) log_printf( "normal exit\n" ); 
 
-# if defined(CELL_PPU_BUILD)
-  int tpp = 2;
-# else
-  int tpp = 1;
-# endif
-  for( m=n=0; n<argc; n++ )
-    if( strncmp( argv[n], "-tpp=", 5 )==0 ) tpp = atoi( argv[n]+5 );
-    else                                    argv[m++] = argv[n];
-  argv[m] = NULL; // ANSI - argv is NULL terminated
-  argc = m;
-  
-  thread.boot( tpp, 1 );
-  serial.boot( tpp, 1 );
-
-  // Note: Some MPIs will bind threads to cores if threads are booted
-  // after MPI is initialized.  So we start up the pipeline
-  // dispatchers _before_ starting up MPI.
-
-  mp_init(argc, argv);
-
-  vpic_simulation simulation; 
-
-  if( argc>=3 && strcmp(argv[1],"restart")==0 ) simulation.restart(argv[2]);
-  else simulation.initialize(argc,argv);
-  
-  // Allow us to change a few run variables such as quota, num_step
-  // "on the fly"
-
-  if ( argc==4 ) simulation.modify_runparams( argv[3] );  
-
-  // Put this here to avoid adding extra garbage to output
-  if( simulation.rank() == 0 ) {
-  	MESSAGE(("**** Beginning simulation advance with %d tpp ****", tpp));
-  } // if
-
-  double start = mp_wtime();
-  while( simulation.advance() ); 
-  double stop = mp_wtime();
-
-  if( simulation.rank()==0 )
-    MESSAGE(("simulation time: %lf\n", stop-start));
-
-  // Let all processors finish up
-
-  simulation.finalize();
-  
-  // Issue a termination message when we exit cleanly.
-  
-  if( simulation.rank()==0 ) 
-    MESSAGE(( "Maximum number of time steps reached.  Job has completed." )); 
-
-  mp_finalize( simulation.grid_mp() );
-
-  serial.halt();
-  thread.halt();
-
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  spu.halt();
-# endif
-
+  halt_services();
   return 0;
 }
 

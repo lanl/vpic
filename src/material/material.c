@@ -83,12 +83,11 @@ delete_material( material_t * m ) {
 }
 
 void
-delete_material_list( material_t ** m_list ) {
-  material_t *m;
-  if( m_list==NULL ) return;
-  while( *m_list!=NULL ) {
-    m = *m_list;
-    *m_list = m->next;
+delete_material_list( material_t * m_list ) {
+  material_t * m;
+  while( m_list ) {
+    m = m_list;
+    m_list = m_list->next;
     delete_material( m );
   }
 }

@@ -60,7 +60,7 @@ new_material( const char * name,
               material_t ** m_list );
 
 void
-delete_material_list( material_t ** m_list );
+delete_material_list( material_t * m_list );
 
 material_t *
 find_material_id( material_id id,

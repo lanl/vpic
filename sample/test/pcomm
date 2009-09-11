@@ -27,31 +27,26 @@ begin_initialization {
 
   num_step = 40;
 
+  define_units( 1, 1 );
+  define_timestep( 0.5 );
   define_periodic_grid( 0,  0,  0,     // Box low corner
                         10, 10, 10,    // Box high corner
                         10, 10, 10,    // Box resolution
                         2,  2,  2   ); // Topology
-  grid->dt = 0.5;
-  grid->cvac = 1;
-  grid->eps0 = 1;
-  grid->damp = 0;
   define_material( "vacuum", 1 );
-  finalize_field_advance();
-
-  species_t * sp = define_species( "test_species", 1, 1, 1, 0, 0 );
-
+  define_field_array();
+  species_t * sp = define_species( "test_species", 1, 1, 1, 1, 0, 0 );
   inject_particle( sp, 2.5, 2.5, 2.5, 1, 1, 1, 0, 0, 0 );
-
   global->fail = 0;
 }
 
 begin_diagnostics {
   species_t * sp = find_species_name( "test_species", species_list );
 
-  if( step==0 ) {
+  if( step()==0 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) || 
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -59,10 +54,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==10 ) {
+  if( step()==10 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(5,5,5) || 
+          sp->p[0].i!=voxel(5,5,5) || 
           sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -70,10 +65,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==11 ) {
+  if( step()==11 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(1,1,1) || 
+          sp->p[0].i!=voxel(1,1,1) || 
           sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -81,10 +76,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==20 ) {
+  if( step()==20 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) || 
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -93,10 +88,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==30 ) {
+  if( step()==30 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(5,5,5) || 
+          sp->p[0].i!=voxel(5,5,5) || 
           sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -104,10 +99,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==31 ) {
+  if( step()==31 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(1,1,1) || 
+          sp->p[0].i!=voxel(1,1,1) || 
           sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -115,10 +110,10 @@ begin_diagnostics {
     }
   }
 
-  if( step==40 ) {
+  if( step()==40 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=LOCAL_CELL_ID(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) || 
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -126,7 +121,7 @@ begin_diagnostics {
     }
   }
 
-  if( step==40 ) {
+  if( step()==40 ) {
     for( int i=0; i<8; i++ ) {
       if( rank()==i ) {
         if( global->fail ) { sim_log_local( "FAIL" ); abort(1); }

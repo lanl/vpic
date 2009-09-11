@@ -4,7 +4,7 @@
 // wc = q B / m gamma ==> wc dt = q dt B / m gamma ==>
 // wc dt = q dt c B / m c gamma ==> wc dt = 2 ( q dt / 2 m c ) ( c B ) / gamma
 //
-// With c = 1, dt = 1, gamma = 2, q/m = 2
+// With c = 1, dt = 1, gamma = 2, q = 2, m = 1
 // wc dt = c B
 // 2 pi dt / tauc = c B
 // 2 pi / Nstep = c B
@@ -24,36 +24,33 @@ begin_initialization {
   int npart = 131;
   int nstep = 64;
 
-  grid->dt   = 1;
-  grid->cvac = 1;
-  grid->eps0 = 1;
+  define_units( 1, 1 );
+  define_timestep( 1 );
   define_periodic_grid( 0, 0, 0,   // Grid low corner
                         L, L, L,   // Grid high corner
                         1, 1, 1,   // Grid resolution
                         1, 1, 1 ); // Processor configuration
   define_material("vacuum",1.0,1.0,0.0);
-  finalize_field_advance( standard_field_advance );
+  define_field_array();
 
   field(1,1,1).cbz  = 2*M_PI / (double)nstep;
   field(1,1,2).cbz  = 2*M_PI / (double)nstep;
 
-  species_t * sp = define_species( "test_species", 2., npart, npart, 0, 0 );
-  repeat(npart)
-    inject_particle( sp,
-                     uniform_rand(0,L),
-                     uniform_rand(0,L),
-                     uniform_rand(0,L),
-                     1, 1, 1, // Gamma = 2
-                     uniform_rand(0,1),
-                     0, 0 );
+  species_t * sp = define_species( "test_species", 2, 1, npart, npart, 0, 0 );
+  repeat(npart) inject_particle( sp,
+                                 uniform_rand(0,L),
+                                 uniform_rand(0,L),
+                                 uniform_rand(0,L),
+                                 1, 1, 1, // Gamma = 2
+                                 uniform_rand(0,1),
+                                 0, 0 );
 
   // Hack into vpic internals
 
   int failed = 0;
-  load_interpolator( interpolator, field, grid );
+  load_interpolator_array( interpolator_array, field_array );
   for( int n=0; n<nstep; n++ ) {
-    advance_p(sp->p,sp->np,sp->q_m,sp->pm,sp->max_nm,
-              accumulator,interpolator,grid);
+    advance_p( sp, accumulator_array, interpolator_array );
     double ux = cos(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
                 cos(2*M_PI*(0.125*nstep)      /(double)nstep);
     double uy = sin(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
@@ -71,7 +68,7 @@ begin_initialization {
                  sp->p[m].ux << " " <<
                  sp->p[m].uy << " " <<
                  sp->p[m].uz << " " <<
-                 sp->p[m].q  << " " <<
+                 sp->p[m].w  << " " <<
                  ux << " " <<
                  uy << " " << 
                  sp->p[m].ux-ux << " " <<

@@ -21,7 +21,7 @@ function run() {
   do
     for SPP in 1 8 # 2 3 4 5 6 7 8
     do
-      EXE="mpirun -np $NP ../../mprelay.op $TEST.ppu $* -tpp=$TPP -spp=$SPP"
+      EXE="mpirun -np $NP ../../mprelay.op $TEST.ppu $* --tpp $TPP --spp $SPP"
       echo "----------------------------------------------------------------"
       echo "Running $EXE"
       echo "----------------------------------------------------------------"

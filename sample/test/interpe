@@ -14,15 +14,14 @@ begin_initialization {
   double L  = 1e10;
   int npart = 131;
 
-  grid->dt = 1;
-  grid->cvac = 1;
-  grid->eps0 = 1;
+  define_units( 1, 1 );
+  define_timestep( 1 );
   define_periodic_grid( 0, 0, 0,   // Grid low corner
                         L, L, L,   // Grid high corner
                         1, 1, 1,   // Grid resolution
                         1, 1, 1 ); // Processor configuration
   define_material("vacuum",1.0,1.0,0.0);
-  finalize_field_advance( _standard_field_advance );
+  define_field_array();
 
   field(1,1,1).ex  = 0;
   field(1,2,1).ex  = 1;
@@ -39,31 +38,30 @@ begin_initialization {
   field(1,2,1).ez  = 10;
   field(2,2,1).ez  = 11;
 
-  species_t * sp = define_species( "test_species", 1., npart, npart, 0, 0 );
+  species_t * sp = define_species( "test_species", 0.5, 0.5, npart, npart, 0, 0 );
 
   // Hack into vpic internals 
 
   int failed = 0;
-  load_interpolator(interpolator,field,grid); 
+  load_interpolator_array( interpolator_array, field_array ); 
   sp->np = npart; 
 
 # define test_e(X,DX,DY,DZ,VAL)                         \
   for( int n=0; n<npart; n++ ) {                        \
-    sp->p[n].i  = LOCAL_CELL_ID(1,1,1);                 \
+    sp->p[n].i  = voxel(1,1,1);                         \
     sp->p[n].dx = DX;                                   \
     sp->p[n].dy = DY;                                   \
     sp->p[n].dz = DZ;                                   \
     sp->p[n].ux = 0;                                    \
     sp->p[n].uy = 0;                                    \
     sp->p[n].uz = 0;                                    \
-    sp->p[n].q  = mt_drandn(rng);                       \
+    sp->p[n].w  = fabs( mt_drandn(rng) );               \
   }                                                     \
-  advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,\
-             accumulator, interpolator, grid );         \
+  advance_p( sp, accumulator_array, interpolator_array ); \
   for( int n=0; n<npart; n++ ) {                        \
     if( sp->p[n].u##X != VAL ) {                        \
       failed++;                                         \
-      sim_log(     "e"#X << " "                         \
+      sim_log(  "e"#X << " "                            \
                 << DX << " "                            \
                 << DY << " "                            \
                 << DZ << " "                            \
@@ -76,7 +74,7 @@ begin_initialization {
                 << sp->p[n].ux << " "                   \
                 << sp->p[n].uy << " "                   \
                 << sp->p[n].uz << " "                   \
-                << sp->p[n].q );                        \
+                << sp->p[n].w );                        \
     }                                                   \
   }
 

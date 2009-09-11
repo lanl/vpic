@@ -21,7 +21,7 @@ function run() {
 
   for TPP in 1 2 3 4
   do
-    EXE="mpirun -np $NP $TEST.$EXT $* -tpp=$TPP"
+    EXE="mpirun -np $NP $TEST.$EXT $* --tpp $TPP"
     echo "------------------------------------------------------------------"
     echo "Running $EXE"
     echo "------------------------------------------------------------------"

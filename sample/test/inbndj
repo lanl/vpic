@@ -16,20 +16,18 @@ begin_globals {
 };
 
 begin_initialization {
-  seed_rand(time(NULL));
+  seed_rand( boot_timestamp );
 
-  grid->dt = 1;
-  grid->cvac = 1;
-  grid->eps0 = 1;
-
+  define_units( 1, 1 );
+  define_timestep( 1 );
   define_periodic_grid( 0,   0,   0,   // Grid low corner
                         0.5, 0.5, 0.5, // Grid high corner
                         1, 1, 1,       // Grid resolution
                         1, 1, 1 );     // Processor configuration
   define_material("vacuum",1.0,1.0,0.0);
-  finalize_field_advance(_vacuum_field_advance);
+  define_field_array();
 
-  species_t * sp = define_species( "test_species", 1., NPART, NPART, 0, 0 );
+  species_t * sp = define_species( "test_species", 2., 1., NPART, NPART, 0, 0 );
 
   // Hack into vpic internals
 
@@ -49,14 +47,14 @@ begin_initialization {
     double vy_c = cy*( (double)dy1[n] - (double)dy0 );
     double vz_c = cz*( (double)dz1[n] - (double)dz0 );
     double rgamma = sqrt( 1. - ( vx_c*vx_c + vy_c*vy_c + vz_c*vz_c ) );
-    sp->p[n].i  = LOCAL_CELL_ID(1,1,1);
+    sp->p[n].i  = voxel(1,1,1);
     sp->p[n].dx = dx0;
     sp->p[n].dy = dy0;
     sp->p[n].dz = dz0;
     sp->p[n].ux = vx_c/rgamma;
     sp->p[n].uy = vy_c/rgamma;
     sp->p[n].uz = vz_c/rgamma;
-    sp->p[n].q = 1;
+    sp->p[n].w  = uniform_rand(0,1);
   }
 
   // Compute the initial charge density
@@ -65,22 +63,22 @@ begin_initialization {
   CLEAR( rho0, 8 );
   for( int n=0; n<NPART; n++ ) {
     double dx = sp->p[n].dx, dy = sp->p[n].dy, dz = sp->p[n].dz;
-    rho0[0] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
-    rho0[1] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
-    rho0[2] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
-    rho0[3] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
-    rho0[4] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
-    rho0[5] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
-    rho0[6] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
-    rho0[7] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
+    double q  = 0.125*(double)sp->q*(double)sp->p[n].w;
+    rho0[0] += q * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho0[1] += q * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho0[2] += q * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho0[3] += q * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho0[4] += q * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho0[5] += q * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho0[6] += q * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
+    rho0[7] += q * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
   }
 
   // Advance the particles
 
-  clear_accumulators( accumulator, grid );
-  advance_p( sp->p, sp->np, sp->q_m, sp->pm, sp->max_nm,
-             accumulator,interpolator,grid);
-  reduce_accumulators( accumulator, grid );
+  clear_accumulator_array( accumulator_array );
+  advance_p( sp, accumulator_array, interpolator_array );
+  reduce_accumulator_array( accumulator_array );
 
   // Compute the final charge density
 
@@ -88,14 +86,15 @@ begin_initialization {
   CLEAR( rho1, 8 );
   for( int n=0; n<NPART; n++ ) {
     double dx = sp->p[n].dx, dy = sp->p[n].dy, dz = sp->p[n].dz;
-    rho1[0] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
-    rho1[1] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
-    rho1[2] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
-    rho1[3] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
-    rho1[4] += 0.125 * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
-    rho1[5] += 0.125 * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
-    rho1[6] += 0.125 * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
-    rho1[7] += 0.125 * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
+    double q  = 0.125*(double)sp->q*(double)sp->p[n].w;
+    rho1[0] += q * ( 1 - dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho1[1] += q * ( 1 + dx ) * ( 1 - dy ) * ( 1 - dz );
+    rho1[2] += q * ( 1 - dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho1[3] += q * ( 1 + dx ) * ( 1 + dy ) * ( 1 - dz );
+    rho1[4] += q * ( 1 - dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho1[5] += q * ( 1 + dx ) * ( 1 - dy ) * ( 1 + dz );
+    rho1[6] += q * ( 1 - dx ) * ( 1 + dy ) * ( 1 + dz );
+    rho1[7] += q * ( 1 + dx ) * ( 1 + dy ) * ( 1 + dz );
   }
 
   // Compute the change in the charge density
@@ -105,7 +104,7 @@ begin_initialization {
 
   // Compute the div J
 
-  accumulator_t *a = &accumulator[LOCAL_CELL_ID(1,1,1)];
+  accumulator_t *a = &accumulator_array->a[ voxel(1,1,1) ];
   double divj[8];
   divj[0] = 0.25*(  (double)a->jx[0] + (double)a->jy[0] + (double)a->jz[0] ); // -1,-1,-1
   divj[1] = 0.25*( -(double)a->jx[0] + (double)a->jy[2] + (double)a->jz[1] ); //  1,-1,-1

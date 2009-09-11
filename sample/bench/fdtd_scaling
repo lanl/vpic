@@ -27,17 +27,15 @@ begin_initialization {
     abort(0);
   }
 
-  grid->dt = 0.99/sqrt(3.0);
-  grid->cvac = 1;
-  grid->eps0 = 1;
+  define_units( 1, 1 );
+  define_timestep( 0.99/sqrt(3.0) );
   define_periodic_grid( 0, 0, 0,                // Grid low corner
                         64*Npx, 64*Npy, 64*Npz, // Grid high corner
                         64*Npx, 64*Npy, 64*Npz, // Grid resolution
                         Npx, Npy, Npz );        // Processor configuration
 
   define_material("vacuum",1.0,1.0,0.0);
-
-  finalize_field_advance();
+  define_field_array( NULL, 0 );
 }
 
 begin_diagnostics {

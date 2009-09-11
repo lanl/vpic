@@ -45,7 +45,7 @@ OPTIMIZATION = -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasi
  
 CFLAGS   = ${CBRUTALITY}   ${OPTIMIZATION} -m64
 CXXFLAGS = ${CXXBRUTALITY} ${OPTIMIZATION} -m64
-LDFLAGS  = ${CXXFLAGS}                     -m64
+LDFLAGS  = -rdynamic                       -m64
 ARFLAGS  =
  
 #ifdef V4_ACCELERATION

@@ -111,7 +111,7 @@ build.EXTENSION:	libvpic.EXTENSION.a
 		echo export INPUT_DECK_DIR='`pwd`' >> build.EXTENSION
 		echo "pushd . >& /dev/null" >> build.EXTENSION
 		echo cd $(PWD) >> build.EXTENSION 
-		echo $(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) src/main.cxx src/deck_wrapper.cxx -DINPUT_DECK='$$INPUT_DECK_DIR/$$1' -o '$$INPUT_DECK_DIR/$$1'.EXTENSION $(LIBRARY_DIRS) -L. -lvpic.EXTENSION $(LIBRARIES) >> build.EXTENSION
+		echo $(CXX) $(CXXFLAGS) $(LDFLAGS) $(INCLUDE_DIRS) src/main.cxx src/deck_wrapper.cxx -DINPUT_DECK='$$INPUT_DECK_DIR/$$1' -o '$$INPUT_DECK_DIR/$$1'.EXTENSION $(LIBRARY_DIRS) -L. -lvpic.EXTENSION $(LIBRARIES) >> build.EXTENSION
 		echo "popd >& /dev/null" >> build.EXTENSION
 		chmod u+x build.EXTENSION
 

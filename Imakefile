@@ -16,49 +16,40 @@ LIBRARY_DIRS +=
 
 /* Modules for the modules library */
 
-AddModule(util,src/util,util)
+AddModule(util,src/util,util_base boot)
+AddModule(checkpt,src/util/checkpt,checkpt checkpt_io)
 AddModule(mtrand,src/util/mtrand,mtrand)
-/*AddModule(mp_old,src/util/mp_old,mp)*/
 AddModule(mp,src/util/mp,mp)
 AddModule(aais,src/util/mp/aais,)
 AddModule(relay,src/util/relay,)
 AddModule(relay_p2p,src/util/relay/p2p,)
 AddModule(relay_dmp,src/util/relay/dmp,)
 AddModule(io,src/util/io,)
-AddModule(dmp,src/util/mp/dmp,mp_dmp)
 AddModule(pipelines,src/util/pipelines,pipelines_serial pipelines_thread)
 AddModule(profile,src/util/profile,profile)
 AddModule(v4,src/util/v4,)
 
-AddModule(grid,src/grid,ops partition grid_structors grid_comm add_boundary distribute_voxels)
+AddModule(grid,src/grid,ops partition grid_structors grid_comm distribute_voxels)
 
 AddModule(material,src/material,material)
 
 AddModule(field_advance,src/field_advance,field_advance)
 
-AddModule(standard_field_advance,src/field_advance/standard,advance_b advance_e energy_f compute_curl_b compute_rhob compute_div_e_err compute_rms_div_e_err clean_div_e compute_div_b_err compute_rms_div_b_err clean_div_b local remote sfa)
+AddModule(standard_field_advance,src/field_advance/standard,advance_b advance_e energy_f compute_curl_b compute_rhob compute_div_e_err compute_rms_div_e_err clean_div_e compute_div_b_err compute_rms_div_b_err clean_div_b local remote sfa vacuum_advance_e vacuum_compute_curl_b vacuum_clean_div_e vacuum_compute_div_e_err vacuum_compute_rhob vacuum_energy_f)
 
-AddModule(vacuum_field_advance,src/field_advance/standard/vacuum,vfa_advance_e vfa_energy_f vfa_compute_curl_b vfa_compute_rhob vfa_compute_div_e_err vfa_clean_div_e vfa)
-
-#ifdef V4_ACCELERATION
-
-AddModule(standard_v4_field_advance,src/field_advance/standard/v4,v4_advance_b v4_advance_e v4_compute_curl_b v4_compute_div_b_err v4_clean_div_b sfa_v4)
-
-AddModule(vacuum_v4_field_advance,src/field_advance/standard/vacuum/v4,vfa_v4_advance_e vfa_v4)
-
-#endif
-
-AddModule(sf_interface,src/sf_interface,load_interpolator clear_accumulators reduce_accumulators unload_accumulator hydro sf_interface)
+/* FIXME: MERGE ACCUMULATORS FILES */
+AddModule(sf_interface,src/sf_interface,interpolator_array accumulator_array clear_accumulators reduce_accumulators unload_accumulator hydro_array)
 
 AddModule(species_advance,src/species_advance,species_advance)
 
-AddModule(standard_particle_advance,src/species_advance/standard,advance_p center_p uncenter_p energy_p boundary_p hydro_p move_p rho_p sort_p)
+AddModule(standard_particle_advance,src/species_advance/standard,advance_p center_p uncenter_p energy_p hydro_p move_p rho_p sort_p)
 
-AddModule(emitter,src/emitter,emitter child-langmuir ccube ivory)
+AddModule(emitter,src/emitter,emitter child_langmuir)
 
-AddModule(boundary,src/boundary,maxwellian_reflux absorb_tally link)
+/* FIXME: BRING BACK LINK */
+AddModule(boundary,src/boundary,boundary boundary_p maxwellian_reflux absorb_tally)
 
-AddModule(vpic,src/vpic,advance dump finalize initialize misc vpic)
+AddModule(vpic,src/vpic,vpic initialize advance dump misc)
 
 /* Additional directories to clean */
 

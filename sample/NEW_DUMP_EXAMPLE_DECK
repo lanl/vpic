@@ -98,8 +98,6 @@ begin_initialization {
 	// Average number of macro particles per cell per species
 	double nppc = 1;
 
-	double hy = Ly/ny;
-
 	// Asymptotic magnetic field strength
 	double b0 = me*c*wce/ec;
 
@@ -229,13 +227,8 @@ begin_initialization {
 	--------------------------------------------------------------------------*/
 
 	// basic grid parameters
-	grid->dx = hy;
-	grid->dy = hy;
-	grid->dz = hy;
-	grid->dt = dt;
-	grid->cvac = c;
-	grid->eps0 = eps0;
-	grid-> damp = damp;
+        define_units( c, eps0 );
+        define_timestep( dt );
 
 	print_available_ram();
 
@@ -253,18 +246,24 @@ begin_initialization {
 	set_domain_particle_bc( BOUNDARY( 1,0,0), reflect_particles );
 
 	/*--------------------------------------------------------------------------
+     * Setup materials
+	--------------------------------------------------------------------------*/
+	define_material( "vacuum", 1 );
+
+	/*--------------------------------------------------------------------------
+     * Setup field array
+	--------------------------------------------------------------------------*/
+
+	define_field_array( NULL, damp );
+
+	/*--------------------------------------------------------------------------
      * Setup the species
 	--------------------------------------------------------------------------*/
 
 	// Allow 20% more local_particles in case of non-uniformity
-	species_t * ele = define_species("ele",-ec/me,2.0*Ne/nproc(),-1,20,1);
-	species_t * ion = define_species("ion", ec/mi,2.0*Ne/nproc(),-1,20,1);
+	species_t * ele = define_species("ele",-ec,me,2.0*Ne/nproc(),-1,20,1);
+	species_t * ion = define_species("ion", ec,mi,2.0*Ne/nproc(),-1,20,1);
 
-	/*--------------------------------------------------------------------------
-     * Setup materials
-	--------------------------------------------------------------------------*/
-	define_material( "vacuum", 1 );
-	finalize_field_advance();
 
 	/*--------------------------------------------------------------------------
 	 * Note: define_material defaults to isotropic materials with mu=1,sigma=0
@@ -647,7 +646,7 @@ begin_initialization {
 } // begin_initialization
 
 #define should_dump(x) \
-	(global->x##_interval>0 && remainder(step, global->x##_interval) == 0)
+	(global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
 
 #include <FileIO.hxx>
 
@@ -699,7 +698,7 @@ begin_diagnostics {
 	 *   fileIO.close();
      *------------------------------------------------------------------------*/
 
-	if(!(step%5)) sim_log("Time step: " << step);
+	if(!(step()%5)) sim_log("Time step: " << step());
 
 	/*--------------------------------------------------------------------------
 	 * Data output directories
@@ -714,7 +713,7 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Normal rundata dump
      *------------------------------------------------------------------------*/
-	if(step==0) {
+	if(step()==0) {
 		dump_mkdir("fields");
 		dump_mkdir("ehydro");
 		dump_mkdir("Hhydro");
@@ -733,13 +732,13 @@ begin_diagnostics {
 	 * Normal rundata energies dump
      *------------------------------------------------------------------------*/
 	if(should_dump(energies)) {
-		dump_energies("rundata/energies", step == 0 ? 0 : 1);
+		dump_energies("rundata/energies", step()==0 ? 0 : 1);
 	} // if
 
 	/*--------------------------------------------------------------------------
 	 * Field data output
      *------------------------------------------------------------------------*/
-	if(step == 1 || should_dump(fields)) {
+	if(step()== 1 || should_dump(fields)) {
 		field_dump(global->fdParams);
 	} // if
 
@@ -760,15 +759,15 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Restart dump
      *------------------------------------------------------------------------*/
-	if(step == 50) {
-//	if(step && !(step%global->restart_interval)) {
+	if(step()== 50) {
+//	if(step() && !(step%global->restart_interval)) {
 		if(!global->rtoggle) {
 			global->rtoggle = 1;
-			dump_restart("restart/restart0", 0);
+			checkpt("restart/restart0", 0);
 		}
 		else {
 			global->rtoggle = 0;
-			dump_restart("restart/restart1", 0);
+			checkpt("restart/restart1", 0);
 		} // if
 	} // if
 
@@ -776,8 +775,8 @@ begin_diagnostics {
 	 * Elapsed time
      *------------------------------------------------------------------------*/
 #if defined(ENABLE_OPENSSL)
-	if(!(step%global->checksum_interval)) {
-		sim_log("Checksumming step " << step);
+	if(!(step()%global->checksum_interval)) {
+		sim_log("Checksumming step " << step());
 		output_checksum_fields();
 		output_checksum_species("ele");
 		output_checksum_species("ion");
@@ -787,14 +786,11 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Elapsed time
      *------------------------------------------------------------------------*/
-	double elapsed = mp_elapsed(grid->mp);
-	if(elapsed > global->quota_sec) {
-		dump_restart("restart/restart", 0);
+	if( uptime() > global->quota_sec) {
+		checkpt("restart/restart", 0);
 		sim_log("Restart complete");
 		sim_log("Allowed runtime exceeded.  Terminating...\n");
-		mp_barrier(grid->mp);
-		mp_finalize(grid->mp);	
-		exit(0);
+                step() = num_step;
 	} // if
 } // begin_diagnostics
 

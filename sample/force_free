@@ -102,22 +102,20 @@ begin_initialization {
   global->iparticle_interval = 0;
   global->restart_interval   = 8192;
 
+  define_units( c, eps0 );
+  define_timestep( dt );
   define_periodic_grid( 0,0,0,            // Low corner
                         lx,ly,lz,         // High corner
                         nx,ny,nz,         // Resolution
                         nprx,npry,nprz ); // Topology
-  grid->dt   = dt;
-  grid->cvac = c;
-  grid->eps0 = eps0;
-  grid->damp = damp;
 
   // 20% extra space for potential non-uniformities
-  species_t * electron = define_species("electron", -ec/me, 1.2*Ne/nproc(), -1, 16, 1);
-  species_t * ion      = define_species("ion",       ec/mi, 1.2*Ni/nproc(), -1, 32, 1);
+  species_t * electron = define_species("electron", -ec, me, 1.2*Ne/nproc(), -1, 16, 1);
+  species_t * ion      = define_species("ion",       ec, mi, 1.2*Ni/nproc(), -1, 32, 1);
 
   // By default, space is filled with first material defined
   define_material("vacuum",1);
-  finalize_field_advance();
+  define_field_array( NULL, damp );
   
   sim_log("Loading fields");
 
@@ -182,7 +180,7 @@ begin_initialization {
 
 begin_diagnostics {
 
-  if( step==0 ) {
+  if( step()==0 ) {
     dump_grid("grid");
     dump_materials("materials");
     dump_species("species");
@@ -192,16 +190,16 @@ begin_diagnostics {
     dump_hydro("ion","ihydro");
   }
 
-# define should_dump(x) ( step>0 &&                                 \
+# define should_dump(x) ( step()>0 &&                               \
                           global->x##_interval>0 &&                 \
-                          remainder(step,global->x##_interval)==0 )
+                          remainder(step(),global->x##_interval)==0 )
   if( should_dump(energies)  ) dump_energies("energies");
   if( should_dump(fields)    ) dump_fields("fields");
   if( should_dump(ehydro)    ) dump_hydro("electron","ehydro");
   if( should_dump(ihydro)    ) dump_hydro("ion","ihydro");
   if( should_dump(eparticle) ) dump_particles("electron","eparticle");
   if( should_dump(iparticle) ) dump_particles("ion","iparticle");
-  if( should_dump(restart)   ) dump_restart("restart",0); 
+  if( should_dump(restart)   ) checkpt( "restart", 0 ); 
 # undef should_dump
 
 }

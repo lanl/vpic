@@ -103,10 +103,8 @@ begin_initialization {
   // Set up grid
  
   sim_log("Setting up computational grid.");
-  grid->dt   = dt;
-  grid->cvac = 1;
-  grid->eps0 = 1;
-  grid->damp = damp;
+  define_units( 1, 1 );
+  define_timestep( dt );
  
   sim_log("Setting up periodic mesh.");
   define_periodic_grid( 0,         -0.5*Ly,    -0.5*Lz,        // Low corner
@@ -133,41 +131,54 @@ begin_initialization {
   if ( ix==0 )            set_domain_field_bc( BOUNDARY(-1,0,0), absorb_fields );
   if ( ix==topology_x-1 ) set_domain_field_bc( BOUNDARY( 1,0,0), absorb_fields );
  
+  // Set up materials
+ 
+  sim_log("Setting up materials.");
+
+  // Space is by default filled with the first material that is defined
+  // If only one material is defined, the standard field advance will be
+  // higher performance
+
+  define_material( "vacuum", 1 );
+
+  // Set up the field advance
+
+  sim_log("Setting up fields");
+
+  define_field_array( NULL, damp );
+
   // Set up the species
   // Allow additional local particles in case of non-uniformity.
  
   sim_log("Setting up species.");
   species_t *electron = define_species( "electron",      // species name
-                                        -1,              // species q/m
+                                        -1,              // species q
+                                         1,              // species m
                                         1.2*Ne/nproc(),  // num particles on local domain
                                         -1,              // num movers (-1 means let computer choose)
                                         20,              // sort interval
                                         1 );             // faster sort (out of place)
- 
+
   // Set up Maxwellian reinjection B.C.  Particles that strike lower and upper x boundaries
-  // are reinjected randomly from a Maxwellian distribution. (Implemented via a callback
-  // function).   This is a common topology for our 3D problems.
+  // are reinjected randomly from a Maxwellian distribution.  This is a common topology for our 3D problems.
  
   sim_log("Setting up Maxwellian reinjection particle boundary condition.");
  
-  maxwellian_reflux_t boundary_data[1];
-  boundary_data->ut_perp[electron->id] = uthe;      // vth_e in perp direction
-  boundary_data->ut_para[electron->id] = uthe;      // vth_e in para direction
-  int maxwellian_reinjection = add_boundary( grid, maxwellian_reflux, boundary_data );
+  particle_bc_t * maxwellian_reinjection =
+    define_particle_bc( maxwellian_reflux( species_list, rng ) );
+
+  // Do this for each species and each maxwellian reinjection bc
+  // Defaults to zero temperature if not set.
+  set_reflux_temp( maxwellian_reinjection, 
+                   electron, // Species whos reinj temp we are setting
+                   uthe,     // uth_e in parallel to surface normal
+                   uthe );   // uth_e perp to surface normal
  
-  // Set up materials
- 
-  sim_log("Setting up materials.");
-  define_material( "vacuum", 1 );
-  define_material( "impermeable_vacuum", 1 );
-  finalize_field_advance( vacuum_field_advance );
- 
-  // Paint the simulation volume with materials and boundary conditions
+  // Paint the simulation volume with boundary conditions
  
 # define iv_region (x<cell_size*iv_thick || x>Lx-cell_size*iv_thick ) /* left and right are i.v. */
-  set_region_material( iv_region, "impermeable_vacuum",     "impermeable_vacuum" );
   set_region_bc( iv_region, maxwellian_reinjection, maxwellian_reinjection, maxwellian_reinjection );
- 
+
   // Load particles
  
   if ( load_particles ) {
@@ -231,9 +242,9 @@ begin_diagnostics {
 # if 0
  
 # define should_dump(x) \
-  (global->x##_interval>0 && remainder(step,global->x##_interval)==0)
+  (global->x##_interval>0 && remainder(step(),global->x##_interval)==0)
  
-  if ( step==0 ) {
+  if ( step()==0 ) {
     // A grid dump contains all grid parameters, field boundary conditions,
     // particle boundary conditions and domain connectivity information. This
     // is stored in a binary format. Each rank makes a grid dump
@@ -282,7 +293,7 @@ begin_diagnostics {
     initted=1;
   }
  
-  if ( step>0 && should_dump(poynting) ) {
+  if ( step()>0 && should_dump(poynting) ) {
     int i, j, k, k1, k2, ix, iy, iz;
     for ( i=0; i<stride; ++i ) pvec[i]=0;     // Initialize pvec to zero.
     RANK_TO_INDEX( int(rank()), ix, iy, iz );
@@ -310,31 +321,29 @@ begin_diagnostics {
     gpsum /= stride*global->topology_y*global->topology_z;
  
     if ( rank()==0 ) {
-      fp_poynting=fopen( fname_poynting, (step==global->poynting_interval ? "w" : "rb+") );
+      fp_poynting=fopen( fname_poynting, (step()==global->poynting_interval ? "w" : "rb+") );
       if ( !fp_poynting ) ERROR(("Could not open file."));
       fseek( fp_poynting,
-             (step/global->poynting_interval-1)*sizeof(double), SEEK_SET );
+             (step()/global->poynting_interval-1)*sizeof(double), SEEK_SET );
       fwrite( &gpsum, sizeof(double), 1, fp_poynting );
       fclose(fp_poynting);
     }
-    sim_log("** step = "<<step<<" Poynting = "<<gpsum);  // Maybe too spammy for outfile....
+    sim_log("** step = "<<step()<<" Poynting = "<<gpsum);  // Maybe too spammy for outfile....
   }
  
   // Restart dump
   if ( should_dump(restart) ) {
     char *restart_fbase[] = { "restart/restart0", "restart/restart1" };
-    dump_restart( restart_fbase[global->rtoggle], 0 );
+    checkpt( restart_fbase[global->rtoggle], 0 );
     global->rtoggle^=1;
   }
  
-  if ( step>0 && (step%global->quota_check_interval)==0 ) {
-    if ( mp_elapsed(grid->mp) > global->quota_sec ) {
+  if ( step()>0 && (step()%global->quota_check_interval)==0 ) {
+    if ( uptime() > global->quota_sec ) {
       dump_restart( "restart/restart", 0 );
       sim_log( "Restart dump restart completed." );
       sim_log( "Allowed runtime exceeded for this job.  Terminating." );
-      mp_barrier( grid->mp ); // Just to be safe
-      mp_finalize( grid->mp );
-      exit(0);
+      step() = num_step;
     }
   }
 # endif

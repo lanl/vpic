@@ -110,10 +110,8 @@ begin_initialization {
   global->ninj_beam  = ninj;
 
   // Setup the grid and domain decomposition
-  grid->dt   = dt;
-  grid->cvac = cvac;
-  grid->eps0 = eps0;
-  grid->damp = damp;
+  define_units( cvac, eps0 );
+  define_timestep( dt );
   define_periodic_grid( (nx==1) ? -0.5*lx : 0,  (ny==1) ? -0.5*ly : 0,  0,
                         (nx==1) ?  0.5*lx : lx, (ny==1) ?  0.5*ly : ly, lz,
                         nx, ny, nz,
@@ -143,14 +141,16 @@ begin_initialization {
     set_domain_particle_bc( BOUNDARY(0,0,1), absorb_particles );
   }
 
-  // Create the species (20%-50% overhead in case of non-uniformity)
-  define_species( "beam", -ec/me, 1.5*ninj*lz/(cvac*dt*nproc()), -1, 20, 1 );
-  species_t * electron = define_species( "e-",   -ec/me, 1.2*np/nproc(),                -1, 20, 1 );
-  species_t * ion      = define_species( "H+",    ec/mi, 1.2*np/nproc(),                -1, 40, 1 );
-
   // Create the materials
   define_material( "vacuum", 1 );
-  finalize_field_advance();
+
+  // Create the fields
+  define_field_array( NULL, damp );
+
+  // Create the species (20%-50% overhead in case of non-uniformity)
+  /**/                   define_species( "beam", -ec, me, 1.5*ninj*lz/(cvac*dt*nproc()), -1, 20, 1 );
+  species_t * electron = define_species( "e-",   -ec, me, 1.2*np/nproc(),                -1, 20, 1 );
+  species_t * ion      = define_species( "H+",    ec, mi, 1.2*np/nproc(),                -1, 40, 1 );
 
   // Create the initial plasma
   // Note: This assumes ranks 0 and nproc()-1 have particles in them
@@ -210,7 +210,7 @@ begin_initialization {
 
 begin_diagnostics {
 
-  if( step==0 ) {
+  if( step()==0 ) {
     dump_grid("grid");
     dump_materials("materials");
     dump_species("species");
@@ -221,9 +221,9 @@ begin_diagnostics {
     dump_hydro("H+","ihydro");
   }
 
-# define should_dump(x) ( step>0 &&                                 \
+# define should_dump(x) ( step()>0 &&                               \
                           global->x##_interval>0 &&                 \
-                          remainder(step,global->x##_interval)==0 )
+                          remainder(step(),global->x##_interval)==0 )
   if( should_dump(energies)  ) dump_energies("energies");
   if( should_dump(fields)    ) dump_fields("fields");
   if( should_dump(bhydro)    ) dump_hydro("beam","bhydro");
@@ -232,7 +232,7 @@ begin_diagnostics {
   if( should_dump(bparticle) ) dump_particles("beam","bparticle");
   if( should_dump(eparticle) ) dump_particles("e-",  "eparticle");
   if( should_dump(iparticle) ) dump_particles("H+",  "iparticle");
-  if( should_dump(restart)   ) dump_restart("restart",0); 
+  if( should_dump(restart)   ) checkpt("restart",step()); 
 # undef should_dump
 
 }

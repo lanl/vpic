@@ -71,20 +71,26 @@ begin_initialization {
   double ny = 1;    // Use 2D simulation for now
   double nz = 144/2;  // ~1.5 mm resolution along z
 
+  // Setup the simulation 
+  num_step             = int(10e-9/grid->dt);
+  status_interval      = 25;
+  clean_div_e_interval = 25;
+  clean_div_b_interval = 25;
+  sync_shared_interval = 25;
+
   // Create the grid
-  // FIXME: Make this into a domain decomposition
+  // FIXME: Make this into a domain decomposition (THIS IS ALMOST CERTAINLY
+  // BROKEN)
+  define_units( cvac, eps0 );
+  define_timestep( 0.98*courant_length(r_o,r_o,z_h-z_l,nx,ny,nz)/cvac );
+
   size_domain( nx, ny, nz ); // Particle reflecting metal box
-  grid->cvac = cvac;
-  grid->eps0 = eps0;
-  grid->dt = 0.98*courant_length(r_o,r_o,z_h-z_l,nx,ny,nz)/cvac;
-  grid->damp = 0.005;
   grid->x0 = 0;
   grid->y0 = (ny==1) ? -0.5e-6 : 0; // Cell centers at y=0 in 2D simulation
   grid->z0 = z_l;
   grid->dx = r_o/nx;
   grid->dy = (ny==1) ? 1e-6 : r_o/ny; 
   grid->dz = (z_h-z_l)/nz;
-
   set_domain_field_bc( BOUNDARY(-1,0,0), symmetric_fields );
   if( ny==1 ) { // If 2D simulation, make periodic along y
     join_domain( BOUNDARY(0,-1,0), rank() );
@@ -95,29 +101,23 @@ begin_initialization {
   set_domain_field_bc( BOUNDARY(0,0,-1), absorb_fields );
   set_domain_field_bc( BOUNDARY(0,0, 1), absorb_fields );
 
-  // Setup the simulation 
-  num_step             = int(10e-9/grid->dt);
-  status_interval      = 25;
-  clean_div_e_interval = 25;
-  clean_div_b_interval = 25;
-  sync_shared_interval = 25;
-
   // Create the materials
-  define_material( "vacuum",   1, 1, 0      );
-  define_material( "copper",   1, 1, 5.98e7 );
-  define_material( "tungsten", 1, 1, 1.85e7 );
-  finalize_field_advance();
+  /**/                    define_material( "vacuum",   1, 1, 0      );
+  material_t * copper   = define_material( "copper",   1, 1, 5.98e7 );
+
+  material_t * tungsten = define_material( "tungsten", 1, 1, 1.85e7 );
+  define_field_array( NULL, 0.005 );
 
   // Create the species
-  define_species( "e-", -ec/me, (3*nx)*(0.5*nx), -1, 20, 1 );
-  define_species( "H+",  ec/mi, (3*nz)*(0.5*nx), -1, 20, 1 );
+  define_species( "e-", -ec/me, (3*nx)*(0.5*nx), -1, 20, 1, 1 );
+  define_species( "H+",  ec/mi, (3*nz)*(0.5*nx), -1, 20, 1, 1 );
 
   // Load the initial fields and particle boundary conditions
-  set_region_material( inner_conductor, "copper",   "copper"   );
-  set_region_material( inner_cap,       "copper",   "copper"   );
-  set_region_material( anode,           "tungsten", "tungsten" );
-  set_region_material( cathode,         "copper",   "copper"   );
-  set_region_material( outer_conductor, "copper",   "copper"   );
+  set_region_material( inner_conductor, copper,   copper   );
+  set_region_material( inner_cap,       copper,   copper   );
+  set_region_material( anode,           tungsten, tungsten );
+  set_region_material( cathode,         copper,   copper   );
+  set_region_material( outer_conductor, copper,   copper   );
 
   set_region_bc( inner_conductor, absorb_particles, absorb_particles, absorb_particles );
   set_region_bc( inner_cap,       absorb_particles, absorb_particles, absorb_particles );
@@ -127,7 +127,7 @@ begin_initialization {
 }
 
 begin_diagnostics {
-  if( (step%100)==0 ) dump_fields("f");
+  if( (step()%100)==0 ) dump_fields("f");
 }
 
 begin_particle_injection {
@@ -141,7 +141,7 @@ begin_field_injection {
   double t, tr, tf, te, r_i, r_o, V_peak;
   double V;
   
-  t = grid->dt * step;
+  t = grid->dt * step();
   tr = global->t_rise;
   tf = tr + global->t_hold;
   te = tf + global->t_fall;

@@ -24,15 +24,15 @@ begin_initialization {
   global->M = 0;
   global->N = 1;
 
-  grid->dt = 0.95/sqrt(3.0);
-  grid->cvac = 1;
-  grid->eps0 = 1;
-  grid->damp = 0.01;
+  define_units( 1, 1 );
+  define_timestep( 0.95/sqrt(3.0) );
+
+  // FIXME: MANUAL GRID CONSTRUCTION IS ALMOST CERTAINLY BROKEN (ALL THE
+  // CONVENIENCE VARIABLES NEED TO BE SET).
   grid->dx = 1;
   grid->dy = 1;
   grid->dz = 1;
   size_domain(32,32,128); // Particle reflecting metal box
-
   // Make the box into waveguide with a short termination at one end
   if( rank()==0 ) {
     grid->x0 = 0;
@@ -49,12 +49,11 @@ begin_initialization {
 
   // Space is by default filled with first material defined
   define_material("vacuum",1.0,1.0,0.0);
-
-  finalize_field_advance();
+  define_field_array( NULL, 0.01 );
 }
 
 begin_diagnostics {
-  if( step%64==0 ) dump_fields( "fields" );
+  if( step()%64==0 ) dump_fields( "fields" );
 }
 
 begin_particle_injection {
@@ -66,15 +65,15 @@ begin_current_injection {
 begin_field_injection {
   int n = global->N, m = global->M;
 
-  if( rank()==0 && step<192 ) {
+  if( rank()==0 && step()<192 ) {
     for( int y=1; y<=grid->ny+1; y++ ) 
       for( int x=1; x<=grid->nx; x++ ) 
-        field(x,y,1).ex += n*sin(2.0*M_PI*step/32.0)
+        field(x,y,1).ex += n*sin(2.0*M_PI*step()/32.0)
                             *cos((m*M_PI/grid->nx)*(x-0.5))
                             *sin((n*M_PI/grid->ny)*(y-1));
     for( int y=1; y<=grid->ny; y++ ) 
       for( int x=1; x<=grid->nx+1; x++ ) 
-        field(x,y,1).ey -= m*sin(2.0*M_PI*step/32.0)
+        field(x,y,1).ey -= m*sin(2.0*M_PI*step()/32.0)
                             *sin((m*M_PI/grid->nx)*(x-1))
                             *cos((n*M_PI/grid->ny)*(y-0.5));
   }

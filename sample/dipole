@@ -18,12 +18,8 @@ begin_initialization {
 
   num_step = 256;
   status_interval = 1;
-
-  grid->dt = 0.95/sqrt(3.0);
-  grid->cvac = 1;
-  grid->eps0 = 1;
-  grid->damp = 0.01;
-
+  define_units( 1, 1 );
+  define_timestep( 0.95/sqrt(3.0) );
   define_absorbing_grid( -32, -32, -32, // Low corner
                           32,  32,  32, // High corner
                           64, 64, 64,   // Resolution
@@ -33,19 +29,20 @@ begin_initialization {
   // Space is by default filled with first material defined
   define_material("vacuum",1.0,1.0,0.0);
 
-  finalize_field_advance();
+  // Create the field array
+  define_field_array( NULL, 0.01 );
 }
 
 begin_diagnostics {
-  if( step%8==0 ) dump_fields( "fields" );
+  if( step()%8==0 ) dump_fields( "fields" );
 }
 
 begin_particle_injection {
 }
 
 begin_current_injection {
-  if( rank()==0 ) field(33,33,32).jfz = sin((2.0*M_PI/16.0)*step);
-  if( rank()==0 ) field(33,33,33).jfz = sin((2.0*M_PI/16.0)*step);
+  if( rank()==0 ) field(33,33,32).jfz = sin((2.0*M_PI/16.0)*step());
+  if( rank()==0 ) field(33,33,33).jfz = sin((2.0*M_PI/16.0)*step());
 }
 
 begin_field_injection {

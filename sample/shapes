@@ -26,11 +26,11 @@ begin_initialization {
   double lx = 64, ly = 64, lz = 64;
   double nx = 64, ny = 64, nz = 64;
 
-  grid->cvac = 299792458;
-  grid->eps0 = 8.854187817e-12;
-  grid->damp = 0.01;
-  grid->dt = 0.95*courant_length(lx,ly,lz,nx,ny,nz)/grid->cvac;
+  define_units( 299792458, 8.854187817e-12 );
+  define_timestep( 0.95*courant_length(lx,ly,lz,nx,ny,nz)/grid->cvac );
 
+  // FIXME: THIS MANUAL GRID SETUP IS ALMOST CERTAINLY BROKEN (ALL THE
+  // CONVENIENCE FIELDS ARE NOT BEING SET UP
   grid->dx = lx/nx;
   grid->dy = ly/ny;
   grid->dz = lz/nz;
@@ -49,12 +49,12 @@ begin_initialization {
 
   // Space is by default filled with first material defined
   define_material("vacuum", 1 ); // mu=1 and sigma=0 by default
-  define_material("calcite",  2.2, 2.2, 2.7,  
-                              1.0, 1.0, 1.0,  
-                              0.0, 0.0, 0.0);
-  define_material("copper", 1, 1, 5.8e7 );
+  material_t * calcite = define_material("calcite",  2.2, 2.2, 2.7,  
+                                                     1.0, 1.0, 1.0,  
+                                                     0.0, 0.0, 0.0);
+  material_t * copper  = define_material("copper", 1, 1, 5.8e7 );
 
-  finalize_field_advance();
+  define_field_array( NULL, 0.01 );
 
   // Shapes are defined by logical equations
 # define clip_sphere y<16 && sqrt(x*x+y*y+z*z)<32
@@ -74,17 +74,15 @@ begin_initialization {
   //                           eqn_bx, eqn_by, eqn_bz );
 
   // A metal coated calcite clipped sphere
-  set_region_material( clip_sphere, "calcite", "copper" ); 
-  set_region_bc( clip_sphere,
-                 absorb_particles, absorb_particles, reflect_particles ); 
+  set_region_material( clip_sphere, calcite, copper ); 
+  set_region_bc( clip_sphere, absorb_particles, absorb_particles, reflect_particles ); 
   set_region_field( clip_sphere,
                     2*sin(x/lx), 0, 0, 
                     0, 0, 0  ); 
 
   // An empty thin foil cube
-  set_region_material( cube, leave_unchanged, "copper" );
-  set_region_bc( cube,
-                 leave_unchanged, absorb_particles, reflect_particles ); 
+  set_region_material( cube, leave_unchanged, copper );
+  set_region_bc( cube, leave_unchanged, absorb_particles, reflect_particles ); 
 
   // A point_region inclusion test is simplier ... if the point is inside
   // the region, that point is part of the point_region. Because the mesh
@@ -98,11 +96,11 @@ begin_initialization {
   //                                eqn_bx, eqn_by, eqn_bz );
 
   // Some intersecting pipes
-  set_point_region_material( pipes, "calcite" );
+  set_point_region_material( pipes, calcite );
 }
 
 begin_diagnostics {
-  if( step==0 ) {
+  if( step()==0 ) {
     dump_materials( "materials" );
     dump_grid( "grid" );
     dump_fields( "field" );

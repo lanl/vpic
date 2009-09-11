@@ -260,16 +260,24 @@ begin_initialization {
   global->lambda               = lambda; 
   global->write_poynting_data  = write_poynting_data; 
 
+  sim_log("Setting up periodic mesh."); 
+  define_units( 1, 1 );
+  define_timestep( dt );
+  define_absorbing_grid( 0,         -0.5*Ly,    -0.5*Lz,        // Low corner
+                         Lx,         0.5*Ly,     0.5*Lz,        // High corner 
+                         nx,         ny,         nz,            // Resolution
+                         topology_x, topology_y, topology_z,    // Topology
+                         reflect_particles );                   // Default particle boundary condition 
+  define_material( "vacuum", 1 );
+  define_field_array( NULL, damp ); 
+
   // Set up the species
   // Allow additional local particles in case of non-uniformity.
-
-
   // Note:  We have to adjust sort intervals for maximum performance on Cell. 
-
   sim_log("Setting up species."); 
   double max_local_np = 1.5*N_e/nproc(); 
   species_t * electron = define_species("electron", 
-                                        -1, 
+                                        -1, 1,
                                         max_local_np, 
                                         -1, 
                                         20,                  
@@ -277,90 +285,39 @@ begin_initialization {
 
   // Start with two ion species.  We have option to go to Xe and Kr gas fills if 
   // we need a higher ion/electron macroparticle ratio.  
-
   species_t *ion_H, *ion_He; 
   if ( mobile_ions ) {
     if ( H_present  ) ion_H  = define_species("H",  
-                                              Z_H /mime_H,  
+                                              Z_H, mime_H,  
                                               max_local_np, 
-                                              -1, 
+                                              -1,
                                               80,
                                               1); 
     if ( He_present ) ion_He = define_species("He",  
-                                              Z_He/mime_He,  
+                                              Z_He, mime_He,  
                                               max_local_np, 
                                               -1, 
                                               80,
                                               1); 
   }
 
-  // Set up grid
-  sim_log("Setting up computational grid."); 
-  grid->dx       = hx; 
-  grid->dy       = hy; 
-  grid->dz       = hz; 
-  grid->dt       = dt; 
-  grid->cvac     = 1;
-  grid->eps0     = 1; 
-  grid->damp     = damp; 
-
-  sim_log("Setting up periodic mesh."); 
-  define_absorbing_grid( 0,         -0.5*Ly,    -0.5*Lz,        // Low corner
-                         Lx,         0.5*Ly,     0.5*Lz,        // High corner 
-                         nx,         ny,         nz,            // Resolution
-                         topology_x, topology_y, topology_z,    // Topology
-                         reflect_particles );                   // Default particle boundary condition 
-
-  // From grid/partition.c: used to determine which domains are on edge
-# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                   \
-    int _ix, _iy, _iz;                                                    \
-    _ix  = (rank);                        /* ix = ix+gpx*( iy+gpy*iz ) */ \
-    _iy  = _ix/int(global->topology_x);   /* iy = iy+gpy*iz */            \
-    _ix -= _iy*int(global->topology_x);   /* ix = ix */                   \
-    _iz  = _iy/int(global->topology_y);   /* iz = iz */                   \
-    _iy -= _iz*int(global->topology_y);   /* iy = iy */                   \
-    (ix) = _ix;                                                           \
-    (iy) = _iy;                                                           \
-    (iz) = _iz;                                                           \
-  } END_PRIMITIVE 
-
-  sim_log("Overriding x boundaries to absorb fields."); 
-  int ix, iy, iz;        // Domain location in mesh
-  RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
 
   // Set up Maxwellian reinjection B.C. 
 
   sim_log("Setting up Maxwellian reinjection boundary condition."); 
 
-  maxwellian_reflux_t boundary_data[1];
-  boundary_data->ut_perp[electron->id] = uth_e;     // vth_e in perp direction
-  boundary_data->ut_para[electron->id] = uth_e;     // vth_e in para direction
+  particle_bc_t * maxwellian_reinjection =
+    define_particle_bc( maxwellian_reflux( species_list, rng ) );
+  set_reflux_temp( maxwellian_reinjection, electron, uth_e, uth_e );
   if( mobile_ions ) {
-    if( H_present ) {
-      boundary_data->ut_perp[ion_H->id] = uthi_H; 
-      boundary_data->ut_para[ion_H->id] = uthi_H;
-    } 
-    if( He_present ) {
-      boundary_data->ut_perp[ion_He->id] = uthi_He; 
-      boundary_data->ut_para[ion_He->id] = uthi_He;
-    } 
+    if( H_present  ) set_reflux_temp( maxwellian_reinjection, ion_H,  uthi_H,  uthi_H );
+    if( He_present ) set_reflux_temp( maxwellian_reinjection, ion_He, uthi_He, uthi_He );
   }
-  int maxwellian_reinjection = add_boundary( grid, maxwellian_reflux, boundary_data );
-
-  // Set up materials
-  sim_log("Setting up materials."); 
-  define_material( "vacuum", 1 );
-
-  // BJA:  WHAT HAPPENS IF IMPERMEABLE VACUUM IS COMMENTED OUT? 
-  define_material( "impermeable_vacuum", 1 ); 
-
-  finalize_field_advance( vacuum_field_advance ); 
  
   // Paint the simulation volume with materials and boundary conditions
 # define iv_region (   x<      hx*iv_thick || x>Lx  -hx*iv_thick  \
                     || y<-Ly/2+hy*iv_thick || y>Ly/2-hy*iv_thick  \
                     || z<-Lz/2+hz*iv_thick || z>Lz/2-hz*iv_thick ) 
-  set_region_material( iv_region, "impermeable_vacuum", "impermeable_vacuum" ); 
   set_region_bc( iv_region, 
                  maxwellian_reinjection, 
                  maxwellian_reinjection, 
@@ -427,15 +384,27 @@ begin_initialization {
   // - (periodically) Print a status message
 } 
 
+  // From grid/partition.c: used to determine which domains are on edge
+# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                   \
+    int _ix, _iy, _iz;                                                    \
+    _ix  = (rank);                        /* ix = ix+gpx*( iy+gpy*iz ) */ \
+    _iy  = _ix/int(global->topology_x);   /* iy = iy+gpy*iz */            \
+    _ix -= _iy*int(global->topology_x);   /* ix = ix */                   \
+    _iz  = _iy/int(global->topology_y);   /* iz = iz */                   \
+    _iy -= _iz*int(global->topology_y);   /* iy = iy */                   \
+    (ix) = _ix;                                                           \
+    (iy) = _iy;                                                           \
+    (iz) = _iz;                                                           \
+  } END_PRIMITIVE 
 
 begin_diagnostics {
 
-  if ( step%200==0 ) sim_log("Time step: "<<step); 
+  if ( step()%200==0 ) sim_log("Time step: "<<step()); 
 
 # define should_dump(x) \
-  (global->x##_interval>0 && remainder(step,global->x##_interval)==0)
+  (global->x##_interval>0 && remainder(step(),global->x##_interval)==0)
 
- if ( step==0 ) {
+ if ( step()==0 ) {
     // A grid dump contains all grid parameters, field boundary conditions,
     // particle boundary conditions and domain connectivity information. This
     // is stored in a binary format. Each rank makes a grid dump
@@ -495,7 +464,8 @@ begin_diagnostics {
     initted=1; 
   }
 
-  if ( step>0 && should_dump(poynting) ) {
+  // FIXME: THIS COULD BE WRITTEN CLEANER USING VPIC.HXX HELPERS
+  if ( step()>0 && should_dump(poynting) ) {
     int i, j, k, k1, k2, ix, iy, iz; 
     for ( i=0; i<stride; ++i ) pvec[i]=0;     // Initialize pvec to zero. 
     RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
@@ -504,8 +474,8 @@ begin_diagnostics {
         for ( k=1; k<grid->nz; ++k ) {
           k1 = INDEX_FORTRAN_3(1,j+1,k+1,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1);
           k2 = INDEX_FORTRAN_3(2,j+1,k+1,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1);
-          pvec[(j-1)*(grid->nz-1)+k-1] = (  field[k2].ey*0.5*(field[k1].cbz+field[k2].cbz)
-                                          - field[k2].ez*0.5*(field[k1].cby+field[k2].cby) )
+          pvec[(j-1)*(grid->nz-1)+k-1] = (  field(k2).ey*0.5*(field(k1).cbz+field(k2).cbz)
+                                          - field(k2).ez*0.5*(field(k1).cby+field(k2).cby) )
                                           / (grid->cvac*grid->cvac*global->e0*global->e0);
         }
       }
@@ -514,19 +484,19 @@ begin_diagnostics {
     // Sum poynting flux on surface
     for ( i=0, psum=0; i<stride; ++i ) psum+=pvec[i]; 
     // Sum over all surfaces
-    mp_allsum_d(&psum, &gpsum, 1, grid->mp);  
+    mp_allsum_d( &psum, &gpsum, 1 );  
     // Divide by number of mesh points summed over
     gpsum /= stride*global->topology_y*global->topology_z; 
     
     if ( rank()==0 && global->write_poynting_data ) { 
-      fp_poynting=fopen( fname_poynting, (step==global->poynting_interval ? "w" : "rb+") );
+      fp_poynting=fopen( fname_poynting, (step()==global->poynting_interval ? "w" : "rb+") );
       if ( !fp_poynting ) ERROR(("Could not open file."));
       fseek( fp_poynting,
-             (step/global->poynting_interval-1)*sizeof(double), SEEK_SET );
+             (step()/global->poynting_interval-1)*sizeof(double), SEEK_SET );
       fwrite( &gpsum, sizeof(double), 1, fp_poynting );
       fclose(fp_poynting);
     } 
-    sim_log("** step = "<<step<<" Poynting = "<<gpsum);  // Dump data to stdout
+    sim_log("** step = "<<step()<<" Poynting = "<<gpsum);  // Dump data to stdout
   }
 
   // Restart dump 
@@ -539,15 +509,13 @@ begin_diagnostics {
   }
 # endif 
 
-  if ( step>0 && global->quota_check_interval 
-              && (step%global->quota_check_interval)==0 ) { 
-    if ( mp_elapsed(grid->mp) > global->quota_sec ) {
-      dump_restart( "restart/restart", 0 ); 
+  if( step()>0 && global->quota_check_interval 
+               && (step()%global->quota_check_interval)==0 ) { 
+    if( uptime() > global->quota_sec ) {
+      checkpt( "restart/restart", 0 ); 
       sim_log( "Restart dump restart completed." ); 
       sim_log( "Allowed runtime exceeded for this job.  Terminating." ); 
-      mp_barrier( grid->mp ); // Just to be safe
-      mp_finalize( grid->mp ); 
-      exit(0); 
+      step() = num_step;
     }
   }
 
@@ -573,7 +541,7 @@ begin_field_injection {
     double alpha      = grid->cvac*grid->dt/grid->dx;
     double emax_coeff = (4/(1+alpha))*global->omega*grid->dt*global->e0;
     double prefactor  = emax_coeff*sqrt(2/M_PI); 
-    double t          = grid->dt*step; 
+    double t          = grid->dt*step(); 
 
     // Compute Rayleigh length in c/wpe
     double rl         = M_PI*global->waist*global->waist/global->lambda; 

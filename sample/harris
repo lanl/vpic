@@ -97,8 +97,8 @@ begin_initialization {
   double Ne   = 0.5*nppc*nx*ny*nz;                    // Total macro electrons in box
   Ne = trunc_granular(Ne,nproc());                    // Make it divisible by number of processors
   double Ni   = Ne;                                   // Total macro ions in box
-  double qe   = -ec*Npe/Ne;                           // Charge per macro electron
-  double qi   = ec*Npi/Ni;                            // Charge per macro ion
+  double we   = Npe/Ne;                               // Weight of a macro electron
+  double wi   = Npi/Ni;                               // Weight of a macro ion
   double gdri = 1/sqrt(1-vdri*vdri/(c*c));            // gamma of ion drift frame
   double gdre = 1/sqrt(1-vdre*vdre/(c*c));            // gamma of electron drift frame
   double udri = vdri*gdri;                            // 4-velocity of ion drift frame
@@ -116,7 +116,7 @@ begin_initialization {
   ////////////////////////////////////////
   // Setup high level simulation parmeters
  
-  num_step             = int(taui/(wci*dt));
+  num_step             = int(0.2*taui/(wci*dt));
   status_interval      = int(1./(wci*dt));
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
@@ -130,14 +130,12 @@ begin_initialization {
   global->iparticle_interval = status_interval; // Do not dump
   global->restart_interval   = status_interval; // Do not dump
  
-  //////////////////////////
-  // Setup the field advance
+  ///////////////////////////
+  // Setup the space and time
  
   // Setup basic grid parameters
-  grid->dt = dt;
-  grid->cvac = c;
-  grid->eps0 = eps0;
-  grid->damp = damp;
+  define_units( c, eps0 );
+  define_timestep( dt );
  
   // Parition a periodic box among the processors sliced uniformly along y
   define_periodic_grid( -0.5*Lx, 0, 0,    // Low corner
@@ -158,7 +156,9 @@ begin_initialization {
   // though. See "shapes" for how to define them and assign them to regions.
   // Also, space is initially filled with the first material defined.
  
-  finalize_field_advance();
+  // If you pass NULL to define field array, the standard field array will
+  // be used (if damp is not provided, no radiation damping will be used).
+  define_field_array( NULL, damp );
  
   ////////////////////
   // Setup the species
@@ -166,8 +166,8 @@ begin_initialization {
   // Allow 50% more local_particles in case of non-uniformity
   // VPIC will pick the number of movers to use for each species
   // Both species use out-of-place sorting
-  species_t * ion      = define_species( "ion",       ec/mi, 1.5*Ni/nproc(), -1, 40, 1 );
-  species_t * electron = define_species( "electron", -ec/me, 1.5*Ne/nproc(), -1, 20, 1 );
+  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1 );
+  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1 );
  
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
@@ -209,7 +209,7 @@ begin_initialization {
   sim_log( "wci = " << wci << ", wci dt = " << wci*dt );
   sim_log( "rhoi = " << vthi/wci << ", L/rhoi = " << L/(vthi/wci) << ", dx/rhoi = " << (Lx/nx)/(vthi/wci) );
   sim_log( "debyei = " << vthi/wpi << ", L/debyei = " << L/(vthi/wpi) << ", dx/debyei = " << (Lx/nx)/(vthi/wpi) );
-  sim_log( "Npi = " << Npi << ", Ni = " << Ni << ", Npi/Ni = " << Npi/Ni << ", qi = " << qi );
+  sim_log( "Npi = " << Npi << ", Ni = " << Ni << ", Npi/Ni = " << Npi/Ni << ", wi = " << wi );
   sim_log( "" );
   sim_log( "Electron parameters" );
   sim_log( "qpe = "  << -ec << ", me = " << me << ", qpe/me = " << -ec/me );
@@ -219,7 +219,7 @@ begin_initialization {
   sim_log( "wce = " << wce << ", wce dt = " << wce*dt );
   sim_log( "rhoe = " << vthe/wce << ", L/rhoe = " << L/(vthe/wce) << ", dx/rhoe = " << (Lx/nx)/(vthe/wce) );
   sim_log( "debyee = " << vthe/wpe << ", L/debyee = " << L/(vthe/wpe) << ", dx/debyee = " << (Lx/nx)/(vthe/wpe) );
-  sim_log( "Npe = " << Npe << ", Ne = " << Ne << ", Npe/Ne = " << Npe/Ne << ", qe = " << qe );
+  sim_log( "Npe = " << Npe << ", Ne = " << Ne << ", Npe/Ne = " << Npe/Ne << ", we = " << we );
   sim_log( "" );
   sim_log( "Miscellaneous" );
   sim_log( "nptotal = " << Ni + Ne );
@@ -262,7 +262,7 @@ begin_initialization {
     d0 = gdri*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udri;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
-    inject_particle( ion,      x, y, z, ux, uy, uz, qi, 0, 0 );
+    inject_particle( ion,      x, y, z, ux, uy, uz, wi, 0, 0 );
  
     ux = maxwellian_rand(uthe);
     uy = maxwellian_rand(uthe);
@@ -270,7 +270,7 @@ begin_initialization {
     d0 = gdre*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udre;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
-    inject_particle( electron, x, y, z, ux, uy, uz, qe, 0, 0 );
+    inject_particle( electron, x, y, z, ux, uy, uz, wi, 0, 0 );
   }
  
   // Upon completion of the initialization, the following occurs:
@@ -303,9 +303,9 @@ begin_initialization {
  
 begin_diagnostics {
  
-# define should_dump(x) (global->x##_interval>0 && remainder(step,global->x##_interval)==0)
+# define should_dump(x) (global->x##_interval>0 && remainder(step(),global->x##_interval)==0)
  
-  if( step==-10 ) {
+  if( step()==-10 ) {
     // A grid dump contains all grid parameters, field boundary conditions,
     // particle boundary conditions and domain connectivity information. This
     // is stored in a binary format. Each rank makes a grid dump
@@ -332,26 +332,26 @@ begin_diagnostics {
   // immediately following a restart dump. Energies dumps are in a text
   // format and the layout is documented at the top of the file. Only rank 0
   // makes makes an energies dump.
-  if( should_dump(energies) ) dump_energies( "energies", step==0 ? 0 : 1 );
+  if( should_dump(energies) ) dump_energies( "energies", step()==0 ? 0 : 1 );
  
   // Field dumps store the raw electromagnetic fields, sources and material
   // placement and a number of auxilliary fields. E, B and RHOB are
   // timecentered, JF and TCA are half a step old. Material fields are static
   // and the remaining fields (DIV E ERR, DIV B ERR and RHOF) are for
-  // debugging purposes. By default, field dump filenames are tagged with the
-  // step. However, if a "0" is added to the call, the filename will not be
+  // debugging purposes. By default, field dump filenames are tagged with
+  // step(). However, if a "0" is added to the call, the filename will not be
   // tagged. The JF that gets stored is accumulated with a charge-conserving
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
-  if( step==-10 )             dump_fields("fields"); // Get first valid total J
+  if( step()==-10 )         dump_fields("fields"); // Get first valid total J
   if( should_dump(fields) ) dump_fields("fields");
  
   // Hydro dumps store particle charge density, current density and
   // stress-energy tensor. All these quantities are known at the time
-  // t = step*grid.dt. All these quantities are accumulated NGP
-  // cell-centered. By default, species dump filenames are tagged with
-  // step. However, if a "0" is added to the call, the filename will not
+  // t = time().  All these quantities are accumulated trilinear
+  // node-centered. By default, species dump filenames are tagged with
+  // step(). However, if a "0" is added to the call, the filename will not
   // be tagged. Note that the current density accumulated by this routine is
   // purely diagnostic. It is not used by the simulation and it is not
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
@@ -360,24 +360,34 @@ begin_diagnostics {
   if( should_dump(ihydro) ) dump_hydro("ion",     "ihydro");
  
   // Particle dumps store the particle data for a given species. The data
-  // written is known at the time t = step*grid->dt. By default, particle dumps
-  // are tagged with step. However, if a "0" is added to the call, the
-  // filename will not be time step tagged. Particle dumps are in a binary
-  // format. Each rank makes a particle dump.
+  // written is known at the time t = time().  By default, particle dumps
+  // are tagged with step(). However, if a "0" is added to the call, the
+  // filename will not be tagged. Particle dumps are in a binary format.
+  // Each rank makes a particle dump.
   if( should_dump(eparticle) ) dump_particles("electron","eparticle");
   if( should_dump(iparticle) ) dump_particles("ion",     "iparticle");
  
-  // Restart dump filenames are by default tagged with the current timestep.
-  // If you do not want to do this add "0" to the dump_restart arguments. One
-  // reason to not tag the dumps is if you want only one restart dump (the most
-  // recent one) to be stored at a time to conserve on file space. Note: A
-  // restart dump should be the _very_ _last_ dump made in a diagnostics
-  // routine. If not, the diagnostics performed after the restart dump but
-  // before the next timestep will be missed on a restart. Restart dumps are
-  // in a binary format. Each rank makes a restart dump.
-  if( should_dump(restart) ) dump_restart("restart",1);
-  //if( elapsed()>=27000 ) {
-  //  dump_restart("restart",0);
+  // A checkpt is made by calling checkpt( fbase, tag ) where fname is a string
+  // and tag is an integer.  A typical usage is:
+  //   checkpt( "checkpt", step() ).
+  // This will cause each process to write their simulation state to a file
+  // whose name is based on fbase, tag and the node's rank.  For the above
+  // usage, if called on step 314 on a 4 process run, the four files:
+  //   checkpt.314.0, checkpt.314.1, checkpt.314.2, checkpt.314.3
+  // to be written.  The simulation can then be restarted from this point by
+  // invoking the application with "--restore checkpt.314".  checkpt must be 
+  // the _VERY_ LAST_ diagnostic called.  If not, diagnostics performed after
+  // the checkpt but before the next timestep will be missed on restore.
+  // Restart dumps are in a binary format unique to the each simulation.
+
+  if( should_dump(restart) ) checkpt( "checkpt", step() );
+
+  // If you want to write a checkpt after a certain amount of simulation time,
+  // use uptime() in conjunction with checkpt.  For example, this will cause
+  // the simulation state to be written after 7.5 hours of running to the
+  // same file every time (useful for dealing with quotas on big machines).
+  //if( uptime()>=27000 ) {
+  //  checkpt( "timeout", 0 );
   //  abort(0);
   //}
  

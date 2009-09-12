@@ -3,7 +3,7 @@
 
 void
 delete_field_array( field_array_t * fa ) {
-  if( fa==NULL ) return;
+  if( !fa ) return;
   fa->kernel->delete_fa( fa );
 }
 

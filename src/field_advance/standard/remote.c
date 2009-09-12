@@ -78,7 +78,7 @@ begin_remote_ghost_tang_b( field_t      * ALIGNED(128) field,
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {          \
     size = (1+n##Y*(n##Z+1)+n##Z*(n##Y+1))*sizeof(float);   \
     p = (float *)size_send_port( i, j, k, size, g );        \
-    if( p!=NULL ) {                                         \
+    if( p ) {                                               \
       (*(p++)) = g->d##X;				    \
       face = (i+j+k)<0 ? 1 : n##X;			    \
       Z##Y##_EDGE_LOOP(face) (*(p++)) = field(x,y,z).cb##Y; \
@@ -104,7 +104,7 @@ end_remote_ghost_tang_b( field_t      * ALIGNED(128) field,
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                        \
     p = (float *)end_recv_port(i,j,k,g);                                \
-    if( p!=NULL ) {                                                     \
+    if( p ) {                                                           \
       lw = (*(p++));                 /* Remote g->d##X */               \
       rw = (2.*g->d##X)/(lw+g->d##X);                                   \
       lw = (lw-g->d##X)/(lw+g->d##X);                                   \
@@ -153,7 +153,7 @@ begin_remote_ghost_norm_e( field_t      * ALIGNED(128) field,
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {          \
     size = ( 1+ (n##Y+1)*(n##Z+1) )*sizeof(float);          \
     p = (float *)size_send_port( i, j, k, size, g );        \
-    if( p!=NULL ) {                                         \
+    if( p ) {                                               \
       (*(p++)) = g->d##X;				    \
       face = (i+j+k)<0 ? 1 : n##X;			    \
       X##_NODE_LOOP(face) (*(p++)) = field(x,y,z).e##X;     \
@@ -178,7 +178,7 @@ end_remote_ghost_norm_e( field_t      * ALIGNED(128) field,
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                      \
     p = (float *)end_recv_port(i,j,k,g);                              \
-    if( p!=NULL ) {                                                   \
+    if( p ) {                                                         \
       lw = (*(p++));                 /* Remote g->d##X */             \
       rw = (2.*g->d##X)/(lw+g->d##X);                                 \
       lw = (lw-g->d##X)/(lw+g->d##X);                                 \
@@ -225,7 +225,7 @@ begin_remote_ghost_div_b( field_t      * ALIGNED(128) field,
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {           \
     size = ( 1 + n##Y*n##Z )*sizeof(float);                  \
     p = (float *)size_send_port( i, j, k, size, g );         \
-    if( p!=NULL ) {                                          \
+    if( p ) {                                                \
       (*(p++)) = g->d##X;				     \
       face = (i+j+k)<0 ? 1 : n##X;			     \
       X##_FACE_LOOP(face) (*(p++)) = field(x,y,z).div_b_err; \
@@ -250,7 +250,7 @@ end_remote_ghost_div_b( field_t      * ALIGNED(128) field,
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                        \
     p = (float *)end_recv_port(i,j,k,g);                                \
-    if( p!=NULL ) {                                                     \
+    if( p ) {                                                           \
       lw = (*(p++));                 /* Remote g->d##X */               \
       rw = (2.*g->d##X)/(lw+g->d##X);                                   \
       lw = (lw-g->d##X)/(lw+g->d##X);                                   \
@@ -322,7 +322,7 @@ synchronize_tang_e_norm_b( field_array_t * RESTRICT fa ) {
     size = ( 2*n##Y*(n##Z+1) + 2*n##Z*(n##Y+1) +                \
              n##Y*n##Z )*sizeof(float);                         \
     p = (float *)size_send_port( i, j, k, size, g );            \
-    if( p!=NULL ) {                                             \
+    if( p ) {                                                   \
       face = (i+j+k)<0 ? 1 : n##X+1;                            \
       X##_FACE_LOOP(face) (*(p++)) = field(x,y,z).cb##X;        \
       Y##Z##_EDGE_LOOP(face) {                                  \
@@ -341,7 +341,7 @@ synchronize_tang_e_norm_b( field_array_t * RESTRICT fa ) {
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {   \
     p = (float *)end_recv_port(i,j,k,g);           \
-    if( p!=NULL ) {                                \
+    if( p ) {                                      \
       face = (i+j+k)<0 ? n##X+1 : 1; /* Average */ \
       X##_FACE_LOOP(face) {                        \
         f = &field(x,y,z);                         \
@@ -421,7 +421,7 @@ synchronize_jf( field_array_t * RESTRICT fa ) {
   int size, face, x, y, z, nx, ny, nz;
   float *p, lw, rw;
 
-  if( fa==NULL ) ERROR(( "Bad args" ));
+  if( !fa ) ERROR(( "Bad args" ));
   field = fa->f;
   g     = fa->g;
 
@@ -439,7 +439,7 @@ synchronize_jf( field_array_t * RESTRICT fa ) {
     size = ( n##Y*(n##Z+1) +                                    \
              n##Z*(n##Y+1) + 1 )*sizeof(float);                 \
     p = (float *)size_send_port( i, j, k, size, g );            \
-    if( p!=NULL ) {                                             \
+    if( p ) {                                                   \
       (*(p++)) = g->d##X;                                       \
       face = (i+j+k)<0 ? 1 : n##X+1;                            \
       Y##Z##_EDGE_LOOP(face) (*(p++)) = field(x,y,z).jf##Y;     \
@@ -450,7 +450,7 @@ synchronize_jf( field_array_t * RESTRICT fa ) {
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                \
     p = (float *)end_recv_port(i,j,k,g);                        \
-    if( p!=NULL ) {                                             \
+    if( p ) {                                                   \
       rw = (*(p++));                 /* Remote g->d##X */       \
       lw = rw + g->d##X;                                        \
       rw /= lw;                                                 \
@@ -553,9 +553,9 @@ synchronize_rho( field_array_t * RESTRICT fa ) {
   begin_recv_port(i,j,k, ( 1 + 2*(n##Y+1)*(n##Z+1) )*sizeof(float), g )
 
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {      \
-    size = ( 1 + 2*(n##Y+1)*(n##Z+1) )*sizeof(float);     \
+    size = ( 1 + 2*(n##Y+1)*(n##Z+1) )*sizeof(float);   \
     p = (float *)size_send_port( i, j, k, size, g );    \
-    if( p!=NULL ) {                                     \
+    if( p ) {                                           \
       (*(p++)) = g->d##X;                               \
       face = (i+j+k)<0 ? 1 : n##X+1;                    \
       X##_NODE_LOOP(face) {                             \
@@ -569,7 +569,7 @@ synchronize_rho( field_array_t * RESTRICT fa ) {
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                \
     p = (float *)end_recv_port(i,j,k,g);                        \
-    if( p!=NULL ) {                                             \
+    if( p ) {                                                   \
       hrw  = (*(p++));               /* Remote g->d##X */       \
       hlw  = hrw + g->d##X;                                     \
       hrw /= hlw;                                               \

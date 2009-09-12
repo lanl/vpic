@@ -32,6 +32,7 @@
  * Inputs:
  *   e0 Peak instantaneous E field in "natural units"
  *----------------------------------------------------------------------------*/
+// FIXME: THIS COULD BE WRITTEN MUCH CLEANER NOW
 double vpic_simulation::poynting_flux(double e0) {
 	double psum, gpsum;
 	int stride = (grid->ny-1)*(grid->nz-1);
@@ -57,8 +58,8 @@ double vpic_simulation::poynting_flux(double e0) {
 					0, grid->ny+1, 0, grid->nz+1);
 
 				pvec[(j-1)*(grid->nz-1)+k-1] =
-					(field[k2].ey*0.5*(field[k1].cbz+field[k2].cbz) -
-					field[k2].ez*0.5*(field[k1].cby+field[k2].cby)) /
+					(field(k2).ey*0.5*(field(k1).cbz+field(k2).cbz) -
+					field(k2).ez*0.5*(field(k1).cby+field(k2).cby)) /
 					(grid->cvac*grid->cvac*e0*e0);
 			} // for
 		} // for
@@ -70,7 +71,7 @@ double vpic_simulation::poynting_flux(double e0) {
 	} // for
 	
 	// Collect sums over all ranks
-	mp_allsum_d(&psum, &gpsum, 1, grid->mp);
+	mp_allsum_d( &psum, &gpsum, 1 );
 
 	// Normalize flux
 	gpsum /= stride*py*pz;

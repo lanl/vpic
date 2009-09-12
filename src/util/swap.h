@@ -193,7 +193,7 @@ void inline swap(particle_t & element) {
 	utils::swap(element.uz);
 
 	// charge
-	utils::swap(element.q);
+	utils::swap(element.w);
 } // swap
 
 } // namespace utils

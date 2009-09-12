@@ -76,7 +76,7 @@ new_mt_rng( unsigned int seed ) {
 
 void
 delete_mt_rng( mt_rng_t * rng ) {
-  if( rng==NULL ) return;
+  if( !rng ) return;
   UNREGISTER_OBJECT( rng );
   FREE( rng );
 }

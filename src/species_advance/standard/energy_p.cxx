@@ -130,7 +130,7 @@ energy_p( const species_t            * RESTRICT sp,
   double local, global;
   int rank;
 
-  if( sp==NULL || ia==NULL || sp->g!=ia->g ) ERROR(( "Bad input args" ));
+  if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));
 
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.

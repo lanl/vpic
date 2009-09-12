@@ -156,7 +156,7 @@ center_p( /**/  species_t            * RESTRICT sp,
           const interpolator_array_t * RESTRICT ia ) {
   DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
-  if( sp==NULL || ia==NULL || sp->g!=ia->g ) ERROR(( "Bad args" ));
+  if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));
 
   // Have the pipelines do the bulk of particles in quads and have the
   // host do the final incomplete quad.

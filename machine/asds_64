@@ -77,7 +77,7 @@ PPU_OPENSSL="/users/bergen/packages"
 # PPU_DACS
 ################################################################################
 PPU_DACS_CPPFLAGS="-I/opt/cell/sysroot/opt/cell/sdk/prototype/usr/include"
-PPU_DACS_LDFLAGS="-L/opt/cell/sysroot/opt/cell/sdk/prototype/usr/lib64"
+PPU_DACS_LDFLAGS="-rdynamic -L/opt/cell/sysroot/opt/cell/sdk/prototype/usr/lib64"
 PPU_DACS_LIBS="-ldacs_hybrid -lstdc++"
 
 ################################################################################

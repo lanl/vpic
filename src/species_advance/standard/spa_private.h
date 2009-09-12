@@ -154,8 +154,4 @@ PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
 PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
 PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
 
-#undef FOR_SPU
-#undef PAD_STRUCT
-#undef PROTOTYPE_PIPELINE
-
 #endif // _spa_private_h_

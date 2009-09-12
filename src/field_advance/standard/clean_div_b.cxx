@@ -40,9 +40,9 @@ clean_div_b_pipeline( pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  DISTRIBUTE_VOXELS( 2,nx, 2,ny, 2,nz, 16,
+                     pipeline_rank, n_pipeline,
+                     x, y, z, n_voxel );
 
 # define LOAD_STENCIL() \
   f0 = &f(x,  y,  z  ); \
@@ -121,9 +121,9 @@ clean_div_b_pipeline_v4( pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline 
   
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  DISTRIBUTE_VOXELS( 2,nx, 2,ny, 2,nz, 16,
+                     pipeline_rank, n_pipeline,
+                     x, y, z, n_voxel );
 
   // Process bulk of voxels 4 at a time
 

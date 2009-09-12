@@ -69,7 +69,7 @@
 // Note: strlen does not include the terminating \0
 #define WRITE_STRING(string,fileIO) do {                    \
     int __WRITE_STRING_len = 0;                             \
-    if( string!=NULL ) __WRITE_STRING_len = strlen(string); \
+    if( string ) __WRITE_STRING_len = strlen(string);       \
     fileIO.write( &__WRITE_STRING_len, 1 );                 \
     if( __WRITE_STRING_len>0 )                              \
       fileIO.write( string, __WRITE_STRING_len );           \

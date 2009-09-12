@@ -34,8 +34,8 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
   // Process the voxels assigned to this pipeline
   
   if( pipeline_rank==n_pipeline ) return; // No need for straggler cleanup
-  n_voxel = distribute_voxels( 1,nx+1, 1,ny+1, 1,nz+1, 1,
-                               pipeline_rank, n_pipeline, &x, &y, &z );
+  DISTRIBUTE_VOXELS( 1,nx+1, 1,ny+1, 1,nz+1, 1,
+                     pipeline_rank, n_pipeline, x, y, z, n_voxel );
 
 # define LOAD_STENCIL()                                                 \
   f0  = &f(x,  y,  z  );                                                \
@@ -82,7 +82,7 @@ unload_accumulator_array( /**/  field_array_t       * RESTRICT fa,
                           const accumulator_array_t * RESTRICT aa ) {
   unload_accumulator_pipeline_args_t args[1];
 
-  if( fa==NULL || aa==NULL || fa->g!=aa->g ) ERROR(( "Bad args" ));
+  if( !fa || !aa || fa->g!=aa->g ) ERROR(( "Bad args" ));
 
 # if 0 // Original non-pipelined version
 

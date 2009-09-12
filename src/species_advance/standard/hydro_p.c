@@ -37,7 +37,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, n;
 
-  if( ha==NULL || sp==NULL || ia==NULL || ha->g!=sp->g || ha->g!=ia->g )
+  if( !ha || !sp || !ia || ha->g!=sp->g || ha->g!=ia->g )
     ERROR(( "Bad args" ));
 
   h = ha->h;

@@ -44,7 +44,7 @@ main( uint64_t id,
     // in the SPE symbol space and arguments for that function
 
     pipeline = (pipeline_func_t)spu_read_in_mbox();
-    if( pipeline==NULL ) break; // If we get a NULL pipeline, we are done
+    if( !pipeline ) break; // If we get a NULL pipeline, we are done
     argp = (((uint64_t)spu_read_in_mbox())<<32) |
             ((uint64_t)spu_read_in_mbox());
     sz            = spu_read_in_mbox();

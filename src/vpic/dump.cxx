@@ -43,7 +43,7 @@ vpic_simulation::dump_energies( const char *fname,
   FileIO fileIO;
   FileIOStatus status(fail);
  
-  if( fname==NULL ) ERROR(("Invalid file name"));
+  if( !fname ) ERROR(("Invalid file name"));
  
   if( rank()==0 ) {
     status = fileIO.open(fname, append ? io_append : io_write);
@@ -85,7 +85,7 @@ vpic_simulation::dump_species( const char *fname ) {
   FileIO fileIO;
  
   if( rank() ) return;
-  if( fname==NULL ) ERROR(( "Invalid file name" ));
+  if( !fname ) ERROR(( "Invalid file name" ));
   MESSAGE(( "Dumping species to \"%s\"", fname ));
   FileIOStatus status = fileIO.open(fname, io_write);
   if( status==fail ) ERROR(( "Could not open \"%s\".", fname ));

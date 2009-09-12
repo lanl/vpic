@@ -13,7 +13,7 @@ update_profile( int dump ) {
   profile_internal_use_only_timer_t * p;
   double sum = 0, sum_total = 0;
 
-  for( p=profile_internal_use_only; p->name!=NULL; p++ ) {
+  for( p=profile_internal_use_only; p->name; p++ ) {
     p->t_total += p->t;
     p->n_total += p->n;
     sum        += p->t;
@@ -26,7 +26,7 @@ update_profile( int dump ) {
                 "    Operation    | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
                 "-----------------+------------------------------+------------------------------\n" );
 
-    for( p=profile_internal_use_only; p->name!=NULL; p++ ) {
+    for( p=profile_internal_use_only; p->name; p++ ) {
       if( p->n==0 && p->n_total==0 ) continue;
       log_printf( "%16.16s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n",
                   p->name,
@@ -41,7 +41,7 @@ update_profile( int dump ) {
     log_printf( "\n" );
   }
 
-  for( p=profile_internal_use_only; p->name!=NULL; p++ ) {
+  for( p=profile_internal_use_only; p->name; p++ ) {
     p->t = 0;
     p->n = 0;
   }

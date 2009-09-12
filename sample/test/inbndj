@@ -134,7 +134,7 @@ begin_initialization {
 
   // Note:  mean of drho = 0, rms of drho = sqrt(2/27-2/64) sqrt(NPART)
   failed = 0;
-  tol = 8; // ~10x worse if single precision reduction used on SPE
+  tol = 10; // ~10x worse if single precision reduction used on SPE
   eps = FLT_EPSILON*0.20694*sqrt(NPART); // drho_mean = 0, drho_rms = sqrt(2/27-2/64)
   for( int n=0; n<8; n++ ) {
     double err = drho[n] + divj[n];

@@ -166,6 +166,10 @@ checkpt_standard_field_array( const field_array_t * fa ) {
   checkpt_field_advance_kernels( fa->kernel );
 }
 
+// FIXME: Use same new/delete/checkpt/restore structure as found in emitter
+// and boundary(e.g. restore_field_advance_kernels =>
+// return field_array_internal( params )).
+
 field_array_t *
 restore_standard_field_array( void ) {
   field_array_t * fa; 

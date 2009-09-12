@@ -140,7 +140,7 @@ vpic_simulation::modify( const char *fname ) {
  
   // Open the modfile
   handle = fopen( fname, "r" );
-  if( handle==NULL ) ERROR(( "Modfile read failed" ));
+  if( !handle ) ERROR(( "Modfile read failed" ));
   // Parse modfile
   while( fgets( line, 127, handle ) ) {
     DTEST( quota,             "quota",             darg );
@@ -174,8 +174,7 @@ vpic_simulation::modify( const char *fname ) {
 #include <CheckSum.hxx>
 
 void vpic_simulation::checksum_fields(CheckSum & cs) {
-  checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
-    cs, "sha1");
+  checkSumBuffer<field_t>(field, grid->nv, cs, "sha1");
 
   const int nproc = mp_nproc(grid->mp);
 
@@ -199,8 +198,7 @@ void vpic_simulation::checksum_fields(CheckSum & cs) {
 
 void vpic_simulation::output_checksum_fields() {
   CheckSum cs;
-  checkSumBuffer<field_t>(field, (grid->nx+2)*(grid->ny+2)*(grid->nz+2),
-    cs, "sha1");
+  checkSumBuffer<field_t>(field, grid->nv, cs, "sha1");
 
   if(nproc() > 1) {
     const unsigned int csels = cs.length*nproc();

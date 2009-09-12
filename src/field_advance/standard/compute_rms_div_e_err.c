@@ -27,9 +27,9 @@ compute_rms_div_e_err_pipeline( pipeline_args_t * args,
 
   // Process voxels assigned to this pipeline
 
-  n_voxel = distribute_voxels( 2,nx, 2,ny, 2,nz, 16,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  DISTRIBUTE_VOXELS( 2,nx, 2,ny, 2,nz, 16,
+                     pipeline_rank, n_pipeline,
+                     x, y, z, n_voxel );
 
   f0 = &f(x,y,z);
 

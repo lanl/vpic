@@ -17,13 +17,12 @@ void
 checkpt_species( const species_t * sp ) {
   CHECKPT( (const char *)sp, sizeof(*sp)+strlen(sp->name) );
   checkpt_data( sp->p,
-                sp->np*sizeof(particle_t),
+                sp->np    *sizeof(particle_t),
                 sp->max_np*sizeof(particle_t), 1, 1, 128 );
   checkpt_data( sp->pm,
-                sp->nm*sizeof(particle_mover_t),
+                sp->nm    *sizeof(particle_mover_t),
                 sp->max_nm*sizeof(particle_mover_t), 1, 1, 128 );
-  CHECKPT_ALIGNED( sp->partition,
-                   (sp->g->nx+2)*(sp->g->ny+2)*(sp->g->nz+2)+1, 128 );
+  CHECKPT_ALIGNED( sp->partition, sp->g->nv+1, 128 );
   CHECKPT_PTR( sp->g );
   CHECKPT_PTR( sp->next );
 }
@@ -92,7 +91,7 @@ new_species( const char * name,
 
   sp->sort_interval = sort_interval;
   sp->sort_out_of_place = sort_out_of_place;
-  MALLOC_ALIGNED( sp->partition, (g->nx+2)*(g->ny+2)*(g->nz+2)+1, 128 );
+  MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 
   sp->g = g;   
   sp->next = *sp_list;
@@ -106,7 +105,7 @@ new_species( const char * name,
 
 static void
 delete_species( species_t * sp ) {
-  if( sp==NULL ) return;
+  if( !sp ) return;
   UNREGISTER_OBJECT( sp );
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
@@ -136,7 +135,7 @@ species_t *
 find_species_name( const char * name,
                    species_t * sp_list ) {
   species_t * sp;
-  if( name==NULL ) return NULL;
+  if( !name ) return NULL;
   LIST_FIND_FIRST( sp, sp_list, strcmp( sp->name, name )==0 );
   return sp;
 }

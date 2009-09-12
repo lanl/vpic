@@ -55,9 +55,9 @@ begin_initialization {
       double rx = uniform_rand(0,nx);
       double ry = uniform_rand(0,ny);
       double rz = uniform_rand(0,nz);
-      double ux = uniform_rand(-nx,nx)/cdt_dx;
-      double uy = uniform_rand(-ny,ny)/cdt_dy;
-      double uz = uniform_rand(-nz,nz)/cdt_dz;
+      double ux = 0.25*uniform_rand(-nx,nx)/cdt_dx;
+      double uy = 0.25*uniform_rand(-ny,ny)/cdt_dy;
+      double uz = 0.25*uniform_rand(-nz,nz)/cdt_dz;
       double gamma = 1/sqrt( 1 - ux*ux - uy*uy - uz*uz );
       ux *= gamma; uy *= gamma; uz *= gamma;
       double w  = uniform_rand(0,1);

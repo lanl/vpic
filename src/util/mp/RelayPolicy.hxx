@@ -98,8 +98,9 @@ struct RelayPolicy {
 
   inline void
   boot_mp( int * pargc,
-           char *** argv ) {
+           char *** pargv ) {
     ConnectionManager::instance().init( pargc, pargv );
+    P2PConnection & p2p = P2PConnection::instance();
     __world.parent = NULL, __world.color = 0, __world.key = 0;
     _world_rank = p2p.global_id();
     _world_size = p2p.global_size();
@@ -348,13 +349,13 @@ struct RelayPolicy {
   mp_begin_send( mp_t * mp,
                  int port,
                  int sz,
-                 int src,
+                 int dst,
                  int tag ) {
     if( !mp || port<0 || port>=mp->n_port || sz<1 || sz>mp->sbuf_sz[port] ||
         dst<0 || dst>=world_size ) ERROR(( "Bad args" ));
     P2PConnection & p2p = P2PConnection::instance();
     mp->sreq_sz[port] = sz;
-    MPRequest request( P2PTag::isend, tag, sz, port, receiver );
+    MPRequest request( P2PTag::isend, tag, sz, port, dst );
     p2p.post( request );
     p2p.isend( static_cast<char *>(mp->sbuf[port]), sz, tag, port );
   }

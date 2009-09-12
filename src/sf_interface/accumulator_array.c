@@ -43,7 +43,7 @@ restore_accumulator_array( void ) {
 accumulator_array_t *
 new_accumulator_array( grid_t * g ) {
   accumulator_array_t * aa;
-  if( g==NULL ) ERROR(( "Bad grid."));
+  if( !g ) ERROR(( "Bad grid."));
   MALLOC( aa, 1 );
   aa->n_pipeline = aa_n_pipeline();
   aa->stride     = POW2_CEIL(g->nv,2);
@@ -57,7 +57,7 @@ new_accumulator_array( grid_t * g ) {
 
 void
 delete_accumulator_array( accumulator_array_t * aa ) {
-  if( aa==NULL ) return;
+  if( !aa ) return;
   UNREGISTER_OBJECT( aa );
   FREE_ALIGNED( aa->a );
   FREE( aa );

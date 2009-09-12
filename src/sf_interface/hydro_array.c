@@ -16,7 +16,7 @@
 void
 checkpt_hydro_array( const hydro_array_t * ha ) {
   CHECKPT( ha, 1 );
-  CHECKPT_ALIGNED( ha->h, (ha->g->nx+2)*(ha->g->ny+2)*(ha->g->nz+2), 128 );
+  CHECKPT_ALIGNED( ha->h, ha->g->nv, 128 );
   CHECKPT_PTR( ha->g );
 }
 
@@ -32,9 +32,9 @@ restore_hydro_array( void ) {
 hydro_array_t *
 new_hydro_array( grid_t * g ) {
   hydro_array_t * ha;
-  if( g==NULL ) ERROR(( "NULL grid" ));
+  if( !g ) ERROR(( "NULL grid" ));
   MALLOC( ha, 1 );
-  MALLOC_ALIGNED( ha->h, (g->nx+2)*(g->ny+2)*(g->nz+2), 128 );
+  MALLOC_ALIGNED( ha->h, g->nv, 128 );
   ha->g = g;
   clear_hydro_array( ha );
   REGISTER_OBJECT( ha, checkpt_hydro_array, restore_hydro_array, NULL );
@@ -43,7 +43,7 @@ new_hydro_array( grid_t * g ) {
 
 void
 delete_hydro_array( hydro_array_t * ha ) {
-  if( ha==NULL ) return;
+  if( !ha ) return;
   UNREGISTER_OBJECT( ha );
   FREE_ALIGNED( ha->h );
   FREE( ha );
@@ -51,8 +51,8 @@ delete_hydro_array( hydro_array_t * ha ) {
 
 void
 clear_hydro_array( hydro_array_t * ha ) {
-  if( ha==NULL ) ERROR(( "NULL hydro array" ));
-  CLEAR( ha->h, (ha->g->nx+2)*(ha->g->ny+2)*(ha->g->nz+2) ); // FIXME: SPU THIS?
+  if( !ha ) ERROR(( "NULL hydro array" ));
+  CLEAR( ha->h, ha->g->nv ); // FIXME: SPU THIS?
 }
 
 #define hydro(x,y,z) h0[ VOXEL(x,y,z, nx,ny,nz) ]
@@ -75,7 +75,7 @@ synchronize_hydro_array( hydro_array_t * ha ) {
   hydro_t * h0, * h;
   grid_t * g;
 
-  if( ha==NULL ) ERROR(( "NULL hydro array" ));
+  if( !ha ) ERROR(( "NULL hydro array" ));
 
   h0 = ha->h;
   g  = ha->g;
@@ -128,7 +128,7 @@ synchronize_hydro_array( hydro_array_t * ha ) {
 # define BEGIN_SEND(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {      \
     size = ( 1 + 14*(n##Y+1)*(n##Z+1) )*sizeof(float);  \
     p = (float *)size_send_port( i, j, k, size, g );    \
-    if( p!=NULL ) {                                     \
+    if( p ) {                                           \
       (*(p++)) = g->d##X;                               \
       face = (i+j+k)<0 ? 1 : n##X+1;                    \
       X##_NODE_LOOP(face) {                             \
@@ -154,7 +154,7 @@ synchronize_hydro_array( hydro_array_t * ha ) {
 
 # define END_RECV(i,j,k,X,Y,Z) BEGIN_PRIMITIVE {                \
     p = (float *)end_recv_port(i,j,k,g);                        \
-    if( p!=NULL ) {                                             \
+    if( p ) {                                                   \
       rw = (*(p++));                 /* Remote g->d##X */       \
       lw = rw + g->d##X;                                        \
       rw /= lw;                                                 \

@@ -202,11 +202,11 @@ typedef struct collective collective_t;
 // The following macros deal with linked lists
 
 #define LIST_FOR_EACH(node,list)        \
-  for((node)=(list); (node)!=NULL; (node)=(node)->next)
+  for((node)=(list); (node); (node)=(node)->next)
 
-#define LIST_FIND_FIRST(node,list,cond) do {              \
-    for((node)=(list); (node)!=NULL; (node)=(node)->next) \
-      if(cond) break;                                     \
+#define LIST_FIND_FIRST(node,list,cond) do {        \
+    for((node)=(list); (node); (node)=(node)->next) \
+      if(cond) break;                               \
   } while(0)
 
 // Given an integer data type "type", MASK_BIT_RANGE returns a bit

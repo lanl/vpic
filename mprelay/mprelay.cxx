@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
 
 	// initialize everything
-	ConnectionManager::instance().init(argc, argv);
+	ConnectionManager::instance().init( &argc, &argv);
 
 	// Relay object
 	MPRelay relay;

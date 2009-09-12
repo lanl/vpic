@@ -29,7 +29,7 @@ AddModule(pipelines,src/util/pipelines,pipelines_serial pipelines_thread)
 AddModule(profile,src/util/profile,profile)
 AddModule(v4,src/util/v4,)
 
-AddModule(grid,src/grid,ops partition grid_structors grid_comm distribute_voxels)
+AddModule(grid,src/grid,ops partition grid_structors grid_comm)
 
 AddModule(material,src/material,material)
 
@@ -49,7 +49,7 @@ AddModule(emitter,src/emitter,emitter child_langmuir)
 /* FIXME: BRING BACK LINK */
 AddModule(boundary,src/boundary,boundary boundary_p maxwellian_reflux absorb_tally)
 
-AddModule(vpic,src/vpic,vpic initialize advance dump misc)
+AddModule(vpic,src/vpic,vpic initialize advance dump misc diagnostics)
 
 /* Additional directories to clean */
 

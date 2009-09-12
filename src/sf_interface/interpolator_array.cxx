@@ -6,7 +6,7 @@
 void
 checkpt_interpolator_array( const interpolator_array_t * ia ) {
   CHECKPT( ia, 1 );
-  CHECKPT_ALIGNED( ia->i, (ia->g->nx+2)*(ia->g->ny+2)*(ia->g->nz+2), 128 );
+  CHECKPT_ALIGNED( ia->i, ia->g->nv, 128 );
   CHECKPT_PTR( ia->g );
 }
 
@@ -22,10 +22,10 @@ restore_interpolator_array( void ) {
 interpolator_array_t *
 new_interpolator_array( grid_t * g ) {
   interpolator_array_t * ia;
-  if( g==NULL ) ERROR(( "NULL grid" ));
+  if( !g ) ERROR(( "NULL grid" ));
   MALLOC( ia, 1 );
-  MALLOC_ALIGNED( ia->i, (g->nx+2)*(g->ny+2)*(g->nz+2), 128 );
-  CLEAR( ia->i, (g->nx+2)*(g->ny+2)*(g->nz+2) );
+  MALLOC_ALIGNED( ia->i, g->nv, 128 );
+  CLEAR( ia->i, g->nv );
   ia->g = g;
   REGISTER_OBJECT( ia, checkpt_interpolator_array, restore_interpolator_array,
                    NULL );
@@ -34,7 +34,7 @@ new_interpolator_array( grid_t * g ) {
 
 void
 delete_interpolator_array( interpolator_array_t * ia ) {
-  if( ia==NULL ) return;
+  if( !ia ) return;
   UNREGISTER_OBJECT( ia );
   FREE_ALIGNED( ia->i );
   FREE( ia );
@@ -79,8 +79,8 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   // Process the voxels assigned to this pipeline
   
   if( pipeline_rank==n_pipeline ) return; // No straggler cleanup needed
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 1,
-                               pipeline_rank, n_pipeline, &x, &y, &z );
+  DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 1,
+                     pipeline_rank, n_pipeline, x, y, z, n_voxel );
 
 # if HAS_SPU_INTERPOLATOR
 # define LOAD_STENCIL()    \
@@ -226,9 +226,9 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   // Process the voxels assigned to this pipeline
 
   if( pipeline_rank==n_pipeline ) return; // No straggler cleanup needed
-  n_voxel = distribute_voxels( 1,nx, 1,ny, 1,nz, 1,
-                               pipeline_rank, n_pipeline,
-                               &x, &y, &z );
+  DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 1,
+                     pipeline_rank, n_pipeline,
+                     x, y, z, n_voxel );
   
 # if HAS_SPU_INTERPOLATOR
 # define LOAD_STENCIL()    \

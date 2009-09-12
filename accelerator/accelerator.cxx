@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 	int64_t * lbuf_recv(NULL);
 
 	// initialize everything
-	ConnectionManager::instance().init(argc, argv);
+	ConnectionManager::instance().init( &argc, &argv );
 
 	// get an instance of the p2p connection
 	P2PConnection & p2p = P2PConnection::instance();

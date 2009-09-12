@@ -52,20 +52,20 @@ dump_node( registry_t * node ) {
               (unsigned long)node->id,
               (unsigned long)node->obj,
               (unsigned long)node->checkpt_func,
-              dli->dli_sname==NULL ? "(null)" : dli->dli_sname,
-              dli->dli_fname==NULL ? "(null)" : dli->dli_fname );
+              !dli->dli_sname ? "(null)" : dli->dli_sname,
+              !dli->dli_fname ? "(null)" : dli->dli_fname );
   if( node->restore_func ) dladdr( (void *)(size_t)node->restore_func, dli );
   else                     dli->dli_sname = NULL, dli->dli_fname = NULL;
   log_printf( "\trestore_func=%lx (%s from %s)\n",
               (unsigned long)node->restore_func,
-              dli->dli_sname==NULL ? "(null)" : dli->dli_sname,
-              dli->dli_fname==NULL ? "(null)" : dli->dli_fname );
+              !dli->dli_sname ? "(null)" : dli->dli_sname,
+              !dli->dli_fname ? "(null)" : dli->dli_fname );
   if( node->reanimate_func ) dladdr( (void *)(size_t)node->reanimate_func,dli);
   else                       dli->dli_sname = NULL, dli->dli_fname = NULL;
   log_printf( "\treanimate_func=%lx (%s from %s)\n",
               (unsigned long)node->reanimate_func,
-              dli->dli_sname==NULL ? "(null)" : dli->dli_sname,
-              dli->dli_fname==NULL ? "(null)" : dli->dli_fname );
+              !dli->dli_sname ? "(null)" : dli->dli_sname,
+              !dli->dli_fname ? "(null)" : dli->dli_fname );
 }
 
 static void
@@ -502,7 +502,7 @@ restore_fptr( void ) {
 
 void *
 reanimate_fptr( void * ptr ) {
-  if( ptr==NULL ) return NULL;
+  if( !ptr ) return NULL;
   ptr = object_ptr( (size_t)ptr );
   if( !ptr )
     ERROR(( "Unable to reanimate a pointer.  Mostly likely, either the "
@@ -535,7 +535,7 @@ checkpt_sym( const void * saddr ) {
      Otherwise, write a address symbol header and the symbol
      address. */
   
-  if( saddr==NULL ) CHECKPT_VAL( size_t, 0x2C11513B );
+  if( !saddr ) CHECKPT_VAL( size_t, 0x2C11513B );
   else {
     static int first_time = 1;
     if( first_time ) {
@@ -596,7 +596,7 @@ find_saddr( const char * sname,
 
   /* If we aren't given a symbol name, return not found */
 
-  if( sname==NULL ) return NULL;
+  if( !sname ) return NULL;
   
   /* Note that the default library search path (RTLD_DEFAULT) includes
      the application itself.  The application should be linked with
@@ -640,7 +640,7 @@ checkpt_sym( const void * saddr ) {
 
   /* If the symbol is NULL, checkpoint a NULL symbol header */
   
-  if( saddr==NULL ) {
+  if( !saddr ) {
     CHECKPT_VAL( size_t, 0x2C11513B );
     return;
   }
@@ -680,8 +680,8 @@ checkpt_sym( const void * saddr ) {
               "address %lx (the closest match was \"%s\" from \"%s\").  "
               "Writing out the raw address instead and keeping my fingers "
               "crossed.\n", (unsigned long)saddr,
-              dli->dli_sname==NULL ? "(null)" : dli->dli_sname,
-              dli->dli_fname==NULL ? "(null)" : dli->dli_fname ));
+              !dli->dli_sname ? "(null)" : dli->dli_sname,
+              !dli->dli_fname ? "(null)" : dli->dli_fname ));
 
     CHECKPT_VAL( size_t, 0xADD7513B  );
     CHECKPT_VAL( const void *, saddr );

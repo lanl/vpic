@@ -139,7 +139,7 @@ sort_p( species_t * sp ) {
   int * RESTRICT ALIGNED(128) next;
   int vl = VOXEL(1,1,1,                         sp->g->nx,sp->g->ny,sp->g->nz);
   int vh = VOXEL(sp->g->nx,sp->g->ny,sp->g->nz, sp->g->nx,sp->g->ny,sp->g->nz);
-  int n_voxel = (sp->g->nx+2)*(sp->g->ny+2)*(sp->g->nz+2);
+  int n_voxel = sp->g->nv;
 
   int * RESTRICT ALIGNED(128) coarse_partition;
   int n_pipeline = N_PIPELINE;
@@ -244,7 +244,7 @@ sort_p( species_t * sp ) {
   particle_t * ALIGNED(128) p = sp->p;
   //const int32_t * RESTRICT ALIGNED(128) sfc = g->sfc;
   const int np                = sp->np; 
-  const int nc                = (sp->g->nx+2)*(sp->g->ny+2)*(sp->g->nz+2);
+  const int nc                = sp->g->nv;
   const int nc1               = nc+1;
   int * RESTRICT ALIGNED(128) partition = sp->partition;
 

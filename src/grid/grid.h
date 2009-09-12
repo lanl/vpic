@@ -314,17 +314,6 @@ end_send_port( int i, // x port coord ([-1,0,1])
 // number of voxels an integer multiple of the bundle size.  If job 
 // is set to n_job, this function will determine the parameters of
 // the final incomplete bundle.
-//
-// FIXME: To acccomodate PPE and SPE builds, the distribute_voxels
-// function is deprecated.  Use the macro instead.
-
-int
-distribute_voxels( int x0, int x1,     // range of x-indices (inclusive)
-                   int y0, int y1,     // range of y-indices (inclusive)
-                   int z0, int z1,     // range of z-indices (inclusive)
-                   int bundle,         // number of voxels in a bundle
-                   int job, int n_job, // job ... on [0,n_job-1]
-                   int * _x, int * _y, int * _z );
 
 #define DISTRIBUTE_VOXELS( x0,x1, y0,y1, z0,z1, b, p,P, x,y,z,nv ) do { \
     int _x0=(x0), _y0=(y0), _z0=(z0), _b=(b), _p=(p), _P=(P);           \

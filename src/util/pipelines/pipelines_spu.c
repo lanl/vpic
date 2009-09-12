@@ -165,15 +165,16 @@ spu_boot( int * pargc,
 
   for( i=0; i<n_pipeline; i++ ) {
 
-	// Create SPE context
-    if( ( SPU_Control_State[i].context=spe_context_create( 0, NULL ) )==NULL )
+    // Create SPE context
+    SPU_Control_State[i].context = spe_context_create( 0, NULL );
+    if( !SPU_Control_State[i].context )
       ERROR(( "spe_context_create failed" ));
 
     // Set the spe pipeline to use the new root_segment generic
-	// event loop
-	SPU_Control_State[i].pipeline = &root_segment;
+    // event loop
+    SPU_Control_State[i].pipeline = &root_segment;
 
-	// Create pthread to run SPE thread non-blocking
+    // Create pthread to run SPE thread non-blocking
     if( pthread_create( &SPU_Control_State[i].handle,
                         NULL,
                         spu_control_thread,

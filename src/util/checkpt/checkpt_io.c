@@ -9,13 +9,12 @@ checkpt_open_rdonly( const char * name ) {
 
   /* Check input args */
 
-  if( name==NULL ) ERROR(( "NULL name" ));
+  if( !name ) ERROR(( "NULL name" ));
 
   /* Open the file for reading */
 
   file = fopen( name, "rb" );
-  if( file==NULL )
-    ERROR(( "Unable to open \"%s\" for checkpt read", name ));
+  if( !file ) ERROR(( "Unable to open \"%s\" for checkpt read", name ));
   return (checkpt_t *)file;
 }
 
@@ -25,13 +24,12 @@ checkpt_open_wronly( const char * name ) {
 
   /* Check input args */
 
-  if( name==NULL ) ERROR(( "NULL name" ));
+  if( !name ) ERROR(( "NULL name" ));
 
   /* Open the file for writing */
 
   file = fopen( name, "wb" );
-  if( file==NULL )
-    ERROR(( "Unable to open \"%s\" for checkpt write", name ));
+  if( !file ) ERROR(( "Unable to open \"%s\" for checkpt write", name ));
   return (checkpt_t *)file;
 }
 
@@ -40,7 +38,7 @@ checkpt_close( checkpt_t * checkpt ) {
 
   /* Check input args */
 
-  if( checkpt==NULL ) return;
+  if( !checkpt ) return;
 
   /* Close the checpt file */
 

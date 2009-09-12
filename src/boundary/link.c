@@ -40,11 +40,11 @@ link_boundary( link_boundary_t     * lb,
 
     sprintf( fname, "%s.%d", lb->fbase, world_rank ); 
     fp = fopen( fname, "r" );
-    if( fp!=NULL )
+    if( fp )
       ERROR(( "File %s already exists (probably from a earlier run or "
               "recovery) ... Please move it or change link filename", fname ));
     fp = fopen( fname, "w" );
-    if( fp==NULL ) ERROR(("Could not open file %s", fname)); 
+    if( !fp ) ERROR(( "Could not open file %s", fname ));
     
     fprintf( fp, "%% %17.0f\n", lb->n_out );
   }

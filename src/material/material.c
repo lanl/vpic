@@ -35,7 +35,7 @@ restore_material( void ) {
 
 int
 num_material( const material_t *m_list ) {
-  if( m_list==NULL ) return 0;
+  if( !m_list ) return 0;
   return m_list->id+1;
 }
 
@@ -50,11 +50,11 @@ new_material( const char * name,
   material_t *m;
   int id, len;
 
-  if( m_list==NULL ) ERROR(("Invalid material list."));
+  if( !m_list ) ERROR(("Invalid material list."));
   // Note: strlen does not include terminating NULL
-  len = (name==NULL) ? 0 : strlen(name);
+  len = (!name) ? 0 : strlen(name);
   if( len<=0 ) ERROR(("Cannot create a nameless material."));
-  if( find_material_name(name,*m_list)!=NULL )
+  if( find_material_name( name, *m_list ) )
     ERROR(("There is already a material named \"%s\".", name));
   id = num_material( *m_list );
   if( id==max_material )
@@ -77,7 +77,7 @@ new_material( const char * name,
 
 static void
 delete_material( material_t * m ) {
-  if( m==NULL ) return;
+  if( !m ) return;
   UNREGISTER_OBJECT( m );
   FREE( m );
 }
@@ -104,7 +104,7 @@ material_t *
 find_material_name( const char * name, 
                     material_t * m_list ) {
   material_t *m;
-  if( name==NULL ) return NULL;
+  if( !name ) return NULL;
   LIST_FIND_FIRST(m,m_list,strcmp(m->name,name)==0);
   return m;
 }

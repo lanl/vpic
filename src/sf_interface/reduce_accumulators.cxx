@@ -165,7 +165,7 @@ reduce_accumulator_array( accumulator_array_t * RESTRICT aa ) {
   DECLARE_ALIGNED_ARRAY( accumulators_pipeline_args_t, 128, args, 1 );
   int i0;
 
-  if( aa==NULL ) ERROR(( "Bad args" ));
+  if( !aa ) ERROR(( "Bad args" ));
 
   i0 = (VOX(1,1,1)/2)*2; // Round i0 down to even for 128B align on Cell
 

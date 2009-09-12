@@ -421,6 +421,7 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
   /*const*/ vec_float4 cdt_dx         = VEC_FLOAT4( args->cdt_dx  );
   /*const*/ vec_float4 cdt_dy         = VEC_FLOAT4( args->cdt_dy  );
   /*const*/ vec_float4 cdt_dz         = VEC_FLOAT4( args->cdt_dz  );
+  /*const*/ vec_float4 qsp            = VEC_FLOAT4( args->qsp     );
   /*const*/ vec_float4 one            = VEC_FLOAT4(  1.           );
   /*const*/ vec_float4 two            = VEC_FLOAT4(  2.           );
   /*const*/ vec_float4 one_third      = VEC_FLOAT4(  1./3.        );
@@ -452,7 +453,7 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
   vec_uint4 vp;                                                                  vec_uint4 vp_1;                                                                vec_uint4 vp_2;                                                                vec_uint4 vp_3;
 
   vec_float4 dx,   dy,   dz;   vec_uint4 i;                                      vec_float4 dx_1, dy_1, dz_1; vec_uint4 i_1;                                    vec_float4 dx_2, dy_2, dz_2; vec_uint4 i_2;                                    vec_float4 dx_3, dy_3, dz_3; vec_uint4 i_3;
-  vec_float4 ux,   uy,   uz,   q;                                                vec_float4 ux_1, uy_1, uz_1, q_1;                                              vec_float4 ux_2, uy_2, uz_2, q_2;                                              vec_float4 ux_3, uy_3, uz_3, q_3; 
+  vec_float4 ux,   uy,   uz,   w;                                                vec_float4 ux_1, uy_1, uz_1, w_1;                                              vec_float4 ux_2, uy_2, uz_2, w_2;                                              vec_float4 ux_3, uy_3, uz_3, w_3; 
 
   vec_float4 ex0,    dexdy,    dexdz,   d2exdydz;                                vec_float4 ex0_1,  dexdy_1,  dexdz_1, d2exdydz_1;                              vec_float4 ex0_2,  dexdy_2,  dexdz_2, d2exdydz_2;                              vec_float4 ex0_3,  dexdy_3,  dexdz_3, d2exdydz_3;
   vec_float4 ey0,    deydz,    deydx,   d2eydzdx;                                vec_float4 ey0_1,  deydz_1,  deydx_1, d2eydzdx_1;                              vec_float4 ey0_2,  deydz_2,  deydx_2, d2eydzdx_2;                              vec_float4 ey0_3,  deydz_3,  deydx_3, d2eydzdx_3;
@@ -475,7 +476,7 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
   vec_uint4  outbnd;                                                             vec_uint4  outbnd_1;                                                           vec_uint4  outbnd_2;                                                           vec_uint4  outbnd_3; 
   uint32_t gather;                                                               uint32_t gather_1;                                                             uint32_t gather_2;                                                             uint32_t gather_3;
 
-  vec_float4 qa,   ccc;                                                          vec_float4 qa_1, ccc_1;                                                        vec_float4 qa_2, ccc_2;                                                        vec_float4 qa_3, ccc_3;
+  vec_float4 q,   ccc;                                                          vec_float4 q_1, ccc_1;                                                        vec_float4 q_2, ccc_2;                                                        vec_float4 q_3, ccc_3;
  
   vec_float4 a0x,   a1x,   a2x,   a3x,   a4x;                                    vec_float4 a0x_1, a1x_1, a2x_1, a3x_1, a4x_1;                                  vec_float4 a0x_2, a1x_2, a2x_2, a3x_2, a4x_2;                                  vec_float4 a0x_3, a1x_3, a2x_3, a3x_3, a4x_3;
   vec_float4 a0y,   a1y,   a2y,   a3y,   a4y;                                    vec_float4 a0y_1, a1y_1, a2y_1, a3y_1, a4y_1;                                  vec_float4 a0y_2, a1y_2, a2y_2, a3y_2, a4y_2;                                  vec_float4 a0y_3, a1y_3, a2y_3, a3y_3, a4y_3;
@@ -489,7 +490,6 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
   // Particle mover variables
 
   vec_float4 dr, r, u;                // Particle displ, position, momentum;
-  vec_float4 /*q,*/ q3;               // Particle charge and one third charge
   vec_float4 sgn_dr, s;               // Movement direction, streak length
   vec_float4 sdr, sr, sr_yzx, sr_zxy; // Streak displ, midpoint, perm midpoint
   vec_float4 v0, v1, v2, v3, v4, v5;  // Vector temporaries
@@ -590,7 +590,7 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
     ux    = p0u;                                                                   ux_1  = p4u;                                                                   ux_2  = p8u;                                                                   ux_3  = p12u;
     uy    = p1u;                                                                   uy_1  = p5u;                                                                   uy_2  = p9u;                                                                   uy_3  = p13u;
     uz    = p2u;                                                                   uz_1  = p6u;                                                                   uz_2  = p10u;                                                                  uz_3  = p14u;
-    q     = p3u;                                                                   q_1   = p7u;                                                                   q_2   = p11u;                                                                  q_3   = p15u;
+    w     = p3u;                                                                   w_1   = p7u;                                                                   w_2   = p11u;                                                                  w_3   = p15u;
     ux0   = ADD( ux,   hax   );                                                    ux0_1 = ADD( ux_1, hax_1 );                                                    ux0_2 = ADD( ux_2, hax_2 );                                                    ux0_3 = ADD( ux_3, hax_3 );
     uy0   = ADD( uy,   hay   );                                                    uy0_1 = ADD( uy_1, hay_1 );                                                    uy0_2 = ADD( uy_2, hay_2 );                                                    uy0_3 = ADD( uy_3, hay_3 );
     uz0   = ADD( uz,   haz   );                                                    uz0_1 = ADD( uz_1, haz_1 );                                                    uz0_2 = ADD( uz_2, haz_2 );                                                    uz0_3 = ADD( uz_3, haz_3 );
@@ -672,11 +672,11 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
 
-    qa    = CZERO( outbnd,   q   );                                                qa_1  = CZERO( outbnd_1, q_1 );                                                qa_2  = CZERO( outbnd_2, q_2 );                                                qa_3  = CZERO( outbnd_3, q_3 );
-    ccc   = MUL( MUL( one_third, qa   ), MUL( ddx,   MUL( ddy,   ddz   ) ) );      ccc_1 = MUL( MUL( one_third, qa_1 ), MUL( ddx_1, MUL( ddy_1, ddz_1 ) ) );      ccc_2 = MUL( MUL( one_third, qa_2 ), MUL( ddx_2, MUL( ddy_2, ddz_2 ) ) );      ccc_3 = MUL( MUL( one_third, qa_3 ), MUL( ddx_3, MUL( ddy_3, ddz_3 ) ) );
+    q    = CZERO( outbnd,   MUL( qsp, w   ) );                                     q_1  = CZERO( outbnd_1, MUL( qsp, w_1 ) );                                     q_2  = CZERO( outbnd_2, MUL( qsp, w_2 ) );                                     q_3  = CZERO( outbnd_3, MUL( qsp, w_3 ) );
+    ccc   = MUL( MUL( one_third, q   ), MUL( ddx,   MUL( ddy,   ddz   ) ) );       ccc_1 = MUL( MUL( one_third, q_1 ), MUL( ddx_1, MUL( ddy_1, ddz_1 ) ) );       ccc_2 = MUL( MUL( one_third, q_2 ), MUL( ddx_2, MUL( ddy_2, ddz_2 ) ) );       ccc_3 = MUL( MUL( one_third, q_3 ), MUL( ddx_3, MUL( ddy_3, ddz_3 ) ) );
 
 #   define ACCUMULATE_J(X,Y,Z)                                                                                                                                                                                                                                                         \
-    a4##X     = MUL(qa,       dd##X    );                                          a4##X##_1 = MUL(qa_1,     dd##X##_1);                                          a4##X##_2 = MUL(qa_2,     dd##X##_2);                                          a4##X##_3 = MUL(qa_3,     dd##X##_3); \
+    a4##X     = MUL(q,       dd##X    );                                           a4##X##_1 = MUL(q_1,     dd##X##_1);                                           a4##X##_2 = MUL(q_2,     dd##X##_2);                                           a4##X##_3 = MUL(q_3,     dd##X##_3); \
     a1##X     = MUL(a4##X,    d##Y##h  );                                          a1##X##_1 = MUL(a4##X##_1,d##Y##h_1);                                          a1##X##_2 = MUL(a4##X##_2,d##Y##h_2);                                          a1##X##_3 = MUL(a4##X##_3,d##Y##h_3); \
     a0##X     = SUB(a4##X,    a1##X    );                                          a0##X##_1 = SUB(a4##X##_1,a1##X##_1);                                          a0##X##_2 = SUB(a4##X##_2,a1##X##_2);                                          a0##X##_3 = SUB(a4##X##_3,a1##X##_3); \
     a1##X     = ADD(a1##X,    a4##X    );                                          a1##X##_1 = ADD(a1##X##_1,a4##X##_1);                                          a1##X##_2 = ADD(a1##X##_2,a4##X##_2);                                          a1##X##_3 = ADD(a1##X##_3,a4##X##_3); \
@@ -737,15 +737,15 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
 
     LOAD_4x1( &pm[m].dispx, dr );
     n = EXTRACT( (vec_int4)dr, 3 );
-    dr = CZERO( element_3, dr ); // dr = p_ddx, p_ddy, p_ddz, 0
+    dr = CZERO( element_3, dr );     // dr  = p_ddx, p_ddy, p_ddz, 0
 
     LOAD_4x1( &p[n].dx, r );
     voxel = EXTRACT( (vec_int4)r, 3 );
-    r = CZERO( element_3, r );   // r  = p_dx,  p_dy,  p_dz,  0
+    r = CZERO( element_3, r );       // r   = p_dx,  p_dy,  p_dz,  0
 
-    LOAD_4x1( &p[n].ux, u );     // u  = p_ux,  p_uy,  p_uz,  p_q
-    q  = SPLAT( u, 3 );          // q  = p_q,   p_q,   p_q,   p_q
-    q3 = MUL( one_third, q );    // q3 = p_q/3, p_q/3, p_q/3, p_q/3
+    LOAD_4x1( &p[n].ux, u );         // u   = p_ux,  p_uy,  p_uz,  p_q
+    q   = MUL( qsp, SPLAT( u, 3 ) ); // q   = p_q,   p_q,   p_q,   p_q
+    q_3 = MUL( one_third, q );       // q_3 = p_q/3, p_q/3, p_q/3, p_q/3
 
     for( n_iter=6; n_iter; n_iter-- ) {
 
@@ -810,7 +810,7 @@ advance_p_pipeline_spu( particle_t       * RESTRICT ALIGNED(128) p,   // Particl
 
       sr_yzx = PERM( sr, sr, yzx_perm ); // sr_yzx = dy, dz, dx, 0
       sr_zxy = PERM( sr, sr, zxy_perm ); // sr_zxy = dz, dx, dy, 0
-      v5  = MUL( q3,
+      v5  = MUL( q_3,
             MUL( SPLAT(sdr,0),
             MUL( SPLAT(sdr,1),
                  SPLAT(sdr,2) ) ) ); // v5 = SPLATS(q ux uy uz/3)

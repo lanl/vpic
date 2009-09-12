@@ -46,7 +46,7 @@ new_grid( void ) {
 
 void
 delete_grid( grid_t * g ) {
-  if( g==NULL ) return;
+  if( !g ) return;
   UNREGISTER_OBJECT( g );
   FREE_ALIGNED( g->neighbor );
   FREE_ALIGNED( g->range );

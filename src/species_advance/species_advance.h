@@ -41,7 +41,6 @@ typedef struct particle_mover {
   int32_t i;                 // Index of the particle to move
 } particle_mover_t;
 
-// FIXME: BOUNDARY HANDLERS NEED TO FILL OUT SPECIES ID FIELD!
 // NOTE: THE LAYOUT OF A PARTICLE_INJECTOR _MUST_ BE COMPATIBLE WITH
 // THE CONCATENATION OF A PARTICLE_T AND A PARTICLE_MOVER!
 
@@ -51,7 +50,7 @@ typedef struct particle_injector {
   float ux, uy, uz;          // Particle normalized momentum
   float w;                   // Particle weight (number of physical particles)
   float dispx, dispy, dispz; // Displacement of particle
-  species_id sp_id;          // FIXME: spid unused currently
+  species_id sp_id;          // Species of particle
 } particle_injector_t;
 
 typedef struct species {

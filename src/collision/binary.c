@@ -137,6 +137,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
       pr_coll = w_max * pr_norm *
         rate_constant( params, spi, spj, &spi_p[k], &spj_p[l] );
       if( pr_coll>1 ) n_large_pr++;
+      if( mt_frand_c0(rng)>=pr_coll ) continue; /* Didn't collide */
 
       /* k and l had a collision.  Determine which computational
          particles should be updated by the collision process.

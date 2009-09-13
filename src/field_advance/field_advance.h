@@ -142,6 +142,10 @@
 // h(nx+1,:,:)) are used to store values of the field array on
 // neighbor processors or used to enforce bonundary conditions.
 
+// Note: When setting the material IDs on the mesh, the material IDs
+// should be set in the ghost cells too. Further, these IDs should be
+// consistent with the neighboring domains (if any)!
+
 // FIXME: MATERIAL-LESS FIELD_T SHOULD EVENTUALLY USE ITS OWN FIELD_T
 // WITH MORE COMPACT LAYOUT.
 

@@ -49,6 +49,8 @@ AddModule(emitter,src/emitter,emitter child_langmuir)
 /* FIXME: BRING BACK LINK */
 AddModule(boundary,src/boundary,boundary boundary_p maxwellian_reflux absorb_tally)
 
+AddModule(collision,src/collision,collision langevin unary binary)
+
 AddModule(vpic,src/vpic,vpic initialize advance dump misc diagnostics)
 
 /* Additional directories to clean */

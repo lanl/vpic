@@ -27,27 +27,27 @@ begin_initialization {
                         L, L, L,         // Grid high corner
                         nproc(), 1, 1,   // Grid resolution
                         nproc(), 1, 1 ); // Processor topology
-  define_material("vacuum",1.0,1.0,0.0);
+  define_material( "vacuum", 1.0, 1.0, 0.0 );
   define_field_array();
 
   species_t * sp = define_species( "test_species", 1, 1, local_np, 1, 0, 0 );
   repeat( local_np )
     inject_particle( sp,
-                     uniform_rand(grid->x0,grid->x1),
-                     uniform_rand(grid->y0,grid->y1),
-                     uniform_rand(grid->z0,grid->z1),
-                     maxwellian_rand(1),
-                     maxwellian_rand(1),
-                     maxwellian_rand(1),
-                     uniform_rand(0,1),
+                     uniform( rng[0], grid->x0, grid->x1 ),
+                     uniform( rng[0], grid->y0, grid->y1 ),
+                     uniform( rng[0], grid->z0, grid->z1 ),
+                     normal( rng[0], 0, 1 ),
+                     normal( rng[0], 0, 1 ),
+                     normal( rng[0], 0, 1 ),
+                     uniform( rng[0], 0, 1 ),
                      0, 0 );
 
   // Warm up the caches
-  repeat(3) advance_p( sp, accumulator_array, interpolator_array );
+  repeat( 3 ) advance_p( sp, accumulator_array, interpolator_array );
 
   // Do the benchmark
   double elapsed = wallclock();
-  repeat(n_step) advance_p( sp, accumulator_array, interpolator_array );
+  repeat( n_step ) advance_p( sp, accumulator_array, interpolator_array );
   elapsed = wallclock() - elapsed;
   sim_log( (double)local_np*(double)nproc()*(double)n_step/elapsed/1e6 );
   exit(0);

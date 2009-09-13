@@ -38,11 +38,11 @@ begin_initialization {
 
   species_t * sp = define_species( "test_species", 2, 1, npart, npart, 0, 0 );
   repeat(npart) inject_particle( sp,
-                                 uniform_rand(0,L),
-                                 uniform_rand(0,L),
-                                 uniform_rand(0,L),
+                                 uniform( rng[0], 0, L ),
+                                 uniform( rng[0], 0, L ),
+                                 uniform( rng[0], 0, L ),
                                  1, 1, 1, // Gamma = 2
-                                 uniform_rand(0,1),
+                                 uniform( rng[0], 0, 1 ),
                                  0, 0 );
 
   // Hack into vpic internals

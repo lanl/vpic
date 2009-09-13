@@ -184,8 +184,8 @@ begin_globals {
 
 begin_initialization {
   int n, count;
-  seed_rand(1);
-  for( n=count=0; n<N; n++ ) if( sequence[n] != mt_urand(rng) ) count++;
+  seed_mt_rng( rng[0], 1 );
+  for( n=count=0; n<N; n++ ) if( sequence[n] != mt_urand(rng[0]) ) count++;
   if( count ) { sim_log( "FAIL" ); abort(1); }
   /**/          sim_log( "pass" ); exit(0);
 }

@@ -27,6 +27,16 @@ restore_main( void ) {
   return &simulation;
 }
 
+void
+checkpt( const char * fbase,
+         int tag ) {
+  char fname[256];
+  if( !fbase ) ERROR(( "NULL filename base" ));
+  sprintf( fname, "%s.%i.%i", fbase, tag, world_rank );
+  if( world_rank==0 ) log_printf( "*** Checkpointing to \"%s\"\n", fbase );
+  checkpt_objects( fname );
+}
+
 int
 main( int argc,
       char **argv ) {

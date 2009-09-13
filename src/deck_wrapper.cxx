@@ -101,111 +101,76 @@ vpic_simulation::user_particle_collisions( void )
 // all associated cell-centers are inside the region.
 
 // Define a region that fills the whole simulation
+
 #define everywhere 1
 
 // Define a macro to allow different parts of a region to be selected.
-// Note: particle boundary conditions are negative numbers so 0 is an
-// invalid particle boundary condition. Likewise, 0 as a const char *
-// is a NULL string (lookup_material will give -1)
-#define leave_unchanged 0
+// Note: get_particle_bc_id returns  0 if NULL is passed to it
+// Note: get_material_bc_id returns -1 if NULL is passed to it
 
-inline material_id
-_mat_id( material_t * m ) {
-  if( !m ) return -1;
-  if( m==(material_t *)leave_unchanged ) return -1;
-  return m->id;
-}
-
-inline int64_t
-_pbc_id( particle_bc_t * pbc ) {
-  if( !pbc ) return 0;
-  if( pbc==(particle_bc_t *)leave_unchanged   ) return 0;
-  if( pbc==(particle_bc_t *)absorb_particles  ) return absorb_particles;
-  if( pbc==(particle_bc_t *)reflect_particles ) return reflect_particles;
-  return pbc->id;
-}
-
-// The x=x statements are to avoid a compiler warning if the supplied
-// region or field equation does not use x, y and/or z
+#define leave_unchanged NULL
 
 // FIXME: THESE GLOBAL POSITION CALCULATIONS NEED TO BE MADE MORE RIGOROUS
 
-#define set_point_region_material( rgn, rmat ) do {                      \
-    const material_id _rmat = _mat_id( (material_t *)(rmat) );           \
+#define set_point_region_material( rgn, rmat ) do {                 \
+    const material_id _rmat = get_material_id( (rmat) );            \
+    if( _rmat==-1 ) break;                                          \
+    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;    \
+    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;    \
+    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;    \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zn = _z0 + _dz*(_k-1), _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yn = _y0 + _dy*(_j-1), _yc = _y0 + _dy*(_j-0.5); field_t * _f = &field(0,_j,_k); \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xn = _x0 + _dx*(_i-1), _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+          x = _xn; y = _yn; z = _zn; if( (rgn) ) _f->nmat  = _rmat; \
+          x = _xc;                   if( (rgn) ) _f->ematx = _rmat; \
+                   y = _yc;          if( (rgn) ) _f->fmatz = _rmat; \
+                            z = _zc; if( (rgn) ) _f->cmat  = _rmat; \
+                   y = _yn;          if( (rgn) ) _f->fmaty = _rmat; \
+          x = _xn;                   if( (rgn) ) _f->ematz = _rmat; \
+                   y = _yc;          if( (rgn) ) _f->fmatx = _rmat; \
+                            z = _zn; if( (rgn) ) _f->ematy = _rmat; \
+          _f++;                                                     \
+    }}}                                                             \
+  } while(0)
+
+#define set_point_region_bc( rgn, ipbc, epbc ) do {            		 \
+    const int64_t _ipbc = get_particle_bc_id( (particle_bc_t *)(ipbc) ); \
+    const int64_t _epbc = get_particle_bc_id( (particle_bc_t *)(epbc) ); \
+    if( !_ipbc && !_epbc ) break;                                        \
     const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;         \
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;         \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;         \
-    field_t * _f0 = &field(0,0,0);                                       \
-    for( int _k=0; _k<=_nz+1; _k++ ) {                                   \
-      const double _zn = _z0 + _dz*(_k-1), _zc = _z0 + _dz*(_k-0.5);     \
-      for( int _j=0; _j<=_ny+1; _j++ ) {                                 \
-        const double _yn = _y0 + _dy*(_j-1), _yc = _y0 + _dy*(_j-0.5);   \
-        field_t * _f = _f0 + voxel(0,_j,_k);                             \
-        for( int _i=0; _i<=_nx+1; _i++ ) {                               \
-          const double _xn = _x0 + _dx*(_i-1), _xc = _x0 + _dx*(_i-0.5); \
-          if( _rmat!=-1 ) {                                              \
-            double x, y, z;                                              \
-            x = _xn; y = _yn; z = _zn; if(rgn) _f->nmat  = _rmat;        \
-            x = _xc;                   if(rgn) _f->ematx = _rmat;        \
-                     y = _yc;          if(rgn) _f->fmatz = _rmat;        \
-                              z = _zc; if(rgn) _f->cmat  = _rmat;        \
-                     y = _yn;          if(rgn) _f->fmaty = _rmat;        \
-            x = _xn;                   if(rgn) _f->ematz = _rmat;        \
-                     y = _yc;          if(rgn) _f->fmatx = _rmat;        \
-                              z = _zn; if(rgn) _f->ematy = _rmat;        \
-            x = x; y = y; z = z;                                         \
+    int64_t * _n0 = grid->neighbor;                                      \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zn = _z0 + _dz*(_k-1), _zh = _z0 + _dz*_k; \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yn = _y0 + _dy*(_j-1), _yh = _y0 + _dy*_j; int64_t * _n = _n0 + 6*voxel(1,_j,_k); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xn = _x0 + _dx*(_i-1), _xh = _x0 + _dx*_i; double x, y, z; \
+          int _r000, _r100, _r010, _r110, _r001, _r101, _r011, _r111;    \
+          x = _xn; y = _yn; z = _zn; _r000 = (rgn);                      \
+          x = _xh;                   _r100 = (rgn);                      \
+          x = _xn; y = _yh;          _r010 = (rgn);                      \
+          x = _xh;                   _r110 = (rgn);                      \
+          x = _xn; y = _yn; z = _zh; _r001 = (rgn);                      \
+          x = _xh;                   _r101 = (rgn);                      \
+          x = _xn; y = _yh;          _r011 = (rgn);                      \
+          x = _xh;                   _r111 = (rgn);                      \
+          if( _epbc ) {                                                  \
+            if( _r000 || _r010 || _r001 || _r011 ) _n[0] = _epbc;        \
+            if( _r000 || _r001 || _r100 || _r101 ) _n[1] = _epbc;        \
+            if( _r000 || _r100 || _r010 || _r110 ) _n[2] = _epbc;        \
+            if( _r100 || _r110 || _r101 || _r111 ) _n[3] = _epbc;        \
+            if( _r010 || _r011 || _r110 || _r111 ) _n[4] = _epbc;        \
+            if( _r001 || _r101 || _r011 || _r111 ) _n[5] = _epbc;        \
           }                                                              \
-          _f++;                                                          \
-        }                                                                \
-      }                                                                  \
-    }                                                                    \
-  } while(0)
-
-#define set_point_region_bc( rgn, ipbc, epbc ) do {            		\
-    const int64_t _ipbc = _pbc_id( (particle_bc_t *)(ipbc) );           \
-    const int64_t _epbc = _pbc_id( (particle_bc_t *)(epbc) );           \
-    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;	\
-    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;	\
-    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;	\
-    int64_t * ALIGNED(128) _n0 = grid->neighbor;                        \
-    for( int _k=1; _k<=_nz; _k++ ) {					\
-      const double _zn = _z0 + _dz*(_k-1), _zh = _z0 + _dz*_k;		\
-      for( int _j=1; _j<=_ny; _j++ ) {					\
-        const double _yn = _y0 + _dy*(_j-1), _yh = _y0 + _dy*_j;	\
-        int64_t *_n = _n0 + 6*voxel(1,_j,_k);		            	\
-        for( int _i=1; _i<=_nx; _i++ ) {				\
-          const double _xn = _x0 + _dx*(_i-1), _xh = _x0 + _dx*_i;	\
-          double x, y, z;						\
-          int _r000, _r100, _r010, _r110, _r001, _r101, _r011, _r111;	\
-          x = _xn; y = _yn; z = _zn; _r000 = (rgn);			\
-          x = _xh;                   _r100 = (rgn);			\
-          x = _xn; y = _yh;          _r010 = (rgn);			\
-          x = _xh;                   _r110 = (rgn);			\
-          x = _xn; y = _yn; z = _zh; _r001 = (rgn);			\
-          x = _xh;                   _r101 = (rgn);			\
-          x = _xn; y = _yh;          _r011 = (rgn);			\
-          x = _xh;                   _r111 = (rgn);			\
-          x = x; y = y; z = z;						\
-          if( _epbc<0 ) {						\
-            if( _r000 || _r010 || _r001 || _r011 ) _n[0] = _epbc;	\
-            if( _r000 || _r001 || _r100 || _r101 ) _n[1] = _epbc;	\
-            if( _r000 || _r100 || _r010 || _r110 ) _n[2] = _epbc;	\
-            if( _r100 || _r110 || _r101 || _r111 ) _n[3] = _epbc;	\
-            if( _r010 || _r011 || _r110 || _r111 ) _n[4] = _epbc;	\
-            if( _r001 || _r101 || _r011 || _r111 ) _n[5] = _epbc;	\
-          }								\
-          if( _ipbc<0 ) {						\
-            if( _r000 && _r010 && _r001 && _r011 ) _n[0] = _ipbc;	\
-            if( _r000 && _r001 && _r100 && _r101 ) _n[1] = _ipbc;	\
-            if( _r000 && _r100 && _r010 && _r110 ) _n[2] = _ipbc;	\
-            if( _r100 && _r110 && _r101 && _r111 ) _n[3] = _ipbc;	\
-            if( _r010 && _r011 && _r110 && _r111 ) _n[4] = _ipbc;	\
-            if( _r001 && _r101 && _r011 && _r111 ) _n[5] = _ipbc;	\
-          }								\
-          _n += 6;							\
-        }								\
-      }									\
-    }									\
+          if( _ipbc ) {                                                  \
+            if( _r000 && _r010 && _r001 && _r011 ) _n[0] = _ipbc         \
+            if( _r000 && _r001 && _r100 && _r101 ) _n[1] = _ipbc         \
+            if( _r000 && _r100 && _r010 && _r110 ) _n[2] = _ipbc         \
+            if( _r100 && _r110 && _r101 && _r111 ) _n[3] = _ipbc         \
+            if( _r010 && _r011 && _r110 && _r111 ) _n[4] = _ipbc         \
+            if( _r001 && _r101 && _r011 && _r111 ) _n[5] = _ipbc         \
+          }                                                              \
+          _n += 6;                                                       \
+    }}}                                                                  \
   } while(0)
 
 // The equations are strictly evaluated inside the region
@@ -216,142 +181,111 @@ _pbc_id( particle_bc_t * pbc ) {
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;         \
     const double _c  = grid->cvac;                                       \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;         \
-    field_t * _f0 = &field(0,0,0);                                       \
-    for( int _k=0; _k<=_nz+1; _k++ ) {                                   \
-      const double _zn = _z0 + _dz*(_k-1), _zc = _z0 + _dz*(_k-0.5);     \
-      for( int _j=0; _j<=_ny+1; _j++ ) {                                 \
-        const double _yn = _y0 + _dy*(_j-1), _yc = _y0 + _dy*(_j-0.5);   \
-        field_t *_f = _f0 + voxel(0,_j,_k);                              \
-        for( int _i=0; _i<=_nx+1; _i++ ) {                               \
-          const double _xn = _x0 + _dx*(_i-1), _xc = _x0 + _dx*(_i-0.5); \
-          double x, y, z;                                                \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zn = _z0 + _dz*(_k-1), _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yn = _y0 + _dy*(_j-1), _yc = _y0 + _dy*(_j-0.5); field_t * _f = &field(0,_j,_k); \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xn = _x0 + _dx*(_i-1), _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
           x = _xn; y = _yn; z = _zn; /* No node fields */                \
-          x = _xc;                   if(rgn) _f->ex  =    (eqn_ex);      \
-                   y = _yc;          if(rgn) _f->cbz = _c*(eqn_bz);      \
+          x = _xc;                   if( (rgn) ) _f->ex  =    (eqn_ex);  \
+                   y = _yc;          if( (rgn) ) _f->cbz = _c*(eqn_bz);  \
                             z = _zc; /* No cell fields */                \
-                   y = _yn;          if(rgn) _f->cby = _c*(eqn_by);      \
-          x = _xn;                   if(rgn) _f->ez  =    (eqn_ez);      \
-                   y = _yc;          if(rgn) _f->cbx = _c*(eqn_bx);      \
-                            z = _zn; if(rgn) _f->ey  =    (eqn_ey);      \
-          x = x; y = y; z = z;                                           \
+                   y = _yn;          if( (rgn) ) _f->cby = _c*(eqn_by);  \
+          x = _xn;                   if( (rgn) ) _f->ez  =    (eqn_ez);  \
+                   y = _yc;          if( (rgn) ) _f->cbx = _c*(eqn_bx);  \
+                            z = _zn; if( (rgn) ) _f->ey  =    (eqn_ey);  \
           _f++;                                                          \
-        }                                                                \
-      }                                                                  \
-    }                                                                    \
+    }}}                                                                  \
   } while(0)
 
-#define set_region_material( rgn, vmat, smat ) do {                        \
-    const material_id _vmat = _mat_id( (material_t *)(vmat) );             \
-    const material_id _smat = _mat_id( (material_t *)(smat) );             \
-    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;	   \
-    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;	   \
-    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;	   \
-    field_t *_f0 = &field(0,0,0);					   \
-    for( int _k=0; _k<=_nz+1; _k++ ) {					   \
-      const double _zl = _z0 + _dz*(_k-1.5), _zc = _z0 + _dz*(_k-0.5);	   \
-      for( int _j=0; _j<=_ny+1; _j++ ) {				   \
-        const double _yl = _y0 + _dy*(_j-1.5), _yc = _y0 + _dy*(_j-0.5);   \
-        field_t *_f = _f0 + voxel(0,_j,_k);			           \
-        for( int _i=0; _i<=_nx+1; _i++ ) {				   \
-          const double _xl = _x0 + _dx*(_i-1.5), _xc = _x0 + _dx*(_i-0.5); \
-          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll, _rlll;	   \
-          double x, y, z;						   \
-          x = _xc; y = _yc; z = _zc; _rccc = (rgn);			   \
-          x = _xl;                   _rlcc = (rgn);			   \
-          x = _xc; y = _yl;          _rclc = (rgn);			   \
-          x = _xl;                   _rllc = (rgn);			   \
-          x = _xc; y = _yc; z = _zl; _rccl = (rgn);			   \
-          x = _xl;                   _rlcl = (rgn);			   \
-          x = _xc; y = _yl;          _rcll = (rgn);			   \
-          x = _xl;                   _rlll = (rgn);			   \
-          x = x; y = y; z = z;						   \
-          if( _smat!=-1 ) {                                                \
-            if( _rccc || _rclc || _rccl || _rcll )  _f->ematx = _smat;	   \
-            if( _rccc || _rccl || _rlcc || _rlcl )  _f->ematy = _smat;	   \
-            if( _rccc || _rlcc || _rclc || _rllc )  _f->ematz = _smat;	   \
-            if( _rccc || _rlcc )                    _f->fmatx = _smat;	   \
-            if( _rccc || _rclc )                    _f->fmaty = _smat;	   \
-            if( _rccc || _rccl )                    _f->fmatz = _smat;	   \
-            if( _rccc || _rlcc || _rclc || _rllc ||			   \
-                _rccl || _rlcl || _rcll || _rlll )  _f->nmat  = _smat;	   \
-          }                                                                \
-          if( _vmat!=-1 ) {                                                \
-            if( _rccc && _rclc && _rccl && _rcll )  _f->ematx = _vmat;	   \
-            if( _rccc && _rccl && _rlcc && _rlcl )  _f->ematy = _vmat;	   \
-            if( _rccc && _rlcc && _rclc && _rllc )  _f->ematz = _vmat;	   \
-            if( _rccc && _rlcc )                    _f->fmatx = _vmat;	   \
-            if( _rccc && _rclc )                    _f->fmaty = _vmat;	   \
-            if( _rccc && _rccl )                    _f->fmatz = _vmat;	   \
-            if( _rccc && _rlcc && _rclc && _rllc &&			   \
-                _rccl && _rlcl && _rcll && _rlll )  _f->nmat  = _vmat;	   \
-            if( _rccc )                             _f->cmat  = _vmat;	   \
-          }								   \
-          _f++;								   \
-        }								   \
-      }									   \
-    }									   \
+#define set_region_material( rgn, vmat, smat ) do {                    \
+    const material_id _vmat = get_material_id( (vmat) );               \
+    const material_id _smat = get_material_id( (smat) );               \
+    if( _vmat==-1 && _smat==-1 ) break;                                \
+    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;       \
+    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;       \
+    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;       \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k); \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll, _rlll;  \
+          x = _xc; y = _yc; z = _zc; _rccc = (rgn);		       \
+          x = _xl;                   _rlcc = (rgn);		       \
+          x = _xc; y = _yl;          _rclc = (rgn);		       \
+          x = _xl;                   _rllc = (rgn);		       \
+          x = _xc; y = _yc; z = _zl; _rccl = (rgn);		       \
+          x = _xl;                   _rlcl = (rgn);		       \
+          x = _xc; y = _yl;          _rcll = (rgn);		       \
+          x = _xl;                   _rlll = (rgn);		       \
+          if( _smat!=-1 ) {                                            \
+            if( _rccc || _rclc || _rccl || _rcll )  _f->ematx = _smat; \
+            if( _rccc || _rccl || _rlcc || _rlcl )  _f->ematy = _smat; \
+            if( _rccc || _rlcc || _rclc || _rllc )  _f->ematz = _smat; \
+            if( _rccc || _rlcc )                    _f->fmatx = _smat; \
+            if( _rccc || _rclc )                    _f->fmaty = _smat; \
+            if( _rccc || _rccl )                    _f->fmatz = _smat; \
+            if( _rccc || _rlcc || _rclc || _rllc ||		       \
+                _rccl || _rlcl || _rcll || _rlll )  _f->nmat  = _smat; \
+          }                                                            \
+          if( _vmat!=-1 ) {                                            \
+            if( _rccc && _rclc && _rccl && _rcll )  _f->ematx = _vmat; \
+            if( _rccc && _rccl && _rlcc && _rlcl )  _f->ematy = _vmat; \
+            if( _rccc && _rlcc && _rclc && _rllc )  _f->ematz = _vmat; \
+            if( _rccc && _rlcc )                    _f->fmatx = _vmat; \
+            if( _rccc && _rclc )                    _f->fmaty = _vmat; \
+            if( _rccc && _rccl )                    _f->fmatz = _vmat; \
+            if( _rccc && _rlcc && _rclc && _rllc &&		       \
+                _rccl && _rlcl && _rcll && _rlll )  _f->nmat  = _vmat; \
+            if( _rccc )                             _f->cmat  = _vmat; \
+          }							       \
+          _f++;                                                        \
+    }}}                                                                \
   } while(0)
 
-
-#define set_region_bc(rgn,vpbc,ipbc,epbc) do {                   \
-    const int64_t _vpbc = _pbc_id( (particle_bc_t *)(vpbc) );    \
-    const int64_t _ipbc = _pbc_id( (particle_bc_t *)(ipbc) );    \
-    const int64_t _epbc = _pbc_id( (particle_bc_t *)(epbc) );    \
-    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0; \
-    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz; \
-    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz; \
-    int64_t * ALIGNED(128) _n0 = grid->neighbor;                 \
-    for( int _k=1; _k<=_nz; _k++ ) {                             \
-      const double _zl = _z0 + _dz*(_k-1.5);                     \
-      const double _zc = _z0 + _dz*(_k-0.5);                     \
-      const double _zh = _z0 + _dz*(_k+0.5);                     \
-      for( int _j=1; _j<=_ny; _j++ ) {                           \
-        const double _yl = _y0 + _dy*(_j-1.5);                   \
-        const double _yc = _y0 + _dy*(_j-0.5);                   \
-        const double _yh = _y0 + _dy*(_j+0.5);                   \
-        int64_t *_n = _n0 + 6*voxel(1,_j,_k);                    \
-        for( int _i=1; _i<=_nx; _i++ ) {                         \
-          const double _xl = _x0 + _dx*(_i-1.5);                 \
-          const double _xc = _x0 + _dx*(_i-0.5);                 \
-          const double _xh = _x0 + _dx*(_i+0.5);                 \
-          int _rc, _r0, _r1, _r2, _r3, _r4, _r5;                 \
-          double x, y, z;                                        \
-          x = _xc; y = _yc; z = _zc; _rc = (rgn);                \
-          x = _xl; y = _yc; z = _zc; _r0 = (rgn);                \
-          x = _xc; y = _yl; z = _zc; _r1 = (rgn);                \
-          x = _xc; y = _yc; z = _zl; _r2 = (rgn);                \
-          x = _xh; y = _yc; z = _zc; _r3 = (rgn);                \
-          x = _xc; y = _yh; z = _zc; _r4 = (rgn);                \
-          x = _xc; y = _yc; z = _zh; _r5 = (rgn);                \
-          x = x; y = y; z = z;                                   \
-          if( _vpbc < 0 ) {                                      \
-            if( _rc && _r0  ) _n[0] = _vpbc;                     \
-            if( _rc && _r1  ) _n[1] = _vpbc;                     \
-            if( _rc && _r2  ) _n[2] = _vpbc;                     \
-            if( _rc && _r3  ) _n[3] = _vpbc;                     \
-            if( _rc && _r4  ) _n[4] = _vpbc;                     \
-            if( _rc && _r5  ) _n[5] = _vpbc;                     \
-          }                                                      \
-          if( _ipbc < 0 ) {                                      \
-            if( _rc && !_r0 ) _n[0] = _ipbc;                     \
-            if( _rc && !_r1 ) _n[1] = _ipbc;                     \
-            if( _rc && !_r2 ) _n[2] = _ipbc;                     \
-            if( _rc && !_r3 ) _n[3] = _ipbc;                     \
-            if( _rc && !_r4 ) _n[4] = _ipbc;                     \
-            if( _rc && !_r5 ) _n[5] = _ipbc;                     \
-          }                                                      \
-          if( _epbc < 0 ) {                                      \
-            if( !_rc && _r0 ) _n[0] = _epbc;                     \
-            if( !_rc && _r1 ) _n[1] = _epbc;                     \
-            if( !_rc && _r2 ) _n[2] = _epbc;                     \
-            if( !_rc && _r3 ) _n[3] = _epbc;                     \
-            if( !_rc && _r4 ) _n[4] = _epbc;                     \
-            if( !_rc && _r5 ) _n[5] = _epbc;                     \
-          }                                                      \
-          _n += 6;                                               \
-        }                                                        \
-      }                                                          \
-    }                                                            \
+#define set_region_bc( rgn, vpbc, ipbc, epbc ) do {                      \
+    const int64_t _vpbc = get_particle_bc_id( (particle_bc_t *)(vpbc) ); \
+    const int64_t _ipbc = get_particle_bc_id( (particle_bc_t *)(ipbc) ); \
+    const int64_t _epbc = get_particle_bc_id( (particle_bc_t *)(epbc) ); \
+    if( !_vpbc && !_ipbc && !_epbc ) break;                              \
+    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;         \
+    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;         \
+    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;         \
+    int64_t * _n0 = grid->neighbor;                                      \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _zc = _z0 + _dz*(_k-0.5), _zh = _z0 + _dz*(_k+0.5); \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _yc = _y0 + _dy*(_j-0.5), _yh = _y0 + _dy*(_j+0.5); int64_t * _n = _n0 + 6*voxel(1,_j,_k); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xc = _x0 + _dx*(_i-0.5), _xh = _x0 + _dx*(_i+0.5); double x, y, z; \
+          int _rc, _r0, _r1, _r2, _r3, _r4, _r5;                         \
+          x = _xc; y = _yc; z = _zc; _rc = (rgn);                        \
+          x = _xl; y = _yc; z = _zc; _r0 = (rgn);                        \
+          x = _xc; y = _yl; z = _zc; _r1 = (rgn);                        \
+          x = _xc; y = _yc; z = _zl; _r2 = (rgn);                        \
+          x = _xh; y = _yc; z = _zc; _r3 = (rgn);                        \
+          x = _xc; y = _yh; z = _zc; _r4 = (rgn);                        \
+          x = _xc; y = _yc; z = _zh; _r5 = (rgn);                        \
+          if( _vpbc ) {                                                  \
+            if( _rc && _r0  ) _n[0] = _vpbc;                             \
+            if( _rc && _r1  ) _n[1] = _vpbc;                             \
+            if( _rc && _r2  ) _n[2] = _vpbc;                             \
+            if( _rc && _r3  ) _n[3] = _vpbc;                             \
+            if( _rc && _r4  ) _n[4] = _vpbc;                             \
+            if( _rc && _r5  ) _n[5] = _vpbc;                             \
+          }                                                              \
+          if( _ipbc ) {                                                  \
+            if( _rc && !_r0 ) _n[0] = _ipbc;                             \
+            if( _rc && !_r1 ) _n[1] = _ipbc;                             \
+            if( _rc && !_r2 ) _n[2] = _ipbc;                             \
+            if( _rc && !_r3 ) _n[3] = _ipbc;                             \
+            if( _rc && !_r4 ) _n[4] = _ipbc;                             \
+            if( _rc && !_r5 ) _n[5] = _ipbc;                             \
+          }                                                              \
+          if( _epbc ) {                                                  \
+            if( !_rc && _r0 ) _n[0] = _epbc;                             \
+            if( !_rc && _r1 ) _n[1] = _epbc;                             \
+            if( !_rc && _r2 ) _n[2] = _epbc;                             \
+            if( !_rc && _r3 ) _n[3] = _epbc;                             \
+            if( !_rc && _r4 ) _n[4] = _epbc;                             \
+            if( !_rc && _r5 ) _n[5] = _epbc;                             \
+          }                                                              \
+          _n += 6;                                                       \
+    }}}                                                                  \
   } while(0)
 
 // rgn is a logical equation that specifies the interior of the volume
@@ -362,40 +296,26 @@ _pbc_id( particle_bc_t * pbc ) {
 // deck segment.
 
 #define define_volume_emitter( e, rgn ) do {                      \
+    /* Count the number of cells in the emitter */                \
     const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;  \
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;  \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;  \
     int _nc = 0;                                                  \
-    /* Count the number of cells in the emitter */                \
-    for( int _k=1; _k<=_nz; _k++ ) {                              \
-      const double _zc = _z0 + _dz*(_k-0.5);                      \
-      for( int _j=1; _j<=_ny; _j++ ) {                            \
-        const double _yc = _y0 + _dy*(_j-0.5);                    \
-        for( int _i=1; _i<=_nx; _i++ ) {                          \
-          const double _xc = _x0 + _dx*(_i-0.5);                  \
-          double x, y, z;                                         \
-          x = _xc; y = _yc; z = _zc;                              \
-          if( (rgn) ) _nc++;                                      \
-        }                                                         \
-      }                                                           \
-    }                                                             \
-    emitter_t * _emitter = define_emitter( (e) );                 \
-    size_emitter( _emitter, _nc );                                \
-    /* Set the cells in the emitter */                            \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yc = _y0 + _dy*(_j-0.5); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+          x = _xc; y = _yc; z = _zc; if( (rgn) ) _nc++;           \
+    }}}                                                           \
+    /* Define the emitter */                                      \
+    int32_t * _c = size_emitter( define_emitter( (e) ), _nc );    \
     _nc = 0;                                                      \
-    for( int _k=1; _k<=_nz; _k++ ) {                              \
-      const double _zc = _z0 + _dz*(_k-0.5);                      \
-      for( int _j=1; _j<=_ny; _j++ ) {                            \
-        const double _yc = _y0 + _dy*(_j-0.5);                    \
-        for( int _i=1; _i<=_nx; _i++ ) {                          \
-          const double _xc = _x0 + _dx*(_i-0.5);                  \
-          double x, y, z;                                         \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yc = _y0 + _dy*(_j-0.5); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
           x = _xc; y = _yc; z = _zc;                              \
-          if( (rgn) ) _emitter->component[_nc++] =                \
+          if( (rgn) ) _c[_nc++] =                                 \
             COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY(0,0,0) );     \
-        }                                                         \
-      }                                                           \
-    }                                                             \
+    }}}                                                           \
   } while(0)
 
 // rgn is a logical equation.
@@ -404,25 +324,15 @@ _pbc_id( particle_bc_t * pbc ) {
 // A surface emitter emits into the exterior of the region.
 
 #define define_surface_emitter( e, rgn ) do {                    \
+    /* Count the number of faces in emitter surface */           \
     const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0; \
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz; \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz; \
     int _nf = 0;                                                 \
-    /* Count the number of faces in emitter */                   \
-    for( int _k=1; _k<=_nz; _k++ ) {                             \
-      const double _zl = _z0 + _dz*(_k-1.5);                     \
-      const double _zc = _z0 + _dz*(_k-0.5);                     \
-      const double _zh = _z0 + _dz*(_k+0.5);                     \
-      for( int _j=1; _j<=_ny; _j++ ) {                           \
-        const double _yl = _y0 + _dy*(_j-1.5);                   \
-        const double _yc = _y0 + _dy*(_j-0.5);                   \
-        const double _yh = _y0 + _dy*(_j+0.5);                   \
-        for( int _i=1; _i<=_nx; _i++ ) {                         \
-          const double _xl = _x0 + _dx*(_i-1.5);                 \
-          const double _xc = _x0 + _dx*(_i-0.5);                 \
-          const double _xh = _x0 + _dx*(_i+0.5);                 \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _zc = _z0 + _dz*(_k-0.5), _zh = _z0 + _dz*(_k+0.5); \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _yc = _y0 + _dy*(_j-0.5), _yh = _y0 + _dy*(_j+0.5); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xc = _x0 + _dx*(_i-0.5), _xh = _x0 + _dx*(_i+0.5); double x, y, z; \
           int _rc, _r0, _r1, _r2, _r3, _r4, _r5;                 \
-          double x, y, z;                                        \
           x = _xc; y = _yc; z = _zc; _rc = (rgn);                \
           x = _xl; y = _yc; z = _zc; _r0 = (rgn);                \
           x = _xc; y = _yl; z = _zc; _r1 = (rgn);                \
@@ -430,34 +340,20 @@ _pbc_id( particle_bc_t * pbc ) {
           x = _xh; y = _yc; z = _zc; _r3 = (rgn);                \
           x = _xc; y = _yh; z = _zc; _r4 = (rgn);                \
           x = _xc; y = _yc; z = _zh; _r5 = (rgn);                \
-          x = x; y = y; z = z;                                   \
           if( !_rc && _r0 ) _nf++;                               \
           if( !_rc && _r1 ) _nf++;                               \
           if( !_rc && _r2 ) _nf++;                               \
           if( !_rc && _r3 ) _nf++;                               \
           if( !_rc && _r4 ) _nf++;                               \
           if( !_rc && _r5 ) _nf++;                               \
-        }                                                        \
-      }                                                          \
-    }                                                            \
-    emitter_t * _emitter = define_emitter( (e) );                \
-    size_emitter( _emitter, _nf );                               \
-    /* Set the faces in the emitter */                           \
+    }}}                                                          \
+    /* Define the emitter */                                     \
+    int32_t * _c = size_emitter( define_emitter( (e) ), _nf );   \
     _nf = 0;                                                     \
-    for( int _k=1; _k<=_nz; _k++ ) {                             \
-      const double _zl = _z0 + _dz*(_k-1.5);                     \
-      const double _zc = _z0 + _dz*(_k-0.5);                     \
-      const double _zh = _z0 + _dz*(_k+0.5);                     \
-      for( int _j=1; _j<=_ny; _j++ ) {                           \
-        const double _yl = _y0 + _dy*(_j-1.5);                   \
-        const double _yc = _y0 + _dy*(_j-0.5);                   \
-        const double _yh = _y0 + _dy*(_j+0.5);                   \
-        for( int _i=1; _i<=_nx; _i++ ) {                         \
-          const double _xl = _x0 + _dx*(_i-1.5);                 \
-          const double _xc = _x0 + _dx*(_i-0.5);                 \
-          const double _xh = _x0 + _dx*(_i+0.5);                 \
+    for( int _k=1; _k<_nz+1; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _zc = _z0 + _dz*(_k-0.5), _zh = _z0 + _dz*(_k+0.5); \
+    for( int _j=1; _j<_ny+1; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _yc = _y0 + _dy*(_j-0.5), _yh = _y0 + _dy*(_j+0.5); \
+    for( int _i=1; _i<_nx+1; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xc = _x0 + _dx*(_i-0.5), _xh = _x0 + _dx*(_i+0.5); double x, y, z; \
           int _rc, _r0, _r1, _r2, _r3, _r4, _r5;                 \
-          double x, y, z;                                        \
           x = _xc; y = _yc; z = _zc; _rc = (rgn);                \
           x = _xl; y = _yc; z = _zc; _r0 = (rgn);                \
           x = _xc; y = _yl; z = _zc; _r1 = (rgn);                \
@@ -465,69 +361,51 @@ _pbc_id( particle_bc_t * pbc ) {
           x = _xh; y = _yc; z = _zc; _r3 = (rgn);                \
           x = _xc; y = _yh; z = _zc; _r4 = (rgn);                \
           x = _xc; y = _yc; z = _zh; _r5 = (rgn);                \
-          x = x; y = y; z = z;                                   \
-          if( !_rc && _r0 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY(-1, 0, 0) ); \
-          if( !_rc && _r1 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0,-1, 0) ); \
-          if( !_rc && _r2 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 0,-1) ); \
-          if( !_rc && _r3 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 1, 0, 0) ); \
-          if( !_rc && _r4 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 1, 0) ); \
-          if( !_rc && _r5 ) _emitter->component[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 0, 1) ); \
-        }                                                        \
-      }                                                          \
-    }                                                            \
+          if( !_rc && _r0 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY(-1, 0, 0) ); \
+          if( !_rc && _r1 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0,-1, 0) ); \
+          if( !_rc && _r2 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 0,-1) ); \
+          if( !_rc && _r3 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 1, 0, 0) ); \
+          if( !_rc && _r4 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 1, 0) ); \
+          if( !_rc && _r5 ) _c[_nf++] = COMPONENT_ID( voxel(_i,_j,_k), BOUNDARY( 0, 0, 1) ); \
+    }}}                                                          \
   } while(0)
 
 // The equations are only evaluated inside the mesh-mapped region
 // (This is not strictly inside the region)
-#define set_region_field(rgn,                                           \
-                         eqn_ex,eqn_ey,eqn_ez,                          \
-                         eqn_bx,eqn_by,eqn_bz) do {                     \
-  const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;          \
-  const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;          \
-  const double _c  = grid->cvac;                                        \
-  const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;          \
-  field_t *_f0 = &field(0,0,0);                                         \
-  for( int _k=0; _k<=_nz+1; _k++ ) {                                    \
-    const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*_k, _zc = _z0 + _dz*(_k-0.5); \
-    for( int _j=0; _j<=_ny+1; _j++ ) {                                  \
-      const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*_j, _yc = _y0 + _dy*(_j-0.5); \
-      field_t *_f = _f0 + voxel(0,_j,_k);                               \
-      for( int _i=0; _i<=_nx+1; _i++ ) {                                \
-        const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*_i, _xc = _x0 + _dx*(_i-0.5); \
-        int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll, _rlll;     \
-        double x, y, z;                                                 \
-        x = _xc; y = _yc; z = _zc; _rccc = (rgn);                       \
-        x = _xl;                   _rlcc = (rgn);                       \
-        x = _xc; y = _yl;          _rclc = (rgn);                       \
-        x = _xl;                   _rllc = (rgn);                       \
-        x = _xc; y = _yc; z = _zl; _rccl = (rgn);                       \
-        x = _xl;                   _rlcl = (rgn);                       \
-        x = _xc; y = _yl;          _rcll = (rgn);                       \
-        x = _xl;                   _rlll = (rgn);                       \
-        x = _xc; y = _ye; z = _ze; if( _rccc || _rclc || _rccl || _rcll ) _f->ex  = (eqn_ex); \
-        x = _xe; y = _yc; z = _ze; if( _rccc || _rccl || _rlcc || _rlcl ) _f->ey  = (eqn_ey); \
-        x = _xe; y = _ye; z = _zc; if( _rccc || _rlcc || _rclc || _rllc ) _f->ez  = (eqn_ez); \
-        x = _xe; y = _yc; z = _zc; if( _rccc || _rlcc )                   _f->cbx = _c*(eqn_bx); \
-        x = _xc; y = _ye; z = _zc; if( _rccc || _rclc )                   _f->cby = _c*(eqn_by); \
-        x = _xc; y = _yc; z = _ze; if( _rccc || _rccl )                   _f->cbz = _c*(eqn_bz); \
-        x = x;   y = y;   z = z;                                        \
-	_f++;                                                           \
-      }                                                                 \
-    }                                                                   \
-  }                                                                     \
-} while(0)
+#define set_region_field( rgn,                                        \
+                          eqn_ex, eqn_ey, eqn_ez,                     \
+                          eqn_bx, eqn_by, eqn_bz ) do {               \
+    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;      \
+    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;      \
+    const double _c  = grid->cvac;                                    \
+    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;      \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*_k, _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*_j, _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k); \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*_i, _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll, _rlll; \
+          x = _xc; y = _yc; z = _zc; _rccc = (rgn);                   \
+          x = _xl;                   _rlcc = (rgn);                   \
+          x = _xc; y = _yl;          _rclc = (rgn);                   \
+          x = _xl;                   _rllc = (rgn);                   \
+          x = _xc; y = _yc; z = _zl; _rccl = (rgn);                   \
+          x = _xl;                   _rlcl = (rgn);                   \
+          x = _xc; y = _yl;          _rcll = (rgn);                   \
+          x = _xl;                   _rlll = (rgn);                   \
+          x = _xc; y = _ye; z = _ze; if( _rccc || _rclc || _rccl || _rcll ) _f->ex  =    (eqn_ex); \
+          x = _xe; y = _yc; z = _ze; if( _rccc || _rccl || _rlcc || _rlcl ) _f->ey  =    (eqn_ey); \
+          x = _xe; y = _ye; z = _zc; if( _rccc || _rlcc || _rclc || _rllc ) _f->ez  =    (eqn_ez); \
+          x = _xe; y = _yc; z = _zc; if( _rccc || _rlcc )                   _f->cbx = _c*(eqn_bx); \
+          x = _xc; y = _ye; z = _zc; if( _rccc || _rclc )                   _f->cby = _c*(eqn_by); \
+          x = _xc; y = _yc; z = _ze; if( _rccc || _rccl )                   _f->cbz = _c*(eqn_bz); \
+          _f++;                                                       \
+    }}}                                                               \
+  } while(0)
 
-// Give input decks a checkpt convenience function
+// In main.cxx
 
-static inline void
+void
 checkpt( const char * fbase,
-         int tag ) {
-  char fname[256];
-  if( !fbase ) ERROR(( "NULL filename base" ));
-  sprintf( fname, "%s.%i.%i", fbase, tag, world_rank );
-  if( world_rank==0 ) log_printf( "*** Checkpointing to \"%s\"\n", fbase );
-  checkpt_objects( fname );
-}
+         int tag );
 
 //-----------------------------------------------------------------------------
 

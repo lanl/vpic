@@ -11,6 +11,7 @@
 #define PROFILE_TIMERS(_) \
   _( clear_accumulators ) \
   _( sort_p            ) \
+  _( collision_model   ) \
   _( advance_p         ) \
   _( reduce_accumulators ) \
   _( emission_model    ) \

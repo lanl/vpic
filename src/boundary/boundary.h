@@ -4,40 +4,7 @@
 #include "../species_advance/species_advance.h"
 
 struct particle_bc;
-
-/* The interacting particle is removed from the particle array after
-   an interact function is called.  So, if you want to preserve the
-   interacting particle after the interaction, you must copy it
-   over the to particle injector buffer.   It is the responsibility
-   of these handlers update rhob according to net charge added and
-   removed from the simulation by these functions. */
-
-typedef int /* Number of particles injected */
-(*particle_bc_func_t)(                   /* The boundary whose ... */
-  void                * RESTRICT b,      /* parameters are b was hit by ...  */
-  species_t           * RESTRICT sp,     /* a particle from this species ... */
-  particle_t          * RESTRICT p,      /* this particle in fact
-                                            (position is hit location, momentum
-                                            is at time of the hit) ... */
-  particle_mover_t    * RESTRICT pm,     /* who had this much displacement
-                                            remaining when it hit */
-  particle_injector_t * RESTRICT pi,     /* Injectors for particles created by
-                                            the interaction */
-  int                            max_pi, /* Max number injections allowed */
-  int                            face ); /* CONVENIENCE: Which face of the
-                                            the voxel containing the above
-                                            particle was hit */
-
-typedef void
-(*delete_particle_bc_func_t)( struct particle_bc * RESTRICT pbc );
-
-typedef struct particle_bc {
-  particle_bc_func_t interact;
-  void * params;
-  delete_particle_bc_func_t delete_pbc;
-  int64_t id;
-  struct particle_bc * next;
-} particle_bc_t;
+typedef struct particle_bc particle_bc_t;
 
 BEGIN_C_DECLS
 
@@ -49,6 +16,13 @@ num_particle_bc( const particle_bc_t * RESTRICT pbc_list );
 void
 delete_particle_bc_list( particle_bc_t * RESTRICT pbc_list );
 
+particle_bc_t *
+append_particle_bc( particle_bc_t * pbc,
+                    particle_bc_t ** pbc_list );
+
+int64_t
+get_particle_bc_id( particle_bc_t * pbc );
+
 /* In boundary_p.cxx */
 
 void
@@ -59,10 +33,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
 /* In maxwellian_reflux.c */
 
-/* DO NOT CALL DIRECTLY ... CALL THROUGH define_particle_bc */
 particle_bc_t *
 maxwellian_reflux( species_t * RESTRICT sp_list,
-                   mt_rng_t  * RESTRICT rng );
+                   mt_rng_t ** rng );
 
 void
 set_reflux_temp( /**/  particle_bc_t * RESTRICT mr,
@@ -72,7 +45,6 @@ set_reflux_temp( /**/  particle_bc_t * RESTRICT mr,
 
 /* In absorb_tally.c */
 
-/* DO NOT CALL DIRECTLY ... CALL THROUGH define_particle_bc */
 particle_bc_t *
 absorb_tally( /**/  species_t      * RESTRICT sp_list,
               const field_array_t  * RESTRICT fa );

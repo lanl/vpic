@@ -209,28 +209,26 @@ restore_maxwellian_reflux( void ) {
 
 void
 delete_maxwellian_reflux( particle_bc_t * RESTRICT pbc ) {
-  if( !pbc ) return;
-  maxwellian_reflux_t * mr = (maxwellian_reflux_t *)pbc->params;
+  FREE( pbc->params );
   delete_particle_bc_internal( pbc );
-  FREE( mr );
 }
 
 /* Public interface *********************************************************/
 
 particle_bc_t *
 maxwellian_reflux( species_t * RESTRICT sp_list,
-                   mt_rng_t  * RESTRICT rng ) {
+                   mt_rng_t  ** rng ) {
   if( !sp_list || !rng ) ERROR(( "Bad args" ));
   maxwellian_reflux_t * mr;
   MALLOC( mr, 1 );
   mr->sp_list = sp_list;
-  mr->rng     = rng;
+  mr->rng     = rng[0];
   MALLOC( mr->ut_para, num_species( mr->sp_list ) );
   MALLOC( mr->ut_perp, num_species( mr->sp_list ) );
   CLEAR( mr->ut_para, num_species( mr->sp_list ) );
   CLEAR( mr->ut_perp, num_species( mr->sp_list ) );
-  return new_particle_bc_internal( (particle_bc_func_t)interact_maxwellian_reflux,
-                                   mr,
+  return new_particle_bc_internal( mr,
+                                   (particle_bc_func_t)interact_maxwellian_reflux,
                                    delete_maxwellian_reflux,
                                    (checkpt_func_t)checkpt_maxwellian_reflux,
                                    (restore_func_t)restore_maxwellian_reflux,

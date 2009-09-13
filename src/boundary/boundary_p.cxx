@@ -1,4 +1,5 @@
-#include "boundary.h"
+#define IN_boundary
+#include "boundary_private.h"
 
 // If this is defined particle and mover buffers will not resize dynamically
 // (This is the common case for the users)

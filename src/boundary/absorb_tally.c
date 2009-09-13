@@ -50,11 +50,10 @@ restore_absorb_tally( void ) {
 
 void
 delete_absorb_tally( particle_bc_t * RESTRICT pbc ) {
-  if( !pbc ) return;
   absorb_tally_t * at = (absorb_tally_t *)pbc->params;
-  delete_particle_bc_internal( pbc );
   FREE( at->tally );
   FREE( at );
+  delete_particle_bc_internal( pbc );
 }
 
 /* Publc interface **********************************************************/
@@ -69,8 +68,8 @@ absorb_tally( /**/  species_t      * RESTRICT sp_list,
   at->fa      = fa;
   MALLOC( at->tally, num_species( sp_list ) );
   CLEAR( at->tally, num_species( sp_list ) );  
-  return new_particle_bc_internal( (particle_bc_func_t)interact_absorb_tally,
-                                   at,
+  return new_particle_bc_internal( at,
+                                   (particle_bc_func_t)interact_absorb_tally,
                                    delete_absorb_tally,
                                    (checkpt_func_t)checkpt_absorb_tally,
                                    (restore_func_t)restore_absorb_tally,

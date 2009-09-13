@@ -5,7 +5,7 @@
 #error "Do not include spa_private.h; include species_advance.h"
 #endif
 
-#include "spa.h"
+#include "../species_advance/species_advance.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // advance_p_pipeline interface

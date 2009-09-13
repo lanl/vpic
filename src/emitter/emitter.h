@@ -7,7 +7,7 @@
 #ifndef _emitter_h_
 #define _emitter_h_
 
-#include "../species_advance/standard/spa.h"
+#include "../species_advance/species_advance.h"
 
 struct emitter;
 typedef struct emitter emitter_t;

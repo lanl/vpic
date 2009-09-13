@@ -3,7 +3,6 @@
 #include "spa_private.h"
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
-// FIXME: Add N_VOXEL convenience field to grid
 
 // FIXME: ALTIVEC ACCELERATE!
 #if defined(__SSE__)
@@ -124,8 +123,8 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
 
 void
 sort_p( species_t * sp ) {
-  
-  // FIXME: CHECK ARGS
+  if( !sp ) ERROR(( "Bad args" ));
+  sp->last_sorted = sp->g->step;
 
   static char * ALIGNED(128) scratch = NULL;
   static size_t max_scratch = 0;
@@ -241,6 +240,9 @@ sort_p( species_t * sp ) {
 
 void
 sort_p( species_t * sp ) {
+  if( !sp ) ERROR(( "Bad args" ));
+  sp->last_sorted = sp->g->step;
+
   particle_t * ALIGNED(128) p = sp->p;
   //const int32_t * RESTRICT ALIGNED(128) sfc = g->sfc;
   const int np                = sp->np; 

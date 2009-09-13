@@ -13,11 +13,10 @@
 #ifndef _vpic_hxx_
 #define _vpic_hxx_
  
-// FIXME: INCLUDES ONCE ALL IS CLEANED UP
 #include "../boundary/boundary.h"
 #include "../collision/collision.h"
 #include "../emitter/emitter.h"
-#include "../species_advance/standard/spa.h"
+// FIXME: INCLUDES ONCE ALL IS CLEANED UP
 #include <unistd.h> // For sleep()
 #include <FileIO.hxx>
 #include <BitField.hxx>

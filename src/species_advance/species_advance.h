@@ -54,7 +54,7 @@ typedef struct particle_injector {
 } particle_injector_t;
 
 typedef struct species {
-  species_id id;                      // Unique identifier for a species
+  char * name;                        // Species name
   float q;                            // Species particle charge
   float m;                            // Species particle rest mass
 
@@ -90,8 +90,8 @@ typedef struct species {
   /**/                                // g->sfc[i]=i ABOVE.
 
   grid_t * g;                         // Underlying grid
+  species_id id;                      // Unique identifier for a species
   struct species *next;               // Next species in the list
-  char name[1];                       // Name is resized on allocation
 } species_t;
 
 BEGIN_C_DECLS
@@ -100,17 +100,6 @@ BEGIN_C_DECLS
 
 int
 num_species( const species_t * sp_list );
-
-species_t *
-new_species( const char * name,
-             float q,
-             float m,
-             int max_local_np,
-             int max_local_nm,
-             int sort_interval,
-             int sort_out_of_place,
-             grid_t * g,
-             species_t ** sp_list );
 
 void
 delete_species_list( species_t * sp_list );
@@ -122,6 +111,20 @@ find_species_id( species_id id,
 species_t *
 find_species_name( const char * name,
                    species_t * sp_list );
+
+species_t *
+append_species( species_t * sp,
+                species_t ** sp_list );
+
+species_t *
+species( const char * name,
+         float q,
+         float m,
+         int max_local_np,
+         int max_local_nm,
+         int sort_interval,
+         int sort_out_of_place,
+         grid_t * g );
 
 // FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS
@@ -140,7 +143,6 @@ move_p( particle_t       * ALIGNED(128) p0,    // Particle array
         accumulator_t    * ALIGNED(128) a0,    // Accumulator to use
         const grid_t     *              g,     // Grid parameters
         const float                     qsp ); // Species particle charge
-
 
 END_C_DECLS
 

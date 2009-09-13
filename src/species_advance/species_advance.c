@@ -10,12 +10,12 @@
 
 #include "species_advance.h"
 
-/* Though these functions are not part of the public API, they must
-   not be declared static. */
+/* Private interface *********************************************************/
 
 void
 checkpt_species( const species_t * sp ) {
-  CHECKPT( (const char *)sp, sizeof(*sp)+strlen(sp->name) );
+  CHECKPT( sp, 1 );
+  CHECKPT_STR( sp->name );
   checkpt_data( sp->p,
                 sp->np    *sizeof(particle_t),
                 sp->max_np*sizeof(particle_t), 1, 1, 128 );
@@ -31,6 +31,7 @@ species_t *
 restore_species( void ) {
   species_t * sp;
   RESTORE( sp );
+  RESTORE_STR( sp->name );
   sp->p  = (particle_t *)      restore_data();
   sp->pm = (particle_mover_t *)restore_data();
   RESTORE_ALIGNED( sp->partition );
@@ -39,78 +40,21 @@ restore_species( void ) {
   return sp;
 }
 
-int
-num_species( const species_t * sp_list ) {
-  return sp_list ? sp_list->id+1 : 0;
-}
-
-species_t *
-new_species( const char * name,
-             float q,
-             float m,
-             int max_local_np,
-             int max_local_nm,
-             int sort_interval,
-             int sort_out_of_place,
-             grid_t * g,
-             species_t ** sp_list ) {
-  species_t * sp;
-  char * buf;
-  int len = (!name ? 0 : strlen(name)); // len does not incl terminal '\0'
-
-  if( len<=0 ) ERROR(( "Cannot create a nameless species" ));
-  if( !sp_list ) ERROR(( "NULL species list" ));
-  if( find_species_name( name, *sp_list ) ) 
-    ERROR(( "There is already a species named \"%s\".", name ));
-
-  if( max_local_np<1 ) ERROR(( "Bad max_local_np (%i) requested for \"%s\".",
-                               max_local_np, name ));
-
-  if( max_local_nm<1 ) ERROR(( "Bad max_local_nm (%i) requested for \"%s\".",
-                               max_local_nm, name ));
-  if( !g ) ERROR(( "NULL grid" ));
-  if( (*sp_list) && (*sp_list)->g!=g )
-    ERROR(( "Species lists should all use the same grid" ));
-
-
-  MALLOC( buf, sizeof(*sp) + len ); // sizeof(*sp) includes terminal '\0'
-  sp = (species_t *)buf;
-
-  sp->id = num_species(*sp_list);
-
-  sp->q = q;
-  sp->m = m;
-
-  sp->np = 0;
-  sp->max_np = max_local_np;
-  MALLOC_ALIGNED( sp->p, max_local_np, 128 );
-
-  sp->nm = 0;
-  sp->max_nm = max_local_nm;
-  MALLOC_ALIGNED( sp->pm, max_local_nm, 128 );
-
-  sp->sort_interval = sort_interval;
-  sp->sort_out_of_place = sort_out_of_place;
-  MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
-
-  sp->g = g;   
-  sp->next = *sp_list;
-  strcpy( sp->name, name );
-
-  REGISTER_OBJECT( sp, checkpt_species, restore_species, NULL );
-
-  *sp_list = sp;
-  return sp;
-}
-
-static void
+void
 delete_species( species_t * sp ) {
-  if( !sp ) return;
   UNREGISTER_OBJECT( sp );
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
+  FREE( sp->name );
   FREE( sp );
+}
+
+/* Public interface **********************************************************/
+
+int
+num_species( const species_t * sp_list ) {
+  return sp_list ? sp_list->id+1 : 0;
 }
 
 void
@@ -139,3 +83,63 @@ find_species_name( const char * name,
   LIST_FIND_FIRST( sp, sp_list, strcmp( sp->name, name )==0 );
   return sp;
 }
+
+species_t *
+append_species( species_t * sp,
+                species_t ** sp_list ) {
+  if( !sp || !sp_list ) ERROR(( "Bad args" ));
+  if( sp->next ) ERROR(( "Species \"%s\" already in a list", sp->name ));
+  if( find_species_name( sp->name, *sp_list ) )
+    ERROR(( "There is already a species in the list named \"%s\"", sp->name ));
+  if( (*sp_list) && sp->g!=(*sp_list)->g )
+    ERROR(( "Species \"%s\" uses a different grid from this list", sp->name ));
+  sp->id   = num_species( *sp_list );
+  sp->next = *sp_list;
+  *sp_list = sp;
+  return sp;
+}
+
+species_t *
+species( const char * name,
+         float q,
+         float m,
+         int max_local_np,
+         int max_local_nm,
+         int sort_interval,
+         int sort_out_of_place,
+         grid_t * g ) {
+  species_t * sp;
+  int len = name ? strlen(name) : 0;
+
+  if( !len ) ERROR(( "Cannot create a nameless species" ));
+  if( !g ) ERROR(( "NULL grid" ));
+  if( max_local_np<1 ) max_local_np = 1;
+  if( max_local_nm<1 ) max_local_nm = 1;
+
+  MALLOC( sp, 1 );
+  CLEAR( sp, 1 );
+
+  MALLOC( sp->name, len+1 );
+  strcpy( sp->name, name );
+
+  sp->q = q;
+  sp->m = m;
+
+  MALLOC_ALIGNED( sp->p, max_local_np, 128 );
+  sp->max_np = max_local_np;
+
+  MALLOC_ALIGNED( sp->pm, max_local_nm, 128 );
+  sp->max_nm = max_local_nm;
+
+  sp->sort_interval = sort_interval;
+  sp->sort_out_of_place = sort_out_of_place;
+  MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
+
+  sp->g = g;   
+
+  /* id, next are set by append species */
+
+  REGISTER_OBJECT( sp, checkpt_species, restore_species, NULL );
+  return sp;
+}
+

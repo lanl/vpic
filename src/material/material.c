@@ -10,12 +10,12 @@
 
 #include "material.h"
 
-/* These checkpt/restore functions are not part of the public API
-   but must not be declared as static. */
+/* Private interface *********************************************************/
 
 void
 checkpt_material( const material_t * m ) {
-  CHECKPT( (const char *)m, sizeof(*m) + strlen(m->name) );
+  CHECKPT( m, 1 );
+  CHECKPT_STR( m->name );
   CHECKPT_PTR( m->next );
 }
 
@@ -23,63 +23,23 @@ material_t *
 restore_material( void ) {
   material_t * m;
   RESTORE( m );
+  RESTORE_STR( m->name );
   RESTORE_PTR( m->next );
   return m;
 }
 
-// Note: new_material added the created species to the head of the
-// species list. Further the species ids are simply incremented from
-// the previous head of the list. The first species is numbered 0. As
-// a result, the total number of species in the species list is the id
-// of the species at the head of the list plus one.
+void
+delete_material( material_t * m ) {
+  UNREGISTER_OBJECT( m );
+  FREE( m->name );
+  FREE( m );
+}
+
+/* Public interface **********************************************************/
 
 int
-num_material( const material_t *m_list ) {
-  if( !m_list ) return 0;
-  return m_list->id+1;
-}
-
-material_t *
-new_material( const char * name,
-              float epsx,   float epsy,   float epsz,
-              float mux,    float muy,    float muz,
-              float sigmax, float sigmay, float sigmaz,
-              float zetax,  float zetay,  float zetaz,
-              material_t ** m_list ) {
-  char * buf;
-  material_t *m;
-  int id, len;
-
-  if( !m_list ) ERROR(("Invalid material list."));
-  // Note: strlen does not include terminating NULL
-  len = (!name) ? 0 : strlen(name);
-  if( len<=0 ) ERROR(("Cannot create a nameless material."));
-  if( find_material_name( name, *m_list ) )
-    ERROR(("There is already a material named \"%s\".", name));
-  id = num_material( *m_list );
-  if( id==max_material )
-    ERROR(("Cannot create material \"%s\"; too many materials.", name));
-  
-  // Note: Since a m->name is declared as a 1-element char array, the
-  // terminating NULL is included in sizeof(m[0])
-  MALLOC( buf, sizeof(m[0])+len ); m = (material_t *)buf;
-  m->id     = id;
-  m->epsx   = epsx,   m->epsy   = epsy,   m->epsz   = epsz;
-  m->mux    = mux,    m->muy    = muy,    m->muz    = muz;
-  m->sigmax = sigmax, m->sigmay = sigmay, m->sigmaz = sigmaz;
-  m->zetax  = zetax,  m->zetay  = zetay,  m->zetaz  = zetaz;
-  m->next   = *m_list;
-  strcpy( m->name, name );
-  *m_list = m;
-  REGISTER_OBJECT( m, checkpt_material, restore_material, NULL );
-  return m;
-}
-
-static void
-delete_material( material_t * m ) {
-  if( !m ) return;
-  UNREGISTER_OBJECT( m );
-  FREE( m );
+num_material( const material_t * m_list ) {
+  return m_list ? m_list->id+1 : 0;
 }
 
 void
@@ -93,18 +53,63 @@ delete_material_list( material_t * m_list ) {
 }
 
 material_t *
-find_material_id( material_id id, 
-                  material_t * m_list ) {
-  material_t *m;
-  LIST_FIND_FIRST(m,m_list,m->id==id);
+find_material_name( const char * name, 
+                    material_t * m_list ) {
+  material_t * m;
+  if( !name ) return NULL;
+  LIST_FIND_FIRST( m, m_list, strcmp( m->name, name )==0 );
   return m;
 }
 
 material_t *
-find_material_name( const char * name, 
-                    material_t * m_list ) {
-  material_t *m;
-  if( !name ) return NULL;
-  LIST_FIND_FIRST(m,m_list,strcmp(m->name,name)==0);
+find_material_id( material_id id, 
+                  material_t * m_list ) {
+  material_t * m;
+  LIST_FIND_FIRST( m, m_list, m->id==id );
   return m;
 }
+
+material_id
+get_material_id( const material_t * m ) {
+  return m ? m->id : -1;
+}
+
+material_t *
+append_material( material_t * m,
+                 material_t ** m_list ) {
+  int id;
+  if( !m || !m_list ) ERROR(( "Bad args" ));
+  if( m->next ) ERROR(( "Material \"%s\" already in a list", m->name ));
+  if( find_material_name( m->name, *m_list ) )
+    ERROR(( "There is already a material named \"%s\" in list", m->name ));
+  id = num_material( *m_list );
+  if( id>=max_material )
+    ERROR(( "Too many materials in list to append material \"%s\"", m->name ));
+  m->id   = (material_id)id;
+  m->next = *m_list;
+  *m_list = m;
+  return m;
+}
+
+material_t *
+material( const char * name,
+          float epsx,   float epsy,   float epsz,
+          float mux,    float muy,    float muz,
+          float sigmax, float sigmay, float sigmaz,
+          float zetax,  float zetay,  float zetaz ) {
+  material_t *m;
+  int len = name ? strlen( name ) : 0;
+  if( !len ) ERROR(( "Cannot create a nameless material" ));
+  MALLOC( m, 1 );
+  CLEAR( m, 1 );
+  MALLOC( m->name, len+1 );
+  strcpy( m->name, name );
+  m->epsx   = epsx,   m->epsy   = epsy,   m->epsz   = epsz;
+  m->mux    = mux,    m->muy    = muy,    m->muz    = muz;
+  m->sigmax = sigmax, m->sigmay = sigmay, m->sigmaz = sigmaz;
+  m->zetax  = zetax,  m->zetay  = zetay,  m->zetaz  = zetaz;
+  /* id, next set by append_material */
+  REGISTER_OBJECT( m, checkpt_material, restore_material, NULL );
+  return m;
+}
+

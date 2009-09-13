@@ -2,6 +2,8 @@ src/vpic/dumpmacros.h
 src/vpic/vpic.hxx
 src/boundary/boundary.h
 src/boundary/boundary_private.h
+src/collision/collision.h
+src/collision/collision_private.h
 src/field_advance/standard/sfa_private.h
 src/field_advance/field_advance.h
 src/field_advance/field_advance_private.h
@@ -11,7 +13,6 @@ src/sf_interface/sf_interface.h
 src/emitter/emitter.h
 src/emitter/emitter_private.h
 src/species_advance/standard/spa_private.h
-src/species_advance/standard/spa.h
 src/species_advance/species_advance.h
 src/util/overlays/cache-4way.h
 src/util/overlays/cache-api.h

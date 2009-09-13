@@ -127,7 +127,7 @@ vpic_simulation::vpic_simulation() {
   int                           n_rng = serial.n_pipeline;
   if( n_rng<thread.n_pipeline ) n_rng = thread.n_pipeline;
 # if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  if( n_rng<spu.pipeline      ) n_rng = spu.n_pipeline;
+  if( n_rng<spu.n_pipeline    ) n_rng = spu.n_pipeline;
 # endif
   n_rng++; 
 

@@ -8,6 +8,10 @@ src/boundary/maxwellian_reflux.c
 src/boundary/absorb_tally.c
 src/boundary/boundary_p.cxx
 src/boundary/boundary.c
+src/collision/binary.c
+src/collision/collision.c
+src/collision/langevin.c
+src/collision/unary.c
 src/field_advance/standard/remote.c
 src/field_advance/standard/energy_f.c
 src/field_advance/standard/vacuum_compute_curl_b.cxx

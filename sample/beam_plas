@@ -162,17 +162,17 @@ begin_initialization {
   double zmax = (rank()==nproc()-1 ? lz-b_plas : grid->z0+grid->dz*grid->nz);
 
   repeat( np*(zmax-zmin)/(lz-b_plas-z_plas) ) {
-    double x = uniform_rand( xmin, xmax );
-    double y = uniform_rand( ymin, ymax );
-    double z = uniform_rand( zmin, zmax );
+    double x = uniform( rng[0], xmin, xmax );
+    double y = uniform( rng[0], ymin, ymax );
+    double z = uniform( rng[0], zmin, zmax );
     inject_particle( electron, x, y, z,
-                     maxwellian_rand(ute),
-                     maxwellian_rand(ute),
-                     maxwellian_rand(ute), -qp, 0, 0 );
+                     normal( rng[0], 0, ute ),
+                     normal( rng[0], 0, ute ),
+                     normal( rng[0], 0, ute ), -qp, 0, 0 );
     inject_particle( ion, x, y, z,
-                     maxwellian_rand(uti),
-                     maxwellian_rand(uti),
-                     maxwellian_rand(uti),  qp, 0, 0 );
+                     normal( rng[0], 0, uti ),
+                     normal( rng[0], 0, uti ),
+                     normal( rng[0], 0, uti ),  qp, 0, 0 );
   }
   
   // Output diagnostics
@@ -251,8 +251,8 @@ begin_particle_injection {
     double x, y, z, ux, uy, uz, age;
 
     do {
-      x = uniform_rand(-1,1);
-      y = uniform_rand(-1,1);
+      x = uniform( rng[0], -1, 1 );
+      y = uniform( rng[0], -1, 1 );
     } while( x*x + y*y > 1 );
     if( grid->nx>1 && x<0 ) x=-x;
     if( grid->ny>1 && y<0 ) y=-y;
@@ -260,12 +260,14 @@ begin_particle_injection {
     y *= global->r_beam;
     z = 0;
 
-    ux = maxwellian_rand(global->uth_beam);
-    uy = maxwellian_rand(global->uth_beam);
-    uz = maxwellian_rand(global->uth_beam);
+    // FIXME: THIS DISTRIBUTION IS SLIGHTLY WRONG (BOTH RELATIVISTIC AND
+    // NUMERICALLY FOR THE UZ COMPONENT (SEE MAXWELLIAN_RAND).
+    ux = normal( rng[0], 0, global->uth_beam );
+    uy = normal( rng[0], 0, global->uth_beam );
+    uz = normal( rng[0], 0, global->uth_beam );
     uz = global->gamma_beam*uz + sqrt(1+ux*ux+uy*uy+uz*uz)*ub;
 
-    age = uniform_rand(0,1);
+    age = uniform( rng[0], 0, 1 );
 
     inject_particle( beam, x, y, z, ux, uy, uz, qb, age, 1 );
   }

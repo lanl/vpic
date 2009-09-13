@@ -367,25 +367,25 @@ begin_initialization {
     double ymin=grid->y0, ymax=grid->y1;
     double zmin=grid->z0, zmax=grid->z1;
     repeat( N_e/(topology_x*topology_y*topology_z) ) {
-      double x = uniform_rand( xmin, xmax );
-      double y = uniform_rand( ymin, ymax );
-      double z = uniform_rand( zmin, zmax );
+      double x = uniform( rng[0], xmin, xmax );
+      double y = uniform( rng[0], ymin, ymax );
+      double z = uniform( rng[0], zmin, zmax );
       if ( iv_region ) continue;           // Particle fell in iv_region.  Don't load.
       inject_particle( electron, x, y, z,
-                       maxwellian_rand(uth_e),
-                       maxwellian_rand(uth_e),
-                       maxwellian_rand(uth_e), q_e, 0, 0 );
+                       normal( rng[0], 0, uth_e ),
+                       normal( rng[0], 0, uth_e ),
+                       normal( rng[0], 0, uth_e ), q_e, 0, 0 );
       if ( mobile_ions ) {
         if ( H_present )  // Inject an H macroion on top of macroelectron
           inject_particle( ion_H, x, y, z, 
-                           maxwellian_rand(uthi_H), 
-                           maxwellian_rand(uthi_H), 
-                           maxwellian_rand(uthi_H), qi_H, 0, 0 ); 
+                           normal( rng[0], 0, uthi_H ), 
+                           normal( rng[0], 0, uthi_H ), 
+                           normal( rng[0], 0, uthi_H ), qi_H, 0, 0 ); 
         if ( He_present ) // Inject an H macroion on top of macroelectron
           inject_particle( ion_He, x, y, z, 
-                           maxwellian_rand(uthi_He), 
-                           maxwellian_rand(uthi_He), 
-                           maxwellian_rand(uthi_He), qi_He, 0, 0 ); 
+                           normal( rng[0], 0, uthi_He ),
+                           normal( rng[0], 0, uthi_He ),
+                           normal( rng[0], 0, uthi_He ), qi_He, 0, 0 ); 
       }
     }
   }

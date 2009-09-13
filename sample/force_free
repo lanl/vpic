@@ -128,9 +128,9 @@ begin_initialization {
     double x, y, z, vperp1, vperp2, vpara, cs, sn, tmp;
 
     // Pick a uniform random location in the local domain
-    x = grid->x0 + uniform_rand(0,grid->dx*grid->nx);
-    y = grid->y0 + uniform_rand(0,grid->dy*grid->ny);
-    z = grid->z0 + uniform_rand(0,grid->dz*grid->nz);
+    x = uniform( rng[0], grid->x0, grid->x1 );
+    y = uniform( rng[0], grid->y0, grid->y1 );
+    z = uniform( rng[0], grid->z0, grid->z1 );
 
     // Compute the magnetic field direction angles
     // Note: this accounts for Yee-mesh discretization of B
@@ -147,9 +147,9 @@ begin_initialization {
     // Pick ion velocity/c from a bi-Maxwellian in the drift frame,
     // boost / rotate it into the lab frame and inject the ion
     do {
-      vperp1 = maxwellian_rand(vtxyi);
-      vperp2 = maxwellian_rand(vtzi);
-      vpara  = maxwellian_rand(vtxyi);
+      vperp1 = normal( rng[0], 0, vtxyi );
+      vperp2 = normal( rng[0], 0, vtzi  );
+      vpara  = normal( rng[0], 0, vtxyi );
     } while( vperp1*vperp1 + vperp2*vperp2 + vpara*vpara >= 1 );
     vperp1 *= sqrt( 1 - vdri*vdri ) / ( 1 + vdri*vpara );
     vperp2 *= sqrt( 1 - vdri*vdri ) / ( 1 + vdri*vpara );
@@ -163,9 +163,9 @@ begin_initialization {
     // Pick electron velocity/c from a bi-Maxwellian in the drift frame,
     // boost / rotate it into the lab frame and inject the electron
     do {
-      vperp1 = maxwellian_rand(vtxye);
-      vperp2 = maxwellian_rand(vtze);
-      vpara  = maxwellian_rand(vtxye);
+      vperp1 = normal( rng[0], 0, vtxye );
+      vperp2 = normal( rng[0], 0, vtze  );
+      vpara  = normal( rng[0], 0, vtxye );
     } while( vperp1*vperp1 + vperp2*vperp2 + vpara*vpara >= 1 );
     vperp1 *= sqrt( 1 - vdre*vdre ) / ( 1 + vdre*vpara );
     vperp2 *= sqrt( 1 - vdre*vdre ) / ( 1 + vdre*vpara );

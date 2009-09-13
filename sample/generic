@@ -188,17 +188,17 @@ begin_initialization {
     double ymin=grid->y0, ymax=grid->y1;
     double zmin=grid->z0, zmax=grid->z1;
     repeat( Ne/(topology_x*topology_y*topology_z) ) {
-      double x = uniform_rand( xmin, xmax );
-      double y = uniform_rand( ymin, ymax );
-      double z = uniform_rand( zmin, zmax );
+      double x = uniform( rng[0], xmin, xmax );
+      double y = uniform( rng[0], ymin, ymax );
+      double z = uniform( rng[0], zmin, zmax );
       if ( iv_region ) continue; // Particle fell in iv_region.  Don't load.
       inject_particle( electron,
                        x, y, z,
-                       maxwellian_rand(uthe),
-                       maxwellian_rand(uthe),
-                       maxwellian_rand(uthe),
+                       normal( rng[0], 0, uthe ),
+                       normal( rng[0], 0, uthe ),
+                       normal( rng[0], 0, uthe ),
                        qe,
-                       0,   // Age (jsut say zero during startup ... particle injection typically wants non-zero here)
+                       0,   // Age (just say zero during startup ... particle injection typically wants non-zero here)
                        0 ); // Do not accumulate inverse to bound charge rhob (rhob will be computed to be consistent with this charge density and initial zero electric field after initialization)
     }
   }

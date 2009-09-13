@@ -1,7 +1,16 @@
+// FIXME: WRITE SIMPLE EMITTERS FOR THINGS LIKE CONSTANT CURRENT PARTICLE
+// BEAMS
+
+// FIXME: COULD ADJUST API OF THESE TO DO MULTIPLE SPECIES OF EMISSION
+// FROM THE SAME EMITTER GEOMETRY (E.G. EMITTER_GEOMETRY OBJECT).
+
 #ifndef _emitter_h_
 #define _emitter_h_
 
 #include "../species_advance/standard/spa.h"
+
+struct emitter;
+typedef struct emitter emitter_t;
 
 // Every local cell has 27 components associated with it (6 faces, 12
 // edges, 8 corners and cell body). All components in a local grid
@@ -19,48 +28,34 @@
 #define EXTRACT_LOCAL_CELL( component_id )     ((component_id)>>5)
 #define EXTRACT_COMPONENT_TYPE( component_id ) ((component_id)&31)
 
-typedef void
-(*emit_func_t)( /**/  void * RESTRICT              params,
-                const int  * RESTRICT ALIGNED(128) component,
-                int                                n_component );
-
-struct emitter;
-
-typedef void
-(*delete_emitter_func_t)( struct emitter * RESTRICT e );
-
-typedef struct emitter {
-  emit_func_t emit;
-  void * params;
-  delete_emitter_func_t delete_e;
-  int * ALIGNED(128) component;
-  int n_component;
-  struct emitter * next;
-} emitter_t;
-
 BEGIN_C_DECLS
 
-// In structors.c
+// In emitter.c
 
 int
 num_emitter( const emitter_t * e_list );
 
 void
-delete_emitter_list( emitter_t * e_list );
-
-// Each emittered must be sized once and only once
+apply_emitter_list( emitter_t * e_list );
 
 void
+delete_emitter_list( emitter_t * e_list );
+
+// Note that this append is hacked to silently return if the given
+// emitter is already part of the list.  This allows the emitter
+// initialization in vpic.hxx / deck_wrappers.cxx to get around
+// some limitations of strict C++. 
+
+emitter_t *
+append_emitter( emitter_t * e,
+                emitter_t ** e_list );
+
+// Each emitter must be sized once and only once.  Returns
+// the buffer were the emitter components should be stored.
+
+int32_t * ALIGNED(128)
 size_emitter( emitter_t * e,
               int n_component );
-
-// FIXME: WRITE SIMPLE EMITTERS FOR THINGS LIKE CONSTANT CURRENT PARTICLE
-// BEAMS
-
-// In child_langmuir.c
-
-// FIXME: COULD ADJUST API OF THESE TO DO MULTIPLE SPECIES OF EMISSION
-// FROM THE SAME EMITTER
 
 // In child-langmuir.c
 
@@ -68,16 +63,12 @@ size_emitter( emitter_t * e,
 #define CCUBE          sqrt(1./6.)
 #define IVORY          sqrt(1./6.)
 
-// Must call define_emitter to actually add this to the simulation
-// Note: define_{surface,volume}_emitter will do this for you
-// automatically if you haven't already
-
 emitter_t *
 child_langmuir( /**/  species_t            * RESTRICT sp,  // Species to emit
                 const interpolator_array_t * RESTRICT ia,  // For field interpolation
                 /**/  field_array_t        * RESTRICT fa,  // For rhob accum (inject)
                 /**/  accumulator_array_t  * RESTRICT aa,  // For Jf accum (aging)
-                /**/  mt_rng_t             * RESTRICT rng, // Random number source
+                /**/  mt_rng_t             **         rng, // Random number source
                 int   n_emit_per_face, // Particles to emit per face per step
                 float ut_perp,         // Perpendicular normalized thermal momentum
                 float ut_para,         // Parallel normalized thermal momentum

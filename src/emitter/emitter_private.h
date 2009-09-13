@@ -7,9 +7,26 @@
 
 #include "emitter.h"
 
+typedef void
+(*emit_func_t)( /**/  void * RESTRICT              params,
+                const int  * RESTRICT ALIGNED(128) component,
+                int                                n_component );
+
+typedef void
+(*delete_emitter_func_t)( emitter_t * RESTRICT e );
+
+struct emitter {
+  void * params;
+  emit_func_t emit;
+  delete_emitter_func_t delete_e;
+  int * ALIGNED(128) component;
+  int n_component;
+  emitter_t * next;
+};
+
 BEGIN_C_DECLS
 
-// In structors.c
+// In emitter.c
 
 void
 checkpt_emitter_internal( const emitter_t * e );
@@ -18,8 +35,8 @@ emitter_t *
 restore_emitter_internal( void * params );
 
 emitter_t *
-new_emitter_internal( emit_func_t emit,
-                      void * params,
+new_emitter_internal( void * params,
+                      emit_func_t emit,
                       delete_emitter_func_t delete_e,
                       checkpt_func_t checkpt,
                       restore_func_t restore,

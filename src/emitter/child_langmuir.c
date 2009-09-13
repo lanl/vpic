@@ -1,6 +1,8 @@
 #define IN_emitter
 #include "emitter_private.h"
 
+/* Private interface *********************************************************/
+
 // FIXME: IN CCUBE SHOULD J_norm BE PROP TO E^(3/2) or (E-THRESH)^(3/2)??
 
 typedef struct child_langmuir {
@@ -33,7 +35,7 @@ void
 emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
                      const int        * RESTRICT ALIGNED(128) component,
                      int                                      n_component ) {
-  /**/  species_t * RESTRICT sp = cl->sp;
+  /**/  species_t        * RESTRICT              sp  = cl->sp;
   const interpolator_t   * RESTRICT ALIGNED(128) fi  = cl->ia->i;
   /**/  field_t          * RESTRICT ALIGNED(128) f   = cl->fa->f;
   /**/  accumulator_t    * RESTRICT ALIGNED(128) a   = cl->aa->a;
@@ -161,18 +163,18 @@ restore_child_langmuir( void ) {
 
 void
 delete_child_langmuir( emitter_t * e ) {
-  if( !e ) return;
-  child_langmuir_t * cl = (child_langmuir_t *)e->params;
+  FREE( e->params );
   delete_emitter_internal( e );
-  FREE( cl );
 }
+
+/* Public interface **********************************************************/
 
 emitter_t *
 child_langmuir( /**/  species_t            * RESTRICT sp,
                 const interpolator_array_t * RESTRICT ia,
                 /**/  field_array_t        * RESTRICT fa,
                 /**/  accumulator_array_t  * RESTRICT aa,
-                /**/  mt_rng_t             * RESTRICT rng,
+                /**/  mt_rng_t             **         rng,
                 int n_emit_per_face,
                 float ut_para,
                 float ut_perp,
@@ -190,14 +192,14 @@ child_langmuir( /**/  species_t            * RESTRICT sp,
   cl->ia              = ia;
   cl->fa              = fa;
   cl->aa              = aa;
-  cl->rng             = rng;
+  cl->rng             = rng[0];
   cl->n_emit_per_face = n_emit_per_face;
   cl->ut_para         = ut_para;
   cl->ut_perp         = ut_perp;
   cl->thresh_e_norm   = thresh_e_norm;
   cl->norm            = norm;
-  return new_emitter_internal( (emit_func_t)emit_child_langmuir,
-                               cl,
+  return new_emitter_internal( cl,
+                               (emit_func_t)emit_child_langmuir,
                                delete_child_langmuir,
                                (checkpt_func_t)checkpt_child_langmuir,
                                (restore_func_t)restore_child_langmuir,

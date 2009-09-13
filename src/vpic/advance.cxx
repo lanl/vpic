@@ -14,20 +14,13 @@
 
 int vpic_simulation::advance(void) {
   species_t *sp;
-  emitter_t *emitter;
   double err;
 
   // Determine if we are done ... see note below why this is done here
 
   if( num_step>0 && step()>=num_step ) return 0;
 
-  // At this point, fields are at E_0 and B_0 and the particle positions
-  // are at r_0 and u_{-1/2}. Further the mover lists for the particles should
-  // empty and all particles should be inside the local computational domain.
-  // Advance the particle lists.
-
-  if( species_list )
-    TIC clear_accumulator_array( accumulator_array ); TOC( clear_accumulators, 1 );
+  // Sort the particles for performance if desired.
 
   LIST_FOR_EACH( sp, species_list )
     if( (sp->sort_interval>0) && ((step() % sp->sort_interval)==0) ) {
@@ -35,13 +28,26 @@ int vpic_simulation::advance(void) {
       TIC sort_p( sp ); TOC( sort_p, 1 );
     } 
 
+  // At this point, fields are at E_0 and B_0 and the particle positions
+  // are at r_0 and u_{-1/2}.  Further the mover lists for the particles should
+  // empty and all particles should be inside the local computational domain.
+  // Advance the particle lists.
+
+  if( species_list )
+    TIC clear_accumulator_array( accumulator_array ); TOC( clear_accumulators, 1 );
+
+  // Note: Particles should not have moved since the last performance sort
+  // when calling collision operators.
+  // FIXME: Technically, this placement of the collision operators only
+  // yields a first order accurate Trotter factorization (not a second
+  // order accurate factorization).
+
+  if( collision_op_list )
+    TIC apply_collision_op_list( collision_op_list ); TOC( collision_model, 1 );
   TIC user_particle_collisions(); TOC( user_particle_collisions, 1 );
 
   LIST_FOR_EACH( sp, species_list )
     TIC advance_p( sp, accumulator_array, interpolator_array ); TOC( advance_p, 1 );
-
-  if( species_list )
-    TIC reduce_accumulator_array( accumulator_array ); TOC( reduce_accumulators, 1 );
 
   // Because the partial position push when injecting aged particles might
   // place those particles onto the guard list (boundary interaction) and
@@ -49,9 +55,15 @@ int vpic_simulation::advance(void) {
   // be done after advance_p and before guard list processing. Note:
   // user_particle_injection should be a stub if species_list is empty.
 
-  LIST_FOR_EACH( emitter, emitter_list )
-    TIC emitter->emit( emitter->params, emitter->component, emitter->n_component ); TOC( emission_model, 1 );
+  if( emitter_list )
+    TIC apply_emitter_list( emitter_list ); TOC( emission_model, 1 );
   TIC user_particle_injection(); TOC( user_particle_injection, 1 );
+
+  // This should be after the emission and injection to allow for the
+  // possibility of thread parallelizing these operations
+
+  if( species_list )
+    TIC reduce_accumulator_array( accumulator_array ); TOC( reduce_accumulators, 1 );
 
   // At this point, most particle positions are at r_1 and u_{1/2}. Particles
   // that had boundary interactions are now on the guard list. Process the

@@ -14,8 +14,9 @@
 #define _vpic_hxx_
  
 // FIXME: INCLUDES ONCE ALL IS CLEANED UP
-#include "../emitter/emitter.h"
 #include "../boundary/boundary.h"
+#include "../collision/collision.h"
+#include "../emitter/emitter.h"
 #include "../species_advance/standard/spa.h"
 #include <unistd.h> // For sleep()
 #include <FileIO.hxx>
@@ -175,7 +176,14 @@ private:
  
   // Helper initialized by user
  
-  mt_rng_t             * rng;                // seed_rng (seed defaults to rank)
+  /* There are enough synchronous and local random number generators
+     to permit the host thread plus all the pipeline threads for one
+     dispatcher to simultaneously produce both synchronous and local
+     random numbers.  Keeping the synchronous generators in sync is
+     the generator users responsibility. */
+
+  mt_rng_t             ** rng;               // Local entropy pool
+  mt_rng_t             ** sync_rng;          // Synchronous entropy pool
   grid_t               * grid;               // define_*_grid et al
   material_t           * material_list;      // define_material
   field_array_t        * field_array;        // define_field_array
@@ -188,6 +196,7 @@ private:
                                              // boundary helpers
   emitter_t            * emitter_list;       // define_emitter /
                                              // emitter helpers
+  collision_op_t       * collision_op_list;  // collision helpers
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
@@ -385,31 +394,29 @@ private:
   // Material helpers
  
   inline material_t *
-  define_material( const char *name,
+  define_material( const char * name,
                    double eps,
                    double mu = 1,
                    double sigma = 0,
                    double zeta = 0 ) {
-    return new_material( name,
-			 eps,   eps,   eps,
-			 mu,    mu,    mu,
-			 sigma, sigma, sigma,
-                         zeta,  zeta,  zeta,
-			 &material_list );
+    return append_material( material( name,
+                                      eps,   eps,   eps,
+                                      mu,    mu,    mu,
+                                      sigma, sigma, sigma,
+                                      zeta,  zeta,  zeta ), &material_list );
   }
  
   inline material_t *
-  define_material( const char *name,
+  define_material( const char * name,
                    double epsx,        double epsy,       double epsz,
                    double mux,         double muy,        double muz,
                    double sigmax,      double sigmay,     double sigmaz,
 		   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
-    return new_material( name,
-			 epsx,   epsy,   epsz,
-			 mux,    muy,    muz,
-			 sigmax, sigmay, sigmaz,
-                         zetax,  zetay,  zetaz,
-			 &material_list );
+    return append_material( material( name,
+                                      epsx,   epsy,   epsz,
+                                      mux,    muy,    muz,
+                                      sigmax, sigmay, sigmaz,
+                                      zetax,  zetay,  zetaz ), &material_list );
   }
  
   inline material_t *
@@ -484,10 +491,10 @@ private:
       if( max_local_nm<16*(MAX_PIPELINE+1) )
         max_local_nm = 16*(MAX_PIPELINE+1);
     }
-    return new_species( name, (float)q, (float)m,
-                        (int)max_local_np, (int)max_local_nm,
-			(int)sort_interval, (int)sort_out_of_place,
-                        grid, &species_list );
+    return append_species( species( name, (float)q, (float)m,
+                                    (int)max_local_np, (int)max_local_nm,
+                                    (int)sort_interval, (int)sort_out_of_place,
+                                    grid ), &species_list );
   }
  
   inline species_t *
@@ -551,27 +558,42 @@ private:
   //////////////////////////////////
   // Random number generator helpers
  
-  inline void seed_rand( double seed ) {
-    seed_mt_rng( rng, (int)seed );
+  // seed_rand seed the all the random number generators.  The seed
+  // used for the individual generators is based off the user provided
+  // seed such each local generator in each process (rng[0:r-1]) gets
+  // a unique seed.  Each synchronous generator (sync_rng[0:r-1]) gets a
+  // unique seed that does not overlap with the local generators
+  // (common across each process).  Lastly, all these seeds are such
+  // that, no individual generator seeds are reused across different
+  // user seeds.
+  // FIXME: MTRAND DESPERATELY NEEDS A LARGER SEED SPACE!
+
+  inline void seed_rng( int base ) {
+    int r, nrng = 0, nproc1 = nproc()+1;
+    for( r=0; rng[r]; r++ ) nrng++;
+    base *= nproc1 * nrng;
+    for( r=0; rng[r]; r++ ) seed_mt_rng( rng[r],      base+rank() +nproc1*r );
+    for( r=0; rng[r]; r++ ) seed_mt_rng( sync_rng[r], base+nproc()+nproc1*r );
   }
- 
+
   // Uniform random number on (low,high) (open interval)
-  // FIXME: THINK CAREFULLY ABOUT THE INTERVAL FINITE PRECISION HERE!
-  inline double uniform_rand( double low, double high ) {
-    double dx = mt_drand(rng);
+  // FIXME: IS THE INTERVAL STILL OPEN IN FINITE PRECISION)?
+  // FIXME: AND IS THE OPEN INTERVAL REALLY WHAT USERS WANT?
+  inline double uniform( mt_rng * _rng, double low, double high ) {
+    double dx = mt_drand(_rng);
     return low*(1-dx) + high*dx;
   }
  
-  // Maxwellian random number with standard deviation dev
-  inline double maxwellian_rand( double dev ) {
-    return dev*mt_drandn(rng);
+  // Normal random number with mean mu and standard deviation sigma
+  inline double normal( mt_rng * _rng, double mu, double sigma ) {
+    return mu + sigma*mt_drandn( _rng );
   }
  
   /////////////////////////////////
   // Emitter and particle bc helpers
 
-  // We only add an emitter if has not been added
-  // This allows things like:
+  // Note that append_emitter is hacked to silently returne if the
+  // emitter is already in the list.  This allows things like:
   //
   // define_surface_emitter( my_emitter( ... ), rgn )
   // ... or ...
@@ -581,27 +603,24 @@ private:
   // my_emit_t * e = define_emitter( my_emit( ... ) )
   // define_surface_emitter( e, rng )
   // ...
-  // All to work
+  // All to work.  (Nominally, would like define_surface_emitter
+  // to evaluate to the value of e.  But, alas, the way
+  // define_surface_emitter works and language limitations of
+  // strict C++ prevent this.)
 
-  emitter_t * 
+  inline emitter_t * 
   define_emitter( emitter_t * e ) {
-    if( !e ) ERROR(( "Bad args" ));
-    emitter_t * ee;
-    LIST_FOR_EACH( ee, emitter_list ) if( e==ee ) break;
-    if( !ee ) {
-      e->next = emitter_list;
-      emitter_list = e;
-    }    
-    return e;
+    return append_emitter( e, &emitter_list );
   }
 
-  particle_bc_t *
+  inline particle_bc_t *
   define_particle_bc( particle_bc_t * pbc ) {
-    if( !pbc ) ERROR(( "Bad args" ));
-    pbc->id   = -3 - num_particle_bc( particle_bc_list );
-    pbc->next = particle_bc_list;
-    particle_bc_list = pbc;
-    return pbc;
+    return append_particle_bc( pbc, &particle_bc_list );
+  }
+
+  inline collision_op_t *
+  define_collision_op( collision_op_t * cop ) {
+    return append_collision_op( cop, &collision_op_list );
   }
 
   ////////////////////////

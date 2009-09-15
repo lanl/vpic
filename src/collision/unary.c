@@ -47,6 +47,9 @@ unary_pipeline( unary_collision_model_t * RESTRICT cm,
   for( ; i<i1; i++ ) {
     pr_coll = dt * rate_constant( params, sp, &p[i] );
     if( pr_coll>1 ) n_large_pr++;
+
+    /* Yes, strictly < (so that 0 rate constants guarantee no collision,
+       and, yes, _c0, so that 1 probabilities guarantee a collision  */
     if( mt_frand_c0(rng) < pr_coll ) collision( params, sp, &p[i], rng );
   }
 

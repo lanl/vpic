@@ -10,6 +10,7 @@ src/boundary/boundary_p.cxx
 src/boundary/boundary.c
 src/collision/binary.c
 src/collision/collision.c
+src/collision/hard_sphere.c
 src/collision/langevin.c
 src/collision/unary.c
 src/field_advance/standard/remote.c

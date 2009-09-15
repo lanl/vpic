@@ -240,6 +240,36 @@ binary_collision_model( const char      * RESTRICT  name,
                         double                      sample,
                         int                         interval );
 
+/* In hard_sphere.c */
+
+/* Based on unary_collision_model */
+
+collision_op_t *
+hard_sphere_fluid( const char * RESTRICT name, /* Model name */
+                   const float n0,             /* Fluid density (#/VOLUME) */
+                   const float v0x,            /* Fluid x-drift (VELOCITY) */
+                   const float v0y,            /* Fluid y-drift (VELOCITY) */
+                   const float v0z,            /* Fluid z-drift (VELOCITY) */
+                   const float kT0,            /* Fluid temperature (ENERGY) */
+                   const float m0,             /* Fluid p. mass (MASS) */
+                   const float r0,             /* Fluid p. radius (LENGTH) */
+                   species_t * RESTRICT sp,    /* Species */
+                   const float rsp,            /* Species p. radius (LENGTH) */
+                   mt_rng_t ** rng,            /* Entropy pool */
+                   const int interval );       /* How often to apply this */
+
+/* Based on binary_collision_model */
+
+collision_op_t *
+hard_sphere( const char * RESTRICT name, /* Model name */
+             species_t * RESTRICT spi,   /* Species-i */
+             const float ri,             /* Species-i p. radius (LENGTH) */
+             species_t * RESTRICT spj,   /* Species-j */
+             const float rj,             /* Species-j p. radius (LENGTH) */
+             mt_rng_t ** rng,            /* Entropy pool */
+             const double sample,        /* Sampling density */
+             const int interval );       /* How often to apply this */
+
 END_C_DECLS
 
 #endif /* _collision_h_ */

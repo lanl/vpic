@@ -44,10 +44,10 @@ class StandardIOPolicy
 		void print(const char * format, va_list & args);
 
 		// binary methods
-		template<typename T> void read(T * data, size_t elements);
-		template<typename T> void write(const T * data, size_t elements);
+		template<typename T> size_t read(T * data, size_t elements);
+		template<typename T> size_t write(const T * data, size_t elements);
 
-		void seek(uint64_t offset, int32_t whence);
+		int64_t seek(uint64_t offset, int32_t whence);
 		int64_t tell();
 		void rewind();
 		void flush();
@@ -127,21 +127,22 @@ inline void StandardIOPolicy::print(const char * format, va_list & args)
 	} // StandardIOPolicy::print
 
 template<typename T>
-inline void StandardIOPolicy::read(T * data, size_t elements)
+inline size_t StandardIOPolicy::read(T * data, size_t elements)
 	{
-		fread(reinterpret_cast<void *>(data), sizeof(T), elements, handle_);
+		return fread(reinterpret_cast<void *>(data), sizeof(T),
+			elements, handle_);
 	} // StandardIOPolicy::read
 
 template<typename T>
-inline void StandardIOPolicy::write(const T * data, size_t elements)
+inline size_t StandardIOPolicy::write(const T * data, size_t elements)
 	{
-		fwrite(reinterpret_cast<void *>(const_cast<T *>(data)),
+		return fwrite(reinterpret_cast<void *>(const_cast<T *>(data)),
 			sizeof(T), elements, handle_);
 	} // StandardIOPolicy::write
 
-inline void StandardIOPolicy::seek(uint64_t offset, int32_t whence)
+inline int64_t StandardIOPolicy::seek(uint64_t offset, int32_t whence)
 	{
-		fseek(handle_, offset, whence);
+		return fseek(handle_, offset, whence);
 	} // StandardIOPolicy::seek
 
 inline int64_t StandardIOPolicy::tell()

@@ -46,13 +46,13 @@ template<class ReadWritePolicy> struct FileIO_T
 		}
 
 		template<typename T>
-		void read(T * data, size_t elements)
-			{ ReadWritePolicy::read(data, elements); }
+		size_t read(T * data, size_t elements)
+			{ return ReadWritePolicy::read(data, elements); }
 		template<typename T>
-		void write(const T * data, size_t elements)
-			{ ReadWritePolicy::write(data, elements); }
+		size_t write(const T * data, size_t elements)
+			{ return ReadWritePolicy::write(data, elements); }
 
-		void seek(uint64_t offset, int32_t whence)
+		int64_t seek(uint64_t offset, int32_t whence)
 			{ return ReadWritePolicy::seek(offset, whence); }
 		int64_t tell()
 			{ return ReadWritePolicy::tell(); }

@@ -647,7 +647,7 @@ begin_initialization {
 
 begin_diagnostics {
 
-	print_available_ram();
+	//print_available_ram();
 
 	/*--------------------------------------------------------------------------
 	 * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
@@ -754,8 +754,8 @@ begin_diagnostics {
 	/*--------------------------------------------------------------------------
 	 * Restart dump
      *------------------------------------------------------------------------*/
-	if(step()== 50) {
-//	if(step() && !(step%global->restart_interval)) {
+//	if(step()== 50) {
+	if(step() && !(step()%global->restart_interval)) {
 		if(!global->rtoggle) {
 			global->rtoggle = 1;
 			checkpt("restart/restart0", 0);

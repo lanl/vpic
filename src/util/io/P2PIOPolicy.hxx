@@ -53,11 +53,11 @@ class P2PIOPolicy
 
 		void print(const char * format, va_list & args);
 
-		template<typename T> void read(T * data, size_t elements);
-		template<typename T> void write(const T * data, size_t elements);
+		template<typename T> size_t read(T * data, size_t elements);
+		template<typename T> size_t write(const T * data, size_t elements);
 
-		void seek(uint64_t offset, int32_t whence);
-		uint64_t tell();
+		int64_t seek(uint64_t offset, int32_t whence);
+		int64_t tell();
 		void rewind();
 		void flush();
 
@@ -66,10 +66,10 @@ class P2PIOPolicy
 		template<typename T> inline void swap_bytes(T * data, size_t elements);
 
 		void send_write_block(uint32_t buffer);
-		void wait_write_block(uint32_t buffer);
+		int64_t wait_write_block(uint32_t buffer);
 
 		void request_read_block(uint32_t buffer);
-		void wait_read_block(uint32_t buffer);
+		int64_t wait_read_block(uint32_t buffer);
 
 		MPBuffer<char, io_buffer_size, 1> io_buffer_[2];
 		MPBuffer<char, io_line_size, 1> io_line_;
@@ -255,7 +255,7 @@ void P2PIOPolicy<swapped>::print(const char * format, va_list & args)
 
 template<bool swapped>
 template<typename T>
-void P2PIOPolicy<swapped>::read(T * data, size_t elements)
+size_t P2PIOPolicy<swapped>::read(T * data, size_t elements)
 	{
 		assert(id_>=0);
 
@@ -263,6 +263,7 @@ void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 		uint64_t bytes = elements*sizeof(T);
 		char * bdata = reinterpret_cast<char *>(data);
 		uint64_t bdata_offset(0);
+		uint64_t read_bytes(0);
 
 		do {
 			const int64_t over_run = (read_buffer_offset_ + bytes) -
@@ -283,7 +284,7 @@ void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 				request_read_block(current_);
 				current_^=1;
 				if(pending_[current_]) {
-					wait_read_block(current_);
+					read_bytes += wait_read_block(current_);
 				} // if
 				read_buffer_offset_ = 0;
 			}
@@ -298,11 +299,13 @@ void P2PIOPolicy<swapped>::read(T * data, size_t elements)
 		// this will only do something if
 		// this class was instantiated as P2PIOPolicy<true>
 		swap_bytes(data, elements);
+
+		return static_cast<size_t>(read_bytes);
 	} // P2PIOPolicy<>::read
 
 template<bool swapped>
 template<typename T>
-void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
+size_t P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 	{
 		assert(id_>=0);
 		assert(mode_ != io_read);
@@ -311,6 +314,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 		uint64_t bytes(elements*sizeof(T));
 		const char * bdata = reinterpret_cast<const char *>(data);
 		uint64_t bdata_offset(0);
+		uint64_t write_bytes(0);
 
 		/*
 		P2PConnection & p2p = P2PConnection::instance();
@@ -357,7 +361,7 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				send_write_block(current_);
 				current_^=1;
 				if(pending_[current_]) {
-					wait_write_block(current_);
+					write_bytes += wait_write_block(current_);
 				} // if
 				write_buffer_offset_ = 0;
 			}
@@ -381,10 +385,12 @@ void P2PIOPolicy<swapped>::write(const T * data, size_t elements)
 				bytes = 0;
 			} // if
 		} while(bytes > 0);
+
+		return static_cast<size_t>(write_bytes);
 	} // P2PIOPolicy<>::write
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::seek(uint64_t offset, int32_t whence)
+int64_t P2PIOPolicy<swapped>::seek(uint64_t offset, int32_t whence)
 	{
 		assert(id_>=0);
 
@@ -394,10 +400,13 @@ void P2PIOPolicy<swapped>::seek(uint64_t offset, int32_t whence)
 		p2p.post(request);
 		p2p.send(&offset, 1, P2PTag::data);
 		p2p.send(&whence, 1, P2PTag::data);
+
+		//FIXME: need real return
+		return 0;
 	} // P2PIOPolicy<>::seek
 
 template<bool swapped>
-uint64_t P2PIOPolicy<swapped>::tell()
+int64_t P2PIOPolicy<swapped>::tell()
 	{
 		assert(id_>=0);
 
@@ -406,7 +415,7 @@ uint64_t P2PIOPolicy<swapped>::tell()
 
 		p2p.post(request);
 
-		uint64_t offset;
+		int64_t offset;
 		p2p.recv(&offset, 1, request.tag, request.id);
 
 		return offset;
@@ -467,11 +476,12 @@ void P2PIOPolicy<swapped>::request_read_block(uint32_t buffer)
 	} // P2PIOPolicy<>::request_read_block
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::wait_read_block(uint32_t buffer)
+int64_t P2PIOPolicy<swapped>::wait_read_block(uint32_t buffer)
 	{
 		P2PConnection & p2p = P2PConnection::instance();
 		p2p.wait_recv(request_[buffer].id);
 		pending_[buffer] = false;
+		return request_[buffer].count;
 	} // P2PIOPolicy<>::wait_read_block
 
 template<bool swapped>
@@ -490,11 +500,12 @@ void P2PIOPolicy<swapped>::send_write_block(uint32_t buffer)
 	} // P2PIOPolicy<>::send_write_block
 
 template<bool swapped>
-void P2PIOPolicy<swapped>::wait_write_block(uint32_t buffer)
+int64_t P2PIOPolicy<swapped>::wait_write_block(uint32_t buffer)
 	{
 		P2PConnection & p2p = P2PConnection::instance();
 		p2p.wait_send(request_[buffer].id);
 		pending_[buffer] = false;
+		return request_[buffer].count;
 	} // P2PIOPolicy<>::wait_write_block
 
 template<bool swapped>

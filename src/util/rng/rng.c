@@ -38,7 +38,7 @@ delete_rng( rng_t * r ) {
 
 /* Seeders */
 
-#define u(n) r->state.u32[ (n)^SFMT_BIG_ENDIAN ]
+#define u(n) r->state.u32[(n)]
 
 static void
 adjust_rng( rng_t * RESTRICT r ) {

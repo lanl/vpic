@@ -11,21 +11,19 @@
 
 #include <emmintrin.h>
 
-#define SFMT_BIG_ENDIAN 0
-
 typedef struct sfmt_128 {
   __m128i u;
 } sfmt_128_t;
 
-#elif 0 /* Use Altivec accelerated version */
+#elif defined(CELL_PPU_BUILD) /* Use Altivec accelerated version */
+
+#include <altivec.h> 
+
+typedef struct sfmt_128 {
+  __vector unsigned int u;
+} sfmt_128_t;
 
 #else /* Use portable version */
-
-#define SFMT_BIG_ENDIAN 0 /* FIXME: GET RID OF THIS */
-
-#ifndef SFMT_BIG_ENDIAN
-#error "SFMT_BIG_ENDIAN not defined"
-#endif
 
 typedef struct sfmt_128 {
   uint32_t u0, u1, u2, u3;
@@ -214,7 +212,7 @@ struct rng {
   uint32_t pad[3]; /* 16-byte align */
 };
 
-#if defined( __SSE2__ )
+#if defined(__SSE2__)
 
 # define DECL_SFMT                                                 \
   __m128i a_u, mask = _mm_setr_epi32( SFMT_MASK0, SFMT_MASK1,      \
@@ -227,6 +225,39 @@ struct rng {
           _mm_and_si128( _mm_srli_epi32( b.u, SFMT_R1 ), mask ) ), \
         _mm_xor_si128(   _mm_srli_si128( c.u, SFMT_R2 ),           \
                          _mm_slli_epi32( d.u, SFMT_L1 ) ) ) )
+
+#elif defined(CELL_PPU_BUILD)
+
+  /* Note: assumes SFMT_{L,R}2 to be in 1,3 */
+# define DECL_SFMT                                                       \
+  __vector unsigned int  a_u;                                            \
+  __vector unsigned int  zero = ((__vector unsigned int){ 0, 0, 0, 0 }); \
+  __vector unsigned int  mask = ((__vector unsigned int){ SFMT_MASK0,    \
+                                                          SFMT_MASK1,    \
+                                                          SFMT_MASK2,    \
+                                                          SFMT_MASK3 }); \
+  __vector unsigned int  sfmt_l1 = ((__vector unsigned int){ SFMT_L1,    \
+                                                             SFMT_L1,    \
+                                                             SFMT_L1,    \
+                                                             SFMT_L1 }); \
+  __vector unsigned int  sfmt_r1 = ((__vector unsigned int){ SFMT_R1,    \
+                                                             SFMT_R1,    \
+                                                             SFMT_R1,    \
+                                                             SFMT_R1 }); \
+  __vector unsigned char sfmt_l2 = ( SFMT_L2==1 ?                        \
+    ((__vector unsigned char){  1, 2, 3,16,   5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8 }) : \
+    ((__vector unsigned char){  3,16,16,16,   7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10 }) ); \
+  __vector unsigned char sfmt_r2 = ( SFMT_R2==1 ?                        \
+    ((__vector unsigned char){  7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10,  16,12,13,14 }) : \
+    ((__vector unsigned char){  5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8,  16,16,16,12 }) )
+
+# define SFMT( a, b, c, d )                                                \
+  a_u = a.u;                                                               \
+  a.u = vec_xor(                           a_u,                            \
+        vec_xor( vec_xor(        vec_perm( a_u, zero, sfmt_l2 ),           \
+                          vec_and( vec_sr( b.u,       sfmt_r1 ), mask ) ), \
+        vec_xor(                 vec_perm( c.u, zero, sfmt_r2 ),           \
+                                   vec_sl( d.u,       sfmt_l1 ) ) ) )
 
 #else
 

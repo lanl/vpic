@@ -33,13 +33,13 @@ begin_initialization {
   species_t * sp = define_species( "test_species", 1, 1, local_np, 1, 0, 0 );
   repeat( local_np )
     inject_particle( sp,
-                     uniform( rng[0], grid->x0, grid->x1 ),
-                     uniform( rng[0], grid->y0, grid->y1 ),
-                     uniform( rng[0], grid->z0, grid->z1 ),
-                     normal( rng[0], 0, 1 ),
-                     normal( rng[0], 0, 1 ),
-                     normal( rng[0], 0, 1 ),
-                     uniform( rng[0], 0, 1 ),
+                     uniform( rng(0), grid->x0, grid->x1 ),
+                     uniform( rng(0), grid->y0, grid->y1 ),
+                     uniform( rng(0), grid->z0, grid->z1 ),
+                     normal( rng(0), 0, 1 ),
+                     normal( rng(0), 0, 1 ),
+                     normal( rng(0), 0, 1 ),
+                     uniform( rng(0), 0, 1 ),
                      0, 0 );
 
   // Warm up the caches

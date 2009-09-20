@@ -48,11 +48,11 @@ append_collision_op( collision_op_t * cop,
    species.  Above, dW is a basic Weiner process. */
 
 collision_op_t *
-langevin( species_t * RESTRICT sp,
-          mt_rng_t  **         rng,
-          float                kT,
-          float                nu,
-          int                  interval );
+langevin( species_t  * RESTRICT sp,
+          rng_pool_t * RESTRICT rp,
+          float                 kT,
+          float                 nu,
+          int                   interval );
 
 /* In unary.c */
 
@@ -98,7 +98,7 @@ typedef float
      my_unary_collide( my_collision_model_params_t * RESTRICT params,
                        const species_t * RESTRICT sp,
                        particle_t * RESTRICT ALIGNED(32) p,
-                       mt_rng_t * RESTRICT rng ) {
+                       rng_t * RESTRICT rng ) {
        pi->u{xyz} = final momentum, ui{xyz} of particle i
                     given fluid background and initial momentum
                     pi->u{xyz}
@@ -108,20 +108,20 @@ typedef void
 (*unary_collision_func_t)( /**/  void       * RESTRICT params,
                            const species_t  * RESTRICT sp,
                            /**/  particle_t * RESTRICT ALIGNED(32) p,
-                           /**/  mt_rng_t   * RESTRICT rng );
+                           /**/  rng_t      * RESTRICT rng );
 
 /* Declare a unary collision model with the given microscopic physics. 
    params must be a registered object or NULL.  Every particle is
    tested for collision on every "interval" timesteps.  */
 
 collision_op_t *
-unary_collision_model( const char      * RESTRICT name,
-                       unary_rate_constant_func_t rate_constant,
-                       unary_collision_func_t     collision,
-                       /**/  void      * RESTRICT params,
-                       /**/  species_t * RESTRICT sp,
-                       /**/  mt_rng_t  **         rng,
-                       int                        interval );
+unary_collision_model( const char       * RESTRICT name,
+                       unary_rate_constant_func_t  rate_constant,
+                       unary_collision_func_t      collision,
+                       /**/  void       * RESTRICT params,
+                       /**/  species_t  * RESTRICT sp,
+                       /**/  rng_pool_t * RESTRICT rp,
+                       int                         interval );
 
 /* In binary.c */
 
@@ -203,7 +203,7 @@ typedef float
                       const species_t * RESTRICT spj,
                       particle_t * RESTRICT ALIGNED(32) pi,
                       particle_t * RESTRICT ALIGNED(32) pj,
-                      mt_rng_t * RESTRICT rng,
+                      rng_t * RESTRICT rng,
                       int type ) {
 
        ... compute the final normalized momenta, ui{xyz} and uj{xyz}
@@ -221,7 +221,7 @@ typedef void
                             const species_t  * RESTRICT spj,
                             /**/  particle_t * RESTRICT ALIGNED(32) pi,
                             /**/  particle_t * RESTRICT ALIGNED(32) pj,
-                            /**/  mt_rng_t   * RESTRICT rng,
+                            /**/  rng_t      * RESTRICT rng,
                             int type );
 
 /* Declare a binary collision model with the given microscopic physics. 
@@ -230,13 +230,13 @@ typedef void
    "interval" timesteps.  */
 
 collision_op_t *
-binary_collision_model( const char      * RESTRICT  name,
+binary_collision_model( const char       * RESTRICT name,
                         binary_rate_constant_func_t rate_constant,
                         binary_collision_func_t     collision,
-                        /**/  void      * RESTRICT  params,
-                        /**/  species_t * RESTRICT  spi,
-                        /**/  species_t * RESTRICT  spj,
-                        /**/  mt_rng_t  **          rng,
+                        /**/  void       * RESTRICT params,
+                        /**/  species_t  * RESTRICT spi,
+                        /**/  species_t  * RESTRICT spj,
+                        /**/  rng_pool_t * RESTRICT rp,
                         double                      sample,
                         int                         interval );
 
@@ -255,7 +255,7 @@ hard_sphere_fluid( const char * RESTRICT name, /* Model name */
                    const float r0,             /* Fluid p. radius (LENGTH) */
                    species_t * RESTRICT sp,    /* Species */
                    const float rsp,            /* Species p. radius (LENGTH) */
-                   mt_rng_t ** rng,            /* Entropy pool */
+                   rng_pool_t * RESTRICT rp,   /* Entropy pool */
                    const int interval );       /* How often to apply this */
 
 /* Based on binary_collision_model */
@@ -266,9 +266,39 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const float ri,             /* Species-i p. radius (LENGTH) */
              species_t * RESTRICT spj,   /* Species-j */
              const float rj,             /* Species-j p. radius (LENGTH) */
-             mt_rng_t ** rng,            /* Entropy pool */
+             rng_pool_t * RESTRICT rp,   /* Entropy pool */
              const double sample,        /* Sampling density */
              const int interval );       /* How often to apply this */
+
+/* In large_angle_coulomb.c */
+
+/* Based on unary_collision_model */
+
+collision_op_t *
+large_angle_coulomb_fluid(
+    const char * RESTRICT name, /* Model name */
+    const float n0,             /* Fluid density (#/VOLUME) */
+    const float vdx,            /* Fluid x-drift (VELOCITY) */
+    const float vdy,            /* Fluid y-drift (VELOCITY) */
+    const float vdz,            /* Fluid z-drift (VELOCITY) */
+    const float kT0,            /* Fluid temperature (ENERGY) */
+    const float q0,             /* Fluid particle charge (CHARGE) */
+    const float m0,             /* Fluid particle mass (MASS) */
+    species_t * RESTRICT sp,    /* Species */
+    const float bmax,           /* Impact parameter cutoff */
+    rng_pool_t * RESTRICT rp,   /* Entropy pool */
+    const int interval );       /* How often to apply this */
+
+/* Based on binary_collision_model */
+
+collision_op_t *
+large_angle_coulomb( const char * RESTRICT name, /* Model name */
+                     species_t * RESTRICT spi,   /* Species-i */
+                     species_t * RESTRICT spj,   /* Species-j */
+                     const float bmax,           /* Impact parameter cutoff */
+                     rng_pool_t * RESTRICT rp,   /* Entropy pool */
+                     const double sample,        /* Sampling density */
+                     const int interval );       /* How often to apply this */
 
 END_C_DECLS
 

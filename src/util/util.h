@@ -7,7 +7,7 @@
 #include "v4/v4.h" // Must be first (FIXME: REALLY?)
 #include "checkpt/checkpt.h"
 #include "mp/mp.h"
-#include "mtrand/mtrand.h"
+#include "rng/rng.h"
 #include "pipelines/pipelines.h"
 #include "profile/profile.h"
 

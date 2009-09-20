@@ -1,3 +1,10 @@
+#ifndef _drand_table_h_
+#define _drand_table_h_
+
+#ifndef IN_rng
+#error "Do not include drand_table.h; use rng.h"
+#endif
+
   static const int    N     = 256;
   static const double R     = 3.6554204190269413594915892673498092335649e+00;
   static const double scale = 1./1.8446744073709551616e+19;
@@ -519,3 +526,5 @@
     2.6028041937556791435638724793028009329987e-03,   // 254
     1.2544610762767424285534301263249357116791e-03,   // 255
     4.4454090067877495505178254032053325461860e-04 }; // 256
+
+#endif /* _drandn_table_h */

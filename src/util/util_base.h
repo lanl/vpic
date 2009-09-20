@@ -14,15 +14,29 @@
 #ifdef __cplusplus
 #define BEGIN_C_DECLS extern "C" {
 #define END_C_DECLS }
+
 #else
 #define BEGIN_C_DECLS
 #define END_C_DECLS
 #endif
 
+// C99 does requires some key macros of stdint to only be defined in
+// C++ implementations if explicitly requested. 
+
+#define __STDC_LIMIT_MACROS
+
+// In a stunning language flaw, C++98 does not support 64-bit data
+// types (including no standard way to initialize a non-trivial 64-bit
+// type to a compile time constant).  Hilary ensures when stdint gives
+// you 64-bit primitive data types.  C99's stdint defines some macros
+// that fix this if explicitly requested.
+
+#define __STDC_CONSTANT_MACROS
+
 #include <stdlib.h> // For exit, size_t, NULL
 #include <string.h> // For string and memory manipulation
-#include <math.h>   // For math prototypes
 #include <stdint.h> // For fixed width integer types
+#include <math.h>   // For math prototypes
 #include <limits.h> // For integer limits
 #include <float.h>  // For floating point limits
 
@@ -39,28 +53,38 @@ typedef struct collective collective_t;
 #define _UTIL_STRINGIFY(s)#s
 #define EXPAND_AND_STRINGIFY(s)_UTIL_STRINGIFY(s)
 
+// Function inlining
+
+// STATIC_INLINE declares a function as having static inline semantics
+// in the C99 sense.  Define this to nothing at compile time to disable
+// or to the appropriate value supported by your compiler.
+
+#ifndef STATIC_INLINE
+#define STATIC_INLINE static __inline__
+#endif
+
 // Conditional annotations
 
 // LIKELY and UNLIKELY allow the programmer to annotate the likelihood
-// of a given conditional being true.
+// of a given conditional being true.  If NO_BRANCH_HINTS is passed
+// at compile time, this optimization will be disabled.
 
-// FIXME: THE MACHINE DESCRIPTIONS SHOULD BE RESPONSIBLE FOR DEFINING
-// THIS TO A NON-TRIVIAL VALUE IF THE PLATFORM COMPILER SUPPORTS
-// SUCH.
-
+#ifdef NO_BRANCH_HINTS
+#define   LIKLEY(_c) _c
+#define UNLIKLEY(_c) _c
+#else
 #ifndef LIKELY
 #define LIKELY(_c)   __builtin_expect((_c),1)
 #endif
-
 #ifndef UNLIKELY
 #define UNLIKELY(_c) __builtin_expect((_c),0)
+#endif
 #endif
 
 // Pointer qualifiers
 
 // This pointer modifier indicates that a pointer can be assumed to
 // have at least the given power-of-two alignment.
-
 // FIXME: May want to use compiler instrincs for to provide compiler
 // the aligment information as well.
 
@@ -71,10 +95,8 @@ typedef struct collective collective_t;
 // This pointer modifier indicates that a pointer is restricted in
 // the C99 sense.  This is added to allow C++ code (which technically
 // does not have restricted pointers) to use this optimization.
-
-// FIXME: THE MACHINE DESCRIPTIONS SHOULD BE RESPONSIBLE FOR DEFINING
-// THIS TO A NON-TRIVIAL VALUE IF THE PLATFORM COMPILER SUPPORTS
-// RESTRICTED POINTER OPTIMIZATIONS
+// Define this to nothing at compile time to disable this or to the
+// appropriate value supported by your compiler.
 
 #ifndef RESTRICT
 #define RESTRICT __restrict

@@ -53,9 +53,9 @@ begin_initialization {
 
   repeat(npart)
     inject_particle( sp,
-                     uniform( rng[0], 0, L ),
-                     uniform( rng[0], 0, L ),
-                     uniform( rng[0], 0, L ),
+                     uniform( rng(0), 0, L ),
+                     uniform( rng(0), 0, L ),
+                     uniform( rng(0), 0, L ),
                      0., 0., 0., 1., 0., 0 );
 
   // Hack into vpic internals

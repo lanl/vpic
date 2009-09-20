@@ -52,15 +52,15 @@ begin_initialization {
 
     sp->np = 0;
     repeat( np ) {
-      double rx = uniform( rng[0], 0, nx );
-      double ry = uniform( rng[0], 0, ny );
-      double rz = uniform( rng[0], 0, nz );
-      double ux = 0.25*uniform( rng[0], -nx,nx ) / cdt_dx;
-      double uy = 0.25*uniform( rng[0], -ny,ny ) / cdt_dy;
-      double uz = 0.25*uniform( rng[0], -nz,nz ) / cdt_dz;
+      double rx = uniform( rng(0), 0, nx );
+      double ry = uniform( rng(0), 0, ny );
+      double rz = uniform( rng(0), 0, nz );
+      double ux = 0.25*uniform( rng(0), -nx,nx ) / cdt_dx;
+      double uy = 0.25*uniform( rng(0), -ny,ny ) / cdt_dy;
+      double uz = 0.25*uniform( rng(0), -nz,nz ) / cdt_dz;
       double gamma = 1/sqrt( 1 - ux*ux - uy*uy - uz*uz );
       ux *= gamma; uy *= gamma; uz *= gamma;
-      double w  = uniform( rng[0], 0,1 );
+      double w  = uniform( rng(0), 0,1 );
 
       inject_particle( sp, rx,ry,rz, ux,uy,uz, w, 0, 0 );
 

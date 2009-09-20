@@ -55,7 +55,7 @@ begin_initialization {
     sp->p[n].ux = 0;                                    \
     sp->p[n].uy = 0;                                    \
     sp->p[n].uz = 0;                                    \
-    sp->p[n].w  = fabs( normal( rng[0], 0, 1 ) );       \
+    sp->p[n].w  = fabs( normal( rng(0), 0, 1 ) );       \
   }                                                     \
   advance_p( sp, accumulator_array, interpolator_array ); \
   for( int n=0; n<npart; n++ ) {                        \

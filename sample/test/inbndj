@@ -16,7 +16,7 @@ begin_globals {
 };
 
 begin_initialization {
-  seed_rng( (int)boot_timestamp );
+  seed_entropy( (int)boot_timestamp );
 
   define_units( 1, 1 );
   define_timestep( 1 );
@@ -40,9 +40,9 @@ begin_initialization {
 
   sp->np = NPART;
   for( int n=0; n<NPART; n++ ) {
-    float dx0 = uniform( rng[0], -1, 1 ); dx1[n] = uniform( rng[0], -1, 1 );
-    float dy0 = uniform( rng[0], -1, 1 ); dy1[n] = uniform( rng[0], -1, 1 );
-    float dz0 = uniform( rng[0], -1, 1 ); dz1[n] = uniform( rng[0], -1, 1 );
+    float dx0 = uniform( rng(0), -1, 1 ); dx1[n] = uniform( rng(0), -1, 1 );
+    float dy0 = uniform( rng(0), -1, 1 ); dy1[n] = uniform( rng(0), -1, 1 );
+    float dz0 = uniform( rng(0), -1, 1 ); dz1[n] = uniform( rng(0), -1, 1 );
     double vx_c = cx*( (double)dx1[n] - (double)dx0 );
     double vy_c = cy*( (double)dy1[n] - (double)dy0 );
     double vz_c = cz*( (double)dz1[n] - (double)dz0 );
@@ -54,7 +54,7 @@ begin_initialization {
     sp->p[n].ux = vx_c/rgamma;
     sp->p[n].uy = vy_c/rgamma;
     sp->p[n].uz = vz_c/rgamma;
-    sp->p[n].w  = uniform( rng[0], 0, 1 );
+    sp->p[n].w  = uniform( rng(0), 0, 1 );
   }
 
   // Compute the initial charge density

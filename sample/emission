@@ -66,7 +66,7 @@ begin_initialization {
                                           interpolator_array,
                                           field_array,
                                           accumulator_array,
-                                          rng,
+                                          entropy,
                                           1, /* Emit per face per step */
                                           0, /* uth para to surface normal */
                                           0, /* uth perp to surface normal */

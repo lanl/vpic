@@ -46,7 +46,7 @@ begin_initialization {
     sim_log( "Usage: " << cmdline_argument[0] << " mass_ratio seed" );
     abort(0);
   }
-  seed_rng( atoi( cmdline_argument[2] ) );
+  seed_entropy( atoi( cmdline_argument[2] ) );
  
   // Diagnostic messages can be passed written (usually to stderr)
   sim_log( "Computing simulation parameters");
@@ -245,10 +245,10 @@ begin_initialization {
  
     // Pick an appropriately distributed random location for the pair
     do {
-      x = L*atanh( uniform( rng[0], -1, 1 ) );
+      x = L*atanh( uniform( rng(0), -1, 1 ) );
     } while( x<=-0.5*Lx || x>=0.5*Lx );
-    y = uniform( rng[0], ymin, ymax );
-    z = uniform( rng[0], 0,    Lz   );
+    y = uniform( rng(0), ymin, ymax );
+    z = uniform( rng(0), 0,    Lz   );
  
     // For the ion, pick an isothermal normalized momentum in the drift frame
     // (this is a proper thermal equilibrium in the non-relativistic limit),
@@ -256,17 +256,17 @@ begin_initialization {
     // along z and then rotate it into the lab frame. Then load the particle.
     // Repeat the process for the electron.
  
-    ux = normal( rng[0], 0, uthi );
-    uy = normal( rng[0], 0, uthi );
-    uz = normal( rng[0], 0, uthi );
+    ux = normal( rng(0), 0, uthi );
+    uy = normal( rng(0), 0, uthi );
+    uz = normal( rng(0), 0, uthi );
     d0 = gdri*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udri;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
     inject_particle( ion,      x, y, z, ux, uy, uz, wi, 0, 0 );
  
-    ux = normal( rng[0], 0, uthe );
-    uy = normal( rng[0], 0, uthe );
-    uz = normal( rng[0], 0, uthe );
+    ux = normal( rng(0), 0, uthe );
+    uy = normal( rng(0), 0, uthe );
+    uz = normal( rng(0), 0, uthe );
     d0 = gdre*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udre;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;

@@ -90,6 +90,10 @@ begin_initialization {
   sim_log("* random number base seed:       "<<rng_seed);
   sim_log("*********************************");
  
+  // Seed the entropy pool
+
+  seed_entropy( rng_seed );
+
   // Set up high level simulation parameters
  
   sim_log("Setting up high-level simulation parameters.");
@@ -165,7 +169,7 @@ begin_initialization {
   sim_log("Setting up Maxwellian reinjection particle boundary condition.");
  
   particle_bc_t * maxwellian_reinjection =
-    define_particle_bc( maxwellian_reflux( species_list, rng ) );
+    define_particle_bc( maxwellian_reflux( species_list, entropy ) );
 
   // Do this for each species and each maxwellian reinjection bc
   // Defaults to zero temperature if not set.
@@ -188,15 +192,15 @@ begin_initialization {
     double ymin=grid->y0, ymax=grid->y1;
     double zmin=grid->z0, zmax=grid->z1;
     repeat( Ne/(topology_x*topology_y*topology_z) ) {
-      double x = uniform( rng[0], xmin, xmax );
-      double y = uniform( rng[0], ymin, ymax );
-      double z = uniform( rng[0], zmin, zmax );
+      double x = uniform( rng(0), xmin, xmax );
+      double y = uniform( rng(0), ymin, ymax );
+      double z = uniform( rng(0), zmin, zmax );
       if ( iv_region ) continue; // Particle fell in iv_region.  Don't load.
       inject_particle( electron,
                        x, y, z,
-                       normal( rng[0], 0, uthe ),
-                       normal( rng[0], 0, uthe ),
-                       normal( rng[0], 0, uthe ),
+                       normal( rng(0), 0, uthe ),
+                       normal( rng(0), 0, uthe ),
+                       normal( rng(0), 0, uthe ),
                        qe,
                        0,   // Age (just say zero during startup ... particle injection typically wants non-zero here)
                        0 ); // Do not accumulate inverse to bound charge rhob (rhob will be computed to be consistent with this charge density and initial zero electric field after initialization)

@@ -398,25 +398,25 @@ begin_initialization {
 		double x, y, z, ux, uy, uz, d0;
 
 		do {
-			x = L*atanh( uniform( sync_rng[0], -1, 1 )*tanhf );
+			x = L*atanh( uniform( sync_rng(0), -1, 1 )*tanhf );
 		} while( x<= -0.5*Lx || x>=0.5*Lx );
-		y = uniform( sync_rng[0], 0, Ly );
-		z = uniform( sync_rng[0], 0, Lz );
+		y = uniform( sync_rng(0), 0, Ly );
+		z = uniform( sync_rng(0), 0, Lz );
 	 
 		// inject_particles() will return an error for particles not
                 // on this node and will not inject particle locally
 
-		ux = normal( sync_rng[0], 0, uthe );
-		uy = normal( sync_rng[0], 0, uthe );
-		uz = normal( sync_rng[0], 0, uthe );
+		ux = normal( sync_rng(0), 0, uthe );
+		uy = normal( sync_rng(0), 0, uthe );
+		uz = normal( sync_rng(0), 0, uthe );
 		d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
 		uy = d0*cs - uz*sn;
 		uz = d0*sn + uz*cs;
 		inject_particle( ele, x, y, z, ux, uy, uz, qe_s, 0, 0 );
 
-		ux = normal( sync_rng[0], 0, uthi );
-		uy = normal( sync_rng[0], 0, uthi );
-		uz = normal( sync_rng[0], 0, uthi );
+		ux = normal( sync_rng(0), 0, uthi );
+		uy = normal( sync_rng(0), 0, uthi );
+		uz = normal( sync_rng(0), 0, uthi );
 		d0 = gdri*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udri;
 		uy = d0*cs - uz*sn;
 		uz = d0*sn + uz*cs;
@@ -424,19 +424,19 @@ begin_initialization {
 	} // repeat
 
 	repeat ( Ne_back ) {
-		double x = uniform( sync_rng[0], -0.5*Lx, 0.5*Lx);
-		double y = uniform( sync_rng[0], 0, Ly );
-		double z = uniform( sync_rng[0], 0, Lz );
+		double x = uniform( sync_rng(0), -0.5*Lx, 0.5*Lx);
+		double y = uniform( sync_rng(0), 0, Ly );
+		double z = uniform( sync_rng(0), 0, Lz );
 
 		inject_particle( ele, x, y, z,
-				 normal( sync_rng[0], 0, utheb ),
-				 normal( sync_rng[0], 0, utheb ),
-				 normal( sync_rng[0], 0, utheb ), qe_b, 0, 0 );
+				 normal( sync_rng(0), 0, utheb ),
+				 normal( sync_rng(0), 0, utheb ),
+				 normal( sync_rng(0), 0, utheb ), qe_b, 0, 0 );
 
 		inject_particle( ion, x, y, z,
-				 normal( sync_rng[0], 0, uthib ),
-				 normal( sync_rng[0], 0, uthib ),
-				 normal( sync_rng[0], 0, uthib ), qi_b, 0, 0 );
+				 normal( sync_rng(0), 0, uthib ),
+				 normal( sync_rng(0), 0, uthib ),
+				 normal( sync_rng(0), 0, uthib ), qi_b, 0, 0 );
 	} // repeat
 
     /*--------------------------------------------------------------------------

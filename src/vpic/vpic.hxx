@@ -181,8 +181,8 @@ private:
      random numbers.  Keeping the synchronous generators in sync is
      the generator users responsibility. */
 
-  mt_rng_t             ** rng;               // Local entropy pool
-  mt_rng_t             ** sync_rng;          // Synchronous entropy pool
+  rng_pool_t           * entropy;            // Local entropy pool
+  rng_pool_t           * sync_entropy;       // Synchronous entropy pool
   grid_t               * grid;               // define_*_grid et al
   material_t           * material_list;      // define_material
   field_array_t        * field_array;        // define_field_array
@@ -310,6 +310,16 @@ private:
   inline hydro_t &
   hydro( const int ix, const int iy, const int iz ) {
     return hydro_array->h[ voxel(ix,iy,iz) ];
+  }
+
+  inline rng_t *
+  rng( const int n ) {
+    return entropy->rng[n];
+  }
+
+  inline rng_t *
+  sync_rng( const int n ) {
+    return sync_entropy->rng[n];
   }
 
   ///////////////
@@ -567,25 +577,22 @@ private:
   // user seeds.
   // FIXME: MTRAND DESPERATELY NEEDS A LARGER SEED SPACE!
 
-  inline void seed_rng( int base ) {
-    int r, nrng = 0, nproc1 = nproc()+1;
-    for( r=0; rng[r]; r++ ) nrng++;
-    base *= nproc1 * nrng;
-    for( r=0; rng[r]; r++ ) seed_mt_rng( rng[r],      base+rank() +nproc1*r );
-    for( r=0; rng[r]; r++ ) seed_mt_rng( sync_rng[r], base+nproc()+nproc1*r );
+  inline void seed_entropy( int base ) {
+    seed_rng_pool( entropy,      base, 0 );
+    seed_rng_pool( sync_entropy, base, 1 );
   }
 
   // Uniform random number on (low,high) (open interval)
-  // FIXME: IS THE INTERVAL STILL OPEN IN FINITE PRECISION)?
-  // FIXME: AND IS THE OPEN INTERVAL REALLY WHAT USERS WANT?
-  inline double uniform( mt_rng * _rng, double low, double high ) {
-    double dx = mt_drand(_rng);
+  // FIXME: IS THE INTERVAL STILL OPEN IN FINITE PRECISION
+  //        AND IS THE OPEN INTERVAL REALLY WHAT USERS WANT??
+  inline double uniform( rng_t * rng, double low, double high ) {
+    double dx = drand( rng );
     return low*(1-dx) + high*dx;
   }
  
   // Normal random number with mean mu and standard deviation sigma
-  inline double normal( mt_rng * _rng, double mu, double sigma ) {
-    return mu + sigma*mt_drandn( _rng );
+  inline double normal( rng_t * rng, double mu, double sigma ) {
+    return mu + sigma*drandn( rng );
   }
  
   /////////////////////////////////

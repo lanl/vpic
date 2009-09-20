@@ -68,7 +68,7 @@ child_langmuir( /**/  species_t            * RESTRICT sp,  // Species to emit
                 const interpolator_array_t * RESTRICT ia,  // For field interpolation
                 /**/  field_array_t        * RESTRICT fa,  // For rhob accum (inject)
                 /**/  accumulator_array_t  * RESTRICT aa,  // For Jf accum (aging)
-                /**/  mt_rng_t             **         rng, // Random number source
+                /**/  rng_pool_t           * RESTRICT rp,  // Random number pool
                 int   n_emit_per_face, // Particles to emit per face per step
                 float ut_perp,         // Perpendicular normalized thermal momentum
                 float ut_para,         // Parallel normalized thermal momentum

@@ -4,21 +4,21 @@
 /* Private interface *********************************************************/
 
 typedef struct langevin {
-  species_t * sp;
-  mt_rng_t ** rng;
+  species_t  * sp;
+  rng_pool_t * rp;
   float kT;
   float nu;
   int interval;
 } langevin_t;
 
-
-    
 void
 langevin_pipeline( langevin_t * RESTRICT l,
                    int pipeline_rank,
                    int n_pipeline ) {
+  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
+
   particle_t * RESTRICT p   = l->sp->p;
-  mt_rng_t   * RESTRICT rng = l->rng[ pipeline_rank ];
+  rng_t      * RESTRICT rng = l->rp->rng[ pipeline_rank ];
 
   /* Decay and drive have a fun derivation.  We want to integrate the
      stochastic equation:
@@ -72,12 +72,10 @@ langevin_pipeline( langevin_t * RESTRICT l,
   /**/  int i  = (int)( 0.5 + n_target*(double) pipeline_rank    );
   const int i1 = (int)( 0.5 + n_target*(double)(pipeline_rank+1) );
 
-  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
-
   for( ; i<i1; i++ ) {
-    p[i].ux = decay*p[i].ux + drive*mt_frandn(rng);
-    p[i].uy = decay*p[i].uy + drive*mt_frandn(rng);
-    p[i].uz = decay*p[i].uz + drive*mt_frandn(rng);
+    p[i].ux = decay*p[i].ux + drive*frandn(rng);
+    p[i].uy = decay*p[i].uy + drive*frandn(rng);
+    p[i].uz = decay*p[i].uz + drive*frandn(rng);
   }
 }
 
@@ -93,7 +91,7 @@ checkpt_langevin( const collision_op_t * cop ) {
   const langevin_t * l = (const langevin_t *)cop->params;
   CHECKPT( l, 1 );
   CHECKPT_PTR( l->sp );
-  CHECKPT_PTR( l->rng );
+  CHECKPT_PTR( l->rp );
   checkpt_collision_op_internal( cop );
 }
 
@@ -102,7 +100,7 @@ restore_langevin( void ) {
   langevin_t * l;
   RESTORE( l );
   RESTORE_PTR( l->sp );
-  RESTORE_PTR( l->rng );
+  RESTORE_PTR( l->rp );
   return restore_collision_op_internal( l );
 }
 
@@ -115,18 +113,19 @@ delete_langevin( collision_op_t * cop ) {
 /* Public interface **********************************************************/
 
 collision_op_t *
-langevin( species_t * RESTRICT sp,
-          mt_rng_t  **         rng,
-          float                kT,
-          float                nu,
-          int                  interval ) {
+langevin( species_t  * RESTRICT sp,
+          rng_pool_t * RESTRICT rp,
+          float                 kT,
+          float                 nu,
+          int                   interval ) {
   langevin_t * l;
 
-  if( !sp || !rng || kT<0 || nu<0 ) ERROR(( "Bad args" ));
+  if( !sp || !rp || rp->n_rng<N_PIPELINE || kT<0 || nu<0 )
+    ERROR(( "Bad args" ));
 
   MALLOC( l, 1 );
   l->sp       = sp;
-  l->rng      = rng;
+  l->rp       = rp;
   l->kT       = kT;
   l->nu       = nu;
   l->interval = interval;

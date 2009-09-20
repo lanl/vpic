@@ -34,8 +34,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 /* In maxwellian_reflux.c */
 
 particle_bc_t *
-maxwellian_reflux( species_t * RESTRICT sp_list,
-                   mt_rng_t ** rng );
+maxwellian_reflux( species_t  * RESTRICT sp_list,
+                   rng_pool_t * RESTRICT rp );
 
 void
 set_reflux_temp( /**/  particle_bc_t * RESTRICT mr,

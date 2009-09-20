@@ -11,7 +11,7 @@ typedef struct unary_collision_model {
   unary_collision_func_t collision;
   void * params;
   species_t * sp;
-  mt_rng_t ** rng;
+  rng_pool_t * rp;
   int interval;
   int n_large_pr[ MAX_PIPELINE ];
 } unary_collision_model_t;
@@ -20,13 +20,15 @@ void
 unary_pipeline( unary_collision_model_t * RESTRICT cm,
                  int pipeline_rank,
                  int n_pipeline ) {
+  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
+
   unary_rate_constant_func_t rate_constant = cm->rate_constant;
   unary_collision_func_t     collision     = cm->collision;
 
   /**/  void       * RESTRICT params = cm->params;
   const species_t  * RESTRICT sp     = cm->sp;
   /**/  particle_t * RESTRICT p      = cm->sp->p;
-  /**/  mt_rng_t   * RESTRICT rng    = cm->rng[ pipeline_rank ];
+  /**/  rng_t      * RESTRICT rng    = cm->rp->rng[ pipeline_rank ];
   const float dt = sp->g->dt * (float)cm->interval;
 
   double n_target = (double)sp->np / (double)n_pipeline;
@@ -35,8 +37,6 @@ unary_pipeline( unary_collision_model_t * RESTRICT cm,
 
   float pr_coll;
   int n_large_pr = 0;
-
-  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
 
   /* For each computational particle assigned to this pipeline, compute
      the probability a comoving physical particle had collision with
@@ -50,7 +50,7 @@ unary_pipeline( unary_collision_model_t * RESTRICT cm,
 
     /* Yes, strictly < (so that 0 rate constants guarantee no collision,
        and, yes, _c0, so that 1 probabilities guarantee a collision  */
-    if( mt_frand_c0(rng) < pr_coll ) collision( params, sp, &p[i], rng );
+    if( frand_c0(rng) < pr_coll ) collision( params, sp, &p[i], rng );
   }
 
   cm->n_large_pr[pipeline_rank] = n_large_pr;
@@ -81,7 +81,7 @@ checkpt_unary_collision_model( const collision_op_t * cop ) {
   CHECKPT_SYM( cm->collision );
   CHECKPT_PTR( cm->params );
   CHECKPT_PTR( cm->sp );
-  CHECKPT_PTR( cm->rng );
+  CHECKPT_PTR( cm->rp );
   checkpt_collision_op_internal( cop );
 }
 
@@ -94,7 +94,7 @@ restore_unary_collision_model( void ) {
   RESTORE_SYM( cm->collision );
   RESTORE_PTR( cm->params );
   RESTORE_PTR( cm->sp );
-  RESTORE_PTR( cm->rng );
+  RESTORE_PTR( cm->rp );
   return restore_collision_op_internal( cm );
 }
 
@@ -109,18 +109,19 @@ delete_unary_collision_model( collision_op_t * cop ) {
 /* Public interface **********************************************************/
 
 collision_op_t *
-unary_collision_model( const char      * RESTRICT name,
-                       unary_rate_constant_func_t rate_constant,
-                       unary_collision_func_t     collision,
-                       /**/  void      * RESTRICT params,
-                       /**/  species_t * RESTRICT sp,
-                       /**/  mt_rng_t  **         rng,
-                       int                        interval ) {
+unary_collision_model( const char       * RESTRICT name,
+                       unary_rate_constant_func_t  rate_constant,
+                       unary_collision_func_t      collision,
+                       /**/  void       * RESTRICT params,
+                       /**/  species_t  * RESTRICT sp,
+                       /**/  rng_pool_t * RESTRICT rp,
+                       int                         interval ) {
   unary_collision_model_t * cm;
   size_t len = name ? strlen(name) : 0;
 
-  if( !rate_constant || !collision || !sp || !rng ) ERROR(( "Bad args" ));
-  if( len==0 ) ERROR(( "Cannot specify a nameless collision model" ));
+  if( !rate_constant || !collision || !sp || !rp || rp->n_rng<N_PIPELINE )
+    ERROR(( "Bad args" ));
+  if( !len ) ERROR(( "Cannot specify a nameless collision model" ));
   if( params && !object_id( params ) )
     ERROR(( "collision model parameters must be checkpoint registered" ));
 
@@ -131,7 +132,7 @@ unary_collision_model( const char      * RESTRICT name,
   cm->collision     = collision;
   cm->params        = params;
   cm->sp            = sp;
-  cm->rng           = rng;
+  cm->rp            = rp;
   cm->interval      = interval;
   return new_collision_op_internal( cm,
                                     (collision_op_func_t)apply_unary_collision_model,

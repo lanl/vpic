@@ -3,11 +3,8 @@
 /* Private interface *********************************************************/
 
 typedef struct hard_sphere {
+  float twomu_mi, twomu_mj, Kc, Kt;
   float udx, udy, udz, ut0;
-  float tr, c0, c1, c2, c3;
-  float cpiR2;
-  float twomu_mi;
-  float twomu_mj;
 } hard_sphere_t;
 
 /* The rate constant for particle i to scatter off particle j is:
@@ -67,50 +64,69 @@ typedef struct hard_sphere {
 
    The raw expression above is a pain to compute numerically.  But we
    have 3rd order accurate expansions for both large and small |vr|
-   which should be more than sufficient in practice.  The transition
-   point, where the two are equal, occurs (with the help of
-   Mathematica again ... the real root of 3rd order polynomial):
-     vr/vt = 1.3891872019570660376
-   With this, in normalized velocities, we have:
+   which we can use to design a very efficient function.  We first
+   note that K can be written as:
 
-     K = c0    + c1 * ur^2, if ur^2 <= tr and
-     K = c2 ur + c3 / ur    otherwise
+     K = ( ni pi^2 R^2 vtj ) f( |vr|/vtj )
 
-   where:
+   Noting that f( x ) = sqrt( 8/pi + x^2 ) matches the zeorth order
+   behavior for x=0 and x->infinity (indeed, this simple function
+   is accurate to about 3% over the whole domain, we consider a
+   more general functional form:
 
-     tr = (1.389...)^2 utj^2
+     f(x) = sqrt( ( a + b x^2 + c x^4 ) / ( 1 + d x^2 ) )
 
-     c0 = ( nj pi R^2 c ) sqrt(8/   pi )   utj
-     c1 = ( nj pi R^2 c ) sqrt(2/(9 pi)) / utj
-     c2 = ( nj pi R^2 c ) 
-     c3 = ( nj pi R^2 c ) utj^2
+   To reproduce the the zeroth order behavior at the order and
+   asymptotically, obviously, we must have a = 8/pi and c=d.  This
+   leaves two degrees of freedom (b and c).  Expanding f(x) about the
+   origin and infinity and solving the system of equations that comes
+   about when matching this approximation's expansions to the above
+   expansions, we get:
 
-   giving the below efficient function.  */
+     a = 8/pi
+     b = 4/(12 - 3 pi)
+     c = (3 pi - 8)/(24 - 6 pi)
+     d = c
+
+   This simple expression is better than 0.3% accurate over the whole
+   domain.  (Note that the above is not strictly a Pade approximant
+   for K or for some function of K as we matched our approximation at
+   two distinct points.  If we wanted to be tedious, we could match
+   higher order terms (we can basically get to floating point single
+   precision with a two extra terms in the above.) */
+
+/* FIXME: KT CAN'T BE MUTIPLED BY VT / ALPHA, BETA, GAMMA ALL NEED
+   TO ABSORB IT */
 
 float
-unary_hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
+hard_sphere_fluid_rate_constant( const hard_sphere_t * RESTRICT hs,
                                  const species_t     * RESTRICT spi,
                                  const particle_t    * RESTRICT pi ) {
-  float urx = pi->ux-hs->udx, ury = pi->uy-hs->udy, urz = pi->uz-hs->udz;
-  float ur2 = urx*urx + ury*ury + urz*urz, ur;
-  /* Using <= here is important as it prevents the divide by a zero ur
-     (which can happen) when thresh is zero (which can also happen if
-     the background is cold) */
-  if( ur2 <= hs->tr ) return hs->c0 + hs->c1*ur2; 
-  ur = sqrtf( ur2 );
-  return hs->c2*ur + hs->c3/ur;
+  static const float alpha = 8./M_PI;
+  static const float beta  = 4./(12.-3.*M_PI);
+  static const float gamma = (3.*M_PI-8.)/(24.-6*M_PI);
+  static const float one   = 1.;
+
+  float urx       = pi->ux - hs->udx;
+  float ury       = pi->uy - hs->udy;
+  float urz       = pi->uz - hs->udz;
+  float ur2       = urx*urx + ury*ury + urz*urz;
+  float ur2_gamma = ur2*gamma;
+  return hs->Kt*sqrtf( ( alpha + ur2*( beta + ur2_gamma ) ) / ( one + ur2_gamma ) );
 }
 
-/* The binary case is much easier theoretically. */
+/* The particle-particle case is much easier theoretically. */
 
 float
-binary_hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
-                                  const species_t     * RESTRICT spi,
-                                  const species_t     * RESTRICT spj,
-                                  const particle_t    * RESTRICT pi,
-                                  const particle_t    * RESTRICT pj ) {
-  float urx = pi->ux-pj->ux, ury = pi->uy-pj->uy, urz = pi->uz-pj->uz;
-  return sqrtf( urx*urx + ury*ury + urz*urz )*hs->cpiR2;
+hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
+                           const species_t     * RESTRICT spi,
+                           const species_t     * RESTRICT spj,
+                           const particle_t    * RESTRICT pi,
+                           const particle_t    * RESTRICT pj ) {
+  float urx = pi->ux - pj->ux;
+  float ury = pi->uy - pj->uy;
+  float urz = pi->uz - pj->uz;
+  return hs->Kc*sqrtf( urx*urx + ury*ury + urz*urz );
 }
 
 /* Conservation of momentum, pi0+pj0 = pi1+pj1, implies that the
@@ -231,8 +247,8 @@ binary_hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
     int d0, d1, d2;                                                     \
                                                                         \
     do {                                                                \
-      bcs_R = 2*mt_frand_c0(rng) - 1;                                   \
-      bsn_R = 2*mt_frand_c0(rng) - 1;                                   \
+      bcs_R = 2*frand_c0(rng) - 1;                                      \
+      bsn_R = 2*frand_c0(rng) - 1;                                      \
       b2_R2 = bcs_R*bcs_R + bsn_R*bsn_R;                                \
     } while( b2_R2>=1 );                                                \
                                                                         \
@@ -249,7 +265,7 @@ binary_hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
     stack[2] = urz;                                                     \
     t1  = stack[d1];                                                    \
     t2  = stack[d2];                                                    \
-    t0  = 1 / sqrtf( t1*t1 + t2*t2 );                                   \
+    t0  = 1 / sqrtf( t1*t1 + t2*t2 + FLT_MIN );                         \
     stack[d0] =  0;                                                     \
     stack[d1] =  t0*t2;                                                 \
     stack[d2] = -t0*t1;                                                 \
@@ -271,10 +287,10 @@ binary_hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
    computations */
 
 void
-unary_hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
+hard_sphere_fluid_collision( const hard_sphere_t * RESTRICT hs,
                              const species_t     * RESTRICT spi,
                              /**/  particle_t    * RESTRICT pi,
-                             /**/  mt_rng_t      * RESTRICT rng ) {
+                             /**/  rng_t         * RESTRICT rng ) {
   float urx, ury, urz, ax, ay, az, w;
 
   urx = pi->ux - hs->udx;
@@ -283,9 +299,9 @@ unary_hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
 
   w = hs->ut0;
   if( w ) {
-    urx -= w*mt_frandn(rng);
-    ury -= w*mt_frandn(rng);
-    urz -= w*mt_frandn(rng);
+    urx -= w*frandn(rng);
+    ury -= w*frandn(rng);
+    urz -= w*frandn(rng);
   }
   
   COMPUTE_MOMENTUM_TRANSFER(urx,urz,urz,ax,ay,az,rng);
@@ -297,13 +313,13 @@ unary_hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
 }
 
 void
-binary_hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
-                              const species_t     * RESTRICT spi,
-                              const species_t     * RESTRICT spj,
-                              /**/  particle_t    * RESTRICT pi,
-                              /**/  particle_t    * RESTRICT pj,
-                              /**/  mt_rng_t      * RESTRICT rng,
-                              const int                      type ) {
+hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
+                       const species_t     * RESTRICT spi,
+                       const species_t     * RESTRICT spj,
+                       /**/  particle_t    * RESTRICT pi,
+                       /**/  particle_t    * RESTRICT pj,
+                       /**/  rng_t         * RESTRICT rng,
+                       const int                      type ) {
   float urx, ury, urz, ax, ay, az, w;
 
   urx = pi->ux - pj->ux;
@@ -354,40 +370,27 @@ hard_sphere_fluid( const char * RESTRICT name, /* Model name */
                    const float r0,             /* Fluid p. radius (LENGTH) */
                    species_t * RESTRICT sp,    /* Species */
                    const float rsp,            /* Species p. radius (LENGTH) */
-                   mt_rng_t ** rng,            /* Entropy pool */
+                   rng_pool_t * RESTRICT rp,   /* Entropy pool */
                    const int interval ) {      /* How often to apply this */
   hard_sphere_t * hs;
-  float c, ut0sq, ut0, csigma, K0, M;
 
-  if( n0<0 || kT0<0 || m0<=0 || r0<0 || !sp || rsp<0 || !rng )
-    ERROR(( "Bad args" ));
-
-  c      = sp->g->cvac;
-  ut0sq  = kT0/(m0*c*c);
-  ut0    = sqrtf(ut0sq);
-  csigma = M_PI*(r0+rsp)*(r0+rsp)*c;
-  K0     = n0*csigma;
-  M      = sp->m + m0;
+  if( n0<0 || kT0<0 || m0<=0 || r0<0 || !sp || rsp<0 ) ERROR(( "Bad args" ));
 
   MALLOC( hs, 1 );
-  hs->udx      = vdx / c;
-  hs->udy      = vdy / c;
-  hs->udz      = vdz / c;
-  hs->ut0      = ut0;
-  hs->tr       = ut0sq*1.929841082081302182;
-  hs->c0       =       K0 * sqrt(8./   M_PI ) * ut0;
-  hs->c1       = ut0 ? K0 * sqrt(2./(9*M_PI)) / ut0 : 0;
-  hs->c2       =       K0;
-  hs->c3       =       K0 * ut0sq;
-  hs->cpiR2    = csigma;
-  hs->twomu_mi = 2*m0   /M;
-  hs->twomu_mj = 2*sp->m/M;
+  hs->twomu_mi = 2.*m0   /(sp->m + m0);
+  hs->twomu_mj = 2.*sp->m/(sp->m + m0);
+  hs->Kc       = M_PI*(r0+rsp)*(r0+rsp)*sp->g->cvac;
+  hs->Kt       = M_PI*(r0+rsp)*(r0+rsp)*sqrtf(kT0/m0)*n0;
+  hs->udx      = vdx / sp->g->cvac;
+  hs->udy      = vdy / sp->g->cvac;
+  hs->udz      = vdz / sp->g->cvac;
+  hs->ut0      = sqrtf(kT0/(m0*sp->g->cvac*sp->g->cvac));
 
   REGISTER_OBJECT( hs, checkpt_hard_sphere, restore_hard_sphere, NULL );
   return unary_collision_model( name,
-                   (unary_rate_constant_func_t)unary_hard_sphere_rate_constant,
-                   (unary_collision_func_t)    unary_hard_sphere_collision,
-                                hs, sp, rng, interval );
+                              (unary_rate_constant_func_t)hard_sphere_fluid_rate_constant,
+                              (unary_collision_func_t)    hard_sphere_fluid_collision,
+                                hs, sp, rp, interval );
 }
 
 collision_op_t *
@@ -396,24 +399,23 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const float ri,             /* Species-i p. radius (LENGTH) */
              species_t * RESTRICT spj,   /* Species-j */
              const float rj,             /* Species-j p. radius (LENGTH) */
-             mt_rng_t ** rng,            /* Entropy pool */
+             rng_pool_t * RESTRICT rp,   /* Entropy pool */
              const double sample,        /* Sampling density */
              const int interval ) {      /* How often to apply this */
   hard_sphere_t * hs;
 
-  if( !spi || ri<0 || !spj || rj<0 || !rng || spi->g!=spj->g )
-    ERROR(( "Bad args" ));
+  if( !spi || ri<0 || !spj || rj<0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
 
   MALLOC( hs, 1 );
   CLEAR(  hs, 1 );
-  hs->cpiR2    = spi->g->cvac*M_PI*(ri+rj)*(ri+rj);
   hs->twomu_mi = 2*spj->m/(spi->m+spj->m);
   hs->twomu_mj = 2*spi->m/(spi->m+spj->m);
+  hs->Kc       = spi->g->cvac*M_PI*(ri+rj)*(ri+rj);
 
   REGISTER_OBJECT( hs, checkpt_hard_sphere, restore_hard_sphere, NULL );
   return binary_collision_model( name,
-                 (binary_rate_constant_func_t)binary_hard_sphere_rate_constant,
-                 (binary_collision_func_t)    binary_hard_sphere_collision,
-                                 hs, spi, spj, rng, sample, interval );
+                                 (binary_rate_constant_func_t)hard_sphere_rate_constant,
+                                 (binary_collision_func_t)    hard_sphere_collision,
+                                 hs, spi, spj, rp, sample, interval );
 }
 

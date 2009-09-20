@@ -12,9 +12,9 @@ typedef struct binary_collision_model {
   binary_rate_constant_func_t rate_constant;
   binary_collision_func_t collision;
   void * params;
-  species_t * spi;
-  species_t * spj;
-  mt_rng_t ** rng;
+  species_t  * spi;
+  species_t  * spj;
+  rng_pool_t * rp;
   double sample;
   int interval;
   int n_large_pr[ MAX_PIPELINE ];
@@ -24,13 +24,15 @@ void
 binary_pipeline( binary_collision_model_t * RESTRICT cm,
                  int pipeline_rank,
                  int n_pipeline ) {
+  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
+
   binary_rate_constant_func_t rate_constant = cm->rate_constant;
   binary_collision_func_t     collision     = cm->collision;
 
   /**/  void       * RESTRICT params        = cm->params;
   /**/  species_t  * RESTRICT spi           = cm->spi;
   /**/  species_t  * RESTRICT spj           = cm->spj;
-  /**/  mt_rng_t   * RESTRICT rng           = cm->rng[ pipeline_rank ];
+  /**/  rng_t      * RESTRICT rng           = cm->rp->rng[ pipeline_rank ];
 
   /**/  particle_t * RESTRICT spi_p         = spi->p;
   const int        * RESTRICT spi_partition = spi->partition;
@@ -45,7 +47,6 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
   float pr_norm, pr_coll, wk, wl, w_max, w_min;
   int v, v1, k, k0, nk, rk, l, l0, nl, rl, np, nc, type, n_large_pr = 0;
 
-  if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
 
   /* Stripe the (mostly non-ghost) voxels over threads for load balance */
 
@@ -63,7 +64,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
     k0 = spi_partition[v  ];
     nk = spi_partition[v+1] - k0;
     if( !nk ) continue; /* Nothing to do */
-    rk = mt_URAND_MAX / (unsigned)nk;
+    rk = UINT_MAX / (unsigned)nk;
 
     if( spi==spj ) {
 
@@ -98,7 +99,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
       l0 = spj_partition[v  ];
       nl = spj_partition[v+1] - l0;
       if( !nl ) continue; /* Nothing to do */
-      rl = mt_URAND_MAX / (unsigned)nl;
+      rl = UINT_MAX / (unsigned)nl;
       np = nk*nl;
       nc = (int)( 0.5 + sample*(double)(nk>nl ? nk : nl) );
 
@@ -120,8 +121,8 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
          of getting k on 0:nk-1 and l on 0:nl-1 and uses the
          preferred high order randgen bits). */
   
-      do { k = (int)(mt_urand(rng)/rk); } while( k==nk ); k += k0;
-      do { l = (int)(mt_urand(rng)/rl); } while( l==nl ); l += l0;
+      do { k = (int)(uirand(rng)/rk); } while( k==nk ); k += k0;
+      do { l = (int)(uirand(rng)/rl); } while( l==nl ); l += l0;
      
       /* Compute the probability that a physical particle in the
          species whose candidate computational particle has the least
@@ -140,7 +141,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
 
       /* Yes, >= so that 0 rate constants guarantee no collision and
          yes, _c0, so that 1 probabilities guarantee a collision */
-      if( mt_frand_c0(rng)>=pr_coll ) continue; /* Didn't collide */
+      if( frand_c0(rng)>=pr_coll ) continue; /* Didn't collide */
 
       /* k and l had a collision.  Determine which computational
          particles should be updated by the collision process.
@@ -151,7 +152,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
     
       w_min = (wk>wl) ? wl : wk;
       type = 1; if( wl==w_min ) type++;
-      if( w_max==w_min || w_max*mt_frand_c0(rng)<w_min ) type = 3;
+      if( w_max==w_min || w_max*frand_c0(rng)<w_min ) type = 3;
       collision( params, spi, spj, &spi_p[k], &spj_p[l], rng, type );
 
     } 
@@ -190,7 +191,7 @@ checkpt_binary_collision_model( const collision_op_t * cop ) {
   CHECKPT_PTR( cm->params );
   CHECKPT_PTR( cm->spi );
   CHECKPT_PTR( cm->spj );
-  CHECKPT_PTR( cm->rng );
+  CHECKPT_PTR( cm->rp );
   checkpt_collision_op_internal( cop );
 }
 
@@ -204,7 +205,7 @@ restore_binary_collision_model( void ) {
   RESTORE_PTR( cm->params );
   RESTORE_PTR( cm->spi );
   RESTORE_PTR( cm->spj );
-  RESTORE_PTR( cm->rng );
+  RESTORE_PTR( cm->rp );
   return restore_collision_op_internal( cm );
 }
 
@@ -219,20 +220,20 @@ delete_binary_collision_model( collision_op_t * cop ) {
 /* Public interface **********************************************************/
 
 collision_op_t *
-binary_collision_model( const char      * RESTRICT  name,
+binary_collision_model( const char       * RESTRICT name,
                         binary_rate_constant_func_t rate_constant,
                         binary_collision_func_t     collision,
-                        /**/  void      * RESTRICT  params,
-                        /**/  species_t * RESTRICT  spi,
-                        /**/  species_t * RESTRICT  spj,
-                        /**/  mt_rng_t  **          rng,
+                        /**/  void       * RESTRICT params,
+                        /**/  species_t  * RESTRICT spi,
+                        /**/  species_t  * RESTRICT spj,
+                        /**/  rng_pool_t * RESTRICT rp,
                         double                      sample,
                         int                         interval ) {
   binary_collision_model_t * cm;
   size_t len = name ? strlen(name) : 0;
 
-  if( !rate_constant || !collision || !spi || !spj || spi->g!=spj->g || !rng )
-    ERROR(( "Bad args" ));
+  if( !rate_constant || !collision || !spi || !spj || spi->g!=spj->g ||
+      !rp || rp->n_rng<N_PIPELINE ) ERROR(( "Bad args" ));
   if( len==0 ) ERROR(( "Cannot specify a nameless collision model" ));
   if( params && !object_id( params ) )
     ERROR(( "collision model parameters must be checkpoint registered" ));
@@ -245,7 +246,7 @@ binary_collision_model( const char      * RESTRICT  name,
   cm->params        = params;
   cm->spi           = spi;
   cm->spj           = spj;
-  cm->rng           = rng;
+  cm->rp            = rp;
   cm->sample        = sample;
   cm->interval      = interval;
   return new_collision_op_internal( cm,

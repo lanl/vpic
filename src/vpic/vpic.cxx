@@ -10,50 +10,6 @@
  
 #include "vpic.hxx"
  
-/* At some point, entropy_pool should become fully fleshed out and
-   publicly exposed. */
-
-void
-checkpt_entropy_pool( const mt_rng_t ** pool ) {
-  int r;
-  for( r=0; pool[r]; r++ ) /**/;
-  CHECKPT( pool, r+1 );
-  for( r=0; pool[r]; r++ ) CHECKPT_PTR( pool[r] );
-}
-
-mt_rng_t **
-restore_entropy_pool( void ) {
-  mt_rng_t ** pool;
-  int r;
-  RESTORE( pool );
-  for( r=0; pool[r]; r++ ) RESTORE_PTR( pool[r] );
-  return pool;
-}
-
-mt_rng_t **
-new_entropy_pool( int n_rng,
-                  int seed,
-                  int sync ) {
-  mt_rng_t ** pool;
-  int r;
-  if( n_rng<1 ) ERROR(( "Bad args" ));
-  seed = (sync ? world_size : world_rank) + (world_size+1)*n_rng*seed;
-  MALLOC( pool, n_rng+1 );
-  for( r=0; r<n_rng; r++ ) pool[r] = new_mt_rng( seed + (world_size+1)*r );
-  pool[n_rng] = NULL; 
-  REGISTER_OBJECT( pool, checkpt_entropy_pool, restore_entropy_pool, NULL );
-  return pool;
-}
-
-void
-delete_entropy_pool( mt_rng_t ** pool ) {
-  int r;
-  if( !pool ) return;
-  UNREGISTER_OBJECT( pool );
-  for( r=0; pool[r]; r++ ) delete_mt_rng( pool[r] );
-  FREE( pool );
-}
-
 /* Note that, when a vpic_simulation is created (and thus registered
    with the checkpt service), it is created empty; none of the simulation
    objects on which it depends have been created yet. (These get created
@@ -68,8 +24,8 @@ delete_entropy_pool( mt_rng_t ** pool ) {
 void
 checkpt_vpic_simulation( const vpic_simulation * vpic ) {
   CHECKPT( vpic, 1 );
-  CHECKPT_PTR( vpic->rng );
-  CHECKPT_PTR( vpic->sync_rng );
+  CHECKPT_PTR( vpic->entropy );
+  CHECKPT_PTR( vpic->sync_entropy );
   CHECKPT_PTR( vpic->grid );
   CHECKPT_FPTR( vpic->material_list );
   CHECKPT_FPTR( vpic->field_array );
@@ -86,8 +42,8 @@ vpic_simulation *
 restore_vpic_simulation( void ) {
   vpic_simulation * vpic;
   RESTORE( vpic );
-  RESTORE_PTR( vpic->rng );
-  RESTORE_PTR( vpic->sync_rng );
+  RESTORE_PTR( vpic->entropy );
+  RESTORE_PTR( vpic->sync_entropy );
   RESTORE_PTR( vpic->grid );
   RESTORE_FPTR( vpic->material_list );
   RESTORE_FPTR( vpic->field_array );
@@ -131,9 +87,9 @@ vpic_simulation::vpic_simulation() {
 # endif
   n_rng++; 
 
-  /**/ rng = new_entropy_pool( n_rng, 0, 0 );
-  sync_rng = new_entropy_pool( n_rng, 0, 1 );
-  grid     = new_grid();
+  entropy      = new_rng_pool( n_rng, 0, 0 );
+  sync_entropy = new_rng_pool( n_rng, 0, 1 );
+  grid = new_grid();
 
   REGISTER_OBJECT( this, checkpt_vpic_simulation,
                    restore_vpic_simulation, reanimate_vpic_simulation );
@@ -150,7 +106,7 @@ vpic_simulation::~vpic_simulation() {
   delete_field_array( field_array );
   delete_material_list( material_list );
   delete_grid( grid );
-  delete_entropy_pool( sync_rng );
-  delete_entropy_pool( rng );
+  delete_rng_pool( sync_entropy );
+  delete_rng_pool( entropy );
 }
  

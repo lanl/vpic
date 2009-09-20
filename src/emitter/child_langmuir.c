@@ -10,7 +10,7 @@ typedef struct child_langmuir {
   const interpolator_array_t * ia;
   /**/  field_array_t        * fa;
   /**/  accumulator_array_t  * aa;
-  /**/  mt_rng_t             * rng;
+  /**/  rng_t                * rng;
   int n_emit_per_face;
   float ut_para;
   float ut_perp;
@@ -39,7 +39,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
   const interpolator_t   * RESTRICT ALIGNED(128) fi  = cl->ia->i;
   /**/  field_t          * RESTRICT ALIGNED(128) f   = cl->fa->f;
   /**/  accumulator_t    * RESTRICT ALIGNED(128) a   = cl->aa->a;
-  /**/  mt_rng_t         * RESTRICT              rng = cl->rng;
+  /**/  rng_t            * RESTRICT              rng = cl->rng;
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
@@ -87,12 +87,12 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         /* Emit the particle */                                         \
                                                                         \
         if( np>=max_np ) { np_skipped++; continue; }                    \
-        u##X = dir ut_para*sqrtf(-2*logf(mt_frand(rng)));               \
-        u##Y = ut_perp*mt_frandn(rng);                                  \
-        u##Z = ut_perp*mt_frandn(rng);                                  \
+        u##X = dir ut_para*sqrtf(2*frande(rng));                        \
+        u##Y = ut_perp*frandn(rng);                                     \
+        u##Z = ut_perp*frandn(rng);                                     \
         p[np].d##X = -(dir 1);                                          \
-        p[np].d##Y = 2*mt_frand_c0(rng)-1;                              \
-        p[np].d##Z = 2*mt_frand_c0(rng)-1;                              \
+        p[np].d##Y = 2*frand_c0(rng)-1;                                 \
+        p[np].d##Z = 2*frand_c0(rng)-1;                                 \
         p[np].i    = i;                                                 \
         p[np].u##X = u##X;                                              \
         p[np].u##Y = u##Y;                                              \
@@ -104,7 +104,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         /* Age the particle */                                          \
                                                                         \
         if( nm>=max_nm ) { nm_skipped++; continue; }                    \
-        w = ( mt_frand_c0(rng)*cdt ) /                                  \
+        w = ( frand_c0(rng)*cdt ) /                                     \
           sqrtf( ( u##X*u##X + u##Y*u##Y ) + ( u##Z*u##Z + 1 ) );       \
         pm[nm].disp##X = w*u##X*rd##X;                                  \
         pm[nm].disp##Y = w*u##Y*rd##Y;                                  \
@@ -174,7 +174,7 @@ child_langmuir( /**/  species_t            * RESTRICT sp,
                 const interpolator_array_t * RESTRICT ia,
                 /**/  field_array_t        * RESTRICT fa,
                 /**/  accumulator_array_t  * RESTRICT aa,
-                /**/  mt_rng_t             **         rng,
+                /**/  rng_pool_t           * RESTRICT rp,
                 int n_emit_per_face,
                 float ut_para,
                 float ut_perp,
@@ -182,7 +182,7 @@ child_langmuir( /**/  species_t            * RESTRICT sp,
                 float norm ) {
   child_langmuir_t * cl;
 
-  if( !sp || !ia || !fa || !aa || !rng ||
+  if( !sp || !ia || !fa || !aa || !rp ||
       sp->g!=ia->g || sp->g!=fa->g || sp->g!=aa->g ||
       n_emit_per_face<1 || ut_para<0  || ut_perp<0 || thresh_e_norm<0 )
     ERROR(( "Bad args" ));
@@ -192,7 +192,7 @@ child_langmuir( /**/  species_t            * RESTRICT sp,
   cl->ia              = ia;
   cl->fa              = fa;
   cl->aa              = aa;
-  cl->rng             = rng[0];
+  cl->rng             = rp->rng[0];
   cl->n_emit_per_face = n_emit_per_face;
   cl->ut_para         = ut_para;
   cl->ut_perp         = ut_perp;

@@ -44,7 +44,7 @@
 
 typedef struct maxwellian_reflux {
   species_t * sp_list;
-  mt_rng_t  * rng;
+  rng_t     * rng;
   float     * ut_para;
   float     * ut_perp;
 } maxwellian_reflux_t;
@@ -62,8 +62,8 @@ interact_maxwellian_reflux( maxwellian_reflux_t * RESTRICT mr,
                             particle_injector_t * RESTRICT pi,
                             int                            max_pi,
                             int                            face ) {
-  const grid_t   * RESTRICT g   = sp->g;
-  /**/  mt_rng_t * RESTRICT rng = mr->rng;
+  const grid_t * RESTRICT g   = sp->g;
+  /**/  rng_t  * RESTRICT rng = mr->rng;
 
   const int32_t sp_id   = sp->id;
   const float   ut_para = mr->ut_para[sp_id]; 
@@ -113,21 +113,13 @@ interact_maxwellian_reflux( maxwellian_reflux_t * RESTRICT mr,
   //   u = sqrt(2) ub sqrt( -log(mu) ).
   //
   // Note that -log(mu) is an _exponentially_ distributed random
-  // number.  In the long haul then, we should probably call
-  // something like sqrt( mt_frande(rng) ) and mtrand is in a
-  // better position to decide the best method to compute such
-  // a rand (it too can be ziggurat accelerated) or even add a
-  // maxwellian flux method to mtrand.
+  // number.
 
   // Note: This assumes ut_para > 0
   
-  // Note: mt_frand_c1 may be more appropriate theoretically but
-  // mt_frand is closer to original behavior (and guarantees a
-  // non-zero normal displacement).
-
-  u[0] = ut_para*scale[face]*sqrtf(-logf(mt_frand(rng)));
-  u[1] = ut_perp*mt_frandn(rng);
-  u[2] = ut_perp*mt_frandn(rng);
+  u[0] = ut_para*scale[face]*sqrtf(frande(rng));
+  u[1] = ut_perp*frandn(rng);
+  u[2] = ut_perp*frandn(rng);
   ux   = u[perm[face][0]];
   uy   = u[perm[face][1]];
   uz   = u[perm[face][2]];
@@ -216,13 +208,13 @@ delete_maxwellian_reflux( particle_bc_t * RESTRICT pbc ) {
 /* Public interface *********************************************************/
 
 particle_bc_t *
-maxwellian_reflux( species_t * RESTRICT sp_list,
-                   mt_rng_t  ** rng ) {
-  if( !sp_list || !rng ) ERROR(( "Bad args" ));
+maxwellian_reflux( species_t  * RESTRICT sp_list,
+                   rng_pool_t * RESTRICT rp ) {
+  if( !sp_list || !rp ) ERROR(( "Bad args" ));
   maxwellian_reflux_t * mr;
   MALLOC( mr, 1 );
   mr->sp_list = sp_list;
-  mr->rng     = rng[0];
+  mr->rng     = rp->rng[0];
   MALLOC( mr->ut_para, num_species( mr->sp_list ) );
   MALLOC( mr->ut_perp, num_species( mr->sp_list ) );
   CLEAR( mr->ut_para, num_species( mr->sp_list ) );

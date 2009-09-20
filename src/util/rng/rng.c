@@ -5,7 +5,7 @@
 /* Private API **************************************************************/
 
 void
-checkpt_rng( const rng_t * r ) {
+checkpt_rng( const rng_t * RESTRICT r ) {
   CHECKPT_ALIGNED( r, 1, 128 );
 }
 
@@ -41,7 +41,7 @@ delete_rng( rng_t * r ) {
 #define u(n) r->state.u32[ (n)^SFMT_BIG_ENDIAN ]
 
 static void
-adjust_rng( rng_t * r ) {
+adjust_rng( rng_t * RESTRICT r ) {
   static const uint32_t parity[4] =
     { SFMT_PARITY0, SFMT_PARITY1, SFMT_PARITY2, SFMT_PARITY3 };
   uint32_t bit = 0;
@@ -62,7 +62,7 @@ adjust_rng( rng_t * r ) {
 }
 
 rng_t *
-seed_rng( rng_t * r,
+seed_rng( rng_t * RESTRICT r,
           int seed ) {
   int n;
   if( !r ) ERROR(( "Bad args" ));
@@ -287,7 +287,7 @@ _( float, f, _c,  uint32_t, u32 ) _( double, d, _c,  uint64_t, u64 )
    scale = 1/2^64. */
 
 float
-frandn( rng_t * r ) {
+frandn( rng_t * RESTRICT r ) {
   uint32_t a, i, j, s;
   float x, y;
 
@@ -342,7 +342,7 @@ frandn_fill( rng_t * RESTRICT r,
 }
 
 double
-drandn( rng_t * r ) {
+drandn( rng_t * RESTRICT r ) {
   uint64_t a, i, j, s;
   double x, y;
 
@@ -401,7 +401,7 @@ drandn_fill( rng_t  * RESTRICT r,
 /* Uses the transformation method */
 
 float
-frande( rng_t * r ) {
+frande( rng_t * RESTRICT r ) {
   uint32_t a;
   RNG_NEXT( a, uint32_t, r, u32, 0 );
   return -logf( conv_frand_c1(a) );
@@ -420,7 +420,7 @@ frande_fill( rng_t * RESTRICT r,
 }
 
 double
-drande( rng_t * r ) {
+drande( rng_t * RESTRICT r ) {
   uint64_t a;
   RNG_NEXT( a, uint64_t, r, u64, 0 );
   return -log( conv_drand_c1(a) );

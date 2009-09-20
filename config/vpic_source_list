@@ -62,7 +62,7 @@ src/util/pipelines/pipelines_thread.c
 src/util/pipelines/pipelines_serial.c
 src/util/mp/mp.cxx
 src/util/checkpt/checkpt.c
-src/util/checkpt/checkpt_io.c
+src/util/checkpt/checkpt_io.cxx
 src/util/profile/profile.c
 src/util/boot.c
 src/util/util_base.c

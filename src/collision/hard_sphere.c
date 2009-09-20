@@ -3,8 +3,9 @@
 /* Private interface *********************************************************/
 
 typedef struct hard_sphere {
-  float twomu_mi, twomu_mj, Kc, Kt;
-  float udx, udy, udz, ut0;
+  float twomu_mi, twomu_mj, Kc;
+  float udx, udy, udz, ut;
+  float ut2, alpha_Kt2ut4, beta_Kt2ut2, gamma_Kt2;
 } hard_sphere_t;
 
 /* The rate constant for particle i to scatter off particle j is:
@@ -95,24 +96,17 @@ typedef struct hard_sphere {
    higher order terms (we can basically get to floating point single
    precision with a two extra terms in the above.) */
 
-/* FIXME: KT CAN'T BE MUTIPLED BY VT / ALPHA, BETA, GAMMA ALL NEED
-   TO ABSORB IT */
-
 float
 hard_sphere_fluid_rate_constant( const hard_sphere_t * RESTRICT hs,
                                  const species_t     * RESTRICT spi,
                                  const particle_t    * RESTRICT pi ) {
-  static const float alpha = 8./M_PI;
-  static const float beta  = 4./(12.-3.*M_PI);
   static const float gamma = (3.*M_PI-8.)/(24.-6*M_PI);
-  static const float one   = 1.;
-
-  float urx       = pi->ux - hs->udx;
-  float ury       = pi->uy - hs->udy;
-  float urz       = pi->uz - hs->udz;
-  float ur2       = urx*urx + ury*ury + urz*urz;
-  float ur2_gamma = ur2*gamma;
-  return hs->Kt*sqrtf( ( alpha + ur2*( beta + ur2_gamma ) ) / ( one + ur2_gamma ) );
+  float urx = pi->ux - hs->udx;
+  float ury = pi->uy - hs->udy;
+  float urz = pi->uz - hs->udz;
+  float ur2 = urx*urx + ury*ury + urz*urz;
+  return sqrtf((hs->alpha_Kt2ut4+ur2*(hs->beta_Kt2ut2+ur2*hs->gamma_Kt2))/
+               (hs->ut2+ur2*gamma));
 }
 
 /* The particle-particle case is much easier theoretically. */
@@ -227,7 +221,7 @@ hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
 
    or wi = mj / (mi+mj) = mu / mi and similarly for wj.
 
-   This gives, normalizing velocities to c:
+   This gives, normalizing to -2 c:
 
      a = [ 1 - b2_R2 ] ur0 -
          [ 1 - b2_R2 ]^(1/2) bcs_R  |ur0|  T1   -
@@ -297,7 +291,7 @@ hard_sphere_fluid_collision( const hard_sphere_t * RESTRICT hs,
   ury = pi->uy - hs->udy;
   urz = pi->uz - hs->udz;
 
-  w = hs->ut0;
+  w = hs->ut;
   if( w ) {
     urx -= w*frandn(rng);
     ury -= w*frandn(rng);
@@ -374,22 +368,28 @@ hard_sphere_fluid( const char * RESTRICT name, /* Model name */
                    const int interval ) {      /* How often to apply this */
   hard_sphere_t * hs;
 
-  if( n0<0 || kT0<0 || m0<=0 || r0<0 || !sp || rsp<0 ) ERROR(( "Bad args" ));
+  if( n0<0 || kT0<0 || m0<=0 || r0<0 ||
+      !sp || sp->m<=0 || rsp<0 ) ERROR(( "Bad args" ));
 
   MALLOC( hs, 1 );
   hs->twomu_mi = 2.*m0   /(sp->m + m0);
   hs->twomu_mj = 2.*sp->m/(sp->m + m0);
   hs->Kc       = M_PI*(r0+rsp)*(r0+rsp)*sp->g->cvac;
-  hs->Kt       = M_PI*(r0+rsp)*(r0+rsp)*sqrtf(kT0/m0)*n0;
   hs->udx      = vdx / sp->g->cvac;
   hs->udy      = vdy / sp->g->cvac;
   hs->udz      = vdz / sp->g->cvac;
-  hs->ut0      = sqrtf(kT0/(m0*sp->g->cvac*sp->g->cvac));
+  hs->ut       = sqrtf(kT0/(m0*sp->g->cvac*sp->g->cvac));
+
+  hs->ut2           = kT0/(m0*sp->g->cvac*sp->g->cvac);
+  hs->alpha_Kt2ut4  = (8./M_PI)*(hs->Kc*n0*hs->Kc*n0)*(hs->ut2*hs->ut2);
+  hs->beta_Kt2ut2   = (4./(12.-3.*M_PI))*(hs->Kc*n0*hs->Kc*n0)*hs->ut2;
+  hs->gamma_Kt2     = ((3.*M_PI-8.)/(24.-6*M_PI))*(hs->Kc*n0*hs->Kc*n0);
+  hs->ut2          += FLT_MIN;
 
   REGISTER_OBJECT( hs, checkpt_hard_sphere, restore_hard_sphere, NULL );
   return unary_collision_model( name,
-                              (unary_rate_constant_func_t)hard_sphere_fluid_rate_constant,
-                              (unary_collision_func_t)    hard_sphere_fluid_collision,
+                   (unary_rate_constant_func_t)hard_sphere_fluid_rate_constant,
+                   (unary_collision_func_t)    hard_sphere_fluid_collision,
                                 hs, sp, rp, interval );
 }
 
@@ -404,7 +404,8 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const int interval ) {      /* How often to apply this */
   hard_sphere_t * hs;
 
-  if( !spi || ri<0 || !spj || rj<0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
+  if( !spi || spi->m<=0 || ri<0 ||
+      !spj || spj->m<=0 || rj<0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
 
   MALLOC( hs, 1 );
   CLEAR(  hs, 1 );
@@ -414,8 +415,8 @@ hard_sphere( const char * RESTRICT name, /* Model name */
 
   REGISTER_OBJECT( hs, checkpt_hard_sphere, restore_hard_sphere, NULL );
   return binary_collision_model( name,
-                                 (binary_rate_constant_func_t)hard_sphere_rate_constant,
-                                 (binary_collision_func_t)    hard_sphere_collision,
+                        (binary_rate_constant_func_t)hard_sphere_rate_constant,
+                        (binary_collision_func_t)    hard_sphere_collision,
                                  hs, spi, spj, rp, sample, interval );
 }
 

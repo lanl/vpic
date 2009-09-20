@@ -47,7 +47,6 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
   float pr_norm, pr_coll, wk, wl, w_max, w_min;
   int v, v1, k, k0, nk, rk, l, l0, nl, rl, np, nc, type, n_large_pr = 0;
 
-
   /* Stripe the (mostly non-ghost) voxels over threads for load balance */
 
   v  = VOXEL( 0,0,0,             g->nx,g->ny,g->nz ) + pipeline_rank;

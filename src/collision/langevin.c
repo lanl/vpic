@@ -113,10 +113,10 @@ delete_langevin( collision_op_t * cop ) {
 /* Public interface **********************************************************/
 
 collision_op_t *
-langevin( species_t  * RESTRICT sp,
-          rng_pool_t * RESTRICT rp,
-          float                 kT,
+langevin( float                 kT,
           float                 nu,
+          species_t  * RESTRICT sp,
+          rng_pool_t * RESTRICT rp,
           int                   interval ) {
   langevin_t * l;
 

@@ -3,31 +3,25 @@
 /* Private interface *********************************************************/
 
 typedef struct large_angle_coulomb {
-  float cc, twomu_mi, twomu_mj, Kc, Kt;
-  float udx, udy, udz, ut0;
+  float cc, twomu_mi, twomu_mj, Kc;
+  float udx, udy, udz, ut;
+  float ut2, alpha_Kt2ut4, beta_Kt2ut2, gamma_Kt2;
 } large_angle_coulomb_t;
 
 /* See hard_sphere.c for a derivation of these. */
-
-/* FIXME: KT CAN'T BE MUTIPLED BY VT / ALPHA, BETA, GAMMA ALL NEED
-   TO ABSORB IT */
 
 float
 large_angle_coulomb_fluid_rate_constant(
     const large_angle_coulomb_t * RESTRICT lac,
     const species_t             * RESTRICT spi,
     const particle_t            * RESTRICT pi ) {
-  static const float alpha = 8./M_PI;
-  static const float beta  = 4./(12.-3.*M_PI);
   static const float gamma = (3.*M_PI-8.)/(24.-6*M_PI);
-  static const float one   = 1.;
-  float urx       = pi->ux - lac->udx;
-  float ury       = pi->uy - lac->udy;
-  float urz       = pi->uz - lac->udz;
-  float ur2       = urx*urx + ury*ury + urz*urz;
-  float ur2_gamma = ur2*gamma;
-  return lac->Kt*sqrtf( ( alpha + ur2*( beta + ur2_gamma ) ) /
-                        ( one + ur2_gamma ) );
+  float urx = pi->ux - lac->udx;
+  float ury = pi->uy - lac->udy;
+  float urz = pi->uz - lac->udz;
+  float ur2 = urx*urx + ury*ury + urz*urz;
+  return sqrtf((lac->alpha_Kt2ut4+ur2*(lac->beta_Kt2ut2+ur2*lac->gamma_Kt2))/
+               (lac->ut2+ur2*gamma));
 }
 
 float
@@ -144,7 +138,7 @@ large_angle_coulomb_fluid_collision(
   ury = pi->uy - lac->udy;
   urz = pi->uz - lac->udz;
 
-  w = lac->ut0;
+  w = lac->ut;
   if( w ) {
     urx -= w*frandn(rng);
     ury -= w*frandn(rng);
@@ -233,11 +227,17 @@ large_angle_coulomb_fluid(
   lac->twomu_mi = 2.*m0    / (sp->m + m0);
   lac->twomu_mj = 2.*sp->m / (sp->m + m0);
   lac->Kc       = M_PI*bmax*bmax*sp->g->cvac;
-  lac->Kt       = M_PI*bmax*bmax*sqrtf(kT0/m0)*n0;
+
   lac->udx      = vdx / sp->g->cvac;
   lac->udy      = vdy / sp->g->cvac;
   lac->udz      = vdz / sp->g->cvac;
-  lac->ut0      = sqrtf(kT0/(m0*sp->g->cvac*sp->g->cvac));
+  lac->ut       = sqrtf(kT0/(m0*sp->g->cvac*sp->g->cvac));
+
+  lac->ut2           = kT0/(m0*sp->g->cvac*sp->g->cvac);
+  lac->alpha_Kt2ut4  = (8./M_PI)*(lac->Kc*n0*lac->Kc*n0)*(lac->ut2*lac->ut2);
+  lac->beta_Kt2ut2   = (4./(12.-3.*M_PI))*(lac->Kc*n0*lac->Kc*n0)*lac->ut2;
+  lac->gamma_Kt2     = ((3.*M_PI-8.)/(24.-6*M_PI))*(lac->Kc*n0*lac->Kc*n0);
+  lac->ut2          += FLT_MIN;
 
   REGISTER_OBJECT( lac,
                    checkpt_large_angle_coulomb,
@@ -258,8 +258,8 @@ large_angle_coulomb( const char * RESTRICT name, /* Model name */
                      const int interval ) {      /* How often to apply this */
   large_angle_coulomb_t * lac;
 
-  if( !spi || !spi->q || !spi->m<=0 ||
-      !spj || !spj->q || !spj->m<=0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
+  if( !spi || !spi->q || spi->m<=0 || 
+      !spj || !spj->q || spj->m<=0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
 
   MALLOC( lac, 1 );
   CLEAR(  lac, 1 );

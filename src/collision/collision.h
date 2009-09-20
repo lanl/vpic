@@ -48,10 +48,10 @@ append_collision_op( collision_op_t * cop,
    species.  Above, dW is a basic Weiner process. */
 
 collision_op_t *
-langevin( species_t  * RESTRICT sp,
-          rng_pool_t * RESTRICT rp,
-          float                 kT,
+langevin( float                 kT,
           float                 nu,
+          species_t  * RESTRICT sp,
+          rng_pool_t * RESTRICT rp,
           int                   interval );
 
 /* In unary.c */

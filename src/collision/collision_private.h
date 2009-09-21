@@ -41,5 +41,18 @@ delete_collision_op_internal( collision_op_t * cop );
 
 END_C_DECLS
 
-#endif /* _collision_h_ */
+///////////////////////////////////////////////////////////////////////////////
+// Langevin pipeline interface
 
+typedef struct langevin_pipeline_args {
+  MEM_PTR( particle_t, 128 ) p;
+  MEM_PTR( rng_t,      128 ) rng[ MAX_PIPELINE ];
+  float decay; 
+  float drive;
+  int np;
+  PAD_STRUCT( (1+MAX_PIPELINE)*SIZEOF_MEM_PTR+2*sizeof(float)+sizeof(int) )
+} langevin_pipeline_args_t;
+
+PROTOTYPE_PIPELINE( langevin, langevin_pipeline_args_t );
+
+#endif /* _collision_h_ */

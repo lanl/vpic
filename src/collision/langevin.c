@@ -1,4 +1,5 @@
 #define IN_collision
+#define HAS_SPU_PIPELINE
 #include "collision_private.h"
 
 /* Private interface *********************************************************/
@@ -12,13 +13,41 @@ typedef struct langevin {
 } langevin_t;
 
 void
-langevin_pipeline( langevin_t * RESTRICT l,
+langevin_pipeline( langevin_pipeline_args_t * RESTRICT args,
                    int pipeline_rank,
                    int n_pipeline ) {
   if( pipeline_rank==n_pipeline ) return; /* No host straggler cleanup */
 
-  particle_t * RESTRICT p   = l->sp->p;
-  rng_t      * RESTRICT rng = l->rp->rng[ pipeline_rank ];
+  particle_t * RESTRICT p     = args->p;
+  rng_t      * RESTRICT rng   = args->rng[ pipeline_rank ];
+  float                 decay = args->decay;
+  float                 drive = args->drive;
+
+  double n_target = (double)args->np / (double)n_pipeline;
+  /**/  int i  = (int)( 0.5 + n_target*(double) pipeline_rank    );
+  const int i1 = (int)( 0.5 + n_target*(double)(pipeline_rank+1) );
+
+  for( ; i<i1; i++ ) {
+    p[i].ux = decay*p[i].ux + drive*frandn(rng);
+    p[i].uy = decay*p[i].uy + drive*frandn(rng);
+    p[i].uz = decay*p[i].uz + drive*frandn(rng);
+  }
+}
+
+#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
+    defined(HAS_SPU_PIPELINE)
+
+// SPU pipeline is defined in a different compilation unit
+
+#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+
+#error "V4 pipeline not implemented"
+
+#endif
+
+void
+apply_langevin( langevin_t * l ) {
+  if( l->interval<1 || (l->sp->g->step % l->interval) ) return;
 
   /* Decay and drive have a fun derivation.  We want to integrate the
      stochastic equation:
@@ -63,26 +92,14 @@ langevin_pipeline( langevin_t * RESTRICT l,
      which is equivalent to resampling the momentum with the
      desired temperature. */
 
-  const float nudt  = l->nu * (float)l->interval * l->sp->g->dt;
-  const float decay = exp( -nudt );
-  const float drive = sqrt( ( -expm1(-2*nudt)*l->kT ) /
-                            ( l->sp->m*l->sp->g->cvac  ) );
-
-  double n_target = (double)l->sp->np / (double)n_pipeline;
-  /**/  int i  = (int)( 0.5 + n_target*(double) pipeline_rank    );
-  const int i1 = (int)( 0.5 + n_target*(double)(pipeline_rank+1) );
-
-  for( ; i<i1; i++ ) {
-    p[i].ux = decay*p[i].ux + drive*frandn(rng);
-    p[i].uy = decay*p[i].uy + drive*frandn(rng);
-    p[i].uz = decay*p[i].uz + drive*frandn(rng);
-  }
-}
-
-void
-apply_langevin( langevin_t * l ) {
-  if( l->interval<1 || (l->sp->g->step % l->interval) ) return;
-  EXEC_PIPELINES( langevin, l, 0 );
+  float nudt  = l->nu * (float)l->interval * l->sp->g->dt;
+  DECLARE_ALIGNED_ARRAY( langevin_pipeline_args_t, 128, args, 1 );
+  args->p     = l->sp->p;
+  COPY( args->rng, l->rp->rng, N_PIPELINE );
+  args->decay = exp( -nudt );
+  args->drive = sqrt(( -expm1(-2*nudt)*l->kT )/( l->sp->m*l->sp->g->cvac ));
+  args->np    = l->sp->np;
+  EXEC_PIPELINES( langevin, args, 0 );
   WAIT_PIPELINES();
 }
 

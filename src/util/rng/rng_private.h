@@ -25,6 +25,8 @@ typedef struct sfmt_128 {
 
 #elif defined(__SPU__) /* Use SPE accelerated version */
 
+#include <spu_mfcio.h>
+
 typedef struct sfmt_128 {
   vec_uint4 u;
 } sfmt_128_t;
@@ -265,7 +267,7 @@ struct rng {
         vec_xor(                 vec_perm( c.u, zero, sfmt_r2 ),           \
                                    vec_sl( d.u,       sfmt_l1 ) ) ) )
 
-#elif __defined(__SPU__)
+#elif defined(__SPU__)
 
   /* Note: assumes SFMT_{L,R}2 to be in 1,3 */
 # define DECL_SFMT                                                        \
@@ -275,11 +277,11 @@ struct rng {
   vec_uint4 sfmt_l1 = {  SFMT_L1,  SFMT_L1,  SFMT_L1,  SFMT_L1 };         \
   vec_int4  sfmt_r1 = { -SFMT_R1, -SFMT_R1, -SFMT_R1, -SFMT_R1 };         \
   vec_uchar16 sfmt_l2 = ( SFMT_L2==1 ?                                    \
-    {  1, 2, 3,16,   5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8 } :           \
-    {  3,16,16,16,   7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10 };            \
+    ((vec_uchar16){ 1, 2, 3,16,   5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8}) : \
+    ((vec_uchar16){ 3,16,16,16,   7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10}) ); \
   vec_uchar16 sfmt_r2 = ( SFMT_R2==1 ?                                    \
-    {  7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10,  16,12,13,14 } :           \
-    {  5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8,  16,16,16,12 }) )
+    ((vec_uchar16){ 7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10,  16,12,13,14}) : \
+    ((vec_uchar16){ 5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8,  16,16,16,12}) )
 
 # define SFMT( a, b, c, d )                                                \
   a_u = a.u;                                                               \
@@ -288,6 +290,7 @@ struct rng {
                       spu_and( spu_rlmask( b.u,       sfmt_r1 ), mask ) ), \
         spu_xor(              spu_shuffle( c.u, zero, sfmt_r2 ),           \
                                    spu_sl( d.u,       sfmt_l1 ) ) ) )
+
 #else
 
 # define DECL_SFMT                                                      \

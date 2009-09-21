@@ -5,7 +5,7 @@
 /* The SPU implementation gives you much of the functionality of the
    regular implementation but most of these are declared as inline. */
 
-#define IN_rng_private
+#define IN_rng
 #include "rng_private.h"
 
 STATIC_INLINE rng_t * ALIGNED(128)
@@ -19,7 +19,7 @@ get_rng( MEM_PTR( rng_t, 128 ) _r ) {
 }
 
 STATIC_INLINE void
-put_rng( rng_t * ALIGNED(128) r
+put_rng( rng_t * ALIGNED(128) r,
          MEM_PTR( rng_t, 128 ) _r ) {
   mfc_put( r, _r, sizeof(*r), 31, 0, 0 );
   mfc_write_tag_mask( 1<<31 );

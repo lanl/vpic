@@ -57,6 +57,11 @@ SECTIONS
       :sort_p_pipeline_spu.o (.text._SPUEAR_subsort_pipeline_spu)
       :sort_p_pipeline_spu.o (.text._SPUEAR_coarse_count_pipeline_spu)
     }
+    .ovly_collision {
+      :langevin_pipeline_spu.o (.text._SPUEAR_langevin_pipeline_spu)
+      /opt/cell/sysroot/usr/spu/lib/libm.a:lib_a-wf_exp.o (.text.expf)
+      /opt/cell/sysroot/usr/spu/lib/libm.a:lib_a-wf_log.o (.text.logf)
+    } 
   }
 }
 INSERT AFTER .text;

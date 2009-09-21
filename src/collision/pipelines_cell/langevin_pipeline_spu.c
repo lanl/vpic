@@ -21,9 +21,9 @@
 #define OFFSET_OF(t,f) ((size_t)(&(((t *)(NULL))->f)))
 
 void
-__SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
-                                int pipeline_rank,
-                                int n_pipeline ) {
+_SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
+                               int pipeline_rank,
+                               int n_pipeline ) {
   double n_target = (double)l->np / (double)n_pipeline;
   int i = (int)( 0.5 + n_target*(double) pipeline_rank    );
   int n = (int)( 0.5 + n_target*(double)(pipeline_rank+1) ) - i;
@@ -34,6 +34,7 @@ __SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
   const float decay = l->decay;
   const float drive = l->drive;
   float dx, dy, dz;
+  int b;
 
   DECLARE_ALIGNED_ARRAY( float, 16, u_in,  4*N_BUF );
   DECLARE_ALIGNED_ARRAY( float, 16, u_out, 4*N_BUF );
@@ -44,16 +45,17 @@ __SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
     if( LIKELY(b<n) ) mfc_get( u_in+4*b, pi_ux + b*sizeof(particle_t),
                                4*sizeof(float), IN_TAG(b), 0, 0 );
 
+  b = 0;
   for( ; n; n-- ) {
 
-    // Compute the random momentum for this step
+    // Compute the random term for this particle
 
-    dx = drive*frandn( rng );
-    dy = drive*frandn( rng );
-    dz = drive*frandn( rng );
+    dx = drive*frandn(rng);
+    dy = drive*frandn(rng);
+    dz = drive*frandn(rng);
 
-    // Finishing reading in the input particle data, update it and
-    // start writing the output particle data
+    // Finishing reading in this particle, update it, and start
+    // writing it back out
 
     mfc_write_tag_mask( (1<<IN_TAG(b)) | (1<<OUT_TAG(b)) );
     mfc_read_tag_status_all();

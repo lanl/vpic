@@ -13,6 +13,8 @@ begin_globals {
 
 begin_initialization {
 
+  sim_log( "Injecting" );
+
   double dt       = 1;
   double wpdt     = 0.2;
   double debye    = 1;
@@ -68,7 +70,7 @@ begin_initialization {
                                 normal(  rng(0), 0, vt ),
                                 normal(  rng(0), 0, vt ), w, 0, 0 );
 
-  define_collision_op( langevin( kT0, 1./dt, sp, entropy, 0*(int)interval ) );
+  define_collision_op( langevin( kT0, 1./dt, sp, entropy, 1*(int)interval ) );
 
   define_collision_op( large_angle_coulomb_fluid( "lac_fluid",
                                                   n0, 0,0,0, kT0, q, m,
@@ -76,7 +78,7 @@ begin_initialization {
                                                   entropy, 0*(int)interval ) );
 
   define_collision_op( large_angle_coulomb( "lac", sp, sp, bmax, entropy,
-                                             sample, 1*(int)interval ) );
+                                             sample, 0*(int)interval ) );
 
   // FIXME: Both seem somewhat unstable ... probably a bug in the momentum
   // transfer computation
@@ -86,6 +88,8 @@ begin_initialization {
                                           entropy, 0*(int)interval ) );
   define_collision_op( hard_sphere( "hs", sp, 0.5*bmax, sp, 0.5*bmax, entropy,
                                     sample, 0*(int)interval ) );
+
+  sim_log( "Colliding" );
 
   // Hack input VPIC internals
 

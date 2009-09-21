@@ -23,6 +23,12 @@ typedef struct sfmt_128 {
   __vector unsigned int u;
 } sfmt_128_t;
 
+#elif defined(__SPU__) /* Use SPE accelerated version */
+
+typedef struct sfmt_128 {
+  vec_uint4 u;
+} sfmt_128_t;
+
 #else /* Use portable version */
 
 typedef struct sfmt_128 {
@@ -259,6 +265,29 @@ struct rng {
         vec_xor(                 vec_perm( c.u, zero, sfmt_r2 ),           \
                                    vec_sl( d.u,       sfmt_l1 ) ) ) )
 
+#elif __defined(__SPU__)
+
+  /* Note: assumes SFMT_{L,R}2 to be in 1,3 */
+# define DECL_SFMT                                                        \
+  vec_uint4 a_u;                                                          \
+  vec_uint4 zero    = { 0, 0, 0, 0 };                                     \
+  vec_uint4 mask    = { SFMT_MASK0, SFMT_MASK1, SFMT_MASK2, SFMT_MASK3 }; \
+  vec_uint4 sfmt_l1 = {  SFMT_L1,  SFMT_L1,  SFMT_L1,  SFMT_L1 };         \
+  vec_int4  sfmt_r1 = { -SFMT_R1, -SFMT_R1, -SFMT_R1, -SFMT_R1 };         \
+  vec_uchar16 sfmt_l2 = ( SFMT_L2==1 ?                                    \
+    {  1, 2, 3,16,   5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8 } :           \
+    {  3,16,16,16,   7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10 };            \
+  vec_uchar16 sfmt_r2 = ( SFMT_R2==1 ?                                    \
+    {  7, 0, 1, 2,  11, 4, 5, 6,  15, 8, 9,10,  16,12,13,14 } :           \
+    {  5, 6, 7, 0,   9,10,11, 4,  13,14,15, 8,  16,16,16,12 }) )
+
+# define SFMT( a, b, c, d )                                                \
+  a_u = a.u;                                                               \
+  a.u = spu_xor(                           a_u,                            \
+        spu_xor( spu_xor(     spu_shuffle( a_u, zero, sfmt_l2 ),           \
+                      spu_and( spu_rlmask( b.u,       sfmt_r1 ), mask ) ), \
+        spu_xor(              spu_shuffle( c.u, zero, sfmt_r2 ),           \
+                                   spu_sl( d.u,       sfmt_l1 ) ) ) )
 #else
 
 # define DECL_SFMT                                                      \

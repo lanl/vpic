@@ -30,7 +30,7 @@ _SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
 
   MEM_PTR( particle_t, 128 ) pi_ux =
     l->p + i*sizeof(particle_t) + OFFSET_OF(particle_t,ux);
-  rng_t * RESTRICT rng = get_rng( l->rng[pipeline_rank] );
+  rng_t * RESTRICT rng = mfc_get_rng( l->rng[pipeline_rank] );
   const float decay = l->decay;
   const float drive = l->drive;
   float dx, dy, dz;
@@ -77,6 +77,6 @@ _SPUEAR_langevin_pipeline_spu( langevin_pipeline_args_t * RESTRICT l,
     pi_ux += sizeof(particle_t); b++; if( b==N_BUF ) b = 0;
   }
 
-  put_rng( rng, l->rng[pipeline_rank] );
+  mfc_put_rng( rng, l->rng[pipeline_rank] );
 }
 

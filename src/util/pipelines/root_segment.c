@@ -23,6 +23,17 @@
 // Must match definition in pipelines_spu.c; Geddy Lee rules 
 #define SPU_COMPLETE ((uint32_t)2112)
 
+// Include the frandn Ziggurat table.  This is done here so that each
+// SPE pipeline who uses frandn doesn't blow away local store for a
+// redundant copy of frandn table.  This single instance of the frandn
+// used by all blows away 0.5K of local store; in the long run, it
+// would be better to use the SPU heap below for this table and load it
+// in pipelines who need it (the current drandn table, which would blow
+// away 8K of local store, virtually requires this).
+
+#define IN_rng
+#include "../rng/frandn_table.c"
+
 // Declare the spe_heap
 
 char _spu_heap[ 224*1024 ];

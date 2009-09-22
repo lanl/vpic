@@ -9,7 +9,7 @@
 #include "rng_private.h"
 
 STATIC_INLINE rng_t * ALIGNED(128)
-get_rng( MEM_PTR( rng_t, 128 ) _r ) {
+mfc_get_rng( MEM_PTR( rng_t, 128 ) _r ) {
   rng_t * r;
   SPU_MALLOC( r, 1, 128 );
   mfc_get( r, _r, sizeof(*r), 31, 0, 0 );
@@ -19,8 +19,8 @@ get_rng( MEM_PTR( rng_t, 128 ) _r ) {
 }
 
 STATIC_INLINE void
-put_rng( rng_t * ALIGNED(128) r,
-         MEM_PTR( rng_t, 128 ) _r ) {
+mfc_put_rng( rng_t * ALIGNED(128) r,
+             MEM_PTR( rng_t, 128 ) _r ) {
   mfc_put( r, _r, sizeof(*r), 31, 0, 0 );
   mfc_write_tag_mask( 1<<31 );
   mfc_read_tag_status_all();
@@ -127,18 +127,22 @@ _( double, d, _c,  uint64_t, u64 )
 /* Normal floating point generators */
 
 #ifdef NEED_frandn
+#include "frandn_table.h"
 STATIC_INLINE float
 frandn( rng_t * RESTRICT r ) {
   uint32_t a, i, j, s;
   float x, y;
 
+  static const float scale = 1.f/4.294967296e+09f;
   static const float sgn[2] = { 1.f, -1.f };
-
-# include "frandn_table.h"
 
   for(;;) {
 
     // Extract components of a 32-bit rand 
+
+#   if FRANDN_N!=64
+#   error "frandn_table.h does not match frandn()"
+#   endif
 
     RNG_NEXT( a, uint32_t, r, u32, 0 );
     s = ( a &   (uint32_t)0x01  );      //        1-bit uniform   rand 
@@ -150,18 +154,19 @@ frandn( rng_t * RESTRICT r ) {
     // FIXME: COULD PRECOMPUTE SCALE * ZIG_X[i+1] AND/OR
     // EVEN DO THE COMPARE DIRECTLY ON j!
 
-    x = j*(scale*zig_x[i+1]);
-    if( LIKELY( x<zig_x[i] ) ) break; /* Vast majority of the time */
+    x = j*(scale*frandn_zig_x[i+1]);
+    if( LIKELY( x<frandn_zig_x[i] ) ) break; // Vast majority of the time
  
     // Construct a y for rejection testing 
  
     RNG_NEXT( a, uint32_t, r, u32, 0 );
     y = conv_frand_c(a);
-    if( LIKELY( i!=N-1 ) ) y = zig_y[i]+(zig_y[i+1]-zig_y[i])*y;
-    else { /* In tail */
+    if( LIKELY( i!=FRANDN_N-1 ) )
+      y = frandn_zig_y[i]+(frandn_zig_y[i+1]-frandn_zig_y[i])*y;
+    else { // In tail
       RNG_NEXT( a, uint32_t, r, u32, 0 );
-      x  = R - (1.f/R)*logf( conv_frand_c1(a) );
-      y *= expf( -R*( x - 0.5f*R ) );
+      x  = FRANDN_R - (1.f/FRANDN_R)*logf( conv_frand_c1(a) );
+      y *= expf( -FRANDN_R*( x - 0.5f*FRANDN_R ) );
     }
 
     if( y < expf(-0.5f*x*x) ) break;
@@ -172,18 +177,22 @@ frandn( rng_t * RESTRICT r ) {
 #endif
 
 #ifdef NEED_drandn
+#include "drandn_table.h"
 STATIC_INLINE double
 drandn( rng_t * RESTRICT r ) {
   uint64_t a, i, j, s;
   double x, y;
 
+  static const double scale = 1./1.8446744073709551616e+19;
   static const double sgn[2] = { 1., -1. };
 
-# include "drandn_table.h"
-  
   for(;;) {
     
     // Extract components of a 64-bit rand 
+
+#   if DRANDN_N!=256
+#   error "drandn_table.h does not math drandn()"
+#   endif
     
     RNG_NEXT( a, uint64_t, r, u64, 0 );
     s =   a &   (uint64_t)0x001;        //         1-bit uniform   rand 
@@ -195,18 +204,19 @@ drandn( rng_t * RESTRICT r ) {
     // FIXME: COULD PRECOMPUTE SCALE * ZIG_X[i+1] AND/OR
     // EVEN DO THE COMPARE DIRECTLY ON j!
 
-    x = j*(scale*zig_x[i+1]);
-    if( LIKELY(x<zig_x[i]) ) break; /* Vast majority of the time */
+    x = j*(scale*drandn_zig_x[i+1]);
+    if( LIKELY( x<drandn_zig_x[i] ) ) break; // Vast majority of the time
  
     // Construct a y for rejection testing 
  
     RNG_NEXT( a, uint64_t, r, u64, 0 );
     y = conv_drand_c(a);
-    if( LIKELY(i!=N-1) ) y = zig_y[i]+(zig_y[i+1]-zig_y[i])*y;
-    else { /* In tail */
+    if( LIKELY( i!=DRANDN_N-1 ) )
+      y = drandn_zig_y[i]+(drandn_zig_y[i+1]-drandn_zig_y[i])*y;
+    else { // In tail 
       RNG_NEXT( a, uint64_t, r, u64, 0 );
-      x  = R - (1./R)*log( conv_drand_c1(a) );
-      y *= exp( -R*( x - 0.5*R ) );
+      x  = FRANDN_R - (1./FRANDN_R)*log( conv_drand_c1(a) );
+      y *= exp( -FRANDN_R*( x - 0.5*FRANDN_R ) );
     }
 
     if( y < exp(-0.5*x*x) ) break;

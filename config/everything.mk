@@ -77,6 +77,7 @@ cleanall:
 
 # Only do all the fancy stuff if we aren't doing a clean #####################
 
+ifneq ($(MAKECMDGOALS),cleanall)
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),help)
 
@@ -204,5 +205,6 @@ $(BUILDDIR)bin/build:
 	ln -s $(BUILDDIR)bin/build build.$(EXTENSION)
 #$(BUILDDIR)include/src/main.cxx $(BUILDDIR)include/src/deck_wrapper.cxx
 
+endif # Not cleanall
 endif # Not clean
 endif # Not help

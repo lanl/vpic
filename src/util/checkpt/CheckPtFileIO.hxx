@@ -1,8 +1,8 @@
 #ifndef CheckPtFileIO_hxx
 #define CheckPtFileIO_hxx
 
-#include <checkpt_private.h>
-#include <FileIO.hxx>
+#include "checkpt_private.h"
+#include "../io/FileIO.hxx"
 
 struct CheckPtFileIO {
 

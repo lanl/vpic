@@ -102,14 +102,15 @@ function configure_autoconf {
 } # configure_autoconf
 
 #-------------------------------------------------------------------------------
-# run imake style build
+# run gmake style build
 #-------------------------------------------------------------------------------
-function configure_imake {
+function configure_gmake {
 	rm Makefile
-	imake -DMACHINE=machine/$machine_file
-	gmake clean
-	gmake -j4 all
-} # configure_imake
+	echo include config/${machine_file}.mk > Makefile
+	echo include config/everything.mk >> Makefile
+	gmake -r clean
+	gmake -j4 -r all
+} # configure_gmake
 
 ################################################################################
 # begin script execution
@@ -125,5 +126,5 @@ ac=$? # this is the return value from check_autoconf
 if [[ $ac == 1 ]] ; then
 	configure_autoconf
 else
-	configure_imake
+	configure_gmake
 fi

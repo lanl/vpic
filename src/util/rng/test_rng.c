@@ -1,3 +1,5 @@
+#include "../util.h"
+
 /* Sequence is from the 11213 generator with a seed of 1234 */
 
 static const int N = 1000;
@@ -203,29 +205,20 @@ static const unsigned int seq[] = {
   2072997009, 1332330347,  179681555, 2315290438, 2429393974, 
    509881964, 3807607878, 3055319970,  671840881, 3477325874 };
 
-begin_globals {
-};
+/* FIXME: IMPROVE COVERAGE */
 
-begin_initialization {
+int
+main( int argc,
+      char **argv ) {
+  rng_t * rng;
   int i;
-  seed_rng( rng(0), 1234 );
-  for( i=0; i<N; i++ ) if( uirand( rng(0) )!=seq[i] ) break;
-  if( i!=N ) { sim_log( "FAIL" ); abort(1); }
-  /**/         sim_log( "pass" ); exit(0);
-}
-
-begin_diagnostics {
-}
-
-begin_particle_injection {
-}
-
-begin_current_injection {
-}
-
-begin_field_injection {
-}
-
-begin_particle_collisions {
+  boot_services( &argc, &argv );
+  rng = new_rng( 1234 );
+  for( i=0; i<N; i++ ) if( uirand( rng )!=seq[i] ) break;
+  if( i!=N ) ERROR(( "FAIL" ));
+  MESSAGE(( "pass" ));
+  delete_rng( rng );
+  halt_services();
+  return 0;
 }
 

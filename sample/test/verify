@@ -42,8 +42,6 @@ run 1 inbndj
 run 1 interpe
 run 1 outbndj
 run 8 pcomm
-run 1 rngseq
-run 1 v4
 
 echo "=================================================================="
 echo "All tests passed"

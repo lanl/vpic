@@ -286,7 +286,7 @@ _( float, f, _c,  uint32_t, u32 ) _( double, d, _c,  uint64_t, u64 )
    53-bit trapezoid rand, 8-bit index, 1 bit sign and N = 256 and
    scale = 1/2^64. */
 
-#include "frandn_table.c"
+#include "frandn_table.h"
 
 float
 frandn( rng_t * RESTRICT r ) {
@@ -345,7 +345,7 @@ frandn_fill( rng_t * RESTRICT r,
   return x;
 }
 
-#include "drandn_table.c"
+#include "drandn_table.h"
 
 double
 drandn( rng_t * RESTRICT r ) {

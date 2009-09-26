@@ -65,11 +65,11 @@ template<class ReadWritePolicy> struct FileIO_T
 #if defined USE_MPRELAY
 
 #if defined HOST_BUILD
-#include <StandardIOPolicy.hxx>
+#include "StandardIOPolicy.hxx"
 
 typedef FileIO_T<StandardIOPolicy> FileIO;
 #else
-#include <P2PIOPolicy.hxx>
+#include "P2PIOPolicy.hxx"
 
 //typedef FileIO_T<P2PIOPolicy<true> > FileIOSwapped;
 //typedef FileIO_T<P2PIOPolicy<true> > FileIO;
@@ -78,7 +78,7 @@ typedef FileIO_T<P2PIOPolicy<false> > FileIOUnswapped;
 #endif // BUILD
 
 #else
-#include <StandardIOPolicy.hxx>
+#include "StandardIOPolicy.hxx"
 typedef FileIO_T<StandardIOPolicy> FileIO;
 typedef FileIO_T<StandardIOPolicy> FileIOUnswapped;
 #endif // MP Implementation

@@ -643,8 +643,6 @@ begin_initialization {
 #define should_dump(x) \
 	(global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
 
-#include <FileIO.hxx>
-
 begin_diagnostics {
 
 	//print_available_ram();

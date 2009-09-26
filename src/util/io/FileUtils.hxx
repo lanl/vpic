@@ -22,19 +22,19 @@ template<class Policy> class FileUtils_T
 #if defined USE_MPRELAY
 
 #if defined HOST_BUILD
-#include <StandardUtilsPolicy.hxx>
+#include "StandardUtilsPolicy.hxx"
 
 typedef FileUtils_T<StandardUtilsPolicy> FileUtils;
 
 #else
-#include <P2PUtilsPolicy.hxx>
+#include "P2PUtilsPolicy.hxx"
 
 typedef FileUtils_T<P2PUtilsPolicy> FileUtils;
 
 #endif // BUILD
 
 #else
-#include <StandardUtilsPolicy.hxx>
+#include "StandardUtilsPolicy.hxx"
 
 typedef FileUtils_T<StandardUtilsPolicy> FileUtils;
 

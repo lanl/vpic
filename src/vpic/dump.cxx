@@ -11,9 +11,7 @@
  
 #include "vpic.hxx"
 #include "dumpmacros.h"
-#include <FileIO.hxx>
-#include <FileUtils.hxx>
-#include <BitField.hxx>
+#include "../util/io/FileUtils.hxx"
 #include <cassert>
  
 /* -1 means no ranks talk */

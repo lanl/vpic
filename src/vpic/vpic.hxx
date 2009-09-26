@@ -17,14 +17,11 @@
 #include "../collision/collision.h"
 #include "../emitter/emitter.h"
 // FIXME: INCLUDES ONCE ALL IS CLEANED UP
-#include <unistd.h> // For sleep()
-#include <FileIO.hxx>
-#include <BitField.hxx>
-#include <CheckSum.hxx>
-#include <SystemRAM.hxx>
+#include "../util/io/FileIO.hxx"
+#include "../util/BitField.hxx"
+#include "../util/CheckSum.hxx"
+#include "../util/SystemRAM.hxx"
 #include <vector>
- 
-#include <stdio.h>
  
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -633,7 +630,7 @@ private:
   // Miscellaneous helpers
  
   inline void abort( double code ) {
-    sleep(1); mp_abort((((int)code)<<17)+1);
+    nanodelay(2000000000); mp_abort((((int)code)<<17)+1);
   }
  
   // Truncate "a" to the nearest integer multiple of "b"

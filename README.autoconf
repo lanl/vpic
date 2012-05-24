@@ -2,8 +2,6 @@
 # Autoconf build system README
 ################################################################################
 
-# TEST
-
 # Bootstrap
 To build the buildsystem run (from the top-level directory):
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "vpic.hxx"
+#include <vpic.hxx>
 
 # define RANK_TO_INDEX(rank,ix) BEGIN_PRIMITIVE {        \
 	int _ix, _iy, _iz;                                    \

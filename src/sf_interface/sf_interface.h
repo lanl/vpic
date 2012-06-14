@@ -13,7 +13,7 @@
 // FIXME: EXTERNAL DIAGNOSTICS THAT READ THESE WILL NEED TO BE UPDATED
 // TO REFLECT SPU USAGE ALIGNMENT CHANGES.
   
-#include "../field_advance/field_advance.h"
+#include <field_advance.h>
 // FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
 /*****************************************************************************/

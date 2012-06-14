@@ -1,6 +1,6 @@
 #define IN_spa
 #define HAS_SPU_PIPELINE
-#include "spa_private.h"
+#include <spa_private.h>
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
 

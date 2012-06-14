@@ -1,5 +1,5 @@
 #define IN_boundary
-#include "boundary_private.h"
+#include <boundary_private.h>
 
 /* Private interface *********************************************************/
 

@@ -12,7 +12,7 @@
 #ifndef FileIOData_hxx
 #define FileIOData_hxx
 
-#include<cstddef>
+#include <cstddef>
 
 enum FileIOMode {
 	io_closed,

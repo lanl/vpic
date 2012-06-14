@@ -15,8 +15,8 @@
 #include <iostream>
 #include <assert.h>
 #include <dacs.h>
-#include "DaCSUtils.h"
-#include "MPData.hxx"
+#include <DaCSUtils.h>
+#include <MPData.hxx>
 
 /*!
 	\struct CMPolicyDaCS CMPolicyDaCS.h

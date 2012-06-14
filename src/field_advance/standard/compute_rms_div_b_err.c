@@ -1,5 +1,5 @@
 #define IN_sfa
-#include "sfa_private.h"
+#include <sfa_private.h>
 
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 

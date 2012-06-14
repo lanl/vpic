@@ -5,7 +5,7 @@
 #error "Do not include emitter_private.h; use emitter.h"
 #endif
 
-#include "emitter.h"
+#include <emitter.h>
 
 typedef void
 (*emit_func_t)( /**/  void * RESTRICT              params,

@@ -2,7 +2,7 @@
 #define CheckPtFileIO_hxx
 
 #include "checkpt_private.h"
-#include "../io/FileIO.hxx"
+#include "FileIO.hxx"
 
 struct CheckPtFileIO {
 

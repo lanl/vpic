@@ -1,5 +1,5 @@
-#include "rng.h"
-#include "../checkpt/checkpt.h"
+#include <rng.h>
+#include <checkpt.h>
 
 /* Private API ***************************************************************/
 

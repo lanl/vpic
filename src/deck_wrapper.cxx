@@ -9,7 +9,7 @@
  */
 
 #include <iostream> // For std::cerr and friends
-#include "vpic/vpic.hxx"
+#include <vpic.hxx>
 
 //-----------------------------------------------------------------------------
 

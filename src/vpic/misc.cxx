@@ -8,7 +8,7 @@
  *
  */
 
-#include "vpic.hxx"
+#include <vpic.hxx>
 
 // FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
 

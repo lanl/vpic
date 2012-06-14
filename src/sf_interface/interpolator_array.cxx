@@ -1,7 +1,7 @@
 #define IN_sf_interface
 #define HAS_V4_PIPELINE
 #define HAS_SPU_PIPELINE
-#include "sf_interface_private.h"
+#include <sf_interface_private.h>
 
 void
 checkpt_interpolator_array( const interpolator_array_t * ia ) {

@@ -1,6 +1,6 @@
 // Note: This is virtually identical to vacuum_compute_div_e_err
 #define IN_sfa
-#include "sfa_private.h"
+#include <sfa_private.h>
 
 typedef struct pipeline_args {
   /**/  field_t      * ALIGNED(128) f;

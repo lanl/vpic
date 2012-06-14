@@ -1,5 +1,5 @@
 #define IN_boundary
-#include "boundary_private.h"
+#include <boundary_private.h>
 
 // Special absorbing boundary condition that tallies the number of
 // particles absorbed of each species.

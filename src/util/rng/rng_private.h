@@ -5,7 +5,7 @@
 #error "Do not include rng_private.h; use rng.h"
 #endif
 
-#include "rng.h"
+#include <rng.h>
 
 #if defined(__SSE2__) /* Use SSE-2 accelerated version */
 

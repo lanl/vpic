@@ -1,7 +1,7 @@
 #ifndef _boundary_h_
 #define _boundary_h_
 
-#include "../species_advance/species_advance.h"
+#include "species_advance.h"
 
 struct particle_bc;
 typedef struct particle_bc particle_bc_t;

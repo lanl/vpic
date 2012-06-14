@@ -1,9 +1,9 @@
 #ifndef _RelayPolicy_hxx_
 #define _RelayPolicy_hxx_
 
-#include "../relay/ConnectionManager.hxx"
-#include "../relay/p2p/P2PConnection.hxx"
-#include "../checkpt/checkpt.h"
+#include <ConnectionManager.hxx>
+#include <P2PConnection.hxx>
+#include <checkpt.h>
 
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */

@@ -1,7 +1,7 @@
 #ifndef _checkpt_h_
 #define _checkpt_h_
 
-#include "../util_base.h"
+#include "util_base.h"
 
 /* A checkpt_func_t serializes an object to a checkpt.  It takes a
    pointer to the object to serialize.  Objects are checkpointed in

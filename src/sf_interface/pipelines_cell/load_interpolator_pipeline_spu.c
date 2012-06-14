@@ -1,6 +1,6 @@
 #define IN_sf_interface
 #define HAS_SPU_PIPELINE
-#include "../sf_interface_private.h"
+#include <sf_interface_private.h>
 
 #include <spu_mfcio.h>
 

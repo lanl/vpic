@@ -8,7 +8,7 @@
  *
  */
  
-#include "vpic.hxx"
+#include <vpic.hxx>
  
 /* Note that, when a vpic_simulation is created (and thus registered
    with the checkpt service), it is created empty; none of the simulation

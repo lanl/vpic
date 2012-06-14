@@ -6,7 +6,7 @@
    regular implementation but most of these are declared as inline. */
 
 #define IN_rng
-#include "rng_private.h"
+#include <rng_private.h>
 
 STATIC_INLINE rng_t * ALIGNED(128)
 mfc_get_rng( MEM_PTR( rng_t, 128 ) _r ) {

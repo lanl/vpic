@@ -9,7 +9,7 @@
  */
 
 #define IN_spa
-#include "spa_private.h"
+#include <spa_private.h>
 
 // accumulate_rho_p adds the charge density associated with the
 // supplied particle array to the rhof of the fields.  Trilinear

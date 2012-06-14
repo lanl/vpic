@@ -7,7 +7,7 @@
 */
 
 #include <spu_mfcio.h>
-#include "../pipelines/pipelines.h"
+#include <pipelines.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main SPU program

@@ -15,7 +15,7 @@
 #include <mpi.h>
 #include <assert.h>
 #include <iostream>
-#include "MPData.hxx"
+#include <MPData.hxx>
 
 /*!
 	\struct CMPolicyMultipleContextMPI_T CMPolicyMultipleContextMPI_T.h

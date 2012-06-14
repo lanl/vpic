@@ -1,4 +1,4 @@
-#include "profile.h"
+#include <profile.h>
 #include <sys/time.h>
 
 profile_internal_use_only_timer_t profile_internal_use_only[] = {

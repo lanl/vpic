@@ -9,7 +9,7 @@
  */
 
 #define IN_sfa
-#include "sfa_private.h"
+#include <sfa_private.h>
 
 // Indexing macros
 #define field(x,y,z) field[ VOXEL(x,y,z, nx,ny,nz) ]

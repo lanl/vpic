@@ -1,5 +1,5 @@
-#include "../rng.h"
-#include "../../util.h"
+#include <rng.h>
+#include <util.h>
 #include <stdio.h>
 
 #define N 10000000

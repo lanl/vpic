@@ -1,5 +1,5 @@
 #define IN_rng
-#include "frandn_table.h"
+#include <frandn_table.h>
 
 const float frandn_zig_x[65] = {
   0.0000000000000000000000000000000000000000e+00f,   // 0

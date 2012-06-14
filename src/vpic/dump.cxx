@@ -9,9 +9,9 @@
  * snell - revised to add strided dumps, time history dumps, others  20080404
  */
  
-#include "vpic.hxx"
-#include "dumpmacros.h"
-#include "../util/io/FileUtils.hxx"
+#include <vpic.hxx>
+#include <dumpmacros.h>
+#include <FileUtils.hxx>
 #include <cassert>
  
 /* -1 means no ranks talk */

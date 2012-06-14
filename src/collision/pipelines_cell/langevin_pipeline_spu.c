@@ -1,9 +1,9 @@
 #define IN_collision
 #define HAS_SPU_PIPELINE
-#include "../collision_private.h"
+#include <collision_private.h>
 
 #define NEED_frandn
-#include "../../util/rng/rng_spe.h"
+#include <rng_spe.h>
 
 #include <spu_mfcio.h>
 

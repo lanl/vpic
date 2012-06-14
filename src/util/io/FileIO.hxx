@@ -13,7 +13,7 @@
 #define FileIO_hxx
 
 #include <stdarg.h>
-#include "FileIOData.hxx"
+#include <FileIOData.hxx>
 
 /*!
 	\class FileIO FileIO.h

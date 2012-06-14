@@ -9,8 +9,8 @@
 // FIXME: EXTERNAL DIAGNOSTICS THAT READ THESE WILL NEED TO BE UPDATED
 // TO REFLECT SPU USAGE ALIGNMENT CHANGES.
 
-#include "../grid/grid.h"
-#include "../material/material.h"
+#include <grid.h>
+#include <material.h>
 
 // FIXME: UPDATE THIS COMMENT BLOCK AND MOVE IT INTO APPROPRIATE LOCATIONS
 //

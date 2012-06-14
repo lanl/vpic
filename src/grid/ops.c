@@ -8,7 +8,7 @@
  *
  */
 
-#include "grid.h"
+#include <grid.h>
 
 #define LOCAL_CELL_ID(x,y,z)  VOXEL(x,y,z, lnx,lny,lnz)
 #define REMOTE_CELL_ID(x,y,z) VOXEL(x,y,z, rnx,rny,rnz)

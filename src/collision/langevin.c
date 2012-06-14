@@ -1,6 +1,6 @@
 #define IN_collision
 #define HAS_SPU_PIPELINE
-#include "collision_private.h"
+#include <collision_private.h>
 
 /* Private interface *********************************************************/
 

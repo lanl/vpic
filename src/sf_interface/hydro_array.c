@@ -8,7 +8,7 @@
  *
  */
 
-#include "sf_interface.h"
+#include <sf_interface.h>
 
 /* Though the checkpt/restore functions are not part of the public
    API, they must not be declared as static. */

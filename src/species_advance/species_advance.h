@@ -12,7 +12,7 @@
 #ifndef _species_advance_h_
 #define _species_advance_h_
 
-#include "../sf_interface/sf_interface.h"
+#include <sf_interface.h>
 
 typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 

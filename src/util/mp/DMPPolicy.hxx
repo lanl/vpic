@@ -2,7 +2,7 @@
 #define _DMPPolicy_hxx_
 
 #include <mpi.h>
-#include "../checkpt/checkpt.h"
+#include <checkpt.h>
 
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */

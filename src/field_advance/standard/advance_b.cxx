@@ -1,6 +1,6 @@
 #define IN_sfa
 #define HAS_V4_PIPELINE
-#include "sfa_private.h"
+#include <sfa_private.h>
 
 typedef struct pipeline_args {
   field_t      * ALIGNED(128) f;

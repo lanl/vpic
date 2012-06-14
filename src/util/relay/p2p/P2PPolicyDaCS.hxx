@@ -15,11 +15,11 @@
 #include <iostream>
 #include <assert.h>
 #include <dacs.h>
-#include "ConnectionManager.hxx"
-#include "MPData.hxx"
-#include "P2PTag.hxx"
-#include "Type2DaCSSwapType.hxx"
-#include "DaCSUtils.h"
+#include <ConnectionManager.hxx>
+#include <MPData.hxx>
+#include <P2PTag.hxx>
+#include <Type2DaCSSwapType.hxx>
+#include <DaCSUtils.h>
 
 /*!
 	\struct P2PPolicyDaCS P2PPolicyDaCS.h

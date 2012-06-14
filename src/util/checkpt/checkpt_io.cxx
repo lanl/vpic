@@ -1,6 +1,6 @@
 #define IN_checkpt
-#include "checkpt_private.h"
-#include "CheckPtFileIO.hxx"
+#include <checkpt_private.h>
+#include <CheckPtFileIO.hxx>
 
 checkpt_t *
 checkpt_open_rdonly( const char * name ) {

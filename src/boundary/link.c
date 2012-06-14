@@ -1,4 +1,4 @@
-#include "boundary.h"
+#include <boundary.h>
 #include <stdio.h> // for debugging output
 
 // Special absorbing boundary condition that generates a "link" output

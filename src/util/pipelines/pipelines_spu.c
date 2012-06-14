@@ -40,7 +40,7 @@
 // (?) Signal blocking in spu_control_threads
 // (?) Timeouts in spu_halt, spu_boot (spin wait)
 
-#include "pipelines.h"
+#include <pipelines.h>
 #include <pthread.h>
 #include <libspe2.h>
 

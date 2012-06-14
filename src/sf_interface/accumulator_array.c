@@ -8,7 +8,7 @@
  *
  */
 
-#include "sf_interface.h"
+#include <sf_interface.h>
 
 static int
 aa_n_pipeline(void) {

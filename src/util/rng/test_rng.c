@@ -1,4 +1,4 @@
-#include "../util.h"
+#include <util.h>
 
 /* Sequence is from the 11213 generator with a seed of 1234 */
 

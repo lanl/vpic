@@ -8,7 +8,7 @@
 #endif
 
 #define IN_field_advance
-#include "../field_advance_private.h"
+#include <field_advance_private.h>
 
 typedef struct material_coefficient {
   float decayx, drivex;         // Decay of ex and drive of (curl H)x and Jx

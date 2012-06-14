@@ -17,11 +17,11 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include "P2PConnection.hxx"
-#include "DMPConnection.hxx"
-#include "MPData.hxx"
-#include "FileIO.hxx"
-#include "FileUtils.hxx"
+#include <P2PConnection.hxx>
+#include <DMPConnection.hxx>
+#include <MPData.hxx>
+#include <FileIO.hxx>
+#include <FileUtils.hxx>
 
 /*!
 	\class MPRelay MPRelay.h

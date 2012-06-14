@@ -1,4 +1,4 @@
-#include "vpic.hxx"
+#include <vpic.hxx>
 #define FAK field_array->kernel
 
 void

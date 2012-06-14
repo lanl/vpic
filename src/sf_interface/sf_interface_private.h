@@ -5,7 +5,7 @@
 #error "Do not include sf_interface_private.h; include sf_interface.h"
 #endif
 
-#include "sf_interface.h"
+#include <sf_interface.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // load_interpolator_pipeline interface

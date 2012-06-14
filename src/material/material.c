@@ -8,7 +8,7 @@
  *
  */
 
-#include "material.h"
+#include <material.h>
 
 /* Private interface *********************************************************/
 

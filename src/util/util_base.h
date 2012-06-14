@@ -253,7 +253,7 @@ typedef struct collective collective_t;
 //
 // Note: Error messages are abortive but MESSAGE and WARNING are not
 
-#define _LOG_HDR __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)")"
+#define _LOG_HDR __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ")"
 
 #define CHECKPOINT() log_printf( _LOG_HDR"[%i]: Checkpoint\n", world_rank )
 
@@ -261,19 +261,19 @@ typedef struct collective collective_t;
 // ATOMIC WHEN MULTIPLE RANKS USE SIMULTANEOUSLY
 
 #define MESSAGE(args) do {                      \
-    log_printf( _LOG_HDR"[%i]: ", world_rank ); \
+    log_printf( _LOG_HDR "[%i]: ", world_rank ); \
     log_printf args;                            \
     log_printf( "\n" );                         \
   } while(0)
 
 #define WARNING(args) do {                                      \
-    log_printf( "Warning at "_LOG_HDR"[%i]:\n\t", world_rank ); \
+    log_printf( "Warning at " _LOG_HDR "[%i]:\n\t", world_rank ); \
     log_printf args;                                            \
     log_printf( "\n" );                                         \
   } while(0)
 
 #define ERROR(args) do {                                      \
-    log_printf( "Error at "_LOG_HDR"[%i]:\n\t", world_rank ); \
+    log_printf( "Error at " _LOG_HDR "[%i]:\n\t", world_rank ); \
     log_printf args;                                          \
     log_printf( "\n" );                                       \
     nanodelay( 1000000000 ); /* Let the message out */        \
@@ -352,9 +352,9 @@ strip_cmdline_string( int * pargc,
 // of bytes to allocate).  n==0 is a request for no elements and x is
 // set NULL as a result.
 
-#define MALLOC(x,n)                                                 \
-  util_malloc( "MALLOC( "#x", "#n" (%lu bytes) ) at "               \
-               __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)") failed", \
+#define MALLOC(x,n)                                                    \
+  util_malloc( "MALLOC( "#x", "#n" (%lu bytes) ) at "                  \
+               __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ") failed", \
                &(x), (n)*sizeof(*(x)) ) 
 
 void
@@ -376,11 +376,11 @@ util_free( void * mem_ref );
 // be a power of two.  Alignments smaller than 16 will be rounded up
 // to 16.
 
-#define MALLOC_ALIGNED(x,n,a)                                               \
-  util_malloc_aligned( "MALLOC_ALIGNED( "#x", "                             \
-                                         #n" (%lu bytes), "                 \
-                                         #a" (%lu bytes) ) at "             \
-                       __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)") failed", \
+#define MALLOC_ALIGNED(x,n,a)                                                  \
+  util_malloc_aligned( "MALLOC_ALIGNED( "#x", "                                \
+                                         #n" (%lu bytes), "                    \
+                                         #a" (%lu bytes) ) at "                \
+                       __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ") failed", \
                        &(x), (n)*sizeof(*(x)), (a) ) 
 
 

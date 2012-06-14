@@ -320,7 +320,7 @@ hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
   ury = pi->uy - pj->uy;
   urz = pi->uz - pj->uz;
 
-  COMPUTE_MOMENTUM_TRANSFER(urx,urz,urz,ax,ay,az,rng);
+  COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   if( type & 1 ) {
     w = hs->twomu_mi; 

@@ -10,16 +10,14 @@
 
 #include "vpic.hxx"
 
-# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                   \
-	int _ix, _iy, _iz;                                                    \
-	_ix  = (rank);                        /* ix = ix+gpx*( iy+gpy*iz ) */ \
-	_iy  = _ix/int(px);   /* iy = iy+gpy*iz */                            \
-	_ix -= _iy*int(px);   /* ix = ix */                                   \
-	_iz  = _iy/int(py);   /* iz = iz */                                   \
-	_iy -= _iz*int(py);   /* iy = iy */                                   \
-	(ix) = _ix;                                                           \
-	(iy) = _iy;                                                           \
-	(iz) = _iz;                                                           \
+# define RANK_TO_INDEX(rank,ix) BEGIN_PRIMITIVE {        \
+	int _ix, _iy, _iz;                                    \
+	_ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */ \
+	_iy  = _ix/int(px);   /* iy = iy+gpy*iz */            \
+	_ix -= _iy*int(px);   /* ix = ix */                   \
+	_iz  = _iy/int(py);   /* iz = iz */                   \
+	_iy -= _iz*int(py);   /* iy = iy */                   \
+	(ix) = _ix;                                           \
 } END_PRIMITIVE 
 
 /*------------------------------------------------------------------------------
@@ -45,8 +43,8 @@ double vpic_simulation::poynting_flux(double e0) {
 	
 	memset(pvec, 0, stride);
 
-	int ix, iy, iz, k1, k2;
-	RANK_TO_INDEX( int(rank()), ix, iy, iz );
+	int ix, k1, k2;
+	RANK_TO_INDEX( int(rank()), ix);
 
 	// Compute Poynting for domains on left of box
 	if(ix==0) {

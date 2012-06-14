@@ -168,7 +168,7 @@ large_angle_coulomb_collision(
   ury = pi->uy - pj->uy;
   urz = pi->uz - pj->uz;
 
-  COMPUTE_MOMENTUM_TRANSFER(urx,urz,urz,ax,ay,az,rng);
+  COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   if( type & 1 ) {
     w = lac->twomu_mi; 

@@ -6,6 +6,13 @@
 struct particle_bc;
 typedef struct particle_bc particle_bc_t;
 
+// may have been moved by Kevin
+typedef struct link_boundary {
+char fbase[256];	// base of file name to contain link info
+double n_out;		// number of writes so far on this node (double to
+						// accomodate long long runs)
+} link_boundary_t;
+
 BEGIN_C_DECLS
 
 /* In boundary.c */

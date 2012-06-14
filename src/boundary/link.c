@@ -23,7 +23,7 @@ link_boundary( link_boundary_t     * lb,
                const grid_t        * g,
                species_t           * sp, 
                particle_injector_t * pi,
-               mt_rng_t            * rng,
+               rng_t               * rng,
                int                   face ) {
   static FILE *fp = NULL; 
   int ix, iy, iz;

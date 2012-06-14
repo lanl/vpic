@@ -44,7 +44,7 @@ vpic_simulation::user_particle_collisions( void )
 #define repeat( count ) for( int64_t _remain=(int64_t)(count); _remain; _remain-- )
 
 #define _SIM_LOG_PREFIX \
-  __FILE__"("EXPAND_AND_STRINGIFY(__LINE__)")[" << rank() << "]: "
+  __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ")[" << rank() << "]: "
 #define sim_log_local(x) std::cerr << _SIM_LOG_PREFIX << x << std::endl
 #define sim_log(x) do {                                \
     if( rank()==0 ) {                                  \
@@ -102,7 +102,8 @@ vpic_simulation::user_particle_collisions( void )
 
 // Define a region that fills the whole simulation
 
-#define everywhere 1
+#define everywhere (x == x) && (y == y) && (z == z)
+//#define everywhere 1
 
 // Define a macro to allow different parts of a region to be selected.
 // Note: get_particle_bc_id returns  0 if NULL is passed to it
@@ -382,7 +383,7 @@ vpic_simulation::user_particle_collisions( void )
     for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*_k, _zc = _z0 + _dz*(_k-0.5); \
     for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*_j, _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k); \
     for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*_i, _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
-          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll, _rlll; \
+          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll;        \
           x = _xc; y = _yc; z = _zc; _rccc = (rgn);                   \
           x = _xl;                   _rlcc = (rgn);                   \
           x = _xc; y = _yl;          _rclc = (rgn);                   \
@@ -390,7 +391,6 @@ vpic_simulation::user_particle_collisions( void )
           x = _xc; y = _yc; z = _zl; _rccl = (rgn);                   \
           x = _xl;                   _rlcl = (rgn);                   \
           x = _xc; y = _yl;          _rcll = (rgn);                   \
-          x = _xl;                   _rlll = (rgn);                   \
           x = _xc; y = _ye; z = _ze; if( _rccc || _rclc || _rccl || _rcll ) _f->ex  =    (eqn_ex); \
           x = _xe; y = _yc; z = _ze; if( _rccc || _rccl || _rlcc || _rlcl ) _f->ey  =    (eqn_ey); \
           x = _xe; y = _ye; z = _zc; if( _rccc || _rlcc || _rclc || _rllc ) _f->ez  =    (eqn_ez); \

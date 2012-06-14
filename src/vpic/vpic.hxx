@@ -637,7 +637,7 @@ private:
   inline double trunc_granular( double a, double b ) { return b*int(a/b); }
  
   // Compute the remainder of a/b
-  inline double remainder( double a, double b ) { return drem(a,b); }
+  inline double remainder( double a, double b ) { return remainder(a,b); }
   // remainder(a,b);
  
   // Compute the Courant length on a regular mesh

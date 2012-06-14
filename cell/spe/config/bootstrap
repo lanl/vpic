@@ -12,10 +12,19 @@
 #)
 
 echo "calling libtoolize..."
-libtoolize -f --automake
+glibtoolize --version &> /dev/null && LIBTOOLIZE=glibtoolize || LIBTOOLIZE=libtoolize
+
+# older versions of libtoolize use configure.in
+$LIBTOOLIZE -c -n -f --automake &> /dev/null || ln -s configure.ac configure.in
+
+# actually call libtoolize
+$LIBTOOLIZE -c -f --automake
+
 echo "calling aclocal -I $1/m4"
 aclocal -I $1/m4 > /dev/null 2>&1
+
 echo "automake -af --foreign"
 automake -af --foreign
+
 echo "autoconf"
 autoconf

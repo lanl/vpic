@@ -1,6 +1,11 @@
 /*#define VERBOSE_CHECKPOINTING*/
 #ifndef NO_REVERSE_SYMBOL_TABLE_LOOKUP_SUPPORT
 #define _GNU_SOURCE
+
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include <dlfcn.h>
 #endif
 

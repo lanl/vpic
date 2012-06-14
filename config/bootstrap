@@ -26,10 +26,15 @@ echo "generating Makefile.am for VPIC library"
 config/create_lib_am > lib/Makefile.am
 
 echo "calling libtoolize..."
-libtoolize -f --automake
+glibtoolize --version &> /dev/null && LIBTOOLIZE=glibtoolize || LIBTOOLIZE=libtoolize
+$LIBTOOLIZE -c -n -f --automake &> /dev/null || ln -s configure.ac configure.in
+$LIBTOOLIZE -c -f --automake
+
 echo "calling aclocal -I $cwd/m4"
 aclocal -I $cwd/m4 > /dev/null 2>&1
+
 echo "automake -af --foreign"
 automake -af --foreign
+
 echo "autoconf"
 autoconf

@@ -33,6 +33,9 @@ $LIBTOOLIZE -c -f --automake
 echo "calling aclocal -I $cwd/m4"
 aclocal -I $cwd/m4 > /dev/null 2>&1
 
+echo "calling python testboot.py"
+python config/testboot.py
+
 echo "automake -af --foreign"
 automake -af --foreign
 

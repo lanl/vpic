@@ -2,14 +2,14 @@
 # top-level Makefile.am
 ################################################################################
 
-SUBDIRS = ${CELLDIR} ${HOSTDIRS} ${DOC}
+SUBDIRS = ${CELLDIR} ${HOSTDIRS} test ${DOC}
 
 #setup: setup-host copy-samples
 setup: copy-samples
 
 all-local: copy-build-script copy-extension-lib @COPY_LOCAL@
 
-clean-local: clean-build-script clean-extension-lib @CLEAN_LOCAL@
+clean-local: clean-build-script clean-extension-lib clean-test @CLEAN_LOCAL@
 
 #setup-host:
 #	$(call symlinks, "@abs_top_srcdir@/src", '.*\.h+?x+?')
@@ -49,6 +49,9 @@ clean-mprelay-exe:
 
 clean-samples:
 	@(rm -rf @abs_top_builddir@/sample)
+
+clean-test:
+	@(cd test; ${MAKE} clean)
 
 doc: FORCE
 	@([ -d @DOC@ ] && cd @DOC@ && make doc > doc.log 2>&1)

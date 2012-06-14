@@ -22,9 +22,13 @@ AC_CONFIG_FILES(Makefile \
 	accelerator/Makefile \
 	utilities/Makefile \
 	cell/Makefile \
+	test/Makefile \
+	test/unit/Makefile \
 	doc/Makefile \
 	doc/doxygen.conf)
 AC_CONFIG_COMMANDS(setup, [make setup])
+
+AC_CONFIG_TESTDIR([test/unit])
 
 ################################################################################
 # need this so that ppe build will create build script correctly

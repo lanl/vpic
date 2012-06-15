@@ -24,6 +24,7 @@ AC_CONFIG_FILES(Makefile \
 	cell/Makefile \
 	test/Makefile \
 	test/unit/Makefile \
+	test/unit/atlocal \
 	doc/Makefile \
 	doc/doxygen.conf)
 AC_CONFIG_COMMANDS(setup, [make setup])

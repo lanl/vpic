@@ -14,9 +14,11 @@ class Test:
 	'''
 	Test executable and the source files that build it.
 	'''
-	def __init__(self, exe, srcs):
+	def __init__(self, exe, srcs, defines, procs):
 		self.exe = exe
 		self.srcs = string.split(srcs)
+		self.defines = defines
+		self.procs = procs
 
 class Test_Builder:
 	'''
@@ -31,8 +33,8 @@ class Test_Builder:
 		self._test_input_files = []
 		self._test_input_dirs = []
 
-	def test(self, exe, srcs):
-		self._tests.append(Test(exe, srcs))
+	def test(self, exe, srcs, defines, procs=[1]):
+		self._tests.append(Test(exe, srcs, defines, procs))
 		self._have_test = True
 
 	def test_input_files(self,files):

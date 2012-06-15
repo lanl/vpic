@@ -1,0 +1,233 @@
+// Test current accumulation for out of bounds particles
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+#define rho0(x,y,z) rho0[voxel(x,y,z)]
+#define rho1(x,y,z) rho1[voxel(x,y,z)]
+#define drho(x,y,z) drho[voxel(x,y,z)]
+#define divj(x,y,z) divj[voxel(x,y,z)]
+
+begin_globals {
+};
+
+begin_initialization {
+  const int nx = 4, ny = 5, nz = 6, np = 131;
+  const int nv = (nx+2)*(ny+2)*(nz+2);
+  int n_iter;
+  double rho0[nv], rho1[nv];
+  double drho[nv], divj[nv];
+
+  // Define the grid
+  define_units( nx+ny+nz, 1 );
+  define_timestep( 1 );
+  define_periodic_grid( 0, 0, 0,    // Grid low corner
+                        nx, ny, nz, // Grid high corner
+                        nx, ny, nz, // Grid resolution
+                        1, 1, 1 );  // Processor topology
+  define_material("vacuum",1.0,1.0,0.0);
+  define_field_array();
+
+  species_t * sp = define_species( "test_species", -2, 3, np, np, 0, 0 );
+
+  // Hack into vpic internals
+
+  double cdt    = (double)grid->cvac*(double)grid->dt;
+  double cdt_dx = cdt/(double)grid->dx;
+  double cdt_dy = cdt/(double)grid->dy;
+  double cdt_dz = cdt/(double)grid->dz;
+  int num_pass = 0, num_fail = 0;
+  double worst_div_err = 0;
+
+  for( n_iter=10000; n_iter; n_iter-- ) {
+
+    // Load the particles 
+
+    CLEAR( rho0, nv );
+    CLEAR( rho1, nv );
+
+    sp->np = 0;
+    repeat( np ) {
+      double rx = uniform( rng(0), 0, nx );
+      double ry = uniform( rng(0), 0, ny );
+      double rz = uniform( rng(0), 0, nz );
+      double ux = 0.25*uniform( rng(0), -nx,nx ) / cdt_dx;
+      double uy = 0.25*uniform( rng(0), -ny,ny ) / cdt_dy;
+      double uz = 0.25*uniform( rng(0), -nz,nz ) / cdt_dz;
+      double gamma = 1/sqrt( 1 - ux*ux - uy*uy - uz*uz );
+      ux *= gamma; uy *= gamma; uz *= gamma;
+      double w  = uniform( rng(0), 0,1 );
+
+      inject_particle( sp, rx,ry,rz, ux,uy,uz, w, 0, 0 );
+
+      /* Check that the injection worked */
+
+      const particle_t * p = &sp->p[sp->np-1];
+      double dx = p->dx;
+      double dy = p->dy;
+      double dz = p->dz;
+      int ix0 = p->i;
+      int iy0 = ix0/(nx+2); ix0 -= iy0*(nx+2); ix0--; int ix1 = (ix0+1)%nx;
+      int iz0 = iy0/(ny+2); iy0 -= iz0*(ny+2); iy0--; int iy1 = (iy0+1)%ny;
+      /**/                                     iz0--; int iz1 = (iz0+1)%nz;
+      if( fabs(rx-(ix0+0.5*(1+dx))) > 1e-6*nx       ||
+          fabs(ry-(iy0+0.5*(1+dy))) > 1e-6*ny       ||
+          fabs(rz-(iz0+0.5*(1+dz))) > 1e-6*nz       ||
+          fabs(ux-(double)p->ux   ) > 1e-6*fabs(ux) ||
+          fabs(uy-(double)p->uy   ) > 1e-6*fabs(uy) ||
+          fabs(uz-(double)p->uz   ) > 1e-6*fabs(uz) ||
+          fabs(w -(double)p->w    ) > 1e-6*fabs(w)  ) {
+        sim_log( "inject_particle: FAIL " <<
+                 fabs(rx-(ix0+0.5*(1+dx))) << " " <<
+                 fabs(ry-(iy0+0.5*(1+dy))) << " " <<
+                 fabs(rz-(iz0+0.5*(1+dz))) << " " <<
+                 fabs(ux-(double)p->ux   ) << " " <<
+                 fabs(uy-(double)p->uy   ) << " " <<
+                 fabs(uz-(double)p->uz   ) << " " <<
+                 fabs(w -(double)p->w    ) );
+        abort(1);
+      }
+
+      /* Compute the initial charge density */
+
+      double q = 0.125*(double)sp->q*(double)p->w;
+      ix0++; iy0++; iz0++;
+      ix1++; iy1++; iz1++;
+      rho0(ix0,iy0,iz0) += q*(1-dx)*(1-dy)*(1-dz);
+      rho0(ix1,iy0,iz0) += q*(1+dx)*(1-dy)*(1-dz);
+      rho0(ix0,iy1,iz0) += q*(1-dx)*(1+dy)*(1-dz);
+      rho0(ix1,iy1,iz0) += q*(1+dx)*(1+dy)*(1-dz);
+      rho0(ix0,iy0,iz1) += q*(1-dx)*(1-dy)*(1+dz);
+      rho0(ix1,iy0,iz1) += q*(1+dx)*(1-dy)*(1+dz);
+      rho0(ix0,iy1,iz1) += q*(1-dx)*(1+dy)*(1+dz);
+      rho0(ix1,iy1,iz1) += q*(1+dx)*(1+dy)*(1+dz);
+
+      rx += cdt*ux/gamma;
+      ry += cdt*uy/gamma;
+      rz += cdt*uz/gamma;
+      ix0 = (int)floor(rx); dx = 2*(rx-(double)ix0-0.5); while(ix0<0) ix0+=nx; ix0%=nx; ix1=(ix0+1)%nx;
+      iy0 = (int)floor(ry); dy = 2*(ry-(double)iy0-0.5); while(iy0<0) iy0+=ny; iy0%=ny; iy1=(iy0+1)%ny;
+      iz0 = (int)floor(rz); dz = 2*(rz-(double)iz0-0.5); while(iz0<0) iz0+=nz; iz0%=nz; iz1=(iz0+1)%nz;
+
+      ix0++; iy0++; iz0++;
+      ix1++; iy1++; iz1++;
+      rho1(ix0,iy0,iz0) += q*(1-dx)*(1-dy)*(1-dz);
+      rho1(ix1,iy0,iz0) += q*(1+dx)*(1-dy)*(1-dz);
+      rho1(ix0,iy1,iz0) += q*(1-dx)*(1+dy)*(1-dz);
+      rho1(ix1,iy1,iz0) += q*(1+dx)*(1+dy)*(1-dz);
+      rho1(ix0,iy0,iz1) += q*(1-dx)*(1-dy)*(1+dz);
+      rho1(ix1,iy0,iz1) += q*(1+dx)*(1-dy)*(1+dz);
+      rho1(ix0,iy1,iz1) += q*(1-dx)*(1+dy)*(1+dz);
+      rho1(ix1,iy1,iz1) += q*(1+dx)*(1+dy)*(1+dz);
+    }
+ 
+    // Compute the initial rho
+    field_array->kernel->clear_rhof( field_array );
+    accumulate_rho_p( field_array, sp );
+    field_array->kernel->synchronize_rho( field_array );
+    for( int z=1; z<=nz+1; z++ ) 
+    for( int y=1; y<=ny+1; y++ ) 
+    for( int x=1; x<=nx+1; x++ ) {
+          if( x<=nx && y<=ny && z<=nz &&
+              fabs(rho0(x,y,z)-(double)field(x,y,z).rhof) > 1e-6*sqrt(np) ) {
+            sim_log( "accumulate_rho_p (initial) FAIL " << 
+                     x << " " << y << " " << z << " " <<
+                     rho0(x,y,z) << " " << field(x,y,z).rhof << " " <<
+                     fabs(rho0(x,y,z)-(double)field(x,y,z).rhof) ) ;
+            abort(1);
+          }
+          drho(x,y,z) = field(x,y,z).rhof;
+    }
+
+    // Move the particles and extract the currents
+    load_interpolator_array( interpolator_array, field_array );
+    clear_accumulator_array( accumulator_array );
+    advance_p( sp, accumulator_array, interpolator_array );
+    field_array->kernel->clear_jf( field_array );
+    reduce_accumulator_array( accumulator_array );
+    unload_accumulator_array( field_array, accumulator_array );
+    field_array->kernel->synchronize_jf( field_array );
+    
+    // Compute the final rho
+    field_array->kernel->clear_rhof( field_array );
+    accumulate_rho_p( field_array, sp );
+    field_array->kernel->synchronize_rho( field_array );
+  
+    // Compute divj
+    for( int z=1; z<=nz+1; z++ ) 
+    for( int y=1; y<=ny+1; y++ ) 
+    for( int x=1; x<=nx+1; x++ ) {
+	  if( x==nx+1 ) divj(x,y,z)  = field(1,y,z).jfx;
+	  else          divj(x,y,z)  = field(x,y,z).jfx;
+	  if( x==1 )    divj(x,y,z) -= field(nx,y,z).jfx;
+	  else          divj(x,y,z) -= field(x-1,y,z).jfx;
+	  if( y==ny+1 ) divj(x,y,z) += field(x,1,z).jfy;
+	  else          divj(x,y,z) += field(x,y,z).jfy;
+	  if( y==1 )    divj(x,y,z) -= field(x,ny,z).jfy;
+	  else          divj(x,y,z) -= field(x,y-1,z).jfy;
+	  if( z==nz+1 ) divj(x,y,z) += field(x,y,1).jfz;
+	  else          divj(x,y,z) += field(x,y,z).jfz;
+	  if( z==1 )    divj(x,y,z) -= field(x,y,nz).jfz;
+	  else          divj(x,y,z) -= field(x,y,z-1).jfz;
+    }
+
+    // Compute drho
+    for( int z=1; z<=nz+1; z++ ) 
+    for( int y=1; y<=ny+1; y++ ) 
+    for( int x=1; x<=nx+1; x++ ) {
+          if( x<=nx && y<=ny && z<=nz &&
+              fabs(rho1(x,y,z)-(double)field(x,y,z).rhof) > 1e-6*sqrt(np) ) {
+            sim_log( "accumulate_rho_p (final) FAIL " << 
+                     x << " " << y << " " << z << " " <<
+                     rho1(x,y,z) << " " << field(x,y,z).rhof << " " <<
+                     fabs(rho1(x,y,z)-(double)field(x,y,z).rhof) ) ;
+            abort(1);
+          }
+          drho(x,y,z) = field(x,y,z).rhof - drho(x,y,z);
+    }
+ 
+    // Compute maximum divergence error
+    double max_div_err = 0;
+    for( int z=1; z<=nz+1; z++ ) 
+    for( int y=1; y<=ny+1; y++ ) 
+    for( int x=1; x<=nx+1; x++ ) {
+          double div_err = drho(x,y,z) + divj(x,y,z);
+          if( div_err<0 ) div_err = -div_err;
+          if( div_err>max_div_err ) max_div_err = div_err;
+    }
+    if( max_div_err < 50e-7 ) num_pass++;
+    else                      num_fail++;
+    if( worst_div_err < max_div_err ) worst_div_err = max_div_err;
+
+    if( ((num_pass+num_fail)%2000)==0 )
+      sim_log("pass " << num_pass <<
+              ", fail " << num_fail <<
+              ", worst " << worst_div_err);
+  }
+
+  if( num_fail ) { sim_log( "FAIL" ); abort(1); }
+  sim_log( "pass" );
+  halt_mp();
+  exit(0);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

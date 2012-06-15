@@ -1,0 +1,117 @@
+// Test electric field interpolation
+// 
+// Written by:
+//   Kevin J. Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+begin_globals {
+};
+
+begin_initialization {
+  double L  = 1e10;
+  int npart = 131;
+
+  define_units( 1, 1 );
+  define_timestep( 1 );
+  define_periodic_grid( 0, 0, 0,   // Grid low corner
+                        L, L, L,   // Grid high corner
+                        1, 1, 1,   // Grid resolution
+                        1, 1, 1 ); // Processor configuration
+  define_material("vacuum",1.0,1.0,0.0);
+  define_field_array();
+
+  field(1,1,1).ex  = 0;
+  field(1,2,1).ex  = 1;
+  field(1,1,2).ex  = 2;
+  field(1,2,2).ex  = 3;
+
+  field(1,1,1).ey  = 4;
+  field(1,1,2).ey  = 5;
+  field(2,1,1).ey  = 6;
+  field(2,1,2).ey  = 7;
+
+  field(1,1,1).ez  = 8;
+  field(2,1,1).ez  = 9;
+  field(1,2,1).ez  = 10;
+  field(2,2,1).ez  = 11;
+
+  species_t * sp = define_species( "test_species", 0.5, 0.5, npart, npart, 0, 0 );
+
+  // Hack into vpic internals 
+
+  int failed = 0;
+  load_interpolator_array( interpolator_array, field_array ); 
+  sp->np = npart; 
+
+# define test_e(X,DX,DY,DZ,VAL)                         \
+  for( int n=0; n<npart; n++ ) {                        \
+    sp->p[n].i  = voxel(1,1,1);                         \
+    sp->p[n].dx = DX;                                   \
+    sp->p[n].dy = DY;                                   \
+    sp->p[n].dz = DZ;                                   \
+    sp->p[n].ux = 0;                                    \
+    sp->p[n].uy = 0;                                    \
+    sp->p[n].uz = 0;                                    \
+    sp->p[n].w  = fabs( normal( rng(0), 0, 1 ) );       \
+  }                                                     \
+  advance_p( sp, accumulator_array, interpolator_array ); \
+  for( int n=0; n<npart; n++ ) {                        \
+    if( sp->p[n].u##X != VAL ) {                        \
+      failed++;                                         \
+      sim_log(  "e"#X << " "                            \
+                << DX << " "                            \
+                << DY << " "                            \
+                << DZ << " "                            \
+                << VAL << " "                           \
+                << n << " "                             \
+                << sp->p[n].i << " "                    \
+                << sp->p[n].dx << " "                   \
+                << sp->p[n].dy << " "                   \
+                << sp->p[n].dz << " "                   \
+                << sp->p[n].ux << " "                   \
+                << sp->p[n].uy << " "                   \
+                << sp->p[n].uz << " "                   \
+                << sp->p[n].w );                        \
+    }                                                   \
+  }
+
+  test_e(x,0,-1,-1,0);
+  test_e(x,0, 1,-1,1);
+  test_e(x,0,-1, 1,2);
+  test_e(x,0, 1, 1,3);
+
+  test_e(y,-1,0,-1,4);
+  test_e(y,-1,0, 1,5);
+  test_e(y, 1,0,-1,6);
+  test_e(y, 1,0, 1,7);
+
+  test_e(z,-1,-1,0,8);
+  test_e(z, 1,-1,0,9);
+  test_e(z,-1, 1,0,10);
+  test_e(z, 1, 1,0,11);
+  
+  if( failed ) { sim_log( "FAIL" ); abort(1); }
+  sim_log( "pass" );
+  halt_mp();
+  exit(0);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

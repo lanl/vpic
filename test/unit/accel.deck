@@ -1,0 +1,104 @@
+// Test acceleration in a constant electric field
+//
+// dp / dt = q E
+// du / dt = q E / m c
+// u_new = u_old + 2 q dt E / 2 m c
+// u_new = u_old + 2 E ( q dt / 2 m c )
+//
+// u(n)  = 2 E ( q dt / 2 m c ) * n
+// With q/m=1, dt=1, c=1, E=1
+// u(n) = E n
+//
+// This input deck was written by:
+//   Kevin J Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - conversion of c++ test code into an input deck
+
+begin_globals {
+};
+
+begin_initialization {
+  double L  = 1e10;
+  int npart = 131;
+  int nstep = 100;
+
+  define_units( 1, 1 );
+  define_timestep( 1 );
+  define_periodic_grid( 0, 0, 0,   // Grid low corner
+                        L, L, L,   // Grid high corner
+                        1, 1, 1,   // Grid resolution
+                        1, 1, 1 ); // Processor configuration
+  define_material( "vacuum", 1.0, 1.0, 0.0 );
+  define_field_array();
+
+  field(1,1,1).ex  = 1;
+  field(1,2,1).ex  = 1;
+  field(1,1,2).ex  = 1;
+  field(1,2,2).ex  = 1;
+
+  field(1,1,1).ey  = 2;
+  field(1,1,2).ey  = 2;
+  field(2,1,1).ey  = 2;
+  field(2,1,2).ey  = 2;
+
+  field(1,1,1).ez  = 3;
+  field(2,1,1).ez  = 3;
+  field(1,2,1).ez  = 3;
+  field(2,2,1).ez  = 3;
+
+  species_t * sp =
+    define_species( "test_species", 1., 1., npart, npart, 0, 0 );
+
+  repeat(npart)
+    inject_particle( sp,
+                     uniform( rng(0), 0, L ),
+                     uniform( rng(0), 0, L ),
+                     uniform( rng(0), 0, L ),
+                     0., 0., 0., 1., 0., 0 );
+
+  // Hack into vpic internals
+  int failed = 0;
+  load_interpolator_array( interpolator_array, field_array );
+  for( int n=0; n<nstep; n++ ) {
+    advance_p( sp, accumulator_array, interpolator_array );
+    for( int m=0; m<npart; m++ ) {
+      if( sp->p[m].ux != 1*(n+1) ||
+          sp->p[m].uy != 2*(n+1) ||
+          sp->p[m].uz != 3*(n+1) ) {
+        failed++;
+        sim_log( n << " " <<
+                 m << " " <<
+                 sp->p[m].i  << " " <<
+                 sp->p[m].dx << " " <<
+                 sp->p[m].dy << " " <<
+                 sp->p[m].dz << " " <<
+                 sp->p[m].ux << " " <<
+                 sp->p[m].uy << " " <<
+                 sp->p[m].uz << " " <<
+                 sp->p[m].w );
+      }
+    }
+  }
+
+  if( failed ) { sim_log( "FAIL" ); abort(1); }
+  sim_log( "pass" );
+  halt_mp();
+  exit(0);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}

@@ -46,3 +46,5 @@ test/unit/Makefile.am
 test/unit/Makefile.in
 test/unit/testsuite.at
 test/unit/atlocal.in
+config/version
+configure.ac

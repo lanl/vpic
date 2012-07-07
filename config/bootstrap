@@ -3,6 +3,12 @@
 # Create build system using GNU autotools
 #
 
+#------------------------------------------------------------------------------#
+# generate configure.av file
+#------------------------------------------------------------------------------#
+echo "generating configure.ac"
+config/create_configure_ac $1 > configure.ac
+
 cwd=`pwd`
 
 # create include dir with links
@@ -12,14 +18,6 @@ cwd=`pwd`
 		ln -s $link .
 	done
 )
-
-echo "calling SPE bootstrap"
-(cd cell/spe; config/bootstrap $cwd)
-echo
-
-echo "calling PPE bootstrap"
-(cd cell/ppe; config/bootstrap $cwd)
-echo
 
 echo "generating Makefile.am for VPIC library"
 [ ! -d lib ] && mkdir lib

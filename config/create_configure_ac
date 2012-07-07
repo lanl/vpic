@@ -1,0 +1,21 @@
+#! /usr/bin/env bash
+################################################################################
+# Copyright (c) 2012 Los Alamos National Security, LLC
+# All rights reserved.
+################################################################################
+
+#------------------------------------------------------------------------------#
+# This script creates a versioned configure.ac file.  With no arguments, the
+# version information is created using the 'make_version' script.  Passing
+# a version as an argument to the script will override this behavior.
+#------------------------------------------------------------------------------#
+
+# create version
+([ -z $1 ] && echo VERSION_TAG=`config/make_version` > config/version) || \
+	echo VERSION_TAG=$1 > config/version
+
+# source version information
+. config/version
+
+# filter input
+cat configure.in.ac | sed "s,VERSION_TAG,$VERSION_TAG,g" > configure.ac

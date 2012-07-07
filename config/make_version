@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+################################################################################
+# Copyright (c) 2012 Los Alamos National Security, LLC
+# All rights reserved.
+################################################################################
+
+# get the current tag
+tag=`git tag | tail -n 1`
+
+# get the date that the current tag was created
+since=`git show --date=relative $tag | head -n 3 | tail -n 1 | sed 's,^Date:[ \t]*,,g'`
+
+# build will count the number of commits since the current tag was created
+build=`git log --since="$since" | grep commit | wc -l`
+
+echo $tag"."$build

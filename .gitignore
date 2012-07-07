@@ -2,6 +2,7 @@ Makefile.in
 accelerator/Makefile.in
 aclocal.m4
 autom4te.cache/
+build/
 cell/Makefile.in
 cell/ppe/Makefile.in
 cell/ppe/accelerator/Makefile.in
@@ -32,9 +33,16 @@ config/depcomp
 config/install-sh
 config/ltmain.sh
 config/missing
+config/build_utils.pyc
 configure
 doc/Makefile.in
 lib/
 mprelay/Makefile.in
 src/include/
 utilities/Makefile.in
+test/Makefile.am
+test/Makefile.in
+test/unit/Makefile.am
+test/unit/Makefile.in
+test/unit/testsuite.at
+test/unit/atlocal.in

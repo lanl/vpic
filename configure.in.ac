@@ -42,6 +42,7 @@ AC_CONFIG_FILES([Makefile \
 #------------------------------------------------------------------------------#
 
 AC_CONFIG_TESTDIR([test/integrated])
+AC_CONFIG_TESTDIR([test/unit])
 
 #------------------------------------------------------------------------------#
 # Program options

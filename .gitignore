@@ -48,3 +48,7 @@ test/unit/testsuite.at
 test/unit/atlocal.in
 config/version
 configure.ac
+config/lib_version
+test/integrated/Makefile.am
+test/integrated/atlocal.in
+test/integrated/testsuite.at

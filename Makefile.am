@@ -2,7 +2,7 @@
 # Top-level Makefile.am
 #------------------------------------------------------------------------------#
 
-SUBDIRS = lib test
+SUBDIRS = lib
 
 #------------------------------------------------------------------------------#
 # Unit tests
@@ -11,7 +11,7 @@ SUBDIRS = lib test
 tests: all
 	cd test; ${MAKE}
 
-check-local:
+check-local: tests
 	cd test; ${MAKE} check
 
 clean-local:

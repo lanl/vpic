@@ -1,5 +1,4 @@
 #define IN_sf_interface
-#define HAS_SPU_PIPELINE
 #include <sf_interface_private.h>
 
 // FIXME: N_ARRAY>1 ALWAYS BUT THIS ISN'T STRICTLY NECESSARY BECAUSE
@@ -147,12 +146,7 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline is defined in a different compilation unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 #error "The regular pipeline is already V4 accelerated!"
 
@@ -177,4 +171,3 @@ reduce_accumulator_array( accumulator_array_t * RESTRICT aa ) {
   EXEC_PIPELINES( reduce_accumulators, args, 0 );
   WAIT_PIPELINES();
 }
-

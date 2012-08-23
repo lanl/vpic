@@ -44,12 +44,7 @@ energy_p_pipeline( energy_p_pipeline_args_t * RESTRICT args,
   args->en[pipeline_rank] = en;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-#error "SPU version not hooked up yet!"
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
 

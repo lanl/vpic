@@ -16,50 +16,7 @@ typedef void
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define FOR_SPU ( defined(CELL_SPU_BUILD)        || \
-                  ( defined(CELL_PPU_BUILD)    &&   \
-                     defined(USE_CELL_SPUS)    &&   \
-                     defined(HAS_SPU_PIPELINE) ) )
-
-#if FOR_SPU
-
-# if defined(CELL_PPU_BUILD) 
-
-    // Use SPU dispatcher on the SPU pipeline
-    // PPU will do straggler cleanup with scalar pipeline
-
-#   define N_PIPELINE spu.n_pipeline
-#   define EXEC_PIPELINES(name,args,str)                               \
-    spu.dispatch( (pipeline_func_t)                                    \
-                  ((size_t)(root_segment_##name##_pipeline_spu)),      \
-                  args, sizeof(*args), str );                          \
-    name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-#   define WAIT_PIPELINES() spu.wait()
-
-#   define PROTOTYPE_PIPELINE( name, args_t )                          \
-    extern uint32_t root_segment_##name##_pipeline_spu;                \
-                                                                       \
-    void                                                               \
-    name##_pipeline( args_t * args,                                    \
-                     int pipeline_rank,                                \
-                     int n_pipeline )
-
-#   define PAD_STRUCT( sz ) char _pad[ PAD( (sz), 16 ) ];
-
-# else
-
-    // SPUs cannot dispatch pipelines
-
-#   define PROTOTYPE_PIPELINE( name, args_t )                          \
-    void                                                               \
-    _SPUEAR_##name##_pipeline_spu( args_t * args,                      \
-                                   int pipeline_rank,                  \
-                                   int n_pipeline )
-
-#   define PAD_STRUCT( sz ) char _pad[ PAD( (sz), 16 ) ];
-# endif
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
   // Use thread dispatcher on the v4 pipeline
   // Caller will do straggler cleanup with scalar pipeline
@@ -107,8 +64,6 @@ typedef void
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-
-#if !defined(CELL_SPU_BUILD)
 
 typedef struct pipeline_dispatcher {
 
@@ -166,12 +121,6 @@ BEGIN_C_DECLS
 extern pipeline_dispatcher_t serial; // For debugging purposes
 extern pipeline_dispatcher_t thread;
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-extern pipeline_dispatcher_t spu;
-#endif
-
 END_C_DECLS
-
-#endif // !CELL_SPU_BUILD
 
 #endif // _pipelines_h_ 

@@ -1,5 +1,4 @@
 #define IN_sf_interface
-#define HAS_SPU_PIPELINE
 #include <sf_interface_private.h>
 
 void
@@ -12,12 +11,7 @@ clear_accumulators_pipeline( accumulators_pipeline_args_t * args,
   for( ; n_array; n_array--, a+=s_array ) CLEAR( a, n );
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline is defined in a different compilation unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 #error "V4 version not hooked up yet!"
 

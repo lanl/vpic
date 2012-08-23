@@ -1,0 +1,30 @@
+#! /usr/bin/env bash
+
+#------------------------------------------------------------------------------#
+# This script creates a versioned configure.ac file.  With no arguments, the
+# version information is created using the 'make_version' script.  Passing
+# a version as an argument to the script will override this behavior.
+#------------------------------------------------------------------------------#
+
+# create version
+(echo VERSION_TAG=`config/make_version` > config/version)
+
+# create library version
+(echo LIBRARY_TAG=`config/make_lib_version` > config/lib_version)
+
+# source version information
+. config/version
+. config/lib_version
+
+# filter input
+if [ -z $1 ] ; then
+	cat configure.in.ac | \
+		sed "s,VERSION_TAG,$VERSION_TAG,g;s,LIBRARY_TAG,$LIBRARY_TAG,g" |
+		sed "s,SANDBOX_SUBDIR,,g" |
+		sed "s,SANDBOX_SUBST,AC_SUBST(SANDBOX\,[]),g" > configure.ac
+else
+	cat configure.in.ac | \
+		sed "s,VERSION_TAG,$VERSION_TAG,g;s,LIBRARY_TAG,$LIBRARY_TAG,g" |
+		sed "s,SANDBOX_SUBDIR,sandbox/Makefile,g" |
+		sed "s,SANDBOX_SUBST,AC_SUBST(SANDBOX\,[sandbox]),g" > configure.ac
+fi

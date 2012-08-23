@@ -1,0 +1,77 @@
+dnl ------------------------------------------------------------------------ dnl
+dnl Copyright (c) 2012 Los Alamos National Security, LLC
+dnl All rights reserved.
+dnl ------------------------------------------------------------------------ dnl
+
+dnl ------------------------------------------------------------------------ dnl
+dnl helper functions
+dnl ------------------------------------------------------------------------ dnl
+
+m4_define([CONFIG_AT_COPYFILES], [
+	dnl Copy the input files to the working directory, if needed.  Look in the 
+	dnl src directory, then in the build dir  
+	if test -n "$INPUTFILES" ; then
+		for file in $INPUTFILES ; do
+			if test -f "$file" ; then
+				cp "$file" .
+			fi
+		done
+	fi
+])
+
+m4_define([CONFIG_AT_COPYDIRS], [
+	dnl Copy the contents of the input directories to the working
+	dnl directory, if needed
+	if test -n "$INPUTDIRS" ; then
+		for dir in $INPUTDIRS ; do
+			filesanddirs="`ls $ccs_srcdir/$dir/`"
+			for fd in $filesanddirs ; do
+				cp -r "$ccs_srcdir/$dir/$fd" .
+			done
+		done
+	fi
+])
+
+dnl ------------------------------------------------------------------------ dnl
+dnl This is called with CONFIG_AT_RUN_PROGRAM([test_program], [1 2], [extra])
+dnl See the output of a make check to know what INPUTFILES or INPUTDIRS
+dnl should be.
+dnl ------------------------------------------------------------------------ dnl
+
+m4_define([CONFIG_AT_RUN_PROGRAM], [
+	AT_BANNER([testing $1])
+	AT_SETUP([$1])
+
+	dnl copy files and directories needed for testing
+	CONFIG_AT_COPYFILES
+	CONFIG_AT_COPYDIRS
+
+	dnl test extras
+	if test -z "$3" ; then
+		extra="true"
+	else
+		extra="$3"
+	fi
+
+	dnl run the tests
+	if test -z "$MPI_LIBS" ; then
+		AT_CHECK([$1 && $extra],[0],[ignore],[ignore])
+	else
+		if test -n "$PES" ; then
+			for npe in $PES
+			do
+				echo "testing $1 on $npe (user spec'd) pes"
+				AT_CHECK([mpiexec -n $npe $1 && $extra],[0],[ignore],[ignore])
+			done
+		else
+			for npe in $2
+			do
+				echo "testing $1 on $npe pes"
+				AT_CHECK([mpiexec -n $npe $1 && $extra],[0],[ignore],[ignore])
+			done
+		fi
+	fi
+
+	AT_TESTED([$1])
+	AT_CLEANUP
+])

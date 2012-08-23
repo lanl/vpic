@@ -14,9 +14,6 @@ static int
 aa_n_pipeline(void) {
   int                       n = serial.n_pipeline;
   if( n<thread.n_pipeline ) n = thread.n_pipeline;
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  if( n<spu.n_pipeline    ) n = spu.n_pipeline;
-# endif
   return n; /* max( {serial,thread,spu}.n_pipeline ) */
 }
 

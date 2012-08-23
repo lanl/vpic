@@ -79,12 +79,7 @@ advance_e_pipeline( pipeline_args_t * args,
   }
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline is defined in a different compilation unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
 

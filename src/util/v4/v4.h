@@ -10,8 +10,6 @@
 #   include <v4_sse.hxx>
 # elif defined USE_V4_ALTIVEC
 #   include <v4_altivec.hxx>
-# elif defined USE_V4_SPU
-#   include <v4_spu.hxx>
 # endif
 #endif
 #undef IN_v4_h

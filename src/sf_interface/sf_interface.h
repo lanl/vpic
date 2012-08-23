@@ -10,9 +10,6 @@
 // _LOCAL_ NUMBER OF CELLS).  THIS LATENT BUG IS NOT EXPECTED TO
 // AFFECT ANY PRACTICAL SIMULATIONS.
 
-// FIXME: EXTERNAL DIAGNOSTICS THAT READ THESE WILL NEED TO BE UPDATED
-// TO REFLECT SPU USAGE ALIGNMENT CHANGES.
-  
 #include <field_advance.h>
 // FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
@@ -30,12 +27,7 @@ typedef struct interpolator {
   float cbx, dcbxdx;
   float cby, dcbydy;
   float cbz, dcbzdz;
-# if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
-  float _pad[2];
-  int64_t neighbor[6]; // 128-byte align.  Use padding for neighbor data
-# else
   float _pad[2];  // 16-byte align
-# endif
 } interpolator_t;
 
 typedef struct interpolator_array {
@@ -80,11 +72,6 @@ typedef struct accumulator {
   float jx[4];   // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
   float jy[4];   // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
   float jz[4];   // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
-# if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
-  float _pad[4]; // 64-byte align (next power of two )
-# else
-  /**/           // 16-byte align
-# endif
 } accumulator_t;
 
 typedef struct accumulator_array {
@@ -151,11 +138,7 @@ typedef struct hydro {
   float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
   float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
   float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
-# if ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && defined(USE_CELL_SPUS)
-  float _pad[2];         // 64-byte align (next power of two)
-# else
   float _pad[2];         // 16-byte align
-# endif
 } hydro_t;
 
 typedef struct hydro_array {

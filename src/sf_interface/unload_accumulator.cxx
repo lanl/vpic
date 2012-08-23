@@ -4,7 +4,6 @@
 // slower implementation in the near future.
 
 #define IN_sf_interface
-#define HAS_SPU_PIPELINE
 #include <sf_interface_private.h>
 
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
@@ -66,12 +65,7 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline defined in a different compile unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 #error "V4 version not hooked up yet!"
 

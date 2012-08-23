@@ -15,8 +15,6 @@ typedef struct rng_pool {
   int n_rng;    /* Number of random number generators in pool */
 } rng_pool_t;
 
-#if !defined(__SPU__) /* The SPU version will define its equivalents */
-
 BEGIN_C_DECLS
 
 /* In rng_pool.c. */
@@ -220,5 +218,4 @@ shuffle( rng_t * RESTRICT r,       /* Generator to use */
 
 END_C_DECLS
 
-#endif /* __SPU__ */
 #endif /* _rng_h_ */

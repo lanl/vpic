@@ -1,5 +1,4 @@
 #define IN_collision
-/*#define HAS_SPU_PIPLINE*/
 /*#define HAS_V4_PIPELINE*/
 #include <collision_private.h>
 

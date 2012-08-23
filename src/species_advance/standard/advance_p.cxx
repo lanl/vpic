@@ -3,7 +3,6 @@
 
 #define IN_spa
 #define HAS_V4_PIPELINE
-#define HAS_SPU_PIPELINE
 #include <spa_private.h>
 
 void
@@ -185,18 +184,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline is defined in a different compilation unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
-
-// Note: The cell pipeline will need to have a SPU version of the
-// move_p function for it as the normal move_p function will exist
-// only on the PPU.
 
 void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
@@ -428,13 +418,6 @@ advance_p( /**/  species_t            * RESTRICT sp,
   args->nx       = sp->g->nx;
   args->ny       = sp->g->ny;
   args->nz       = sp->g->nz;
-
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-     defined(HAS_SPU_PIPELINE)
-  args->neighbor = sp->g->neighbor;
-  args->rangel   = sp->g->rangel;
-  args->rangeh   = sp->g->rangeh;
-# endif
 
   // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,

@@ -30,20 +30,6 @@ typedef struct advance_p_pipeline_args {
   MEM_PTR( particle_mover_seg_t, 128 ) seg;      // Dest for return values
   MEM_PTR( const grid_t,         1   ) g;        // Local domain grid params
 
-# if FOR_SPU
-
-  // For move_p_spu; it is easier to have the PPU unpack these grid_t
-  // quantities for the SPUs than to have the SPUs pointer chase
-  // through the above grid_t to extract these quantities.
-
-  MEM_PTR( const int64_t,        128 ) neighbor; // Global voxel indices of
-  /**/                                           // voxels adjacent to local
-  /**/                                           // voxels
-  int64_t                              rangel;   // First global voxel here
-  int64_t                              rangeh;   // Last global voxel here
-
-# endif
-
   float                                qdt_2mc;  // Particle/field coupling
   float                                cdt_dx;   // x-space/time coupling
   float                                cdt_dy;   // y-space/time coupling
@@ -56,11 +42,7 @@ typedef struct advance_p_pipeline_args {
   int                                  ny;       // y-mesh resolution
   int                                  nz;       // z-mesh resolution
  
-# if FOR_SPU
-  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) + 2*sizeof(int64_t))
-# else
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
-# endif
 
 } advance_p_pipeline_args_t;
 
@@ -128,10 +110,7 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
   ((vl)+((((int64_t)(p))*((int64_t)((vh)-(vl)+1)) + ((int64_t)((P)-1))) / \
           ((int64_t)(P))))
 
-// SPU can only subsort so large a voxel range.  The below value
-// reserves 208KiB of the SPU heap in the fine subsort pipeline.
-
-enum { max_subsort_voxel = 26624 };
+// FIXME: safe to remove? enum { max_subsort_voxel = 26624 };
 
 typedef struct sort_p_pipeline_args {
 

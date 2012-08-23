@@ -1,6 +1,5 @@
 #define IN_sf_interface
 #define HAS_V4_PIPELINE
-#define HAS_SPU_PIPELINE
 #include <sf_interface_private.h>
 
 void
@@ -44,21 +43,12 @@ delete_interpolator_array( interpolator_array_t * ia ) {
 #define f(x,y,z)  f [   VOXEL(x,y,z, nx,ny,nz) ]
 #define nb(x,y,z) nb[ 6*VOXEL(x,y,z, nx,ny,nz) ]
 
-#define HAS_SPU_INTERPOLATOR                                \
-  ( defined(CELL_PPU_BUILD) || defined(CELL_SPU_BUILD) ) && \
-  defined(USE_CELL_SPUS)
-
 void
 load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 			    int pipeline_rank,
                             int n_pipeline ) {
   interpolator_t * ALIGNED(128) fi = args->fi;
   const field_t  * ALIGNED(128) f  = args->f;
-
-# if HAS_SPU_INTERPOLATOR
-  const int64_t * ALIGNED(128) nb = args->nb;
-  const int64_t * ALIGNED(16) pnb;
-# endif
 
   interpolator_t * ALIGNED(16) pi;
 
@@ -82,18 +72,6 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 1,
                      pipeline_rank, n_pipeline, x, y, z, n_voxel );
 
-# if HAS_SPU_INTERPOLATOR
-# define LOAD_STENCIL()    \
-  pi   = &fi(x,  y,  z  ); \
-  pf0  =  &f(x,  y,  z  ); \
-  pfx  =  &f(x+1,y,  z  ); \
-  pfy  =  &f(x,  y+1,z  ); \
-  pfz  =  &f(x,  y,  z+1); \
-  pfyz =  &f(x,  y+1,z+1); \
-  pfzx =  &f(x+1,y,  z+1); \
-  pfxy =  &f(x+1,y+1,z  ); \
-  pnb  = &nb(x,  y,  z  )
-# else
 # define LOAD_STENCIL()    \
   pi   = &fi(x,  y,  z  ); \
   pf0  =  &f(x,  y,  z  ); \
@@ -103,7 +81,6 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
   pfyz =  &f(x,  y+1,z+1); \
   pfzx =  &f(x+1,y,  z+1); \
   pfxy =  &f(x+1,y+1,z  )
-# endif
 
   LOAD_STENCIL();
   
@@ -157,16 +134,6 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
     pi->cbz    = half*( w1 + w0 );
     pi->dcbzdz = half*( w1 - w0 );
 
-#   if HAS_SPU_INTERPOLATOR
-    pi->neighbor[0] = pnb[0];
-    pi->neighbor[1] = pnb[1];
-    pi->neighbor[2] = pnb[2];
-    pi->neighbor[3] = pnb[3];
-    pi->neighbor[4] = pnb[4];
-    pi->neighbor[5] = pnb[5];
-    pnb += 6;
-#   endif
-
     pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
 
     x++;
@@ -181,12 +148,7 @@ load_interpolator_pipeline( load_interpolator_pipeline_args_t * args,
 
 }
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-    defined(HAS_SPU_PIPELINE)
-
-// SPU pipeline is defined in a different compilation unit
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 using namespace v4;
 
@@ -196,11 +158,6 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int n_pipeline ) {
   interpolator_t * ALIGNED(128) fi = args->fi;
   const field_t  * ALIGNED(128) f  = args->f;
-
-# if HAS_SPU_INTERPOLATOR
-  const int64_t * ALIGNED(128) nb = args->nb;
-  const int64_t * ALIGNED(16) pnb;
-# endif
 
   interpolator_t * ALIGNED(16) pi;
 
@@ -230,18 +187,6 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
   
-# if HAS_SPU_INTERPOLATOR
-# define LOAD_STENCIL()    \
-  pi   = &fi(x,  y,  z  ); \
-  pf0  =  &f(x,  y,  z  ); \
-  pfx  =  &f(x+1,y,  z  ); \
-  pfy  =  &f(x,  y+1,z  ); \
-  pfz  =  &f(x,  y,  z+1); \
-  pfyz =  &f(x,  y+1,z+1); \
-  pfzx =  &f(x+1,y,  z+1); \
-  pfxy =  &f(x+1,y+1,z  ); \
-  pnb  = &nb(x,  y,  z  )
-# else
 # define LOAD_STENCIL()    \
   pi   = &fi(x,  y,  z  ); \
   pf0  =  &f(x,  y,  z  ); \
@@ -251,7 +196,6 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
   pfyz =  &f(x,  y+1,z+1); \
   pfzx =  &f(x+1,y,  z+1); \
   pfxy =  &f(x+1,y+1,z  )
-# endif
 
   LOAD_STENCIL();
   
@@ -295,13 +239,6 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     w0  = toggle_bits( sgn_1_3, v4float(pf0->cbz) ); // [ w0 -w0 d/c d/c ]
     w1  =                       v4float(pfz->cbz);   // [ w1 -w1 d/c d/c ]
     store_4x1( half*( w1 + w0 ), &pi->cbz ); // Note: Padding after bz coeff!
-
-#   if HAS_SPU_INTERPOLATOR
-    copy_4x1( pi->neighbor,   pnb   );
-    copy_4x1( pi->neighbor+2, pnb+2 );
-    copy_4x1( pi->neighbor+4, pnb+4 );
-    pnb += 6;
-#   endif
 
     pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
 

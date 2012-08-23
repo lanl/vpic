@@ -1,5 +1,4 @@
 #define IN_spa
-#define HAS_SPU_PIPELINE
 #include <spa_private.h>
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
@@ -142,13 +141,7 @@ sort_p( species_t * sp ) {
 
   int * RESTRICT ALIGNED(128) coarse_partition;
   int n_pipeline = N_PIPELINE;
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) && \
-     defined(HAS_SPU_PIPELINE)
-  int n_subsort  = N_PIPELINE*(int)
-    ceil( (double)(vh-vl+1) / ((double)N_PIPELINE*(double)max_subsort_voxel) );
-# else
   int n_subsort  = N_PIPELINE;
-# endif
   int cp_stride  = POW2_CEIL( n_subsort, 4 );
 
   int i, pipeline_rank, subsort, count, sum;
@@ -156,7 +149,6 @@ sort_p( species_t * sp ) {
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
 
   // Insure enough scratch space is allocated for the sorting
-  // FIXME: NOTE THAT THE SPU PIPELINE DOESN'T ACTUALLY USE NEXT.
   sz_scratch = ( sizeof(*p)*n_particle + 128 +
                  sizeof(*partition)*n_voxel + 128 +
                  sizeof(*coarse_partition)*(cp_stride*n_pipeline+1) );

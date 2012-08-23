@@ -1,9 +1,5 @@
 #include <util.h>
 
-#if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-#include <fenv.h> // For fesetround
-#endif
-
 double _boot_timestamp = 0;
 
 double
@@ -30,9 +26,6 @@ boot_services( int * pargc,
 
   serial.boot( pargc, pargv );
   thread.boot( pargc, pargv );
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  spu.boot( pargc, pargv );
-# endif
 
   // Boot up the communications layer
   // See note above about thread-core-affinity
@@ -44,24 +37,6 @@ boot_services( int * pargc,
   mp_barrier();
   _boot_timestamp = 0;
   _boot_timestamp = uptime();
-
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS) 
-
-  // set PPU rounding mode
-
-  // FIXME: IS THIS SAFE (I.E. DO LIBRARIES LIKE LIBM EXPECT US TO
-  // CHANGE THIS GLOBALLY?)
-  // FIXME: ALTIVEC ROUNDING MODE SHOULD BE SET TO MATCH IF USING
-  // ALTIVEC!
-
-# ifndef PPE_ROUNDING_MODE
-# define PPE_ROUNDING_MODE FE_TONEAREST
-# endif
-
-  fesetround(PPE_ROUNDING_MODE);
-
-# endif
-
 }
 
 // This operates in reverse order from boot_services
@@ -70,9 +45,6 @@ void
 halt_services( void ) {
   _boot_timestamp = 0;
   halt_mp();
-# if defined(CELL_PPU_BUILD) && defined(USE_CELL_SPUS)
-  spu.halt();
-# endif
   thread.halt();
   serial.halt();
   halt_checkpt();

@@ -19,7 +19,7 @@ echo "#-------------------------------------------------------------------------
 echo
 echo "lib_LTLIBRARIES = libvpic.la"
 echo
-echo "INCLUDES = -I\${top_srcdir}/src/include \\"
+echo "AM_CPPFLAGS = -I\${top_srcdir}/src/include \\"
 echo "   @EXTRA_CPPFLAGS@"
 echo
 echo "libvpic_includedir = \${includedir}"

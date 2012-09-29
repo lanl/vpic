@@ -2,7 +2,7 @@
 # Top-level Makefile.am
 #------------------------------------------------------------------------------#
 
-SUBDIRS = lib
+SUBDIRS = lib bin
 
 #------------------------------------------------------------------------------#
 # Unit tests
@@ -29,3 +29,10 @@ links:
 			ln -s $$link .; \
 		done \
 	)
+
+install-data-hook:
+	@(([ -d ${prefix}/src ] || mkdir -p ${prefix}/src) && \
+		([ -d ${prefix}/sample ] || mkdir -p ${prefix}/sample) && \
+		cp ${top_srcdir}/deck/main.cxx ${prefix}/src && \
+		cp ${top_srcdir}/deck/wrapper.cxx ${prefix}/src && \
+		cp ${top_srcdir}/sample/harris ${prefix}/sample)

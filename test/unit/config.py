@@ -2,5 +2,5 @@
 # Unit test configuration
 #------------------------------------------------------------------------------#
 
-bld.test('v4', 'test_v4.cxx', '', [1])
-bld.test('rng', 'test_rng.c', '', [1])
+bld.test('v4', 'test_v4.cxx unit.cxx', '', [1])
+bld.test('rng', 'test_rng.c unit.cxx', '', [1])

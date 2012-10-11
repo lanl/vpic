@@ -2,20 +2,7 @@
 # Top-level Makefile.am
 #------------------------------------------------------------------------------#
 
-SUBDIRS = lib bin
-
-#------------------------------------------------------------------------------#
-# Unit tests
-#------------------------------------------------------------------------------#
-
-tests: all
-	cd test; ${MAKE}
-
-check-local: tests
-	cd test; ${MAKE} check
-
-clean-local:
-	cd test; ${MAKE} clean
+SUBDIRS = lib bin test
 
 #------------------------------------------------------------------------------#
 # Create links
@@ -30,9 +17,17 @@ links:
 		done \
 	)
 
+#------------------------------------------------------------------------------#
+# Extra install data
+#------------------------------------------------------------------------------#
+
 install-data-hook:
 	@(([ -d ${prefix}/src ] || mkdir -p ${prefix}/src) && \
 		([ -d ${prefix}/sample ] || mkdir -p ${prefix}/sample) && \
 		cp ${top_srcdir}/deck/main.cxx ${prefix}/src && \
 		cp ${top_srcdir}/deck/wrapper.cxx ${prefix}/src && \
 		cp ${top_srcdir}/sample/harris ${prefix}/sample)
+
+dist-hook:
+	@(mkdir -p ${distdir}/machine && \
+		cp ${top_srcdir}/machine/* ${distdir}/machine)

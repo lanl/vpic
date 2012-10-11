@@ -67,7 +67,7 @@ for dir in subdirs:
 		m.write(70 * '#' + '\n\n')
 		# ... copy these files from the config to build directory
 		for lat in ['local.at']:
-		    m.write('%s : %s/config/%s\n' % (lat, topdir, lat))
+		    m.write('%s : ${top_srcdir}/config/%s\n' % (lat, lat))
 		    m.write('\tcp $< $@\n')
 
 		m.write('\nbin_PROGRAMS =\n')
@@ -106,7 +106,7 @@ for dir in subdirs:
 		m.write('AUTOM4TE = `which autom4te`\n')
 		m.write('AUTOTEST = $(AUTOM4TE) --language=autotest\n\n')
 		m.write('$(TESTSUITE) : tsdeps\n')
-		m.write("\t$(AUTOTEST) -I '%s/%s' -o \$@.tmp \$@.at\n" % (testdir,dir))
+		m.write("\t$(AUTOTEST) -I '${top_srcdir}/test/%s' -o \$@.tmp \$@.at\n" % (dir))
 		m.write('\tmv \$@.tmp \$@\n\n')
 		m.write('## tsdeps are testsuite dependencies.\n')
 		m.write('tsdeps : atfiles package.m4\n')
@@ -114,10 +114,10 @@ for dir in subdirs:
 		tsflags=''
                 # ... if there are test files, add them to the TESTSUITEFLAGS
 		if len(bld._test_input_files) > 0:
-			tsflags += "INPUTFILES='%s/%s/%s" % (testdir,dir,
+			tsflags += "INPUTFILES='${top_srcdir}/test/%s/%s" % (dir,
 							     bld._test_input_files[0])
 			for f in bld._test_input_files[1:]:
-				tsflags += ' %s/%s/%s' % (testdir,dir,f)
+				tsflags += ' ${top_srcdir}/test/%s/%s' % (dir,f)
 			tsflags += "'"
 #SAVE THIS FOR WHEN START USING INPUT DIRS
 #                # ... if there are test dirs, add them to the TESTSUITEFLAGS
@@ -134,7 +134,7 @@ for dir in subdirs:
 
 		# Create dependencies on "at" files.
 		m.write('\natfiles : local.at \\\n')
-		m.write('\t%s/%s/testsuite.at\n' % (testdir,dir))
+		m.write('\t${top_srcdir}/test/%s/testsuite.at\n' % (dir))
 
 		# create rule to write package.m4
 		m.write('\n# write the package.m4\n')
@@ -142,8 +142,8 @@ for dir in subdirs:
 		m.write("package.m4:\n")
 		m.write("\t@:;{ \\\n")
 		m.write("\techo '# Signature of the current package.' ; \\\n")
-		m.write("\techo 'm4_define([AT_PACKAGE_NAME], [%s])' && \\\n" % testdir)
-		m.write("\techo 'm4_define([AT_PACKAGE_STRING], [%s])' ; \\\n" % testdir)
+		m.write("\techo 'm4_define([AT_PACKAGE_NAME], [${top_srcdir}/test])' && \\\n")
+		m.write("\techo 'm4_define([AT_PACKAGE_STRING], [${top_srcdir}/test])' ; \\\n")
 		m.write("\techo 'm4_define([AT_PACKAGE_BUGREPORT], [bergen@lanl.gov])'; \\\n")
 		m.write("\t} > package.m4\n")
 		m.close()

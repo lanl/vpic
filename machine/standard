@@ -12,7 +12,7 @@ EXTENSION=op
 # C compiler flags
 #------------------------------------------------------------------------------#
 
-CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse"
+CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -fno-exceptions"
 
 #------------------------------------------------------------------------------#
 # C++ compiler flags

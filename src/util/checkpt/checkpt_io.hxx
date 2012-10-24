@@ -1,10 +1,10 @@
-#ifndef CheckPtFileIO_hxx
-#define CheckPtFileIO_hxx
+#ifndef CheckPtIO_hxx
+#define CheckPtIO_hxx
 
 #include "checkpt_private.h"
 #include "FileIO.hxx"
 
-struct CheckPtFileIO {
+struct CheckPtIO {
 
 	static checkpt_t * checkpt_open_rdonly(const char * name) {
 		if(!name) ERROR(("NULL name"));
@@ -63,6 +63,6 @@ struct CheckPtFileIO {
 		fileIO->write(reinterpret_cast<const char *>(data), sz);
 	} // checkpt_write
 
-}; // struct CheckPtFileIO
+}; // struct CheckPtIO
 
-#endif // CheckPtFileIO_hxx
+#endif // CheckPtIO_hxx

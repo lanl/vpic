@@ -28,6 +28,16 @@ install-data-hook:
 		cp ${top_srcdir}/deck/wrapper.cxx ${prefix}/src && \
 		cp ${top_srcdir}/sample/harris ${prefix}/sample)
 
+#------------------------------------------------------------------------------#
+# Extra dist
+#------------------------------------------------------------------------------#
+
 dist-hook:
 	@(mkdir -p ${distdir}/machine && \
-		cp ${top_srcdir}/machine/* ${distdir}/machine)
+		cp -r ${top_srcdir}/machine/* ${distdir}/machine)
+	@(mkdir -p ${distdir}/test/integrated && \
+		cp ${top_srcdir}/test/integrated/*.deck ${distdir}/test/integrated)
+	@(mkdir -p ${distdir}/sample && \
+		cp -r ${top_srcdir}/sample/* ${distdir}/sample)			
+	@(mkdir -p ${distdir}/config && \
+		cp ${top_srcdir}/config/local.at ${distdir}/config)

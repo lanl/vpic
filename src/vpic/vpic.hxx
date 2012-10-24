@@ -18,9 +18,9 @@
 #include <emitter.h>
 // FIXME: INCLUDES ONCE ALL IS CLEANED UP
 #include <FileIO.hxx>
-#include <BitField.hxx>
-#include <CheckSum.hxx>
-#include <SystemRAM.hxx>
+#include <bitfield.hxx>
+#include <checksum.hxx>
+#include <system.hxx>
 #include <vector>
  
 #ifndef USER_GLOBAL_SIZE

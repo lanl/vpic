@@ -53,10 +53,10 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   load_4x1( &p[n].dx,   r  );  voxel = p[n].i;
   load_4x1( &p[n].ux,   u  );
 
-  q  = v4float(qsp)*splat(u,3); // q  = p_q,   p_q,   p_q,   D/C
+  q  = v4float(qsp)*splat<3>(u); // q  = p_q,   p_q,   p_q,   D/C
   q3 = v4float(1.f/3.f)*q;      // q3 = p_q/3, p_q/3, p_q/3, D/C
-  dr = shuffle( dr, 0,1,2,2 );  // dr = p_ddx, p_ddy, p_ddz, D/C 
-  r  = shuffle( r,  0,1,2,2 );  // r  = p_dx,  p_dy,  p_dz,  D/C
+  dr = shuffle<0,1,2,2>( dr );  // dr = p_ddx, p_ddy, p_ddz, D/C 
+  r  = shuffle<0,1,2,2>( r );  // r  = p_dx,  p_dy,  p_dz,  D/C
   
   for(;;) {
 
@@ -116,12 +116,12 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     r  += sdr + sdr; // r   = p_dx',       p_dy',       p_dz',       D/C
 
     v4  = q*sdr;     // v4  = q ux,        q uy,        q uz,        D/C
-    v1  = v4*shuffle( v5, 1,2,0,3 );
+    v1  = v4*shuffle<1,2,0,3>( v5 );
     /**/             // v1  = q ux dy,     q uy dz,     q uz dx,     D/C
     v0  = v4 - v1;   // v0  = q ux(1-dy),  q uy(1-dz),  q uz(1-dx),  D/C
     v1 += v4;        // v1  = q ux(1+dy),  q uy(1+dz),  q uz(1+dx),  D/C
 
-    v5  = shuffle( v5, 2,0,1,3 ); // v5 = dz, dx, dy, D/C
+    v5  = shuffle<2,0,1,3>( v5 ); // v5 = dz, dx, dy, D/C
     v4  = one + v5;  // v4  = 1+dz,        1+dx,        1+dy,        D/C
     v2  = v0*v4;     // v2  = q ux(1-dy)(1+dz), ...,                 D/C
     v3  = v1*v4;     // v3  = q ux(1+dy)(1+dz), ...,                 D/C
@@ -129,7 +129,8 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     v0 *= v4;        // v0  = q ux(1-dy)(1-dz), ...,                 D/C
     v1 *= v4;        // v1  = q ux(1+dy)(1-dz), ...,                 D/C
 
-    v4  = ((q3*splat(sdr,0))*splat(sdr,1))*splat(sdr,2);
+    //v4  = ((q3*splat(sdr,0))*splat(sdr,1))*splat(sdr,2);
+    v4  = ((q3*splat<0>(sdr))*splat<1>(sdr))*splat<2>(sdr);
     // FIXME: splat ambiguity in v4 prevents flattening
     /**/             // v4  = q ux uy uz/3,q ux uy uz/3,q ux uy uz/3,D/C
     v0 += v4;        // v0  = q ux[(1-dy)(1-dz)+uy uz/3], ...,       D/C

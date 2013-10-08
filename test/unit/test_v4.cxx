@@ -86,7 +86,7 @@ void test_all(void) {
 void test_splat(void) {
   v4int a( 1, 2, 3, 4), b( 5, 6, 7, 8), c( 9,10,11,12), d(13,14,15,16);
   v4int e(17,18,19,20);
-  b = splat(a,0); c = splat(a,1); d = splat(a,2); e = splat(a,3);
+  b = splat<0>(a); c = splat<1>(a); d = splat<2>(a); e = splat<3>(a);
   if( any(a!=v4int(1,2,3,4)) || any(b!=v4int(1,1,1,1)) ||
       any(c!=v4int(2,2,2,2)) || any(d!=v4int(3,3,3,3)) ||
       any(e!=v4int(4,4,4,4)) )
@@ -97,10 +97,10 @@ void test_splat(void) {
 void test_shuffle(void) {
   v4int a( 0, 1, 2, 3), b( 4, 8,12,16), c( 5, 9,13,17), d( 6,10,14,18);
   v4int e( 7,11,15,19);
-  b = shuffle(a,1,2,3,0);
-  c = shuffle(a,2,3,0,1);
-  d = shuffle(a,3,0,1,2);
-  e = shuffle(a,3,2,1,0);
+  b = shuffle<1,2,3,0>(a);
+  c = shuffle<2,3,0,1>(a);
+  d = shuffle<3,0,1,2>(a);
+  e = shuffle<3,2,1,0>(a);
   if( any(a!=v4int(0,1,2,3)) || any(b!=v4int(1,2,3,0)) ||
       any(c!=v4int(2,3,0,1)) || any(d!=v4int(3,0,1,2)) ||
       any(e!=v4int(3,2,1,0)) )

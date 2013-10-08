@@ -29,6 +29,10 @@ namespace v4 {
   class v4int;
   class v4float;
 
+  template<int i0, int i1, int i2, int i3> struct permute {
+    constexpr static int value = i0 + i1*4 + i2*16 + i3*64;
+  }; // permute
+
 # define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
   
   ////////////////
@@ -43,9 +47,12 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, int n );
-    friend inline v4 shuffle( const v4 &a,
-                              int i0, int i1, int i2, int i3 );
+
+    template<int n>
+	 	friend inline v4 splat( const v4 &a );
+    template<int i0, int i1, int i2, int i3>
+	 	friend inline v4 shuffle( const v4 &a );
+
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -130,21 +137,22 @@ namespace v4 {
   inline int all( const v4 &a ) {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
-  
+
   // Note: n MUST BE AN IMMEDIATE!
-  inline v4 splat( const v4 & a, int n ) {
+  template<int n>
+  inline v4 splat(const v4 & a) {
     __m128 a_v = a.v;
     v4 b;
-    b.v = _mm_shuffle_ps( a_v, a_v, n*PERM(1,1,1,1) );
+    b.v = _mm_shuffle_ps( a_v, a_v, (n*permute<1,1,1,1>::value));
     return b;
   }
 
   // Note: i0:3 MUST BE IMMEDIATES! */
-  inline v4 shuffle( const v4 & a,
-                     int i0, int i1, int i2, int i3 ) {
+  template<int i0, int i1, int i2, int i3>
+  inline v4 shuffle( const v4 & a ) {
     __m128 a_v = a.v;
     v4 b;
-    b.v = _mm_shuffle_ps( a_v, a_v, PERM(i0,i1,i2,i3) );
+    b.v = _mm_shuffle_ps( a_v, a_v, (permute<i0,i1,i2,i3>::value) );
     return b;
   }
 

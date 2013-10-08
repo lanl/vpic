@@ -26,7 +26,7 @@ class StandardIOPolicy
 	public:
 
 		//! Constructor
-		StandardIOPolicy() : handle_(NULL) {}
+		StandardIOPolicy() : handle_(nullptr) {}
 
 		//! Destructor
 		~StandardIOPolicy() {}
@@ -62,6 +62,8 @@ class StandardIOPolicy
 inline FileIOStatus
 StandardIOPolicy::open(const char * filename, FileIOMode mode)
 	{
+		handle_ = nullptr;
+
 		switch(mode) {
 			
 			case io_read:
@@ -93,7 +95,7 @@ StandardIOPolicy::open(const char * filename, FileIOMode mode)
 
 		} // switch
 
-		if(!handle_) {
+		if(handle_ == nullptr) {
 			return fail;
 		} // if
 

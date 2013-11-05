@@ -50,7 +50,7 @@ delete_particle_bc_internal( particle_bc_t * pbc ) {
 
 int
 num_particle_bc( const particle_bc_t * RESTRICT pbc_list ) {
-  return pbc_list ? (-pbc_list->id-3) : 0;
+  return pbc_list ? (-pbc_list->id-2) : 0;
 }
 
 void

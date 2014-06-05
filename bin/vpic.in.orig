@@ -1,0 +1,6 @@
+#! /usr/bin/env bash
+
+deck=`echo $1 | sed 's,\.cxx,,g;s,\.cc,,g;s,\.cpp,,g;s,.*\/,,g'`
+
+echo "@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@prefix@/include -I. @prefix@/src/main.cxx @prefix@/src/wrapper.cxx -DINPUT_DECK=$1 -o $deck.@EXTENSION@ -L@prefix@/lib -lvpic -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm"
+@CXX@ @DEFS@ @CPPFLAGS@ @CXXFLAGS@ @EXTRA_CPPFLAGS@ -I@prefix@/include -I. @prefix@/src/main.cxx @prefix@/src/wrapper.cxx -DINPUT_DECK=$1 -o $deck.@EXTENSION@ -L@prefix@/lib -lvpic -L. @EXTRA_LDFLAGS@ @EXTRA_LIBS@ -lm

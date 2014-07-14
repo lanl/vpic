@@ -32,9 +32,13 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, int n );
-    friend inline v4 shuffle( const v4 &a,
-                              int i0, int i1, int i2, int i3 );
+
+    template<int n>
+    friend inline v4 splat( const v4 &a );
+
+    template<int i0, int i1, int i2, int i3>
+    friend inline v4 shuffle( const v4 &a );
+
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -121,7 +125,8 @@ namespace v4 {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
   
-  inline v4 splat( const v4 & a, int n ) {
+  template<int n>
+  inline v4 splat( const v4 & a ) {
     v4 b;
     b.i[0] = a.i[n];
     b.i[1] = a.i[n];
@@ -130,8 +135,8 @@ namespace v4 {
     return b;
   }
 
-  inline v4 shuffle( const v4 & a,
-                     int i0, int i1, int i2, int i3 ) {
+  template<int i0, int i1, int i2, int i3>
+  inline v4 shuffle( const v4 & a ) {
     v4 b;
     b.i[0] = a.i[i0];
     b.i[1] = a.i[i1];

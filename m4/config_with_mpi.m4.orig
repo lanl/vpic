@@ -149,46 +149,6 @@ AC_DEFUN([CONFIG_WITH_MPI], [
 				[mpi_a=no], [$supportLIBS])
 		fi
 
-		dnl try mpich-gcc
-		if test "$mpi_a" != yes ; then
-			case "$1" in
-				C++)
-					AC_LANG_PUSH(C++)
-					mpiLIB=mpichcxx
-					supportLIBS=`echo $MPI_LIBS | sed s,-lmpichcxx,,g`
-				;;
-				*)
-					AC_LANG_PUSH(C)
-					mpiLIB=mpich-gcc
-					supportLIBS=`echo $MPI_LIBS | sed s,-lmpich-gcc,,g`
-				;;
-			esac
-
-			AC_CHECK_HEADER(mpi.h, [mpi_h=yes], [mpi_h=no], /* check */)
-			AC_CHECK_LIB($mpiLIB, MPI_Init, [mpi_a=yes],
-				[mpi_a=no], [$supportLIBS])
-		fi
-
-		dnl try mpich-xl
-		if test "$mpi_a" != yes ; then
-			case "$1" in
-				C++)
-					AC_LANG_PUSH(C++)
-					mpiLIB=mpichcxx
-					supportLIBS=`echo $MPI_LIBS | sed s,-lmpichcxx,,g`
-				;;
-				*)
-					AC_LANG_PUSH(C)
-					mpiLIB=mpich-xl
-					supportLIBS=`echo $MPI_LIBS | sed s,-lmpich-xl,,g`
-				;;
-			esac
-
-			AC_CHECK_HEADER(mpi.h, [mpi_h=yes], [mpi_h=no], /* check */)
-			AC_CHECK_LIB($mpiLIB, MPI_Init, [mpi_a=yes],
-				[mpi_a=no], [$supportLIBS])
-		fi
-
         AC_LANG_POP()
 
         CPPFLAGS="$old_CPPFLAGS"

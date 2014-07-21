@@ -19,7 +19,7 @@ CFLAGS="-D_XOPEN_SOURCE=600 -g -O2"
 # C++ compiler flags
 #------------------------------------------------------------------------------#
 
-CXXFLAGS="-D_XOPEN_SOURCE=600 -g -O2 -DUSE_V4_PORTABLE -qlanglvl=extended0x -Dnullptr=NULL -qstaticlink"
+CXXFLAGS="-D_XOPEN_SOURCE=600 -g -O2 -DUSE_V4_PORTABLE -qlanglvl=extended0x -Dnullptr=NULL"
 #CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -DUSE_V4_PORTABLE"
 
 #------------------------------------------------------------------------------#
@@ -27,5 +27,5 @@ CXXFLAGS="-D_XOPEN_SOURCE=600 -g -O2 -DUSE_V4_PORTABLE -qlanglvl=extended0x -Dnu
 #------------------------------------------------------------------------------#
 
 #MPI_CPPFLAGS="-I/bgsys/drivers/V1R2M1/ppc64/comm/include -I/bgsys/drivers/V1R2M1/ppc64/comm/lib/gnu -I/bgsys/drivers/V1R2M1/ppc64 -I/bgsys/drivers/V1R2M1/ppc64/comm/sys/include -I/bgsys/drivers/V1R2M1/ppc64/spi/include -I/bgsys/drivers/V1R2M1/ppc64/spi/include/kernel/cnk -I/bgsys/drivers/V1R2M1/ppc64/comm/include"
-#MPI_LDFLAGS="-L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib"
+MPI_LDFLAGS="-Wl,-Bstatic -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib"
 MPI_LIBS="-lmpich-xl -lopa-xl -lmpl-xl -lpami-gcc -lSPI -lSPI_cnk -lrt -lpthread -lstdc++ -lpthread"

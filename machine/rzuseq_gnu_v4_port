@@ -18,7 +18,7 @@ CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -
 # C++ compiler flags
 #------------------------------------------------------------------------------#
 
-CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -DUSE_V4_PORTABLE"
+CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -DUSE_V4_PORTABLE -all-static"
 
 #------------------------------------------------------------------------------#
 # MPI

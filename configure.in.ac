@@ -7,6 +7,7 @@
 #------------------------------------------------------------------------------#
 
 AC_INIT(vpic, VERSION_TAG, bergen@lanl.gov)
+LT_INIT([])
 AC_CONFIG_AUX_DIR(config)
 AC_CANONICAL_TARGET
 
@@ -52,7 +53,6 @@ AC_CONFIG_TESTDIR([test/unit])
 #------------------------------------------------------------------------------#
 
 AC_PROG_CXX
-LT_INIT
 CONFIG_PROG_DOXYGEN
 
 #------------------------------------------------------------------------------#

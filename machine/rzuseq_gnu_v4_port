@@ -26,4 +26,4 @@ CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long 
 
 #MPI_CPPFLAGS="-I/bgsys/drivers/V1R2M1/ppc64/comm/include -I/bgsys/drivers/V1R2M1/ppc64/comm/lib/gnu -I/bgsys/drivers/V1R2M1/ppc64 -I/bgsys/drivers/V1R2M1/ppc64/comm/sys/include -I/bgsys/drivers/V1R2M1/ppc64/spi/include -I/bgsys/drivers/V1R2M1/ppc64/spi/include/kernel/cnk -I/bgsys/drivers/V1R2M1/ppc64/comm/include"
 #MPI_LDFLAGS="-L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/sys/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib64 -L/bgsys/drivers/V1R2M1/ppc64/comm/lib -L/bgsys/drivers/V1R2M1/ppc64/spi/lib -L/bgsys/drivers/V1R2M1/ppc64/comm/lib"
-MPI_LIBS="-lmpich-gcc -lopa-gcc -lmpl-gcc -lpami-gcc -lSPI -lSPI_cnk -lrt -lpthread -lstdc++ -lpthread -dynamic"
+MPI_LIBS="-lmpich-gcc -lopa-gcc -lmpl-gcc -lpami-gcc -dynamic -lSPI -lSPI_cnk -lrt -lpthread -lstdc++ -lpthread"

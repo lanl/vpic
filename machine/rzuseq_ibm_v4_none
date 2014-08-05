@@ -12,13 +12,13 @@ EXTENSION=op
 # C compiler flags
 #------------------------------------------------------------------------------#
 
-CFLAGS="-D_XOPEN_SOURCE=600 -g -O2"
+CFLAGS="-D_XOPEN_SOURCE=600 -g -O3 -qmaxmem=-1"
 
 #------------------------------------------------------------------------------#
 # C++ compiler flags
 #------------------------------------------------------------------------------#
 
-CXXFLAGS="-D_XOPEN_SOURCE=600 -g -O2 -qlanglvl=extended0x -Dnullptr=NULL"
+CXXFLAGS="-D_XOPEN_SOURCE=600 -g -O3 -qmaxmem=-1 -qlanglvl=extended0x -Dnullptr=NULL"
 
 #------------------------------------------------------------------------------#
 # MPI

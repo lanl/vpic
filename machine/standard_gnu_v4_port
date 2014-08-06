@@ -12,13 +12,13 @@ EXTENSION=op
 # C compiler flags
 #------------------------------------------------------------------------------#
 
-CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -fno-exceptions"
+CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ftree-vectorize -ftree-vectorizer-verbose=2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -fno-exceptions"
 
 #------------------------------------------------------------------------------#
 # C++ compiler flags
 #------------------------------------------------------------------------------#
 
-CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ftree-vectorize -ftree-vectorizer-verbose=6 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -DUSE_V4_PORTABLE"
+CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -ftree-vectorize -ftree-vectorizer-verbose=2 -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -DUSE_V4_PORTABLE"
 
 #------------------------------------------------------------------------------#
 # MPI

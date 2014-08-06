@@ -12,13 +12,13 @@ EXTENSION=op
 # C compiler flags
 #------------------------------------------------------------------------------#
 
-CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -vec-report=7 -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -fno-exceptions"
+CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -vec-report=2 -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -fno-exceptions"
 
 #------------------------------------------------------------------------------#
 # C++ compiler flags
 #------------------------------------------------------------------------------#
 
-CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -vec-report=7 -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -DUSE_V4_SSE"
+CXXFLAGS="-Werror -Wall -pedantic -std=c++11 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O2 -vec-report=2 -fno-strict-aliasing -fomit-frame-pointer -march=native -mfpmath=sse -DUSE_V4_SSE"
 
 #------------------------------------------------------------------------------#
 # MPI

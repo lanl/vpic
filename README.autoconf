@@ -33,7 +33,7 @@ something like:
 (in top-level VPIC directory)
 % mkdir -p build/standard_64
 % cp machine/standard build/standard_64
-% cd build/standard_64
+% cd build/machine
 % ../../configure
 
 # Build

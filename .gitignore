@@ -29,6 +29,7 @@ cell/spe/config/missing
 cell/spe/configure
 config/config.guess
 config/config.sub
+config/compile
 config/depcomp
 config/install-sh
 config/ltmain.sh

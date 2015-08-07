@@ -1,0 +1,3 @@
+[submodule "cinch"]
+	path = cinch
+	url = git@gitlab.lanl.gov:ngc-utils/cinch.git

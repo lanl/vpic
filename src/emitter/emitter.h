@@ -43,7 +43,7 @@ delete_emitter_list( emitter_t * e_list );
 
 // Note that this append is hacked to silently return if the given
 // emitter is already part of the list.  This allows the emitter
-// initialization in vpic.hxx / deck_wrappers.cxx to get around
+// initialization in vpic.h / deck_wrappers.cxx to get around
 // some limitations of strict C++. 
 
 emitter_t *

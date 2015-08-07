@@ -2,8 +2,8 @@
 // COMM. FIXME: THIS API NEEDS A SERIOUS REVAMP (BUT AT LEAST IT IS
 // LESS A HOUSE OF SHAME THAN PREVIOUSLY).
 
-#ifndef _mp_h_
-#define _mp_h_
+#ifndef mp_h
+#define mp_h
 
 #include <util_base.h>
 
@@ -152,4 +152,4 @@ mp_end_send( mp_t * mp,
 
 END_C_DECLS
 
-#endif /* _mp_h_ */
+#endif /* mp_h */

@@ -30,8 +30,14 @@ include_directories(${MPI_C_INCLUDE_PATH})
 # NOTE: These must be set before creating the compile scripts below.
 #------------------------------------------------------------------------------#
 
+set(VPIC_CPPFLAGS)
+if(MPI_CPPFLAGS)
+  string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
+  set(VPIC_CPPFLAGS "${string_cppflags}")
+endif(MPI_CPPFLAGS)
+
 set(VPIC_CXX_FLAGS "-I${MPI_C_INCLUDE_PATH} ${MPI_C_LINK_FLAGS}")
-string(REPLACE ";" " " string_libraries ${MPI_C_LIBRARIES})
+string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 
 #------------------------------------------------------------------------------#
@@ -43,7 +49,17 @@ configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
 install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
   DESTINATION bin
-  RENAME vpic)
+  RENAME vpic
+  PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+    )
+
+install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
+  DESTINATION share/vpic)
+install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
+  DESTINATION share/vpic)
 
 # local script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in

@@ -1,9 +1,9 @@
 #ifndef RelayPolicy_h
 #define RelayPolicy_h
 
-#include <ConnectionManager.h>
-#include <P2PConnection.h>
-#include <checkpt.h>
+#include "ConnectionManager.h"
+#include "P2PConnection.h"
+#include "checkpt.h"
 
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */

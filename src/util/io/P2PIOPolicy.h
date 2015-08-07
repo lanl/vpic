@@ -14,10 +14,11 @@
 
 #include <cstdarg>
 #include <string>
-#include <FileIOData.h>
-#include <P2PConnection.h>
-#include <MPData.h>
-#include <swap.h>
+
+#include "FileIOData.h"
+#include "P2PConnection.h"
+#include "MPData.h"
+#include "swap.h"
 
 /*!
 	\class P2PIOPolicy P2PIOPolicy.h

@@ -8,7 +8,7 @@
  *
  */
 
-#include <vpic.hxx>
+#include "vpic/vpic.h"
 
 /* The simulation variable is set up this way so both the checkpt
    service and main can see it.  This allows main to find where

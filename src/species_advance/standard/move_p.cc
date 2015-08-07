@@ -1,5 +1,5 @@
 #define IN_spa
-#include <spa_private.h>
+#include "spa_private.h"
 
 // move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
 // depositing particle current as it goes. If the particle was moved

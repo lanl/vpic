@@ -14,10 +14,10 @@ private:
 };
 
 #ifdef USE_MPRELAY
-#include <RelayPolicy.h>
+#include "RelayPolicy.h"
 typedef MPWrapper_T<RelayPolicy> MPWrapper;
 #else
-#include <DMPPolicy.h>
+#include "DMPPolicy.h"
 typedef MPWrapper_T<DMPPolicy> MPWrapper;
 #endif
 

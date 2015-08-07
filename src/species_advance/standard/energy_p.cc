@@ -1,6 +1,6 @@
 #define IN_spa
 #define HAS_V4_PIPELINE
-#include <spa_private.h>
+#include "spa_private.h"
 
 void
 energy_p_pipeline( energy_p_pipeline_args_t * RESTRICT args,

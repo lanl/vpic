@@ -1,5 +1,5 @@
 #define IN_sfa
-#include <sfa_private.h>
+#include "sfa_private.h"
 
 static field_advance_kernels_t sfa_kernels = {
 

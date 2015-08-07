@@ -4,17 +4,17 @@
 #-----------------------------------------------------------------------------~#
 
 set(boundary_HEADERS
+  boundary.h
+  boundary_private.h
+  PARENT_SCOPE
+)
+
+set(boundary_SOURCES
   absorb_tally.c
   boundary.c
   boundary_p.cc
   link.c
   maxwellian_reflux.c
-  PARENT_SCOPE
-)
-
-set(boundary_SOURCES
-  boundary.h
-  boundary_private.h
   PARENT_SCOPE
 )
 

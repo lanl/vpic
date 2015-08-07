@@ -6,11 +6,11 @@
 #define _DARWIN_C_SOURCE
 #endif
 
-#include <dlfcn.h>
+#include "dlfcn.h"
 #endif
 
 #define IN_checkpt
-#include <checkpt_private.h>
+#include "checkpt_private.h"
 
 /* Boolean flag indicating whether or not checkpoint is booted. */
 

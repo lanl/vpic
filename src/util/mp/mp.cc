@@ -8,8 +8,8 @@
  *
  */
 
-#include <mp.h>
-#include <MPWrapper.h>
+#include "mp.h"
+#include "MPWrapper.h"
 
 void boot_mp( int * pargc, char *** pargv ) {
   MPWrapper::instance().boot_mp( pargc, pargv );

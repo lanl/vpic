@@ -1,7 +1,7 @@
 // FIXME: USE THE DISCRETIZED VARIATIONAL PRINCIPLE DEFINITION OF ENERGY
 
 #define IN_sfa
-#include <sfa_private.h>
+#include "sfa_private.h"
 
 typedef struct pipeline_args {
   const field_t      * ALIGNED(128) f;

@@ -1,7 +1,7 @@
 #ifndef P2PUtilsPolicy_h
 #define P2PUtilsPolicy_h
 
-#include <P2PConnection.h>
+#include "P2PConnection.h"
 
 class P2PUtilsPolicy
 	{

@@ -5,7 +5,7 @@
 #ifndef mp_h
 #define mp_h
 
-#include <util_base.h>
+#include "../util_base.h"
 
 /* Opaque handle to the message passing buffers */
 

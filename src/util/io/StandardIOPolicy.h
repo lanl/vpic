@@ -12,10 +12,11 @@
 #ifndef StandardIOPolicy_h
 #define StandardIOPolicy_h
 
-#include <FileIOData.h>
 #include <string>
 #include <cstdarg>
 #include <cstdio>
+
+#include "FileIOData.h"
 
 /*!
 	\class StandardIOPolicy StandardIOPolicy.h

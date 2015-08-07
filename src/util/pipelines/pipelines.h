@@ -1,7 +1,7 @@
 #ifndef _pipelines_h_
 #define _pipelines_h_
 
-#include <util_base.h>
+#include "../util_base.h"
 
 enum { MAX_PIPELINE = 16 };
 

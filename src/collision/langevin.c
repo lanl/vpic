@@ -1,5 +1,5 @@
 #define IN_collision
-#include <collision_private.h>
+#include "collision_private.h"
 
 /* Private interface *********************************************************/
 

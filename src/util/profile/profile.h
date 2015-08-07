@@ -1,7 +1,7 @@
 #ifndef _profile_h_
 #define _profile_h_
 
-#include <util_base.h>
+#include "../util_base.h"
 
 // To add a named timer to the profile, add a line to this macro in
 // the position you want the times to appear in the profile dumps.  To

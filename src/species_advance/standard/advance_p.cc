@@ -3,7 +3,7 @@
 
 #define IN_spa
 #define HAS_V4_PIPELINE
-#include <spa_private.h>
+#include "spa_private.h"
 
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,

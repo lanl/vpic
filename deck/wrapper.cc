@@ -9,7 +9,9 @@
  */
 
 #include <iostream> // For std::cerr and friends
-#include <vpic.hxx>
+
+#include "vpic/vpic.h"
+#include "util/util_base.h"
 
 //-----------------------------------------------------------------------------
 

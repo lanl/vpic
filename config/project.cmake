@@ -6,6 +6,8 @@ project(vpic)
 
 cinch_add_library_target(vpic src)
 
+set(CINCH_HEADER_SUFFIXES "\\.h")
+
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

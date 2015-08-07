@@ -2,7 +2,10 @@
 #define DMPPolicy_h
 
 #include <mpi.h>
-#include <checkpt.h>
+#include <cstdlib>
+#include <cstdlib>
+
+#include "../checkpt/checkpt.h"
 
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */
@@ -133,7 +136,9 @@ struct DMPPolicy {
   mp_allsum_d( double * local,
                double * global,
                int n ) {
-    if( !local || !global || n<1 || abs(local-global)<n ) ERROR(( "Bad args" ));
+    if( !local || !global || n<1 || std::abs(local-global)<n ) {
+	 	ERROR(( "Bad args" ));
+	 } // if
     TRAP( MPI_Allreduce( local, global, n, MPI_DOUBLE, MPI_SUM, world->comm ) );
   }
   
@@ -141,7 +146,9 @@ struct DMPPolicy {
   mp_allsum_i( int * local,
                int * global,
                int n ) {
-    if( !local || !global || n<1 || abs(local-global)<n ) ERROR(( "Bad args" ));
+    if( !local || !global || n<1 || std::abs(local-global)<n ) {
+	 	ERROR(( "Bad args" ));
+	 } // if
     TRAP( MPI_Allreduce( local, global, n, MPI_INT, MPI_SUM, world->comm ) );
   }
   

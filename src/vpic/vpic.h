@@ -13,15 +13,16 @@
 #ifndef vpic_h
 #define vpic_h
  
-#include <boundary.h>
-#include <collision.h>
-#include <emitter.h>
-// FIXME: INCLUDES ONCE ALL IS CLEANED UP
-#include <FileIO.h>
-#include <bitfield.h>
-#include <checksum.h>
-#include <system.h>
 #include <vector>
+
+#include "boundary/boundary.h"
+#include "collision/collision.h"
+#include "emitter/emitter.h"
+// FIXME: INCLUDES ONCE ALL IS CLEANED UP
+#include "../util/io/FileIO.h"
+#include "../util/bitfield.h"
+#include "../util/checksum.h"
+#include "../util/system.h"
  
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384

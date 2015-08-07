@@ -4,7 +4,7 @@
 // slower implementation in the near future.
 
 #define IN_sf_interface
-#include <sf_interface_private.h>
+#include "sf_interface_private.h"
 
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 #define a(x,y,z) a[ VOXEL(x,y,z, nx,ny,nz) ]

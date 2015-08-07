@@ -1,5 +1,5 @@
 #define IN_rng
-#include <drandn_table.h>
+#include "drandn_table.h"
 
 const double drandn_zig_x[257] = {
   0.0000000000000000000000000000000000000000e+00,   // 0

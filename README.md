@@ -4,7 +4,7 @@ VPIC is a fully relativistic plasma simulation code...
 
 # Getting the Code
 
-VPIC uses nested submodules.  This requires the addition of the --recursive
+VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
 ```
@@ -12,7 +12,8 @@ flag when cloning the repository:
 ```
 
 This command will check out the VPIC source code, including the Cinch
-build system.  Cinch is documented [here](gitlab.lanl.gov/ngc-utils/cinch).
+build system.  Cinch is documented
+[here](http://gitlab.lanl.gov/ngc-utils/cinch).
 
 # Build Instructions
 

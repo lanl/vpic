@@ -2,6 +2,11 @@
 
 VPIC is a fully relativistic plasma simulation code...
 
+# Getting the Code
+
+VPIC uses nested submodules.  This requires the addition of the --recursive
+flag when cloning the repository.
+
 # Build Instructions
 
 VPIC uses the CMake build system.  To configure a build, do the following from

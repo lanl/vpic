@@ -7,15 +7,15 @@ VPIC is a fully relativistic plasma simulation code...
 VPIC uses the CMake build system.  To configure a build, do the following from
 the top-level source directory:
   
-    % mkdir build
-	 % cd build
+   % mkdir build
+	% cd build
 
 Then call the curses version of CMake:
 
-	 % ccmake ..
+	% ccmake ..
 
 or, optionally:
 
-	 % cmake -DENABLE_MPI ..
+	% cmake -DENABLE_MPI ..
 
 After configuration, simply type 'make'.

@@ -10,7 +10,7 @@
 // _LOCAL_ NUMBER OF CELLS).  THIS LATENT BUG IS NOT EXPECTED TO
 // AFFECT ANY PRACTICAL SIMULATIONS.
 
-#include <field_advance.h>
+#include "../field_advance/field_advance.h"
 // FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
 /*****************************************************************************/

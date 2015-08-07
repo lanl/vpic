@@ -1,9 +1,0 @@
-AC_DEFUN([CCS_EXTRA_FLAGS], [
-    AC_ARG_VAR([EXTRA_CPPFLAGS], [Extra pre-processor flags])
-    AC_ARG_VAR([EXTRA_LDFLAGS], [Extra link flags])
-    AC_ARG_VAR([EXTRA_LIBS], [Extra library flags])
-
-    AC_SUBST(EXTRA_CPPFLAGS, $EXTRA_CPPFLAGS)
-    AC_SUBST(EXTRA_LDFLAGS, $EXTRA_LDFLAGS)
-    AC_SUBST(EXTRA_LIBS, $EXTRA_LIBS)
-])

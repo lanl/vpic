@@ -8,7 +8,7 @@
  *
  */
 
-#include <grid.h>
+#include "grid.h"
 
 #define RANK_TO_INDEX(rank,ix,iy,iz) do {               \
     int _ix, _iy, _iz;                                  \

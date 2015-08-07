@@ -12,9 +12,9 @@
 #ifndef swap_h
 #define swap_h
 
-#include <field_advance.h>
-#include <sf_interface.h>
-#include <species_advance.h>
+#include "field_advance.h"
+#include "sf_interface.h"
+#include "species_advance.h"
 
 #if defined(__GNUC__)
 	#include <byteswap.h>

@@ -1,7 +1,0 @@
-#! /usr/bin/env bash
-
-mv config/vpic_header_list config/vpic_header_list.bak
-mv config/vpic_source_list config/vpic_source_list.bak
-
-find src -regex '.*\.h+?x+?' | grep -v include > config/vpic_header_list
-find src -regex '.*\.c+?x+?' | grep -v "main.cxx" | grep -v "deck_wrapper.cxx" | grep -v "_spu.c" > config/vpic_source_list

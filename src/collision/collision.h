@@ -5,7 +5,7 @@
    accomdate collisional processes involving an arbitrary number of
    bodies (e.g. 3-body recombination processes). */
 
-#include "species_advance.h"
+#include "../species_advance/species_advance.h"
 
 struct collision_op;
 typedef struct collision_op collision_op_t;

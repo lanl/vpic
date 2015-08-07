@@ -1,10 +1,10 @@
-#include <pipelines.h> // For util_base.h, datatypes and prototypes
+#include "pipelines.h" // For util_base.h, datatypes and prototypes
 
 static int Busy = 0;
 
 /*****************************************************************************/
 
-#include <checkpt.h>
+#include "../checkpt/checkpt.h"
 
 void
 checkpt_serial( const pipeline_dispatcher_t * _serial ) {

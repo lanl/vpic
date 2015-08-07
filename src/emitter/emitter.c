@@ -1,5 +1,5 @@
 #define IN_emitter
-#include <emitter_private.h>
+#include "emitter_private.h"
 
 /* Private interface **********************************************************/
 

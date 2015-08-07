@@ -1,7 +1,7 @@
 #ifndef _material_h_
 #define _material_h_
 
-#include <util.h>
+#include "../util/util.h"
 
 enum {
   max_material = 32768 // Valid materials are numbered 0...32767

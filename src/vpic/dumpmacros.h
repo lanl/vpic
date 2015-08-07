@@ -1,5 +1,5 @@
-#ifndef _dumpmacros_h_
-#define _dumpmacros_h_
+#ifndef dumpmacros_h
+#define dumpmacros_h
 
 /* FIXME: WHEN THESE MACROS WERE HOISTED AND VARIOUS HACKS DONE TO THEm
    THEY BECAME _VERY_ _DANGEROUS. */
@@ -174,4 +174,4 @@
 
 #define ABORT(cond) if( cond ) ERROR(( #cond ))
 
-#endif // _dumpmacros_h_
+#endif // dumpmacros_h

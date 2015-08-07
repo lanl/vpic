@@ -1,1 +1,0 @@
-$(call add-objs,sfa advance_e advance_b compute_div_e_err clean_div_e compute_rms_div_e_err compute_div_b_err clean_div_b compute_rms_div_b_err energy_f compute_curl_b compute_rhob local remote vacuum_advance_e vacuum_energy_f vacuum_clean_div_e vacuum_compute_div_e_err vacuum_compute_curl_b vacuum_compute_rhob,vpic)

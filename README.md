@@ -39,3 +39,22 @@ Then call the curses version of CMake:
 ```
 
 After configuration, simply type 'make'.
+
+# Building an example input deck
+
+After you have successfully built VPIC, you should have an executable in
+the *bin* directory called *vpic*.  To build an executable from one of
+the sample input decks, simply run:
+
+```
+% bin/vpic input_deck
+```
+
+Where *input_deck* is the name of your sample deck.  For example, to build
+the *harris* input deck in the *sample* subdirectory
+*(assuming that your build directory is located in the top-level
+source directory)*:
+
+```
+% bin/vpic ../sample/harris
+```

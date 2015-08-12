@@ -50,7 +50,7 @@ the sample input decks, simply run:
 % bin/vpic input_deck
 ```
 
-Where *input_deck* is the name of your sample deck.  For example, to build
+where *input_deck* is the name of your sample deck.  For example, to build
 the *harris* input deck in the *sample* subdirectory
 *(assuming that your build directory is located in the top-level
 source directory)*:

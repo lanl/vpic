@@ -9,6 +9,7 @@ project(vpic)
 #------------------------------------------------------------------------------#
 
 set(ENABLE_MPI True CACHE BOOL "Enable MPI" FORCE)
+set(ENABLE_MPI_CXX_BINDINGS False CACHE BOOL "Enable MPI C++ Bindings" FORCE)
 
 #------------------------------------------------------------------------------#
 # Add library target

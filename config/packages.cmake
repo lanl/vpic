@@ -47,7 +47,6 @@ include_directories(${MPI_C_INCLUDE_PATH})
 
 set(VPIC_CPPFLAGS)
 if(MPI_CPPFLAGS)
-message(STATUS "${MPI_CPPFLAGS}")
   string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
   set(VPIC_CPPFLAGS "${string_cppflags}")
 endif(MPI_CPPFLAGS)

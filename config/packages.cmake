@@ -47,11 +47,14 @@ include_directories(${MPI_C_INCLUDE_PATH})
 
 set(VPIC_CPPFLAGS)
 if(MPI_CPPFLAGS)
+message(STATUS "${MPI_CPPFLAGS}")
   string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
   set(VPIC_CPPFLAGS "${string_cppflags}")
 endif(MPI_CPPFLAGS)
 
-set(VPIC_CXX_FLAGS "-I${MPI_C_INCLUDE_PATH} ${MPI_C_LINK_FLAGS}")
+string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
+set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
+
 string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 

@@ -1,0 +1,24 @@
+# Makefile for building final exe and cleaning directory
+
+# path to installed compiler wrapper
+VPIC = ${CMAKE_BINARY_DIR}/bin/vpic
+# name of input deck file
+DECK = harris
+# name of platform to build for
+PLAT = Linux
+
+# compile final exe
+all:
+	$(VPIC) $(DECK)
+
+# clean everything
+clean:
+	-$(RM) $(DECK).$(PLAT)
+	-$(RM) checkpt.*
+	-$(RM) ehydro.*
+	-$(RM) energies
+	-$(RM) eparticle.*
+	-$(RM) fields.*
+	-$(RM) ihydro.*
+	-$(RM) iparticle.*
+	-$(RM) *~

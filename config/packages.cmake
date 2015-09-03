@@ -66,6 +66,11 @@ set(VPIC_CXX_LIBRARIES "${string_libraries}")
 # Handle vpic compile script
 #------------------------------------------------------------------------------#
 
+# process Makefile.run.in to get a simple Makefile.run for a run. Points to
+# local built exe wrapper, and has example deck/platform.
+configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
+  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
+
 # install script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)

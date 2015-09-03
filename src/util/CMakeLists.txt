@@ -54,8 +54,10 @@ set(util_SOURCES
 )
 
 if(ENABLE_UNIT_TESTS)
-  cinch_add_unit(v4
-    SOURCES v4/test_v4.cc)
+  if(USE_V4)
+    cinch_add_unit(v4
+      SOURCES v4/test_v4.cc)
+  endif(USE_V4)
 
   cinch_add_unit(rng
     SOURCES rng/test_rng.cc

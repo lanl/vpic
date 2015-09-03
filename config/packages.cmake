@@ -54,6 +54,11 @@ endif(MPI_CPPFLAGS)
 string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
 set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
 
+# Add debug flags
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
 string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 

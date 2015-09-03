@@ -14,6 +14,7 @@
 #define vpic_h
  
 #include <vector>
+#include <cmath>
 
 #include "boundary/boundary.h"
 #include "collision/collision.h"
@@ -638,7 +639,7 @@ private:
   inline double trunc_granular( double a, double b ) { return b*int(a/b); }
  
   // Compute the remainder of a/b
-  inline double remainder( double a, double b ) { return remainder(a,b); }
+  inline double remainder( double a, double b ) { return std::remainder(a,b); }
   // remainder(a,b);
  
   // Compute the Courant length on a regular mesh

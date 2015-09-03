@@ -1,4 +1,9 @@
-#include <util.h>
+/*~--------------------------------------------------------------------------~*
+ *~--------------------------------------------------------------------------~*/
+
+#include <gtest/gtest.h>
+
+#include "../util.h"
 
 /* Sequence is from the 11213 generator with a seed of 1234 */
 
@@ -207,18 +212,14 @@ static const unsigned int seq[] = {
 
 /* FIXME: IMPROVE COVERAGE */
 
-int
-main( int argc,
-      char **argv ) {
-  rng_t * rng;
+TEST(rng, uirand) {
   int i;
-  boot_services( &argc, &argv );
-  rng = new_rng( 1234 );
+  rng_t * rng = new_rng( 1234 );
   for( i=0; i<N; i++ ) if( uirand( rng )!=seq[i] ) break;
-  if( i!=N ) ERROR(( "FAIL" ));
-  MESSAGE(( "pass" ));
-  delete_rng( rng );
-  halt_services();
-  return 0;
-}
+  ASSERT_FALSE( i!=N );
+  delete_rng(rng);
+} // TEST
 
+/*~-------------------------------------------------------------------------~-*
+ * vim: set tabstop=2 shiftwidth=2 expandtab :
+ *~-------------------------------------------------------------------------~-*/

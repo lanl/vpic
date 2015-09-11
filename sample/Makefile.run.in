@@ -22,3 +22,15 @@ clean:
 	-$(RM) ihydro.*
 	-$(RM) iparticle.*
 	-$(RM) *~
+
+# example openmpi mpirun commands. --tpp is number of vpic pipelines. Each
+# pipeline is domain replicated.
+
+# one rank on a node, bound to all available cores.
+# mpirun bind-to none  --report-bindings -n 1 ./harris.Linux  1 1 --tpp 16
+
+# two ranks on a node with two sockets. ranks bound to sockets.
+# mpirun --map-by socket --bind-to socket --report-bindings -n 2 ./harris.Linux  1 1 --tpp 16
+
+# 4 ranks on a node with 4 numa nodes. ranks bound to numa nodes.
+# mpirun --map-by numa --bind-to numa --report-bindings -n 4 ./harris.Linux  1 1 --tpp 8

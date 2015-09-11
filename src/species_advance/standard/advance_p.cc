@@ -173,11 +173,11 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
       if( move_p( p0, local_pm, a0, g, qsp ) ) { // Unlikely
         if( nm<max_nm ) {
-		  	 pm[nm++] = local_pm[0];
+	  pm[nm++] = local_pm[0];
         }
         else {
-		    itmp++;                 // Unlikely
-		  } // if
+	  itmp++;                 // Unlikely
+	} // if
       } // if
     }
 

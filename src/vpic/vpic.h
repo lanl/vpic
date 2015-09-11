@@ -16,9 +16,9 @@
 #include <vector>
 #include <cmath>
 
-#include "boundary/boundary.h"
-#include "collision/collision.h"
-#include "emitter/emitter.h"
+#include "../boundary/boundary.h"
+#include "../collision/collision.h"
+#include "../emitter/emitter.h"
 // FIXME: INCLUDES ONCE ALL IS CLEANED UP
 #include "../util/io/FileIO.h"
 #include "../util/bitfield.h"

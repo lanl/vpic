@@ -53,6 +53,19 @@ set(util_SOURCES
   PARENT_SCOPE
 )
 
+if(ENABLE_UNIT_TESTS)
+  if(USE_V4)
+    cinch_add_unit(v4
+      SOURCES v4/test_v4.cc)
+  endif(USE_V4)
+
+  cinch_add_unit(rng
+    SOURCES rng/test_rng.cc
+    LIBRARIES vpic
+    POLICY VPIC
+    THREADS 1)
+endif(ENABLE_UNIT_TESTS)
+
 #if(ENABLE_UNIT_TESTS)
 #  cinch_add_unit(casename
 #    SOURCES testfile.cc

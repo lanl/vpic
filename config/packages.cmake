@@ -100,6 +100,18 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
     WORLD_READ WORLD_EXECUTE
 )
 
+#------------------------------------------------------------------------------#
+# Add VPIC unit test policy
+#------------------------------------------------------------------------------#
+
+cinch_add_unit_execution_policy(VPIC
+  ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
+  FLAGS ${MPI_${MPI_LANGUAGE}_COMPILE_FLAGS}
+  INCLUDES ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH}
+  LIBRARIES ${MPI_${MPI_LANGUAGE}_LIBRARIES}
+  EXEC ${MPIEXEC}
+  EXEC_THREADS ${MPIEXEC_NUMPROC_FLAG})
+
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

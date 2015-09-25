@@ -15,6 +15,22 @@ set(ENABLE_MPI_CXX_BINDINGS False CACHE BOOL "Enable MPI C++ Bindings" FORCE)
 # Add build options
 #------------------------------------------------------------------------------#
 
+option(ENABLE_INTEGRATED_TESTS "enable integrated tests" OFF)
+if(ENABLE_INTEGRATED_TESTS)
+  enable_testing()
+  add_subdirectory(test/integrated)
+endif(ENABLE_INTEGRATED_TESTS)
+
+option(USE_OPENMP "use openmp" OFF)
+if(USE_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  endif(OPENMP_FOUND)
+endif(USE_OPENMP)
+
 set(USE_V4)
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
 if(USE_V4_ALTIVEC)
@@ -33,7 +49,6 @@ if(USE_V4_SSE)
   add_definitions(-DUSE_V4_SSE)
   set(USE_V4 True)
 endif(USE_V4_SSE)
-
 
 #------------------------------------------------------------------------------#
 # Add library target

@@ -15,6 +15,7 @@ all:
 clean:
 	-$(RM) $(DECK).$(PLAT)
 	-$(RM) checkpt.*
+	-$(RM) core.*
 	-$(RM) ehydro.*
 	-$(RM) energies
 	-$(RM) eparticle.*

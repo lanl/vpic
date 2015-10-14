@@ -52,7 +52,9 @@ if(MPI_CPPFLAGS)
 endif(MPI_CPPFLAGS)
 
 string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
-set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
+if(NOT ${string_includes} STREQUAL "")
+  set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
+endif(NOT ${string_includes} STREQUAL "")
 
 # Add debug flags
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")

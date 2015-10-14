@@ -16,8 +16,9 @@
 
 foreach( lang C CXX Fortran )
   # forcing -dynamic allows cmake's intitial compiler check to pass.
-  set( CMAKE_${lang}_FLAGS "-dynamic" CACHE STRING
-    "On Cray, use -dynamic when checking if the compiler works." )
+  # adding -craype-verbose shows compiler flags when % make VERBOSE=1.
+  set( CMAKE_${lang}_FLAGS "-dynamic -craype-verbose" CACHE STRING
+    "Use -dynamic when checking if the compiler works. Add -craype-verbose." )
 endforeach()
 set( CMAKE_EXE_LINKER_FLAGS "-dynamic" CACHE STRING
   "Extra flags for linking executables")

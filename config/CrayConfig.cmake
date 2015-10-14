@@ -1,7 +1,11 @@
 # ----------------------------------------------------------------------
 # Cray systems (Cielo, Cielito, Trinitite, Trinity)
 #
-# cmake -C ~/draco/config/CrayConfig.cmake [configure options] source_dir
+# This file is courtesy of Kelly Thompson (KT), kgt@lanl.gov
+#
+# cmake -C /path/to/vpic/config/CrayConfig.cmake [options] /path/to/vpic
+# or
+# ccmake -C /path/to/vpic/config/CrayConfig.cmake /path/to/vpic
 # ----------------------------------------------------------------------
 
 #

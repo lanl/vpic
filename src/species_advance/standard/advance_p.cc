@@ -34,7 +34,15 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
   int itmp, ii, n, nm, max_nm;
   
-  particle_mover_t local_pm[1];
+  // When V4_ACCELERATION is defined the move_p that gets called from within
+  // this (non v4) pipeline is the _v4 version. This is because move_p is only
+  // compiled as v4 or not v4, not one of each. Therefore local_pm requires
+  // 16 byte alignment. The debug version barfed on unaligned memory access
+  // for local_pm exactly through this mechanism. The new declaration of
+  // local_pm is exactly as it is in the pipeline_v4.
+  // For a debug_64 build of version 407 this bug does not appear since
+  // the code goes into move_p.c, which does not use vector intrinsics.
+  DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
   // Determine which quads of particles quads this pipeline processes
 
@@ -426,7 +434,7 @@ advance_p( /**/  species_t            * RESTRICT sp,
 
   // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,
-  // it uses an entire accumulator.  Reserving an entirely accumulator
+  // it uses an entire accumulator.  Reserving an entire accumulator
   // for the host processor to handle at most 15 particles is wasteful
   // of memory.  It is anticipated that it may be useful at some point
   // in the future have pipelines accumulating currents while the host

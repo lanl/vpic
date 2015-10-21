@@ -34,14 +34,6 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
   int itmp, ii, n, nm, max_nm;
   
-  // When V4_ACCELERATION is defined the move_p that gets called from within
-  // this (non v4) pipeline is the _v4 version. This is because move_p is only
-  // compiled as v4 or not v4, not one of each. Therefore local_pm requires
-  // 16 byte alignment. The debug version barfed on unaligned memory access
-  // for local_pm exactly through this mechanism. The new declaration of
-  // local_pm is exactly as it is in the pipeline_v4.
-  // For a debug_64 build of version 407 this bug does not appear since
-  // the code goes into move_p.c, which does not use vector intrinsics.
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
   // Determine which quads of particles quads this pipeline processes

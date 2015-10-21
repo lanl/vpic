@@ -30,7 +30,6 @@ else()
   message(FATAL_ERROR "C99 compatible compiler not found")
 endif()
 
-
 #------------------------------------------------------------------------------#
 # Add MPI includes
 #------------------------------------------------------------------------------#
@@ -63,6 +62,17 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
 string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
+
+#------------------------------------------------------------------------------#
+# OpenSSL
+#------------------------------------------------------------------------------#
+
+if(ENABLE_OPENSSL)
+  find_package(OpenSSL REQUIRED)
+
+  include_directories(${OPENSSL_INCLUDE_DIR})
+  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${OPENSSL_LIBRARIES}")
+endif(ENABLE_OPENSSL)
 
 #------------------------------------------------------------------------------#
 # Handle vpic compile script

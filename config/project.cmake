@@ -50,6 +50,11 @@ if(USE_V4_SSE)
   set(USE_V4 True)
 endif(USE_V4_SSE)
 
+option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
+if(ENABLE_OPENSSL)
+  add_definitions(-DENABLE_OPENSSL)
+endif(ENABLE_OPENSSL)
+
 #------------------------------------------------------------------------------#
 # Add library target
 #------------------------------------------------------------------------------#

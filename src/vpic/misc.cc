@@ -171,25 +171,23 @@ vpic_simulation::modify( const char *fname ) {
 #undef DTEST
 
 #if defined(ENABLE_OPENSSL)
-#include <CheckSum.h>
+#include "../util/checksum.h"
 
 void vpic_simulation::checksum_fields(CheckSum & cs) {
-  checkSumBuffer<field_t>(field, grid->nv, cs, "sha1");
+  checkSumBuffer<field_array_t>(field_array, grid->nv, cs, "sha1");
 
-  const int nproc = mp_nproc(grid->mp);
-
-  if(nproc > 1) {
-    const unsigned int csels = cs.length*nproc;
+  if(nproc() > 1) {
+    const unsigned int csels = cs.length*nproc();
     unsigned char * sums(NULL);
 
-    if(mp_rank(grid->mp) == 0) {
+    if(rank() == 0) {
       sums = new unsigned char[csels];
     } // if
 
     // gather sums from all ranks
-    mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+    mp_gather_uc(cs.value, sums, cs.length);
 
-    if(mp_rank(grid->mp) == 0) {
+    if(rank() == 0) {
       checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
       delete[] sums;
     } // if
@@ -198,7 +196,7 @@ void vpic_simulation::checksum_fields(CheckSum & cs) {
 
 void vpic_simulation::output_checksum_fields() {
   CheckSum cs;
-  checkSumBuffer<field_t>(field, grid->nv, cs, "sha1");
+  checkSumBuffer<field_array_t>(field_array, grid->nv, cs, "sha1");
 
   if(nproc() > 1) {
     const unsigned int csels = cs.length*nproc();
@@ -209,7 +207,7 @@ void vpic_simulation::output_checksum_fields() {
     } // if
 
     // gather sums from all ranks
-    mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+    mp_gather_uc(cs.value, sums, cs.length);
 
     if( rank() == 0) {
       checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
@@ -230,20 +228,18 @@ void vpic_simulation::checksum_species(const char * species, CheckSum & cs) {
   
   checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
 
-  const int nproc = mp_nproc(grid->mp);
-
-  if(nproc > 1) {
-    const unsigned int csels = cs.length*nproc;
+  if(nproc() > 1) {
+    const unsigned int csels = cs.length*nproc();
     unsigned char * sums(NULL);
 
-	if(mp_rank(grid->mp) == 0) {
+	if(rank() == 0) {
     	sums = new unsigned char[csels];
 	} // if
 
 	// gather sums from all ranks
-	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+	mp_gather_uc(cs.value, sums, cs.length);
 
-	if(mp_rank(grid->mp) == 0) {
+	if(rank() == 0) {
 		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");
 		MESSAGE(("SPECIES \"%s\" SHA1CHECKSUM: %s", species, cs.strvalue));
 		delete[] sums;
@@ -269,7 +265,7 @@ void vpic_simulation::output_checksum_species(const char * species) {
 	} // if
 
 	// gather sums from all ranks
-	mp_gather_uc(cs.value, sums, cs.length, grid->mp);
+	mp_gather_uc(cs.value, sums, cs.length);
 
 	if( rank() == 0) {
 		checkSumBuffer<unsigned char>(sums, csels, cs, "sha1");

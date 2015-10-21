@@ -71,7 +71,8 @@ if(ENABLE_OPENSSL)
   find_package(OpenSSL REQUIRED)
 
   include_directories(${OPENSSL_INCLUDE_DIR})
-  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${OPENSSL_LIBRARIES}")
+  string(REPLACE ";" " " string_libraries "${OPENSSL_LIBRARIES}")
+  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
 endif(ENABLE_OPENSSL)
 
 #------------------------------------------------------------------------------#

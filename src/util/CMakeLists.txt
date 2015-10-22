@@ -56,11 +56,11 @@ set(util_SOURCES
 if(ENABLE_UNIT_TESTS)
   if(USE_V4)
     cinch_add_unit(v4
-      SOURCES v4/test_v4.cc)
+      SOURCES v4/test/v4.cc)
   endif(USE_V4)
 
   cinch_add_unit(rng
-    SOURCES rng/test_rng.cc
+    SOURCES rng/test/rng.cc
     LIBRARIES vpic
     POLICY VPIC
     THREADS 1)

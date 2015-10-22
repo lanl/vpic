@@ -3,8 +3,8 @@
 
 #include <gtest/gtest.h>
 
-#include "../util.h"
-#include "v4.h"
+#include "../../util.h"
+#include "../v4.h"
 
 using namespace v4;
 

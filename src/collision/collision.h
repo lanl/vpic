@@ -5,7 +5,12 @@
    accomdate collisional processes involving an arbitrary number of
    bodies (e.g. 3-body recombination processes). */
 
-#include "species_advance.h"
+#include "../species_advance/species_advance.h"
+
+#include <math.h>
+#ifndef M_PI
+# define M_PI 3.14159265358979323846
+#endif
 
 struct collision_op;
 typedef struct collision_op collision_op_t;

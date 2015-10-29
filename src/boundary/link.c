@@ -1,5 +1,5 @@
-#include <boundary.h>
-#include <stdio.h> // for debugging output
+#include "boundary.h"
+#include "stdio.h" // for debugging output
 
 // Special absorbing boundary condition that generates a "link" output
 // comprising data for particles absorbed at boundary.

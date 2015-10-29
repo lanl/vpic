@@ -1,0 +1,3 @@
+[submodule "cinch"]
+	path = cinch
+	url = ../../csse/cinch.git

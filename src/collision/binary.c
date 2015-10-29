@@ -1,6 +1,6 @@
 #define IN_collision
 /*#define HAS_V4_PIPELINE*/
-#include <collision_private.h>
+#include "collision_private.h"
 
 /* FIXME: ADD SAMPLE TO UNARY */
 

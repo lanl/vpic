@@ -6,8 +6,8 @@
 // _LOCAL_ NUMBER OF CELLS).  THIS LATENT BUG IS NOT EXPECTED TO
 // AFFECT ANY PRACTICAL SIMULATIONS.
 
-#include <grid.h>
-#include <material.h>
+#include "../grid/grid.h"
+#include "../material/material.h"
 
 // FIXME: UPDATE THIS COMMENT BLOCK AND MOVE IT INTO APPROPRIATE LOCATIONS
 //

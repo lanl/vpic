@@ -11,7 +11,7 @@
 #ifndef _grid_h_
 #define _grid_h_
 
-#include <util.h>
+#include "../util/util.h"
 
 #define BOUNDARY(i,j,k) (13+(i)+3*(j)+9*(k)) /* FORTRAN -1:1,-1:1,-1:1 */
 

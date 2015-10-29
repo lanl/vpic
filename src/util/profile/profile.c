@@ -1,5 +1,5 @@
-#include <profile.h>
-#include <sys/time.h>
+#include "profile.h"
+#include "sys/time.h"
 
 profile_internal_use_only_timer_t profile_internal_use_only[] = {
 # define PROFILE_TIMER_INIT( timer ) { #timer, 0., 0., 0, 0 },

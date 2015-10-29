@@ -37,8 +37,9 @@
 // (?) Signal blocking in pipelines
 // (?) Timeouts in thread_halt, thread_boot (spin wait)
 
-#include <pipelines.h>
 #include <pthread.h>
+
+#include "pipelines.h"
 
 static void *
 pipeline_mgr( void *_id );

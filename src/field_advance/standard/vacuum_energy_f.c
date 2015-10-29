@@ -1,7 +1,7 @@
 // FIXME: USE THE DISCRETIZED VARIATIONAL DEFINITION OF ENERGY
 
 #define IN_sfa
-#include <sfa_private.h>
+#include "sfa_private.h"
 
 typedef struct pipeline_args {
   const field_t      * ALIGNED(128) f;
@@ -19,9 +19,9 @@ typedef struct pipeline_args {
   const float qepsx = 0.25*m->epsx;                                        \
   const float qepsy = 0.25*m->epsy;                                        \
   const float qepsz = 0.25*m->epsz;                                        \
-  const float hrmux = 0.25*m->rmux;                                        \
-  const float hrmuy = 0.25*m->rmuy;                                        \
-  const float hrmuz = 0.25*m->rmuz;                                        \
+  const float hrmux = 0.5*m->rmux; /* was previously 0.25 in master */	   \
+  const float hrmuy = 0.5*m->rmuy; /* was previously 0.25 in master */	   \
+  const float hrmuz = 0.5*m->rmuz; /* was previously 0.25 in master*/	   \
                                                                            \
   const field_t * ALIGNED(16) f0;                                          \
   const field_t * ALIGNED(16) fx,  * ALIGNED(16) fy,  * ALIGNED(16) fz;    \

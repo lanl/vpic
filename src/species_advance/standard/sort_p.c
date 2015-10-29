@@ -1,11 +1,11 @@
 #define IN_spa
-#include <spa_private.h>
+#include "spa_private.h"
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
 
 // FIXME: ALTIVEC ACCELERATE!
 #if defined(__SSE__)
-#include <xmmintrin.h>
+#include "xmmintrin.h"
 #endif
 
 void

@@ -1,6 +1,6 @@
 #define IN_rng
-#include <rng_private.h>
-#include <checkpt.h>
+#include "rng_private.h"
+#include "../checkpt/checkpt.h"
 
 /* Private API **************************************************************/
 

@@ -1,7 +1,7 @@
 #ifndef _rng_h_
 #define _rng_h_
 
-#include <util_base.h>
+#include "../util_base.h"
 
 /* rng_t opaque handle */
 

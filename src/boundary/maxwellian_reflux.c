@@ -38,7 +38,7 @@
 // Revamped by KJB, May 2008, Sep 2009
 
 #define IN_boundary
-#include <boundary_private.h>
+#include "boundary_private.h"
  
 /* Private interface ********************************************************/
 

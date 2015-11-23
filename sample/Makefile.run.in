@@ -14,15 +14,14 @@ all:
 # clean everything
 clean:
 	-$(RM) $(DECK).$(PLAT)
-	-$(RM) checkpt.*
-	-$(RM) core.*
-	-$(RM) ehydro.*
-	-$(RM) energies
-	-$(RM) eparticle.*
-	-$(RM) fields.*
-	-$(RM) ihydro.*
-	-$(RM) iparticle.*
-	-$(RM) *~
+        -$(RM) -rf global.vpc
+        -$(RM) -rf info*
+        -$(RM) -rf hydro
+        -$(RM) -rf fields
+        -$(RM) -rf particle
+        -$(RM) -rf restart*
+        -$(RM) -rf rundata
+        -$(RM) *~
 
 # example openmpi mpirun commands. --tpp is number of vpic pipelines. Each
 # pipeline is domain replicated.

@@ -1,3 +1,39 @@
+================================================================================
+2015/11/25 - jgw
+I found an input deck change that will allow co20090912 generic to run to
+completion without running out of movers, but I don't yet understand why. The
+change is to set qe = Npe/Ne; instead of qe = -Npe/Ne;
+To discover this I followed the thread that particle energies were being
+written as negative numbers and guessed there may have been a semantic change
+to handling negative charge that had not propagated to the input deck. I am
+now combing through commit messages trying to find messages that might give
+a clue to what is going on. Below are some commits that look related.
+
+6f951403446a0e058ec47bb2a540baaad95c2f3a 08 September 2009
+- Updated various pipelines (not the Cell ones yet though) and APIs to take
+  into account that species charge to mass ratio is now given as the _physical_
+  particle charge and _physical_ particle mass (mades collision handling code
+  much cleaner as the collision handling code needs to know explicitly the
+  relationship between computational particles and physical particles to get
+  cross sections correct).
+- Updated variable pipelines (not the Cell ones yet though) and APIs to take
+  into account that particles no longer indicate their net charge.  Rather they
+  indicate the number of physical particles they represent.  As such,
+  you can do things like collision packages right (and also do things like
+  handle a neutrally charged particle species more consistently ... FIXME:
+  it would be possible to short circuit some operations for such in the
+  standard species advance ... might be worthwhile to install this at some
+  point).
+
+4ee009673d0f4da3375a0699100da1f02dba7f8e 08 September 2009
+Changed basic species data types to accomodate the collision package.
+- Particle charge => # physical particles represented
+- Species charge/mass ratio => separate physical particle charge and physical
+  particle mass
+
+
+================================================================================
+2015/11/24 - jgw
 Below is a large series of code checkouts with reports on whether the code
 built, and if it did how did the "generic" deck run. Since many checkins did
 not build we could only bracket the introduction of the bug to within 28

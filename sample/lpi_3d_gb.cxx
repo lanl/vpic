@@ -371,10 +371,11 @@ begin_initialization {
       double y = uniform( rng(0), ymin, ymax );
       double z = uniform( rng(0), zmin, zmax );
       if ( iv_region ) continue;           // Particle fell in iv_region.  Don't load.
+      // third to last arg is "weight," a positive number
       inject_particle( electron, x, y, z,
                        normal( rng(0), 0, uth_e ),
                        normal( rng(0), 0, uth_e ),
-                       normal( rng(0), 0, uth_e ), q_e, 0, 0 );
+                       normal( rng(0), 0, uth_e ), -q_e, 0, 0 );
       if ( mobile_ions ) {
         if ( H_present )  // Inject an H macroion on top of macroelectron
           inject_particle( ion_H, x, y, z, 

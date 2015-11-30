@@ -16,44 +16,16 @@ set(ENABLE_MPI_CXX_BINDINGS False CACHE BOOL "Enable MPI C++ Bindings" FORCE)
 #------------------------------------------------------------------------------#
 
 option(ENABLE_INTEGRATED_TESTS "enable integrated tests" OFF)
-if(ENABLE_INTEGRATED_TESTS)
-  enable_testing()
-  add_subdirectory(test/integrated)
-endif(ENABLE_INTEGRATED_TESTS)
 
-option(USE_OPENMP "use openmp" OFF)
-if(USE_OPENMP)
-  find_package(OpenMP)
-  if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  endif(OPENMP_FOUND)
-endif(USE_OPENMP)
+option(USE_OPENMP "Use OpenMP" OFF)
 
-set(USE_V4)
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
-if(USE_V4_ALTIVEC)
-  add_definitions(-DUSE_V4_ALTIVEC)
-  set(USE_V4 True)
-endif(USE_V4_ALTIVEC)
 
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
-if(USE_V4_PORTABLE)
-  add_definitions(-DUSE_V4_PORTABLE)
-  set(USE_V4 True)
-endif(USE_V4_PORTABLE)
 
 option(USE_V4_SSE "Enable V4 SSE" OFF)
-if(USE_V4_SSE)
-  add_definitions(-DUSE_V4_SSE)
-  set(USE_V4 True)
-endif(USE_V4_SSE)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
-if(ENABLE_OPENSSL)
-  add_definitions(-DENABLE_OPENSSL)
-endif(ENABLE_OPENSSL)
 
 #------------------------------------------------------------------------------#
 # Add library target

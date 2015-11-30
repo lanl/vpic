@@ -125,6 +125,47 @@ cinch_add_unit_execution_policy(VPIC
   EXEC ${MPIEXEC}
   EXEC_THREADS ${MPIEXEC_NUMPROC_FLAG})
 
+#------------------------------------------------------------------------------#
+# Add VPIC integrated test mechanism
+#------------------------------------------------------------------------------#
+
+if(ENABLE_INTEGRATED_TESTS)
+  enable_testing()
+  add_subdirectory(test/integrated)
+endif(ENABLE_INTEGRATED_TESTS)
+
+#------------------------------------------------------------------------------#
+# Act on build options set in project.cmake
+#------------------------------------------------------------------------------#
+if(USE_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  endif(OPENMP_FOUND)
+endif(USE_OPENMP)
+
+set(USE_V4)
+if(USE_V4_ALTIVEC)
+  add_definitions(-DUSE_V4_ALTIVEC)
+  set(USE_V4 True)
+endif(USE_V4_ALTIVEC)
+
+if(USE_V4_PORTABLE)
+  add_definitions(-DUSE_V4_PORTABLE)
+  set(USE_V4 True)
+endif(USE_V4_PORTABLE)
+
+if(USE_V4_SSE)
+  add_definitions(-DUSE_V4_SSE)
+  set(USE_V4 True)
+endif(USE_V4_SSE)
+
+if(ENABLE_OPENSSL)
+  add_definitions(-DENABLE_OPENSSL)
+endif(ENABLE_OPENSSL)
+
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

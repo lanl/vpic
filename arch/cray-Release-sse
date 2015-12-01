@@ -18,11 +18,24 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 #------------------------------------------------------------------------------#
 
 cmake \
-  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
   -DENABLE_UNIT_TESTS=ON \
   -DUSE_V4_SSE=ON \
+  -DCMAKE_C_COMPILER=cc \
+  -DCMAKE_CXX_COMPILER=CC \
+  -DCMAKE_C_FLAGS="-dynamic -craype-verbose" \
+  -DCMAKE_CXX_FLAGS="-dynamic -craype-verbose" \
+  -DCMAKE_EXE_LINKER_FLAGS="-dynamic" \
+  -DMPI_C_LIBRARIES="" \
+  -DMPI_CXX_LIBRARIES="" \
+  -DMPI_C_INCLUDE_PATH="" \
+  -DMPI_CXX_INCLUDE_PATH="" \
+  -DMPI_C_COMPILER="" \
+  -DMPI_CXX_COMPILER="" \
+  -DMPIEXEC="aprun" \
+  -DMPIEXEC_NUMPROC_FLAG="-n" \
   $cinch_dir
 
 #------------------------------------------------------------------------------#

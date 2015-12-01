@@ -22,7 +22,7 @@ cmake \
   -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
   -DENABLE_UNIT_TESTS=ON \
-  -DUSE_V4_SSE=ON\
+  -DUSE_V4_SSE=ON \
   $cinch_dir
 
 #------------------------------------------------------------------------------#

@@ -8,16 +8,16 @@
 // structure to hold the data for energy diagnostics
 struct edata {
   species_id sp_id;       /* species id */ 
-  double     vth;         /* thermal energy */ 
-  char fname[256];        /* file to save data */ 
+  double       vth;       /* thermal energy */ 
+  char  fname[256];       /* file to save data */ 
 };
 
 // naming convention for the hydro dump files
 #define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"     
 
 // Vadim's in-line average 
-#define ALLOCATE(A,LEN,TYPE)                               \
-  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) \
+#define ALLOCATE(A,LEN,TYPE)                                    \
+  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) )      \
     ERROR(("Cannot allocate."));
 
 begin_globals {
@@ -72,13 +72,12 @@ begin_globals {
 
 begin_initialization {
 
- // use natural PIC units
-
- double ec   = 1;         // Charge normalization
- double me   = 1;         // Mass normalization
- double c    = 1;         // Speed of light
- double de   = 1;         // Length normalization (electron inertial length)
- double eps0 = 1;         // Permittivity of space
+  // use natural PIC units
+  double ec   = 1;        // Charge normalization
+  double me   = 1;        // Mass normalization
+  double c    = 1;        // Speed of light
+  double de   = 1;        // Length normalization (electron inertial length)
+  double eps0 = 1;        // Permittivity of space
 
   double cfl_req   = 0.7; // How close to Courant should we try to run
   double wpedt_max = 0.2; // How big a timestep is allowed if Courant is not too restrictive
@@ -258,16 +257,16 @@ begin_initialization {
   // Determine which domains area along the boundaries - Use macro from
   // grid/partition.c
 
-# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                   \
-    int _ix, _iy, _iz;                                                    \
-    _ix  = (rank);                /* ix = ix+gpx*( iy+gpy*iz ) */         \
-    _iy  = _ix/int(topology_x);   /* iy = iy+gpy*iz */                    \
-    _ix -= _iy*int(topology_x);   /* ix = ix */                           \
-    _iz  = _iy/int(topology_y);   /* iz = iz */                           \
-    _iy -= _iz*int(topology_y);   /* iy = iy */ 	        	  \
-    (ix) = _ix;                                                           \
-    (iy) = _iy;                                                           \
-    (iz) = _iz;                                                           \
+# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                 \
+    int _ix, _iy, _iz;                                                  \
+    _ix  = (rank);                /* ix = ix+gpx*( iy+gpy*iz ) */       \
+    _iy  = _ix/int(topology_x);   /* iy = iy+gpy*iz */                  \
+    _ix -= _iy*int(topology_x);   /* ix = ix */                         \
+    _iz  = _iy/int(topology_y);   /* iz = iz */                         \
+    _iy -= _iz*int(topology_y);   /* iy = iy */                         \
+    (ix) = _ix;                                                         \
+    (iy) = _iy;                                                         \
+    (iz) = _iz;                                                         \
   } END_PRIMITIVE 
 
   int ix, iy, iz ; 
@@ -316,9 +315,9 @@ begin_initialization {
   // Define the grid
 
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,     // Low corner
-                          Lx, 0.5*Ly, 0.5*Lz,     // High corner
-                          nx, ny, nz,             // Resolution
-                          topology_x, topology_y, topology_z); // Topology
+    Lx, 0.5*Ly, 0.5*Lz,     // High corner
+    nx, ny, nz,             // Resolution
+    topology_x, topology_y, topology_z); // Topology
 
   // ***** Set Field Boundary Conditions *****
 
@@ -358,16 +357,16 @@ begin_initialization {
   double nmovers = 0.1*nmax;
   double sort_method = 1;   //  0=in place and 1=out of place
   species_t *electron = define_species("electron",-ec, me, nmax, nmovers,
-				       electron_sort_interval, sort_method);
+    electron_sort_interval, sort_method);
   species_t *ion = define_species("ion", ec, mi, nmax, nmovers,
-				  ion_sort_interval, sort_method);
+    ion_sort_interval, sort_method);
 
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
 
   sim_log( "***********************************************" );
   sim_log("* Topology:                       " << topology_x
-	  << " " << topology_y << " " << topology_z); 
+    << " " << topology_y << " " << topology_z); 
   sim_log ( "L_di   = " << L_di ); 
   sim_log ( "Ti/Te = " << Ti_Te ) ;
   sim_log ( "wpe/wce = " << wpe_wce );
@@ -499,12 +498,12 @@ begin_initialization {
 # define VD sqrt(VDX*VDX+VDY*VDY)
 # define GVD 1./sqrt(1.-VD*VD/(c*c))
 
-// modified perturbation
+  // modified perturbation
 # define DBX dbx*cos(2.0*pi*(x-0.5*Lx)/Lpert)*sin(pi*z/Lz)
 # define DBZ dbz*cos(pi*z/Lz)*sin(2.0*pi*(x-0.5*Lx)/Lpert)
 
 
-//LO
+  //LO
 
   sim_log( "Loading fields" );
   //set_region_field( everywhere, 0, 0, 0, BX+DBX, BY, DBZ);

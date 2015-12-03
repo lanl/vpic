@@ -190,14 +190,29 @@ begin_initialization {
   //            nodes, the default is 8. A zero value is not allowed and is
   //            a fatal error.
 
-  // 1 rank/core = 128 ranks
+  // 128 ranks, 1 rank/core
   // aprun -n 128 ./reconnection.Linux                   : 45.7490s
   // 1 rank/core, 2 threads/core
   // aprun -n 128 -d 2 -j 2 ./reconnection.Linux --tpp 2 : 33.7558s
-#if 1
+#if 0
   double topology_x = 8;  // Number of domains in x, y, and z
   double topology_y = 8;
-  double topology_z = 2;
+  double topology_z = 1;
+#endif
+
+  // 16 ranks. probably all on the same node
+  // aprun -n 16 ./reconnection.Linux                               : 364.061s
+  // 16 ranks, 4 ranks/node
+  // aprun -n 16 -N 4 ./reconnection.Linux                          : 293.699s
+  // 16 ranks, 4 ranks/node, 2 ranks/numa
+  // aprun -n 16 -N 4 -S 2 ./reconnection.Linux                     : 268.528s
+  // 16 ranks, 4 ranks/node, 2 ranks/numa, 16 CPUs/rank, 2 CPUs/compute unit
+  // aprun -n 16 -N 4 -S 2 -d 16 -j 2 ./reconnection.Linux --tpp  8 :  68.444s
+  // aprun -n 16 -N 4 -S 2 -d 16 -j 2 ./reconnection.Linux --tpp 16 :  44.980s
+#if 0
+  double topology_x = 8;  // Number of domains in x, y, and z
+  double topology_y = 2;
+  double topology_z = 1;
 #endif
 
   // 8 ranks. probably all on the same node
@@ -216,9 +231,97 @@ begin_initialization {
   double topology_z = 1;
 #endif
 
+  // darwin haswell node, cn46
+  // [wohlbier@cn46 reconnection_map]$ lscpu
+  // Architecture:          x86_64
+  // CPU op-mode(s):        32-bit, 64-bit
+  // Byte Order:            Little Endian
+  // CPU(s):                64
+  // On-line CPU(s) list:   0-63
+  // Thread(s) per core:    2
+  // Core(s) per socket:    16
+  // Socket(s):             2
+  // NUMA node(s):          4
+  // Vendor ID:             GenuineIntel
+  // CPU family:            6
+  // Model:                 63
+  // Model name:            Intel(R) Xeon(R) CPU E5-2698 v3 @ 2.30GHz
+  // Stepping:              2
+  // CPU MHz:               2619.214
+  // BogoMIPS:              4605.00
+  // Virtualization:        VT-x
+  // L1d cache:             32K
+  // L1i cache:             32K
+  // L2 cache:              256K
+  // L3 cache:              20480K
+  // NUMA node0 CPU(s):     0-7,32-39
+  // NUMA node1 CPU(s):     8-15,40-47
+  // NUMA node2 CPU(s):     16-23,48-55
+  // NUMA node3 CPU(s):     24-31,56-63
+
+  // using openmpi
+  // mpirun -n 64 ./reconnection.Linux                         : 141.589s
+  // mpirun -n 64 --map-by hwthread --bind-to hwthread ./reconnection.Linux
+  //                                                           : 131.266s
+#if 0
+  double topology_x = 8;  // Number of domains in x, y, and z
+  double topology_y = 8;
+  double topology_z = 1;
+#endif
+  // mpirun -n 32 ./reconnection.Linux                         : 224.982s
+  // mpirun -n 32 ./reconnection.Linux --tpp 2                 : 142.308s
+  // mpirun -n 32 --map-by core --bind-to core ./reconnection.Linux --tpp 2
+  //                                                           : 131.318s
+  // map --profile --np 32 --mpiargs="--map-by core --bind-to core" ./reonnection.Linux --tpp 2
+#if 0
+  double topology_x = 8;  // Number of domains in x, y, and z
+  double topology_y = 2;
+  double topology_z = 2;
+#endif
+
+  // mpirun -n 4 --map-by numa --bind-to numa ./reconnection.Linux --tpp 16
+  //                                                           : 158.467s
+  // map --profile --np 4 --mpiargs="--map-by numa --bind-to numa" ./reonnection.Linux --tpp 16
+#if 1
+  double topology_x = 4;  // Number of domains in x, y, and z
+  double topology_y = 1;
+  double topology_z = 1;
+#endif
+
+  // mpirun -n 2 --map-by socket --bind-to socket ./reconnection.Linux --tpp 32
+  //                                                           : 248.501s
+#if 0
+  double topology_x = 2;  // Number of domains in x, y, and z
+  double topology_y = 1;
+  double topology_z = 1;
+#endif
+
+  // mpirun -n 1 --bind-to none ./reconnection.Linux --tpp 64  : 302.203s
+  // NB: htop confirms all 64 CPUs are active. It also confirms there are
+  //     serialization points within the calculation which is likely why
+  //     this operating mode is slower than MPI everywhere.
+#if 0
+  double topology_x = 1;  // Number of domains in x, y, and z
+  double topology_y = 1;
+  double topology_z = 1;
+#endif
+
+
   double nx = 128;
   double ny = 64;
   double nz = 64;
+
+  // 128GB/node, 1 rank/core, 32 cores/node => 4GB/rank
+  // rss (resident set size) as reported by aprun is maximum over ranks
+  // Available RAM (kilobytes):         128822768k
+                               // rss =     94032k ( 94MB)
+  //nx *= 2; ny *= 2; nz *= 2; // rss =    653372k (653MB)
+  //nx *= 3; ny *= 3; nz *= 3; // rss =   2161060k (2.2GB)
+  //nx *= 4; ny *= 4; nz *= 4; // application termination
+  //nppc *= 2;                 // rss =    173380k (173MB)
+  //nppc *= 40;                // rss =  3186120k (3.2GB)
+  //nppc *= 50;                // rss =  3978860k (4.0GB)
+  //nppc *= 60;                // application termination
 
   double hx = Lx/nx;
   double hy = Ly/ny;
@@ -386,16 +489,16 @@ begin_initialization {
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
   sim_log ( "nppc = " << nppc );
-  sim_log ( " b0 = " << b0 );
-  sim_log ( " di = " << di );
-  sim_log ( " Ne = " << Ne );
+  sim_log ( "b0 = " << b0 );
+  sim_log ( "di = " << di );
+  sim_log ( "Ne = " << Ne );
   sim_log ( "total # of particles = " << 2*Ne );
-  sim_log ( " qi = " << qi );
-  sim_log ( " qe = " << qe );
+  sim_log ( "qi = " << qi );
+  sim_log ( "qe = " << qe );
   sim_log ( "dt*wpe = " << wpe*dt ); 
   sim_log ( "dt*wce = " << wce*dt );
   sim_log ( "dt*wci = " << wci*dt );
-  sim_log ( " energies_interval: " << energies_interval );
+  sim_log ( "energies_interval: " << energies_interval );
   sim_log ( "dx/de = " << Lx/(de*nx) );
   sim_log ( "dy/de = " << Ly/(de*ny) );
   sim_log ( "dz/de = " << Lz/(de*nz) );
@@ -406,7 +509,6 @@ begin_initialization {
   sim_log ( "vthi/c = " << vthi/c );
   sim_log ( "vthe/c = " << vthe/c );
 
-  
   // Dump simulation information to file "info"
   if (rank() == 0 ) {
 

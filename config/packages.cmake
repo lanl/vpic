@@ -55,10 +55,15 @@ if(NOT ${string_includes} STREQUAL "")
   set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
 endif(NOT ${string_includes} STREQUAL "")
 
-# Add debug flags
+# Add Debug flags to VPIC_CXX_FLAGS
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
+# Add RelWithDebInfo flags to VPIC_CXX_FLAGS
+if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
 string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
@@ -165,6 +170,11 @@ endif(USE_V4_SSE)
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
+
+#------------------------------------------------------------------------------#
+# include cmake hacks
+#------------------------------------------------------------------------------#
+#include(config/hacks.cmake)
 
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :

@@ -38,11 +38,11 @@ set(util_HEADERS
 )
 
 set(util_SOURCES
+  checkpt/checkpt.c
   checkpt/checkpt_io.cc
   mp/mp.cc
   boot.c
   util_base.c
-  checkpt/checkpt.c
   pipelines/pipelines_serial.c
   pipelines/pipelines_thread.c
   profile/profile.c
@@ -53,18 +53,16 @@ set(util_SOURCES
   PARENT_SCOPE
 )
 
-if(ENABLE_UNIT_TESTS)
-  if(USE_V4)
-    cinch_add_unit(v4
-      SOURCES v4/test/v4.cc)
-  endif(USE_V4)
+if(USE_V4)
+  cinch_add_unit(v4
+    SOURCES v4/test/v4.cc)
+endif(USE_V4)
 
-  cinch_add_unit(rng
-    SOURCES rng/test/rng.cc
-    LIBRARIES vpic
-    POLICY VPIC
-    THREADS 1)
-endif(ENABLE_UNIT_TESTS)
+cinch_add_unit(rng
+  SOURCES rng/test/rng.cc
+  LIBRARIES vpic dl
+  POLICY VPIC
+  THREADS 1)
 
 #if(ENABLE_UNIT_TESTS)
 #  cinch_add_unit(casename

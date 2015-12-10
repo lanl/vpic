@@ -53,18 +53,19 @@ set(util_SOURCES
   PARENT_SCOPE
 )
 
-if(USE_V4)
-  cinch_add_unit(v4
-    SOURCES v4/test/v4.cc)
-endif(USE_V4)
+if(ENABLE_UNIT_TESTS)
 
-cinch_add_unit(rng
-  SOURCES rng/test/rng.cc
-  LIBRARIES vpic dl
-  POLICY VPIC
-  THREADS 1)
+  if(USE_V4)
+    cinch_add_unit(v4
+      SOURCES v4/test/v4.cc)
+  endif(USE_V4)
+  
+  cinch_add_unit(rng
+    SOURCES rng/test/rng.cc
+    LIBRARIES vpic dl
+    POLICY VPIC
+    THREADS 1)
 
-#if(ENABLE_UNIT_TESTS)
 #  cinch_add_unit(casename
 #    SOURCES testfile.cc
 #    LIBRARIES list
@@ -72,7 +73,8 @@ cinch_add_unit(rng
 #    POLICY MPI
 #    THREADS 1 2 4
 #  )
-#endif(ENABLE_UNIT_TESTS)
+
+endif(ENABLE_UNIT_TESTS)
 
 #----------------------------------------------------------------------------~-#
 # Formatting options for vim.

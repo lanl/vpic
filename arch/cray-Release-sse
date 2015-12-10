@@ -3,6 +3,17 @@
 # placeholder
 #~----------------------------------------------------------------------------~#
 
+# To build on cieli(t)o:
+# module swap PrgEnv-pgi PrgEnv-intel
+# module load user_contrib
+# module load cmake/3.4.0
+# cd /path/to/code
+# mkdir build
+# cd build
+# ../arch/cray-Release-sse
+# make -j
+
+
 #------------------------------------------------------------------------------#
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
@@ -19,8 +30,8 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DENABLE_COLOR_UNIT_TESTS=ON \
-  -DENABLE_INTEGRATED_TESTS=ON \
+  -DENABLE_COLOR_UNIT_TESTS=OFF \
+  -DENABLE_INTEGRATED_TESTS=OFF \
   -DENABLE_UNIT_TESTS=OFF \
   -DUSE_V4_SSE=ON \
   -DCMAKE_C_COMPILER=cc \
@@ -34,9 +45,16 @@ cmake \
   -DMPI_CXX_INCLUDE_PATH="" \
   -DMPI_C_COMPILER="" \
   -DMPI_CXX_COMPILER="" \
-  -DMPIEXEC=`which aprun` \
-  -DMPIEXEC_NUMPROC_FLAG="-n" \
   $cinch_dir
+
+# To turn on unit/integrated tests add the following. Note that `which aprun`
+# will ONLY WORK ON THE BACK END.
+#  -DENABLE_COLOR_UNIT_TESTS=OFF \
+#  -DENABLE_INTEGRATED_TESTS=OFF \
+#  -DENABLE_UNIT_TESTS=OFF \
+#  -DMPIEXEC=`which aprun` \
+#  -DMPIEXEC_NUMPROC_FLAG="-n" \
+
 
 #------------------------------------------------------------------------------#
 # vim: syntax=sh

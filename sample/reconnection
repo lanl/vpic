@@ -268,12 +268,13 @@ begin_initialization {
   double topology_y = 8;
   double topology_z = 1;
 #endif
+
   // mpirun -n 32 ./reconnection.Linux                         : 224.982s
   // mpirun -n 32 ./reconnection.Linux --tpp 2                 : 142.308s
   // mpirun -n 32 --map-by core --bind-to core ./reconnection.Linux --tpp 2
   //                                                           : 131.318s
-  // map --profile --np 32 --mpiargs="--map-by core --bind-to core" ./reonnection.Linux --tpp 2
-#if 0
+  // map --profile mpirun --map-by core --bind-to core -n 32 ./reconnection.Linux --tpp 2
+#if 1
   double topology_x = 8;  // Number of domains in x, y, and z
   double topology_y = 2;
   double topology_z = 2;
@@ -282,7 +283,7 @@ begin_initialization {
   // mpirun -n 4 --map-by numa --bind-to numa ./reconnection.Linux --tpp 16
   //                                                           : 158.467s
   // map --profile --np 4 --mpiargs="--map-by numa --bind-to numa" ./reonnection.Linux --tpp 16
-#if 1
+#if 0
   double topology_x = 4;  // Number of domains in x, y, and z
   double topology_y = 1;
   double topology_z = 1;

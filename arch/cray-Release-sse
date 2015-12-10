@@ -3,7 +3,7 @@
 # placeholder
 #~----------------------------------------------------------------------------~#
 
-# To build on cieli(t)o:
+# To build on ciel(it)o:
 # module swap PrgEnv-pgi PrgEnv-intel
 # module load user_contrib
 # module load cmake/3.4.0

@@ -275,7 +275,7 @@ begin_initialization {
   // mpirun -n 32 --map-by core --bind-to core ./reconnection.Linux --tpp 2
   //                                                           : 131.318s
   // map --profile mpirun --map-by core --bind-to core -n 32 ./reconnection.Linux --tpp 2
-#if 1
+#if 0
   double topology_x = 8;  // Number of domains in x, y, and z
   double topology_y = 2;
   double topology_z = 2;
@@ -292,7 +292,7 @@ begin_initialization {
 
   // mpirun -n 2 --map-by socket --bind-to socket ./reconnection.Linux --tpp 32
   //                                                           : 248.501s
-#if 0
+#if 1
   double topology_x = 2;  // Number of domains in x, y, and z
   double topology_y = 1;
   double topology_z = 1;
@@ -312,6 +312,8 @@ begin_initialization {
   double nx = 128;
   double ny = 64;
   double nz = 64;
+
+  nx /= 4; ny /= 4; nz /= 4; nppc /= 10;
 
   // 128GB/node, 1 rank/core, 32 cores/node => 4GB/rank
   // rss (resident set size) as reported by aprun is maximum over ranks
@@ -348,8 +350,9 @@ begin_initialization {
   if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;        // override timestep if
                                                  // plasma frequency limited
    
-  //  int restart_interval = int(10000.0/(wci*dt));
-  int restart_interval = 8000;
+  //int restart_interval = int(10000.0/(wci*dt));
+  //int restart_interval = 8000;
+  int restart_interval = 100;
   int energies_interval = 100;
   int interval = int(5.0/(wci*dt)); 
   int fields_interval = interval;
@@ -381,7 +384,7 @@ begin_initialization {
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
-  num_step             = 500;
+  num_step             = 5000;
   status_interval      = 200;
   sync_shared_interval = status_interval/2;
   clean_div_e_interval = status_interval/2;
@@ -962,7 +965,6 @@ begin_diagnostics {
     dump_mkdir("fields");
     dump_mkdir("hydro");
     dump_mkdir("rundata");
-    dump_mkdir("restart0");
     dump_mkdir("restart1");  // 1st backup
     dump_mkdir("restart2");  // 2nd backup
     dump_mkdir("particle");
@@ -1012,9 +1014,12 @@ begin_diagnostics {
    * Restart dump
    *------------------------------------------------------------------------*/
 
-  //Vadim:
+  // jgw: cannot write a restart every step with this logic, which is really
+  //      only useful for debugging.
+  // Vadim:
   if (step() && !(step()%global->restart_interval))
-    global->write_restart = 1; // set restart flag. the actual restart files are written during the next step
+    global->write_restart = 1; // set restart flag. the actual restart files
+                               // are written during the next step
   else
     if (global->write_restart) {
       
@@ -1043,9 +1048,9 @@ begin_diagnostics {
         if ( ! (fp_restart_info.open("latest_restart", io_write)==ok) )
 	  ERROR(("Cannot open file."));
         if(!global->rtoggle) {
-          fp_restart_info.print("restart restart2/restart");
+          fp_restart_info.print("restart restart2/restart\n");
         } else
-          fp_restart_info.print("restart restart1/restart");
+          fp_restart_info.print("restart restart1/restart\n");
 	
         fp_restart_info.close();
       }
@@ -1091,7 +1096,8 @@ begin_diagnostics {
       //Vadim:
       if (rank()==0) {
 	FileIO fp_restart_info;
-	if ( ! (fp_restart_info.open("latest_restart", io_write)==ok) ) ERROR(("Cannot open file."));
+	if ( ! (fp_restart_info.open("latest_restart", io_write)==ok) )
+          ERROR(("Cannot open file."));
 	fp_restart_info.print("restart restart0/restart");
 	fp_restart_info.close();
       }

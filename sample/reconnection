@@ -194,6 +194,7 @@ begin_initialization {
   // aprun -n 128 ./reconnection.Linux                   : 45.7490s
   // 1 rank/core, 2 threads/core
   // aprun -n 128 -d 2 -j 2 ./reconnection.Linux --tpp 2 : 33.7558s
+  // map --profile aprun -n 128 -d 2 -j 2 ./reconnection.Linux --tpp 2
 #if 0
   double topology_x = 8;  // Number of domains in x, y, and z
   double topology_y = 8;

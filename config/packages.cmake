@@ -81,44 +81,6 @@ if(ENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
 
 #------------------------------------------------------------------------------#
-# Handle vpic compile script
-#------------------------------------------------------------------------------#
-
-# process Makefile.run.in to get a simple Makefile.run for a run. Points to
-# local built exe wrapper, and has example deck/platform.
-configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
-  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
-
-# install script
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
-install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
-  DESTINATION bin
-  RENAME vpic
-  PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-    )
-
-install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
-  DESTINATION share/vpic)
-install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
-  DESTINATION share/vpic)
-
-# local script
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
-
-file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
-  DESTINATION ${CMAKE_BINARY_DIR}/bin
-  FILE_PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-)
-
-#------------------------------------------------------------------------------#
 # Add VPIC unit test policy
 #------------------------------------------------------------------------------#
 
@@ -174,7 +136,46 @@ endif(ENABLE_OPENSSL)
 #------------------------------------------------------------------------------#
 # include cmake hacks
 #------------------------------------------------------------------------------#
+
 #include(config/hacks.cmake)
+
+#------------------------------------------------------------------------------#
+# Handle vpic compile script last
+#------------------------------------------------------------------------------#
+
+# process Makefile.run.in to get a simple Makefile.run for a run. Points to
+# local built exe wrapper, and has example deck/platform.
+configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
+  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
+
+# install script
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
+install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
+  DESTINATION bin
+  RENAME vpic
+  PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+    )
+
+install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
+  DESTINATION share/vpic)
+install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
+  DESTINATION share/vpic)
+
+# local script
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
+
+file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
+  DESTINATION ${CMAKE_BINARY_DIR}/bin
+  FILE_PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+)
 
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :

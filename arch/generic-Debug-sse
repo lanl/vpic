@@ -1,44 +1,34 @@
+#! /usr/bin/env bash
 #~----------------------------------------------------------------------------~#
-# VPIC project configuration
+# placeholder
 #~----------------------------------------------------------------------------~#
 
-project(vpic)
-
 #------------------------------------------------------------------------------#
-# Set project defaults
+# Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-set(ENABLE_MPI True CACHE BOOL "Enable MPI" FORCE)
-set(ENABLE_MPI_CXX_BINDINGS False CACHE BOOL "Enable MPI C++ Bindings" FORCE)
+cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 
 #------------------------------------------------------------------------------#
-# Add build options
+# Check required environment variables
 #------------------------------------------------------------------------------#
 
-option(ENABLE_INTEGRATED_TESTS "enable integrated tests" OFF)
-
-option(USE_OPENMP "Use OpenMP" OFF)
-
-option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
-
-option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
-
-option(USE_V4_SSE "Enable V4 SSE" OFF)
-
-option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
-
 #------------------------------------------------------------------------------#
-# Add library target
+# Call CMake command
 #------------------------------------------------------------------------------#
 
-cinch_add_library_target(vpic src)
+cmake \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DENABLE_COLOR_UNIT_TESTS=ON \
+  -DENABLE_INTEGRATED_TESTS=ON \
+  -DENABLE_UNIT_TESTS=ON \
+  -DUSE_V4_SSE=ON \
+  $cinch_dir
 
 #------------------------------------------------------------------------------#
-# Set header suffix
+# vim: syntax=sh
 #------------------------------------------------------------------------------#
-
-set(CINCH_HEADER_SUFFIXES "\\.h")
 
 #~---------------------------------------------------------------------------~-#
-# vim: set tabstop=2 shiftwidth=2 expandtab :
+# placeholder
 #~---------------------------------------------------------------------------~-#

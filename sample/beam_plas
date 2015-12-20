@@ -168,11 +168,11 @@ begin_initialization {
     inject_particle( electron, x, y, z,
                      normal( rng(0), 0, ute ),
                      normal( rng(0), 0, ute ),
-                     normal( rng(0), 0, ute ), -qp, 0, 0 );
+                     normal( rng(0), 0, ute ), qp, 0, 0 );
     inject_particle( ion, x, y, z,
                      normal( rng(0), 0, uti ),
                      normal( rng(0), 0, uti ),
-                     normal( rng(0), 0, uti ),  qp, 0, 0 );
+                     normal( rng(0), 0, uti ), qp, 0, 0 );
   }
   
   // Output diagnostics

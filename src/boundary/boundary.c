@@ -68,8 +68,8 @@ append_particle_bc( particle_bc_t * pbc,
                     particle_bc_t ** pbc_list ) {
   if( !pbc || !pbc_list ) ERROR(( "Bad args" ));
   if( pbc->next ) ERROR(( "Particle boundary condition already in a list" ));
-  //pbc->id   = -3-num_particle_bc( *pbc_list );
-  pbc->id   = -2-num_particle_bc( *pbc_list );
+  // Assumes reflective/absorbing are -1, -2
+  pbc->id   = -3-num_particle_bc( *pbc_list );
   pbc->next = *pbc_list;
   *pbc_list = pbc;
   return pbc;

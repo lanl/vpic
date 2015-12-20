@@ -3,9 +3,9 @@
 #
 # This file is courtesy of Kelly Thompson (KT), kgt@lanl.gov
 #
-# cmake -C /path/to/vpic/config/CrayConfig.cmake [options] /path/to/vpic
+# cmake -C /path/to/vpic/arch/CrayConfig.cmake [options] /path/to/vpic
 # or
-# ccmake -C /path/to/vpic/config/CrayConfig.cmake /path/to/vpic
+# ccmake -C /path/to/vpic/arch/CrayConfig.cmake /path/to/vpic
 # ----------------------------------------------------------------------
 
 #

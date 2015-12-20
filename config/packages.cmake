@@ -55,10 +55,15 @@ if(NOT ${string_includes} STREQUAL "")
   set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
 endif(NOT ${string_includes} STREQUAL "")
 
-# Add debug flags
+# Add Debug flags to VPIC_CXX_FLAGS
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+
+# Add RelWithDebInfo flags to VPIC_CXX_FLAGS
+if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
 string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
@@ -76,7 +81,66 @@ if(ENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
 
 #------------------------------------------------------------------------------#
-# Handle vpic compile script
+# Add VPIC unit test policy
+#------------------------------------------------------------------------------#
+
+cinch_add_unit_execution_policy(VPIC
+  ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
+  FLAGS ${MPI_${MPI_LANGUAGE}_COMPILE_FLAGS}
+  INCLUDES ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH}
+  LIBRARIES ${MPI_${MPI_LANGUAGE}_LIBRARIES}
+  EXEC ${MPIEXEC}
+  EXEC_THREADS ${MPIEXEC_NUMPROC_FLAG})
+
+#------------------------------------------------------------------------------#
+# Add VPIC integrated test mechanism
+#------------------------------------------------------------------------------#
+
+if(ENABLE_INTEGRATED_TESTS)
+  enable_testing()
+  add_subdirectory(test/integrated)
+endif(ENABLE_INTEGRATED_TESTS)
+
+#------------------------------------------------------------------------------#
+# Act on build options set in project.cmake
+#------------------------------------------------------------------------------#
+if(USE_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  endif(OPENMP_FOUND)
+endif(USE_OPENMP)
+
+set(USE_V4)
+if(USE_V4_ALTIVEC)
+  add_definitions(-DUSE_V4_ALTIVEC)
+  set(USE_V4 True)
+endif(USE_V4_ALTIVEC)
+
+if(USE_V4_PORTABLE)
+  add_definitions(-DUSE_V4_PORTABLE)
+  set(USE_V4 True)
+endif(USE_V4_PORTABLE)
+
+if(USE_V4_SSE)
+  add_definitions(-DUSE_V4_SSE)
+  set(USE_V4 True)
+endif(USE_V4_SSE)
+
+if(ENABLE_OPENSSL)
+  add_definitions(-DENABLE_OPENSSL)
+endif(ENABLE_OPENSSL)
+
+#------------------------------------------------------------------------------#
+# include cmake hacks
+#------------------------------------------------------------------------------#
+
+#include(config/hacks.cmake)
+
+#------------------------------------------------------------------------------#
+# Handle vpic compile script last
 #------------------------------------------------------------------------------#
 
 # process Makefile.run.in to get a simple Makefile.run for a run. Points to
@@ -112,18 +176,6 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
     GROUP_READ GROUP_EXECUTE
     WORLD_READ WORLD_EXECUTE
 )
-
-#------------------------------------------------------------------------------#
-# Add VPIC unit test policy
-#------------------------------------------------------------------------------#
-
-cinch_add_unit_execution_policy(VPIC
-  ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
-  FLAGS ${MPI_${MPI_LANGUAGE}_COMPILE_FLAGS}
-  INCLUDES ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH}
-  LIBRARIES ${MPI_${MPI_LANGUAGE}_LIBRARIES}
-  EXEC ${MPIEXEC}
-  EXEC_THREADS ${MPIEXEC_NUMPROC_FLAG})
 
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :

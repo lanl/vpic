@@ -1,4 +1,3 @@
-// FIXME: THIS INPUT DECK NEEDS REVAMPED FOR NEW SOURCE TREE
 //========================================================================
 //  Generic plasma deck for VPIC intended for use in testing performance
 //
@@ -196,12 +195,13 @@ begin_initialization {
       double y = uniform( rng(0), ymin, ymax );
       double z = uniform( rng(0), zmin, zmax );
       if ( iv_region ) continue; // Particle fell in iv_region.  Don't load.
+      // third to last arg is "weight," a positive number
       inject_particle( electron,
                        x, y, z,
                        normal( rng(0), 0, uthe ),
                        normal( rng(0), 0, uthe ),
                        normal( rng(0), 0, uthe ),
-                       qe,
+                       -qe,
                        0,   // Age (just say zero during startup ... particle injection typically wants non-zero here)
                        0 ); // Do not accumulate inverse to bound charge rhob (rhob will be computed to be consistent with this charge density and initial zero electric field after initialization)
     }
@@ -240,7 +240,7 @@ begin_initialization {
  
  
 begin_diagnostics {
- 
+  sim_log("step: " << step());
   return;  // Turn off diagnostics for now (but leave them in for Ben to look at).
  
 # if 0

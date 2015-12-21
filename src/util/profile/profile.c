@@ -21,11 +21,6 @@ update_profile( int dump ) {
   }
 
   if( dump ) {
-    /* log_printf( "\n" // 890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx  */
-    /*             "                 |      Since Last Update       |     Since Last Restore\n" */
-    /*             "    Operation    | Pct   Time    Count    Per   | Pct   Time    Count    Per\n" */
-    /*             "-----------------+------------------------------+------------------------------\n" ); */
-
     log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
                 "                           |      Since Last Update       |     Since Last Restore\n"
                 "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"

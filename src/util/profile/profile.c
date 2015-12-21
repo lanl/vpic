@@ -21,14 +21,20 @@ update_profile( int dump ) {
   }
 
   if( dump ) {
-    log_printf( "\n" // 890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
-                "                 |      Since Last Update       |     Since Last Restore\n"
-                "    Operation    | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
-                "-----------------+------------------------------+------------------------------\n" );
+    /* log_printf( "\n" // 890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx  */
+    /*             "                 |      Since Last Update       |     Since Last Restore\n" */
+    /*             "    Operation    | Pct   Time    Count    Per   | Pct   Time    Count    Per\n" */
+    /*             "-----------------+------------------------------+------------------------------\n" ); */
+
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
+                "                           |      Since Last Update       |     Since Last Restore\n"
+                "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
+                "---------------------------+------------------------------+------------------------------\n" );
 
     for( p=profile_internal_use_only; p->name; p++ ) {
       if( p->n==0 && p->n_total==0 ) continue;
-      log_printf( "%16.16s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n",
+      /* log_printf( "%16.16s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n", */
+      log_printf( "%26.26s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n",
                   p->name,
                   (int)( 100.*p->t/sum + 0.5 ), p->t,
                   (double)p->n,

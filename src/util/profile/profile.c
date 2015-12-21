@@ -28,7 +28,6 @@ update_profile( int dump ) {
 
     for( p=profile_internal_use_only; p->name; p++ ) {
       if( p->n==0 && p->n_total==0 ) continue;
-      /* log_printf( "%16.16s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n", */
       log_printf( "%26.26s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n",
                   p->name,
                   (int)( 100.*p->t/sum + 0.5 ), p->t,

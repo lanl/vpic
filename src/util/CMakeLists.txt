@@ -34,6 +34,8 @@ set(util_HEADERS
   v4/v4_altivec.h
   v4/v4_portable.h
   v4/v4_sse.h
+  v8/v8.h
+  v8/v8_portable.h
   PARENT_SCOPE
 )
 
@@ -59,6 +61,11 @@ if(ENABLE_UNIT_TESTS)
     cinch_add_unit(v4
       SOURCES v4/test/v4.cc)
   endif(USE_V4)
+
+  if(USE_V8)
+    cinch_add_unit(v8
+      SOURCES v8/test/v8.cc)
+  endif(USE_V8)
   
   cinch_add_unit(rng
     SOURCES rng/test/rng.cc

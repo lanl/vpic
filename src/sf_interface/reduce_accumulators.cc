@@ -56,6 +56,39 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 # define O9(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)B(k,6)B(k,7)B(k,8)B(k,9) \
               C(k,(((v0+v1)+(v2+v3))+((v4+v5)+(v6+v7)))+  (v8+v9))
 
+# elif defined(V8_ACCELERATION)
+
+  using namespace v8;
+
+  v8float v0, v1, v2, v3, v4, v5, v6, v7, v8, v9;
+
+# define LOOP(OP)                               \
+  for( ; i<i1; i++ ) {                          \
+    k = i*si;                                   \
+    OP(k   ); OP(k+ 4); OP(k+ 8);               \
+  }
+# define A(k)   load_4x1(  &a[k],          v0   );
+# define B(k,r) load_4x1(  &b[k+(r-1)*sr], v##r );
+# define C(k,v) store_4x1( v, &a[k] )
+# define O1(k)A(k  )B(k,1)                                                 \
+              C(k,   v0+v1)
+# define O2(k)A(k  )B(k,1)B(k,2)                                           \
+              C(k,  (v0+v1)+ v2)
+# define O3(k)A(k  )B(k,1)B(k,2)B(k,3)                                     \
+              C(k,  (v0+v1)+(v2+v3))
+# define O4(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)                               \
+              C(k, ((v0+v1)+(v2+v3))+  v4)
+# define O5(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)                         \
+              C(k, ((v0+v1)+(v2+v3))+ (v4+v5))
+# define O6(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)B(k,6)                   \
+              C(k, ((v0+v1)+(v2+v3))+((v4+v5)+ v6))
+# define O7(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)B(k,6)B(k,7)             \
+              C(k, ((v0+v1)+(v2+v3))+((v4+v5)+(v6+v7)))
+# define O8(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)B(k,6)B(k,7)B(k,8)       \
+              C(k,(((v0+v1)+(v2+v3))+((v4+v5)+(v6+v7)))+   v8)
+# define O9(k)A(k  )B(k,1)B(k,2)B(k,3)B(k,4)B(k,5)B(k,6)B(k,7)B(k,8)B(k,9) \
+              C(k,(((v0+v1)+(v2+v3))+((v4+v5)+(v6+v7)))+  (v8+v9))
+
 # else
 
   float f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11;
@@ -110,6 +143,17 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
       }
       store_4x1(v0,&a[j+0]); store_4x1(v1,&a[j+4]); store_4x1(v2,&a[j+8]);
     }
+#   elif defined(V8_ACCELERATION)
+    for( ; i<i1; i++ ) {
+      j = i*si;
+      load_4x1(&a[j+0],v0);  load_4x1(&a[j+4],v1);  load_4x1(&a[j+8],v2);
+      for( r=0; r<nr; r++ ) {
+        k = j + r*sr;
+        load_4x1(&b[k+0],v3);  load_4x1(&b[k+4],v4);  load_4x1(&b[k+8],v5);
+        v0 += v3;              v1 += v4;              v2 += v5;
+      }
+      store_4x1(v0,&a[j+0]); store_4x1(v1,&a[j+4]); store_4x1(v2,&a[j+8]);
+    }
 #   else
     for( ; i<i1; i++ ) {
       j = i*si;
@@ -149,6 +193,12 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 #if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 #error "The regular pipeline is already V4 accelerated!"
+
+#endif
+
+#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
+
+#error "The regular pipeline is already V8 accelerated!"
 
 #endif
 

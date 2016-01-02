@@ -41,6 +41,31 @@ typedef void
 
 # define PAD_STRUCT( sz )
 
+#elif defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
+
+  // Use thread dispatcher on the v8 pipeline
+  // Caller will do straggler cleanup with scalar pipeline
+
+# define N_PIPELINE thread.n_pipeline
+# define EXEC_PIPELINES(name,args,str)                                 \
+  thread.dispatch( (pipeline_func_t)name##_pipeline_v8,                \
+                   args, sizeof(*args), str );                         \
+  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
+# define WAIT_PIPELINES() thread.wait()
+
+# define PROTOTYPE_PIPELINE( name, args_t ) \
+  void                                      \
+  name##_pipeline_v8( args_t * args,        \
+                      int pipeline_rank,    \
+                      int n_pipeline );     \
+                                            \
+  void                                      \
+  name##_pipeline( args_t * args,           \
+                   int pipeline_rank,       \
+                   int n_pipeline )
+
+# define PAD_STRUCT( sz )
+
 #else
 
   // Use thread dispatcher on the scalar pipeline

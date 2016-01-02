@@ -13,6 +13,10 @@
 using namespace v4;
 #endif
 
+#ifdef V8_ACCELERATION
+using namespace v8;
+#endif
+
 enum { MAX_PBC = 32, MAX_SP = 32 };
 
 void
@@ -200,6 +204,10 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
           copy_4x1( &pi->dispx, &pm->dispx );
+#         elifdef V8_ACCELERATION
+          copy_4x1( &pi->dx,    &p0[i].dx  );
+          copy_4x1( &pi->ux,    &p0[i].ux  );
+          copy_4x1( &pi->dispx, &pm->dispx );
 #         else
           pi->dx=p0[i].dx; pi->dy=p0[i].dy; pi->dz=p0[i].dz;
           pi->i =nn - range[face];
@@ -247,6 +255,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         np--;
 #       ifdef V4_ACCELERATION
+        copy_4x1( &p0[i].dx, &p0[np].dx );
+        copy_4x1( &p0[i].ux, &p0[np].ux );
+#       elifdef V8_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
 #       else
@@ -415,6 +426,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef V4_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
+#       elifdef V8_ACCELERATION
+        copy_4x1(  &p[np].dx,    &pi->dx    );
+        copy_4x1(  &p[np].ux,    &pi->ux    );
 #       else
         p[np].dx=pi->dx; p[np].dy=pi->dy; p[np].dz=pi->dz; p[np].i=pi->i;
         p[np].ux=pi->ux; p[np].uy=pi->uy; p[np].uz=pi->uz; p[np].w=pi->w;
@@ -425,6 +439,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         if( nm>=sp_max_nm[id] ) { n_dropped_movers[id]++;    continue; }
 #       endif
 #       ifdef V4_ACCELERATION
+        copy_4x1( &pm[nm].dispx, &pi->dispx );
+        pm[nm].i = np;
+#       elifdef V8_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;
 #       else

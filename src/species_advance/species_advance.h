@@ -16,7 +16,7 @@
 
 typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 
-// FIXME: Eventually particle_t (definitely) and ther other formats
+// FIXME: Eventually particle_t (definitely) and their other formats
 // (maybe) should be opaque and specific to a particular
 // species_advance implementation
 

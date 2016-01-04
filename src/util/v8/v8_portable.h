@@ -101,8 +101,8 @@ namespace v8 {
   protected:
 
     union {
-      int i[4];
-      float f[4];
+      int i[8];
+      float f[8];
     };
     
   public:
@@ -110,6 +110,7 @@ namespace v8 {
     v8() {}                    // Default constructor
     v8(const v8 &a) {          // Copy constructor
       i[0]=a.i[0]; i[1]=a.i[1]; i[2]=a.i[2]; i[3]=a.i[3];
+      i[4]=a.i[4]; i[5]=a.i[5]; i[6]=a.i[6]; i[7]=a.i[7];
     }
     ~v8() {}                   // Default destructor
 
@@ -118,11 +119,11 @@ namespace v8 {
   // v8 miscellaneous functions
 
   inline int any( const v8 &a ) {
-    return a.i[0] || a.i[1] || a.i[2] || a.i[3];
+    return a.i[0] || a.i[1] || a.i[2] || a.i[3] || a.i[4] || a.i[5] || a.i[6] || a.i[7];
   }
   
   inline int all( const v8 &a ) {
-    return a.i[0] && a.i[1] && a.i[2] && a.i[3];
+    return a.i[0] && a.i[1] && a.i[2] && a.i[3] && a.i[4] && a.i[5] && a.i[6] && a.i[7];
   }
   
   template<int n>
@@ -132,16 +133,24 @@ namespace v8 {
     b.i[1] = a.i[n];
     b.i[2] = a.i[n];
     b.i[3] = a.i[n];
+    b.i[4] = a.i[n];
+    b.i[5] = a.i[n];
+    b.i[6] = a.i[n];
+    b.i[7] = a.i[n];
     return b;
   }
 
-  template<int i0, int i1, int i2, int i3>
+  template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
   inline v8 shuffle( const v8 & a ) {
     v8 b;
     b.i[0] = a.i[i0];
     b.i[1] = a.i[i1];
     b.i[2] = a.i[i2];
     b.i[3] = a.i[i3];
+    b.i[4] = a.i[i4];
+    b.i[5] = a.i[i5];
+    b.i[6] = a.i[i6];
+    b.i[7] = a.i[i7];
     return b;
   }
 
@@ -152,8 +161,13 @@ namespace v8 {
     sw( a.i[1], b.i[1] );
     sw( a.i[2], b.i[2] );
     sw( a.i[3], b.i[3] );
+    sw( a.i[4], b.i[4] );
+    sw( a.i[5], b.i[5] );
+    sw( a.i[6], b.i[6] );
+    sw( a.i[7], b.i[7] );
   }
 
+  // wdn need to figure this out
   inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3 ) {
     /**/ sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
     /**/                        sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
@@ -169,6 +183,10 @@ namespace v8 {
     a.i[1] = ((const int * ALIGNED(16))p)[1];
     a.i[2] = ((const int * ALIGNED(16))p)[2];
     a.i[3] = ((const int * ALIGNED(16))p)[3];
+    a.i[4] = ((const int * ALIGNED(16))p)[4];
+    a.i[5] = ((const int * ALIGNED(16))p)[5];
+    a.i[6] = ((const int * ALIGNED(16))p)[6];
+    a.i[7] = ((const int * ALIGNED(16))p)[7];
   }
 
   inline void store_4x1( const v8 &a, void * ALIGNED(16) p ) {
@@ -176,6 +194,10 @@ namespace v8 {
     ((int * ALIGNED(16))p)[1] = a.i[1];
     ((int * ALIGNED(16))p)[2] = a.i[2];
     ((int * ALIGNED(16))p)[3] = a.i[3];
+    ((int * ALIGNED(16))p)[4] = a.i[4];
+    ((int * ALIGNED(16))p)[5] = a.i[5];
+    ((int * ALIGNED(16))p)[6] = a.i[6];
+    ((int * ALIGNED(16))p)[7] = a.i[7];
   }
 
   inline void stream_4x1( const v8 &a, void * ALIGNED(16) p ) {
@@ -183,6 +205,10 @@ namespace v8 {
     ((int * ALIGNED(16))p)[1] = a.i[1];
     ((int * ALIGNED(16))p)[2] = a.i[2];
     ((int * ALIGNED(16))p)[3] = a.i[3];
+    ((int * ALIGNED(16))p)[4] = a.i[4];
+    ((int * ALIGNED(16))p)[5] = a.i[5];
+    ((int * ALIGNED(16))p)[6] = a.i[6];
+    ((int * ALIGNED(16))p)[7] = a.i[7];
   }
 
   inline void clear_4x1( void * ALIGNED(16) p ) {
@@ -190,6 +216,10 @@ namespace v8 {
     ((int * ALIGNED(16))p)[1] = 0;
     ((int * ALIGNED(16))p)[2] = 0;
     ((int * ALIGNED(16))p)[3] = 0;
+    ((int * ALIGNED(16))p)[4] = 0;
+    ((int * ALIGNED(16))p)[5] = 0;
+    ((int * ALIGNED(16))p)[6] = 0;
+    ((int * ALIGNED(16))p)[7] = 0;
   }
 
   // FIXME: Ordering semantics
@@ -199,6 +229,10 @@ namespace v8 {
     ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
     ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
     ((int * ALIGNED(16))dst)[3] = ((const int * ALIGNED(16))src)[3];
+    ((int * ALIGNED(16))dst)[4] = ((const int * ALIGNED(16))src)[4];
+    ((int * ALIGNED(16))dst)[5] = ((const int * ALIGNED(16))src)[5];
+    ((int * ALIGNED(16))dst)[6] = ((const int * ALIGNED(16))src)[6];
+    ((int * ALIGNED(16))dst)[7] = ((const int * ALIGNED(16))src)[7];
   }
 
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
@@ -207,10 +241,15 @@ namespace v8 {
     t = ((int * ALIGNED(16))a)[1]; ((int * ALIGNED(16))a)[1] = ((int * ALIGNED(16))b)[1]; ((int * ALIGNED(16))b)[1] = t;
     t = ((int * ALIGNED(16))a)[2]; ((int * ALIGNED(16))a)[2] = ((int * ALIGNED(16))b)[2]; ((int * ALIGNED(16))b)[2] = t;
     t = ((int * ALIGNED(16))a)[3]; ((int * ALIGNED(16))a)[3] = ((int * ALIGNED(16))b)[3]; ((int * ALIGNED(16))b)[3] = t;
+    t = ((int * ALIGNED(16))a)[4]; ((int * ALIGNED(16))a)[4] = ((int * ALIGNED(16))b)[4]; ((int * ALIGNED(16))b)[4] = t;
+    t = ((int * ALIGNED(16))a)[5]; ((int * ALIGNED(16))a)[5] = ((int * ALIGNED(16))b)[5]; ((int * ALIGNED(16))b)[5] = t;
+    t = ((int * ALIGNED(16))a)[6]; ((int * ALIGNED(16))a)[6] = ((int * ALIGNED(16))b)[6]; ((int * ALIGNED(16))b)[6] = t;
+    t = ((int * ALIGNED(16))a)[7]; ((int * ALIGNED(16))a)[7] = ((int * ALIGNED(16))b)[7]; ((int * ALIGNED(16))b)[7] = t;
   }
 
   // v8 transposed memory manipulation functions
 
+  // wdn need to figure this out
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3, v8 &a ) {
     a.i[0] = ((const int *)a0)[0];

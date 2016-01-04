@@ -204,7 +204,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
           copy_4x1( &pi->dispx, &pm->dispx );
-#         elifdef V8_ACCELERATION
+#         elif defined V8_ACCELERATION
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
           copy_4x1( &pi->dispx, &pm->dispx );
@@ -257,7 +257,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef V4_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
-#       elifdef V8_ACCELERATION
+#       elif defined V8_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
 #       else
@@ -426,7 +426,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef V4_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
-#       elifdef V8_ACCELERATION
+#       elif defined V8_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
 #       else
@@ -441,7 +441,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef V4_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;
-#       elifdef V8_ACCELERATION
+#       elif defined V8_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;
 #       else

@@ -201,14 +201,14 @@ vacuum_advance_e_pipeline_v8( pipeline_args_t * args,
     f02 = f0; fx2 = fx; fy2 = fy; fz2 = fz; NEXT_STENCIL();
     f03 = f0; fx3 = fx; fy3 = fy; fz3 = fz; NEXT_STENCIL();
 
-    load_4x4_tr( &f00->ex,   &f01->ex,   &f02->ex,   &f03->ex,   f0_ex,   f0_ey,   f0_ez,   save0 );
-    load_4x3_tr( &f00->cbx,  &f01->cbx,  &f02->cbx,  &f03->cbx,  f0_cbx,  f0_cby,  f0_cbz         );
-    load_4x4_tr( &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax, f0_tcax, f0_tcay, f0_tcaz, save1 );
-    load_4x3_tr( &f00->jfx,  &f01->jfx,  &f02->jfx,  &f03->jfx,  f0_jfx,  f0_jfy,  f0_jfz         );
+    load_8x4_tr( &f00->ex,   &f01->ex,   &f02->ex,   &f03->ex,   f0_ex,   f0_ey,   f0_ez,   save0 );
+    load_8x3_tr( &f00->cbx,  &f01->cbx,  &f02->cbx,  &f03->cbx,  f0_cbx,  f0_cby,  f0_cbz         );
+    load_8x4_tr( &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax, f0_tcax, f0_tcay, f0_tcaz, save1 );
+    load_8x3_tr( &f00->jfx,  &f01->jfx,  &f02->jfx,  &f03->jfx,  f0_jfx,  f0_jfy,  f0_jfz         );
 
-    load_4x3_tr( &fx0->cbx,  &fx1->cbx,  &fx2->cbx,  &fx3->cbx,  dummy,   fx_cby,  fx_cbz         );
-    load_4x3_tr( &fy0->cbx,  &fy1->cbx,  &fy2->cbx,  &fy3->cbx,  fy_cbx,  dummy,   fy_cbz         );
-    load_4x2_tr( &fz0->cbx,  &fz1->cbx,  &fz2->cbx,  &fz3->cbx,  fz_cbx,  fz_cby   /**/           );
+    load_8x3_tr( &fx0->cbx,  &fx1->cbx,  &fx2->cbx,  &fx3->cbx,  dummy,   fx_cby,  fx_cbz         );
+    load_8x3_tr( &fy0->cbx,  &fy1->cbx,  &fy2->cbx,  &fy3->cbx,  fy_cbx,  dummy,   fy_cbz         );
+    load_8x2_tr( &fz0->cbx,  &fz1->cbx,  &fz2->cbx,  &fz3->cbx,  fz_cbx,  fz_cby   /**/           );
 
     f0_tcax = fnms( vdamp,f0_tcax, fms( vpy_muz,(f0_cbz-fy_cbz), vpz_muy*(f0_cby-fz_cby) ) );
     f0_tcay = fnms( vdamp,f0_tcay, fms( vpz_mux,(f0_cbx-fz_cbx), vpx_muz*(f0_cbz-fx_cbz) ) );
@@ -218,9 +218,9 @@ vacuum_advance_e_pipeline_v8( pipeline_args_t * args,
     f0_ey   = fma( vdecayy,f0_ey, vdrivey*fnms( vcj,f0_jfy, f0_tcay ) );
     f0_ez   = fma( vdecayz,f0_ez, vdrivez*fnms( vcj,f0_jfz, f0_tcaz ) );
 
-    // Note: Unlike load_4x3 versus load_4x4, store_4x4 is much more efficient than store_4x3!
-    store_4x4_tr( f0_ex,   f0_ey,   f0_ez,   save0, &f00->ex,    &f01->ex,    &f02->ex,    &f03->ex   );
-    store_4x4_tr( f0_tcax, f0_tcay, f0_tcaz, save1, &f00->tcax,  &f01->tcax,  &f02->tcax,  &f03->tcax );
+    // Note: Unlike load_8x3 versus load_8x4, store_8x4 is much more efficient than store_8x3!
+    store_8x4_tr( f0_ex,   f0_ey,   f0_ez,   save0, &f00->ex,    &f01->ex,    &f02->ex,    &f03->ex   );
+    store_8x4_tr( f0_tcax, f0_tcay, f0_tcaz, save1, &f00->tcax,  &f01->tcax,  &f02->tcax,  &f03->tcax );
   }
 }
 

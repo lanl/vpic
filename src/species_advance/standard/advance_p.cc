@@ -268,12 +268,22 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     vp1 = (float * ALIGNED(16))(f0 + ii(1));
     vp2 = (float * ALIGNED(16))(f0 + ii(2));
     vp3 = (float * ALIGNED(16))(f0 + ii(3));
-    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2); hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
-    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5); hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
-    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2); haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
-    load_4x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4); cbx = fma( v3, dx, cbx );
-    /**/                                                    cby = fma( v4, dy, cby );
-    load_4x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);        cbz = fma( v5, dz, cbz );
+
+    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2);
+    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
+
+    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5);
+    hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
+
+    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2);
+    haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
+
+    load_4x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4);
+    cbx = fma( v3, dx, cbx );
+    cby = fma( v4, dy, cby );
+
+    load_4x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);
+    cbz = fma( v5, dz, cbz );
 
     // Update momentum
     // If you are willing to eat a 5-10% performance hit,
@@ -466,19 +476,29 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   // Process the particle quads for this pipeline
 
   for( ; nq; nq--, p+=4 ) {
-    load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
+    load_8x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
 
     // Interpolate fields
     vp0 = (float * ALIGNED(16))(f0 + ii(0));
     vp1 = (float * ALIGNED(16))(f0 + ii(1));
     vp2 = (float * ALIGNED(16))(f0 + ii(2));
     vp3 = (float * ALIGNED(16))(f0 + ii(3));
-    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2); hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
-    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5); hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
-    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2); haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
-    load_4x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4); cbx = fma( v3, dx, cbx );
-    /**/                                                    cby = fma( v4, dy, cby );
-    load_4x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);        cbz = fma( v5, dz, cbz );
+
+    load_8x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2);
+    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
+
+    load_8x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5);
+    hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
+
+    load_8x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2);
+    haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
+
+    load_8x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4);
+    cbx = fma( v3, dx, cbx );
+    cby = fma( v4, dy, cby );
+
+    load_8x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);
+    cbz = fma( v5, dz, cbz );
 
     // Update momentum
     // If you are willing to eat a 5-10% performance hit,
@@ -486,7 +506,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // quite in the noise numerically) for cyclotron frequencies
     // approaching the nyquist frequency.
 
-    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
+    load_8x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
     ux += hax;
     uy += hay;
     uz += haz;
@@ -505,7 +525,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     ux += hax;
     uy += hay;
     uz += haz;
-    store_4x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
+    store_8x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
     
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
@@ -527,7 +547,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v3  = merge(outbnd,dx,v3); // Do not update outbnd particles
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
-    store_4x4_tr(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
+    store_8x4_tr(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
     
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
@@ -558,10 +578,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v2 -= v5;       /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */      \
     v3 += v5;       /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */      \
     transpose(v0,v1,v2,v3);                                         \
-    increment_4x1(vp0+offset,v0);                                   \
-    increment_4x1(vp1+offset,v1);                                   \
-    increment_4x1(vp2+offset,v2);                                   \
-    increment_4x1(vp3+offset,v3)
+    increment_8x1(vp0+offset,v0);                                   \
+    increment_8x1(vp1+offset,v1);                                   \
+    increment_8x1(vp2+offset,v2);                                   \
+    increment_8x1(vp3+offset,v3)
 
     ACCUMULATE_J( x,y,z, 0 );
     ACCUMULATE_J( y,z,x, 4 );
@@ -578,7 +598,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
       local_pm->dispz = uz(N);                                          \
       local_pm->i     = (p - p0) + N;                                   \
       if( move_p( p0, local_pm, a0, g, _qsp ) ) { /* Unlikely */        \
-        if( nm<max_nm ) copy_4x1( &pm[nm++], local_pm );                \
+        if( nm<max_nm ) copy_8x1( &pm[nm++], local_pm );                \
         else            itmp++;             /* Unlikely */              \
       }                                                                 \
     }

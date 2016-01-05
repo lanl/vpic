@@ -215,7 +215,7 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
   for( ; n_voxel>3; n_voxel-=4 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
 
-    load_4x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
+    load_8x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
 
     fx_cbx = v8float( fx0->cbx, fx1->cbx, fx2->cbx, fx3->cbx );
     fy_cby = v8float( fy0->cby, fy1->cby, fy2->cby, fy3->cby );
@@ -223,7 +223,7 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
 
     f0_div_b_err = fma( vpx,fx_cbx-f0_cbx, fma( vpy,fy_cby-f0_cby, vpz*(fz_cbz-f0_cbz) ) );
 
-    store_4x1_tr( f0_div_b_err, &f00->div_b_err, &f01->div_b_err, &f02->div_b_err, &f03->div_b_err );
+    store_8x1_tr( f0_div_b_err, &f00->div_b_err, &f01->div_b_err, &f02->div_b_err, &f03->div_b_err );
   }
 
 # undef NEXT_STENCIL

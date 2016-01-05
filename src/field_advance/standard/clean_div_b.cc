@@ -241,7 +241,7 @@ clean_div_b_pipeline_v8( pipeline_args_t * args,
   for( ; n_voxel>3; n_voxel-=4 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
 
-    load_4x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
+    load_8x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
 
     fx_div_b_err = v8float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err );
     fy_div_b_err = v8float( fy0->div_b_err, fy1->div_b_err, fy2->div_b_err, fy3->div_b_err );
@@ -251,7 +251,7 @@ clean_div_b_pipeline_v8( pipeline_args_t * args,
     f0_cby = fma( f0_div_b_err-fy_div_b_err, py, f0_cby );
     f0_cbz = fma( f0_div_b_err-fz_div_b_err, pz, f0_cbz );
 
-    store_4x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
+    store_8x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 
 # undef NEXT_STENCIL

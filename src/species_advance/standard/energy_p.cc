@@ -156,7 +156,7 @@ energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
   // Process the particle quads for this pipeline
 
   for( ; nq; nq--, p+=4 ) {
-    load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,i);
+    load_8x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,i);
 
     // Interpolate fields
 
@@ -164,14 +164,14 @@ energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
     vp1 = (float *)(f + i(1));
     vp2 = (float *)(f + i(2));
     vp3 = (float *)(f + i(3));
-    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  ex,v0,v1,v2); ex = fma( fma( dy, v2, v1 ), dz, fma( dy, v0, ex ) );
-    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,ey,v0,v1,v2); ey = fma( fma( dz, v2, v1 ), dx, fma( dz, v0, ey ) );
-    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,ez,v0,v1,v2); ez = fma( fma( dx, v2, v1 ), dy, fma( dx, v0, ez ) );
+    load_8x4_tr(vp0,  vp1,  vp2,  vp3,  ex,v0,v1,v2); ex = fma( fma( dy, v2, v1 ), dz, fma( dy, v0, ex ) );
+    load_8x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,ey,v0,v1,v2); ey = fma( fma( dz, v2, v1 ), dx, fma( dz, v0, ey ) );
+    load_8x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,ez,v0,v1,v2); ez = fma( fma( dx, v2, v1 ), dy, fma( dx, v0, ez ) );
 
     // Update momentum to half step
     // (note Boris rotation does not change energy so it is unnecessary)
 
-    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,v0,v1,v2,w);
+    load_8x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,v0,v1,v2,w);
     v0  = fma( ex, qdt_2mc, v0 );
     v1  = fma( ey, qdt_2mc, v1 );
     v2  = fma( ez, qdt_2mc, v2 );

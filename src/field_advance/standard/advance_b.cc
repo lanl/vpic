@@ -170,18 +170,18 @@ advance_b_pipeline_v8( pipeline_args_t * args,
     f02 = f0; fx2 = fx; fy2 = fy; fz2 = fz; NEXT_STENCIL();
     f03 = f0; fx3 = fx; fy3 = fy; fz3 = fz; NEXT_STENCIL();
 
-    load_4x3_tr(  &f00->ex,  &f01->ex,  &f02->ex,  &f03->ex,  f0_ex,  f0_ey,  f0_ez  );
-    load_4x3_tr(  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
+    load_8x3_tr(  &f00->ex,  &f01->ex,  &f02->ex,  &f03->ex,  f0_ex,  f0_ey,  f0_ez  );
+    load_8x3_tr(  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
 
-    load_4x3_tr(  &fx0->ex,  &fx1->ex,  &fx2->ex,  &fx3->ex,  dummy,  fx_ey,  fx_ez  );
-    load_4x3_tr(  &fy0->ex,  &fy1->ex,  &fy2->ex,  &fy3->ex,  fy_ex,  dummy,  fy_ez  );
-    load_4x2_tr(  &fz0->ex,  &fz1->ex,  &fz2->ex,  &fz3->ex,  fz_ex,  fz_ey   /**/   );
+    load_8x3_tr(  &fx0->ex,  &fx1->ex,  &fx2->ex,  &fx3->ex,  dummy,  fx_ey,  fx_ez  );
+    load_8x3_tr(  &fy0->ex,  &fy1->ex,  &fy2->ex,  &fy3->ex,  fy_ex,  dummy,  fy_ez  );
+    load_8x2_tr(  &fz0->ex,  &fz1->ex,  &fz2->ex,  &fz3->ex,  fz_ex,  fz_ey   /**/   );
 
     f0_cbx += fnms( vpy,( fy_ez-f0_ez ),  vpz*( fz_ey-f0_ey ) );
     f0_cby += fnms( vpz,( fz_ex-f0_ex ),  vpx*( fx_ez-f0_ez ) );
     f0_cbz += fnms( vpx,( fx_ey-f0_ey ),  vpy*( fy_ex-f0_ex ) );
 
-    store_4x3_tr( f0_cbx, f0_cby, f0_cbz, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
+    store_8x3_tr( f0_cbx, f0_cby, f0_cbz, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 }
 

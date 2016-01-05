@@ -238,9 +238,9 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
   int64_t neighbor;
   int type;
 
-  load_4x1( &pm->dispx, dr );  n     = pm->i;
-  load_4x1( &p[n].dx,   r  );  voxel = p[n].i;
-  load_4x1( &p[n].ux,   u  );
+  load_8x1( &pm->dispx, dr );  n     = pm->i;
+  load_8x1( &p[n].dx,   r  );  voxel = p[n].i;
+  load_8x1( &p[n].ux,   u  );
 
   q  = v8float(qsp)*splat<3>(u); // q  = p_q,   p_q,   p_q,   D/C
   q3 = v8float(1.f/3.f)*q;      // q3 = p_q/3, p_q/3, p_q/3, D/C
@@ -276,7 +276,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER 
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
-    store_4x1( (sgn_dr-r) / ((dr+dr)+v0), stack_vf );
+    store_8x1( (sgn_dr-r) / ((dr+dr)+v0), stack_vf );
     /**/                          type = 3;             f0 = 1;
     f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
@@ -329,15 +329,15 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 
     transpose( v0, v1, v2, v3 );
 
-    increment_4x1( a[voxel].jx, v0 );
-    increment_4x1( a[voxel].jy, v1 );
-    increment_4x1( a[voxel].jz, v2 );
+    increment_8x1( a[voxel].jx, v0 );
+    increment_8x1( a[voxel].jy, v1 );
+    increment_8x1( a[voxel].jz, v2 );
 
     // If streak ended at the end of the particle track, this mover
     // was succesfully processed.  Should be just under ~50% of the
     // time.
        
-    if( type==3 ) { store_4x1( r, &p[n].dx ); p[n].i = voxel; break; }
+    if( type==3 ) { store_8x1( r, &p[n].dx ); p[n].i = voxel; break; }
 
     // Streak terminated on a voxel face.  Determine if the particle
     // crossed into a local voxel or if it hit a boundary.  Convert
@@ -346,9 +346,9 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // this point; hitting a structure or parallel domain boundary
     // should usually be a rare event. */
 
-    clear_4x1( stack_vi );
+    clear_8x1( stack_vi );
     stack_vi[type] = -1;
-    load_4x1( stack_vi, bits );
+    load_8x1( stack_vi, bits );
     r = merge( bits, sgn_dr, r ); // Avoid roundoff fiascos--put the
                                   // particle _exactly_ on the
                                   // boundary.
@@ -362,7 +362,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // coordinate for the particle is guaranteed to be +/-1 _exactly_
     // for the particle.
 
-    store_4x1( sgn_dr, stack_vf ); if( stack_vf[type]>0 ) type += 3;
+    store_8x1( sgn_dr, stack_vf ); if( stack_vf[type]>0 ) type += 3;
     neighbor = g->neighbor[ 6*voxel + type ];
 
     if( UNLIKELY( neighbor==reflect_particles ) ) {
@@ -373,7 +373,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 
       dr = toggle_bits( bits, dr );
       u  = toggle_bits( bits, u  );
-      store_4x1( u, &p[n].ux );
+      store_8x1( u, &p[n].ux );
       continue;
     }
 
@@ -383,8 +383,8 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
       // particle position and update the remaining displacement in
       // the particle mover.
 
-      store_4x1( r, &p[n].dx );    p[n].i = 8*voxel + type;
-      store_4x1( dr, &pm->dispx ); pm->i  = n;
+      store_8x1( r, &p[n].dx );    p[n].i = 8*voxel + type;
+      store_8x1( dr, &pm->dispx ); pm->i  = n;
       return 1; // Mover still in use
     }
 

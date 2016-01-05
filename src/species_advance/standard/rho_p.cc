@@ -208,4 +208,3 @@ accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
 
 # endif
 }
-

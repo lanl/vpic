@@ -67,9 +67,9 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
     k = i*si;                                   \
     OP(k   ); OP(k+ 4); OP(k+ 8);               \
   }
-# define A(k)   load_4x1(  &a[k],          v0   );
-# define B(k,r) load_4x1(  &b[k+(r-1)*sr], v##r );
-# define C(k,v) store_4x1( v, &a[k] )
+# define A(k)   load_8x1(  &a[k],          v0   );
+# define B(k,r) load_8x1(  &b[k+(r-1)*sr], v##r );
+# define C(k,v) store_8x1( v, &a[k] )
 # define O1(k)A(k  )B(k,1)                                                 \
               C(k,   v0+v1)
 # define O2(k)A(k  )B(k,1)B(k,2)                                           \
@@ -146,13 +146,13 @@ reduce_accumulators_pipeline( accumulators_pipeline_args_t * args,
 #   elif defined(V8_ACCELERATION)
     for( ; i<i1; i++ ) {
       j = i*si;
-      load_4x1(&a[j+0],v0);  load_4x1(&a[j+4],v1);  load_4x1(&a[j+8],v2);
+      load_8x1(&a[j+0],v0);  load_8x1(&a[j+4],v1);  load_8x1(&a[j+8],v2);
       for( r=0; r<nr; r++ ) {
         k = j + r*sr;
-        load_4x1(&b[k+0],v3);  load_4x1(&b[k+4],v4);  load_4x1(&b[k+8],v5);
+        load_8x1(&b[k+0],v3);  load_8x1(&b[k+4],v4);  load_8x1(&b[k+8],v5);
         v0 += v3;              v1 += v4;              v2 += v5;
       }
-      store_4x1(v0,&a[j+0]); store_4x1(v1,&a[j+4]); store_4x1(v2,&a[j+8]);
+      store_8x1(v0,&a[j+0]); store_8x1(v1,&a[j+4]); store_8x1(v2,&a[j+8]);
     }
 #   else
     for( ; i<i1; i++ ) {

@@ -315,7 +315,7 @@ load_interpolator_pipeline_v8( load_interpolator_pipeline_args_t * args,
     w1 =                       v8float( pfy->ex);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v8float( pfz->ex) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v8float(pfyz->ex);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+    store_8x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ex );
 
     // ey interpolation coefficients 
@@ -323,7 +323,7 @@ load_interpolator_pipeline_v8( load_interpolator_pipeline_args_t * args,
     w1 =                       v8float( pfz->ey);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v8float( pfx->ey) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v8float(pfzx->ey);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+    store_8x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ey );
 
     // ez interpolation coefficients 
@@ -331,7 +331,7 @@ load_interpolator_pipeline_v8( load_interpolator_pipeline_args_t * args,
     w1 =                       v8float( pfx->ez);   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v8float( pfy->ez) ); // [ w2 -w2 -w2 w2 ]
     w3 =                       v8float(pfxy->ez);   // [ w3  w3  w3 w3 ]
-    store_4x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
+    store_8x1( fourth*( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ez );
 
     // bx and by interpolation coefficients 
@@ -342,12 +342,12 @@ load_interpolator_pipeline_v8( load_interpolator_pipeline_args_t * args,
     w1  =              merge( sel_0_1,
                               v8float(pfx->cbx),
                               v8float(pfy->cby) );   // [ w1x  w1x w1y  w1y ]
-    store_4x1( half*( w1 + w0 ), &pi->cbx );
+    store_8x1( half*( w1 + w0 ), &pi->cbx );
 
     // bz interpolation coefficients 
     w0  = toggle_bits( sgn_1_3, v8float(pf0->cbz) ); // [ w0 -w0 d/c d/c ]
     w1  =                       v8float(pfz->cbz);   // [ w1 -w1 d/c d/c ]
-    store_4x1( half*( w1 + w0 ), &pi->cbz ); // Note: Padding after bz coeff!
+    store_8x1( half*( w1 + w0 ), &pi->cbz ); // Note: Padding after bz coeff!
 
     pi++; pf0++; pfx++; pfy++; pfz++; pfyz++; pfzx++; pfxy++;
 

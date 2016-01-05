@@ -9,7 +9,7 @@
 #define V4_PORTABLE_ACCELERATION
 
 #ifndef ALIGNED
-#define ALIGNED(n)
+#define ALIGNED(n) snout
 #endif
 
 #include <math.h>

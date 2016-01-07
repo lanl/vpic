@@ -1,6 +1,6 @@
 #define IN_sfa
 #define HAS_V4_PIPELINE
-#define HAS_V8_PIPELINE
+//#define HAS_V8_PIPELINE
 #include "sfa_private.h"
 
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]

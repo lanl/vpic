@@ -1,6 +1,6 @@
 #define IN_sf_interface
 #define HAS_V4_PIPELINE
-#define HAS_V8_PIPELINE
+//#define HAS_V8_PIPELINE
 #include "sf_interface_private.h"
 
 void

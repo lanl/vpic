@@ -114,10 +114,6 @@ if(USE_OPENMP)
 endif(USE_OPENMP)
 
 set(USE_V4)
-if(USE_V4_ALTIVEC)
-  add_definitions(-DUSE_V4_ALTIVEC)
-  set(USE_V4 True)
-endif(USE_V4_ALTIVEC)
 
 if(USE_V4_PORTABLE)
   add_definitions(-DUSE_V4_PORTABLE)
@@ -128,6 +124,18 @@ if(USE_V4_SSE)
   add_definitions(-DUSE_V4_SSE)
   set(USE_V4 True)
 endif(USE_V4_SSE)
+
+if(USE_V4_ALTIVEC)
+  add_definitions(-DUSE_V4_ALTIVEC)
+  set(USE_V4 True)
+endif(USE_V4_ALTIVEC)
+
+set(USE_V8)
+
+if(USE_V8_PORTABLE)
+  add_definitions(-DUSE_V8_PORTABLE)
+  set(USE_V8 True)
+endif(USE_V8_PORTABLE)
 
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)

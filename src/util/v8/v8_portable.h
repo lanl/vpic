@@ -36,11 +36,12 @@ namespace v8 {
     template<int n>
     friend inline v8 splat( const v8 &a );
 
-    template<int i0, int i1, int i2, int i3>
+    template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
     friend inline v8 shuffle( const v8 &a );
 
     friend inline void swap( v8 &a, v8 &b );
-    friend inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3 );
+    friend inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				  v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
 
     // v8int miscellaneous friends
 
@@ -193,12 +194,6 @@ namespace v8 {
     sw( a.i[6], b.i[6] );
     sw( a.i[7], b.i[7] );
   }
-
-  //  inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3 ) {
-  //    /**/ sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
-  //    /**/                        sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
-  //    /**/                                               sw( a2.i[3],a3.i[2] );
-  //  }
 
   inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
 			 v8 &a4, v8 &a5, v8 &a6, v8 &a7 ) {

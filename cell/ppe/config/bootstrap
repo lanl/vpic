@@ -4,6 +4,7 @@
 #
 
 echo "generating Makefile.am for PPU VPIC library"
+[ ! -d lib ] && mkdir lib
 config/create_lib_am > lib/Makefile.am
 
 echo "calling libtoolize..."

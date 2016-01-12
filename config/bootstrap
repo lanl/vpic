@@ -22,6 +22,7 @@ echo "calling PPE bootstrap"
 echo
 
 echo "generating Makefile.am for VPIC library"
+[ ! -d lib ] && mkdir lib
 config/create_lib_am > lib/Makefile.am
 
 echo "calling libtoolize..."

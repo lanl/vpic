@@ -700,19 +700,18 @@ vpic_simulation::restart( const char *fbase ) {
  
   // fields
  
-  // FIXME: SEE NOTE IN ABOVE ABOUT THIS!
+  // FIXME: SEE NOTE ABOVE ABOUT THIS.
   field_advance_methods_t fam[1];
   READ(field_advance_methods_t,fam[0],fileIO);
 
-  //field_advance = new_field_advance( grid, material_list, fam );
-  ///*
-  field_advance = new_field_advance( grid, material_list,
-  	vacuum_field_advance );
-  //*/
-  /*
+  // field_advance = new_field_advance( grid, material_list, fam );
+
+  // field_advance = new_field_advance( grid, material_list,
+  // 	vacuum_field_advance );
+
   field_advance = new_field_advance( grid, material_list,
   	standard_field_advance );
-  */
+
   field = field_advance->f; // FIXME: Temporary hack
  
   READ(int,size,  fileIO); ABORT(size!=sizeof(field[0]));

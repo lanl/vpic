@@ -11,7 +11,7 @@
 #define IN_spa
 #include "spa_private.h"
 
-#if 0
+#if 1
 
 void
 sort_p( species_t * sp,

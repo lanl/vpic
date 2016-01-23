@@ -64,9 +64,9 @@ CCS_EXTRA_FLAGS
 ################################################################################
 AC_PROG_CXX
 AC_PROG_CC
-CCS_SIMD_ISA
-CCS_TUNE_CXX
-CCS_TUNE_CC
+#CCS_SIMD_ISA
+#CCS_TUNE_CXX
+#CCS_TUNE_CC
 CCS_PROG_DOXYGEN
 
 # initialize these to empty

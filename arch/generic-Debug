@@ -17,11 +17,18 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 # Call CMake command
 #------------------------------------------------------------------------------#
 
+# The flag -rdynamic removes warnings of the form:
+# Unable to find a safely writable symbol that corresponds to address 432af0
+# (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").  Writing out
+# the raw address instead and keeping my fingers crossed.
+
 cmake \
   -DCMAKE_BUILD_TYPE=Debug \
   -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
   -DENABLE_UNIT_TESTS=ON \
+  -DCMAKE_C_FLAGS="-rdynamic" \
+  -DCMAKE_CXX_FLAGS="-rdynamic" \
   $cinch_dir
 
 #------------------------------------------------------------------------------#

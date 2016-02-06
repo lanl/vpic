@@ -27,8 +27,11 @@ cmake \
   -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
   -DENABLE_UNIT_TESTS=ON \
-  -DCMAKE_C_FLAGS="-rdynamic" \
-  -DCMAKE_CXX_FLAGS="-rdynamic" \
+  -DUSE_V4_SSE=ON \
+  -DCMAKE_C_COMPILER=mpiicc \
+  -DCMAKE_CXX_COMPILER=mpiicpc \
+  -DCMAKE_C_FLAGS="-xmic-avx512 -rdynamic" \
+  -DCMAKE_CXX_FLAGS="-xmic-avx512 -rdynamic" \
   $cinch_dir
 
 #------------------------------------------------------------------------------#

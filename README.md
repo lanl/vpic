@@ -11,7 +11,7 @@ flag when cloning the repository:
 
 This command will check out the VPIC source code, including the Cinch
 build system.  Cinch is documented
-[here](https://github.com/flecsi/cinch).
+[here](https://github.com/losalamos/cinch).
 
 # Requirements
 

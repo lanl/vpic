@@ -180,9 +180,16 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
   v8float fz_cbz;                 // Voxel quad +z neighbor z magnetic fields
 
   field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel quad
+
   field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel quad +x neighbors
+
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel quad +y neighbors
+
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel quad +z neighbors
 
   // Process the voxels assigned to this pipeline 
   
@@ -190,7 +197,7 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
 
-  // Process bulk of voxels 4 at a time
+  // Process bulk of voxels 8 at a time
 
 # define LOAD_STENCIL() \
   f0 = &f(x,  y,  z  ); \
@@ -212,18 +219,28 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
 
   LOAD_STENCIL();
 
-  for( ; n_voxel>3; n_voxel-=4 ) {
+  for( ; n_voxel>3; n_voxel-=8 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
+    NEXT_STENCIL(4); NEXT_STENCIL(5); NEXT_STENCIL(6); NEXT_STENCIL(7);
 
-    load_8x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz );
+    load_8x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
+		 &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx,
+		 f0_cbx, f0_cby, f0_cbz );
 
-    fx_cbx = v8float( fx0->cbx, fx1->cbx, fx2->cbx, fx3->cbx );
-    fy_cby = v8float( fy0->cby, fy1->cby, fy2->cby, fy3->cby );
-    fz_cbz = v8float( fz0->cbz, fz1->cbz, fz2->cbz, fz3->cbz );
+    fx_cbx = v8float( fx0->cbx, fx1->cbx, fx2->cbx, fx3->cbx,
+		      fx4->cbx, fx5->cbx, fx6->cbx, fx7->cbx );
+
+    fy_cby = v8float( fy0->cby, fy1->cby, fy2->cby, fy3->cby,
+		      fy4->cby, fy5->cby, fy6->cby, fy7->cby );
+
+    fz_cbz = v8float( fz0->cbz, fz1->cbz, fz2->cbz, fz3->cbz,
+		      fz4->cbz, fz5->cbz, fz6->cbz, fz7->cbz );
 
     f0_div_b_err = fma( vpx,fx_cbx-f0_cbx, fma( vpy,fy_cby-f0_cby, vpz*(fz_cbz-f0_cbz) ) );
 
-    store_8x1_tr( f0_div_b_err, &f00->div_b_err, &f01->div_b_err, &f02->div_b_err, &f03->div_b_err );
+    store_8x1_tr( f0_div_b_err,
+		  &f00->div_b_err, &f01->div_b_err, &f02->div_b_err, &f03->div_b_err,
+		  &f04->div_b_err, &f05->div_b_err, &f06->div_b_err, &f07->div_b_err );
   }
 
 # undef NEXT_STENCIL

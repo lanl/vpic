@@ -13,9 +13,9 @@
 using namespace v4;
 #endif
 
-#ifdef V8_ACCELERATION
-using namespace v8;
-#endif
+// #ifdef V8_ACCELERATION
+// using namespace v8;
+// #endif
 
 enum { MAX_PBC = 32, MAX_SP = 32 };
 
@@ -200,14 +200,17 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         if( ((nn>=0) & (nn< rangel)) | ((nn>rangeh) & (nn<=rangem)) ) {
           pi = &pi_send[face][n_send[face]++];
+	  // This appears to be working with the different components of position
+	  // and velocity for a single particle.  Thus, I do't think it is a
+	  // candidate for longer SIMD vector lengths without further study.
 #         ifdef V4_ACCELERATION
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
           copy_4x1( &pi->dispx, &pm->dispx );
-#         elif defined V8_ACCELERATION
-          copy_4x1( &pi->dx,    &p0[i].dx  );
-          copy_4x1( &pi->ux,    &p0[i].ux  );
-          copy_4x1( &pi->dispx, &pm->dispx );
+// #         elif defined V8_ACCELERATION
+//           copy_8x1( &pi->dx,    &p0[i].dx  );
+//           copy_8x1( &pi->ux,    &p0[i].ux  );
+//           copy_8x1( &pi->dispx, &pm->dispx );
 #         else
           pi->dx=p0[i].dx; pi->dy=p0[i].dy; pi->dz=p0[i].dz;
           pi->i =nn - range[face];
@@ -254,12 +257,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       backfill:
 
         np--;
+	// This appears to be working with the different components of position
+	// and velocity for a single particle.  Thus, I do't think it is a
+	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
-#       elif defined V8_ACCELERATION
-        copy_4x1( &p0[i].dx, &p0[np].dx );
-        copy_4x1( &p0[i].ux, &p0[np].ux );
+// #       elif defined V8_ACCELERATION
+//         copy_8x1( &p0[i].dx, &p0[np].dx );
+//         copy_8x1( &p0[i].ux, &p0[np].ux );
 #       else
         p0[i] = p0[np];
 #       endif
@@ -423,12 +429,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( np>=sp_max_np[id] ) { n_dropped_particles[id]++; continue; }
 #       endif
+	// This appears to be working with the different components of position
+	// and velocity for a single particle.  Thus, I do't think it is a
+	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
-#       elif defined V8_ACCELERATION
-        copy_4x1(  &p[np].dx,    &pi->dx    );
-        copy_4x1(  &p[np].ux,    &pi->ux    );
+// #       elif defined V8_ACCELERATION
+//         copy_8x1(  &p[np].dx,    &pi->dx    );
+//         copy_8x1(  &p[np].ux,    &pi->ux    );
 #       else
         p[np].dx=pi->dx; p[np].dy=pi->dy; p[np].dz=pi->dz; p[np].i=pi->i;
         p[np].ux=pi->ux; p[np].uy=pi->uy; p[np].uz=pi->uz; p[np].w=pi->w;
@@ -438,12 +447,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( nm>=sp_max_nm[id] ) { n_dropped_movers[id]++;    continue; }
 #       endif
+	// This appears to be working with the different components of position
+	// and velocity for a single particle.  Thus, I do't think it is a
+	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;
-#       elif defined V8_ACCELERATION
-        copy_4x1( &pm[nm].dispx, &pi->dispx );
-        pm[nm].i = np;
+// #       elif defined V8_ACCELERATION
+//         copy_8x1( &pm[nm].dispx, &pi->dispx );
+//         pm[nm].i = np;
 #       else
         pm[nm].dispx=pi->dispx; pm[nm].dispy=pi->dispy; pm[nm].dispz=pi->dispz;
         pm[nm].i=np;

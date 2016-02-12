@@ -5,6 +5,7 @@
 // in util_base.h and other low level includes automatically.
 
 #include "v4/v4.h" // Must be first (FIXME: REALLY?)
+#include "v8/v8.h"
 #include "checkpt/checkpt.h"
 #include "mp/mp.h"
 #include "rng/rng.h"

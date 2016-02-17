@@ -28,6 +28,12 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 # Call CMake command
 #------------------------------------------------------------------------------#
 
+# The flag -rdynamic removes warnings of the form:
+# Unable to find a safely writable symbol that corresponds to address 432af0
+# (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").  Writing out
+# the raw address instead and keeping my fingers crossed.
+# The flags -dynamic and -craype-verbose were required for the trinitite build.
+
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_COLOR_UNIT_TESTS=OFF \
@@ -36,9 +42,9 @@ cmake \
   -DUSE_V4_SSE=ON \
   -DCMAKE_C_COMPILER=cc \
   -DCMAKE_CXX_COMPILER=CC \
-  -DCMAKE_C_FLAGS="-dynamic -craype-verbose" \
-  -DCMAKE_CXX_FLAGS="-dynamic -craype-verbose" \
-  -DCMAKE_EXE_LINKER_FLAGS="-dynamic" \
+  -DCMAKE_C_FLAGS="-rdynamic -dynamic -craype-verbose" \
+  -DCMAKE_CXX_FLAGS="-rdynamic -dynamic -craype-verbose" \
+  -DCMAKE_EXE_LINKER_FLAGS="-rdynamic -dynamic" \
   -DMPI_C_LIBRARIES="" \
   -DMPI_CXX_LIBRARIES="" \
   -DMPI_C_INCLUDE_PATH="" \

@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "../../util.h"
+#include "vpic/vpic/vpic_unit_deck.h"
 
 /* Sequence is from the 11213 generator with a seed of 1234 */
 

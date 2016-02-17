@@ -151,6 +151,10 @@ endif(ENABLE_OPENSSL)
 # Handle vpic compile script last
 #------------------------------------------------------------------------------#
 
+if(BUILD_SHARED_LIBS)
+    set(VPIC_CXX_FLAGS "-rdynamic ${VPIC_CXX_FLAGS}")
+endif(BUILD_SHARED_LIBS)
+
 # process Makefile.run.in to get a simple Makefile.run for a run. Points to
 # local built exe wrapper, and has example deck/platform.
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in

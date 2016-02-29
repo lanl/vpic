@@ -5,13 +5,13 @@
 #define beta(a,b) beta[INDEX_FORTRAN_2(a,b,1,3,1,3)]
 
 void compute_injection(double uv[],    // relativistic momentum of injected particle
-		       double ne,      // density of boundary cell
-		       double vel[],   // fluid moentum of boundary cell
-		       double p[],     // relativistic stress tensor of boundary cell
-		       int i,          // inward normal direction for injector
-		       int j,          // j x k = n
-		       int k,          //
-		       mt_rng_t *rng) {
+                       double ne,      // density of boundary cell
+                       double vel[],   // fluid moentum of boundary cell
+                       double p[],     // relativistic stress tensor of boundary cell
+                       int i,          // inward normal direction for injector
+                       int j,          // j x k = n
+                       int k,          //
+                       mt_rng_t *rng) {
 
   // Declarations
   const double sqpi =1.772453850905516;
@@ -114,10 +114,10 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
       vold = vmid;
       fmid=sqpi*vdrift*erf(vmid-vdrift)-exp(-(vmid-vdrift)*(vmid-vdrift))-arg;
       if ( fmid*f2 <= 0 )
-	v1 = vmid;
+        v1 = vmid;
       else {
-	v2 = vmid;
-	f2 = fmid;
+        v2 = vmid;
+        f2 = fmid;
       }
       vmid = (v1+v2)/2;
       error = fabs(vmid-vold);
@@ -166,59 +166,59 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
 #define ALLOCATE(A,LEN,TYPE)                                             \
   if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate."));
 
-#define DUMP_INJECTOR(side,dim1,dim2,set)	          	     \
-  {							             \
-    FileIO fileIO;						     \
-    FileIOStatus status;					     \
-    char filename[20];						     \
+#define DUMP_INJECTOR(side,dim1,dim2,set)                            \
+  {                                                                  \
+    FileIO fileIO;                                                   \
+    FileIOStatus status;                                             \
+    char filename[20];                                               \
     sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));   \
-    status= fileIO.open(filename, io_write);			     \
-    size_t len = dim1*dim2*nsp;					     \
-    fileIO.write(global->n##side,len);				     \
-    fileIO.write(global->b##side,len);				     \
-    fileIO.write(global->f##side,len);				     \
-    fileIO.write(global->u##side,3*len);			     \
-    fileIO.write(global->p##side,9*len);			     \
-    fileIO.close();						     \
+    status= fileIO.open(filename, io_write);                         \
+    size_t len = dim1*dim2*nsp;                                      \
+    fileIO.write(global->n##side,len);                               \
+    fileIO.write(global->b##side,len);                               \
+    fileIO.write(global->f##side,len);                               \
+    fileIO.write(global->u##side,3*len);                             \
+    fileIO.write(global->p##side,9*len);                             \
+    fileIO.close();                                                  \
   }
 
-#define READ_INJECTOR(side,dim1,dim2,set)				\
-  {									\
-    FileIO fileIO;							\
-    FileIOStatus status;						\
-    char filename[20];							\
-    sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));	\
-    status= fileIO.open(filename, io_read);				\
-    size_t len = dim1*dim2*nsp;						\
-    fileIO.read(global->n##side,len);					\
-    fileIO.read(global->b##side,len);					\
-    fileIO.read(global->f##side,len);					\
-    fileIO.read(global->u##side,3*len);					\
-    fileIO.read(global->p##side,9*len);					\
-    fileIO.close();							\
+#define READ_INJECTOR(side,dim1,dim2,set)                               \
+  {                                                                     \
+    FileIO fileIO;                                                      \
+    FileIOStatus status;                                                \
+    char filename[20];                                                  \
+    sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));      \
+    status= fileIO.open(filename, io_read);                             \
+    size_t len = dim1*dim2*nsp;                                         \
+    fileIO.read(global->n##side,len);                                   \
+    fileIO.read(global->b##side,len);                                   \
+    fileIO.read(global->f##side,len);                                   \
+    fileIO.read(global->u##side,3*len);                                 \
+    fileIO.read(global->p##side,9*len);                                 \
+    fileIO.close();                                                     \
   }
 
-#define DEFINE_INJECTOR(side,dim1,dim2)					\
-  size_t len = dim1*dim2*nsp;						\
-  ALLOCATE(global->f##side,len,double);					\
-  ALLOCATE(global->n##side,len,double);					\
-  ALLOCATE(global->b##side,len,double);					\
-  ALLOCATE(global->u##side,3*len,double)				\
+#define DEFINE_INJECTOR(side,dim1,dim2)                                 \
+  size_t len = dim1*dim2*nsp;                                           \
+  ALLOCATE(global->f##side,len,double);                                 \
+  ALLOCATE(global->n##side,len,double);                                 \
+  ALLOCATE(global->b##side,len,double);                                 \
+  ALLOCATE(global->u##side,3*len,double)                                \
   ALLOCATE(global->p##side,9*len,double);
 
 
 # define DUMP_INJECTORS(set)                                    \
-  if (global->left) DUMP_INJECTOR(left,ny,nz,set);		\
+  if (global->left) DUMP_INJECTOR(left,ny,nz,set);              \
   if (global->right) DUMP_INJECTOR(right,ny,nz,set);            \
-  if (global->top) DUMP_INJECTOR(top,ny,nx,set);		\
+  if (global->top) DUMP_INJECTOR(top,ny,nx,set);                \
   if (global->bottom) DUMP_INJECTOR(bot,ny,nx,set);
 
   // Define Fortran style indexing of arrays
 
-#define INDEX_FORTRAN_4(a,b,c,d,al,ah,bl,bh,cl,ch,dl,dh)	\
+#define INDEX_FORTRAN_4(a,b,c,d,al,ah,bl,bh,cl,ch,dl,dh)        \
   ((a)-(al) + ((ah)-(al)+1)*((b)-(bl) +  ((bh)-(bl)+1)*(((c)-(cl)) + ((ch)-(cl)+1)*((d)-(dl)))))
 
-#define INDEX_FORTRAN_5(a,b,c,d,e,al,ah,bl,bh,cl,ch,dl,dh,el,eh)		\
+#define INDEX_FORTRAN_5(a,b,c,d,e,al,ah,bl,bh,cl,ch,dl,dh,el,eh)                \
   ((a)-(al) + ((ah)-(al)+1)*((b)-(bl) +  ((bh)-(bl)+1)*(((c)-(cl)) + ((ch)-(cl)+1)*(((d)-(dl)) + ((dh)-(dl)+1)*((e)-(el))))))
 
 #define bbot(n,i,j) global->bbot[INDEX_FORTRAN_3(n,i,j,1,nsp,1,nx,1,ny)]

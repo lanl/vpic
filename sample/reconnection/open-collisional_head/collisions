@@ -156,14 +156,14 @@ begin_particle_collisions {
 
       for ( icell=((grid->nx+2)*(grid->ny+2)*(grid->nz+2))-2; icell>=0; --icell ) {
         npar1  = s1->partition[icell+1]-s1->partition[icell];
-	density = npar1*(global->nfac);
-	//	if ( density > 0.98 ) MESSAGE(("npar1, density = %i  %e\n",npar1,density));
+        density = npar1*(global->nfac);
+        //      if ( density > 0.98 ) MESSAGE(("npar1, density = %i  %e\n",npar1,density));
 
-	var=cd[isp1].cvar*density;
-	sqrt_var=sqrt(var);
-	sqrt_half_var=sqrt(var/2);
+        var=cd[isp1].cvar*density;
+        sqrt_var=sqrt(var);
+        sqrt_half_var=sqrt(var/2);
 
-	phead1 = s1->p;
+        phead1 = s1->p;
         for ( i=0; i<npar1; ++i ) {
           karr1[i].i=i+s1->partition[icell];
           karr1[i].r=uniform_rand(0,1);
@@ -201,16 +201,16 @@ begin_particle_collisions {
             npar1  = s1->partition[icell+1]-s1->partition[icell];
             npar2  = s2->partition[icell+1]-s2->partition[icell];
 
-	    density = npar1*(global->nfac);
-	    var=density*(global->cvar)*pow(cd[isp1].z,2)*pow(cd[isp2].z,2)/(rmass*rmass);
-	    sqrt_var=sqrt(var);
+            density = npar1*(global->nfac);
+            var=density*(global->cvar)*pow(cd[isp1].z,2)*pow(cd[isp2].z,2)/(rmass*rmass);
+            sqrt_var=sqrt(var);
 
 
-	    phead1 = s1->p;
+            phead1 = s1->p;
             phead2 = s2->p;
 
             if ( npar1>(int)karr_max_length || npar2>(int)karr_max_length )
-	      //     MESSAGE(("Error: too many keys needed!  %d %d (%d)\n", npar1, npar2, (int)karr_max_length ));
+              //     MESSAGE(("Error: too many keys needed!  %d %d (%d)\n", npar1, npar2, (int)karr_max_length ));
 
             /* Generate key arrays and sort */
             for ( i=0; i<npar1; ++i ) {

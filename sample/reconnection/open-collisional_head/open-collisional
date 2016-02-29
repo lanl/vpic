@@ -130,10 +130,10 @@ begin_initialization {
   //jgw//double rout[3] = {0.002, 0.002, 0.002};  //  Relaxation - density, velocity + particle flux, pressure tensor
   //jgw//double edrive = 0.08*v_A/(wpe_wce);    //  Setting edrive = 0 will give undriven limit
   //  double edrive = 0.0099;    //  Setting edrive = 0 will give undriven limit
-  
+
   //jgw//double tdrive = 32000.0;
   //jgw//double sort_interval = 10;        //  Injector moments are also updated at this internal
-  
+
   // Numerical parameters
 
   double nppc  = 400; // Average number of macro particle per cell per species
@@ -177,7 +177,7 @@ begin_initialization {
   //jgw//double qi_b =  ec*Npe_back/Ne_back;  // Charge per macro electron
   double weight_b =  ec*Npe_back/Ne_back;  // Charge per macro electron
   //jgw//double nfac = qi_s/(hx*hy*hz);            // Convert density to particles per cell
-  
+
   double gdri = 1/sqrt(1-vdri*vdri/(c*c));  // gamma of ion drift frame
   double gdre = 1/sqrt(1-vdre*vdre/(c*c)); // gamma of electron drift frame
   double udri = vdri*gdri;                 // 4-velocity of ion drift frame
@@ -192,7 +192,7 @@ begin_initialization {
   double dt = cfl_req*dg/c;                       // courant limited time step
   if( wpe*dt>wpedt_max)
     dt=wpedt_max/wpe;  // override timestep if plasma frequency limited
-  
+
   // Intervals for output
   int restart_interval = 8000;
   int energies_interval = 1000;
@@ -325,7 +325,7 @@ begin_initialization {
   //jgw//grid->damp = damp;
 
   // Define the grid
-  
+
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,    // Low corner
                          Lx, 0.5*Ly, 0.5*Lz,     // High corner
                          nx, ny, nz,             // Resolution
@@ -339,7 +339,7 @@ begin_initialization {
     set_domain_field_bc( BOUNDARY(-1,0,0), absorb_fields );
   if ( ix==topology_x-1 )
     set_domain_field_bc( BOUNDARY( 1,0,0), absorb_fields );
-  
+
   sim_log("Conducting fields on X & Z-boundaries");
   if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields );
   if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields );
@@ -457,7 +457,7 @@ begin_initialization {
   sim_log ( "vdre/c = " << vdre/c );
   //jgw//sim_log("* nu/wce:                        "<<nuei_wce);
   //jgw//sim_log("* nu*dt_coll:                    "<<nuei_wce/wpe_wce*dt_coll);
-  
+
   // Dump simulation information to file "info"
   if (rank() == 0 ) {
     FileIO fp_info;
@@ -521,7 +521,7 @@ begin_initialization {
     fp_info.print("		 ***************************\n");
     fp_info.close();
   }
-  
+
   ////////////////////////////
   // Load fields
 
@@ -553,7 +553,7 @@ begin_initialization {
   double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
   double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
   double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
-  
+
   // Load Harris population
 
   sim_log( "-> Main Harris Sheet" );
@@ -588,7 +588,7 @@ begin_initialization {
     ux = d0*sn + ux*cs;
 
     inject_particle(ion, x, y, z, ux, uy, uz, weight_s, 0, 0 );
-  
+
   }
 
   sim_log( "-> Background Population" );
@@ -604,7 +604,7 @@ begin_initialization {
                      normal( rng(0), 0, vtheb),
                      normal( rng(0), 0, vtheb),
                      weight_b, 0, 0);
-  
+
     inject_particle( ion, x, y, z,
                      normal( rng(0), 0, vthib),
                      normal( rng(0), 0, vthib),
@@ -635,7 +635,7 @@ begin_initialization {
    *   ex0 ex1 ex2 ... exN ey0 ey1 ey2 ...
    *
    *------------------------------------------------------------------------*/
-  
+
   global->fdParams.format = band;
   sim_log ( "Fields output format = band" );
 
@@ -756,7 +756,7 @@ begin_initialization {
    * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
 
    output_variables( all );
-   
+
    output_variables( electric | div_e_err | magnetic | div_b_err |
                      tca      | rhob      | current  | rhof |
                      emat     | nmat      | fmat     | cmat );
@@ -963,12 +963,12 @@ begin_diagnostics {
   // be synchronized across processors. Note that this is only checked every
   // few timesteps to eliminate the expensive mp_elapsed call from every
   // timestep. mp_elapsed has an ALL_REDUCE in it!
-  
+
   if (( step()>0 && global->quota_check_interval>0
         && (step()&global->quota_check_interval)==0)
       || (global->write_end_restart) ) {
     if ( (global->write_end_restart) ) {
-		   
+
       global->write_end_restart = 0; // reset restart flag
 
       sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
@@ -1135,7 +1135,7 @@ begin_particle_injection {
   //jgw//	  READ_INJECTOR(bot,ny,nx,0);
 
   //jgw//    }  // end bottom boundary
-  
+
   //jgw//    if (rank() == 0) MESSAGE(("-------------------------------------------------------------------"));
 
   //jgw//  }// End of Intialization
@@ -1263,11 +1263,11 @@ begin_particle_injection {
 
 
   //  *******  Update the injector moments at every sort interval *********
-  
+
   //jgw//  double v[3];
   //jgw//  double u[3];
   //jgw//  double p[9];
-  
+
   //jgw//#define icell(i,j,k) INDEX_FORTRAN_3(i,j,k,0,nx+1,0,ny+1,0,nz+1)
   //jgw//#define v(i) v[INDEX_FORTRAN_1(i,1,3)]
   //jgw//#define u(i) u[INDEX_FORTRAN_1(i,1,3)]
@@ -1585,7 +1585,7 @@ begin_field_injection {
   //jgw//   yx_EDGE_LOOP(1) field(x,y,z).ey = (global->edrive)*(1-exp(-t/tau));
   //jgw//   xy_EDGE_LOOP(1) field(x,y,z).ex = (global->edrive)*(1-exp(-t/tau))*global->bg;
 
-  
+
   //jgw//}
 
 }  // end field injection

@@ -1,7 +1,8 @@
 # Makefile for building final exe and cleaning directory
 
 # path to installed compiler wrapper
-VPIC = /home/wohlbier/VPIC/head/build_intel_debug/bin/vpic
+#VPIC = /home/wohlbier/VPIC/head/build_intel_debug/bin/vpic
+VPIC = /home/wohlbier/VPIC/head/build_intel_relwithdebinfo_sse/bin/vpic
 
 # name of input deck file
 DECK = open-collisional

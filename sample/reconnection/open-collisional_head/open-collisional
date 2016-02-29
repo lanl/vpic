@@ -432,10 +432,10 @@ begin_initialization {
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
   sim_log ( "nppc = " << nppc );
-  sim_log ( " b0 = " << b0 );
+  sim_log ( "b0 = " << b0 );
   //jgw//sim_log ( " v_A (based on nb) = " << v_A );
-  sim_log ( " di = " << di );
-  sim_log ( " Ne = " << Ne );
+  sim_log ( "di = " << di );
+  sim_log ( "Ne = " << Ne );
   //jgw//sim_log ( " Ne_sheet = " << Ne_sheet );
   //jgw//sim_log ( " Ne_back = " << Ne_back );
   sim_log ( "total # of particles = " << 2*Ne );

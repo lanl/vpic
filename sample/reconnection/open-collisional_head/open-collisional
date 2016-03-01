@@ -10,9 +10,9 @@
 
 // structure to hold the data for energy diagnostics
 struct edata {
-  species_id sp_id;       /* species id */ 
-  double       vth;       /* thermal energy */ 
-  char  fname[256];       /* file to save data */ 
+  species_id sp_id;       /* species id */
+  double       vth;       /* thermal energy */
+  char  fname[256];       /* file to save data */
 };
 
 begin_globals {
@@ -375,7 +375,9 @@ begin_initialization {
   sim_log("Setting up materials. ");
 
   define_material( "vacuum", 1 );
-  define_material( "resistive",1,1,1);
+  material_t * resistive = define_material( "resistive",1,1,1 );
+
+  define_field_array(NULL); // second argument is damp, default to 0
 
   // Note: define_material defaults to isotropic materials with mu=1,sigma=0
   // Tensor electronic, magnetic and conductive materials are supported
@@ -388,19 +390,14 @@ begin_initialization {
 
   sim_log("Finalizing Field Advance");
 
-  //jgw//finalize_field_advance(standard_field_advance); // not in API ?
-
   // Define resistive layer surrounding boundary --> set thickness=0
   // to eliminate this feature
+  double thickness = 2;
+#define resistive_layer (x < hx*thickness || x > Lx-hx*thickness        \
+                         || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
 
-  //jgw//double thickness = 2;
-  //jgw//#define resistive_layer (x < hx*thickness || x > Lx-hx*thickness        \
-  //jgw//|| z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
-  //jgw//
-  //jgw//if (thickness > 0)
-  //jgw//  set_region_material(resistive_layer, "resistive", "resistive");
-
-  define_field_array(NULL);
+  if (thickness > 0)
+    set_region_material(resistive_layer, resistive, resistive);
 
   //////////////////////////////////////////////////////////////////////////////
   // Setup the species
@@ -805,15 +802,15 @@ begin_initialization {
   /* ---------------------------------------------
      Add parameters for the energy diagnostics
      --------------------------------------------- */
-  
+
   global->ede.sp_id = electron->id;
   global->ede.vth = sqrt(2.0)*vthe;
   sprintf(global->ede.fname,global->hedParams.baseFileName);
-  
+
   global->edi.sp_id = ion->id;
   global->edi.vth = sqrt(2.0)*vthi;
   sprintf(global->edi.fname, global->hHdParams.baseFileName);
-  
+
   global->nex  = 6;
   global->emax = 120;
 

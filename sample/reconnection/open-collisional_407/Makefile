@@ -1,13 +1,15 @@
 # Makefile for building final exe and cleaning directory
 
+# name of platform to build for
+#PLAT = op
+PLAT = emt64
+
 # path to installed compiler wrapper
-VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_intel_debug/build.op
+#VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_intel_debug/build.${PLAT}
+VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_intel_release_sse/build.${PLAT}
 
 # name of input deck file
 DECK = open-collisional
-# name of platform to build for
-PLAT = op
-#PLAT = emt64
 
 # compile final exe
 all:

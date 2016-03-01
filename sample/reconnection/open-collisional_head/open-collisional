@@ -8,6 +8,13 @@
 
 //////////////////////////////////////////////////////
 
+// structure to hold the data for energy diagnostics
+struct edata {
+  species_id sp_id;       /* species id */ 
+  double       vth;       /* thermal energy */ 
+  char  fname[256];       /* file to save data */ 
+};
+
 begin_globals {
 
   int restart_interval;
@@ -23,7 +30,7 @@ begin_globals {
   double quota_sec;          // Run quota in seconds
   double b0;                 // B0
   double bg;                 // Guide field
-  //jgw//double v_A;
+  double v_A;
   double topology_x;       // domain topology
   double topology_y;
   double topology_z;
@@ -52,9 +59,9 @@ begin_globals {
   //jgw//double rin[3];  //  Relaxation parameter for inflow boundary moments
   //jgw//double rout[3]; //  Relaxation parameter for outlfow boundary moments
   //jgw//double sort[2]; // Intervals where we know particles are sorted
-  //jgw//double edrive;  // Drive field for inflow boundary
-  //jgw//double tdrive;
-  //jgw//int left,right,top,bottom;  // Keep track of boundary domains
+  double edrive;  // Drive field for inflow boundary
+  double tdrive;
+  int left,right,top,bottom;  // Keep track of boundary domains
   //jgw//double *nbot, *ubot, *pbot, *bbot, *fbot;         // Moments for bottom injectors
   //jgw//double *ntop, *utop, *ptop, *btop, *ftop;         // Moments for top injectors
   //jgw//double *nleft, *uleft, *pleft, *bleft, *fleft;     // Moments for left injectors
@@ -66,13 +73,18 @@ begin_globals {
   DumpParameters hHdParams;
   std::vector<DumpParameters *> outputParams;
 
+  // Variables for the energy diagnostics
+  edata ede;             // parameters for electron species
+  edata edi;             // parameters for ion species
+  double emax;           // maximum energy (in units of me*c**2)
+  int nex;               // number of energy bins
+
   //Vadim: modified restart machinary
   int write_restart;     // global flag for all to write restart files
   int write_end_restart; // global flag for all to write restart files
 };
 
 begin_initialization {
-
   // use natural PIC units
   double ec   = 1;         // Charge normalization
   double me   = 1;         // Mass normalization
@@ -82,7 +94,7 @@ begin_initialization {
 
   double cfl_req   = 0.99;  // How close to Courant should we try to run
   double wpedt_max = 0.36;  // Max dt allowed if Courant not too restrictive
-  //jgw//double damp      = 0.0;   // Level of radiation damping
+  double damp      = 0.0;   // Level of radiation damping
   int rng_seed     = 1;     // Random number seed increment
 
   // Physics parameters
@@ -118,8 +130,8 @@ begin_initialization {
   double wpi  = wpe/sqrt(mi_me);      // ion plasma frequency
   double di   = c/wpi;                // ion inertial length
   double L    = L_di*di;              // Harris sheet thickness
-  //jgw//double rhoi_L = sqrt(Ti_Te/(1.0+Ti_Te))/L_di;
-  //jgw//double v_A= (wci/wpi)/sqrt(nb_n0); //  based on nb
+  double rhoi_L = sqrt(Ti_Te/(1.0+Ti_Te))/L_di;
+  double v_A= (wci/wpi)/sqrt(nb_n0); //  based on nb
 
   double ion_sort_interval = 25; // Injector moments also updated
   double electron_sort_interval = 25; // Injector moments also updated
@@ -128,10 +140,10 @@ begin_initialization {
 
   //jgw//double rin[3] =  {0.000, 0.06, 0.000};  //  Relaxation - density, velocity + particle flux, pressure tensor
   //jgw//double rout[3] = {0.002, 0.002, 0.002};  //  Relaxation - density, velocity + particle flux, pressure tensor
-  //jgw//double edrive = 0.08*v_A/(wpe_wce);    //  Setting edrive = 0 will give undriven limit
+  double edrive = 0.08*v_A/(wpe_wce);    // edrive = 0 gives undriven limit
   //  double edrive = 0.0099;    //  Setting edrive = 0 will give undriven limit
 
-  //jgw//double tdrive = 32000.0;
+  double tdrive = 32000.0;
   //jgw//double sort_interval = 10;        //  Injector moments are also updated at this internal
 
   // Numerical parameters
@@ -195,7 +207,7 @@ begin_initialization {
 
   // Intervals for output
   int restart_interval = 8000;
-  int energies_interval = 1000;
+  int energies_interval = 10;
   int interval = int(0.25/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
@@ -234,17 +246,17 @@ begin_initialization {
     (iz) = _iz;                                                         \
   } END_PRIMITIVE
 
-  int ix, iy, iz; //jgw//, left=0,right=0,top=0,bottom=0;
+  int ix, iy, iz, left=0,right=0,top=0,bottom=0;
   RANK_TO_INDEX( int(rank()), ix, iy, iz );
-  //jgw//if ( ix ==0 ) left=1;
-  //jgw//if ( ix ==topology_x-1 ) right=1;
-  //jgw//if ( iz ==0 ) bottom=1;
-  //jgw//if ( iz ==topology_z-1 ) top=1;
+  if ( ix ==0 ) left=1;
+  if ( ix ==topology_x-1 ) right=1;
+  if ( iz ==0 ) bottom=1;
+  if ( iz ==topology_z-1 ) top=1;
 
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
-  num_step             = 200;
+  num_step             = 100;
   status_interval      = 200;
   sync_shared_interval = status_interval/2;
   clean_div_e_interval = status_interval/2;
@@ -259,22 +271,22 @@ begin_initialization {
   global->Hparticle_interval   = Hparticle_interval;
   global->quota_check_interval = quota_check_interval;
   global->quota_sec            = quota_sec;
-  global->rtoggle            = 0;
+  global->rtoggle              = 0;
 
   global->b0  = b0;
   global->bg  = bg;
-  //jgw//global->v_A  = v_A;
-  //jgw//global->edrive  = edrive;
-  //jgw//global->tdrive  = tdrive;
+  global->v_A  = v_A;
+  global->edrive  = edrive;
+  global->tdrive  = tdrive;
 
   global->topology_x  = topology_x;
   global->topology_y  = topology_y;
   global->topology_z  = topology_z;
 
-  //jgw//global->left = left;
-  //jgw//global->right = right;
-  //jgw//global->top = top;
-  //jgw//global->bottom = bottom;
+  global->left = left;
+  global->right = right;
+  global->top = top;
+  global->bottom = bottom;
 
   //  Parameters for the open boundary model
   //jgw//global->nsp = 2;
@@ -325,7 +337,6 @@ begin_initialization {
   //jgw//grid->damp = damp;
 
   // Define the grid
-
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,    // Low corner
                          Lx, 0.5*Ly, 0.5*Lz,     // High corner
                          nx, ny, nz,             // Resolution
@@ -411,9 +422,9 @@ begin_initialization {
     << " " << topology_y << " " << topology_z);
   sim_log ( "tanhf = " << tanhf );
   sim_log ( "L_di   = " << L_di );
-  //jgw//sim_log ( "rhoi/L   = " << rhoi_L );
+  sim_log ( "rhoi/L   = " << rhoi_L );
   sim_log ( "Ti/Te = " << Ti_Te ) ;
-  //jgw//sim_log ( "nb/n0 = " << nb_n0 ) ;
+  sim_log ( "nb/n0 = " << nb_n0 ) ;
   sim_log ( "wpe/wce = " << wpe_wce );
   sim_log ( "mi/me = " << mi_me );
   sim_log ( "theta = " << theta );
@@ -428,16 +439,16 @@ begin_initialization {
   sim_log ( "nx = " << nx );
   sim_log ( "ny = " << ny );
   sim_log ( "nz = " << nz );
-  //jgw//sim_log ( "damp = " << damp );
+  sim_log ( "damp = " << damp );
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
   sim_log ( "nppc = " << nppc );
   sim_log ( "b0 = " << b0 );
-  //jgw//sim_log ( " v_A (based on nb) = " << v_A );
+  sim_log ( "v_A (based on nb) = " << v_A );
   sim_log ( "di = " << di );
   sim_log ( "Ne = " << Ne );
-  //jgw//sim_log ( " Ne_sheet = " << Ne_sheet );
-  //jgw//sim_log ( " Ne_back = " << Ne_back );
+  sim_log ( "Ne_sheet = " << Ne_sheet );
+  sim_log ( "Ne_back = " << Ne_back );
   sim_log ( "total # of particles = " << 2*Ne );
   sim_log ( "dt*wpe = " << wpe*dt );
   sim_log ( "dt*wce = " << wce*dt );
@@ -465,7 +476,7 @@ begin_initialization {
     fp_info.print("           ***** Simulation parameters ***** \n");
     fp_info.print("              L/di   =               %e\n", L_di);
     fp_info.print("              L/de   =               %e\n", L/de);
-    //jgw//fp_info.print("               rhoi/L =               %e\n", rhoi_L);
+    fp_info.print("              rhoi/L =               %e\n", rhoi_L);
     fp_info.print("              Ti/Te  =               %e\n", Ti_Te );
     fp_info.print("              Tbi/Ti =               %e\n", Tbi_Ti );
     fp_info.print("              Tbe/Te =               %e\n", Tbe_Te );
@@ -484,12 +495,12 @@ begin_initialization {
     fp_info.print("              nx =                   %e\n", nx );
     fp_info.print("              ny =                   %e\n", ny );
     fp_info.print("              nz =                   %e\n", nz );
-    //jgw//fp_info.print("               damp =                 %e\n", damp );
-    //jgw//fp_info.print("               courant =              %e\n", c*dt/dg );
-    fp_info.print("              nproc =                %e\n", nproc() );
+    fp_info.print("              damp =                 %e\n", damp );
+    fp_info.print("              courant =              %e\n", c*dt/dg );
+    fp_info.print("              nproc =                %i\n", nproc() );
     fp_info.print("              nppc =                 %e\n", nppc );
     fp_info.print("              b0 =                   %e\n", b0 );
-    //jgw//fp_info.print("               v_A (based on nb) =    %e\n", v_A );
+    fp_info.print("              v_A (based on nb) =    %e\n", v_A );
     fp_info.print("              di =                   %e\n", di );
     fp_info.print("              Ne =                   %e\n", Ne );
     fp_info.print("              Ne_sheet =             %e\n", Ne_sheet );
@@ -533,12 +544,12 @@ begin_initialization {
 
   // Localized Perturbation to lauch a light wave
 
-# define R2 ((x-0.5*Lx)*(x-0.5*Lx) + z*z)/(L*L)
-# define PERT  0.2*tanh(R2)/cosh(R2)
-  set_region_field( everywhere, 0, 0, 0,                    // Electric field
-    cs*b0*tanh(z/L) - z*PERT, //Bx
-    b0*bg, //By
-    (x-0.5*Lx)*PERT ); // Bz
+//    # define R2 ((x-0.5*Lx)*(x-0.5*Lx) + z*z)/(L*L)
+//    # define PERT  0.2*tanh(R2)/cosh(R2)
+//      set_region_field( everywhere, 0, 0, 0,                    // Electric field
+//        cs*b0*tanh(z/L) - z*PERT, //Bx
+//        b0*bg, //By
+//        (x-0.5*Lx)*PERT ); // Bz
 
   // Note: everywhere is a region that encompasses the entire simulation
   // In general, regions are specied as logical equations (i.e. x>0 && x+y<2)
@@ -558,8 +569,7 @@ begin_initialization {
 
   sim_log( "-> Main Harris Sheet" );
 
-  //jgw//repeat ( Ne_sheet/nproc() ) {
-  repeat ( Ne/nproc() ) {
+  repeat ( Ne_sheet/nproc() ) {
     double x, y, z, ux, uy, uz, d0 ;
 
     do {
@@ -792,6 +802,20 @@ begin_initialization {
 
   sim_log ( "Ion species variable list: " << varlist );
 
+  /* ---------------------------------------------
+     Add parameters for the energy diagnostics
+     --------------------------------------------- */
+  
+  global->ede.sp_id = electron->id;
+  global->ede.vth = sqrt(2.0)*vthe;
+  sprintf(global->ede.fname,global->hedParams.baseFileName);
+  
+  global->edi.sp_id = ion->id;
+  global->edi.vth = sqrt(2.0)*vthi;
+  sprintf(global->edi.fname, global->hHdParams.baseFileName);
+  
+  global->nex  = 6;
+  global->emax = 120;
 
   sim_log("*** Finished with user-specified initialization ***");
 

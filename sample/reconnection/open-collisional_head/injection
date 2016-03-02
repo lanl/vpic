@@ -4,14 +4,14 @@
 #define p(a,b)    p[INDEX_FORTRAN_2(a,b,1,3,1,3)]
 #define beta(a,b) beta[INDEX_FORTRAN_2(a,b,1,3,1,3)]
 
-void compute_injection(double uv[],    // relativistic momentum of injected particle
-                       double ne,      // density of boundary cell
-                       double vel[],   // fluid moentum of boundary cell
-                       double p[],     // relativistic stress tensor of boundary cell
-                       int i,          // inward normal direction for injector
-                       int j,          // j x k = n
-                       int k,          //
-                       mt_rng_t *rng) {
+void compute_injection(double uv[],  // rel. momentum of injected particles
+                       double ne,    // density of boundary cell
+                       double vel[], // fluid moentum of boundary cell
+                       double p[],   // rel. stress tensor of boundary cell
+                       int i,        // inward normal direction for injector
+                       int j,        // j x k = n
+                       int k,        //
+                       rng_t * rng) {
 
   // Declarations
   const double sqpi =1.772453850905516;
@@ -26,7 +26,7 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
   n = abs(i);
   d = i/n;
 
-//  Compute inverse of pressure tensor
+  //  Compute inverse of pressure tensor
 
   double det=p(1,1)*p(2,2)*p(3,3)+2*p(1,2)*p(2,3)*p(1,3)-p(1,1)*p(2,3)*p(2,3)-p(2,2)*p(1,3)*p(1,3)-p(3,3)*p(1,2)*p(1,2);
   beta(1,1) = (p(2,2)*p(3,3)-p(2,3)*p(2,3))/det;
@@ -39,7 +39,7 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
   beta(3,2) = beta(2,3);
   beta(3,3) = (p(1,1)*p(2,2)-p(1,2)*p(1,2))/det;
 
-// Cheeck if det is less than zero
+  // Cheeck if det is less than zero
 
   if (det < 0) {
     ERROR((" *** Determinant is Negative  det= %e",det));
@@ -80,7 +80,7 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
   double f1=1;
   double f2=1;
   while (f1*f2 > 0) {
-    r0 = mt_frand(rng);
+    r0 = drand( rng );
     arg=r0*(exp(-vdrift*vdrift)+sqpi*vdrift*(1+erf(vdrift)))-exp(-vdrift*vdrift)-sqpi*vdrift*erf(vdrift);
     f1=sqpi*vdrift*erf(v1-vdrift)-exp(-(v1-vdrift)*(v1-vdrift))-arg;
     f2=sqpi*vdrift*erf(v2-vdrift)-exp(-(v2-vdrift)*(v2-vdrift))-arg;
@@ -139,15 +139,15 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
   // Now compute the two transverse components of momentum
 
   det=(beta(j,j)*beta(k,k)-beta(j,k)*beta(j,k));
-  double xj=mt_drandn(rng)/sqrt(2);
-  double xk=mt_drandn(rng)/sqrt(2);
+  double xj=drandn(rng)/sqrt(2);
+  double xk=drandn(rng)/sqrt(2);
   uv(j) = vel(j) + xj*sqrt(beta(k,k)/det)+(uv(n)-vel(n))*p(n,j)/p(n,n);
   uv(k) = vel(k) + (xk*sqrt(beta(k,k))-(uv(n)-vel(n))*beta(n,k)-(uv(j)-vel(j))*beta(j,k))/beta(k,k);
 
   // To make this relativistically correct - use rejection to decide if we keep th
 
   double gamma = sqrt(1+uv(1)*uv(1)+uv(2)*uv(2)+uv(3)*uv(3));
-  double test=mt_drand(rng);
+  double test=drand(rng);
   if (test > 1/gamma)  goto reject;
 
   //  Now return relativistic momentum
@@ -163,62 +163,62 @@ void compute_injection(double uv[],    // relativistic momentum of injected part
 
 //  Safe allocate
 
-#define ALLOCATE(A,LEN,TYPE)                                             \
+#define ALLOCATE(A,LEN,TYPE)                                            \
   if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate."));
 
-#define DUMP_INJECTOR(side,dim1,dim2,set)                            \
-  {                                                                  \
-    FileIO fileIO;                                                   \
-    FileIOStatus status;                                             \
-    char filename[20];                                               \
-    sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));   \
-    status= fileIO.open(filename, io_write);                         \
-    size_t len = dim1*dim2*nsp;                                      \
-    fileIO.write(global->n##side,len);                               \
-    fileIO.write(global->b##side,len);                               \
-    fileIO.write(global->f##side,len);                               \
-    fileIO.write(global->u##side,3*len);                             \
-    fileIO.write(global->p##side,9*len);                             \
-    fileIO.close();                                                  \
-  }
-
-#define READ_INJECTOR(side,dim1,dim2,set)                               \
+#define DUMP_INJECTOR(side,dim1,dim2,set)                               \
   {                                                                     \
     FileIO fileIO;                                                      \
     FileIOStatus status;                                                \
     char filename[20];                                                  \
     sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));      \
-    status= fileIO.open(filename, io_read);                             \
+    status= fileIO.open(filename, io_write);                            \
     size_t len = dim1*dim2*nsp;                                         \
-    fileIO.read(global->n##side,len);                                   \
-    fileIO.read(global->b##side,len);                                   \
-    fileIO.read(global->f##side,len);                                   \
-    fileIO.read(global->u##side,3*len);                                 \
-    fileIO.read(global->p##side,9*len);                                 \
+    fileIO.write(global->n##side,len);                                  \
+    fileIO.write(global->b##side,len);                                  \
+    fileIO.write(global->f##side,len);                                  \
+    fileIO.write(global->u##side,3*len);                                \
+    fileIO.write(global->p##side,9*len);                                \
     fileIO.close();                                                     \
   }
 
-#define DEFINE_INJECTOR(side,dim1,dim2)                                 \
-  size_t len = dim1*dim2*nsp;                                           \
-  ALLOCATE(global->f##side,len,double);                                 \
-  ALLOCATE(global->n##side,len,double);                                 \
-  ALLOCATE(global->b##side,len,double);                                 \
-  ALLOCATE(global->u##side,3*len,double)                                \
+#define READ_INJECTOR(side,dim1,dim2,set)                               \
+  {                                                                     \
+   FileIO fileIO;                                                       \
+   FileIOStatus status;                                                 \
+   char filename[20];                                                   \
+   sprintf(filename, "restart" #set "/" #side ".%d",int(rank()));       \
+   status= fileIO.open(filename, io_read);                              \
+   size_t len = dim1*dim2*nsp;                                          \
+   fileIO.read(global->n##side,len);                                    \
+   fileIO.read(global->b##side,len);                                    \
+   fileIO.read(global->f##side,len);                                    \
+   fileIO.read(global->u##side,3*len);                                  \
+   fileIO.read(global->p##side,9*len);                                  \
+   fileIO.close();                                                      \
+   }
+
+#define DEFINE_INJECTOR(side,dim1,dim2)         \
+  size_t len = dim1*dim2*nsp;                   \
+  ALLOCATE(global->f##side,len,double);         \
+  ALLOCATE(global->n##side,len,double);         \
+  ALLOCATE(global->b##side,len,double);         \
+  ALLOCATE(global->u##side,3*len,double)        \
   ALLOCATE(global->p##side,9*len,double);
 
 
-# define DUMP_INJECTORS(set)                                    \
-  if (global->left) DUMP_INJECTOR(left,ny,nz,set);              \
-  if (global->right) DUMP_INJECTOR(right,ny,nz,set);            \
-  if (global->top) DUMP_INJECTOR(top,ny,nx,set);                \
+# define DUMP_INJECTORS(set)                            \
+  if (global->left) DUMP_INJECTOR(left,ny,nz,set);      \
+  if (global->right) DUMP_INJECTOR(right,ny,nz,set);    \
+  if (global->top) DUMP_INJECTOR(top,ny,nx,set);        \
   if (global->bottom) DUMP_INJECTOR(bot,ny,nx,set);
 
-  // Define Fortran style indexing of arrays
+// Define Fortran style indexing of arrays
 
-#define INDEX_FORTRAN_4(a,b,c,d,al,ah,bl,bh,cl,ch,dl,dh)        \
+#define INDEX_FORTRAN_4(a,b,c,d,al,ah,bl,bh,cl,ch,dl,dh)                \
   ((a)-(al) + ((ah)-(al)+1)*((b)-(bl) +  ((bh)-(bl)+1)*(((c)-(cl)) + ((ch)-(cl)+1)*((d)-(dl)))))
 
-#define INDEX_FORTRAN_5(a,b,c,d,e,al,ah,bl,bh,cl,ch,dl,dh,el,eh)                \
+#define INDEX_FORTRAN_5(a,b,c,d,e,al,ah,bl,bh,cl,ch,dl,dh,el,eh)        \
   ((a)-(al) + ((ah)-(al)+1)*((b)-(bl) +  ((bh)-(bl)+1)*(((c)-(cl)) + ((ch)-(cl)+1)*(((d)-(dl)) + ((dh)-(dl)+1)*((e)-(el))))))
 
 #define bbot(n,i,j) global->bbot[INDEX_FORTRAN_3(n,i,j,1,nsp,1,nx,1,ny)]

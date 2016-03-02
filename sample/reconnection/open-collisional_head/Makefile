@@ -3,6 +3,8 @@
 # path to installed compiler wrapper
 #VPIC = /home/wohlbier/VPIC/head/build_intel_debug/bin/vpic
 VPIC = /home/wohlbier/VPIC/head/build_intel_relwithdebinfo_sse/bin/vpic
+#VPIC = /home/wohlbier/VPIC/head/build_gcc_debug/bin/vpic
+#VPIC = /home/wohlbier/VPIC/head/build_gcc_relwithdebinfo_sse/bin/vpic
 
 # name of input deck file
 DECK = open-collisional

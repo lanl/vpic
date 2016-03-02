@@ -4,7 +4,7 @@
 //
 //////////////////////////////////////////////////////
 
-//jgw//#include "injection"   //  Subroutine to compute re-injection velocity
+#include "injection"   //  Subroutine to compute re-injection velocity
 
 //////////////////////////////////////////////////////
 
@@ -47,25 +47,29 @@ begin_globals {
   //jgw//double mi_me;
   //jgw//double wpewce;
 
-  //  Variables for Open BC Model
-  //jgw//double nb;      // Background density
-  //jgw//int nsp;        //  Number of Species
-  //jgw//double vth[2];  // Thermal velocity of Harris components
-  //jgw//double vthb[2]; // Thermal velocity of background components
-  //jgw//double q[2];    // Species charge
-  //jgw//double L_de;    //  Initial Harris sheet thickness
-  //jgw//double uf[2];   // Initial Fluid Drift in Harris
-  //jgw//double nfac;    //  Normalization factor to convert particles per cell into density
-  //jgw//double rin[3];  //  Relaxation parameter for inflow boundary moments
-  //jgw//double rout[3]; //  Relaxation parameter for outlfow boundary moments
-  //jgw//double sort[2]; // Intervals where we know particles are sorted
+  // Variables for Open BC Model
+  double nb;      // Background density
+  int nsp;        // Number of Species
+  double vth[2];  // Thermal velocity of Harris components
+  double vthb[2]; // Thermal velocity of background components
+  double q[2];    // Species charge
+  double L_de;    // Initial Harris sheet thickness
+  double uf[2];   // Initial Fluid Drift in Harris
+  double nfac; // Normalization factor to convert particles per cell to density
+  double rin[3];  // Relaxation parameter for inflow boundary moments
+  double rout[3]; // Relaxation parameter for outlfow boundary moments
+  double sort[2]; // Intervals where we know particles are sorted
   double edrive;  // Drive field for inflow boundary
   double tdrive;
   int left,right,top,bottom;  // Keep track of boundary domains
-  //jgw//double *nbot, *ubot, *pbot, *bbot, *fbot;         // Moments for bottom injectors
-  //jgw//double *ntop, *utop, *ptop, *btop, *ftop;         // Moments for top injectors
-  //jgw//double *nleft, *uleft, *pleft, *bleft, *fleft;     // Moments for left injectors
-  //jgw//double *nright, *uright, *pright, *bright, *fright; // Moments for right injectors
+  // Moments for bottom injectors
+  double *nbot, *ubot, *pbot, *bbot, *fbot;
+  // Moments for top injectors
+  double *ntop, *utop, *ptop, *btop, *ftop;
+  // Moments for left injectors
+  double *nleft, *uleft, *pleft, *bleft, *fleft;
+  // Moments for right injectors
+  double *nright, *uright, *pright, *bright, *fright;
 
   // Output variables
   DumpParameters fdParams;
@@ -131,23 +135,22 @@ begin_initialization {
   double di   = c/wpi;                // ion inertial length
   double L    = L_di*di;              // Harris sheet thickness
   double rhoi_L = sqrt(Ti_Te/(1.0+Ti_Te))/L_di;
-  double v_A= (wci/wpi)/sqrt(nb_n0); //  based on nb
+  double v_A= (wci/wpi)/sqrt(nb_n0); // based on nb
 
   double ion_sort_interval = 25; // Injector moments also updated
   double electron_sort_interval = 25; // Injector moments also updated
 
-  //  Parameters for Open BC model
-
-  //jgw//double rin[3] =  {0.000, 0.06, 0.000};  //  Relaxation - density, velocity + particle flux, pressure tensor
-  //jgw//double rout[3] = {0.002, 0.002, 0.002};  //  Relaxation - density, velocity + particle flux, pressure tensor
+  // Parameters for Open BC model
+  // Relaxation - density, velocity + particle flux, pressure tensor
+  double rin[3] =  {0.000, 0.06, 0.000};
+  double rout[3] = {0.002, 0.002, 0.002};
   double edrive = 0.08*v_A/(wpe_wce);    // edrive = 0 gives undriven limit
-  //  double edrive = 0.0099;    //  Setting edrive = 0 will give undriven limit
+  //double edrive = 0.0099;    // Setting edrive = 0 will give undriven limit
 
   double tdrive = 32000.0;
-  //jgw//double sort_interval = 10;        //  Injector moments are also updated at this internal
+  double sort_interval = 10;  // Injector moments also updated at this interval
 
   // Numerical parameters
-
   double nppc  = 400; // Average number of macro particle per cell per species
 
   double Lx    = 20*di;      // size of box in x dimension
@@ -182,13 +185,13 @@ begin_initialization {
   Ne_sheet = trunc_granular(Ne_sheet,nproc()); // Make it divisible by nproc
   Ne_back  = trunc_granular(Ne_back,nproc());  // Make it divisible by nproc
   Ne = Ne_sheet + Ne_back;
-  //jgw//double qe_s = -ec*Npe_sheet/Ne_sheet;  // Charge per macro electron
-  //jgw//double qi_s =  ec*Npe_sheet/Ne_sheet;  // Charge per macro electron
+  double qe_s = -ec*Npe_sheet/Ne_sheet;  // Charge per macro electron
+  double qi_s =  ec*Npe_sheet/Ne_sheet;  // Charge per macro electron
   double weight_s = ec*Npe_sheet/Ne_sheet;  // Charge per macro electron
-  //jgw//double qe_b = -ec*Npe_back/Ne_back;  // Charge per macro electron
-  //jgw//double qi_b =  ec*Npe_back/Ne_back;  // Charge per macro electron
+  double qe_b = -ec*Npe_back/Ne_back;  // Charge per macro electron
+  double qi_b =  ec*Npe_back/Ne_back;  // Charge per macro electron
   double weight_b =  ec*Npe_back/Ne_back;  // Charge per macro electron
-  //jgw//double nfac = qi_s/(hx*hy*hz);            // Convert density to particles per cell
+  double nfac = qi_s/(hx*hy*hz);       // Convert density to particles per cell
 
   double gdri = 1/sqrt(1-vdri*vdri/(c*c));  // gamma of ion drift frame
   double gdre = 1/sqrt(1-vdre*vdre/(c*c)); // gamma of electron drift frame
@@ -229,7 +232,7 @@ begin_initialization {
   //jgw//double nuei_wce = 0.05;
   //jgw//double cvar = dt_coll*3.0*sqrt(2.0*M_PI)/4.0*pow(vthe,3)*nuei_wce/wpe_wce;
   //jgw//double nppc_max   = 20*nppc;  // Max possible number of particles/cell of ea. species
-  //jgw//                              // (to size the key array in collision handler)
+  //jgw//                       // (to size the key array in collision handler)
 
   // Determine which domains area along the boundaries - Use macro from
   // grid/partition.c.
@@ -288,27 +291,27 @@ begin_initialization {
   global->top = top;
   global->bottom = bottom;
 
-  //  Parameters for the open boundary model
-  //jgw//global->nsp = 2;
-  //jgw//global->nb  = nb_n0;
-  //jgw//global->rin[0]  = rin[0];
-  //jgw//global->rin[1]  = rin[1];
-  //jgw//global->rin[2]  = rin[2];
-  //jgw//global->rout[0]  = rout[0];
-  //jgw//global->rout[1]  = rout[1];
-  //jgw//global->rout[2]  = rout[2];
-  //jgw//global->vth[0]  = sqrt(2)*vthe;
-  //jgw//global->vth[1]  = sqrt(2)*vthi;
-  //jgw//global->vthb[0]  = sqrt(2)*vtheb;
-  //jgw//global->vthb[1]  = sqrt(2)*vthib;
-  //jgw//global->q[0]  = qe_s;
-  //jgw//global->q[1]  = qi_s;
-  //jgw//global->uf[0]  = udre;
-  //jgw//global->uf[1]  = udri;
-  //jgw//global->sort[0]  = sort_interval;
-  //jgw//global->sort[1]  = sort_interval;
-  //jgw//global->nfac  = nfac;
-  //jgw//global->L_de  = L;
+  // Parameters for the open boundary model
+  global->nsp = 2;
+  global->nb  = nb_n0;
+  global->rin[0]  = rin[0];
+  global->rin[1]  = rin[1];
+  global->rin[2]  = rin[2];
+  global->rout[0]  = rout[0];
+  global->rout[1]  = rout[1];
+  global->rout[2]  = rout[2];
+  global->vth[0]  = sqrt(2)*vthe;
+  global->vth[1]  = sqrt(2)*vthi;
+  global->vthb[0]  = sqrt(2)*vtheb;
+  global->vthb[1]  = sqrt(2)*vthib;
+  global->q[0]  = weight_s;
+  global->q[1]  = weight_s;
+  global->uf[0]  = udre;
+  global->uf[1]  = udri;
+  global->sort[0]  = sort_interval;
+  global->sort[1]  = sort_interval;
+  global->nfac  = nfac;
+  global->L_de  = L;
 
   // Collision model parameters
 
@@ -334,7 +337,7 @@ begin_initialization {
   grid->dt = dt;
   grid->cvac = c;
   grid->eps0 = eps0;
-  //jgw//grid->damp = damp;
+  //grid->damp = damp;
 
   // Define the grid
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,    // Low corner
@@ -405,7 +408,7 @@ begin_initialization {
   sim_log("Setting up species. ");
   double nmax = 2.0*Ne/nproc();
   double nmovers = 0.1*nmax;
-  double sort_method = 1;   //  0=in place and 1=out of place
+  double sort_method = 1;   // 0=in place and 1=out of place
   species_t *electron = define_species("electron", -ec, me, nmax, nmovers,
     electron_sort_interval, sort_method);
   species_t *ion = define_species("ion", ec, mi, nmax, nmovers,
@@ -847,7 +850,6 @@ begin_initialization {
 
 #define should_dump(x)                                                  \
   (global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
-//jgw//#include <FileIO.hxx>
 
 begin_diagnostics {
 
@@ -893,11 +895,10 @@ begin_diagnostics {
    * THE LOCATION OF THE GLOBAL HEADER!!!
    *------------------------------------------------------------------------*/
 
-  //jgw//const int nsp=global->nsp;
-  //jgw//const int nx=grid->nx;
-  //jgw//const int ny=grid->ny;
-  //jgw//const int nz=grid->nz;
-
+  const int nsp=global->nsp;
+  const int nx=grid->nx;
+  const int ny=grid->ny;
+  const int nz=grid->nz;
 
   /*--------------------------------------------------------------------------
    * Normal rundata dump
@@ -906,7 +907,7 @@ begin_diagnostics {
     dump_mkdir("fields");
     dump_mkdir("hydro");
     dump_mkdir("rundata");
-    //jgw//dump_mkdir("injectors");
+    dump_mkdir("injectors");
     //jgw//dump_mkdir("restart0");
     dump_mkdir("restart1");  // 1st backup
     dump_mkdir("restart2");  // 2nd backup
@@ -951,12 +952,12 @@ begin_diagnostics {
     if(!global->rtoggle) {
       global->rtoggle = 1;
       checkpt("restart1/restart", 0);
-      //jgw//DUMP_INJECTORS(1);
+      DUMP_INJECTORS(1);
     }
     else {
       global->rtoggle = 0;
       checkpt("restart2/restart", 0);
-      //jgw//DUMP_INJECTORS(2);
+      DUMP_INJECTORS(2);
     } // if
   } // if
 
@@ -965,7 +966,7 @@ begin_diagnostics {
   char subdir[36];
   if ( should_dump(eparticle) && step() !=0
        && step() > 56*(global->fields_interval)  ) {
-    //  if ( should_dump(eparticle) && step() !=0 ) {
+    // if ( should_dump(eparticle) && step() !=0 ) {
     sprintf(subdir,"particle/T.%d",step());
     dump_mkdir(subdir);
     sprintf(subdir,"particle/T.%d/eparticle",step());
@@ -996,7 +997,7 @@ begin_diagnostics {
       double dumpstart = uptime();
 
       checkpt("restart0/restart",0);
-      //jgw//DUMP_INJECTORS(0);
+      DUMP_INJECTORS(0);
 
       mp_barrier(  ); // Just to be safe
       sim_log( "Restart dump restart completed." );
@@ -1012,555 +1013,600 @@ begin_diagnostics {
 // *******************  PARTICLE INJECTION  - OPEN BOUNDARY ********************
 
 begin_particle_injection {
-  //jgw//int inject;
-  //jgw//double x, y, z, age, flux, vtherm, vd;
-  //jgw//double uv[3];
-  //jgw//double zcell;
-  //jgw//const int nsp=global->nsp;
-  //jgw//const int nx=grid->nx;
-  //jgw//const int ny=grid->ny;
-  //jgw//const int nz=grid->nz;
-  //jgw//const double rin[3]={global->rin[0],global->rin[1],global->rin[2]};
-  //jgw//const double rout[3]={global->rout[0],global->rout[1],global->rout[2]};
-  //jgw//const double sqpi =1.772453850905516;
-  //jgw//const double dt=grid->dt;
-  //jgw//const double hx=grid->dx;
-  //jgw//const double hy=grid->dy;
-  //jgw//const double hz=grid->dz;
-  //jgw//const double nb=global->nb;
-  //jgw//const double nfac=global->nfac;
+  int inject;
+  double x, y, z, age, flux, vtherm, vd;
+  double uv[3];
+  double zcell;
+  const int nsp=global->nsp;
+  const int nx=grid->nx;
+  const int ny=grid->ny;
+  const int nz=grid->nz;
+  const double rin[3]={global->rin[0],global->rin[1],global->rin[2]};
+  const double rout[3]={global->rout[0],global->rout[1],global->rout[2]};
+  const double sqpi =1.772453850905516;
+  const double dt=grid->dt;
+  const double hx=grid->dx;
+  const double hy=grid->dy;
+  const double hz=grid->dz;
+  const double nb=global->nb;
+  const double nfac=global->nfac;
 
   // Initialize the injectors on the first call
-
-  //jgw//  static int initted=0;
-  //jgw//  if ( !initted ) {
-
-  //jgw//    initted=1;
-
-  //jgw//    if (rank() == 0) MESSAGE(("----------------Initializing the Particle Injectors-----------------"));
-
-  //jgw//    // Intialize injectors for Harris Sheet with a uniform background
-
-  //jgw//    if (global->right) {
-
-  //jgw//       DEFINE_INJECTOR(right,ny,nz);
-
-  //jgw//       if (step ==0) {
-  //jgw//         for ( int n=1; n<=nsp; n++ ) {
-  //jgw//           double cn = (uf(2)/vth(2))/(vth(n)/vth(2));
-  //jgw//           for ( int k=1;k<=nz; k++ ) {
-  //jgw//             for ( int j=1;j<=ny; j++ ) {
-  //jgw//               bright(n,k,j) = 0;
-  //jgw//               zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
-  //jgw//               nright(n,k,j) = (nb + 1/(cosh(zcell)*cosh(zcell)))/nfac;
-  //jgw//               fright(n,k,j) = (nb*vthb(n) + vth(n)/(cosh(zcell)*cosh(zcell)))/(2*hx*sqpi*nfac);
-  //jgw//               uright(1,n,k,j) = 0;
-  //jgw//               uright(2,n,k,j) = uf(n)/(1+nb*cosh(zcell)*cosh(zcell));
-  //jgw//               uright(3,n,k,j) = 0;
-  //jgw//               pright(1,2,n,k,j)=pright(2,1,n,k,j)=pright(1,3,n,k,j)=pright(3,1,n,k,j)=pright(2,3,n,k,j)=pright(3,2,n,k,j)=0;
-  //jgw//               pright(1,1,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)/(cosh(zcell)*cosh(zcell)))/(2*nfac);
-  //jgw//               pright(2,2,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)*(1/(cosh(zcell)*cosh(zcell))+2*nb*cn*cn/(1+nb*cosh(zcell)*cosh(zcell))))/(2*nfac);
-  //jgw//               pright(3,3,n,k,j) = pright(1,1,n,k,j);
-  //jgw//             }
-  //jgw//           }
-  //jgw//         }  // end for
-  //jgw//       } // endif
-
-  //jgw//       else
-  //jgw//         READ_INJECTOR(right,ny,nz,0);
-
-  //jgw//    } //end right boundary
-
-  //jgw//    if (global->left) {
-
-  //jgw//       DEFINE_INJECTOR(left,ny,nz);
-
-  //jgw//       if (step==0) {
-  //jgw//         for ( int n=1; n<=nsp; n++ ) {
-  //jgw//           double cn = (uf(2)/vth(2))/(vth(n)/vth(2));
-  //jgw//           for ( int k=1;k<nz+1; k++ ) {
-  //jgw//             for ( int j=1;j<=ny; j++ ) {
-  //jgw//               bleft(n,k,j) = 0;
-  //jgw//               zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
-  //jgw//               nleft(n,k,j) = (nb + 1/(cosh(zcell)*cosh(zcell)))/nfac;
-  //jgw//               fleft(n,k,j) = (nb*vthb(n) + vth(n)/(cosh(zcell)*cosh(zcell)))/(2*hx*sqpi*nfac);
-  //jgw//               uleft(1,n,k,j) = 0;
-  //jgw//               uleft(2,n,k,j) = uf(n)/(1+nb*cosh(zcell)*cosh(zcell));
-  //jgw//               uleft(3,n,k,j) = 0;
-  //jgw//               pleft(1,2,n,k,j)=pleft(2,1,n,k,j)=pleft(1,3,n,k,j)=pleft(3,1,n,k,j)=pleft(2,3,n,k,j)=pleft(3,2,n,k,j)=0;
-  //jgw//               pleft(1,1,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)/(cosh(zcell)*cosh(zcell)))/(2*nfac);
-  //jgw//               pleft(2,2,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)*(1/(cosh(zcell)*cosh(zcell))+2*nb*cn*cn/(1+nb*cosh(zcell)*cosh(zcell))))/(2*nfac);
-  //jgw//               pleft(3,3,n,k,j) = pleft(1,1,n,k,j);
-  //jgw//             }
-  //jgw//           }
-  //jgw//         } // end for
-  //jgw//       } //endif
-
-  //jgw//       else
-  //jgw//         READ_INJECTOR(left,ny,nz,0);
-
-  //jgw//    } // end left boundary
-
-  //jgw//    if (global->top) {
-
-  //jgw//       DEFINE_INJECTOR(top,ny,nx);
-
-  //jgw//       if (step==0) {
-  //jgw//         for ( int n=1; n<=nsp; n++ ) {
-  //jgw//           for ( int i=1;i<=nx; i++ ) {
-  //jgw//             for ( int j=1;j<=ny; j++ ) {
-  //jgw//               btop(n,i,j) = 0;
-  //jgw//               ntop(n,i,j) = nb/nfac;
-  //jgw//               ftop(n,i,j) = ntop(n,i,j)*vthb(n)/(2*hz*sqpi);
-  //jgw//               utop(1,n,i,j) = 0;
-  //jgw//               utop(2,n,i,j) = 0;
-  //jgw//               utop(3,n,i,j) = 0;
-  //jgw//               ptop(1,2,n,i,j)=ptop(2,1,n,i,j)=ptop(1,3,n,i,j)=ptop(3,1,n,i,j)=ptop(2,3,n,i,j)=ptop(3,2,n,i,j)=0;
-  //jgw//               ptop(1,1,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
-  //jgw//               ptop(2,2,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
-  //jgw//               ptop(3,3,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
-  //jgw//             }
-  //jgw//           }
-  //jgw//         } // end for
-  //jgw//       } //endif
-
-  //jgw//       else
-  //jgw//         READ_INJECTOR(top,ny,nx,0);
-
-  //jgw//    } // end top boundary
-
-  //jgw//    if (global->bottom) {
-
-  //jgw//       DEFINE_INJECTOR(bot,ny,nx);
-
-  //jgw//       if (step ==0) {
-  //jgw//         for ( int n=1; n<=nsp; n++ ) {
-  //jgw//           for ( int i=1;i<=nx; i++ ) {
-  //jgw//             for ( int j=1;j<=ny; j++ ) {
-  //jgw//               bbot(n,i,j) = 0;
-  //jgw//               nbot(n,i,j) = nb/nfac;
-  //jgw//               fbot(n,i,j) = nbot(n,i,j)*vthb(n)/(2*hz*sqpi);
-  //jgw//               ubot(1,n,i,j) = 0.0;
-  //jgw//               ubot(2,n,i,j) = 0.0;
-  //jgw//               ubot(3,n,i,j) = 0.0;
-  //jgw//               pbot(1,2,n,i,j)=pbot(2,1,n,i,j)=pbot(1,3,n,i,j)=pbot(3,1,n,i,j)=pbot(2,3,n,i,j)=pbot(3,2,n,i,j)=0;
-  //jgw//               pbot(1,1,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
-  //jgw//               pbot(2,2,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
-  //jgw//               pbot(3,3,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
-  //jgw//             }
-  //jgw//           }
-  //jgw//         } // end for
-  //jgw//       } //endif
-
-  //jgw//       else
-  //jgw//         READ_INJECTOR(bot,ny,nx,0);
-
-  //jgw//    }  // end bottom boundary
-
-  //jgw//    if (rank() == 0) MESSAGE(("-------------------------------------------------------------------"));
-
-  //jgw//  }// End of Intialization
-
-  //jgw//  //  Inject particles on Left Boundary
-
-  //jgw//  if (global->left) {
-  //jgw//    for ( int n=1; n<=nsp; n++ ) {
-  //jgw//       species_t * species = find_species_id(n-1,species_list );
-  //jgw//       for ( int k=1;k<=nz; k++ ) {
-  //jgw//         for ( int j=1;j<=ny; j++ ) {
-  //jgw//           bleft(n,k,j) = bleft(n,k,j) + dt*fleft(n,k,j);
-  //jgw//           inject = (int) bleft(n,k,j);
-  //jgw//           bleft(n,k,j) = bleft(n,k,j) - (double) inject;
-  //jgw//           double uflow[3] = {uleft(1,n,k,j),uleft(2,n,k,j),uleft(3,n,k,j)};
-  //jgw//           double press[9] = {pleft(1,1,n,k,j),pleft(1,2,n,k,j),pleft(1,3,n,k,j),pleft(2,1,n,k,j),pleft(2,2,n,k,j),pleft(2,3,n,k,j),pleft(3,1,n,k,j),pleft(3,2,n,k,j),pleft(3,3,n,k,j)};
-  //jgw//           repeat(inject) {
-  //jgw//             compute_injection(uv,nleft(n,k,j),uflow,press,1,2,3,rng);
-  //jgw//             x = grid->x0;
-  //jgw//             y = grid->y0 + hy*(j-1) + hy*uniform_rand(0,1);
-  //jgw//             z = grid->z0 + hz*(k-1) + hz*uniform_rand(0,1);
-  //jgw//             age = 0;
-  //jgw//             inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age, 1 );
-  //jgw//           }
-  //jgw//         }
-  //jgw//       }
-  //jgw//    }
-  //jgw//  } // end left injector
-
-  //jgw//  //  Inject particles on Right Boundary
-
-  //jgw//  if (global->right) {
-  //jgw//    for ( int n=1; n<=nsp; n++ ) {
-  //jgw//       species_t * species = find_species_id(n-1,species_list );
-  //jgw//       for ( int k=1;k<=nz; k++ ) {
-  //jgw//         for ( int j=1;j<=ny; j++ ) {
-  //jgw//           bright(n,k,j) = bright(n,k,j) + dt*fright(n,k,j);
-  //jgw//           inject = (int) bright(n,k,j);
-  //jgw//           bright(n,k,j) = bright(n,k,j) - (double) inject;
-  //jgw//           double uflow[3] = {uright(1,n,k,j),uright(2,n,k,j),uright(3,n,k,j)};
-  //jgw//           double press[9] = {pright(1,1,n,k,j),pright(1,2,n,k,j),pright(1,3,n,k,j),pright(2,1,n,k,j),pright(2,2,n,k,j),pright(2,3,n,k,j),pright(3,1,n,k,j),pright(3,2,n,k,j),pright(3,3,n,k,j)};
-  //jgw//           repeat(inject) {
-  //jgw//             compute_injection(uv,nright(n,k,j),uflow,press,-1,2,3,rng);
-  //jgw//             x = grid->x1;
-  //jgw//             y = grid->y0 + hy*(j-1) + hy*uniform_rand(0,1);
-  //jgw//             z = grid->z0 + hz*(k-1) + hz*uniform_rand(0,1);
-  //jgw//             age = 0;
-  //jgw//             inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age, 1 );
-  //jgw//           }
-  //jgw//         }
-  //jgw//       }
-  //jgw//    }
-  //jgw//  } // end right injector
-
-  //jgw//  //  Inject particles on Top Boundary
-
-  //jgw//  if (global->top) {
-  //jgw//    for ( int n=1; n<=nsp; n++ ) {
-  //jgw//       species_t * species = find_species_id(n-1,species_list );
-  //jgw//       for ( int i=1;i<=nx; i++ ) {
-  //jgw//         for ( int j=1;j<=ny; j++ ) {
-
-  //jgw//           vtherm = sqrt(2.0*ptop(3,3,n,i,j)/ntop(n,i,j));
-  //jgw//           double t=grid->dt*step;
-  //jgw//           double tau = global->tdrive;
-  //jgw//           double vexb = (global->edrive)*(1-exp(-t/tau))/field(i,j,nz).cbx;
-  //jgw//           vd = vexb/vtherm;
-  //jgw//           btop(n,i,j) = btop(n,i,j) + dt*ntop(n,i,j)*vtherm*(exp(-vd*vd)/sqpi+vd*(erf(vd)+1))/(2*hz);
-
-  //jgw//           //      btop(n,i,j) = btop(n,i,j) + dt*ftop(n,i,j);
-  //jgw//           inject = (int) btop(n,i,j);
-  //jgw//           btop(n,i,j) = btop(n,i,j)- (double) inject;
-  //jgw//           double uflow[3] = {0 ,0 , -vexb};
-
-  //jgw//           //      double uflow[3] = {utop(1,n,i,j),utop(2,n,i,j),utop(3,n,i,j)};
-  //jgw//           double press[9] = {ptop(1,1,n,i,j),ptop(1,2,n,i,j),ptop(1,3,n,i,j),ptop(2,1,n,i,j),ptop(2,2,n,i,j),ptop(2,3,n,i,j),ptop(3,1,n,i,j),ptop(3,2,n,i,j),ptop(3,3,n,i,j)};
-  //jgw//           repeat(inject) {
-  //jgw//             compute_injection(uv,ntop(n,i,j),uflow,press,-3,2,1,rng);
-  //jgw//             x = grid->x0 + hx*(i-1) + hx*uniform_rand(0,1) ;
-  //jgw//             y = grid->y0 + hy*(j-1) + hy*uniform_rand(0,1);
-  //jgw//             z = grid->z1;
-  //jgw//             age=0;
-  //jgw//             inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age, 1 );
-  //jgw//           }
-  //jgw//         }
-  //jgw//       }
-  //jgw//    }
-  //jgw//  }  // end top injector
-
-  //jgw//  //  Inject particles on Bottom Boundary
-
-  //jgw//  if (global->bottom) {
-  //jgw//    for ( int n=1; n<=nsp; n++ ) {
-  //jgw//       species_t * species = find_species_id(n-1,species_list );
-  //jgw//       for ( int i=1;i<=nx; i++ ) {
-  //jgw//         for ( int j=1;j<=ny; j++ ) {
-
-  //jgw//           vtherm = sqrt(2.0*pbot(3,3,n,i,j)/nbot(n,i,j));
-  //jgw//           double t=grid->dt*step;
-  //jgw//           double tau = global->tdrive;
-  //jgw//           double vexb = (global->edrive)*(1-exp(-t/tau))/field(i,j,1).cbx;
-  //jgw//           vd =   -vexb/vtherm;
-  //jgw//           bbot(n,i,j) = bbot(n,i,j) + dt*nbot(n,i,j)*vtherm*(exp(-vd*vd)/sqpi+vd*(erf(vd)+1))/(2*hz);
-
-  //jgw//           //      bbot(n,i,j) = bbot(n,i,j) + dt*fbot(n,i,j);
-
-
-  //jgw//           inject = (int) bbot(n,i,j);
-  //jgw//           bbot(n,i,j) = bbot(n,i,j)- (double) inject;
-  //jgw//           //      double uflow[3] = {ubot(1,n,i,j),ubot(2,n,i,j),ubot(3,n,i,j)};
-  //jgw//           double uflow[3] = {0 ,0 , vexb };
-  //jgw//           double press[9] = {pbot(1,1,n,i,j),pbot(1,2,n,i,j),pbot(1,3,n,i,j),pbot(2,1,n,i,j),pbot(2,2,n,i,j),pbot(2,3,n,i,j),pbot(3,1,n,i,j),pbot(3,2,n,i,j),pbot(3,3,n,i,j)};
-  //jgw//           repeat(inject) {
-  //jgw//             compute_injection(uv,nbot(n,i,j),uflow,press,3,2,1,rng);
-  //jgw//             x = grid->x0 + hx*(i-1) + hx*uniform_rand(0,1);
-  //jgw//             y = grid->y0 + hy*(j-1) + hy*uniform_rand(0,1);
-  //jgw//             z = grid->z0;
-  //jgw//             age = 0;
-  //jgw//             inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age, 1 );
-  //jgw//           }
-  //jgw//         }
-  //jgw//       }
-  //jgw//    }
-  //jgw//  } // end bottom injector
-
-
-  //  *******  Update the injector moments at every sort interval *********
-
-  //jgw//  double v[3];
-  //jgw//  double u[3];
-  //jgw//  double p[9];
-
-  //jgw//#define icell(i,j,k) INDEX_FORTRAN_3(i,j,k,0,nx+1,0,ny+1,0,nz+1)
-  //jgw//#define v(i) v[INDEX_FORTRAN_1(i,1,3)]
-  //jgw//#define u(i) u[INDEX_FORTRAN_1(i,1,3)]
-  //jgw//#define p(i,j) p[INDEX_FORTRAN_2(i,j,1,3,1,3)]
-
-  //  Parameters for measuring moments  - BE CAREFUL - don't make too big or we will go off the node
-
-  //jgw// int noff = 1;   // Offset from edge - to measure moments
-  //jgw//               // noff = 0  --> start with cell directly on boundary
-
-  //jgw// int nav = 2;    // How many cells to include in the "inward" direction in the averging
-  //jgw// int navin = 2;    // How many cells to include in the "inward" direction in the averging
-
-  //  Right boundary Moments
-
-
-  //jgw// if (global->right) {
-  //jgw// for ( int n=1; n<=nsp; n++ ) {
-  //jgw//   species_t * species = find_species_id(n-1,species_list );
-  //jgw//   particle_t * part;
-  //jgw//   if (remainder(step, global->sort[n-1]) == 0) {
-  //jgw//     double npart;
-  //jgw//     for ( int k=1;k<=nz; k++ ) {
-  //jgw//        for ( int j=1;j<=ny; j++ ) {
-  //jgw//          npart = 0;
-  //jgw//          flux = 0;
-  //jgw//          u[0] = u[1] = u[2] = 0;
-  //jgw//          p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
-  //jgw//          for ( int i=nx-noff; i>nx-nav-noff; i-- ){
-  //jgw//            int nstart = species->partition[icell(i,j,k)];
-  //jgw//            int nstop  = species->partition[icell(i,j,k)+1];
-  //jgw//            int ncell  = nstop - nstart;
-  //jgw//            npart = npart + ncell;
-  //jgw//            for (int np=nstart; np<nstop ; np++) {
-  //jgw//              part=&species->p[np];
-  //jgw//              double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy + part->uz*part->uz);
-  //jgw//              v(1) = part->ux;
-  //jgw//              v(2) = part->uy;
-  //jgw//              v(3) = part->uz;
-  //jgw//              if (v(1) < 0) flux = flux - v(1)/gamma;
-  //jgw//              for ( int a=1;a<=3; a++ ) {
-  //jgw//                u(a) = u(a) + v(a);
-  //jgw//                for ( int b=1;b<=3; b++ ) {
-  //jgw//                  p(a,b) = p(a,b) + v(a)*v(b);
-  //jgw//                }
-  //jgw//              }
-  //jgw//            } // end particle loop for single cell
-  //jgw//          } // end cells included for these moments
-
-  //jgw//          if ( npart > 0 ) {
-  //jgw//            fright(n,k,j) = (1.0-rout[1])*fright(n,k,j) + rout[1]*flux/(nav*hx);
-  //jgw//            nright(n,k,j) = (1.0-rout[0])*nright(n,k,j) + rout[0]*npart/nav;
-  //jgw//            for ( int a=1; a<=3; a++ ) {
-  //jgw//              uright(a,n,k,j) = (1-rout[1])*uright(a,n,k,j) + rout[1]*u(a)/npart;
-  //jgw//              for ( int b=1;b<=3; b++ ) {
-  //jgw//                p(a,b) = (p(a,b) - u(a)*u(b)/npart)/nav;
-  //jgw//                pright(a,b,n,k,j) = (1-rout[2])*pright(a,b,n,k,j) + rout[2]*p(a,b);
-  //jgw//              }
-  //jgw//            }
-  //jgw//          }
-  //jgw//        }
-  //jgw//     }
-  //jgw//   }
-  //jgw// }
-  //jgw// }  // end right moment update
-
-  //    Left boundary Moments
-
-  //jgw// if (global->left) {
-  //jgw// for ( int n=1; n<=nsp; n++ ) {
-  //jgw//   species_t * species = find_species_id(n-1,species_list );
-  //jgw//   particle_t * part;
-  //jgw//   if (remainder(step, global->sort[n-1]) == 0) {
-  //jgw//     double npart;
-  //jgw//     for ( int k=1;k<=nz; k++ ) {
-  //jgw//        for ( int j=1;j<=ny; j++ ) {
-  //jgw//          npart = 0;
-  //jgw//          flux = 0;
-  //jgw//          u[0] = u[1] = u[2] = 0;
-  //jgw//          p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
-  //jgw//          for ( int i=1+noff;i<=nav+noff; i++ ) {
-  //jgw//            int nstart = species->partition[icell(i,j,k)];
-  //jgw//            int nstop  = species->partition[icell(i,j,k)+1];
-  //jgw//            int ncell  = nstop - nstart;
-  //jgw//            npart = npart + ncell;
-  //jgw//            for (int np=nstart; np < nstop ; np++) {
-  //jgw//              part=&species->p[np];
-  //jgw//              double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy + part->uz*part->uz);
-  //jgw//              v(1) = part->ux;
-  //jgw//              v(2) = part->uy;
-  //jgw//              v(3) = part->uz;
-  //jgw//              if (v(1) > 0) flux = flux + v(1)/gamma;
-  //jgw//              for ( int a=1; a<=3; a++ ) {
-  //jgw//                u(a) = u(a) + v(a);
-  //jgw//                for ( int b=1;b<=3; b++ ) {
-  //jgw//                  p(a,b) = p(a,b) + v(a)*v(b);
-  //jgw//                }
-  //jgw//              }
-  //jgw//            } // end particle loop for single cell
-  //jgw//          } // end cells included for these moments
-
-  //jgw//          if ( npart > 0 ) {
-  //jgw//            fleft(n,k,j) = (1.0-rout[1])*fleft(n,k,j) + rout[1]*flux/(nav*hx);
-  //jgw//            nleft(n,k,j) = (1.0-rout[0])*nleft(n,k,j) + rout[0]*npart/nav;
-  //jgw//            for ( int a=1; a<=3; a++ ) {
-  //jgw//              uleft(a,n,k,j) = (1-rout[1])*uleft(a,n,k,j) + rout[1]*u(a)/npart;
-  //jgw//              for ( int b=1;b<=3; b++ ) {
-  //jgw//                p(a,b) = (p(a,b) - u(a)*u(b)/npart)/nav;
-  //jgw//                pleft(a,b,n,k,j) = (1-rout[2])*pleft(a,b,n,k,j) + rout[2]*p(a,b);
-  //jgw//              }
-  //jgw//            }
-  //jgw//          }
-  //jgw//        }
-  //jgw//     }
-  //jgw//   }
-  //jgw// }
-  //jgw//}  // end left moment update
-
-  //    Top boundary Moments
-
-  //jgw// if (global->top) {
-  //jgw// for ( int n=1; n<=nsp; n++ ) {
-  //jgw//   species_t * species = find_species_id(n-1,species_list );
-  //jgw//   particle_t * part;
-  //jgw//   if (remainder(step, global->sort[n-1]) == 0) {
-  //jgw//     double npart;
-  //jgw//     for ( int i=1;i<=nx; i++ )
-  //jgw//        for ( int j=1;j<=ny; j++ ) {
-  //jgw//          npart = 0;
-  //jgw//          flux = 0;
-  //jgw//          u[0] = u[1] = u[2] = 0;
-  //jgw//          p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
-  //jgw//          for ( int k=nz-noff; k>nz-navin-noff; k-- ) {
-  //jgw//            int nstart = species->partition[icell(i,j,k)];
-  //jgw//            int nstop  = species->partition[icell(i,j,k)+1];
-  //jgw//            int ncell  = nstop - nstart;
-  //jgw//            npart = npart + ncell;
-  //jgw//            for (int np=nstart; np < nstop ; np++) {
-  //jgw//              part=&species->p[np];
-  //jgw//              double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy + part->uz*part->uz);
-  //jgw//              v(1) = part->ux;
-  //jgw//              v(2) = part->uy;
-  //jgw//              v(3) = part->uz;
-  //jgw//              if (v(3) < 0) flux = flux - v(3)/gamma;
-  //jgw//              for ( int a=1; a<=3; a++ ) {
-  //jgw//                u(a) = u(a) + v(a);
-  //jgw//                for ( int b=1;b<=3; b++ ) {
-  //jgw//                  p(a,b) = p(a,b) + v(a)*v(b);
-  //jgw//                }
-  //jgw//              }
-  //jgw//            } // end particle loop for single cell
-  //jgw//          } // end cells included for these moments
-
-  //jgw//          if ( npart > 0 ) {
-  //jgw//            ftop(n,i,j) = (1.0-rin[1])*ftop(n,i,j) + rin[1]*flux/(navin*hz);
-
-  //         if ( npart/navin < ntop(n,i,j) ) ftop(n,i,j) = (ntop(n,i,j)- npart/navin)/dt; else ftop(n,i,j)=0;
-
-  //jgw//            ntop(n,i,j) = (1-rin[0])*ntop(n,i,j) + rin[0]*npart/navin;
-  //jgw//            for ( int a=1;a<=3; a++ ) {
-  //jgw//              utop(a,n,i,j) = (1-rin[1])*utop(a,n,i,j) + rin[1]*u(a)/npart;
-  //jgw//              for ( int b=1;b<=3; b++ ) {
-  //jgw//                p(a,b) = (p(a,b) - v(a)*v(b)/npart)/navin;
-  //jgw//                ptop(a,b,n,i,j) = (1-rin[2])*ptop(a,b,n,i,j) + rin[2]*p(a,b);
-  //jgw//              }
-  //jgw//            }
-  //jgw//          }
-  //jgw//        }
-  //jgw//   }
-  //jgw// }
-  //jgw// }  // end bottom moment update
-
-  //jgw// if (global->bottom) {
-  //jgw// for ( int n=1; n<=nsp; n++ ) {
-  //jgw//   species_t * species = find_species_id(n-1,species_list );
-  //jgw//   particle_t * part;
-  //jgw//   if (remainder(step, global->sort[n-1]) == 0) {
-  //jgw//     double npart;
-  //jgw//     for ( int i=1;i<=nx; i++ )
-  //jgw//        for ( int j=1;j<=ny; j++ ) {
-  //jgw//          npart = 0;
-  //jgw//          flux = 0;
-  //jgw//          u[0] = u[1] = u[2] = 0;
-  //jgw//          p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
-  //jgw//          for ( int k=1+noff;k<=navin+noff; k++ ) {
-  //jgw//            int nstart = species->partition[icell(i,j,k)];
-  //jgw//            int nstop  = species->partition[icell(i,j,k)+1];
-  //jgw//            int ncell  = nstop - nstart;
-  //jgw//            npart = npart + ncell;
-  //jgw//            for (int np=nstart; np < nstop ; np++) {
-  //jgw//              part=&species->p[np];
-  //jgw//              double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy + part->uz*part->uz);
-  //jgw//              v(1) = part->ux;
-  //jgw//              v(2) = part->uy;
-  //jgw//              v(3) = part->uz;
-  //jgw//              if (v(3) > 0) flux = flux + v(3)/gamma;
-  //jgw//              for ( int a=1; a<=3; a++ ) {
-  //jgw//                u(a) = u(a) + v(a);
-  //jgw//                for ( int b=1;b<=3; b++ ) {
-  //jgw//                  p(a,b) = p(a,b) + v(a)*v(b);
-  //jgw//                }
-  //jgw//              }
-  //jgw//            } // end particle loop for single cell
-  //jgw//          } // end cells included for these moments
-
-  //jgw//          if ( npart > 0) {
-  //jgw//            fbot(n,i,j) = (1.0-rin[1])*fbot(n,i,j) + rin[1]*flux/(navin*hz);
-  //jgw//            //      if ( npart/navin < nbot(n,i,j) ) fbot(n,i,j) = (nbot(n,i,j)- npart/navin)/dt; else fbot(n,i,j)=0;
-  //jgw//            nbot(n,i,j) = (1-rin[0])*nbot(n,i,j) + rin[0]*npart/navin;
-  //jgw//            for ( int a=1;a<=3; a++ ) {
-  //jgw//              ubot(a,n,i,j) = (1-rin[1])*ubot(a,n,i,j) + rin[1]*u(a)/npart;
-  //jgw//              for ( int b=1;b<=3; b++ ) {
-  //jgw//                p(a,b) = (p(a,b) - v(a)*v(b)/npart)/navin;
-  //jgw//                pbot(a,b,n,i,j) = (1-rin[2])*pbot(a,b,n,i,j) + rin[2]*p(a,b);
-  //jgw//              }
-  //jgw//            }
-  //jgw//          }
-  //jgw//        }
-  //jgw//   }
-  //jgw// }
-  //jgw// }  // end bottom moment update
-
-
-  //  Periodically save injector moments on outflow boundaries
-  //  Only do this on the outflow boundaries, and only if we have
-  //  a single domain on each boundary - otherwise would have to combine data files.
-
-  //jgw// if ( global->topology_y == 1 && global->topology_z ==1 ) {
-
-  // How often to write moments to file -
-
-  //jgw// int nskip = 10;
-
-  //jgw// if (global->left) {
-  //jgw//   int j = 1;
-  //jgw//   for ( int n=1; n<=nsp; n++ ) {
-  //jgw//     if (remainder(step, nskip*global->sort[n-1]) == 0) {
-  //jgw//        char buffer[20];
-  //jgw//        sprintf(buffer, "injectors/left%i.dat", n);
-  //jgw//        FileIO fileIO;
-  //jgw//        FileIOStatus status;
-  //jgw//        status= fileIO.open(buffer, io_append);
-  //jgw//        for ( int k=1;k<=nz; k++ ) {
-  //jgw//          zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
-  //jgw//          fileIO.print("%6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g \n", zcell,nleft(n,k,j),uleft(1,n,k,j),uleft(2,n,k,j),uleft(3,n,k,j),pleft(1,1,n,k,j),pleft(2,2,n,k,j),pleft(3,3,n,k,j),pleft(1,2,n,k,j),pleft(1,3,n,k,j),pleft(2,3,n,k,j));
-  //jgw//        } //end for
-  //jgw//        fileIO.print("  \n \n");
-  //jgw//        fileIO.close();
-  //jgw//     }
-  //jgw//   }
-  //jgw// }  //end left output
-
-  //jgw// if (global->right) {
-  //jgw//   int j = 1;
-  //jgw//   for ( int n=1; n<=nsp; n++ ) {
-  //jgw//     if (remainder(step, nskip*global->sort[n-1]) == 0) {
-  //jgw//        char buffer[20];
-  //jgw//        sprintf(buffer, "injectors/right%i.dat", n);
-  //jgw//        FileIO fileIO;
-  //jgw//        FileIOStatus status;
-  //jgw//        status= fileIO.open(buffer, io_append);
-  //jgw//        for ( int k=1;k<=nz; k++ ) {
-  //jgw//          zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
-  //jgw//          fileIO.print("%6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g \n", zcell,nright(n,k,j),uright(1,n,k,j),uright(2,n,k,j),uright(3,n,k,j),pright(1,1,n,k,j),pright(2,2,n,k,j),pright(3,3,n,k,j),pright(1,2,n,k,j),pright(1,3,n,k,j),pright(2,3,n,k,j));
-  //jgw//        } //end for
-  //jgw//        fileIO.print("  \n \n");
-  //jgw//        fileIO.close();
-  //jgw//     }
-  //jgw//   }
-  //jgw// }  //end right output
-
-  //jgw// } //end output for injector moments
+  static int initted=0;
+  if ( !initted ) {
+
+    initted=1;
+
+    if (rank() == 0)
+      MESSAGE(("------------Initializing the Particle Injectors-------------"));
+
+    // Intialize injectors for Harris Sheet with a uniform background
+
+    if (global->right) {
+
+      DEFINE_INJECTOR(right,ny,nz);
+
+      if (step()==0) {
+        for ( int n=1; n<=nsp; n++ ) {
+          double cn = (uf(2)/vth(2))/(vth(n)/vth(2));
+          for ( int k=1;k<=nz; k++ ) {
+            for ( int j=1;j<=ny; j++ ) {
+              bright(n,k,j) = 0;
+              zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
+              nright(n,k,j) = (nb + 1/(cosh(zcell)*cosh(zcell)))/nfac;
+              fright(n,k,j) = (nb*vthb(n) + vth(n)/(cosh(zcell)*cosh(zcell)))
+                /(2*hx*sqpi*nfac);
+              uright(1,n,k,j) = 0;
+              uright(2,n,k,j) = uf(n)/(1+nb*cosh(zcell)*cosh(zcell));
+              uright(3,n,k,j) = 0;
+              pright(1,2,n,k,j)=pright(2,1,n,k,j)=pright(1,3,n,k,j)
+                =pright(3,1,n,k,j)=pright(2,3,n,k,j)=pright(3,2,n,k,j)=0;
+              pright(1,1,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)
+                                   /(cosh(zcell)*cosh(zcell)))/(2*nfac);
+              pright(2,2,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)
+                                   *(1/(cosh(zcell)*cosh(zcell))+2*nb*cn*cn/
+                                     (1+nb*cosh(zcell)*cosh(zcell))))/(2*nfac);
+              pright(3,3,n,k,j) = pright(1,1,n,k,j);
+            }
+          }
+        }  // end for
+      } // endif
+
+      else
+        READ_INJECTOR(right,ny,nz,0);
+
+    } //end right boundary
+
+    if (global->left) {
+
+      DEFINE_INJECTOR(left,ny,nz);
+
+      if (step()==0) {
+        for ( int n=1; n<=nsp; n++ ) {
+          double cn = (uf(2)/vth(2))/(vth(n)/vth(2));
+          for ( int k=1;k<nz+1; k++ ) {
+            for ( int j=1;j<=ny; j++ ) {
+              bleft(n,k,j) = 0;
+              zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
+              nleft(n,k,j) = (nb + 1/(cosh(zcell)*cosh(zcell)))/nfac;
+              fleft(n,k,j) = (nb*vthb(n) + vth(n)/(cosh(zcell)*cosh(zcell)))
+                /(2*hx*sqpi*nfac);
+              uleft(1,n,k,j) = 0;
+              uleft(2,n,k,j) = uf(n)/(1+nb*cosh(zcell)*cosh(zcell));
+              uleft(3,n,k,j) = 0;
+              pleft(1,2,n,k,j)=pleft(2,1,n,k,j)=pleft(1,3,n,k,j)
+                =pleft(3,1,n,k,j)=pleft(2,3,n,k,j)=pleft(3,2,n,k,j)=0;
+              pleft(1,1,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)
+                                  /(cosh(zcell)*cosh(zcell)))/(2*nfac);
+              pleft(2,2,n,k,j) = (nb*vthb(n)*vthb(n) + vth(n)*vth(n)
+                                  *(1/(cosh(zcell)*cosh(zcell))+2*nb*cn*cn
+                                    /(1+nb*cosh(zcell)*cosh(zcell))))/(2*nfac);
+              pleft(3,3,n,k,j) = pleft(1,1,n,k,j);
+            }
+          }
+        } // end for
+      } //endif
+
+      else
+        READ_INJECTOR(left,ny,nz,0);
+
+    } // end left boundary
+
+    if (global->top) {
+
+      DEFINE_INJECTOR(top,ny,nx);
+
+      if (step()==0) {
+        for ( int n=1; n<=nsp; n++ ) {
+          for ( int i=1;i<=nx; i++ ) {
+            for ( int j=1;j<=ny; j++ ) {
+              btop(n,i,j) = 0;
+              ntop(n,i,j) = nb/nfac;
+              ftop(n,i,j) = ntop(n,i,j)*vthb(n)/(2*hz*sqpi);
+              utop(1,n,i,j) = 0;
+              utop(2,n,i,j) = 0;
+              utop(3,n,i,j) = 0;
+              ptop(1,2,n,i,j)=ptop(2,1,n,i,j)=ptop(1,3,n,i,j)=ptop(3,1,n,i,j)
+                =ptop(2,3,n,i,j)=ptop(3,2,n,i,j)=0;
+              ptop(1,1,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
+              ptop(2,2,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
+              ptop(3,3,n,i,j) = ntop(n,i,j)*vthb(n)*vthb(n)/2;;
+            }
+          }
+        } // end for
+      } //endif
+
+      else
+        READ_INJECTOR(top,ny,nx,0);
+
+    } // end top boundary
+
+    if (global->bottom) {
+
+      DEFINE_INJECTOR(bot,ny,nx);
+
+      if (step()==0) {
+        for ( int n=1; n<=nsp; n++ ) {
+          for ( int i=1;i<=nx; i++ ) {
+            for ( int j=1;j<=ny; j++ ) {
+              bbot(n,i,j) = 0;
+              nbot(n,i,j) = nb/nfac;
+              fbot(n,i,j) = nbot(n,i,j)*vthb(n)/(2*hz*sqpi);
+              ubot(1,n,i,j) = 0.0;
+              ubot(2,n,i,j) = 0.0;
+              ubot(3,n,i,j) = 0.0;
+              pbot(1,2,n,i,j)=pbot(2,1,n,i,j)=pbot(1,3,n,i,j)
+                =pbot(3,1,n,i,j)=pbot(2,3,n,i,j)=pbot(3,2,n,i,j)=0;
+              pbot(1,1,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
+              pbot(2,2,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
+              pbot(3,3,n,i,j) = nbot(n,i,j)*vthb(n)*vthb(n)/2;
+            }
+          }
+        } // end for
+      } //endif
+
+      else
+        READ_INJECTOR(bot,ny,nx,0);
+
+    }  // end bottom boundary
+
+    if (rank() == 0)
+      MESSAGE(("------------------------------------------------------------"));
+
+  } // End of Intialization
+
+  // Inject particles on Left Boundary
+  if (global->left) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      for ( int k=1;k<=nz; k++ ) {
+        for ( int j=1;j<=ny; j++ ) {
+          bleft(n,k,j) = bleft(n,k,j) + dt*fleft(n,k,j);
+          inject = (int) bleft(n,k,j);
+          bleft(n,k,j) = bleft(n,k,j) - (double) inject;
+          double uflow[3] = {uleft(1,n,k,j),uleft(2,n,k,j),uleft(3,n,k,j)};
+          double press[9] = {pleft(1,1,n,k,j),pleft(1,2,n,k,j),
+                             pleft(1,3,n,k,j),pleft(2,1,n,k,j),
+                             pleft(2,2,n,k,j),pleft(2,3,n,k,j),
+                             pleft(3,1,n,k,j),pleft(3,2,n,k,j),
+                             pleft(3,3,n,k,j)};
+          repeat(inject) {
+            compute_injection(uv,nleft(n,k,j),uflow,press,1,2,3,rng(0));
+            x = grid->x0;
+            y = grid->y0 + hy*(j-1) + hy*uniform( rng(0), 0, 1 );
+            z = grid->z0 + hz*(k-1) + hz*uniform( rng(0), 0, 1 );
+            age = 0;
+            inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age,
+                            1 );
+          }
+        }
+      }
+    }
+  } // end left injector
+
+  // Inject particles on Right Boundary
+
+  if (global->right) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      for ( int k=1;k<=nz; k++ ) {
+        for ( int j=1;j<=ny; j++ ) {
+          bright(n,k,j) = bright(n,k,j) + dt*fright(n,k,j);
+          inject = (int) bright(n,k,j);
+          bright(n,k,j) = bright(n,k,j) - (double) inject;
+          double uflow[3] = {uright(1,n,k,j),uright(2,n,k,j),uright(3,n,k,j)};
+          double press[9] = {pright(1,1,n,k,j),pright(1,2,n,k,j),
+                             pright(1,3,n,k,j),pright(2,1,n,k,j),
+                             pright(2,2,n,k,j),pright(2,3,n,k,j),
+                             pright(3,1,n,k,j),pright(3,2,n,k,j),
+                             pright(3,3,n,k,j)};
+          repeat(inject) {
+            compute_injection(uv,nright(n,k,j),uflow,press,-1,2,3,rng(0));
+            x = grid->x1;
+            y = grid->y0 + hy*(j-1) + hy*uniform( rng(0), 0, 1 );
+            z = grid->z0 + hz*(k-1) + hz*uniform( rng(0), 0, 1 );
+            age = 0;
+            inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age,
+                            1 );
+          }
+        }
+      }
+    }
+  } // end right injector
+
+  // Inject particles on Top Boundary
+
+  if (global->top) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      for ( int i=1;i<=nx; i++ ) {
+        for ( int j=1;j<=ny; j++ ) {
+
+          vtherm = sqrt(2.0*ptop(3,3,n,i,j)/ntop(n,i,j));
+          double t=grid->dt*step();
+          double tau = global->tdrive;
+          double vexb = (global->edrive)*(1-exp(-t/tau))/field(i,j,nz).cbx;
+          vd = vexb/vtherm;
+          btop(n,i,j) = btop(n,i,j)
+            + dt*ntop(n,i,j)*vtherm*(exp(-vd*vd)/sqpi+vd*(erf(vd)+1))/(2*hz);
+
+          //btop(n,i,j) = btop(n,i,j) + dt*ftop(n,i,j);
+          inject = (int) btop(n,i,j);
+          btop(n,i,j) = btop(n,i,j)- (double) inject;
+          double uflow[3] = {0 ,0 , -vexb};
+
+          //double uflow[3] = {utop(1,n,i,j),utop(2,n,i,j),utop(3,n,i,j)};
+          double press[9] = {ptop(1,1,n,i,j),ptop(1,2,n,i,j),ptop(1,3,n,i,j),
+                             ptop(2,1,n,i,j),ptop(2,2,n,i,j),ptop(2,3,n,i,j),
+                             ptop(3,1,n,i,j),ptop(3,2,n,i,j),ptop(3,3,n,i,j)};
+          repeat(inject) {
+            compute_injection(uv,ntop(n,i,j),uflow,press,-3,2,1,rng(0));
+            x = grid->x0 + hx*(i-1) + hx*uniform( rng(0), 0, 1 );
+            y = grid->y0 + hy*(j-1) + hy*uniform( rng(0), 0, 1 );
+            z = grid->z1;
+            age=0;
+            inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age,
+                            1 );
+          }
+        }
+      }
+    }
+  }  // end top injector
+
+  // Inject particles on Bottom Boundary
+
+  if (global->bottom) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      for ( int i=1;i<=nx; i++ ) {
+        for ( int j=1;j<=ny; j++ ) {
+
+          vtherm = sqrt(2.0*pbot(3,3,n,i,j)/nbot(n,i,j));
+          double t=grid->dt*step();
+          double tau = global->tdrive;
+          double vexb = (global->edrive)*(1-exp(-t/tau))/field(i,j,1).cbx;
+          vd =   -vexb/vtherm;
+          bbot(n,i,j) = bbot(n,i,j)
+            + dt*nbot(n,i,j)*vtherm*(exp(-vd*vd)/sqpi+vd*(erf(vd)+1))/(2*hz);
+
+          //bbot(n,i,j) = bbot(n,i,j) + dt*fbot(n,i,j);
+          inject = (int) bbot(n,i,j);
+          bbot(n,i,j) = bbot(n,i,j)- (double) inject;
+          //double uflow[3] = {ubot(1,n,i,j),ubot(2,n,i,j),ubot(3,n,i,j)};
+          double uflow[3] = {0 ,0 , vexb };
+          double press[9] = {pbot(1,1,n,i,j),pbot(1,2,n,i,j),pbot(1,3,n,i,j),
+                             pbot(2,1,n,i,j),pbot(2,2,n,i,j),pbot(2,3,n,i,j),
+                             pbot(3,1,n,i,j),pbot(3,2,n,i,j),pbot(3,3,n,i,j)};
+          repeat(inject) {
+            compute_injection(uv,nbot(n,i,j),uflow,press,3,2,1,rng(0));
+            x = grid->x0 + hx*(i-1) + hx*uniform( rng(0), 0, 1 );
+            y = grid->y0 + hy*(j-1) + hy*uniform( rng(0), 0, 1 );
+            z = grid->z0;
+            age = 0;
+            inject_particle(species, x, y, z, uv[0], uv[1], uv[2], q(n), age,
+                            1 );
+          }
+        }
+      }
+    }
+  } // end bottom injector
+
+
+  // *******  Update the injector moments at every sort interval *********
+  double v[3];
+  double u[3];
+  double p[9];
+
+#define icell(i,j,k) INDEX_FORTRAN_3(i,j,k,0,nx+1,0,ny+1,0,nz+1)
+#define v(i) v[INDEX_FORTRAN_1(i,1,3)]
+#define u(i) u[INDEX_FORTRAN_1(i,1,3)]
+#define p(i,j) p[INDEX_FORTRAN_2(i,j,1,3,1,3)]
+
+  // Parameters for measuring moments  - BE CAREFUL -
+  // don't make too big or we will go off the node
+
+  int noff = 1;   // Offset from edge - to measure moments
+                  // noff = 0  --> start with cell directly on boundary
+
+  int nav = 2;  // How many cells to include in the "inward" direction in avg
+  int navin = 2;// How many cells to include in the "inward" direction in avg
+
+  // Right boundary Moments
+  if (global->right) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      particle_t * part;
+      if (remainder(step(), global->sort[n-1]) == 0) {
+        double npart;
+        for ( int k=1;k<=nz; k++ ) {
+          for ( int j=1;j<=ny; j++ ) {
+            npart = 0;
+            flux = 0;
+            u[0] = u[1] = u[2] = 0;
+            p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
+            for ( int i=nx-noff; i>nx-nav-noff; i-- ){
+              int nstart = species->partition[icell(i,j,k)];
+              int nstop  = species->partition[icell(i,j,k)+1];
+              int ncell  = nstop - nstart;
+              npart = npart + ncell;
+              for (int np=nstart; np<nstop ; np++) {
+                part=&species->p[np];
+                double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy
+                                    + part->uz*part->uz);
+                v(1) = part->ux;
+                v(2) = part->uy;
+                v(3) = part->uz;
+                if (v(1) < 0) flux = flux - v(1)/gamma;
+                for ( int a=1;a<=3; a++ ) {
+                  u(a) = u(a) + v(a);
+                  for ( int b=1;b<=3; b++ ) {
+                    p(a,b) = p(a,b) + v(a)*v(b);
+                  }
+                }
+              } // end particle loop for single cell
+            } // end cells included for these moments
+
+            if ( npart > 0 ) {
+              fright(n,k,j) = (1.0-rout[1])*fright(n,k,j)
+                + rout[1]*flux/(nav*hx);
+              nright(n,k,j) = (1.0-rout[0])*nright(n,k,j) + rout[0]*npart/nav;
+              for ( int a=1; a<=3; a++ ) {
+                uright(a,n,k,j) = (1-rout[1])*uright(a,n,k,j)
+                  + rout[1]*u(a)/npart;
+                for ( int b=1;b<=3; b++ ) {
+                  p(a,b) = (p(a,b) - u(a)*u(b)/npart)/nav;
+                  pright(a,b,n,k,j) = (1-rout[2])*pright(a,b,n,k,j)
+                    + rout[2]*p(a,b);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }  // end right moment update
+
+  // Left boundary Moments
+  if (global->left) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      particle_t * part;
+      if (remainder(step(), global->sort[n-1]) == 0) {
+        double npart;
+        for ( int k=1;k<=nz; k++ ) {
+          for ( int j=1;j<=ny; j++ ) {
+            npart = 0;
+            flux = 0;
+            u[0] = u[1] = u[2] = 0;
+            p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
+            for ( int i=1+noff;i<=nav+noff; i++ ) {
+              int nstart = species->partition[icell(i,j,k)];
+              int nstop  = species->partition[icell(i,j,k)+1];
+              int ncell  = nstop - nstart;
+              npart = npart + ncell;
+              for (int np=nstart; np < nstop ; np++) {
+                part=&species->p[np];
+                double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy
+                                    + part->uz*part->uz);
+                v(1) = part->ux;
+                v(2) = part->uy;
+                v(3) = part->uz;
+                if (v(1) > 0) flux = flux + v(1)/gamma;
+                for ( int a=1; a<=3; a++ ) {
+                  u(a) = u(a) + v(a);
+                  for ( int b=1;b<=3; b++ ) {
+                    p(a,b) = p(a,b) + v(a)*v(b);
+                  }
+                }
+              } // end particle loop for single cell
+            } // end cells included for these moments
+
+            if ( npart > 0 ) {
+              fleft(n,k,j) = (1.0-rout[1])*fleft(n,k,j) + rout[1]*flux/(nav*hx);
+              nleft(n,k,j) = (1.0-rout[0])*nleft(n,k,j) + rout[0]*npart/nav;
+              for ( int a=1; a<=3; a++ ) {
+                uleft(a,n,k,j) = (1-rout[1])*uleft(a,n,k,j)
+                  + rout[1]*u(a)/npart;
+                for ( int b=1;b<=3; b++ ) {
+                  p(a,b) = (p(a,b) - u(a)*u(b)/npart)/nav;
+                  pleft(a,b,n,k,j) = (1-rout[2])*pleft(a,b,n,k,j)
+                    + rout[2]*p(a,b);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }  // end left moment update
+
+  // Top boundary Moments
+  if (global->top) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      particle_t * part;
+      if (remainder(step(), global->sort[n-1]) == 0) {
+        double npart;
+        for ( int i=1;i<=nx; i++ )
+          for ( int j=1;j<=ny; j++ ) {
+            npart = 0;
+            flux = 0;
+            u[0] = u[1] = u[2] = 0;
+            p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
+            for ( int k=nz-noff; k>nz-navin-noff; k-- ) {
+              int nstart = species->partition[icell(i,j,k)];
+              int nstop  = species->partition[icell(i,j,k)+1];
+              int ncell  = nstop - nstart;
+              npart = npart + ncell;
+              for (int np=nstart; np < nstop ; np++) {
+                part=&species->p[np];
+                double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy
+                                    + part->uz*part->uz);
+                v(1) = part->ux;
+                v(2) = part->uy;
+                v(3) = part->uz;
+                if (v(3) < 0) flux = flux - v(3)/gamma;
+                for ( int a=1; a<=3; a++ ) {
+                  u(a) = u(a) + v(a);
+                  for ( int b=1;b<=3; b++ ) {
+                    p(a,b) = p(a,b) + v(a)*v(b);
+                  }
+                }
+              } // end particle loop for single cell
+            } // end cells included for these moments
+
+            if ( npart > 0 ) {
+              ftop(n,i,j) = (1.0-rin[1])*ftop(n,i,j) + rin[1]*flux/(navin*hz);
+
+              if ( npart/navin < ntop(n,i,j) )
+                ftop(n,i,j) = (ntop(n,i,j)- npart/navin)/dt;
+              else ftop(n,i,j)=0;
+
+              ntop(n,i,j) = (1-rin[0])*ntop(n,i,j) + rin[0]*npart/navin;
+              for ( int a=1;a<=3; a++ ) {
+                utop(a,n,i,j) = (1-rin[1])*utop(a,n,i,j) + rin[1]*u(a)/npart;
+                for ( int b=1;b<=3; b++ ) {
+                  p(a,b) = (p(a,b) - v(a)*v(b)/npart)/navin;
+                  ptop(a,b,n,i,j) = (1-rin[2])*ptop(a,b,n,i,j) + rin[2]*p(a,b);
+                }
+              }
+            }
+          }
+      }
+    }
+  }  // end top moment update
+
+  if (global->bottom) {
+    for ( int n=1; n<=nsp; n++ ) {
+      species_t * species = find_species_id(n-1,species_list );
+      particle_t * part;
+      if (remainder(step(), global->sort[n-1]) == 0) {
+        double npart;
+        for ( int i=1;i<=nx; i++ )
+          for ( int j=1;j<=ny; j++ ) {
+            npart = 0;
+            flux = 0;
+            u[0] = u[1] = u[2] = 0;
+            p[0] = p[1] = p[2] = p[3]= p[4] = p[5] = p[6]= p[7] = p[8] = 0;
+            for ( int k=1+noff;k<=navin+noff; k++ ) {
+              int nstart = species->partition[icell(i,j,k)];
+              int nstop  = species->partition[icell(i,j,k)+1];
+              int ncell  = nstop - nstart;
+              npart = npart + ncell;
+              for (int np=nstart; np < nstop ; np++) {
+                part=&species->p[np];
+                double gamma = sqrt(1.0+part->ux*part->ux + part->uy*part->uy
+                                    + part->uz*part->uz);
+                v(1) = part->ux;
+                v(2) = part->uy;
+                v(3) = part->uz;
+                if (v(3) > 0) flux = flux + v(3)/gamma;
+                for ( int a=1; a<=3; a++ ) {
+                  u(a) = u(a) + v(a);
+                  for ( int b=1;b<=3; b++ ) {
+                    p(a,b) = p(a,b) + v(a)*v(b);
+                  }
+                }
+              } // end particle loop for single cell
+            } // end cells included for these moments
+
+            if ( npart > 0) {
+              fbot(n,i,j) = (1.0-rin[1])*fbot(n,i,j) + rin[1]*flux/(navin*hz);
+              // if ( npart/navin < nbot(n,i,j) ) fbot(n,i,j)
+              // = (nbot(n,i,j)- npart/navin)/dt; else fbot(n,i,j)=0;
+              nbot(n,i,j) = (1-rin[0])*nbot(n,i,j) + rin[0]*npart/navin;
+              for ( int a=1;a<=3; a++ ) {
+                ubot(a,n,i,j) = (1-rin[1])*ubot(a,n,i,j) + rin[1]*u(a)/npart;
+                for ( int b=1;b<=3; b++ ) {
+                  p(a,b) = (p(a,b) - v(a)*v(b)/npart)/navin;
+                  pbot(a,b,n,i,j) = (1-rin[2])*pbot(a,b,n,i,j) + rin[2]*p(a,b);
+                }
+              }
+            }
+          }
+      }
+    }
+  }  // end bottom moment update
+
+
+  // Periodically save injector moments on outflow boundaries
+  // Only do this on the outflow boundaries, and only if we have
+  // a single domain on each boundary - otherwise would have to combine
+  // data files.
+
+  if ( global->topology_y == 1 && global->topology_z ==1 ) {
+
+    // How often to write moments to file -
+
+    int nskip = 10;
+
+    if (global->left) {
+      int j = 1;
+      for ( int n=1; n<=nsp; n++ ) {
+        if (remainder(step(), nskip*global->sort[n-1]) == 0) {
+          char buffer[20];
+          sprintf(buffer, "injectors/left%i.dat", n);
+          FileIO fileIO;
+          if ( ! (fileIO.open(buffer, io_append)==ok) ) 
+            ERROR(("Cannot open file."));
+          for ( int k=1;k<=nz; k++ ) {
+            zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
+            fileIO.print("%6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g \n",
+                         zcell,nleft(n,k,j),uleft(1,n,k,j),uleft(2,n,k,j),
+                         uleft(3,n,k,j),pleft(1,1,n,k,j),pleft(2,2,n,k,j),
+                         pleft(3,3,n,k,j),pleft(1,2,n,k,j),pleft(1,3,n,k,j),
+                         pleft(2,3,n,k,j));
+          } //end for
+          fileIO.print("  \n \n");
+          fileIO.close();
+        }
+      }
+    }  //end left output
+
+    if (global->right) {
+      int j = 1;
+      for ( int n=1; n<=nsp; n++ ) {
+        if (remainder(step(), nskip*global->sort[n-1]) == 0) {
+          char buffer[20];
+          sprintf(buffer, "injectors/right%i.dat", n);
+          FileIO fileIO;
+          if ( ! (fileIO.open(buffer, io_append)==ok) ) 
+            ERROR(("Cannot open file."));
+          for ( int k=1;k<=nz; k++ ) {
+            zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
+            fileIO.print("%6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g %6.4g \n",
+                         zcell,nright(n,k,j),uright(1,n,k,j),uright(2,n,k,j),
+                         uright(3,n,k,j),pright(1,1,n,k,j),pright(2,2,n,k,j),
+                         pright(3,3,n,k,j),pright(1,2,n,k,j),pright(1,3,n,k,j),
+                         pright(2,3,n,k,j));
+          } //end for
+          fileIO.print("  \n \n");
+          fileIO.close();
+        }
+      }
+    }  //end right output
+
+  } //end output for injector moments
 
 } // end particle injection
 

@@ -69,17 +69,17 @@
       p = sp->p;   // header of the particle array
 
       for (icell=0; icell< total_cells; icell++)
-	for ( k=0; k<nex; k++) dist[k*total_cells+icell]=0; //zero out distribution function
+        for ( k=0; k<nex; k++) dist[k*total_cells+icell]=0; //zero out distribution function
 
       for ( i=0; i<sp->np; ++i ) {                 // loop over particles
 
-	double gam2 = 1.0+p->ux*p->ux + p->uy*p->uy + p->uz*p->uz;
-	double ke = sqrt(gam2) - 1.0;
+        double gam2 = 1.0+p->ux*p->ux + p->uy*p->uy + p->uz*p->uz;
+        double ke = sqrt(gam2) - 1.0;
 
-	k = int(ke/dke);                          // energy bin
-	if (k > (nex-1)) k = nex-1;               // everything with energy > emax goes into the last bin
-	dist[k*total_cells+p->i]++;               // incerement the corresponding bin for cell p->i
-	p++;                                      // next particle
+        k = int(ke/dke);                          // energy bin
+        if (k > (nex-1)) k = nex-1;               // everything with energy > emax goes into the last bin
+        dist[k*total_cells+p->i]++;               // incerement the corresponding bin for cell p->i
+        p++;                                      // next particle
 
       }
 
@@ -94,43 +94,43 @@
       int nzp2 = grid->nz + 2;
 
       for (iz=0; iz<nzp2; iz++)
-	for (iy=0; iy<nyp2; iy++)
-	  for (ix=0; ix<nxp2; ix++) {
+        for (iy=0; iy<nyp2; iy++)
+          for (ix=0; ix<nxp2; ix++) {
 
-	    np=0;  // particle counter
+            np=0;  // particle counter
 
-	    icell = LOCAL_CELL_ID(ix,iy,iz);
+            icell = LOCAL_CELL_ID(ix,iy,iz);
 
-	    for ( k=0; k<nex; k++) np += dist[k*total_cells+icell];  // count the particles in the cell
-	    if (np>0) for ( k=0; k<nex; k++) dist[k*total_cells+icell] /= np;  // normalize the distribution
+            for ( k=0; k<nex; k++) np += dist[k*total_cells+icell];  // count the particles in the cell
+            if (np>0) for ( k=0; k<nex; k++) dist[k*total_cells+icell] /= np;  // normalize the distribution
 
 
-	    // is this a ghost cell ?
+            // is this a ghost cell ?
 
-	    gcell = (ix==0) || (ix==nxp2-1) || (iy==0) || (iy==nyp2-1) || (iz==0) || (iz==nzp2-1) ;
+            gcell = (ix==0) || (ix==nxp2-1) || (iy==0) || (iy==nyp2-1) || (iz==0) || (iz==nzp2-1) ;
 
-	    // if yes, assign the value from a neighboring cell
+            // if yes, assign the value from a neighboring cell
 
-	    if (gcell) {
+            if (gcell) {
 
-	      // find the neighboring cell
+              // find the neighboring cell
 
-	      ixn=ix; iyn=iy; izn=iz;
+              ixn=ix; iyn=iy; izn=iz;
 
-	      if (ix==0) ixn++;
-	      if (ix==nxp2-1) ixn--;
-	      if (iy==0) iyn++;
-	      if (iy==nyp2-1) iyn--;
-	      if (iz==0) izn++;
-	      if (iz==nzp2-1) izn--;
+              if (ix==0) ixn++;
+              if (ix==nxp2-1) ixn--;
+              if (iy==0) iyn++;
+              if (iy==nyp2-1) iyn--;
+              if (iz==0) izn++;
+              if (iz==nzp2-1) izn--;
 
-	      int64_t nid = LOCAL_CELL_ID (ixn,iyn,izn);
+              int64_t nid = LOCAL_CELL_ID (ixn,iyn,izn);
 
-	      for ( k=0; k<nex; k++) dist[k*total_cells+icell] = dist[k*total_cells+nid];
+              for ( k=0; k<nex; k++) dist[k*total_cells+icell] = dist[k*total_cells+nid];
 
-	    }
+            }
 
-	  }
+          }
 
 
       } // end normalization
@@ -147,8 +147,8 @@
       // dump all the energy bands
 
       for ( k=0; k<nex; k++) {
-	wp = dist+(k*total_cells);
-	fedump.write( wp, total_cells );
+        wp = dist+(k*total_cells);
+        fedump.write( wp, total_cells );
       }
 
       fedump.close();

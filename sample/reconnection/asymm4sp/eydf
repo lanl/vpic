@@ -38,54 +38,54 @@
 
 
       for (int ipx=0; ipx < eyd_npx; ++ipx)
-	for (int ipz=0; ipz<eyd_npz; ++ipz) {
+        for (int ipz=0; ipz<eyd_npz; ++ipz) {
 
 
-	  int ip = ipx*eyd_npz + ipz;
+          int ip = ipx*eyd_npz + ipz;
 
-	  ALLOCATE( fnames[ip], 256, char );
+          ALLOCATE( fnames[ip], 256, char );
 
-	  {
+          {
 
-	    // points are aligned in npx vertical grids
+            // points are aligned in npx vertical grids
 
-	    eyd_x[ip] = (-300.0 + 600.0/(eyd_npx-1.0)*ipx);
-	    eyd_z[ip] = (-100.0 + 200.0/(eyd_npz-1.0)*ipz);
+            eyd_x[ip] = (-300.0 + 600.0/(eyd_npx-1.0)*ipx);
+            eyd_z[ip] = (-100.0 + 200.0/(eyd_npz-1.0)*ipz);
 
-	    sprintf( fnames[ip], "fd/grid.%i/ey.%i.%i", ipx, ipz, (int)rank() );
-
-
-	  }
-
-	  int idx, idy, idz;
-
-	  RANK_TO_INDEX( int(rank()), idx, idy, idz );  // Domain location in mesh
-
-	  int point_xidx = (int) ((eyd_x[ip] + global->xcenter)/(grid->nx*grid->dx)-FLT_EPSILON);         // domain location that the current x belongs to
-	  int point_zidx = (int) ((eyd_z[ip] + global->zcenter)/(grid->nz*grid->dz)-FLT_EPSILON);
-
-	  if ((point_xidx==idx) && (point_zidx==idz)) {
-
-	    // this point belongs to the domain
-	    eyd_dump[ip] = 1;
-
-	    eyd_ix[ip] = (int) ((eyd_x[ip] + global->xcenter)/grid->dx - point_xidx*grid->nx) + 1;
-	    eyd_iz[ip] = (int) ((eyd_z[ip] + global->zcenter)/grid->dz - point_zidx*grid->nz) + 1;
-
-	  }
-	  else {
-
-	    // this point does not belong to the domain
-	    eyd_dump[ip] = 0;
-
-	    eyd_ix[ip] = -1;
-	    eyd_iz[ip] = -1;
+            sprintf( fnames[ip], "fd/grid.%i/ey.%i.%i", ipx, ipz, (int)rank() );
 
 
-	  }
+          }
+
+          int idx, idy, idz;
+
+          RANK_TO_INDEX( int(rank()), idx, idy, idz );  // Domain location in mesh
+
+          int point_xidx = (int) ((eyd_x[ip] + global->xcenter)/(grid->nx*grid->dx)-FLT_EPSILON);         // domain location that the current x belongs to
+          int point_zidx = (int) ((eyd_z[ip] + global->zcenter)/(grid->nz*grid->dz)-FLT_EPSILON);
+
+          if ((point_xidx==idx) && (point_zidx==idz)) {
+
+            // this point belongs to the domain
+            eyd_dump[ip] = 1;
+
+            eyd_ix[ip] = (int) ((eyd_x[ip] + global->xcenter)/grid->dx - point_xidx*grid->nx) + 1;
+            eyd_iz[ip] = (int) ((eyd_z[ip] + global->zcenter)/grid->dz - point_zidx*grid->nz) + 1;
+
+          }
+          else {
+
+            // this point does not belong to the domain
+            eyd_dump[ip] = 0;
+
+            eyd_ix[ip] = -1;
+            eyd_iz[ip] = -1;
 
 
-	}
+          }
+
+
+        }
 
 
       // Allocate space for data arrays
@@ -94,37 +94,37 @@
 
       if (step==0)  {     // prepend a header with number of x meshpoints to each file
 
-	dump_mkdir("fd");
+        dump_mkdir("fd");
 
-	for (int ipx=0; ipx < eyd_npx; ++ipx) {
-
-
-	  char dname [256];
-
-	  sprintf( dname, "fd/grid.%i", ipx);
-	  dump_mkdir(dname);
+        for (int ipx=0; ipx < eyd_npx; ++ipx) {
 
 
-	}
+          char dname [256];
 
-	for ( int ip=0; ip < eyd_np; ++ip)
-	  if (eyd_dump[ip]==1) {
+          sprintf( dname, "fd/grid.%i", ipx);
+          dump_mkdir(dname);
+
+
+        }
+
+        for ( int ip=0; ip < eyd_np; ++ip)
+          if (eyd_dump[ip]==1) {
 
             status = fp_ey[ip].open(fnames[ip], io_write);
-	    if ( status==fail ) ERROR(("Could not open file."));
+            if ( status==fail ) ERROR(("Could not open file."));
 
-	    fp_ey[ip].write( &header_size, 1 );
-	    fp_ey[ip].write( &eyd_npz, 1 );
-	    fp_ey[ip].write( &eyd_npx, 1 );
-	    fp_ey[ip].write( eyd_x, eyd_np );
-	    fp_ey[ip].write( eyd_z, eyd_np );
-	    fp_ey[ip].write( &eyd_ix[ip], 1 );
-	    fp_ey[ip].write( &eyd_iz[ip], 1 );
-	    fp_ey[ip].write( &grid->ny, 1 );
-	    fp_ey[ip].close();
+            fp_ey[ip].write( &header_size, 1 );
+            fp_ey[ip].write( &eyd_npz, 1 );
+            fp_ey[ip].write( &eyd_npx, 1 );
+            fp_ey[ip].write( eyd_x, eyd_np );
+            fp_ey[ip].write( eyd_z, eyd_np );
+            fp_ey[ip].write( &eyd_ix[ip], 1 );
+            fp_ey[ip].write( &eyd_iz[ip], 1 );
+            fp_ey[ip].write( &grid->ny, 1 );
+            fp_ey[ip].close();
 
 
-	  }
+          }
 
       }
 
@@ -142,24 +142,24 @@
       // for each control point, check if this rank needs to dump ey
       for ( int ip=0; ip < eyd_np; ++ip)
 
-	if (eyd_dump[ip]==1) {
+        if (eyd_dump[ip]==1) {
 
-	  // local ix, iz
-	  const int _ix = eyd_ix[ip];
-	  const int _iz = eyd_iz[ip];
+          // local ix, iz
+          const int _ix = eyd_ix[ip];
+          const int _iz = eyd_iz[ip];
 
-	  // Store data into array ey
-	  for ( int i=0; i<grid->ny; ++i ) {
-	    int k=INDEX_FORTRAN_3(_ix,i+1,_iz,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1);
-	    fields_y[i]            = field[k].ex;
-	    fields_y[i+grid->ny]   = field[k].ey;
-	    fields_y[i+2*grid->ny] = field[k].ez;
-	    fields_y[i+3*grid->ny] = field[k].cbx;
-	    fields_y[i+4*grid->ny] = field[k].cby;
-	    fields_y[i+5*grid->ny] = field[k].cbz;
-	  }
+          // Store data into array ey
+          for ( int i=0; i<grid->ny; ++i ) {
+            int k=INDEX_FORTRAN_3(_ix,i+1,_iz,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1);
+            fields_y[i]            = field[k].ex;
+            fields_y[i+grid->ny]   = field[k].ey;
+            fields_y[i+2*grid->ny] = field[k].ez;
+            fields_y[i+3*grid->ny] = field[k].cbx;
+            fields_y[i+4*grid->ny] = field[k].cby;
+            fields_y[i+5*grid->ny] = field[k].cbz;
+          }
 
-	  // Write array to file
+          // Write array to file
 
           // BJA: I think you want the file io mode to be io_read_write if you're going
           // to be doing random access to the file (which is the common case upon restart).
@@ -172,13 +172,13 @@
           status = fp_ey[ip].open( fnames[ip], io_read_write );  // BJA: with .close(), should never be open
           if ( status==fail ) ERROR(("Could not open file."));   // BJA: error check
 
-	  fp_ey[ip].seek( FFT_HEADER_SIZE+(step/ global->ey_save_interval)*FFT_RECORD_LENGTH, SEEK_SET );
-	  fp_ey[ip].write( fields_y, 6*stride );
-	  fp_ey[ip].write( &step, 1 );
+          fp_ey[ip].seek( FFT_HEADER_SIZE+(step/ global->ey_save_interval)*FFT_RECORD_LENGTH, SEEK_SET );
+          fp_ey[ip].write( fields_y, 6*stride );
+          fp_ey[ip].write( &step, 1 );
           fp_ey[ip].close();                                     // BJA: Should force a flush
 
 
-	}
+        }
 
 
 

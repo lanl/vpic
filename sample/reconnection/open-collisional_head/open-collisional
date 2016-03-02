@@ -1011,7 +1011,6 @@ begin_diagnostics {
 } // end diagnostics
 
 // *******************  PARTICLE INJECTION  - OPEN BOUNDARY ********************
-
 begin_particle_injection {
   int inject;
   double x, y, z, age, flux, vtherm, vd;
@@ -1274,7 +1273,6 @@ begin_particle_injection {
   }  // end top injector
 
   // Inject particles on Bottom Boundary
-
   if (global->bottom) {
     for ( int n=1; n<=nsp; n++ ) {
       species_t * species = find_species_id(n-1,species_list );
@@ -1611,49 +1609,41 @@ begin_particle_injection {
 } // end particle injection
 
 //*******************  CURRENT INJECTION ***************************
-
 begin_current_injection {
 }
 
 //*******************  FIELD INJECTION ***************************
-
 begin_field_injection {
 
-  //jgw//const int nx=grid->nx;
-  //jgw//const int ny=grid->ny;
-  //jgw//const int nz=grid->nz;
-  //jgw//double t=grid->dt*step;
-  //jgw//double tau = global->tdrive;
-  //jgw//int x,y,z;
+  const int nx=grid->nx;
+  const int ny=grid->ny;
+  const int nz=grid->nz;
+  double t=grid->dt*step();
+  double tau = global->tdrive;
+  int x,y,z;
 
-  //   There macros are from local.c to apply boundary conditions
+  // There macros are from local.c to apply boundary conditions
+#define XYZ_LOOP(xl,xh,yl,yh,zl,zh)             \
+  for( z=zl; z<=zh; z++ )                       \
+    for( y=yl; y<=yh; y++ )                     \
+      for( x=xl; x<=xh; x++ )
 
-  //jgw// #define XYZ_LOOP(xl,xh,yl,yh,zl,zh)           \
-  //jgw// for( z=zl; z<=zh; z++ )                       \
-  //jgw//   for( y=yl; y<=yh; y++ )                     \
-  //jgw//     for( x=xl; x<=xh; x++ )
+#define xy_EDGE_LOOP(z) XYZ_LOOP(1,nx,1,ny+1,z,z)
+#define yx_EDGE_LOOP(z) XYZ_LOOP(1,nx+1,1,ny,z,z)
 
-  //jgw//#define xy_EDGE_LOOP(z) XYZ_LOOP(1,nx,1,ny+1,z,z)
-  //jgw//#define yx_EDGE_LOOP(z) XYZ_LOOP(1,nx+1,1,ny,z,z)
+  // Top Boundary
+  if (global->top) {
+    yx_EDGE_LOOP(nz+1) field(x,y,z).ey = (global->edrive)*(1-exp(-t/tau));
+    xy_EDGE_LOOP(nz+1) field(x,y,z).ex = -(global->edrive)*(1-exp(-t/tau))
+      *global->bg;
+  }
 
-  //jgw// // Top Boundary
-
-  //jgw// if (global->top) {
-
-  //jgw//   yx_EDGE_LOOP(nz+1) field(x,y,z).ey = (global->edrive)*(1-exp(-t/tau));
-  //jgw//   xy_EDGE_LOOP(nz+1) field(x,y,z).ex = -(global->edrive)*(1-exp(-t/tau))*global->bg;
-
-  //jgw// }
-
-  //jgw// // Bottom Boundary
-
-  //jgw// if (global->bottom) {
-
-  //jgw//   yx_EDGE_LOOP(1) field(x,y,z).ey = (global->edrive)*(1-exp(-t/tau));
-  //jgw//   xy_EDGE_LOOP(1) field(x,y,z).ex = (global->edrive)*(1-exp(-t/tau))*global->bg;
-
-
-  //jgw//}
+  // Bottom Boundary
+  if (global->bottom) {
+    yx_EDGE_LOOP(1) field(x,y,z).ey = (global->edrive)*(1-exp(-t/tau));
+    xy_EDGE_LOOP(1) field(x,y,z).ex = (global->edrive)*(1-exp(-t/tau))
+      *global->bg;
+  }
 
 }  // end field injection
 

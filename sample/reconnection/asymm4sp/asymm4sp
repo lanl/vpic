@@ -8,13 +8,13 @@
 
 // structure to hold the data for energy diagnostics
 struct edata {
-  species_id sp_id;         /* species id */ 
-  double     vth;          /* thermal energy */ 
-  char fname[256];        /* file to save data */ 
+  species_id sp_id;         /* species id */
+  double     vth;          /* thermal energy */
+  char fname[256];        /* file to save data */
 };
 
 // naming convention for the hydro dump files
-#define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"     
+#define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"
 
 //#include "injection"   //  Subroutine to compute re-injection velocity
 
@@ -35,8 +35,8 @@ begin_globals {
   double quota_sec;        // Run quota in seconds
   double b0;               // B0
   double bg;               // Guide field
-  double v_A;             
-  double topology_x;       // domain topology 
+  double v_A;
+  double topology_x;       // domain topology
   double topology_y;
   double topology_z;
 
@@ -59,7 +59,7 @@ begin_globals {
   edata ediBot;                        // parameters for ion species
   double emax;                       // maximum energy (in units of vth*2/2)
   int nex;                           // number of energy bins
-  
+
   // variables for ey/bz diangostics
 
   double xcenter;                     // x-coordinate for the center of the sheet
@@ -68,7 +68,7 @@ begin_globals {
   double L;
   double di;
 
-  int ey_save_interval;               // time interval (in steps) to save ey	
+  int ey_save_interval;               // time interval (in steps) to save ey
 
 
 };
@@ -97,7 +97,7 @@ begin_initialization {
   double TiH_Te   = 11.4286;       // Harris Ion temperature / electron temperature
   double TeR_Te   = 3.3929;    // Background Electron temperature / electron temperature right (magnetosphere)
   double TeH_Te   = 3.3929;       // Harris Electron temperature / electron temperature
-  
+
   double nR_nL    = 0.0619;    // ratio of plasma densities (sphere/sheath)
   double bR_bL    = 1.6957;    // ratio of reconnecting field components (sphere/sheath)
   double bg = 0.0991;         // Guide field/sheath reconnecting field
@@ -108,7 +108,7 @@ begin_initialization {
   double taui    = 50;     // simulation wci's to run
   double cs   = cos(theta);
   double sn   = sin(theta);
-  
+
   double quota   = 15.0;    // run quota in hours
   double quota_sec = quota*3600;  // Run quota in seconds
 
@@ -117,7 +117,7 @@ begin_initialization {
   double mi = me*mi_me;                                   // Ion mass
   double Te = 0.5*betaL/((1.0+TiL_Te)*wpe_wce*wpe_wce);   // Electron temperature in sheath
   double Ti = Te*TiL_Te;                                  // Ion temperature in sheath
-  double TiR_Te = (1.0+TiL_Te)*(1.0+(1.0-bR_bL*bR_bL)/betaL)/nR_nL - TeR_Te;    //Background Ion temperature/ Te from force balance (magnetosphere) 
+  double TiR_Te = (1.0+TiL_Te)*(1.0+(1.0-bR_bL*bR_bL)/betaL)/nR_nL - TeR_Te;    //Background Ion temperature/ Te from force balance (magnetosphere)
   double vthe = sqrt(Te/me);                              // Electron thermal velocity in sheath
   double vthi = sqrt(Ti/mi);                              // Ion thermal velocity in sheath
   double vtheH = sqrt(Te*TeH_Te/me);                      // Electron thermal velocity in Harris
@@ -133,10 +133,10 @@ begin_initialization {
   double bh_b0 = 0.5*(1.0+bR_bL);                         		// Harris component to the reference (left) field
   double bc_b0 = 0.5*(bR_bL - 1.0);					// Mean B field
   double nh_n0 = bh_b0*bh_b0*(1.0+TiL_Te)/(TeH_Te+TiH_Te)/betaL;        // Harris peak density/nL
-  
+
   double ion_sort_interval = 50 ;            //  Injector moments are also updated at this internal
   double electron_sort_interval = 20;         //  Injector moments are also updated at this internal
-  
+
   // Numerical parameters
 
   double nppc          = 150; // Average number of macro particle per cell per species
@@ -146,7 +146,7 @@ begin_initialization {
   double Lz            = 20*di; // size of box in z dimension
 
   double topology_x = 512;  // Number of domains in x, y, and z
-  double topology_y = 64; 
+  double topology_y = 64;
   double topology_z = 1;    // For load balance, best to keep "1" or "2" for Harris sheet
 
   double nx = 4096;
@@ -198,10 +198,10 @@ begin_initialization {
   double qi_sL = ec*Npe_sheet/2.0/Ne_sheetL;  // Charge per macro ion
   double qi_sR = ec*Npe_sheet/2.0/Ne_sheetR;  // Charge per macro ion
   double qi_bL = ec*Npe_backL/Ne_backL;  // Charge per macro ion
-  double qi_bR = ec*Npe_backR/Ne_backR;  // Charge per macro ion      
+  double qi_bR = ec*Npe_backR/Ne_backR;  // Charge per macro ion
   double nfacL = qi_sL/(hx*hy*hz);            // Convert density to particles per cell
   double nfacR = qi_sR/(hx*hy*hz);            // Convert density to particles per cell
-  
+
   //  double gdri = 1/sqrt(1-vdri*vdri/(c*c));  // gamma of ion drift frame
   //  double gdre = 1/sqrt(1-vdre*vdre/(c*c)); // gamma of electron drift frame
   //  double udri = vdri*gdri;                 // 4-velocity of ion drift frame
@@ -216,28 +216,28 @@ begin_initialization {
   double dg = courant_length(Lx,Ly,Lz,nx,ny,nz);        // courant length
   double dt = cfl_req*dg/c;                             // courant limited time step
   if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;               // override timestep if plasma frequency limited
-   
+
   int restart_interval = 5000;
   int energies_interval = 200;
-  int interval = int(0.5/(wci*dt)); 
+  int interval = int(0.5/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
   int Hhydro_interval = interval;
-  int eparticle_interval = int(10.0/(wci*dt)); 
-  int Hparticle_interval = int(10.0/(wci*dt)); 
+  int eparticle_interval = int(10.0/(wci*dt));
+  int Hparticle_interval = int(10.0/(wci*dt));
   int quota_check_interval   = 200;
 
   // set parameters for the Ey/Bx diagnostics
 
   double ey_save_interval_wci  = 0.314;                 // time interval in omega_ci
-  
+
   int ey_save_interval = int (ey_save_interval_wci*mi_me*wpe_wce/dt);
 
   // need to assign global topology before calls to RANK_TO_INDEX
 
-  global->topology_x  = topology_x;  
-  global->topology_y  = topology_y;  
-  global->topology_z  = topology_z;  
+  global->topology_x  = topology_x;
+  global->topology_y  = topology_y;
+  global->topology_z  = topology_z;
 
   //  Determine which domains area along the boundaries - Use macro from grid/partition.c
 
@@ -251,10 +251,10 @@ begin_initialization {
     (ix) = _ix;                                                           \
     (iy) = _iy;                                                           \
     (iz) = _iz;                                                           \
-  } END_PRIMITIVE 
+  } END_PRIMITIVE
 
-  int ix, iy, iz; 
-  RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
+  int ix, iy, iz;
+  RANK_TO_INDEX( int(rank()), ix, iy, iz );
 
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
@@ -266,15 +266,15 @@ begin_initialization {
 
   global->restart_interval   = restart_interval;
   global->energies_interval  = energies_interval;
-  global->fields_interval    = fields_interval;  
-  global->ehydro_interval    = ehydro_interval;  
-  global->Hhydro_interval    = Hhydro_interval;  
-  global->eparticle_interval = eparticle_interval;  
-  global->Hparticle_interval = Hparticle_interval;  
+  global->fields_interval    = fields_interval;
+  global->ehydro_interval    = ehydro_interval;
+  global->Hhydro_interval    = Hhydro_interval;
+  global->eparticle_interval = eparticle_interval;
+  global->Hparticle_interval = Hparticle_interval;
   global->quota_check_interval     = quota_check_interval;
-  global->quota_sec          = quota_sec;  
+  global->quota_sec          = quota_sec;
 
-  global->rtoggle            = 0;  
+  global->rtoggle            = 0;
 
 
   global->xcenter                  = Lx/2.0;
@@ -297,7 +297,7 @@ begin_initialization {
   grid->damp = damp;
 
   // Define the grid
-  
+
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,    // Low corner
 			  Lx, 0.5*Ly, 0.5*Lz,     // High corner
 			  nx, ny, nz,             // Resolution
@@ -306,20 +306,20 @@ begin_initialization {
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Setup materials & Finalize Field Advance
 
-  sim_log("Setting up materials. "); 
+  sim_log("Setting up materials. ");
   define_material( "vacuum", 1 );
-  sim_log("Finalizing Field Advance"); 
-  finalize_field_advance(vacuum_field_advance); 
+  sim_log("Finalizing Field Advance");
+  finalize_field_advance(vacuum_field_advance);
 
  // ***** Set Boundary Conditions *****
-  
-  sim_log("Conducting fields on Z-boundaries"); 
-   if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields ); 
-   if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields ); 
+
+  sim_log("Conducting fields on Z-boundaries");
+   if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields );
+   if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields );
 
  // ***** Set Particle Boundary Conditions *****
 
-   sim_log("Reflect & Z-boundaries"); 
+   sim_log("Reflect & Z-boundaries");
    if ( iz==0 )            set_domain_particle_bc( BOUNDARY(0,0,-1), reflect_particles );
    if ( iz==topology_z-1 ) set_domain_particle_bc( BOUNDARY(0,0,1), reflect_particles );
 
@@ -336,9 +336,9 @@ begin_initialization {
   // Log diagnostic information about this simulation
 
   sim_log( "***********************************************" );
-  sim_log("* Topology:                       "<<topology_x<<" "<<topology_y<<" "<<topology_z); 
+  sim_log("* Topology:                       "<<topology_x<<" "<<topology_y<<" "<<topology_z);
   sim_log ( "tanhf = " << tanhf );
-  sim_log ( "L_di   = " << L_di ); 
+  sim_log ( "L_di   = " << L_di );
   sim_log ( "TiL/Te = " << TiL_Te ) ;
   sim_log ( "TiR/Te = " << TiR_Te ) ;
   sim_log ( "TeR/Te = " << TeR_Te ) ;
@@ -355,7 +355,7 @@ begin_initialization {
   sim_log ( "Lz/de = " << Lz/de );
   sim_log ( "nx = " << nx );
   sim_log ( "ny = " << ny );
-  sim_log ( "nz = " << nz ); 
+  sim_log ( "nz = " << nz );
   sim_log ( "damp = " << damp );
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
@@ -369,7 +369,7 @@ begin_initialization {
   sim_log ( " Ne_backL = " << Ne_backL );
   sim_log ( " Ne_backR = " << Ne_backR );
   sim_log ( "total # of particles = " << 2*Ne );
-  sim_log ( "dt*wpe = " << wpe*dt ); 
+  sim_log ( "dt*wpe = " << wpe*dt );
   sim_log ( "dt*wce = " << wce*dt );
   sim_log ( "dt*wci = " << wci*dt );
   sim_log ( " energies_interval: " << energies_interval );
@@ -385,7 +385,7 @@ begin_initialization {
   sim_log ( "vthe/c = " << vthe/c );
   sim_log ( "vdri/c = " << vdri/c );
   sim_log ( "vdre/c = " << vdre/c );
-  
+
   // Dump simulation information to file "info"
   if (rank() == 0 ) {
 
@@ -459,7 +459,7 @@ begin_initialization {
     // write binary info file
 
     if ( ! (fp_info.open("info.bin", io_write)==ok) ) ERROR(("Cannot open file."));
-    
+
     fp_info.write(&topology_x, 1 );
     fp_info.write(&topology_y, 1 );
     fp_info.write(&topology_z, 1 );
@@ -490,7 +490,7 @@ begin_initialization {
   set_region_field( everywhere, 0, 0, 0,                    // Electric field
 		    cs*b0*(bc_b0+bh_b0*tanh(z/L))+dbx*cos(2.0*M_PI*(x-0.5*Lx)/Lpert)*sin(M_PI*z/Lz), //Bx
 		    -sn*b0*(bc_b0+bh_b0*tanh(z/L)) + b0*bg, //By
-		    dbz*cos(M_PI*z/Lz)*sin(2.0*M_PI*(x-0.5*Lx)/Lpert) ); // Bz  
+		    dbz*cos(M_PI*z/Lz)*sin(2.0*M_PI*(x-0.5*Lx)/Lpert) ); // Bz
 
 
   // Note: everywhere is a region that encompasses the entire simulation
@@ -506,11 +506,11 @@ begin_initialization {
   double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
   double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
   double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
-  
+
   if (topology_z > 1) {
 
     ERROR(("I only know how to quickly load the equilibrium when topology_z=1"));
-    mp_finalize( grid->mp ); 
+    mp_finalize( grid->mp );
     exit(1);
 
   }
@@ -524,11 +524,11 @@ begin_initialization {
     //    double d0;
 
   do {
-    z = L*atanh(uniform_rand(-1.0,0.0)*tanhf); 
+    z = L*atanh(uniform_rand(-1.0,0.0)*tanhf);
    } while( z<= zmin || z>=zmax );
    x = uniform_rand(xmin,xmax);
    y = uniform_rand(ymin,ymax);
- 
+
    // inject_particles() will return an error for particles no on this
    // node and will not inject particle locally
 
@@ -555,7 +555,7 @@ begin_initialization {
     //    ux = d0*sn + ux*cs;
 
       inject_particle(ionBot, x, y, z, ux, uy, uz, qi_sL, 0, 0 );
-    
+
   }
 
   // Load Harris population R
@@ -567,11 +567,11 @@ begin_initialization {
     //    double d0;
 
   do {
-    z = L*atanh(uniform_rand(0.0,1.0)*tanhf); 
+    z = L*atanh(uniform_rand(0.0,1.0)*tanhf);
    } while( z<= zmin || z>=zmax );
    x = uniform_rand(xmin,xmax);
    y = uniform_rand(ymin,ymax);
- 
+
    // inject_particles() will return an error for particles no on this
    // node and will not inject particle locally
 
@@ -598,66 +598,66 @@ begin_initialization {
     //    ux = d0*sn + ux*cs;
 
       inject_particle(ionTop, x, y, z, ux, uy, uz, qi_sR, 0, 0 );
-    
+
   }
 
-  sim_log( "-> non-uniform background population L" );  
+  sim_log( "-> non-uniform background population L" );
 
   repeat ( Ne_backL/nproc() ) {
    double x, y, z, ux, uy, uz, test ;
-    
+
     // load this using rejection method
 
   do {
     z = uniform_rand(zmin,0.0);
-    test = uniform_rand(0.0,1.0); 
+    test = uniform_rand(0.0,1.0);
    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
    x = uniform_rand(xmin,xmax);
    y = uniform_rand(ymin,ymax);
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
     double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
-    
+
       inject_particle( electronBot, x, y, z,
 		       maxwellian_rand(ve),
 		       maxwellian_rand(ve),
 		       maxwellian_rand(ve),qe_bL, 0, 0);
-      
+
       inject_particle( ionBot, x, y, z,
 		       maxwellian_rand(vi),
 		       maxwellian_rand(vi),
 		       maxwellian_rand(vi),qi_bL, 0 ,0 );
-   
+
 
   }
 
-  sim_log( "-> non-uniform background population R" );  
+  sim_log( "-> non-uniform background population R" );
 
   repeat ( Ne_backR/nproc() ) {
    double x, y, z, ux, uy, uz, test ;
-    
+
     // load this using rejection method
 
   do {
     z = uniform_rand(0.0,zmax);
-    test = uniform_rand(0.0,aa/cc); 
+    test = uniform_rand(0.0,aa/cc);
    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
    x = uniform_rand(xmin,xmax);
    y = uniform_rand(ymin,ymax);
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
     double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
-    
+
       inject_particle( electronTop, x, y, z,
 		       maxwellian_rand(ve),
 		       maxwellian_rand(ve),
 		       maxwellian_rand(ve),qe_bR, 0, 0);
-      
+
       inject_particle( ionTop, x, y, z,
 		       maxwellian_rand(vi),
 		       maxwellian_rand(vi),
 		       maxwellian_rand(vi),qi_bR, 0 ,0 );
-   
+
 
   }
 
@@ -732,7 +732,7 @@ begin_initialization {
 	 *
 	 *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
      *------------------------------------------------------------------------*/
-	
+
 	// relative path to fields data from global header
 	sprintf(global->fdParams.baseDir, "fields");
 
@@ -822,7 +822,7 @@ begin_initialization {
      *------------------------------------------------------------------------*/
 	/* CUT AND PASTE AS A STARTING POINT
 	 * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
-	
+
     output_variables( all );
 
     output_variables( electric | div_e_err | magnetic | div_b_err |
@@ -930,7 +930,7 @@ begin_initialization {
 
 //*********************************************************
 
-//  BILL - Increase frequency of the dump interval 
+//  BILL - Increase frequency of the dump interval
 //#define should_dump(x)						\
 //	(global->x##_interval>0 && remainder(step, (global->x##_interval)/200 ) == 0 )
 
@@ -1070,19 +1070,19 @@ begin_diagnostics {
 	char subdir[36];
 	if ( should_dump(eparticle) && step !=0 && step > 14*(global->fields_interval) ) {
 	  begin_turnstile(NUM_TURNSTILES);
-	  sprintf(subdir,"particle/T.%d",step); 
+	  sprintf(subdir,"particle/T.%d",step);
 	  dump_mkdir(subdir);
 
-	  sprintf(subdir,"particle/T.%d/eTopParticle",step); 
+	  sprintf(subdir,"particle/T.%d/eTopParticle",step);
 	  dump_particles("electronTop",subdir);
 
-	  sprintf(subdir,"particle/T.%d/eBotParticle",step); 
+	  sprintf(subdir,"particle/T.%d/eBotParticle",step);
 	  dump_particles("electronBot",subdir);
 
-	  sprintf(subdir,"particle/T.%d/iTopParticle",step); 
+	  sprintf(subdir,"particle/T.%d/iTopParticle",step);
 	  dump_particles("ionTop",subdir);
 
-	  sprintf(subdir,"particle/T.%d/iBotParticle",step); 
+	  sprintf(subdir,"particle/T.%d/iBotParticle",step);
 	  dump_particles("ionBot",subdir);
 
 	  end_turnstile;
@@ -1090,17 +1090,17 @@ begin_diagnostics {
 	*/  // end comment
 
 	//	if ( should_dump(Hparticle) ) {
-	//  dump_particles("ion",  "Hparticle");    
+	//  dump_particles("ion",  "Hparticle");
 	//	}
 
-  // Shut down simulation when wall clock time exceeds global->quota_sec. 
+  // Shut down simulation when wall clock time exceeds global->quota_sec.
   // Note that the mp_elapsed() is guaranteed to return the same value for all
-  // processors (i.e., elapsed time on proc #0), and therefore the abort will 
+  // processors (i.e., elapsed time on proc #0), and therefore the abort will
   // be synchronized across processors. Note that this is only checked every
   // few timesteps to eliminate the expensive mp_elapsed call from every
   // timestep. mp_elapsed has an ALL_REDUCE in it!
-  
-	//global->quota_sec = 3.5*3600;  
+
+	//global->quota_sec = 3.5*3600;
 	if  ( step>0 && global->quota_check_interval>0 && (step&global->quota_check_interval)==0 ) {
 	  if( mp_elapsed( grid->mp ) > global->quota_sec ) {
 	    sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
@@ -1112,7 +1112,7 @@ begin_diagnostics {
 	    sim_log( "Restart dump restart completed." );
 	    double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
 	    sim_log("Restart duration "<<dumpelapsed);
-	    mp_finalize( grid->mp ); 
+	    mp_finalize( grid->mp );
 	    exit(0); // Exit or abort?
 	  }
 	}
@@ -1136,7 +1136,7 @@ begin_diagnostics {
 } // end diagnostics
 
 // *******************  PARTICLE INJECTION  - OPEN BOUNDARY ***************************
- 
+
 begin_particle_injection {
 
 

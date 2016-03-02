@@ -190,7 +190,7 @@ begin_initialization {
   // Intervals for output
 
   int restart_interval = 8000;
-  int energies_interval = 10;
+  int energies_interval = 50;
   int interval = int(0.25/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
@@ -237,7 +237,7 @@ begin_initialization {
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
-  num_step             = 100;
+  num_step             = 1000;
   status_interval      = 200;
   sync_shared_interval = status_interval/2;
   clean_div_e_interval = status_interval/2;
@@ -1554,7 +1554,4 @@ begin_field_injection {
 }  // end field injection
 
 //  Collisional algorithm
-
-//jgw//#include "collisions"
-begin_particle_collisions {
-}
+#include "collisions"

@@ -36,16 +36,16 @@ begin_globals {
   double topology_z;
 
   // parameters for the collision model
-  //jgw//int    ee_collisions; // Flag to signal we want to do e-e collisions.
-  //jgw//int    ei_collisions; // Flag to signal we want to do e-i collisions.
-  //jgw//int    ii_collisions; // Flag to signal we want to do i-i collisions.
+  int    ee_collisions; // Flag to signal we want to do e-e collisions.
+  int    ei_collisions; // Flag to signal we want to do e-i collisions.
+  int    ii_collisions; // Flag to signal we want to do i-i collisions.
 
-  //jgw//double cvar; // Base variance (dimensionless) used in particle collision
-  //jgw//double nppc_max; // Max number of particles/cell (used to define key array size).
-  //jgw//int tstep_coll;  // Collision interval (=multiple of sort interval).
-  //jgw//double Z;
-  //jgw//double mi_me;
-  //jgw//double wpewce;
+  double cvar; // Base variance (dimensionless) used in particle collision
+  double nppc_max; // Max number of particles/cell (used to def key array size).
+  int tstep_coll;  // Collision interval (=multiple of sort interval).
+  double Z;
+  double mi_me;
+  double wpewce;
 
   // Variables for Open BC Model
   double nb;      // Background density
@@ -105,7 +105,7 @@ begin_initialization {
   double mi_me   = 400.0;  // Ion mass / electron mass
   double L_di    = 0.5;    // Sheet thickness / ion inertial length
   double Ti_Te   = 5.0;    // Ion temperature / electron temperature
-  //jgw//double Z   = 1.0;      // Ion charge
+  double Z   = 1.0;      // Ion charge
   double nb_n0   = 0.228;   // background plasma density
   double Tbe_Te  = 0.7598;  // Ratio of background T_e to Harris T_e
   double Tbi_Ti  = 0.3039;  // Ratio of background T_i to Harris T_i
@@ -210,7 +210,7 @@ begin_initialization {
 
   // Intervals for output
   int restart_interval = 8000;
-  int energies_interval = 10;
+  int energies_interval = 50;
   int interval = int(0.25/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
@@ -223,16 +223,17 @@ begin_initialization {
   // In CGS, variance of tan theta =
   // 2 pi e^4 n_e dt_coll loglambda / (m_ab^2 u^3)
 
-  //jgw//int ii_collisions = 1; // flags to do collisions between the corresponding species
-  //jgw//int ee_collisions = 1;
-  //jgw//int ei_collisions = 1;
+  int ii_collisions = 1; // do collisions between the corresponding species
+  int ee_collisions = 1;
+  int ei_collisions = 1;
 
-  //jgw//int tstep_coll = (int) sort_interval;  // How frequently to apply collision operator
-  //jgw//double dt_coll = dt*(tstep_coll);          // in (1/wpe)
-  //jgw//double nuei_wce = 0.05;
-  //jgw//double cvar = dt_coll*3.0*sqrt(2.0*M_PI)/4.0*pow(vthe,3)*nuei_wce/wpe_wce;
-  //jgw//double nppc_max   = 20*nppc;  // Max possible number of particles/cell of ea. species
-  //jgw//                       // (to size the key array in collision handler)
+  int tstep_coll = (int) sort_interval;  // How frequently to do collisions
+  double dt_coll = dt*(tstep_coll);      // in (1/wpe)
+  double nuei_wce = 0.05;
+  double cvar = dt_coll*3.0*sqrt(2.0*M_PI)/4.0*pow(vthe,3)*nuei_wce/wpe_wce;
+  // Max possible number of particles/cell of ea. species
+  // (to size the key array in collision handler)
+  double nppc_max   = 20*nppc;
 
   // Determine which domains area along the boundaries - Use macro from
   // grid/partition.c.
@@ -259,7 +260,7 @@ begin_initialization {
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
-  num_step             = 100;
+  num_step             = 1000;
   status_interval      = 200;
   sync_shared_interval = status_interval/2;
   clean_div_e_interval = status_interval/2;
@@ -314,18 +315,17 @@ begin_initialization {
   global->L_de  = L;
 
   // Collision model parameters
+  global->ee_collisions            = ee_collisions;
+  global->ii_collisions            = ii_collisions;
+  global->ei_collisions            = ei_collisions;
 
-  //jgw//global->ee_collisions            = ee_collisions;
-  //jgw//global->ii_collisions            = ii_collisions;
-  //jgw//global->ei_collisions            = ei_collisions;
-
-  //jgw//global->cvar                     = cvar;
-  //jgw//global->nppc_max                 = nppc_max;
-  //jgw//global->tstep_coll               = tstep_coll;
-  //jgw//global->mi_me                    = mi_me;
-  //jgw//global->Z                        = Z;
-  //jgw//global->wpewce                   = wpe_wce;
-  //jgw//global->nfac                     = nfac;
+  global->cvar                     = cvar;
+  global->nppc_max                 = nppc_max;
+  global->tstep_coll               = tstep_coll;
+  global->mi_me                    = mi_me;
+  global->Z                        = Z;
+  global->wpewce                   = wpe_wce;
+  global->nfac                     = nfac;
 
   //////////////////////////////////////////////////////////////////////////////
   // Setup the grid
@@ -466,8 +466,8 @@ begin_initialization {
   sim_log ( "vthe/c = " << vthe/c );
   sim_log ( "vdri/c = " << vdri/c );
   sim_log ( "vdre/c = " << vdre/c );
-  //jgw//sim_log("* nu/wce:                        "<<nuei_wce);
-  //jgw//sim_log("* nu*dt_coll:                    "<<nuei_wce/wpe_wce*dt_coll);
+  sim_log ("* nu/wce:                        " << nuei_wce);
+  sim_log ("* nu*dt_coll:                    " << nuei_wce/wpe_wce*dt_coll);
 
   // Dump simulation information to file "info"
   if (rank() == 0 ) {
@@ -526,9 +526,10 @@ begin_initialization {
     fp_info.print("              vthe/c =               %e\n", vthe/c );
     fp_info.print("              vdri/c =               %e\n", vdri/c );
     fp_info.print("              vdre/c =               %e\n", vdre/c );
-    //jgw//fp_info.print(" tstep_coll:                    %i\n", tstep_coll);
-    //jgw//fp_info.print(" nu/wce:                        %g\n", nuei_wce);
-    //jgw//fp_info.print(" nu*dt_coll:                    %g\n", nuei_wce/wpe_wce*dt_coll);
+    fp_info.print(" tstep_coll:                    %i\n", tstep_coll);
+    fp_info.print(" nu/wce:                        %g\n", nuei_wce);
+    fp_info.print(" nu*dt_coll:                    %g\n",
+      nuei_wce/wpe_wce*dt_coll);
     fp_info.print("              ***************************\n");
     fp_info.close();
   }
@@ -908,7 +909,6 @@ begin_diagnostics {
     dump_mkdir("hydro");
     dump_mkdir("rundata");
     dump_mkdir("injectors");
-    //jgw//dump_mkdir("restart0");
     dump_mkdir("restart1");  // 1st backup
     dump_mkdir("restart2");  // 2nd backup
     dump_mkdir("particle");
@@ -1648,7 +1648,4 @@ begin_field_injection {
 }  // end field injection
 
 //  Collisional algorithm
-
-//jgw//#include "collisions"
-begin_particle_collisions {
-}
+#include "collisions"

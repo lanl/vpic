@@ -2,6 +2,8 @@
 //
 //  Reconnection Problem --> single Force-Free Current Sheet with conductive BC
 //
+//  Use head version of VPIC.
+//
 ///////////////////////////////////////////////////////////////////////////////
 #include <math.h>
 

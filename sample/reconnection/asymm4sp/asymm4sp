@@ -75,13 +75,13 @@ begin_globals {
 
 begin_initialization {
 
- // use natural PIC units
+  // use natural PIC units
 
- double ec   = 1;         // Charge normalization
- double me   = 1;         // Mass normalization
- double c    = 1;         // Speed of light
- double de   = 1;         // Length normalization (electron inertial length)
- double eps0 = 1;         // Permittivity of space
+  double ec   = 1;         // Charge normalization
+  double me   = 1;         // Mass normalization
+  double c    = 1;         // Speed of light
+  double de   = 1;         // Length normalization (electron inertial length)
+  double eps0 = 1;         // Permittivity of space
 
   double cfl_req   = 0.99;  // How close to Courant should we try to run
   double wpedt_max = 0.36;  // How big a timestep is allowed if Courant is not too restrictive
@@ -188,7 +188,7 @@ begin_initialization {
   Ne_backL  = trunc_granular(Ne_backL,nproc()); // Make it divisible by number of processors
   Ne_backR  = trunc_granular(Ne_backR,nproc()); // Make it divisible by number of processors
 
- // double Ne_left = Ne_back - Ne_uniform;            // "left part"
+  // double Ne_left = Ne_back - Ne_uniform;            // "left part"
 
   Ne = Ne_sheetL + Ne_sheetR + Ne_backL + Ne_backR;
   double qe_sL = -ec*Npe_sheet/2.0/Ne_sheetL;  // Charge per macro electron
@@ -241,16 +241,16 @@ begin_initialization {
 
   //  Determine which domains area along the boundaries - Use macro from grid/partition.c
 
-# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                   \
-    int _ix, _iy, _iz;                                                    \
+# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                 \
+    int _ix, _iy, _iz;                                                  \
     _ix  = (rank);                        /* ix = ix+gpx*( iy+gpy*iz ) */ \
-    _iy  = _ix/int(global->topology_x);   /* iy = iy+gpy*iz */                    \
-    _ix -= _iy*int(global->topology_x);   /* ix = ix */                           \
-    _iz  = _iy/int(global->topology_y);   /* iz = iz */                           \
-    _iy -= _iz*int(global->topology_y);   /* iy = iy */                           \
-    (ix) = _ix;                                                           \
-    (iy) = _iy;                                                           \
-    (iz) = _iz;                                                           \
+    _iy  = _ix/int(global->topology_x);   /* iy = iy+gpy*iz */          \
+    _ix -= _iy*int(global->topology_x);   /* ix = ix */                 \
+    _iz  = _iy/int(global->topology_y);   /* iz = iz */                 \
+    _iy -= _iz*int(global->topology_y);   /* iy = iy */                 \
+    (ix) = _ix;                                                         \
+    (iy) = _iy;                                                         \
+    (iz) = _iz;                                                         \
   } END_PRIMITIVE
 
   int ix, iy, iz;
@@ -299,9 +299,9 @@ begin_initialization {
   // Define the grid
 
   define_periodic_grid(  0, -0.5*Ly, -0.5*Lz,    // Low corner
-                          Lx, 0.5*Ly, 0.5*Lz,     // High corner
-                          nx, ny, nz,             // Resolution
-                          topology_x, topology_y, topology_z); // Topology
+                         Lx, 0.5*Ly, 0.5*Lz,     // High corner
+                         nx, ny, nz,             // Resolution
+                         topology_x, topology_y, topology_z); // Topology
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Setup materials & Finalize Field Advance
@@ -311,17 +311,17 @@ begin_initialization {
   sim_log("Finalizing Field Advance");
   finalize_field_advance(vacuum_field_advance);
 
- // ***** Set Boundary Conditions *****
+  // ***** Set Boundary Conditions *****
 
   sim_log("Conducting fields on Z-boundaries");
-   if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields );
-   if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields );
+  if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields );
+  if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields );
 
- // ***** Set Particle Boundary Conditions *****
+  // ***** Set Particle Boundary Conditions *****
 
-   sim_log("Reflect & Z-boundaries");
-   if ( iz==0 )            set_domain_particle_bc( BOUNDARY(0,0,-1), reflect_particles );
-   if ( iz==topology_z-1 ) set_domain_particle_bc( BOUNDARY(0,0,1), reflect_particles );
+  sim_log("Reflect & Z-boundaries");
+  if ( iz==0 )            set_domain_particle_bc( BOUNDARY(0,0,-1), reflect_particles );
+  if ( iz==topology_z-1 ) set_domain_particle_bc( BOUNDARY(0,0,1), reflect_particles );
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Setup the species
@@ -481,7 +481,7 @@ begin_initialization {
     fp_info.write(&ey_save_interval, 1 );
     fp_info.close();
 
-}
+  }
 
   ////////////////////////////
   // Load fields
@@ -523,14 +523,14 @@ begin_initialization {
     double x, y, z, ux, uy, uz ;
     //    double d0;
 
-  do {
-    z = L*atanh(uniform_rand(-1.0,0.0)*tanhf);
-   } while( z<= zmin || z>=zmax );
-   x = uniform_rand(xmin,xmax);
-   y = uniform_rand(ymin,ymax);
+    do {
+      z = L*atanh(uniform_rand(-1.0,0.0)*tanhf);
+    } while( z<= zmin || z>=zmax );
+    x = uniform_rand(xmin,xmax);
+    y = uniform_rand(ymin,ymax);
 
-   // inject_particles() will return an error for particles no on this
-   // node and will not inject particle locally
+    // inject_particles() will return an error for particles no on this
+    // node and will not inject particle locally
 
     ux = maxwellian_rand(vtheH);
     uy = maxwellian_rand(vtheH);
@@ -538,9 +538,9 @@ begin_initialization {
 
     uy = uy + vdre;
 
-//    d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
-//    uy = d0*cs - ux*sn;
-//    ux = d0*sn + ux*cs;
+    //    d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
+    //    uy = d0*cs - ux*sn;
+    //    ux = d0*sn + ux*cs;
 
     inject_particle(electronBot, x, y, z, ux, uy, uz, qe_sL, 0, 0 );
 
@@ -554,7 +554,7 @@ begin_initialization {
     //    uy = d0*cs - ux*sn;
     //    ux = d0*sn + ux*cs;
 
-      inject_particle(ionBot, x, y, z, ux, uy, uz, qi_sL, 0, 0 );
+    inject_particle(ionBot, x, y, z, ux, uy, uz, qi_sL, 0, 0 );
 
   }
 
@@ -566,14 +566,14 @@ begin_initialization {
     double x, y, z, ux, uy, uz ;
     //    double d0;
 
-  do {
-    z = L*atanh(uniform_rand(0.0,1.0)*tanhf);
-   } while( z<= zmin || z>=zmax );
-   x = uniform_rand(xmin,xmax);
-   y = uniform_rand(ymin,ymax);
+    do {
+      z = L*atanh(uniform_rand(0.0,1.0)*tanhf);
+    } while( z<= zmin || z>=zmax );
+    x = uniform_rand(xmin,xmax);
+    y = uniform_rand(ymin,ymax);
 
-   // inject_particles() will return an error for particles no on this
-   // node and will not inject particle locally
+    // inject_particles() will return an error for particles no on this
+    // node and will not inject particle locally
 
     ux = maxwellian_rand(vtheH);
     uy = maxwellian_rand(vtheH);
@@ -581,9 +581,9 @@ begin_initialization {
 
     uy = uy + vdre;
 
-//    d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
-//    uy = d0*cs - ux*sn;
-//    ux = d0*sn + ux*cs;
+    //    d0 = gdre*uy + sqrt(ux*ux + uy*uy + uz*uz + 1)*udre;
+    //    uy = d0*cs - ux*sn;
+    //    ux = d0*sn + ux*cs;
 
     inject_particle(electronTop, x, y, z, ux, uy, uz, qe_sR, 0, 0 );
 
@@ -597,36 +597,36 @@ begin_initialization {
     //    uy = d0*cs - ux*sn;
     //    ux = d0*sn + ux*cs;
 
-      inject_particle(ionTop, x, y, z, ux, uy, uz, qi_sR, 0, 0 );
+    inject_particle(ionTop, x, y, z, ux, uy, uz, qi_sR, 0, 0 );
 
   }
 
   sim_log( "-> non-uniform background population L" );
 
   repeat ( Ne_backL/nproc() ) {
-   double x, y, z, ux, uy, uz, test ;
+    double x, y, z, ux, uy, uz, test ;
 
     // load this using rejection method
 
-  do {
-    z = uniform_rand(zmin,0.0);
-    test = uniform_rand(0.0,1.0);
-   } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
-   x = uniform_rand(xmin,xmax);
-   y = uniform_rand(ymin,ymax);
+    do {
+      z = uniform_rand(zmin,0.0);
+      test = uniform_rand(0.0,1.0);
+    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
+    x = uniform_rand(xmin,xmax);
+    y = uniform_rand(ymin,ymax);
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
     double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
 
-      inject_particle( electronBot, x, y, z,
-                       maxwellian_rand(ve),
-                       maxwellian_rand(ve),
-                       maxwellian_rand(ve),qe_bL, 0, 0);
+    inject_particle( electronBot, x, y, z,
+                     maxwellian_rand(ve),
+                     maxwellian_rand(ve),
+                     maxwellian_rand(ve),qe_bL, 0, 0);
 
-      inject_particle( ionBot, x, y, z,
-                       maxwellian_rand(vi),
-                       maxwellian_rand(vi),
-                       maxwellian_rand(vi),qi_bL, 0 ,0 );
+    inject_particle( ionBot, x, y, z,
+                     maxwellian_rand(vi),
+                     maxwellian_rand(vi),
+                     maxwellian_rand(vi),qi_bL, 0 ,0 );
 
 
   }
@@ -634,264 +634,264 @@ begin_initialization {
   sim_log( "-> non-uniform background population R" );
 
   repeat ( Ne_backR/nproc() ) {
-   double x, y, z, ux, uy, uz, test ;
+    double x, y, z, ux, uy, uz, test ;
 
     // load this using rejection method
 
-  do {
-    z = uniform_rand(0.0,zmax);
-    test = uniform_rand(0.0,aa/cc);
-   } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
-   x = uniform_rand(xmin,xmax);
-   y = uniform_rand(ymin,ymax);
+    do {
+      z = uniform_rand(0.0,zmax);
+      test = uniform_rand(0.0,aa/cc);
+    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
+    x = uniform_rand(xmin,xmax);
+    y = uniform_rand(ymin,ymax);
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
     double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
 
-      inject_particle( electronTop, x, y, z,
-                       maxwellian_rand(ve),
-                       maxwellian_rand(ve),
-                       maxwellian_rand(ve),qe_bR, 0, 0);
+    inject_particle( electronTop, x, y, z,
+                     maxwellian_rand(ve),
+                     maxwellian_rand(ve),
+                     maxwellian_rand(ve),qe_bR, 0, 0);
 
-      inject_particle( ionTop, x, y, z,
-                       maxwellian_rand(vi),
-                       maxwellian_rand(vi),
-                       maxwellian_rand(vi),qi_bR, 0 ,0 );
+    inject_particle( ionTop, x, y, z,
+                     maxwellian_rand(vi),
+                     maxwellian_rand(vi),
+                     maxwellian_rand(vi),qi_bR, 0 ,0 );
 
 
   }
 
   sim_log( "Finished loading particles" );
 
-   /*--------------------------------------------------------------------------
-     * New dump definition
-     *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * New dump definition
+   *------------------------------------------------------------------------*/
 
-    /*--------------------------------------------------------------------------
-         * Set data output format
-         *
-         * This option allows the user to specify the data format for an output
-         * dump.  Legal settings are 'band' and 'band_interleave'.  Band-interleave
-         * format is the native storage format for data in VPIC.  For field data,
-         * this looks something like:
-         *
-         *   ex0 ey0 ez0 div_e_err0 cbx0 ... ex1 ey1 ez1 div_e_err1 cbx1 ...
-         *
-         * Banded data format stores all data of a particular state variable as a
-         * contiguous array, and is easier for ParaView to process efficiently.
-         * Banded data looks like:
-         *
-         *   ex0 ex1 ex2 ... exN ey0 ey1 ey2 ...
-         *
-     *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Set data output format
+   *
+   * This option allows the user to specify the data format for an output
+   * dump.  Legal settings are 'band' and 'band_interleave'.  Band-interleave
+   * format is the native storage format for data in VPIC.  For field data,
+   * this looks something like:
+   *
+   *   ex0 ey0 ez0 div_e_err0 cbx0 ... ex1 ey1 ez1 div_e_err1 cbx1 ...
+   *
+   * Banded data format stores all data of a particular state variable as a
+   * contiguous array, and is easier for ParaView to process efficiently.
+   * Banded data looks like:
+   *
+   *   ex0 ex1 ex2 ... exN ey0 ey1 ey2 ...
+   *
+   *------------------------------------------------------------------------*/
 
-        global->fdParams.format = band;
+  global->fdParams.format = band;
 
-        sim_log ( "Fields output format = band" );
+  sim_log ( "Fields output format = band" );
 
-        global->eTopdParams.format = band;
-        global->eBotdParams.format = band;
+  global->eTopdParams.format = band;
+  global->eBotdParams.format = band;
 
-        sim_log ( "Electron species output format = band" );
+  sim_log ( "Electron species output format = band" );
 
-        global->iTopdParams.format = band;
-        global->iBotdParams.format = band;
+  global->iTopdParams.format = band;
+  global->iBotdParams.format = band;
 
-        sim_log ( "Ion species output format = band" );
+  sim_log ( "Ion species output format = band" );
 
-    /*--------------------------------------------------------------------------
-         * Set stride
-         *
-         * This option allows data down-sampling at output.  Data are down-sampled
-         * in each dimension by the stride specified for that dimension.  For
-         * example, to down-sample the x-dimension of the field data by a factor
-         * of 2, i.e., half as many data will be output, select:
-         *
-         *   global->fdParams.stride_x = 2;
-         *
-         * The following 2-D example shows down-sampling of a 7x7 grid (nx = 7,
-         * ny = 7.  With ghost-cell padding the actual extents of the grid are 9x9.
-         * Setting the strides in x and y to equal 2 results in an output grid of
-         * nx = 4, ny = 4, with actual extents 6x6.
-         *
-     * G G G G G G G G G
-     * G X X X X X X X G
-     * G X X X X X X X G         G G G G G G
-     * G X X X X X X X G         G X X X X G
-     * G X X X X X X X G   ==>   G X X X X G
-     * G X X X X X X X G         G X X X X G
-     * G X X X X X X X G         G X X X X G
-     * G X X X X X X X G         G G G G G G
-     * G G G G G G G G G
-     *
-         * Note that grid extents in each dimension must be evenly divisible by
-         * the stride for that dimension:
-         *
-         *   nx = 150;
-         *   global->fdParams.stride_x = 10; // legal -> 150/10 = 15
-         *
-         *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
-     *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Set stride
+   *
+   * This option allows data down-sampling at output.  Data are down-sampled
+   * in each dimension by the stride specified for that dimension.  For
+   * example, to down-sample the x-dimension of the field data by a factor
+   * of 2, i.e., half as many data will be output, select:
+   *
+   *   global->fdParams.stride_x = 2;
+   *
+   * The following 2-D example shows down-sampling of a 7x7 grid (nx = 7,
+   * ny = 7.  With ghost-cell padding the actual extents of the grid are 9x9.
+   * Setting the strides in x and y to equal 2 results in an output grid of
+   * nx = 4, ny = 4, with actual extents 6x6.
+   *
+   * G G G G G G G G G
+   * G X X X X X X X G
+   * G X X X X X X X G         G G G G G G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G   ==>   G X X X X G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G         G G G G G G
+   * G G G G G G G G G
+   *
+   * Note that grid extents in each dimension must be evenly divisible by
+   * the stride for that dimension:
+   *
+   *   nx = 150;
+   *   global->fdParams.stride_x = 10; // legal -> 150/10 = 15
+   *
+   *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
+   *------------------------------------------------------------------------*/
 
-        // relative path to fields data from global header
-        sprintf(global->fdParams.baseDir, "fields");
+  // relative path to fields data from global header
+  sprintf(global->fdParams.baseDir, "fields");
 
-        // base file name for fields output
-        sprintf(global->fdParams.baseFileName, "fields");
+  // base file name for fields output
+  sprintf(global->fdParams.baseFileName, "fields");
 
-        global->fdParams.stride_x = 1;
-        global->fdParams.stride_y = 1;
-        global->fdParams.stride_z = 1;
+  global->fdParams.stride_x = 1;
+  global->fdParams.stride_y = 1;
+  global->fdParams.stride_z = 1;
 
-        // add field parameters to list
-        global->outputParams.push_back(&global->fdParams);
+  // add field parameters to list
+  global->outputParams.push_back(&global->fdParams);
 
-        sim_log ( "Fields x-stride " << global->fdParams.stride_x );
-        sim_log ( "Fields y-stride " << global->fdParams.stride_y );
-        sim_log ( "Fields z-stride " << global->fdParams.stride_z );
+  sim_log ( "Fields x-stride " << global->fdParams.stride_x );
+  sim_log ( "Fields y-stride " << global->fdParams.stride_y );
+  sim_log ( "Fields z-stride " << global->fdParams.stride_z );
 
-        // relative path to electron species data from global header
-        sprintf(global->eTopdParams.baseDir, "hydro");
-        sprintf(global->eBotdParams.baseDir, "hydro");
+  // relative path to electron species data from global header
+  sprintf(global->eTopdParams.baseDir, "hydro");
+  sprintf(global->eBotdParams.baseDir, "hydro");
 
-        // base file name for fields output
-        sprintf(global->eTopdParams.baseFileName, "eTophydro");
-        sprintf(global->eBotdParams.baseFileName, "eBothydro");
+  // base file name for fields output
+  sprintf(global->eTopdParams.baseFileName, "eTophydro");
+  sprintf(global->eBotdParams.baseFileName, "eBothydro");
 
-        global->eTopdParams.stride_x = 1;
-        global->eTopdParams.stride_y = 1;
-        global->eTopdParams.stride_z = 1;
+  global->eTopdParams.stride_x = 1;
+  global->eTopdParams.stride_y = 1;
+  global->eTopdParams.stride_z = 1;
 
-        global->eBotdParams.stride_x = 1;
-        global->eBotdParams.stride_y = 1;
-        global->eBotdParams.stride_z = 1;
+  global->eBotdParams.stride_x = 1;
+  global->eBotdParams.stride_y = 1;
+  global->eBotdParams.stride_z = 1;
 
-        // add electron species parameters to list
-        global->outputParams.push_back(&global->eTopdParams);
-        global->outputParams.push_back(&global->eBotdParams);
+  // add electron species parameters to list
+  global->outputParams.push_back(&global->eTopdParams);
+  global->outputParams.push_back(&global->eBotdParams);
 
-        sim_log ( "Electron species x-stride " << global->eTopdParams.stride_x );
-        sim_log ( "Electron species y-stride " << global->eTopdParams.stride_y );
-        sim_log ( "Electron species z-stride " << global->eTopdParams.stride_z );
+  sim_log ( "Electron species x-stride " << global->eTopdParams.stride_x );
+  sim_log ( "Electron species y-stride " << global->eTopdParams.stride_y );
+  sim_log ( "Electron species z-stride " << global->eTopdParams.stride_z );
 
-        // relative path to electron species data from global header
-        sprintf(global->iTopdParams.baseDir, "hydro");
-        sprintf(global->iBotdParams.baseDir, "hydro");
+  // relative path to electron species data from global header
+  sprintf(global->iTopdParams.baseDir, "hydro");
+  sprintf(global->iBotdParams.baseDir, "hydro");
 
-        // base file name for fields output
-        sprintf(global->iTopdParams.baseFileName, "HTophydro");
-        sprintf(global->iBotdParams.baseFileName, "HBothydro");
+  // base file name for fields output
+  sprintf(global->iTopdParams.baseFileName, "HTophydro");
+  sprintf(global->iBotdParams.baseFileName, "HBothydro");
 
-        global->iTopdParams.stride_x = 1;
-        global->iTopdParams.stride_y = 1;
-        global->iTopdParams.stride_z = 1;
+  global->iTopdParams.stride_x = 1;
+  global->iTopdParams.stride_y = 1;
+  global->iTopdParams.stride_z = 1;
 
-        global->iBotdParams.stride_x = 1;
-        global->iBotdParams.stride_y = 1;
-        global->iBotdParams.stride_z = 1;
+  global->iBotdParams.stride_x = 1;
+  global->iBotdParams.stride_y = 1;
+  global->iBotdParams.stride_z = 1;
 
-        sim_log ( "Ion species x-stride " << global->iTopdParams.stride_x );
-        sim_log ( "Ion species y-stride " << global->iTopdParams.stride_y );
-        sim_log ( "Ion species z-stride " << global->iTopdParams.stride_z );
+  sim_log ( "Ion species x-stride " << global->iTopdParams.stride_x );
+  sim_log ( "Ion species y-stride " << global->iTopdParams.stride_y );
+  sim_log ( "Ion species z-stride " << global->iTopdParams.stride_z );
 
-        // add electron species parameters to list
-        global->outputParams.push_back(&global->iTopdParams);
-        global->outputParams.push_back(&global->iBotdParams);
+  // add electron species parameters to list
+  global->outputParams.push_back(&global->iTopdParams);
+  global->outputParams.push_back(&global->iBotdParams);
 
-    /*--------------------------------------------------------------------------
-         * Set output fields
-         *
-         * It is now possible to select which state-variables are output on a
-         * per-dump basis.  Variables are selected by passing an or-list of
-         * state-variables by name.  For example, to only output the x-component
-         * of the electric field and the y-component of the magnetic field, the
-         * user would call output_variables like:
-         *
-         *   global->fdParams.output_variables( ex | cby );
-         *
-         * NOTE: OUTPUT VARIABLES ARE ONLY USED FOR THE BANDED FORMAT.  IF THE
-         * FORMAT IS BAND-INTERLEAVE, ALL VARIABLES ARE OUTPUT AND CALLS TO
-         * 'output_variables' WILL HAVE NO EFFECT.
-         *
-         * ALSO: DEFAULT OUTPUT IS NONE!  THIS IS DUE TO THE WAY THAT VPIC
-         * HANDLES GLOBAL VARIABLES IN THE INPUT DECK AND IS UNAVOIDABLE.
-         *
-         * For convenience, the output variable 'all' is defined:
-         *
-         *   global->fdParams.output_variables( all );
-     *------------------------------------------------------------------------*/
-        /* CUT AND PASTE AS A STARTING POINT
-         * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
+  /*--------------------------------------------------------------------------
+   * Set output fields
+   *
+   * It is now possible to select which state-variables are output on a
+   * per-dump basis.  Variables are selected by passing an or-list of
+   * state-variables by name.  For example, to only output the x-component
+   * of the electric field and the y-component of the magnetic field, the
+   * user would call output_variables like:
+   *
+   *   global->fdParams.output_variables( ex | cby );
+   *
+   * NOTE: OUTPUT VARIABLES ARE ONLY USED FOR THE BANDED FORMAT.  IF THE
+   * FORMAT IS BAND-INTERLEAVE, ALL VARIABLES ARE OUTPUT AND CALLS TO
+   * 'output_variables' WILL HAVE NO EFFECT.
+   *
+   * ALSO: DEFAULT OUTPUT IS NONE!  THIS IS DUE TO THE WAY THAT VPIC
+   * HANDLES GLOBAL VARIABLES IN THE INPUT DECK AND IS UNAVOIDABLE.
+   *
+   * For convenience, the output variable 'all' is defined:
+   *
+   *   global->fdParams.output_variables( all );
+   *------------------------------------------------------------------------*/
+  /* CUT AND PASTE AS A STARTING POINT
+   * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
 
-    output_variables( all );
+   output_variables( all );
 
-    output_variables( electric | div_e_err | magnetic | div_b_err |
-                      tca      | rhob      | current  | rhof |
-                      emat     | nmat      | fmat     | cmat );
+   output_variables( electric | div_e_err | magnetic | div_b_err |
+   tca      | rhob      | current  | rhof |
+   emat     | nmat      | fmat     | cmat );
 
-    output_variables( current_density  | charge_density |
-                      momentum_density | ke_density     | stress_tensor );
-        */
+   output_variables( current_density  | charge_density |
+   momentum_density | ke_density     | stress_tensor );
+  */
 
-        global->fdParams.output_variables( electric | magnetic );
-        global->eTopdParams.output_variables( current_density | charge_density | stress_tensor );
-        global->eBotdParams.output_variables( current_density | charge_density | stress_tensor );
-        global->iTopdParams.output_variables( current_density | charge_density | stress_tensor );
-        global->iBotdParams.output_variables( current_density | charge_density | stress_tensor );
+  global->fdParams.output_variables( electric | magnetic );
+  global->eTopdParams.output_variables( current_density | charge_density | stress_tensor );
+  global->eBotdParams.output_variables( current_density | charge_density | stress_tensor );
+  global->iTopdParams.output_variables( current_density | charge_density | stress_tensor );
+  global->iBotdParams.output_variables( current_density | charge_density | stress_tensor );
 
-        //      global->fdParams.output_variables( all );
-        //      global->hedParams.output_variables( all );
-        //global->hHdParams.output_variables( all );
+  //      global->fdParams.output_variables( all );
+  //      global->hedParams.output_variables( all );
+  //global->hHdParams.output_variables( all );
 
-        /*--------------------------------------------------------------------------
-         * Convenience functions for simlog output
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Convenience functions for simlog output
+   *------------------------------------------------------------------------*/
 
-        char varlist[512];
-        create_field_list(varlist, global->fdParams);
+  char varlist[512];
+  create_field_list(varlist, global->fdParams);
 
-        sim_log ( "Fields variable list: " << varlist );
+  sim_log ( "Fields variable list: " << varlist );
 
-        create_hydro_list(varlist, global->eTopdParams);
-        sim_log ( "Electron top species variable list: " << varlist );
+  create_hydro_list(varlist, global->eTopdParams);
+  sim_log ( "Electron top species variable list: " << varlist );
 
-        create_hydro_list(varlist, global->eBotdParams);
-        sim_log ( "Electron bot species variable list: " << varlist );
+  create_hydro_list(varlist, global->eBotdParams);
+  sim_log ( "Electron bot species variable list: " << varlist );
 
-        create_hydro_list(varlist, global->iTopdParams);
-        sim_log ( "Ion top species variable list: " << varlist );
+  create_hydro_list(varlist, global->iTopdParams);
+  sim_log ( "Ion top species variable list: " << varlist );
 
-        create_hydro_list(varlist, global->iBotdParams);
-        sim_log ( "Ion bot species variable list: " << varlist );
-
-
-        /* ---------------------------------------------
-
-           now add parameters for the energy diagnostics
-
-         --------------------------------------------- */
-
-        global->edeTop.sp_id = electronTop->id;
-        global->edeTop.vth = sqrt(2.0)*vthe;
-        sprintf(global->edeTop.fname,global->eTopdParams.baseFileName);
-
-        global->edeBot.sp_id = electronBot->id;
-        global->edeBot.vth = sqrt(2.0)*vthe;
-        sprintf(global->edeBot.fname,global->eBotdParams.baseFileName);
-
-        global->ediTop.sp_id = ionTop->id;
-        global->ediTop.vth = sqrt(2.0)*vthi;
-        sprintf(global->ediTop.fname, global->iTopdParams.baseFileName);
-
-        global->ediBot.sp_id = ionBot->id;
-        global->ediBot.vth = sqrt(2.0)*vthi;
-        sprintf(global->ediBot.fname, global->iBotdParams.baseFileName);
-
-        global->nex  = 5;
-        global->emax = 20;
+  create_hydro_list(varlist, global->iBotdParams);
+  sim_log ( "Ion bot species variable list: " << varlist );
 
 
-        sim_log("*** Finished with user-specified initialization ***");
+  /* ---------------------------------------------
+
+     now add parameters for the energy diagnostics
+
+     --------------------------------------------- */
+
+  global->edeTop.sp_id = electronTop->id;
+  global->edeTop.vth = sqrt(2.0)*vthe;
+  sprintf(global->edeTop.fname,global->eTopdParams.baseFileName);
+
+  global->edeBot.sp_id = electronBot->id;
+  global->edeBot.vth = sqrt(2.0)*vthe;
+  sprintf(global->edeBot.fname,global->eBotdParams.baseFileName);
+
+  global->ediTop.sp_id = ionTop->id;
+  global->ediTop.vth = sqrt(2.0)*vthi;
+  sprintf(global->ediTop.fname, global->iTopdParams.baseFileName);
+
+  global->ediBot.sp_id = ionBot->id;
+  global->ediBot.vth = sqrt(2.0)*vthi;
+  sprintf(global->ediBot.fname, global->iBotdParams.baseFileName);
+
+  global->nex  = 5;
+  global->emax = 20;
+
+
+  sim_log("*** Finished with user-specified initialization ***");
 
 
   // Upon completion of the initialization, the following occurs:
@@ -924,8 +924,8 @@ begin_initialization {
 } //begin_initialization
 
 
-#define should_dump(x) \
-        (global->x##_interval>0 && remainder(step, global->x##_interval ) == 0 )
+#define should_dump(x)                                                  \
+  (global->x##_interval>0 && remainder(step, global->x##_interval ) == 0 )
 
 
 //*********************************************************
@@ -941,157 +941,157 @@ begin_initialization {
 begin_diagnostics {
 
 
-        /*--------------------------------------------------------------------------
-         * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
-         *
-         * To create a new directory, use:
-         *
-         *   dump_mkdir("full-path-to-directory/directoryname")
-         *
-         * To open a file, use: FileIO class
-         *
-         * Example for file creation and use:
-         *
-         *   // declare file and open for writing
-         *   // possible modes are: io_write, io_read, io_append,
-         *   // io_read_write, io_write_read, io_append_read
-         *   FileIO fileIO;
-         *   FileIOStatus status;
-         *   status= fileIO.open("full-path-to-file/filename", io_write);
-         *
-         *   // formatted ASCII  output
-         *   fileIO.print("format string", varg1, varg2, ...);
-         *
-         *   // binary output
-         *   // Write n elements from array data to file.
-         *   // T is the type, e.g., if T=double
-         *   // fileIO.write(double * data, size_t n);
-         *   // All basic types are supported.
-         *   fileIO.write(T * data, size_t n);
-         *
-         *   // close file
-         *   fileIO.close();
-     *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
+   *
+   * To create a new directory, use:
+   *
+   *   dump_mkdir("full-path-to-directory/directoryname")
+   *
+   * To open a file, use: FileIO class
+   *
+   * Example for file creation and use:
+   *
+   *   // declare file and open for writing
+   *   // possible modes are: io_write, io_read, io_append,
+   *   // io_read_write, io_write_read, io_append_read
+   *   FileIO fileIO;
+   *   FileIOStatus status;
+   *   status= fileIO.open("full-path-to-file/filename", io_write);
+   *
+   *   // formatted ASCII  output
+   *   fileIO.print("format string", varg1, varg2, ...);
+   *
+   *   // binary output
+   *   // Write n elements from array data to file.
+   *   // T is the type, e.g., if T=double
+   *   // fileIO.write(double * data, size_t n);
+   *   // All basic types are supported.
+   *   fileIO.write(T * data, size_t n);
+   *
+   *   // close file
+   *   fileIO.close();
+   *------------------------------------------------------------------------*/
 
-     /*--------------------------------------------------------------------------
-         * Data output directories
-         * WARNING: The directory list passed to "global_header" must be
-         * consistent with the actual directories where fields and species are
-         * output using "field_dump" and "hydro_dump".
-         *
-         * DIRECTORY PATHES SHOULD BE RELATIVE TO
-         * THE LOCATION OF THE GLOBAL HEADER!!!
-     *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Data output directories
+   * WARNING: The directory list passed to "global_header" must be
+   * consistent with the actual directories where fields and species are
+   * output using "field_dump" and "hydro_dump".
+   *
+   * DIRECTORY PATHES SHOULD BE RELATIVE TO
+   * THE LOCATION OF THE GLOBAL HEADER!!!
+   *------------------------------------------------------------------------*/
 
 
   /*--------------------------------------------------------------------------
    * Normal rundata dump
    *------------------------------------------------------------------------*/
-        if(step==0) {
-                dump_mkdir("fields");
-                dump_mkdir("hydro");
-                dump_mkdir("rundata");
-                dump_mkdir("restart0");
-                dump_mkdir("restart1");  // 1st backup
-                dump_mkdir("restart2");  // 2nd backup
-                dump_mkdir("particle");
+  if(step==0) {
+    dump_mkdir("fields");
+    dump_mkdir("hydro");
+    dump_mkdir("rundata");
+    dump_mkdir("restart0");
+    dump_mkdir("restart1");  // 1st backup
+    dump_mkdir("restart2");  // 2nd backup
+    dump_mkdir("particle");
 
-                dump_grid("rundata/grid");
-                dump_materials("rundata/materials");
-                dump_species("rundata/species");
-                global_header("global", global->outputParams);
-        } // if
+    dump_grid("rundata/grid");
+    dump_materials("rundata/materials");
+    dump_species("rundata/species");
+    global_header("global", global->outputParams);
+  } // if
 
-        /*--------------------------------------------------------------------------
-         * Normal rundata energies dump
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Normal rundata energies dump
+   *------------------------------------------------------------------------*/
 
-        if(should_dump(energies)) {
-          dump_energies("rundata/energies", step == 0 ? 0 : 1);
-        } // if
+  if(should_dump(energies)) {
+    dump_energies("rundata/energies", step == 0 ? 0 : 1);
+  } // if
 
-        /*--------------------------------------------------------------------------
-         * Field data output
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Field data output
+   *------------------------------------------------------------------------*/
 
-        if(should_dump(fields)) field_dump(global->fdParams);
+  if(should_dump(fields)) field_dump(global->fdParams);
 
-        /*--------------------------------------------------------------------------
-         * Electron species output
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Electron species output
+   *------------------------------------------------------------------------*/
 
-        if(should_dump(ehydro)) hydro_dump("electronTop", global->eTopdParams);
-        if(should_dump(ehydro)) hydro_dump("electronBot", global->eBotdParams);
+  if(should_dump(ehydro)) hydro_dump("electronTop", global->eTopdParams);
+  if(should_dump(ehydro)) hydro_dump("electronBot", global->eBotdParams);
 
-        /*--------------------------------------------------------------------------
-         * Ion species output
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Ion species output
+   *------------------------------------------------------------------------*/
 
-        if(should_dump(Hhydro)) hydro_dump("ionTop", global->iTopdParams);
-        if(should_dump(Hhydro)) hydro_dump("ionBot", global->iBotdParams);
+  if(should_dump(Hhydro)) hydro_dump("ionTop", global->iTopdParams);
+  if(should_dump(Hhydro)) hydro_dump("ionBot", global->iBotdParams);
 
-        /*--------------------------------------------------------------------------
-         * Energy Spectrum Output
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Energy Spectrum Output
+   *------------------------------------------------------------------------*/
 
-         #include "energy"   //  Subroutine to compute energy spectrum diagnostic
+#include "energy"   //  Subroutine to compute energy spectrum diagnostic
 
-        /*--------------------------------------------------------------------------
-         * Fluctuation diagnostics
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Fluctuation diagnostics
+   *------------------------------------------------------------------------*/
 
-        #include "eydf"
+#include "eydf"
 
-        /*--------------------------------------------------------------------------
-         * Restart dump
-         *------------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------------
+   * Restart dump
+   *------------------------------------------------------------------------*/
 
-        //global->restart_interval=800000;
-        if(step && !(step%global->restart_interval)) {
-          double dumpstart = mp_elapsed(grid->mp);
-          begin_turnstile(NUM_TURNSTILES);
-          if(!global->rtoggle) {
-            global->rtoggle = 1;
-            dump_restart("restart1/restart", 0);
-          }
-          else {
-            global->rtoggle = 0;
-            dump_restart("restart2/restart", 0);
-          } // if
-          end_turnstile;
-          double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
-          sim_log("Restart duration "<<dumpelapsed);
-        } // if
+  //global->restart_interval=800000;
+  if(step && !(step%global->restart_interval)) {
+    double dumpstart = mp_elapsed(grid->mp);
+    begin_turnstile(NUM_TURNSTILES);
+    if(!global->rtoggle) {
+      global->rtoggle = 1;
+      dump_restart("restart1/restart", 0);
+    }
+    else {
+      global->rtoggle = 0;
+      dump_restart("restart2/restart", 0);
+    } // if
+    end_turnstile;
+    double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
+    sim_log("Restart duration "<<dumpelapsed);
+  } // if
 
 
   // Dump particle data
 
-        /* comment out particle dumps
-        char subdir[36];
-        if ( should_dump(eparticle) && step !=0 && step > 14*(global->fields_interval) ) {
-          begin_turnstile(NUM_TURNSTILES);
-          sprintf(subdir,"particle/T.%d",step);
-          dump_mkdir(subdir);
+  /* comment out particle dumps
+     char subdir[36];
+     if ( should_dump(eparticle) && step !=0 && step > 14*(global->fields_interval) ) {
+     begin_turnstile(NUM_TURNSTILES);
+     sprintf(subdir,"particle/T.%d",step);
+     dump_mkdir(subdir);
 
-          sprintf(subdir,"particle/T.%d/eTopParticle",step);
-          dump_particles("electronTop",subdir);
+     sprintf(subdir,"particle/T.%d/eTopParticle",step);
+     dump_particles("electronTop",subdir);
 
-          sprintf(subdir,"particle/T.%d/eBotParticle",step);
-          dump_particles("electronBot",subdir);
+     sprintf(subdir,"particle/T.%d/eBotParticle",step);
+     dump_particles("electronBot",subdir);
 
-          sprintf(subdir,"particle/T.%d/iTopParticle",step);
-          dump_particles("ionTop",subdir);
+     sprintf(subdir,"particle/T.%d/iTopParticle",step);
+     dump_particles("ionTop",subdir);
 
-          sprintf(subdir,"particle/T.%d/iBotParticle",step);
-          dump_particles("ionBot",subdir);
+     sprintf(subdir,"particle/T.%d/iBotParticle",step);
+     dump_particles("ionBot",subdir);
 
-          end_turnstile;
-        }
-        */  // end comment
+     end_turnstile;
+     }
+  */  // end comment
 
-        //      if ( should_dump(Hparticle) ) {
-        //  dump_particles("ion",  "Hparticle");
-        //      }
+  //      if ( should_dump(Hparticle) ) {
+  //  dump_particles("ion",  "Hparticle");
+  //      }
 
   // Shut down simulation when wall clock time exceeds global->quota_sec.
   // Note that the mp_elapsed() is guaranteed to return the same value for all
@@ -1100,36 +1100,36 @@ begin_diagnostics {
   // few timesteps to eliminate the expensive mp_elapsed call from every
   // timestep. mp_elapsed has an ALL_REDUCE in it!
 
-        //global->quota_sec = 3.5*3600;
-        if  ( step>0 && global->quota_check_interval>0 && (step&global->quota_check_interval)==0 ) {
-          if( mp_elapsed( grid->mp ) > global->quota_sec ) {
-            sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
-            double dumpstart = mp_elapsed(grid->mp);
-            begin_turnstile(NUM_TURNSTILES);
-            dump_restart("restart0/restart",0);
-            end_turnstile;
-            mp_barrier( grid->mp ); // Just to be safe
-            sim_log( "Restart dump restart completed." );
-            double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
-            sim_log("Restart duration "<<dumpelapsed);
-            mp_finalize( grid->mp );
-            exit(0); // Exit or abort?
-          }
-        }
+  //global->quota_sec = 3.5*3600;
+  if  ( step>0 && global->quota_check_interval>0 && (step&global->quota_check_interval)==0 ) {
+    if( mp_elapsed( grid->mp ) > global->quota_sec ) {
+      sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
+      double dumpstart = mp_elapsed(grid->mp);
+      begin_turnstile(NUM_TURNSTILES);
+      dump_restart("restart0/restart",0);
+      end_turnstile;
+      mp_barrier( grid->mp ); // Just to be safe
+      sim_log( "Restart dump restart completed." );
+      double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
+      sim_log("Restart duration "<<dumpelapsed);
+      mp_finalize( grid->mp );
+      exit(0); // Exit or abort?
+    }
+  }
 
-        // restart before the end
+  // restart before the end
 
-        //      if  ( step == num_step -1) {
-        //    sim_log( "Writing the end-restart.\n");
-        //    double dumpstart = mp_elapsed(grid->mp);
-        //    begin_turnstile(NUM_TURNSTILES);
-        //    dump_restart("restart0/restart",0);
-        //   end_turnstile;
-        //   mp_barrier( grid->mp ); // Just to be safe
-        //   sim_log( "Restart dump restart completed." );
-        //   double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
-        //   sim_log("Restart duration "<<dumpelapsed);
-        //}
+  //      if  ( step == num_step -1) {
+  //    sim_log( "Writing the end-restart.\n");
+  //    double dumpstart = mp_elapsed(grid->mp);
+  //    begin_turnstile(NUM_TURNSTILES);
+  //    dump_restart("restart0/restart",0);
+  //   end_turnstile;
+  //   mp_barrier( grid->mp ); // Just to be safe
+  //   sim_log( "Restart dump restart completed." );
+  //   double dumpelapsed = mp_elapsed(grid->mp) - dumpstart;
+  //   sim_log("Restart duration "<<dumpelapsed);
+  //}
 
 
 

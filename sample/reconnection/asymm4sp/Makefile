@@ -1,17 +1,34 @@
 # Makefile for building final exe and cleaning directory
 
-# name of platform to build for
-#PLAT = op
-PLAT = emt64
-
-# path to installed compiler wrapper
-#VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_intel_debug/build.${PLAT}
-VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_intel_release_sse/build.${PLAT}
-#VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_gcc_debug/build.${PLAT}
-#VPIC = /home/wohlbier/VPIC/407/vpic-407-src/build_gcc_release_sse/build.${PLAT}
-
-# name of input deck file
 DECK = asymm4sp
+FOURZEROSEVEN = yes
+OPT = no
+COMPILER = intel
+
+# set your src path(s) and plat(form)
+
+# defaults
+SRC_PATH = /home/wohlbier/VPIC/head
+PLAT = Linux
+ifeq (x${FOURZEROSEVEN}, xyes)
+  SRC_PATH = /home/wohlbier/VPIC/407/vpic-407-src
+  PLAT = op
+endif
+
+# choose optimized or not, default is debug
+FLAVOR = debug
+ifeq (x${OPT}, yes)
+  FLAVOR = release_sse
+endif
+
+# default to head wrapper
+WRAPPER = bin/vpic
+ifeq (x${FOURZEROSEVEN}, xyes)
+  WRAPPER = build.${PLAT}
+endif
+
+# point to compiler wrapper
+VPIC = ${SRC_PATH}/build_${COMPILER}_${FLAVOR}/${WRAPPER}
 
 # compile final exe
 all:
@@ -30,14 +47,13 @@ clean:
 	-$(RM) -rf rundata
 	-$(RM) *~
 
-# example openmpi mpirun commands. --tpp is number of vpic pipelines. Each
-# pipeline is domain replicated.
-
-# one rank on a node, bound to all available cores.
-# mpirun bind-to none  --report-bindings -n 1 ./harris.Linux  1 1 --tpp 16
-
-# two ranks on a node with two sockets. ranks bound to sockets.
-# mpirun --map-by socket --bind-to socket --report-bindings -n 2 ./harris.Linux  1 1 --tpp 16
-
-# 4 ranks on a node with 4 numa nodes. ranks bound to numa nodes.
-# mpirun --map-by numa --bind-to numa --report-bindings -n 4 ./harris.Linux  1 1 --tpp 8
+config:
+	@echo "DECK: ${DECK}"
+	@echo "FOURZEROSEVEN: ${FOURZEROSEVEN}"
+	@echo "OPT: ${OPT}"
+	@echo "COMPILER: ${COMPILER}"
+	@echo "SRC_PATH: ${SRC_PATH}"
+	@echo "PLAT: ${PLAT}"
+	@echo "FLAVOR: ${FLAVOR}"
+	@echo "WRAPPER: ${WRAPPER}"
+	@echo "VPIC: ${VPIC}"

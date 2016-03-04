@@ -6,6 +6,8 @@
 
 #define NUM_TURNSTILES 8192
 
+//#define FOURZEROSEVEN 1
+
 // structure to hold the data for energy diagnostics
 struct edata {
   species_id sp_id;         /* species id */
@@ -145,13 +147,16 @@ begin_initialization {
   double Ly            = 10*di;  // size of box in y dimension
   double Lz            = 20*di; // size of box in z dimension
 
-  double topology_x = 512;  // Number of domains in x, y, and z
-  double topology_y = 64;
-  double topology_z = 1;    // For load balance, best to keep "1" or "2" for Harris sheet
+  //int scale_factor = 1; // full scale run
+  int scale_factor = 64;
 
-  double nx = 4096;
-  double ny = 1024;
-  double nz = 2048;
+  double topology_x = 512/scale_factor;  // Number of domains in x, y, and z
+  double topology_y = 64/scale_factor;
+  double topology_z = 1;  // For load balance, keep "1" or "2" for Harris sheet
+
+  double nx = 4096/scale_factor;
+  double ny = 1024/scale_factor;
+  double nz = 2048/scale_factor;
 
   double hx = Lx/nx;
   double hy = Ly/ny;
@@ -218,7 +223,8 @@ begin_initialization {
   if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;               // override timestep if plasma frequency limited
 
   int restart_interval = 5000;
-  int energies_interval = 200;
+  int energies_interval = 100;
+  energies_interval = 10;
   int interval = int(0.5/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
@@ -259,6 +265,7 @@ begin_initialization {
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
+  num_step             = 100;
   status_interval      = 200;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
@@ -294,7 +301,9 @@ begin_initialization {
   grid->dt = dt;
   grid->cvac = c;
   grid->eps0 = eps0;
+#ifdef FOURZEROSEVEN
   grid->damp = damp;
+#endif
 
   // Define the grid
 
@@ -303,13 +312,17 @@ begin_initialization {
                          nx, ny, nz,             // Resolution
                          topology_x, topology_y, topology_z); // Topology
 
-  ////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // Setup materials & Finalize Field Advance
 
   sim_log("Setting up materials. ");
   define_material( "vacuum", 1 );
   sim_log("Finalizing Field Advance");
+#ifdef FOURZEROSEVEN
   finalize_field_advance(vacuum_field_advance);
+#else
+  define_field_array(NULL); // second argument is damp, default to 0
+#endif
 
   // ***** Set Boundary Conditions *****
 
@@ -323,20 +336,43 @@ begin_initialization {
   if ( iz==0 )            set_domain_particle_bc( BOUNDARY(0,0,-1), reflect_particles );
   if ( iz==topology_z-1 ) set_domain_particle_bc( BOUNDARY(0,0,1), reflect_particles );
 
-  ////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // Setup the species
 
   sim_log("Setting up species. ");
-  species_t *electronTop = define_species("electronTop",-ec/me,1.5*Ne/nproc(),-1,electron_sort_interval,0);
-  species_t *electronBot = define_species("electronBot",-ec/me,1.5*Ne/nproc(),-1,electron_sort_interval,0);
-  species_t *ionTop = define_species("ionTop", ec/mi,1.5*Ne/nproc(),-1,ion_sort_interval,0);
-  species_t *ionBot = define_species("ionBot", ec/mi,1.5*Ne/nproc(),-1,ion_sort_interval,0);
+#ifdef FOURZEROSEVEN
+  species_t *electronTop =
+    define_species("electronTop",-ec/me,1.5*Ne/nproc(),-1,
+                   electron_sort_interval,0);
+  species_t *electronBot =
+    define_species("electronBot",-ec/me,1.5*Ne/nproc(),-1,
+                   electron_sort_interval,0);
+  species_t *ionTop =
+    define_species("ionTop", ec/mi,1.5*Ne/nproc(),-1,ion_sort_interval,0);
+  species_t *ionBot =
+    define_species("ionBot", ec/mi,1.5*Ne/nproc(),-1,ion_sort_interval,0);
+#else
+  double nmax = 1.5*Ne/nproc();
+  double nmovers = 0.1*nmax;
+  double sort_method = 0;   // 0=in place and 1=out of place
+  species_t *electronTop =
+    define_species("electronTop",-ec,me,nmax,nmovers,electron_sort_interval,
+                   sort_method);
+  species_t *electronBot =
+    define_species("electronBot",-ec,me,nmax,nmovers,electron_sort_interval,
+                   sort_method);
+  species_t *ionTop =
+    define_species("ionTop",ec,mi,nmax,nmovers,ion_sort_interval,sort_method);
+  species_t *ionBot =
+    define_species("ionBot",ec,mi,nmax,nmovers,ion_sort_interval,sort_method);
+#endif
 
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
 
   sim_log( "***********************************************" );
-  sim_log("* Topology:                       "<<topology_x<<" "<<topology_y<<" "<<topology_z);
+  sim_log("* Topology:                       "
+          << topology_x << " " <<topology_y << " " << topology_z);
   sim_log ( "tanhf = " << tanhf );
   sim_log ( "L_di   = " << L_di );
   sim_log ( "TiL/Te = " << TiL_Te ) ;
@@ -360,19 +396,19 @@ begin_initialization {
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
   sim_log ( "nppc = " << nppc );
-  sim_log ( " b0 = " << b0 );
-  sim_log ( " v_A (based on nb) = " << v_A );
-  sim_log ( " di = " << di );
-  sim_log ( " Ne = " << Ne );
-  sim_log ( " Ne_sheetL = " << Ne_sheetL );
-  sim_log ( " Ne_sheetR = " << Ne_sheetR );
-  sim_log ( " Ne_backL = " << Ne_backL );
-  sim_log ( " Ne_backR = " << Ne_backR );
+  sim_log ( "b0 = " << b0 );
+  sim_log ( "v_A (based on nb) = " << v_A );
+  sim_log ( "di = " << di );
+  sim_log ( "Ne = " << Ne );
+  sim_log ( "Ne_sheetL = " << Ne_sheetL );
+  sim_log ( "Ne_sheetR = " << Ne_sheetR );
+  sim_log ( "Ne_backL = " << Ne_backL );
+  sim_log ( "Ne_backR = " << Ne_backR );
   sim_log ( "total # of particles = " << 2*Ne );
   sim_log ( "dt*wpe = " << wpe*dt );
   sim_log ( "dt*wce = " << wce*dt );
   sim_log ( "dt*wci = " << wci*dt );
-  sim_log ( " energies_interval: " << energies_interval );
+  sim_log ( "energies_interval: " << energies_interval );
   sim_log ( "dx/de = " << Lx/(de*nx) );
   sim_log ( "dy/de = " << Ly/(de*ny) );
   sim_log ( "dz/de = " << Lz/(de*nz) );
@@ -502,7 +538,12 @@ begin_initialization {
 
   // Do a fast load of the particles
 
+#ifdef FOURZEROSEVEN
   seed_rand( rng_seed*nproc() + rank() );  //Generators desynchronized
+#else
+  seed_entropy( rank() );  //Generators desynchronized
+#endif
+
   double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
   double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
   double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
@@ -510,7 +551,12 @@ begin_initialization {
   if (topology_z > 1) {
 
     ERROR(("I only know how to quickly load the equilibrium when topology_z=1"));
+#ifdef FOURZEROSEVEN
     mp_finalize( grid->mp );
+#else
+    finalize();
+#endif
+
     exit(1);
 
   }
@@ -523,18 +569,32 @@ begin_initialization {
     double x, y, z, ux, uy, uz ;
     //    double d0;
 
+#ifdef FOURZEROSEVEN
     do {
       z = L*atanh(uniform_rand(-1.0,0.0)*tanhf);
     } while( z<= zmin || z>=zmax );
     x = uniform_rand(xmin,xmax);
     y = uniform_rand(ymin,ymax);
+#else
+    do {
+      z = L*atanh(uniform(rng(0),-1.0,0.0)*tanhf);
+    } while( z<= zmin || z>=zmax );
+    x = uniform(rng(0),xmin,xmax);
+    y = uniform(rng(0),ymin,ymax);
+#endif
 
     // inject_particles() will return an error for particles no on this
     // node and will not inject particle locally
 
+#ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vtheH);
     uy = maxwellian_rand(vtheH);
     uz = maxwellian_rand(vtheH);
+#else
+    ux = normal(rng(0),0,vtheH);
+    uy = normal(rng(0),0,vtheH);
+    uz = normal(rng(0),0,vtheH);
+#endif
 
     uy = uy + vdre;
 
@@ -544,9 +604,15 @@ begin_initialization {
 
     inject_particle(electronBot, x, y, z, ux, uy, uz, qe_sL, 0, 0 );
 
+#ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vthiH);
     uy = maxwellian_rand(vthiH);
     uz = maxwellian_rand(vthiH);
+#else
+    ux = normal(rng(0),0,vthiH);
+    uy = normal(rng(0),0,vthiH);
+    uz = normal(rng(0),0,vthiH);
+#endif
 
     uy = uy + vdri;
 
@@ -566,18 +632,32 @@ begin_initialization {
     double x, y, z, ux, uy, uz ;
     //    double d0;
 
+#ifdef FOURZEROSEVEN
     do {
       z = L*atanh(uniform_rand(0.0,1.0)*tanhf);
     } while( z<= zmin || z>=zmax );
     x = uniform_rand(xmin,xmax);
     y = uniform_rand(ymin,ymax);
+#else
+    do {
+      z = L*atanh(uniform(rng(0),0.0,1.0)*tanhf);
+    } while( z<= zmin || z>=zmax );
+    x = uniform(rng(0),xmin,xmax);
+    y = uniform(rng(0),ymin,ymax);
+#endif
 
     // inject_particles() will return an error for particles no on this
     // node and will not inject particle locally
 
+#ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vtheH);
     uy = maxwellian_rand(vtheH);
     uz = maxwellian_rand(vtheH);
+#else
+    ux = normal(rng(0),0,vtheH);
+    uy = normal(rng(0),0,vtheH);
+    uz = normal(rng(0),0,vtheH);
+#endif
 
     uy = uy + vdre;
 
@@ -587,9 +667,15 @@ begin_initialization {
 
     inject_particle(electronTop, x, y, z, ux, uy, uz, qe_sR, 0, 0 );
 
+#ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vthiH);
     uy = maxwellian_rand(vthiH);
     uz = maxwellian_rand(vthiH);
+#else
+    ux = normal(rng(0),0,vthiH);
+    uy = normal(rng(0),0,vthiH);
+    uz = normal(rng(0),0,vthiH);
+#endif
 
     uy = uy + vdri;
 
@@ -608,16 +694,27 @@ begin_initialization {
 
     // load this using rejection method
 
+#ifdef FOURZEROSEVEN
     do {
       z = uniform_rand(zmin,0.0);
       test = uniform_rand(0.0,1.0);
     } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
     x = uniform_rand(xmin,xmax);
     y = uniform_rand(ymin,ymax);
+#else
+    do {
+      z = uniform(rng(0),zmin,0.0);
+      test = uniform(rng(0),0.0,1.0);
+    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
+    x = uniform(rng(0),xmin,xmax);
+    y = uniform(rng(0),ymin,ymax);
+#endif
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
-    double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
+    double vi
+      = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
 
+#ifdef FOURZEROSEVEN
     inject_particle( electronBot, x, y, z,
                      maxwellian_rand(ve),
                      maxwellian_rand(ve),
@@ -627,7 +724,17 @@ begin_initialization {
                      maxwellian_rand(vi),
                      maxwellian_rand(vi),
                      maxwellian_rand(vi),qi_bL, 0 ,0 );
+#else
+    inject_particle( electronBot, x, y, z,
+                     normal(rng(0),0,ve),
+                     normal(rng(0),0,ve),
+                     normal(rng(0),0,ve),qe_bL, 0, 0);
 
+    inject_particle( ionBot, x, y, z,
+                     normal(rng(0),0,vi),
+                     normal(rng(0),0,vi),
+                     normal(rng(0),0,vi),qi_bL, 0 ,0 );
+#endif
 
   }
 
@@ -638,16 +745,27 @@ begin_initialization {
 
     // load this using rejection method
 
+#ifdef FOURZEROSEVEN
     do {
       z = uniform_rand(0.0,zmax);
       test = uniform_rand(0.0,aa/cc);
     } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
     x = uniform_rand(xmin,xmax);
     y = uniform_rand(ymin,ymax);
+#else
+    do {
+      z = uniform(rng(0),0.0,zmax);
+      test = uniform(rng(0),0.0,aa/cc);
+    } while( test > (aa+bb*tanh(z/L))/(cc+dd*tanh(z/L)) );
+    x = uniform(rng(0),xmin,xmax);
+    y = uniform(rng(0),ymin,ymax);
+#endif
 
     double ve = vthe*sqrt(0.5*(1.0+TeR_Te+(TeR_Te-1.0)*tanh(z/L)));
-    double vi = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
+    double vi
+      = vthi*sqrt(0.5*(1.0+TiR_Te/TiL_Te+(TiR_Te/TiL_Te-1.0)*tanh(z/L)));
 
+#ifdef FOURZEROSEVEN
     inject_particle( electronTop, x, y, z,
                      maxwellian_rand(ve),
                      maxwellian_rand(ve),
@@ -657,6 +775,17 @@ begin_initialization {
                      maxwellian_rand(vi),
                      maxwellian_rand(vi),
                      maxwellian_rand(vi),qi_bR, 0 ,0 );
+#else
+    inject_particle( electronTop, x, y, z,
+                     normal(rng(0),0,ve),
+                     normal(rng(0),0,ve),
+                     normal(rng(0),0,ve),qe_bR, 0, 0);
+
+    inject_particle( ionTop, x, y, z,
+                     normal(rng(0),0,vi),
+                     normal(rng(0),0,vi),
+                     normal(rng(0),0,vi),qi_bR, 0 ,0 );
+#endif
 
 
   }
@@ -924,9 +1053,13 @@ begin_initialization {
 } //begin_initialization
 
 
+#ifdef FOURZEROSEVEN
 #define should_dump(x)                                                  \
   (global->x##_interval>0 && remainder(step, global->x##_interval ) == 0 )
-
+#else
+#define should_dump(x)                                                  \
+  (global->x##_interval>0 && remainder(step(), global->x##_interval ) == 0 )
+#endif
 
 //*********************************************************
 
@@ -935,8 +1068,9 @@ begin_initialization {
 //      (global->x##_interval>0 && remainder(step, (global->x##_interval)/200 ) == 0 )
 
 //*********************************************************
-
+#ifdef FOURZEROSEVEN
 #include <FileIO.hxx>
+#endif
 
 begin_diagnostics {
 
@@ -987,7 +1121,11 @@ begin_diagnostics {
   /*--------------------------------------------------------------------------
    * Normal rundata dump
    *------------------------------------------------------------------------*/
+#ifdef FOURZEROSEVEN
   if(step==0) {
+#else
+  if(step()==0) {
+#endif
     dump_mkdir("fields");
     dump_mkdir("hydro");
     dump_mkdir("rundata");
@@ -1007,7 +1145,11 @@ begin_diagnostics {
    *------------------------------------------------------------------------*/
 
   if(should_dump(energies)) {
+#ifdef FOURZEROSEVEN
     dump_energies("rundata/energies", step == 0 ? 0 : 1);
+#else
+    dump_energies("rundata/energies", step() == 0 ? 0 : 1);
+#endif
   } // if
 
   /*--------------------------------------------------------------------------
@@ -1047,6 +1189,7 @@ begin_diagnostics {
    *------------------------------------------------------------------------*/
 
   //global->restart_interval=800000;
+#ifdef FOURZEROSEVEN
   if(step && !(step%global->restart_interval)) {
     double dumpstart = mp_elapsed(grid->mp);
     begin_turnstile(NUM_TURNSTILES);
@@ -1063,6 +1206,23 @@ begin_diagnostics {
     sim_log("Restart duration "<<dumpelapsed);
   } // if
 
+#else
+  if(step() && !(step()%global->restart_interval)) {
+    double dumpstart = uptime();
+    BEGIN_TURNSTILE(NUM_TURNSTILES) {
+      if(!global->rtoggle) {
+        global->rtoggle = 1;
+        checkpt("restart1/restart", 0);
+      }
+      else {
+        global->rtoggle = 0;
+        checkpt("restart2/restart", 0);
+      } // if
+    } END_TURNSTILE;
+    double dumpelapsed = uptime() - dumpstart;
+    sim_log("Restart duration "<<dumpelapsed);
+  } // if
+#endif
 
   // Dump particle data
 
@@ -1101,6 +1261,7 @@ begin_diagnostics {
   // timestep. mp_elapsed has an ALL_REDUCE in it!
 
   //global->quota_sec = 3.5*3600;
+#ifdef FOURZEROSEVEN
   if  ( step>0 && global->quota_check_interval>0 && (step&global->quota_check_interval)==0 ) {
     if( mp_elapsed( grid->mp ) > global->quota_sec ) {
       sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
@@ -1116,6 +1277,24 @@ begin_diagnostics {
       exit(0); // Exit or abort?
     }
   }
+#else
+  if ( step()>0 && global->quota_check_interval>0 &&
+      (step()&global->quota_check_interval)==0 ) {
+    if( uptime() > global->quota_sec ) {
+      sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
+      double dumpstart = uptime();
+      BEGIN_TURNSTILE(NUM_TURNSTILES) {
+        checkpt("restart0/restart",0);
+      } END_TURNSTILE;
+      barrier(); // Just to be safe
+      sim_log( "Restart dump restart completed." );
+      double dumpelapsed = uptime() - dumpstart;
+      sim_log("Restart duration "<<dumpelapsed);
+      finalize();
+      exit(0); // Exit or abort?
+    }
+  }
+#endif
 
   // restart before the end
 

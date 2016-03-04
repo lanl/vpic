@@ -865,7 +865,7 @@ begin_diagnostics {
 
   
 #define ALLOCATE(A,LEN,TYPE)                                             \
-  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate.")); 
+  if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) ) ERROR(("Cannot allocate."));
 
   //--------------------------------------------------------------------------- 
 

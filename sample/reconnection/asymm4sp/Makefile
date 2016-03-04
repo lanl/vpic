@@ -1,9 +1,11 @@
 # Makefile for building final exe and cleaning directory
 
 DECK = asymm4sp
-FOURZEROSEVEN = yes
+#FOURZEROSEVEN = yes
+FOURZEROSEVEN = no
 OPT = no
-COMPILER = intel
+#COMPILER = intel
+COMPILER = gcc
 
 # set your src path(s) and plat(form)
 
@@ -37,11 +39,11 @@ all:
 # clean everything
 clean:
 	-$(RM) $(DECK).$(PLAT)
+	-$(RM) -rf fd
 	-$(RM) -rf fields
 	-$(RM) -rf global.vpc
 	-$(RM) -rf hydro
 	-$(RM) -rf info*
-	-$(RM) -rf injectors
 	-$(RM) -rf particle
 	-$(RM) -rf restart*
 	-$(RM) -rf rundata

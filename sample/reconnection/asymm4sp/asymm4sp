@@ -1,3 +1,5 @@
+//#define FOURZEROSEVEN 1
+
 //////////////////////////////////////////////////////
 //
 //   Asymmetric reconnection 4 species
@@ -5,8 +7,6 @@
 //////////////////////////////////////////////////////
 
 #define NUM_TURNSTILES 8192
-
-//#define FOURZEROSEVEN 1
 
 // structure to hold the data for energy diagnostics
 struct edata {
@@ -31,7 +31,7 @@ begin_globals {
   int Hhydro_interval;
   int eparticle_interval;
   int Hparticle_interval;
-  int quota_check_interval;  //  How frequently to check if quote exceeded
+  int quota_check_interval;  //  How frequently to check if quota exceeded
 
   int rtoggle;             // enables save of last two restart dumps for safety
   double quota_sec;        // Run quota in seconds
@@ -44,7 +44,6 @@ begin_globals {
 
 
   //  Variables for new output format
-
   DumpParameters fdParams;
   DumpParameters eTopdParams;
   DumpParameters eBotdParams;
@@ -54,7 +53,6 @@ begin_globals {
   std::vector<DumpParameters *> outputParams;
 
   // Variables for the energy diagnostics
-
   edata edeTop;                        // parameters for electron species
   edata edeBot;                        // parameters for electron species
   edata ediTop;                        // parameters for ion species
@@ -63,22 +61,18 @@ begin_globals {
   int nex;                           // number of energy bins
 
   // variables for ey/bz diangostics
-
-  double xcenter;                     // x-coordinate for the center of the sheet
+  double xcenter;                     // x-coordinate for center of the sheet
   double zcenter;                     // z-coordinate
 
   double L;
   double di;
 
   int ey_save_interval;               // time interval (in steps) to save ey
-
-
 };
 
 begin_initialization {
 
   // use natural PIC units
-
   double ec   = 1;         // Charge normalization
   double me   = 1;         // Mass normalization
   double c    = 1;         // Speed of light
@@ -86,65 +80,80 @@ begin_initialization {
   double eps0 = 1;         // Permittivity of space
 
   double cfl_req   = 0.99;  // How close to Courant should we try to run
-  double wpedt_max = 0.36;  // How big a timestep is allowed if Courant is not too restrictive
+  double wpedt_max = 0.36;  // max dt if Courant is not too restrictive
   double damp      = 0.0;   // Level of radiation damping
   int rng_seed     = 1;     // Random number seed increment
 
-  // Physics parameters    (Reference density and temperature on cool/dense magnetosheath side)
+  // Physics parameters
+  // (Reference density and temperature on cool/dense magnetosheath side)
   double mi_me   = 100.0; // Ion mass / electron mass
-  double L_di    = 1.0;   // Sheet thickness / ion inertial length (in units of reference density)
+  // Sheet thickness / ion inertial length (in units of reference density)
+  double L_di    = 1.0;
 
-  double TiL_Te   = 11.4286;   // Background Ion temperature / electron temperature left (sheath)
-  //double TiR_Te   = 71.4286;   // Background Ion temperature / electron temperature right (magnetosphere)
-  double TiH_Te   = 11.4286;       // Harris Ion temperature / electron temperature
-  double TeR_Te   = 3.3929;    // Background Electron temperature / electron temperature right (magnetosphere)
-  double TeH_Te   = 3.3929;       // Harris Electron temperature / electron temperature
+  // Background Ion temperature / electron temperature left (sheath)
+  double TiL_Te   = 11.4286;
+  // Background Ion temperature / electron temperature right (magnetosphere)
+  //double TiR_Te   = 71.4286;
+  // Harris Ion temperature / electron temperature
+  double TiH_Te   = 11.4286;
+  // Background Elec. temperature / electron temperature right (magnetosphere)
+  double TeR_Te   = 3.3929;
+  // Harris Electron temperature / electron temperature
+  double TeH_Te   = 3.3929;
 
   double nR_nL    = 0.0619;    // ratio of plasma densities (sphere/sheath)
-  double bR_bL    = 1.6957;    // ratio of reconnecting field components (sphere/sheath)
+  // ratio of reconnecting field components (sphere/sheath)
+  double bR_bL    = 1.6957;
   double bg = 0.0991;         // Guide field/sheath reconnecting field
-
-  double betaL = 2.9935;      // plasma beta on the left-hand side of the sheet (sheath), neglecting guide field
+  // plasma beta on the left-hand side of the sheet (sheath), neglecting
+  // guide field
+  double betaL = 2.9935;
   double wpe_wce = 1.5;   // electron plasma freq / electron cyclotron freq
-  double theta   = 0;      // B0 = Bx
-  double taui    = 50;     // simulation wci's to run
+  double theta   = 0;     // B0 = Bx
+  double taui    = 50;    // simulation wci's to run
   double cs   = cos(theta);
   double sn   = sin(theta);
 
   double quota   = 15.0;    // run quota in hours
   double quota_sec = quota*3600;  // Run quota in seconds
 
-
   //derived qunatities
   double mi = me*mi_me;                                   // Ion mass
-  double Te = 0.5*betaL/((1.0+TiL_Te)*wpe_wce*wpe_wce);   // Electron temperature in sheath
-  double Ti = Te*TiL_Te;                                  // Ion temperature in sheath
-  double TiR_Te = (1.0+TiL_Te)*(1.0+(1.0-bR_bL*bR_bL)/betaL)/nR_nL - TeR_Te;    //Background Ion temperature/ Te from force balance (magnetosphere)
-  double vthe = sqrt(Te/me);                              // Electron thermal velocity in sheath
-  double vthi = sqrt(Ti/mi);                              // Ion thermal velocity in sheath
-  double vtheH = sqrt(Te*TeH_Te/me);                      // Electron thermal velocity in Harris
-  double vthiH = sqrt(Te*TiH_Te/mi);                      // Ion thermal velocity in Harris
-  double wci  = 1.0/(mi_me*wpe_wce);                      // Ion cyclotron frequency
-  double wce  = wci*mi_me;                                // Electron cyclotron freqeuncy
-  double wpe  = wce*wpe_wce;                              // electron plasma frequency
-  double wpi  = wpe/sqrt(mi_me);                          // ion plasma frequency
-  double di   = c/wpi;                                    // ion inertial length
-  double L    = L_di*di;                                  // Harris sheet thickness
-  double v_A= (wci/wpi);                                  //  based on nL
+  // Electron temperature in sheath
+  double Te = 0.5*betaL/((1.0+TiL_Te)*wpe_wce*wpe_wce);
+  // Ion temperature in sheath
+  double Ti = Te*TiL_Te;
+  //Background Ion temperature/ Te from force balance (magnetosphere)
+  double TiR_Te = (1.0+TiL_Te)*(1.0+(1.0-bR_bL*bR_bL)/betaL)/nR_nL - TeR_Te;
+  double vthe = sqrt(Te/me);         // Electron thermal velocity in sheath
+  double vthi = sqrt(Ti/mi);         // Ion thermal velocity in sheath
+  double vtheH = sqrt(Te*TeH_Te/me); // Electron thermal velocity in Harris
+  double vthiH = sqrt(Te*TiH_Te/mi); // Ion thermal velocity in Harris
+  double wci  = 1.0/(mi_me*wpe_wce); // Ion cyclotron frequency
+  double wce  = wci*mi_me;           // Electron cyclotron freqeuncy
+  double wpe  = wce*wpe_wce;         // electron plasma frequency
+  double wpi  = wpe/sqrt(mi_me);     // ion plasma frequency
+  double di   = c/wpi;               // ion inertial length
+  double L    = L_di*di;             // Harris sheet thickness
+  double v_A= (wci/wpi);             // based on nL
 
-  double bh_b0 = 0.5*(1.0+bR_bL);                                       // Harris component to the reference (left) field
-  double bc_b0 = 0.5*(bR_bL - 1.0);                                     // Mean B field
-  double nh_n0 = bh_b0*bh_b0*(1.0+TiL_Te)/(TeH_Te+TiH_Te)/betaL;        // Harris peak density/nL
+  // Harris component to the reference (left) field
+  double bh_b0 = 0.5*(1.0+bR_bL);
+  double bc_b0 = 0.5*(bR_bL - 1.0); // Mean B field
+  // Harris peak density/nL
+  double nh_n0 = bh_b0*bh_b0*(1.0+TiL_Te)/(TeH_Te+TiH_Te)/betaL;
 
-  double ion_sort_interval = 50 ;            //  Injector moments are also updated at this internal
-  double electron_sort_interval = 20;         //  Injector moments are also updated at this internal
+  // Injector moments also updated at this interval
+  double ion_sort_interval = 50;
+  // Injector moments also updated at this interval
+  double electron_sort_interval = 20;
 
   // Numerical parameters
-
-  double nppc          = 150; // Average number of macro particle per cell per species
+  // Average number of macro particle per cell per species
+  double nppc          = 150;
 
   double Lx            = 40*di; // size of box in x dimension
-  double Ly            = 10*di;  // size of box in y dimension
+  double Ly            = 10*di; // size of box in y dimension
   double Lz            = 20*di; // size of box in z dimension
 
   //int scale_factor = 1; // full scale run
@@ -162,24 +171,25 @@ begin_initialization {
   double hy = Ly/ny;
   double hz = Lz/nz;
 
-  double b0            = 1.0/wpe_wce;                       // Asymptotic magnetic field strength on the left
-  double n0            = 1.0;                               // electron density on the left
-  double vdri          = 2.0*Ti*TiH_Te/TiL_Te/(b0*L*bh_b0);  // Ion drift velocity Harris
-  double vdre          = -vdri*TeH_Te/TiH_Te;               // electron drift velocity Harris
+  double b0 = 1.0/wpe_wce; // Asymptotic magnetic field strength on the left
+  double n0 = 1.0;         // electron density on the left
+  double vdri = 2.0*Ti*TiH_Te/TiL_Te/(b0*L*bh_b0); // Ion drift velocity Harris
+  double vdre = -vdri*TeH_Te/TiH_Te;   // electron drift velocity Harris
 
   double aa  = nR_nL*(TeR_Te+TiR_Te)+1.0+TiL_Te;  //convenience parameters
   double bb  = nR_nL*(TeR_Te+TiR_Te)-1.0-TiL_Te;  //Background density is:
-  double cc  = TeR_Te+TiR_Te+1.0+TiL_Te;          //  nb/n0 = [aa+bb tanh(z/L)]/[cc + dd tanh(z/L)]
-  double dd  = TeR_Te+TiR_Te-1.0-TiL_Te;          //
+  //  nb/n0 = [aa+bb tanh(z/L)]/[cc + dd tanh(z/L)]
+  double cc  = TeR_Te+TiR_Te+1.0+TiL_Te;
+  double dd  = TeR_Te+TiR_Te-1.0-TiL_Te;
 
-  double Npe_sheet     = 2.0*nh_n0*Lx*Ly*L*tanh(0.5*Lz/L); // number of physical electrons in sheet
-  double Npe_backL     = Lx*Ly*(0.5*Lz*(aa*cc-bb*dd) - L*(bb*cc-aa*dd)*log(cosh(0.5*Lz/L)-dd/cc*sinh(0.5*Lz/L)))/(cc*cc-dd*dd);  //number background L (sheath) electrons
-  double Npe_backR     = Lx*Ly*(0.5*Lz*(aa*cc-bb*dd) + L*(bb*cc-aa*dd)*log(cosh(0.5*Lz/L)+dd/cc*sinh(0.5*Lz/L)))/(cc*cc-dd*dd);  //number background R (sphere) electrons
+  double Npe_sheet = 2.0*nh_n0*Lx*Ly*L*tanh(0.5*Lz/L); // number of physical electrons in sheet
+  double Npe_backL = Lx*Ly*(0.5*Lz*(aa*cc-bb*dd) - L*(bb*cc-aa*dd)*log(cosh(0.5*Lz/L)-dd/cc*sinh(0.5*Lz/L)))/(cc*cc-dd*dd);  //number background L (sheath) electrons
+  double Npe_backR = Lx*Ly*(0.5*Lz*(aa*cc-bb*dd) + L*(bb*cc-aa*dd)*log(cosh(0.5*Lz/L)+dd/cc*sinh(0.5*Lz/L)))/(cc*cc-dd*dd);  //number background R (sphere) electrons
   //double Npe_back      = nc_n0*Ly*Lz*Lx;    // Number of physical electrons in background
-  double Npe_L         = Npe_sheet/2.0 + Npe_backL;  //Number of physical L (sheath) electrons
-  double Npe_R         = Npe_sheet/2.0 + Npe_backR;       //Number of physical R (sphere) electrons
-  double Ne            = nppc*nx*ny*nz;  // total macro electrons in box
-  double Ne_sheetL     = Ne/2.0*Npe_sheet/2.0/Npe_L; //total macro L electrons in sheet
+  double Npe_L = Npe_sheet/2.0 + Npe_backL;  //Number of physical L (sheath) electrons
+  double Npe_R = Npe_sheet/2.0 + Npe_backR;       //Number of physical R (sphere) electrons
+  double Ne = nppc*nx*ny*nz;  // total macro electrons in box
+  double Ne_sheetL = Ne/2.0*Npe_sheet/2.0/Npe_L; //total macro L electrons in sheet
   double Ne_sheetR     = Ne/2.0*Npe_sheet/2.0/Npe_R; //total macro R electrons in sheet
   double Ne_backL      = Ne/2.0*Npe_backL/Npe_L;     //total macro L electrons in background
   double Ne_backR      = Ne/2.0*Npe_backR/Npe_R;     //total macro R electrons in background
@@ -204,8 +214,8 @@ begin_initialization {
   double qi_sR = ec*Npe_sheet/2.0/Ne_sheetR;  // Charge per macro ion
   double qi_bL = ec*Npe_backL/Ne_backL;  // Charge per macro ion
   double qi_bR = ec*Npe_backR/Ne_backR;  // Charge per macro ion
-  double nfacL = qi_sL/(hx*hy*hz);            // Convert density to particles per cell
-  double nfacR = qi_sR/(hx*hy*hz);            // Convert density to particles per cell
+  double nfacL = qi_sL/(hx*hy*hz);      // Convert density to particles per cell
+  double nfacR = qi_sR/(hx*hy*hz);      // Convert density to particles per cell
 
   //  double gdri = 1/sqrt(1-vdri*vdri/(c*c));  // gamma of ion drift frame
   //  double gdre = 1/sqrt(1-vdre*vdre/(c*c)); // gamma of electron drift frame
@@ -224,7 +234,6 @@ begin_initialization {
 
   int restart_interval = 5000;
   int energies_interval = 100;
-  energies_interval = 10;
   int interval = int(0.5/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
@@ -265,7 +274,7 @@ begin_initialization {
   ///////////////////////////////////////////////
   // Setup high level simulation parameters
   num_step             = int(taui/(wci*dt));
-  num_step             = 100;
+  num_step             = 1000;
   status_interval      = 200;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
@@ -602,7 +611,11 @@ begin_initialization {
     //    uy = d0*cs - ux*sn;
     //    ux = d0*sn + ux*cs;
 
+#ifdef FOURZEROSEVEN
     inject_particle(electronBot, x, y, z, ux, uy, uz, qe_sL, 0, 0 );
+#else
+    inject_particle(electronBot, x, y, z, ux, uy, uz, abs(qe_sL), 0, 0 );
+#endif
 
 #ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vthiH);
@@ -665,7 +678,11 @@ begin_initialization {
     //    uy = d0*cs - ux*sn;
     //    ux = d0*sn + ux*cs;
 
+#ifdef FOURZEROSEVEN
     inject_particle(electronTop, x, y, z, ux, uy, uz, qe_sR, 0, 0 );
+#else
+    inject_particle(electronTop, x, y, z, ux, uy, uz, abs(qe_sR), 0, 0 );
+#endif
 
 #ifdef FOURZEROSEVEN
     ux = maxwellian_rand(vthiH);
@@ -728,7 +745,7 @@ begin_initialization {
     inject_particle( electronBot, x, y, z,
                      normal(rng(0),0,ve),
                      normal(rng(0),0,ve),
-                     normal(rng(0),0,ve),qe_bL, 0, 0);
+                     normal(rng(0),0,ve),abs(qe_bL), 0, 0);
 
     inject_particle( ionBot, x, y, z,
                      normal(rng(0),0,vi),
@@ -779,7 +796,7 @@ begin_initialization {
     inject_particle( electronTop, x, y, z,
                      normal(rng(0),0,ve),
                      normal(rng(0),0,ve),
-                     normal(rng(0),0,ve),qe_bR, 0, 0);
+                     normal(rng(0),0,ve),abs(qe_bR), 0, 0);
 
     inject_particle( ionTop, x, y, z,
                      normal(rng(0),0,vi),

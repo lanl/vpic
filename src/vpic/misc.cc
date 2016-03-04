@@ -23,7 +23,7 @@ vpic_simulation::inject_particle( species_t * sp,
   // Check input parameters
   if( !accumulator_array ) ERROR(( "Accumulator not setup yet" ));
   if( !sp                ) ERROR(( "Invalid species" ));
-  if( w < 0              ) ERROR(( "w < 0" ));
+  if( w < 0              ) ERROR(( "inject_particle: w < 0" ));
 
   const double x0 = (double)grid->x0, y0 = (double)grid->y0, z0 = (double)grid->z0;
   const double x1 = (double)grid->x1, y1 = (double)grid->y1, z1 = (double)grid->z1;

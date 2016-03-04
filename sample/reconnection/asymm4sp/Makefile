@@ -1,9 +1,13 @@
 # Makefile for building final exe and cleaning directory
 
 DECK = asymm4sp
+
 #FOURZEROSEVEN = yes
 FOURZEROSEVEN = no
-OPT = no
+
+OPT = yes
+#OPT = no
+
 #COMPILER = intel
 COMPILER = gcc
 
@@ -19,7 +23,7 @@ endif
 
 # choose optimized or not, default is debug
 FLAVOR = debug
-ifeq (x${OPT}, yes)
+ifeq (x${OPT}, xyes)
   FLAVOR = release_sse
 endif
 

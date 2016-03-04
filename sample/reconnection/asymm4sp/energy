@@ -1,4 +1,8 @@
 #ifndef FOURZEROSEVEN
+// This macro exists in the 407 version, but is no longer exposed in the head
+// version. I searched to see if there was a preferred way of computing this
+// but didn't find anything. So, when building against head version define
+// the macro.
 #define LOCAL_CELL_ID(x,y,z) \
   INDEX_FORTRAN_3(x,y,z,0,grid->nx+1,0,grid->ny+1,0,grid->nz+1)
 #endif

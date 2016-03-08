@@ -13,12 +13,12 @@ BUILDSTYLE=standard
 ################################################################################
 # CFLAGS - configure C compiler behavior
 ################################################################################
-CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -mfpmath=sse"
+CFLAGS="-Werror -Wall -pedantic -std=c99 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -mfpmath=sse -axCORE-AVX2"
 
 ################################################################################
 # CXXFLAGS - configure C++ compiler behavior
 ################################################################################
-CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -mfpmath=sse -DUSE_V4_SSE"
+CXXFLAGS="-Werror -Wall -pedantic -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -O2 -fno-strict-aliasing -fomit-frame-pointer -mfpmath=sse -axCORE-AVX2 -DUSE_V4_SSE"
 
 ################################################################################
 # EXTENSION - executable extension
@@ -40,8 +40,9 @@ ADDRESSING=64
 # MPI_CPPFLAGS - configure MPI preprocessor flags
 # MPI_LDFLAGS - configure MPI link flags
 # MPI_LIBS - configure MPI library names
+# SKIP_MPI - tell configure.ac that you don't want to invoke CCS_WITH_MPI.
 ################################################################################
-#MPI_CPPFLAGS="-I${MPICH_DIR}/include"
-#MPI_LDFLAGS="-L${MPICH_DIR}/lib"
-#MPI_LIBS="${MPICH_DIR}/lib/libmpich.a"
+#MPI_CPPFLAGS=""
+#MPI_LDFLAGS=""
+#MPI_LIBS=""
 SKIP_MPI=yes

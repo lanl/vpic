@@ -275,7 +275,11 @@ fi
 
 # this does auto-detection of mpi libraries using
 # the C compiler and possibly the openmpi mpicc program
-CCS_WITH_MPI(C)
+if test "$SKIP_MPI" = "yes" ; then
+   	echo "Skipping MPI tests."
+else
+        CCS_WITH_MPI(C)
+fi
 
 EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS $MPI_CPPFLAGS"
 EXTRA_LDFLAGS="$EXTRA_LDFLAGS $MPI_LDFLAGS"

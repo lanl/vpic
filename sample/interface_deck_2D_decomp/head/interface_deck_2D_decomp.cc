@@ -110,7 +110,6 @@ begin_initialization {
   int load_particles       = 1;         // Flag to turn off particle load for testing wave launch.
 //??????????????????????????????????????????????????????????????????
   double nppc              = 4000; // for species I1 if qi_I1 > qi_I2; for species I2 if qi_I2 > qi_I1
-  nppc = 100; //jgw//
                                   // electron and ion number in each region are the same
 
   // FIXME:  Put in the real values here rather than approximate values:
@@ -182,8 +181,6 @@ begin_initialization {
   // DEBUG - smaller problem of 16 cores
   topology_x = 4;
   topology_z = 4;
-  topology_x = 1; //jgw//
-  topology_z = 1; //jgw//
   nx        /= 625;
   nz        /= 5;
   Lx        /= 625;

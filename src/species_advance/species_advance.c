@@ -113,6 +113,7 @@ species( const char * name,
 
   if( !len ) ERROR(( "Cannot create a nameless species" ));
   if( !g ) ERROR(( "NULL grid" ));
+  if( g->nv == 0) ERROR(( "Allocate grid before defining species." ));
   if( max_local_np<1 ) max_local_np = 1;
   if( max_local_nm<1 ) max_local_nm = 1;
 

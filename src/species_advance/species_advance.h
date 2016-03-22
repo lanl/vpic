@@ -23,7 +23,7 @@ typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 typedef struct particle {
   float dx, dy, dz; // Particle position in cell coordinates (on [-1,1])
   int32_t i;        // Voxel containing the particle.  Note that
-  /**/              // particled awaiting processing by boundary_p
+  /**/              // particles awaiting processing by boundary_p
   /**/              // have actually set this to 8*voxel + face where
   /**/              // face is the index of the face they interacted
   /**/              // with (on 0:5).  This limits the local number of

@@ -154,7 +154,8 @@ using namespace v8;
 void
 center_p_pipeline_v8( center_p_pipeline_args_t * args,
                       int pipeline_rank,
-                      int n_pipeline ) {
+                      int n_pipeline )
+{
   const interpolator_t * ALIGNED(128) f0 = args->f0;
 
   particle_t           * ALIGNED(128) p;
@@ -188,7 +189,8 @@ center_p_pipeline_v8( center_p_pipeline_args_t * args,
 
   // Process the particle quads for this pipeline
 
-  for( ; nq; nq--, p+=8 ) {
+  for( ; nq; nq--, p+=8 )
+  {
     load_8x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		 dx, dy, dz, ii );
@@ -234,7 +236,7 @@ center_p_pipeline_v8( center_p_pipeline_args_t * args,
 
     cbz = fma( v5, dz, cbz );
 
-    // Update momentum.   Could use load_8x3_tr.
+    // Update momentum.  Could use load_8x3_tr.
     load_8x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
 		 &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux,
 		 ux, uy, uz, q );

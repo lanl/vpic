@@ -65,7 +65,7 @@ END_C_DECLS
 // allocation indexed FORTRAN style.  That is, the accumulator array
 // is a 4d array.  a(:,:,:,0) is the accumulator used by the host
 // processor.  a(:,:,:,1:n_pipeline) are the accumulators used by
-// pipelines during operations.  Like the interpolator, accumualtors
+// pipelines during operations.  Like the interpolator, accumulators
 // on the surface of the local domain are not used.
 
 typedef struct accumulator {

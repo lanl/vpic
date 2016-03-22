@@ -6,6 +6,8 @@
 //#define HAS_V8_PIPELINE
 #include "spa_private.h"
 
+#include <iostream>
+
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
@@ -269,6 +271,17 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     vp2 = (float * ALIGNED(16))(f0 + ii(2));
     vp3 = (float * ALIGNED(16))(f0 + ii(3));
 
+    std::cout << "------------------------------------------------------------------"
+	      << std::endl;
+    std::cout << "Interpolate fields." << std::endl;
+    std::cout << "------------------------------------------------------------------"
+	      << std::endl;
+    std::cout << "f0  = " << f0 << std::endl;
+    std::cout << "vp0 = " << vp0 << "   ii0 = " << ii(0) << std::endl;
+    std::cout << "vp1 = " << vp1 << "   ii1 = " << ii(1) << std::endl;
+    std::cout << "vp2 = " << vp2 << "   ii2 = " << ii(2) << std::endl;
+    std::cout << "vp3 = " << vp3 << "   ii3 = " << ii(3) << std::endl;
+
     load_4x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2);
     hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
 
@@ -347,6 +360,17 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     vp2 = (float * ALIGNED(16))(a0 + ii(2));
     vp3 = (float * ALIGNED(16))(a0 + ii(3));
 
+    std::cout << "------------------------------------------------------------------"
+	      << std::endl;
+    std::cout << "Accumulate current." << std::endl;
+    std::cout << "------------------------------------------------------------------"
+	      << std::endl;
+    std::cout << "a0  = " << a0 << std::endl;
+    std::cout << "vp0 = " << vp0 << "   ii0 = " << ii(0) << std::endl;
+    std::cout << "vp1 = " << vp1 << "   ii1 = " << ii(1) << std::endl;
+    std::cout << "vp2 = " << vp2 << "   ii2 = " << ii(2) << std::endl;
+    std::cout << "vp3 = " << vp3 << "   ii3 = " << ii(3) << std::endl;
+
 #   define ACCUMULATE_J(X,Y,Z,offset)                               \
     v4  = q*u##X;   /* v4 = q ux                            */      \
     v1  = v4*d##Y;  /* v1 = q ux dy                         */      \
@@ -395,6 +419,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
 #   undef MOVE_OUTBND
 
+    throw;
   }
 
   args->seg[pipeline_rank].pm        = pm;

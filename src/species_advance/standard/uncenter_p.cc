@@ -21,8 +21,9 @@ uncenter_p_pipeline( center_p_pipeline_args_t * args,
   float dx, dy, dz, ux, uy, uz;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4;
+  int   ii;
 
-  int first, ii, n;
+  int first, n;
 
   // Determine which particles this pipeline processes
 
@@ -96,7 +97,7 @@ uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
   v4float dx, dy, dz, ux, uy, uz, q;
   v4float hax, hay, haz, cbx, cby, cbz;
   v4float v0, v1, v2, v3, v4, v5;
-  v4int ii;
+  v4int   ii;
 
   int first, nq;
 
@@ -177,7 +178,7 @@ uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
   v8float dx, dy, dz, ux, uy, uz, q;
   v8float hax, hay, haz, cbx, cby, cbz;
   v8float v0, v1, v2, v3, v4, v5;
-  v8int ii;
+  v8int   ii;
 
   int first, nq;
 

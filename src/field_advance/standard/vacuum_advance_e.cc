@@ -204,7 +204,7 @@ vacuum_advance_e_pipeline_v8( pipeline_args_t * args,
   // Process the bulk of the voxels 8 at a time
 
   INIT_STENCIL();
-  for( ; n_voxel>3; n_voxel-=8 ) {
+  for( ; n_voxel>7; n_voxel-=8 ) {
     f00 = f0; fx0 = fx; fy0 = fy; fz0 = fz; NEXT_STENCIL();
     f01 = f0; fx1 = fx; fy1 = fy; fz1 = fz; NEXT_STENCIL();
     f02 = f0; fx2 = fx; fy2 = fy; fz2 = fz; NEXT_STENCIL();

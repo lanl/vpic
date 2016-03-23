@@ -157,7 +157,7 @@ energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, n0, nq );
   p += n0;
-  nq >>= 2;
+  nq >>= 3;
 
   // Process the particle quads for this pipeline
 

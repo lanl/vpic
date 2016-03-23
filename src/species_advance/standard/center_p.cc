@@ -185,7 +185,7 @@ center_p_pipeline_v8( center_p_pipeline_args_t * args,
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
   p = args->p0 + itmp;
-  nq >>= 2;
+  nq >>= 3;
 
   // Process the particle quads for this pipeline
 

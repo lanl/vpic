@@ -450,7 +450,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
   p = args->p0 + itmp;
-  nq>>=2;
+  nq>>=3;
 
   // Determine which movers are reserved for this pipeline.
   // Movers (16 bytes) should be reserved for pipelines in at least

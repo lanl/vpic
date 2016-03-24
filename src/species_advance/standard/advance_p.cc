@@ -3,7 +3,7 @@
 
 #define IN_spa
 #define HAS_V4_PIPELINE
-//#define HAS_V8_PIPELINE
+#define HAS_V8_PIPELINE
 #include "spa_private.h"
 
 void
@@ -32,9 +32,10 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   float dx, dy, dz, ux, uy, uz, q;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4, v5;
+  int   ii;
 
   int itmp, ii, n, nm, max_nm;
-  
+
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
   // Determine which quads of particles quads this pipeline processes
@@ -424,6 +425,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   float                * ALIGNED(16)  vp1;
   float                * ALIGNED(16)  vp2;
   float                * ALIGNED(16)  vp3;
+  float                * ALIGNED(16)  vp4;
+  float                * ALIGNED(16)  vp5;
+  float                * ALIGNED(16)  vp6;
+  float                * ALIGNED(16)  vp7;
 
   const v8float qdt_2mc(args->qdt_2mc);
   const v8float cdt_dx(args->cdt_dx);
@@ -475,29 +480,46 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Process the particle quads for this pipeline
 
-  for( ; nq; nq--, p+=4 ) {
-    load_8x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
+  for( ; nq; nq--, p+=8 )
+  {
+    load_8x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
+		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
+		 dx, dy, dz, ii );
 
     // Interpolate fields
-    vp0 = (float * ALIGNED(16))(f0 + ii(0));
-    vp1 = (float * ALIGNED(16))(f0 + ii(1));
-    vp2 = (float * ALIGNED(16))(f0 + ii(2));
-    vp3 = (float * ALIGNED(16))(f0 + ii(3));
+    vp0 = ( float * ALIGNED(16) ) ( f0 + ii(0) );
+    vp1 = ( float * ALIGNED(16) ) ( f0 + ii(1) );
+    vp2 = ( float * ALIGNED(16) ) ( f0 + ii(2) );
+    vp3 = ( float * ALIGNED(16) ) ( f0 + ii(3) );
+    vp4 = ( float * ALIGNED(16) ) ( f0 + ii(4) );
+    vp5 = ( float * ALIGNED(16) ) ( f0 + ii(5) );
+    vp6 = ( float * ALIGNED(16) ) ( f0 + ii(6) );
+    vp7 = ( float * ALIGNED(16) ) ( f0 + ii(7) );
 
-    load_8x4_tr(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2);
+    load_8x4_tr( vp0, vp1, vp2, vp3,
+		 vp4, vp5, vp6, vp7,
+		 hax, v0, v1, v2 );
     hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
 
-    load_8x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5);
+    load_8x4_tr( vp0+4, vp1+4, vp2+4, vp3+4,
+		 vp4+4, vp5+4, vp6+4, vp7+4,
+		 hay, v3, v4, v5 );
     hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
 
-    load_8x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2);
+    load_8x4_tr( vp0+8, vp1+8, vp2+8, vp3+8,
+		 vp4+8, vp5+8, vp6+8, vp7+8,
+		 haz, v0, v1, v2 );
     haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
 
-    load_8x4_tr(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4);
+    load_8x4_tr( vp0+12, vp1+12, vp2+12, vp3+12,
+		 vp4+12, vp5+12, vp6+12, vp7+12,
+		 cbx, v3, cby, v4 );
     cbx = fma( v3, dx, cbx );
     cby = fma( v4, dy, cby );
 
-    load_8x2_tr(vp0+16,vp1+16,vp2+16,vp3+16,cbz,v5);
+    load_8x2_tr( vp0+16, vp1+16, vp2+16, vp3+16,
+		 vp4+16, vp5+16, vp6+16, vp7+16,
+		 cbz, v5 );
     cbz = fma( v5, dz, cbz );
 
     // Update momentum
@@ -506,7 +528,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // quite in the noise numerically) for cyclotron frequencies
     // approaching the nyquist frequency.
 
-    load_8x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
+    load_8x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
+		 &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux,
+		 ux, uy, uz, q );
     ux += hax;
     uy += hay;
     uz += haz;
@@ -525,7 +549,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     ux += hax;
     uy += hay;
     uz += haz;
-    store_8x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
+    store_8x4_tr( ux, uy, uz, q,
+		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
+		  &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
     
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
@@ -547,20 +573,26 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v3  = merge(outbnd,dx,v3); // Do not update outbnd particles
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
-    store_8x4_tr(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
-    
+    store_8x4_tr( v3, v4, v5, ii,
+		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
+		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
+
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
-    q  = czero(outbnd,q*qsp);       // Do not accumulate outbnd particles
+    q  = czero(outbnd,q*qsp);      // Do not accumulate outbnd particles
     dx = v0;                       // Streak midpoint (valid for inbnd only)
     dy = v1;
     dz = v2;
     v5 = q*ux*uy*uz*one_third;     // Charge conservation correction
-    vp0 = (float * ALIGNED(16))(a0 + ii(0)); // Accumulator pointers
-    vp1 = (float * ALIGNED(16))(a0 + ii(1));
-    vp2 = (float * ALIGNED(16))(a0 + ii(2));
-    vp3 = (float * ALIGNED(16))(a0 + ii(3));
+    vp0 = ( float * ALIGNED(16) ) ( a0 + ii(0) ); // Accumulator pointers
+    vp1 = ( float * ALIGNED(16) ) ( a0 + ii(1) );
+    vp2 = ( float * ALIGNED(16) ) ( a0 + ii(2) );
+    vp3 = ( float * ALIGNED(16) ) ( a0 + ii(3) );
+    vp4 = ( float * ALIGNED(16) ) ( a0 + ii(4) );
+    vp5 = ( float * ALIGNED(16) ) ( a0 + ii(5) );
+    vp6 = ( float * ALIGNED(16) ) ( a0 + ii(6) );
+    vp7 = ( float * ALIGNED(16) ) ( a0 + ii(7) );
 
 #   define ACCUMULATE_J(X,Y,Z,offset)                               \
     v4  = q*u##X;   /* v4 = q ux                            */      \
@@ -577,29 +609,37 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v1 -= v5;       /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */      \
     v2 -= v5;       /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */      \
     v3 += v5;       /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */      \
-    transpose(v0,v1,v2,v3);                                         \
-    increment_8x1(vp0+offset,v0);                                   \
-    increment_8x1(vp1+offset,v1);                                   \
-    increment_8x1(vp2+offset,v2);                                   \
-    increment_8x1(vp3+offset,v3)
+    transpose( v0, v1, v2, v3 );                                    \
+    increment_8x1( vp0 + offset, v0 );                              \
+    increment_8x1( vp1 + offset, v1 );                              \
+    increment_8x1( vp2 + offset, v2 );                              \
+    increment_8x1( vp3 + offset, v3 )
 
-    ACCUMULATE_J( x,y,z, 0 );
-    ACCUMULATE_J( y,z,x, 4 );
-    ACCUMULATE_J( z,x,y, 8 );
+    ACCUMULATE_J( x, y, z, 0 );
+    ACCUMULATE_J( y, z, x, 4 );
+    ACCUMULATE_J( z, x, y, 8 );
 
 #   undef ACCUMULATE_J
 
     // Update position and accumulate outbnd
 
 #   define MOVE_OUTBND(N)                                               \
-    if( outbnd(N) ) {                       /* Unlikely */              \
+    if ( outbnd(N) )                                /* Unlikely */      \
+    {                                                                   \
       local_pm->dispx = ux(N);                                          \
       local_pm->dispy = uy(N);                                          \
       local_pm->dispz = uz(N);                                          \
-      local_pm->i     = (p - p0) + N;                                   \
-      if( move_p( p0, local_pm, a0, g, _qsp ) ) { /* Unlikely */        \
-        if( nm<max_nm ) copy_8x1( &pm[nm++], local_pm );                \
-        else            itmp++;             /* Unlikely */              \
+      local_pm->i     = ( p - p0 ) + N;                                 \
+      if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
+      {                                                                 \
+        if ( nm<max_nm )                                                \
+        {                                                               \
+	  copy_8x1( &pm[nm++], local_pm );				\
+	}                                                               \
+        else                                        /* Unlikely */      \
+	{                                                               \
+	  itmp++;                                                       \
+	}                                                               \
       }                                                                 \
     }
 
@@ -607,6 +647,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     MOVE_OUTBND(1);
     MOVE_OUTBND(2);
     MOVE_OUTBND(3);
+    MOVE_OUTBND(4);
+    MOVE_OUTBND(5);
+    MOVE_OUTBND(6);
+    MOVE_OUTBND(7);
 
 #   undef MOVE_OUTBND
 

@@ -585,7 +585,7 @@ begin_initialization {
           inject_particle( ion_I1, x, y, z,
                            normal( rng(0), 0, uthi_I1 ),
                            normal( rng(0), 0, uthi_I1 ),
-                           normal( rng(0), 0, uthi_I1 ), fabs(qi_I1), 0, 0 );
+                           normal( rng(0), 0, uthi_I1 ), fabs(qi_I1)/Z_I1, 0, 0 );
 
           repeat( Z_I1 ) {
 
@@ -609,8 +609,7 @@ begin_initialization {
           inject_particle( ion_I2, x, y, z,
                            normal( rng(0), 0, uthi_I2),
                            normal( rng(0), 0, uthi_I2),
-                           normal( rng(0), 0, uthi_I2), fabs(qi_I2), 0, 0 );
-
+                           normal( rng(0), 0, uthi_I2), fabs(qi_I2)/Z_I2, 0, 0 );
           repeat( Z_I2 ) {
 
             // Leading order correction to Juttner distribution; also fixes uthe

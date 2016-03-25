@@ -1320,7 +1320,7 @@ namespace v8 {
     b.i[7] = m.i[7] ^ a.i[7];
     return b;
   }
-  
+
   inline void increment_8x1( float * ALIGNED(16) p, const v8float &a ) {
     p[0] += a.f[0];
     p[1] += a.f[1];

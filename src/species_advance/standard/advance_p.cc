@@ -444,7 +444,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   v8float dx, dy, dz, ux, uy, uz, q;
   v8float hax, hay, haz, cbx, cby, cbz;
-  v8float v0, v1, v2, v3, v4, v5;
+  v8float v0, v1, v2, v3, v4, v5, v6, v7, v8;
   v8int   ii, outbnd;
 
   int itmp, nq, nm, max_nm;
@@ -584,7 +584,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     dx = v0;                       // Streak midpoint (valid for inbnd only)
     dy = v1;
     dz = v2;
-    v5 = q*ux*uy*uz*one_third;     // Charge conservation correction
+
+    v8 = q*ux*uy*uz*one_third;     // Charge conservation correction
+
     vp0 = ( float * ALIGNED(16) ) ( a0 + ii(0) ); // Accumulator pointers
     vp1 = ( float * ALIGNED(16) ) ( a0 + ii(1) );
     vp2 = ( float * ALIGNED(16) ) ( a0 + ii(2) );
@@ -605,15 +607,23 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v4  = one-d##Z; /* v4 = 1-dz                            */      \
     v0 *= v4;       /* v0 = q ux (1-dy)(1-dz)               */      \
     v1 *= v4;       /* v1 = q ux (1+dy)(1-dz)               */      \
-    v0 += v5;       /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */      \
-    v1 -= v5;       /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */      \
-    v2 -= v5;       /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */      \
-    v3 += v5;       /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */      \
-    transpose( v0, v1, v2, v3 );                                    \
+    v0 += v8;       /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */      \
+    v1 -= v8;       /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */      \
+    v2 -= v8;       /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */      \
+    v3 += v8;       /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */      \
+    v4  = 0.0;      /* Zero pad                             */	    \
+    v5  = 0.0;      /* Zero pad                             */	    \
+    v6  = 0.0;      /* Zero pad                             */	    \
+    v7  = 0.0;      /* Zero pad                             */	    \
+    transpose( v0, v1, v2, v3, v4, v5, v6, v7 );                    \
     increment_8x1( vp0 + offset, v0 );                              \
     increment_8x1( vp1 + offset, v1 );                              \
     increment_8x1( vp2 + offset, v2 );                              \
-    increment_8x1( vp3 + offset, v3 )
+    increment_8x1( vp3 + offset, v3 );                              \
+    increment_8x1( vp4 + offset, v4 );                              \
+    increment_8x1( vp5 + offset, v5 );                              \
+    increment_8x1( vp6 + offset, v6 );                              \
+    increment_8x1( vp7 + offset, v7 );
 
     ACCUMULATE_J( x, y, z, 0 );
     ACCUMULATE_J( y, z, x, 4 );
@@ -634,7 +644,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
       {                                                                 \
         if ( nm<max_nm )                                                \
         {                                                               \
-	  copy_8x1( &pm[nm++], local_pm );				\
+	  v4::copy_4x1( &pm[nm++], local_pm ); 	                        \
 	}                                                               \
         else                                        /* Unlikely */      \
 	{                                                               \

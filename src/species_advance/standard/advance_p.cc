@@ -1130,33 +1130,22 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr( vp0, vp1, vp2, vp3,
 		 vp4, vp5, vp6, vp7,
 		 hax, v0, v1, v2, hay, v3, v4, v5 );
-    // load_8x4_tr( vp0, vp1, vp2, vp3,
-    // 		 vp4, vp5, vp6, vp7,
-    // 		 hax, v0, v1, v2 );
-    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
 
-    // load_8x4_tr( vp0+4, vp1+4, vp2+4, vp3+4,
-    // 		 vp4+4, vp5+4, vp6+4, vp7+4,
-    // 		 hay, v3, v4, v5 );
+    hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
     hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
 
     load_8x8_tr( vp0+8, vp1+8, vp2+8, vp3+8,
 		 vp4+8, vp5+8, vp6+8, vp7+8,
 		 haz, v0, v1, v2, cbx, v3, cby, v4 );
-    // load_8x4_tr( vp0+8, vp1+8, vp2+8, vp3+8,
-    // 		 vp4+8, vp5+8, vp6+8, vp7+8,
-    // 		 haz, v0, v1, v2 );
-    haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
 
-    // load_8x4_tr( vp0+12, vp1+12, vp2+12, vp3+12,
-    // 		 vp4+12, vp5+12, vp6+12, vp7+12,
-    // 		 cbx, v3, cby, v4 );
+    haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
     cbx = fma( v3, dx, cbx );
     cby = fma( v4, dy, cby );
 
     load_8x2_tr( vp0+16, vp1+16, vp2+16, vp3+16,
 		 vp4+16, vp5+16, vp6+16, vp7+16,
 		 cbz, v5 );
+
     cbz = fma( v5, dz, cbz );
 
     // Update momentum
@@ -1164,10 +1153,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // v0 = qdt_2mc/sqrt(blah) is a few ulps more accurate (but still
     // quite in the noise numerically) for cyclotron frequencies
     // approaching the nyquist frequency.
-
-    // load_8x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
-    // 		 &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux,
-    // 		 ux, uy, uz, q );
 
     ux += hax;
     uy += hay;
@@ -1188,9 +1173,14 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     uy += hay;
     uz += haz;
 
-    store_8x4_tr( ux, uy, uz, q,
-		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
-		  &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
+    // Store ux, uy, uz in v6, v7, v8 so store_8x8_tr can be used below.
+    v6  = ux;
+    v7  = uy;
+    v8  = uz;
+
+    // store_8x4_tr( ux, uy, uz, q,
+    // 		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
+    // 		  &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
 
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
@@ -1215,9 +1205,13 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
 
-    store_8x4_tr( v3, v4, v5, ii,
+    store_8x8_tr( v3, v4, v5, ii, v6, v7, v8, q,
 		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
+
+    // store_8x4_tr( v3, v4, v5, ii,
+    // 		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
+    // 		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
 
     // Accumulate current of inbnd particles.
     // Note: accumulator values are 4 times the total physical charge that

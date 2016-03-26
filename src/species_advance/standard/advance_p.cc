@@ -410,6 +410,8 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
 using namespace v8;
 
+#if 0
+// Method 1.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		       int pipeline_rank,
@@ -689,8 +691,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
+#endif // if 0
 
-#if 0
+// Method 2.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		       int pipeline_rank,
@@ -1026,7 +1029,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-#endif // if 0
 
 #endif // if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 

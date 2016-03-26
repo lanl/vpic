@@ -125,6 +125,16 @@ if(USE_V4_SSE)
   set(USE_V4 True)
 endif(USE_V4_SSE)
 
+if(USE_V4_AVX)
+  add_definitions(-DUSE_V4_AVX)
+  set(USE_V4 True)
+endif(USE_V4_AVX)
+
+if(USE_V4_AVX2)
+  add_definitions(-DUSE_V4_AVX2)
+  set(USE_V4 True)
+endif(USE_V4_AVX2)
+
 if(USE_V4_ALTIVEC)
   add_definitions(-DUSE_V4_ALTIVEC)
   set(USE_V4 True)

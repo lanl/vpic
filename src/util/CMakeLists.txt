@@ -35,6 +35,8 @@ set(util_HEADERS
   v4/v4_portable.h
   v4/v4_sse.h
   v8/v8.h
+  v8/v8_avx.h
+  v8/v8_avx2.h
   v8/v8_portable.h
   PARENT_SCOPE
 )

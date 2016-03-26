@@ -137,6 +137,16 @@ if(USE_V8_PORTABLE)
   set(USE_V8 True)
 endif(USE_V8_PORTABLE)
 
+if(USE_V8_AVX)
+  add_definitions(-DUSE_V8_AVX)
+  set(USE_V8 True)
+endif(USE_V8_AVX)
+
+if(USE_V8_AVX2)
+  add_definitions(-DUSE_V8_AVX2)
+  set(USE_V8 True)
+endif(USE_V8_AVX2)
+
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)

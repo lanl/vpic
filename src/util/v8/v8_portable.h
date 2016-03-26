@@ -14,20 +14,20 @@
 
 #include <math.h>
 
-namespace v8 {
-
+namespace v8
+{
   class v8;
   class v8int;
   class v8float;
-  
+
   ////////////////
   // v8 base class
-  
-  class v8 {
-    
+
+  class v8
+  {
     friend class v8int;
     friend class v8float;
-      
+
     // v8 miscellaneous friends
 
     friend inline int any( const v8 &a );
@@ -50,7 +50,7 @@ namespace v8 {
     friend inline v8 merge(    const v8int &c, const v8 &a, const v8 &b );
 
     // v8 memory manipulation friends
-        
+
     friend inline void load_8x1( const void * ALIGNED(16) p, v8 &a );
     friend inline void store_8x1( const v8 &a, void * ALIGNED(16) p );
     friend inline void stream_8x1( const v8 &a, void * ALIGNED(16) p );
@@ -93,7 +93,17 @@ namespace v8 {
                                     const void * ALIGNED(16) a6,
                                     const void * ALIGNED(16) a7,
                                     v8 &a, v8 &b, v8 &c, v8 &d );
-    
+    friend inline void load_8x8_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
+				    const void * ALIGNED(16) a4,
+                                    const void * ALIGNED(16) a5,
+                                    const void * ALIGNED(16) a6,
+                                    const void * ALIGNED(16) a7,
+                                    v8 &a, v8 &b, v8 &c, v8 &d,
+                                    v8 &e, v8 &f, v8 &g, v8 &h );
+
     friend inline void store_8x1_tr( const v8 &a,
                                      void *a0, void *a1, void *a2, void *a3,
                                      void *a4, void *a5, void *a6, void *a7 );
@@ -125,14 +135,27 @@ namespace v8 {
                                      void * ALIGNED(16) a5,
                                      void * ALIGNED(16) a6,
                                      void * ALIGNED(16) a7 );
+    friend inline void store_8x8_tr( const v8 &a, const v8 &b,
+                                     const v8 &c, const v8 &d,
+                                     const v8 &e, const v8 &f,
+                                     const v8 &g, const v8 &h,
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3,
+                                     void * ALIGNED(16) a4,
+                                     void * ALIGNED(16) a5,
+                                     void * ALIGNED(16) a6,
+                                     void * ALIGNED(16) a7 );
 
   protected:
 
-    union {
+    union
+    {
       int i[8];
       float f[8];
     };
-    
+
   public:
 
     v8() {}                    // Default constructor
@@ -141,21 +164,25 @@ namespace v8 {
       i[4]=a.i[4]; i[5]=a.i[5]; i[6]=a.i[6]; i[7]=a.i[7];
     }
     ~v8() {}                   // Default destructor
-
   };
-  
+
   // v8 miscellaneous functions
 
-  inline int any( const v8 &a ) {
-    return a.i[0] || a.i[1] || a.i[2] || a.i[3] || a.i[4] || a.i[5] || a.i[6] || a.i[7];
+  inline int any( const v8 &a )
+  {
+    return a.i[0] || a.i[1] || a.i[2] || a.i[3] ||
+           a.i[4] || a.i[5] || a.i[6] || a.i[7];
   }
-  
-  inline int all( const v8 &a ) {
-    return a.i[0] && a.i[1] && a.i[2] && a.i[3] && a.i[4] && a.i[5] && a.i[6] && a.i[7];
+
+  inline int all( const v8 &a )
+  {
+    return a.i[0] && a.i[1] && a.i[2] && a.i[3] &&
+           a.i[4] && a.i[5] && a.i[6] && a.i[7];
   }
-  
+
   template<int n>
-  inline v8 splat( const v8 & a ) {
+  inline v8 splat( const v8 & a )
+  {
     v8 b;
     b.i[0] = a.i[n];
     b.i[1] = a.i[n];
@@ -169,7 +196,8 @@ namespace v8 {
   }
 
   template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
-  inline v8 shuffle( const v8 & a ) {
+  inline v8 shuffle( const v8 & a )
+  {
     v8 b;
     b.i[0] = a.i[i0];
     b.i[1] = a.i[i1];
@@ -184,7 +212,8 @@ namespace v8 {
 
 # define sw(x,y) x^=y, y^=x, x^=y
 
-  inline void swap( v8 &a, v8 &b ) { 
+  inline void swap( v8 &a, v8 &b )
+  { 
     sw( a.i[0], b.i[0] );
     sw( a.i[1], b.i[1] );
     sw( a.i[2], b.i[2] );
@@ -196,21 +225,23 @@ namespace v8 {
   }
 
   inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			 v8 &a4, v8 &a5, v8 &a6, v8 &a7 ) {
-    /**/ sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] ); sw( a0.i[4],a4.i[0] ); sw( a0.i[5],a5.i[0] ); sw( a0.i[6],a6.i[0] ); sw( a0.i[7],a7.i[0] );
-    /**/                        sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] ); sw( a1.i[4],a4.i[1] ); sw( a1.i[5],a5.i[1] ); sw( a1.i[6],a6.i[1] ); sw( a1.i[7],a7.i[1] );
-    /**/                                               sw( a2.i[3],a3.i[2] ); sw( a2.i[4],a4.i[2] ); sw( a2.i[5],a5.i[2] ); sw( a2.i[6],a6.i[2] ); sw( a2.i[7],a7.i[2] );
-    /**/                                                                      sw( a3.i[4],a4.i[3] ); sw( a3.i[5],a5.i[3] ); sw( a3.i[6],a6.i[3] ); sw( a3.i[7],a7.i[3] );
-    /**/                                                                                             sw( a4.i[5],a5.i[4] ); sw( a4.i[6],a6.i[4] ); sw( a4.i[7],a7.i[4] );
-    /**/                                                                                                                    sw( a5.i[6],a6.i[5] ); sw( a5.i[7],a7.i[5] );
-    /**/                                                                                                                                           sw( a6.i[7],a7.i[6] );
+			 v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] ); sw( a0.i[4],a4.i[0] ); sw( a0.i[5],a5.i[0] ); sw( a0.i[6],a6.i[0] ); sw( a0.i[7],a7.i[0] );
+                           sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] ); sw( a1.i[4],a4.i[1] ); sw( a1.i[5],a5.i[1] ); sw( a1.i[6],a6.i[1] ); sw( a1.i[7],a7.i[1] );
+                                                  sw( a2.i[3],a3.i[2] ); sw( a2.i[4],a4.i[2] ); sw( a2.i[5],a5.i[2] ); sw( a2.i[6],a6.i[2] ); sw( a2.i[7],a7.i[2] );
+                                                                         sw( a3.i[4],a4.i[3] ); sw( a3.i[5],a5.i[3] ); sw( a3.i[6],a6.i[3] ); sw( a3.i[7],a7.i[3] );
+                                                                                                sw( a4.i[5],a5.i[4] ); sw( a4.i[6],a6.i[4] ); sw( a4.i[7],a7.i[4] );
+                                                                                                                       sw( a5.i[6],a6.i[5] ); sw( a5.i[7],a7.i[5] );
+                                                                                                                                              sw( a6.i[7],a7.i[6] );
   }
 
 # undef sw
 
   // v8 memory manipulation functions
-  
-  inline void load_8x1( const void * ALIGNED(16) p, v8 &a ) {
+
+  inline void load_8x1( const void * ALIGNED(16) p, v8 &a )
+  {
     a.i[0] = ((const int * ALIGNED(16))p)[0];
     a.i[1] = ((const int * ALIGNED(16))p)[1];
     a.i[2] = ((const int * ALIGNED(16))p)[2];
@@ -221,7 +252,8 @@ namespace v8 {
     a.i[7] = ((const int * ALIGNED(16))p)[7];
   }
 
-  inline void store_8x1( const v8 &a, void * ALIGNED(16) p ) {
+  inline void store_8x1( const v8 &a, void * ALIGNED(16) p )
+  {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
     ((int * ALIGNED(16))p)[2] = a.i[2];
@@ -232,7 +264,8 @@ namespace v8 {
     ((int * ALIGNED(16))p)[7] = a.i[7];
   }
 
-  inline void stream_8x1( const v8 &a, void * ALIGNED(16) p ) {
+  inline void stream_8x1( const v8 &a, void * ALIGNED(16) p )
+  {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
     ((int * ALIGNED(16))p)[2] = a.i[2];
@@ -243,7 +276,8 @@ namespace v8 {
     ((int * ALIGNED(16))p)[7] = a.i[7];
   }
 
-  inline void clear_8x1( void * ALIGNED(16) p ) {
+  inline void clear_8x1( void * ALIGNED(16) p )
+  {
     ((int * ALIGNED(16))p)[0] = 0;
     ((int * ALIGNED(16))p)[1] = 0;
     ((int * ALIGNED(16))p)[2] = 0;
@@ -256,7 +290,8 @@ namespace v8 {
 
   // FIXME: Ordering semantics
   inline void copy_8x1( void * ALIGNED(16) dst,
-                        const void * ALIGNED(16) src ) {
+                        const void * ALIGNED(16) src )
+  {
     ((int * ALIGNED(16))dst)[0] = ((const int * ALIGNED(16))src)[0];
     ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
     ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
@@ -267,7 +302,8 @@ namespace v8 {
     ((int * ALIGNED(16))dst)[7] = ((const int * ALIGNED(16))src)[7];
   }
 
-  inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
+  inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
+  {
     int t;
     t = ((int * ALIGNED(16))a)[0];
     ((int * ALIGNED(16))a)[0] = ((int * ALIGNED(16))b)[0];
@@ -307,7 +343,9 @@ namespace v8 {
   inline void load_8x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3,
                            const void *a4, const void *a5,
-                           const void *a6, const void *a7, v8 &a ) {
+                           const void *a6, const void *a7,
+			   v8 &a )
+  {
     a.i[0] = ((const int *)a0)[0];
     a.i[1] = ((const int *)a1)[0];
     a.i[2] = ((const int *)a2)[0];
@@ -326,7 +364,8 @@ namespace v8 {
                            const void * ALIGNED(8) a5,
                            const void * ALIGNED(8) a6,
                            const void * ALIGNED(8) a7,
-                           v8 &a, v8 &b ) {
+                           v8 &a, v8 &b )
+  {
     a.i[0] = ((const int * ALIGNED(8))a0)[0];
     b.i[0] = ((const int * ALIGNED(8))a0)[1];
 
@@ -351,7 +390,7 @@ namespace v8 {
     a.i[7] = ((const int * ALIGNED(8))a7)[0];
     b.i[7] = ((const int * ALIGNED(8))a7)[1];
   }
-  
+
   inline void load_8x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -360,19 +399,20 @@ namespace v8 {
                            const void * ALIGNED(16) a5,
                            const void * ALIGNED(16) a6,
                            const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c ) {
+                           v8 &a, v8 &b, v8 &c )
+  {
     a.i[0] = ((const int * ALIGNED(16))a0)[0];
     b.i[0] = ((const int * ALIGNED(16))a0)[1];
     c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    
+
     a.i[1] = ((const int * ALIGNED(16))a1)[0];
     b.i[1] = ((const int * ALIGNED(16))a1)[1];
     c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    
+
     a.i[2] = ((const int * ALIGNED(16))a2)[0];
     b.i[2] = ((const int * ALIGNED(16))a2)[1];
     c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    
+
     a.i[3] = ((const int * ALIGNED(16))a3)[0];
     b.i[3] = ((const int * ALIGNED(16))a3)[1];
     c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
@@ -380,15 +420,15 @@ namespace v8 {
     a.i[4] = ((const int * ALIGNED(16))a4)[0];
     b.i[4] = ((const int * ALIGNED(16))a4)[1];
     c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    
+
     a.i[5] = ((const int * ALIGNED(16))a5)[0];
     b.i[5] = ((const int * ALIGNED(16))a5)[1];
     c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    
+
     a.i[6] = ((const int * ALIGNED(16))a6)[0];
     b.i[6] = ((const int * ALIGNED(16))a6)[1];
     c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    
+
     a.i[7] = ((const int * ALIGNED(16))a7)[0];
     b.i[7] = ((const int * ALIGNED(16))a7)[1];
     c.i[7] = ((const int * ALIGNED(16))a7)[2]; 
@@ -402,22 +442,23 @@ namespace v8 {
                            const void * ALIGNED(16) a5,
                            const void * ALIGNED(16) a6,
                            const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d ) {
+                           v8 &a, v8 &b, v8 &c, v8 &d )
+  {
     a.i[0] = ((const int * ALIGNED(16))a0)[0];
     b.i[0] = ((const int * ALIGNED(16))a0)[1];
     c.i[0] = ((const int * ALIGNED(16))a0)[2];
     d.i[0] = ((const int * ALIGNED(16))a0)[3];
-    
+
     a.i[1] = ((const int * ALIGNED(16))a1)[0];
     b.i[1] = ((const int * ALIGNED(16))a1)[1];
     c.i[1] = ((const int * ALIGNED(16))a1)[2];
     d.i[1] = ((const int * ALIGNED(16))a1)[3];
-    
+
     a.i[2] = ((const int * ALIGNED(16))a2)[0];
     b.i[2] = ((const int * ALIGNED(16))a2)[1];
     c.i[2] = ((const int * ALIGNED(16))a2)[2];
     d.i[2] = ((const int * ALIGNED(16))a2)[3];
-    
+
     a.i[3] = ((const int * ALIGNED(16))a3)[0];
     b.i[3] = ((const int * ALIGNED(16))a3)[1];
     c.i[3] = ((const int * ALIGNED(16))a3)[2];
@@ -427,26 +468,111 @@ namespace v8 {
     b.i[4] = ((const int * ALIGNED(16))a4)[1];
     c.i[4] = ((const int * ALIGNED(16))a4)[2];
     d.i[4] = ((const int * ALIGNED(16))a4)[3];
-    
+
     a.i[5] = ((const int * ALIGNED(16))a5)[0];
     b.i[5] = ((const int * ALIGNED(16))a5)[1];
     c.i[5] = ((const int * ALIGNED(16))a5)[2];
     d.i[5] = ((const int * ALIGNED(16))a5)[3];
-    
+
     a.i[6] = ((const int * ALIGNED(16))a6)[0];
     b.i[6] = ((const int * ALIGNED(16))a6)[1];
     c.i[6] = ((const int * ALIGNED(16))a6)[2];
     d.i[6] = ((const int * ALIGNED(16))a6)[3];
-    
+
     a.i[7] = ((const int * ALIGNED(16))a7)[0];
     b.i[7] = ((const int * ALIGNED(16))a7)[1];
     c.i[7] = ((const int * ALIGNED(16))a7)[2];
     d.i[7] = ((const int * ALIGNED(16))a7)[3];
   }
 
+  inline void load_8x8_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+			   const void * ALIGNED(16) a4,
+                           const void * ALIGNED(16) a5,
+                           const void * ALIGNED(16) a6,
+                           const void * ALIGNED(16) a7,
+                           v8 &a, v8 &b, v8 &c, v8 &d,
+                           v8 &e, v8 &f, v8 &g, v8 &h )
+  {
+    a.i[0] = ((const int * ALIGNED(16))a0)[0];
+    b.i[0] = ((const int * ALIGNED(16))a0)[1];
+    c.i[0] = ((const int * ALIGNED(16))a0)[2];
+    d.i[0] = ((const int * ALIGNED(16))a0)[3];
+    e.i[0] = ((const int * ALIGNED(16))a0)[4];
+    f.i[0] = ((const int * ALIGNED(16))a0)[5];
+    g.i[0] = ((const int * ALIGNED(16))a0)[6];
+    h.i[0] = ((const int * ALIGNED(16))a0)[7];
+
+    a.i[1] = ((const int * ALIGNED(16))a1)[0];
+    b.i[1] = ((const int * ALIGNED(16))a1)[1];
+    c.i[1] = ((const int * ALIGNED(16))a1)[2];
+    d.i[1] = ((const int * ALIGNED(16))a1)[3];
+    e.i[1] = ((const int * ALIGNED(16))a1)[4];
+    f.i[1] = ((const int * ALIGNED(16))a1)[5];
+    g.i[1] = ((const int * ALIGNED(16))a1)[6];
+    h.i[1] = ((const int * ALIGNED(16))a1)[7];
+
+    a.i[2] = ((const int * ALIGNED(16))a2)[0];
+    b.i[2] = ((const int * ALIGNED(16))a2)[1];
+    c.i[2] = ((const int * ALIGNED(16))a2)[2];
+    d.i[2] = ((const int * ALIGNED(16))a2)[3];
+    e.i[2] = ((const int * ALIGNED(16))a2)[4];
+    f.i[2] = ((const int * ALIGNED(16))a2)[5];
+    g.i[2] = ((const int * ALIGNED(16))a2)[6];
+    h.i[2] = ((const int * ALIGNED(16))a2)[7];
+
+    a.i[3] = ((const int * ALIGNED(16))a3)[0];
+    b.i[3] = ((const int * ALIGNED(16))a3)[1];
+    c.i[3] = ((const int * ALIGNED(16))a3)[2];
+    d.i[3] = ((const int * ALIGNED(16))a3)[3];
+    e.i[3] = ((const int * ALIGNED(16))a3)[4];
+    f.i[3] = ((const int * ALIGNED(16))a3)[5];
+    g.i[3] = ((const int * ALIGNED(16))a3)[6];
+    h.i[3] = ((const int * ALIGNED(16))a3)[7];
+
+    a.i[4] = ((const int * ALIGNED(16))a4)[0];
+    b.i[4] = ((const int * ALIGNED(16))a4)[1];
+    c.i[4] = ((const int * ALIGNED(16))a4)[2];
+    d.i[4] = ((const int * ALIGNED(16))a4)[3];
+    e.i[4] = ((const int * ALIGNED(16))a4)[4];
+    f.i[4] = ((const int * ALIGNED(16))a4)[5];
+    g.i[4] = ((const int * ALIGNED(16))a4)[6];
+    h.i[4] = ((const int * ALIGNED(16))a4)[7];
+
+    a.i[5] = ((const int * ALIGNED(16))a5)[0];
+    b.i[5] = ((const int * ALIGNED(16))a5)[1];
+    c.i[5] = ((const int * ALIGNED(16))a5)[2];
+    d.i[5] = ((const int * ALIGNED(16))a5)[3];
+    e.i[5] = ((const int * ALIGNED(16))a5)[4];
+    f.i[5] = ((const int * ALIGNED(16))a5)[5];
+    g.i[5] = ((const int * ALIGNED(16))a5)[6];
+    h.i[5] = ((const int * ALIGNED(16))a5)[7];
+
+    a.i[6] = ((const int * ALIGNED(16))a6)[0];
+    b.i[6] = ((const int * ALIGNED(16))a6)[1];
+    c.i[6] = ((const int * ALIGNED(16))a6)[2];
+    d.i[6] = ((const int * ALIGNED(16))a6)[3];
+    e.i[6] = ((const int * ALIGNED(16))a6)[4];
+    f.i[6] = ((const int * ALIGNED(16))a6)[5];
+    g.i[6] = ((const int * ALIGNED(16))a6)[6];
+    h.i[6] = ((const int * ALIGNED(16))a6)[7];
+
+    a.i[7] = ((const int * ALIGNED(16))a7)[0];
+    b.i[7] = ((const int * ALIGNED(16))a7)[1];
+    c.i[7] = ((const int * ALIGNED(16))a7)[2];
+    d.i[7] = ((const int * ALIGNED(16))a7)[3];
+    e.i[7] = ((const int * ALIGNED(16))a7)[4];
+    f.i[7] = ((const int * ALIGNED(16))a7)[5];
+    g.i[7] = ((const int * ALIGNED(16))a7)[6];
+    h.i[7] = ((const int * ALIGNED(16))a7)[7];
+  }
+
   inline void store_8x1_tr( const v8 &a,
                             void *a0, void *a1, void *a2, void *a3,
-                            void *a4, void *a5, void *a6, void *a7 ) {
+                            void *a4, void *a5, void *a6, void *a7 )
+  {
     ((int *)a0)[0] = a.i[0];
     ((int *)a1)[0] = a.i[1];
     ((int *)a2)[0] = a.i[2];
@@ -461,7 +587,8 @@ namespace v8 {
                             void * ALIGNED(8) a0, void * ALIGNED(8) a1,
                             void * ALIGNED(8) a2, void * ALIGNED(8) a3,
                             void * ALIGNED(8) a4, void * ALIGNED(8) a5,
-                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 ) {
+                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
+  {
     ((int * ALIGNED(8))a0)[0] = a.i[0];
     ((int * ALIGNED(8))a0)[1] = b.i[0];
 
@@ -491,19 +618,20 @@ namespace v8 {
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3,
                             void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 ) {
+                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  {
     ((int * ALIGNED(16))a0)[0] = a.i[0];
     ((int * ALIGNED(16))a0)[1] = b.i[0];
     ((int * ALIGNED(16))a0)[2] = c.i[0];
-    
+
     ((int * ALIGNED(16))a1)[0] = a.i[1];
     ((int * ALIGNED(16))a1)[1] = b.i[1];
     ((int * ALIGNED(16))a1)[2] = c.i[1];
-    
+
     ((int * ALIGNED(16))a2)[0] = a.i[2];
     ((int * ALIGNED(16))a2)[1] = b.i[2];
     ((int * ALIGNED(16))a2)[2] = c.i[2];
-    
+
     ((int * ALIGNED(16))a3)[0] = a.i[3];
     ((int * ALIGNED(16))a3)[1] = b.i[3];
     ((int * ALIGNED(16))a3)[2] = c.i[3];
@@ -511,40 +639,41 @@ namespace v8 {
     ((int * ALIGNED(16))a4)[0] = a.i[4];
     ((int * ALIGNED(16))a4)[1] = b.i[4];
     ((int * ALIGNED(16))a4)[2] = c.i[4];
-    
+
     ((int * ALIGNED(16))a5)[0] = a.i[5];
     ((int * ALIGNED(16))a5)[1] = b.i[5];
     ((int * ALIGNED(16))a5)[2] = c.i[5];
-    
+
     ((int * ALIGNED(16))a6)[0] = a.i[6];
     ((int * ALIGNED(16))a6)[1] = b.i[6];
     ((int * ALIGNED(16))a6)[2] = c.i[6];
-    
+
     ((int * ALIGNED(16))a7)[0] = a.i[7];
     ((int * ALIGNED(16))a7)[1] = b.i[7];
     ((int * ALIGNED(16))a7)[2] = c.i[7];
   }
-  
+
   inline void store_8x4_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3,
                             void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 ) {
+                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  {
     ((int * ALIGNED(16))a0)[0] = a.i[0];
     ((int * ALIGNED(16))a0)[1] = b.i[0];
     ((int * ALIGNED(16))a0)[2] = c.i[0];
     ((int * ALIGNED(16))a0)[3] = d.i[0];
-    
+
     ((int * ALIGNED(16))a1)[0] = a.i[1];
     ((int * ALIGNED(16))a1)[1] = b.i[1];
     ((int * ALIGNED(16))a1)[2] = c.i[1];
     ((int * ALIGNED(16))a1)[3] = d.i[1];
-    
+
     ((int * ALIGNED(16))a2)[0] = a.i[2];
     ((int * ALIGNED(16))a2)[1] = b.i[2];
     ((int * ALIGNED(16))a2)[2] = c.i[2];
     ((int * ALIGNED(16))a2)[3] = d.i[2];
-    
+
     ((int * ALIGNED(16))a3)[0] = a.i[3];
     ((int * ALIGNED(16))a3)[1] = b.i[3];
     ((int * ALIGNED(16))a3)[2] = c.i[3];
@@ -554,28 +683,108 @@ namespace v8 {
     ((int * ALIGNED(16))a4)[1] = b.i[4];
     ((int * ALIGNED(16))a4)[2] = c.i[4];
     ((int * ALIGNED(16))a4)[3] = d.i[4];
-    
+
     ((int * ALIGNED(16))a5)[0] = a.i[5];
     ((int * ALIGNED(16))a5)[1] = b.i[5];
     ((int * ALIGNED(16))a5)[2] = c.i[5];
     ((int * ALIGNED(16))a5)[3] = d.i[5];
-    
+
     ((int * ALIGNED(16))a6)[0] = a.i[6];
     ((int * ALIGNED(16))a6)[1] = b.i[6];
     ((int * ALIGNED(16))a6)[2] = c.i[6];
     ((int * ALIGNED(16))a6)[3] = d.i[6];
-    
+
     ((int * ALIGNED(16))a7)[0] = a.i[7];
     ((int * ALIGNED(16))a7)[1] = b.i[7];
     ((int * ALIGNED(16))a7)[2] = c.i[7];
     ((int * ALIGNED(16))a7)[3] = d.i[7];
   }
 
+  inline void store_8x8_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
+			    const v8 &e, const v8 &f, const v8 &g, const v8 &h,
+                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
+                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
+                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  {
+    ((int * ALIGNED(16))a0)[0] = a.i[0];
+    ((int * ALIGNED(16))a0)[1] = b.i[0];
+    ((int * ALIGNED(16))a0)[2] = c.i[0];
+    ((int * ALIGNED(16))a0)[3] = d.i[0];
+    ((int * ALIGNED(16))a0)[4] = e.i[0];
+    ((int * ALIGNED(16))a0)[5] = f.i[0];
+    ((int * ALIGNED(16))a0)[6] = g.i[0];
+    ((int * ALIGNED(16))a0)[7] = h.i[0];
+
+    ((int * ALIGNED(16))a1)[0] = a.i[1];
+    ((int * ALIGNED(16))a1)[1] = b.i[1];
+    ((int * ALIGNED(16))a1)[2] = c.i[1];
+    ((int * ALIGNED(16))a1)[3] = d.i[1];
+    ((int * ALIGNED(16))a1)[4] = e.i[1];
+    ((int * ALIGNED(16))a1)[5] = f.i[1];
+    ((int * ALIGNED(16))a1)[6] = g.i[1];
+    ((int * ALIGNED(16))a1)[7] = h.i[1];
+
+    ((int * ALIGNED(16))a2)[0] = a.i[2];
+    ((int * ALIGNED(16))a2)[1] = b.i[2];
+    ((int * ALIGNED(16))a2)[2] = c.i[2];
+    ((int * ALIGNED(16))a2)[3] = d.i[2];
+    ((int * ALIGNED(16))a2)[4] = e.i[2];
+    ((int * ALIGNED(16))a2)[5] = f.i[2];
+    ((int * ALIGNED(16))a2)[6] = g.i[2];
+    ((int * ALIGNED(16))a2)[7] = h.i[2];
+
+    ((int * ALIGNED(16))a3)[0] = a.i[3];
+    ((int * ALIGNED(16))a3)[1] = b.i[3];
+    ((int * ALIGNED(16))a3)[2] = c.i[3];
+    ((int * ALIGNED(16))a3)[3] = d.i[3];
+    ((int * ALIGNED(16))a3)[4] = e.i[3];
+    ((int * ALIGNED(16))a3)[5] = f.i[3];
+    ((int * ALIGNED(16))a3)[6] = g.i[3];
+    ((int * ALIGNED(16))a3)[7] = h.i[3];
+
+    ((int * ALIGNED(16))a4)[0] = a.i[4];
+    ((int * ALIGNED(16))a4)[1] = b.i[4];
+    ((int * ALIGNED(16))a4)[2] = c.i[4];
+    ((int * ALIGNED(16))a4)[3] = d.i[4];
+    ((int * ALIGNED(16))a4)[4] = e.i[4];
+    ((int * ALIGNED(16))a4)[5] = f.i[4];
+    ((int * ALIGNED(16))a4)[6] = g.i[4];
+    ((int * ALIGNED(16))a4)[7] = h.i[4];
+
+    ((int * ALIGNED(16))a5)[0] = a.i[5];
+    ((int * ALIGNED(16))a5)[1] = b.i[5];
+    ((int * ALIGNED(16))a5)[2] = c.i[5];
+    ((int * ALIGNED(16))a5)[3] = d.i[5];
+    ((int * ALIGNED(16))a5)[4] = e.i[5];
+    ((int * ALIGNED(16))a5)[5] = f.i[5];
+    ((int * ALIGNED(16))a5)[6] = g.i[5];
+    ((int * ALIGNED(16))a5)[7] = h.i[5];
+
+    ((int * ALIGNED(16))a6)[0] = a.i[6];
+    ((int * ALIGNED(16))a6)[1] = b.i[6];
+    ((int * ALIGNED(16))a6)[2] = c.i[6];
+    ((int * ALIGNED(16))a6)[3] = d.i[6];
+    ((int * ALIGNED(16))a6)[4] = e.i[6];
+    ((int * ALIGNED(16))a6)[5] = f.i[6];
+    ((int * ALIGNED(16))a6)[6] = g.i[6];
+    ((int * ALIGNED(16))a6)[7] = h.i[6];
+
+    ((int * ALIGNED(16))a7)[0] = a.i[7];
+    ((int * ALIGNED(16))a7)[1] = b.i[7];
+    ((int * ALIGNED(16))a7)[2] = c.i[7];
+    ((int * ALIGNED(16))a7)[3] = d.i[7];
+    ((int * ALIGNED(16))a7)[4] = e.i[7];
+    ((int * ALIGNED(16))a7)[5] = f.i[7];
+    ((int * ALIGNED(16))a7)[6] = g.i[7];
+    ((int * ALIGNED(16))a7)[7] = h.i[7];
+  }
+
   //////////////
   // v8int class
 
-  class v8int : public v8 {
-
+  class v8int : public v8
+  {
     // v8int prefix unary operator friends
 
     friend inline v8int operator  +( const v8int & a );
@@ -650,31 +859,41 @@ namespace v8 {
   public:
 
     // v8int constructors / destructors
-    
+
     v8int() {}                                // Default constructor
-    v8int( const v8int &a ) {                 // Copy constructor
+
+    v8int( const v8int &a )                   // Copy constructor
+    {
       i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
       i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7];
     }
-    v8int( const v8 &a ) {                    // Init from mixed
+
+    v8int( const v8 &a )                      // Init from mixed
+    {
       i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
       i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7];
     }
-    v8int( int a ) {                          // Init from scalar
+
+    v8int( int a )                            // Init from scalar
+    {
       i[0] = a; i[1] = a; i[2] = a; i[3] = a;
       i[4] = a; i[5] = a; i[6] = a; i[7] = a;
     }
+
     v8int( int i0, int i1, int i2, int i3,
-	   int i4, int i5, int i6, int i7 ) { // Init from scalars
+	   int i4, int i5, int i6, int i7 )   // Init from scalars
+    {
       i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
       i[4] = i4; i[5] = i5; i[6] = i6; i[7] = i7;
     }
+
     ~v8int() {}                               // Destructor
-    
+
     // v8int assignment operators
-  
+
 #   define ASSIGN(op)			          \
-    inline v8int &operator op( const v8int &b ) { \
+    inline v8int &operator op( const v8int &b )   \
+    {						  \
       i[0] op b.i[0];                             \
       i[1] op b.i[1];                             \
       i[2] op b.i[2];                             \
@@ -701,16 +920,16 @@ namespace v8 {
 #   undef ASSIGN
 
     // v8int member access operator
-    
+
     inline int &operator []( int n ) { return i[n]; }
     inline int  operator ()( int n ) { return i[n]; }
-
   };
 
   // v8int prefix unary operators
 
 # define PREFIX_UNARY(op)                       \
-  inline v8int operator op( const v8int & a ) { \
+  inline v8int operator op( const v8int & a )   \
+  {						\
     v8int b;                                    \
     b.i[0] = (op a.i[0]);                       \
     b.i[1] = (op a.i[1]);                       \
@@ -726,7 +945,8 @@ namespace v8 {
   PREFIX_UNARY(+)
   PREFIX_UNARY(-)
 
-  inline v8int operator !( const v8int & a ) {
+  inline v8int operator !( const v8int & a )
+  {
     v8int b;
     b.i[0] = -(!a.i[0]);
     b.i[1] = -(!a.i[1]);
@@ -740,13 +960,14 @@ namespace v8 {
   }
 
   PREFIX_UNARY(~)
-  
+
 # undef PREFIX_UNARY
 
   // v8int prefix increment / decrement
 
 # define PREFIX_INCDEC(op)                      \
-  inline v8int operator op( v8int & a ) {       \
+  inline v8int operator op( v8int & a )         \
+  {						\
     v8int b;                                    \
     b.i[0] = (op a.i[0]);                       \
     b.i[1] = (op a.i[1]);                       \
@@ -767,7 +988,8 @@ namespace v8 {
   // v8int postfix increment / decrement
 
 # define POSTFIX_INCDEC(op)                    \
-  inline v8int operator op( v8int & a, int ) { \
+  inline v8int operator op( v8int & a, int )   \
+  {					       \
     v8int b;                                   \
     b.i[0] = (a.i[0] op);                      \
     b.i[1] = (a.i[1] op);                      \
@@ -786,9 +1008,10 @@ namespace v8 {
 # undef POSTFIX_INCDEC
 
   // v8int binary operators
-  
+
 # define BINARY(op)                                             \
-  inline v8int operator op( const v8int &a, const v8int &b ) {	\
+  inline v8int operator op( const v8int &a, const v8int &b )    \
+  {								\
     v8int c;                                                    \
     c.i[0] = a.i[0] op b.i[0];                                  \
     c.i[1] = a.i[1] op b.i[1];                                  \
@@ -817,7 +1040,8 @@ namespace v8 {
   // v8int logical operators
 
 # define LOGICAL(op)                                           \
-  inline v8int operator op( const v8int &a, const v8int &b ) { \
+  inline v8int operator op( const v8int &a, const v8int &b )   \
+  {							       \
     v8int c;                                                   \
     c.i[0] = -(a.i[0] op b.i[0]);                              \
     c.i[1] = -(a.i[1] op b.i[1]);                              \
@@ -838,12 +1062,13 @@ namespace v8 {
   LOGICAL(>=)
   LOGICAL(&&)
   LOGICAL(||)
-  
+
 # undef LOGICAL
 
   // v8int miscellaneous functions
 
-  inline v8int abs( const v8int &a ) {
+  inline v8int abs( const v8int &a )
+  {
     v8int b;
     b.i[0] = (a.i[0]>=0) ? a.i[0] : -a.i[0];
     b.i[1] = (a.i[1]>=0) ? a.i[1] : -a.i[1];
@@ -856,7 +1081,8 @@ namespace v8 {
     return b;
   }
 
-  inline v8 czero( const v8int &c, const v8 &a ) {
+  inline v8 czero( const v8int &c, const v8 &a )
+  {
     v8 b;
     b.i[0] = a.i[0] & ~c.i[0];
     b.i[1] = a.i[1] & ~c.i[1];
@@ -869,7 +1095,8 @@ namespace v8 {
     return b;
   }
 
-  inline v8 notczero( const v8int &c, const v8 &a ) {
+  inline v8 notczero( const v8int &c, const v8 &a )
+  {
     v8 b;
     b.i[0] = a.i[0] & c.i[0];
     b.i[1] = a.i[1] & c.i[1];
@@ -881,8 +1108,9 @@ namespace v8 {
     b.i[7] = a.i[7] & c.i[7];
     return b;
   }
-  
-  inline v8 merge( const v8int &c, const v8 &t, const v8 &f ) {
+
+  inline v8 merge( const v8int &c, const v8 &t, const v8 &f )
+  {
     v8 m;
     m.i[0] = (f.i[0] & ~c.i[0]) | (t.i[0] & c.i[0] );
     m.i[1] = (f.i[1] & ~c.i[1]) | (t.i[1] & c.i[1] );
@@ -898,8 +1126,8 @@ namespace v8 {
   ////////////////
   // v8float class
 
-  class v8float : public v8 {
-
+  class v8float : public v8
+  {
     // v8float prefix unary operator friends
 
     friend inline v8float operator  +( const v8float &a );
@@ -970,35 +1198,45 @@ namespace v8 {
     friend inline void scale_8x1(     float * ALIGNED(16) p, const v8float &a );
     // FIXME: crack
     friend inline void trilinear( v8float & wl, v8float & wh );
-    
+
   public:
 
     // v8float constructors / destructors
-    
+
     v8float() {}                                        // Default constructor
-    v8float( const v8float &a ) {                       // Copy constructor
+
+    v8float( const v8float &a )                         // Copy constructor
+    {
       f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3];
       f[4] = a.f[4]; f[5] = a.f[5]; f[6] = a.f[6]; f[7] = a.f[7];
     }
-    v8float( const v8 &a ) {                            // Init from mixed
+
+    v8float( const v8 &a )                              // Init from mixed
+    {
       f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3];
       f[4] = a.f[4]; f[5] = a.f[5]; f[6] = a.f[6]; f[7] = a.f[7];
     }
-    v8float( float a ) {                                // Init from scalar
+
+    v8float( float a )                                  // Init from scalar
+    {
       f[0] = a; f[1] = a; f[2] = a; f[3] = a;
       f[4] = a; f[5] = a; f[6] = a; f[7] = a;
     }
+
     v8float( float f0, float f1, float f2, float f3,
-	     float f4, float f5, float f6, float f7 ) { // Init from scalars
+	     float f4, float f5, float f6, float f7 )   // Init from scalars
+    {
       f[0] = f0; f[1] = f1; f[2] = f2; f[3] = f3;
       f[4] = f4; f[5] = f5; f[6] = f6; f[7] = f7;
     }
+
     ~v8float() {}                                       // Destructor
 
     // v8float assignment operators
 
 #   define ASSIGN(op)                                   \
-    inline v8float &operator op( const v8float &b ) {	\
+    inline v8float &operator op( const v8float &b )     \
+    {							\
       f[0] op b.f[0];		             		\
       f[1] op b.f[1];                                   \
       f[2] op b.f[2];                                   \
@@ -1022,26 +1260,28 @@ namespace v8 {
 
     inline float &operator []( int n ) { return f[n]; }
     inline float  operator ()( int n ) { return f[n]; }
-
   };
 
   // v8float prefix unary operators
 
-  inline v8float operator +( const v8float &a ) {
+  inline v8float operator +( const v8float &a )
+  {
     v8float b;
     b.f[0] = +a.f[0]; b.f[1] = +a.f[1]; b.f[2] = +a.f[2]; b.f[3] = +a.f[3];
     b.f[4] = +a.f[4]; b.f[5] = +a.f[5]; b.f[6] = +a.f[6]; b.f[7] = +a.f[7];
     return b;
   }
 
-  inline v8float operator -( const v8float &a ) {
+  inline v8float operator -( const v8float &a )
+  {
     v8float b;
     b.f[0] = -a.f[0]; b.f[1] = -a.f[1]; b.f[2] = -a.f[2]; b.f[3] = -a.f[3];
     b.f[4] = -a.f[4]; b.f[5] = -a.f[5]; b.f[6] = -a.f[6]; b.f[7] = -a.f[7];
     return b;
   }
 
-  inline v8int operator !( const v8float &a ) {
+  inline v8int operator !( const v8float &a )
+  {
     v8int b;
     b.i[0] = a.i[0] ? 0 : -1;
     b.i[1] = a.i[1] ? 0 : -1;
@@ -1056,14 +1296,16 @@ namespace v8 {
 
   // v8float prefix increment / decrement operators
 
-  inline v8float operator ++( v8float &a ) {
+  inline v8float operator ++( v8float &a )
+  {
     v8float b;
     b.f[0] = ++a.f[0]; b.f[1] = ++a.f[1]; b.f[2] = ++a.f[2]; b.f[3] = ++a.f[3];
     b.f[4] = ++a.f[4]; b.f[5] = ++a.f[5]; b.f[6] = ++a.f[6]; b.f[7] = ++a.f[7];
     return b;
   }
 
-  inline v8float operator --( v8float &a ) {
+  inline v8float operator --( v8float &a )
+  {
     v8float b;
     b.f[0] = --a.f[0]; b.f[1] = --a.f[1]; b.f[2] = --a.f[2]; b.f[3] = --a.f[3];
     b.f[4] = --a.f[4]; b.f[5] = --a.f[5]; b.f[6] = --a.f[6]; b.f[7] = --a.f[7];
@@ -1072,14 +1314,16 @@ namespace v8 {
 
   // v8float postfix increment / decrement operators
 
-  inline v8float operator ++( v8float &a, int ) {
+  inline v8float operator ++( v8float &a, int )
+  {
     v8float b;
     b.f[0] = a.f[0]++; b.f[1] = a.f[1]++; b.f[2] = a.f[2]++; b.f[3] = a.f[3]++;
     b.f[4] = a.f[4]++; b.f[5] = a.f[5]++; b.f[6] = a.f[6]++; b.f[7] = a.f[7]++;
     return b;
   }
 
-  inline v8float operator --( v8float &a, int ) {
+  inline v8float operator --( v8float &a, int )
+  {
     v8float b;
     b.f[0] = a.f[0]--; b.f[1] = a.f[1]--; b.f[2] = a.f[2]--; b.f[3] = a.f[3]--;
     b.f[4] = a.f[4]--; b.f[5] = a.f[5]--; b.f[6] = a.f[6]--; b.f[7] = a.f[7]--;
@@ -1087,9 +1331,10 @@ namespace v8 {
   }
 
   // v8float binary operators
-    
+
 # define BINARY(op)                                                  \
-  inline v8float operator op( const v8float &a, const v8float &b ) { \
+  inline v8float operator op( const v8float &a, const v8float &b )   \
+  {								     \
     v8float c;                                                       \
     c.f[0] = a.f[0] op b.f[0];                                       \
     c.f[1] = a.f[1] op b.f[1];                                       \
@@ -1112,7 +1357,8 @@ namespace v8 {
   // v8float logical operators
 
 # define LOGICAL(op)                                               \
-  inline v8int operator op( const v8float &a, const v8float &b ) { \
+  inline v8int operator op( const v8float &a, const v8float &b )   \
+  {								   \
     v8int c;                                                       \
     c.i[0] = -( a.f[0] op b.f[0] );                                \
     c.i[1] = -( a.f[1] op b.f[1] );                                \
@@ -1139,7 +1385,8 @@ namespace v8 {
   // v8float math library functions
 
 # define CMATH_FR1(fn)                          \
-  inline v8float fn( const v8float &a ) {       \
+  inline v8float fn( const v8float &a )         \
+  {						\
     v8float b;                                  \
     b.f[0] = ::fn(a.f[0]);                      \
     b.f[1] = ::fn(a.f[1]);                      \
@@ -1153,7 +1400,8 @@ namespace v8 {
   }
 
 # define CMATH_FR2(fn)                                          \
-  inline v8float fn( const v8float &a, const v8float &b ) {     \
+  inline v8float fn( const v8float &a, const v8float &b )       \
+  {								\
     v8float c;                                                  \
     c.f[0] = ::fn(a.f[0],b.f[0]);                               \
     c.f[1] = ::fn(a.f[1],b.f[1]);                               \
@@ -1172,7 +1420,8 @@ namespace v8 {
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
   CMATH_FR1(sqrt)     CMATH_FR1(tan)   CMATH_FR1(tanh)
 
-  inline v8float copysign( const v8float &a, const v8float &b ) {
+  inline v8float copysign( const v8float &a, const v8float &b )
+  {
     v8float c;
     float t;
     t = ::fabs(a.f[0]); if( b.f[0]<0 ) t = -t; c.f[0] = t;
@@ -1190,21 +1439,9 @@ namespace v8 {
 # undef CMATH_FR2
 
   // v8float miscelleanous functions
-  
-  inline v8float rsqrt_approx( const v8float &a ) {
-    v8float b;
-    b.f[0] = ::sqrt( 1/a.f[0] );
-    b.f[1] = ::sqrt( 1/a.f[1] );
-    b.f[2] = ::sqrt( 1/a.f[2] );
-    b.f[3] = ::sqrt( 1/a.f[3] );
-    b.f[4] = ::sqrt( 1/a.f[4] );
-    b.f[5] = ::sqrt( 1/a.f[5] );
-    b.f[6] = ::sqrt( 1/a.f[6] );
-    b.f[7] = ::sqrt( 1/a.f[7] );
-    return b;
-  }
-  
-  inline v8float rsqrt( const v8float &a ) {
+
+  inline v8float rsqrt_approx( const v8float &a )
+  {
     v8float b;
     b.f[0] = ::sqrt( 1/a.f[0] );
     b.f[1] = ::sqrt( 1/a.f[1] );
@@ -1217,20 +1454,22 @@ namespace v8 {
     return b;
   }
 
-  inline v8float rcp_approx( const v8float &a ) {
+  inline v8float rsqrt( const v8float &a )
+  {
     v8float b;
-    b.f[0] = 1/a.f[0];
-    b.f[1] = 1/a.f[1];
-    b.f[2] = 1/a.f[2];
-    b.f[3] = 1/a.f[3];
-    b.f[4] = 1/a.f[4];
-    b.f[5] = 1/a.f[5];
-    b.f[6] = 1/a.f[6];
-    b.f[7] = 1/a.f[7];
+    b.f[0] = ::sqrt( 1/a.f[0] );
+    b.f[1] = ::sqrt( 1/a.f[1] );
+    b.f[2] = ::sqrt( 1/a.f[2] );
+    b.f[3] = ::sqrt( 1/a.f[3] );
+    b.f[4] = ::sqrt( 1/a.f[4] );
+    b.f[5] = ::sqrt( 1/a.f[5] );
+    b.f[6] = ::sqrt( 1/a.f[6] );
+    b.f[7] = ::sqrt( 1/a.f[7] );
     return b;
   }
-  
-  inline v8float rcp( const v8float &a ) {
+
+  inline v8float rcp_approx( const v8float &a )
+  {
     v8float b;
     b.f[0] = 1/a.f[0];
     b.f[1] = 1/a.f[1];
@@ -1243,7 +1482,22 @@ namespace v8 {
     return b;
   }
 
-  inline v8float fma(  const v8float &a, const v8float &b, const v8float &c ) {
+  inline v8float rcp( const v8float &a )
+  {
+    v8float b;
+    b.f[0] = 1/a.f[0];
+    b.f[1] = 1/a.f[1];
+    b.f[2] = 1/a.f[2];
+    b.f[3] = 1/a.f[3];
+    b.f[4] = 1/a.f[4];
+    b.f[5] = 1/a.f[5];
+    b.f[6] = 1/a.f[6];
+    b.f[7] = 1/a.f[7];
+    return b;
+  }
+
+  inline v8float fma(  const v8float &a, const v8float &b, const v8float &c )
+  {
     v8float d;
     d.f[0] = a.f[0]*b.f[0] + c.f[0];
     d.f[1] = a.f[1]*b.f[1] + c.f[1];
@@ -1256,7 +1510,8 @@ namespace v8 {
     return d;
   }
 
-  inline v8float fms(  const v8float &a, const v8float &b, const v8float &c ) {
+  inline v8float fms(  const v8float &a, const v8float &b, const v8float &c )
+  {
     v8float d;
     d.f[0] = a.f[0]*b.f[0] - c.f[0];
     d.f[1] = a.f[1]*b.f[1] - c.f[1];
@@ -1269,7 +1524,8 @@ namespace v8 {
     return d;
   }
 
-  inline v8float fnms( const v8float &a, const v8float &b, const v8float &c ) {
+  inline v8float fnms( const v8float &a, const v8float &b, const v8float &c )
+  {
     v8float d;
     d.f[0] = c.f[0] - a.f[0]*b.f[0];
     d.f[1] = c.f[1] - a.f[1]*b.f[1];
@@ -1282,7 +1538,8 @@ namespace v8 {
     return d;
   }
 
-  inline v8float clear_bits(  const v8int &m, const v8float &a ) {
+  inline v8float clear_bits(  const v8int &m, const v8float &a )
+  {
     v8float b;
     b.i[0] = (~m.i[0]) & a.i[0];
     b.i[1] = (~m.i[1]) & a.i[1];
@@ -1295,7 +1552,8 @@ namespace v8 {
     return b;
   }
 
-  inline v8float set_bits(    const v8int &m, const v8float &a ) {
+  inline v8float set_bits(    const v8int &m, const v8float &a )
+  {
     v8float b;
     b.i[0] = m.i[0] | a.i[0];
     b.i[1] = m.i[1] | a.i[1];
@@ -1308,7 +1566,8 @@ namespace v8 {
     return b;
   }
 
-  inline v8float toggle_bits( const v8int &m, const v8float &a ) {
+  inline v8float toggle_bits( const v8int &m, const v8float &a )
+  {
     v8float b;
     b.i[0] = m.i[0] ^ a.i[0];
     b.i[1] = m.i[1] ^ a.i[1];
@@ -1321,7 +1580,8 @@ namespace v8 {
     return b;
   }
 
-  inline void increment_8x1( float * ALIGNED(16) p, const v8float &a ) {
+  inline void increment_8x1( float * ALIGNED(16) p, const v8float &a )
+  {
     p[0] += a.f[0];
     p[1] += a.f[1];
     p[2] += a.f[2];
@@ -1332,7 +1592,8 @@ namespace v8 {
     p[7] += a.f[7];
   }
 
-  inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a ) {
+  inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a )
+  {
     p[0] -= a.f[0];
     p[1] -= a.f[1];
     p[2] -= a.f[2];
@@ -1343,7 +1604,8 @@ namespace v8 {
     p[7] -= a.f[7];
   }
 
-  inline void scale_8x1( float * ALIGNED(16) p, const v8float &a ) {
+  inline void scale_8x1( float * ALIGNED(16) p, const v8float &a )
+  {
     p[0] *= a.f[0];
     p[1] *= a.f[1];
     p[2] *= a.f[2];
@@ -1357,7 +1619,8 @@ namespace v8 {
   // wdn: this function is not currently used.  also, it seems like it
   //      is not a SIMD function in the same way as the rest of the
   //      functions in this class.
-  //  inline void trilinear( v8float & wl, v8float & wh ) {
+  //  inline void trilinear( v8float & wl, v8float & wh )
+  //  {
   //    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
 
   //    wl.f[0] = ((1-x)*(1-y))*(1-z);

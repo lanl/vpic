@@ -404,16 +404,16 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
-#endif
+#endif // if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
 using namespace v8;
 
 void
-advance_p_pipeline_v8_v0( advance_p_pipeline_args_t * args,
-			  int pipeline_rank,
-			  int n_pipeline )
+advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
+		       int pipeline_rank,
+		       int n_pipeline )
 {
   particle_t           * ALIGNED(128) p0 = args->p0;
   accumulator_t        * ALIGNED(128) a0 = args->a0;
@@ -480,13 +480,13 @@ advance_p_pipeline_v8_v0( advance_p_pipeline_args_t * args,
   nm   = 0;
   itmp = 0;
 
-  // Determine which accumulator array to use
-  // The host gets the first accumulator array
+  // Determine which accumulator array to use.
+  // The host gets the first accumulator array.
 
   a0 += ( 1 + pipeline_rank ) *
         POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
 
-  // Process the particle quads for this pipeline
+  // Process the particle quads for this pipeline.
 
   for( ; nq; nq--, p+=8 )
   {
@@ -494,7 +494,7 @@ advance_p_pipeline_v8_v0( advance_p_pipeline_args_t * args,
 		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		 dx, dy, dz, ii );
 
-    // Interpolate fields
+    // Interpolate fields.
     vp0 = ( float * ALIGNED(16) ) ( f0 + ii(0) );
     vp1 = ( float * ALIGNED(16) ) ( f0 + ii(1) );
     vp2 = ( float * ALIGNED(16) ) ( f0 + ii(2) );
@@ -690,6 +690,7 @@ advance_p_pipeline_v8_v0( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
+#if 0
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		       int pipeline_rank,
@@ -750,11 +751,11 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   max_nm = args->max_nm - ( args->np&15 );
 
-  if( max_nm < 0 ) max_nm = 0;
+  if ( max_nm < 0 ) max_nm = 0;
 
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
 
-  if( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
+  if ( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
 
   pm   = args->pm + itmp;
   nm   = 0;
@@ -764,7 +765,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   // The host gets the first accumulator array.
 
   a0 += ( 1 + pipeline_rank ) *
-        POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2) , 2 );
+        POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
 
   // Process the particle quads for this pipeline.
 
@@ -870,9 +871,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
 
-    // Accumulate current of inbnd particles
+    // Accumulate current of inbnd particles.
     // Note: accumulator values are 4 times the total physical charge that
-    // passed through the appropriate current quadrant in a time-step
+    // passed through the appropriate current quadrant in a time-step.
     q  = czero(outbnd,q*qsp);      // Do not accumulate outbnd particles
     dx = v0;                       // Streak midpoint (valid for inbnd only)
     dy = v1;
@@ -1025,8 +1026,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
+#endif // if 0
 
-#endif
+#endif // if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
 void
 advance_p( /**/  species_t            * RESTRICT sp,

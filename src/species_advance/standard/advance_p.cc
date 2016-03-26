@@ -1127,24 +1127,30 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     vp6 = ( float * ALIGNED(16) ) ( f0 + ii(6) );
     vp7 = ( float * ALIGNED(16) ) ( f0 + ii(7) );
 
-    load_8x4_tr( vp0, vp1, vp2, vp3,
+    load_8x8_tr( vp0, vp1, vp2, vp3,
 		 vp4, vp5, vp6, vp7,
-		 hax, v0, v1, v2 );
+		 hax, v0, v1, v2, hay, v3, v4, v5 );
+    // load_8x4_tr( vp0, vp1, vp2, vp3,
+    // 		 vp4, vp5, vp6, vp7,
+    // 		 hax, v0, v1, v2 );
     hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
 
-    load_8x4_tr( vp0+4, vp1+4, vp2+4, vp3+4,
-		 vp4+4, vp5+4, vp6+4, vp7+4,
-		 hay, v3, v4, v5 );
+    // load_8x4_tr( vp0+4, vp1+4, vp2+4, vp3+4,
+    // 		 vp4+4, vp5+4, vp6+4, vp7+4,
+    // 		 hay, v3, v4, v5 );
     hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
 
-    load_8x4_tr( vp0+8, vp1+8, vp2+8, vp3+8,
+    load_8x8_tr( vp0+8, vp1+8, vp2+8, vp3+8,
 		 vp4+8, vp5+8, vp6+8, vp7+8,
-		 haz, v0, v1, v2 );
+		 haz, v0, v1, v2, cbx, v3, cby, v4 );
+    // load_8x4_tr( vp0+8, vp1+8, vp2+8, vp3+8,
+    // 		 vp4+8, vp5+8, vp6+8, vp7+8,
+    // 		 haz, v0, v1, v2 );
     haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
 
-    load_8x4_tr( vp0+12, vp1+12, vp2+12, vp3+12,
-		 vp4+12, vp5+12, vp6+12, vp7+12,
-		 cbx, v3, cby, v4 );
+    // load_8x4_tr( vp0+12, vp1+12, vp2+12, vp3+12,
+    // 		 vp4+12, vp5+12, vp6+12, vp7+12,
+    // 		 cbx, v3, cby, v4 );
     cbx = fma( v3, dx, cbx );
     cby = fma( v4, dy, cby );
 

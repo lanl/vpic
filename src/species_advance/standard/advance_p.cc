@@ -564,7 +564,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     store_8x4_tr( ux, uy, uz, q,
 		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
 		  &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
-    
+
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     ux *= cdt_dx;

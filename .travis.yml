@@ -33,7 +33,7 @@ env: #maybe add mpich later
 
 script:
   - mkdir build && cd build && 
-    PATH="$HOME/bin:/usr/lib/ccache:$PATH" CC=gcc-${GVER} CXX=g++-${GVER} cmake -DENABLE_MPI=$MPI -DENABLE_INTEGRATED_TESTS=ON -DENABLE_UNIT_TESTS=ON ${COVERAGE:+-DUSE_GCOV=ON} .. && 
+    PATH="$HOME/bin:/usr/lib/ccache:$PATH" CC=gcc-${GVER} CXX=g++-${GVER} cmake -DENABLE_MPI=$MPI -DENABLE_INTEGRATED_TESTS=ON -DENABLE_UNIT_TESTS=ON ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} .. && 
     make -j4 && make test ARGS="-V" && make install DESTDIR="${HOME}"
 
 after_success:

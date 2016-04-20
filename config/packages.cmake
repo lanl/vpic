@@ -147,6 +147,10 @@ if(BUILD_SHARED_LIBS)
     set(VPIC_CXX_FLAGS "-rdynamic ${VPIC_CXX_FLAGS}")
 endif(BUILD_SHARED_LIBS)
 
+if(ENABLE_COVERAGE_BUILD)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} --coverage")
+endif(ENABLE_COVERAGE_BUILD)
+
 # process Makefile.run.in to get a simple Makefile.run for a run. Points to
 # local built exe wrapper, and has example deck/platform.
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in

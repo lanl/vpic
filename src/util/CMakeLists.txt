@@ -53,6 +53,10 @@ set(util_SOURCES
   PARENT_SCOPE
 )
 
+if(USE_CATALYST)
+  add_subdirectory(catalyst)
+endif(USE_CATALYST)
+
 if(ENABLE_UNIT_TESTS)
 
   if(USE_V4)

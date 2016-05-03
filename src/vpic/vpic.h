@@ -659,6 +659,16 @@ private:
   friend vpic_simulation * restore_vpic_simulation( void );
   friend void reanimate_vpic_simulation( vpic_simulation * vpic );
 
+  //////////////////////////////////////////////////////////
+  // This friend is used by Catalyst to get simulation
+  // information.
+
+#ifdef USE_CATALYST
+  friend void coprocessorProcess(long long timestep, double time,
+                                 vpic_simulation* sim, int topology[3],
+                                 std::vector<DumpParameters *>& dumpParams);
+#endif
+
   ////////////////////////////////////////////////////////////
   // User input deck provided functions (see deck_wrapper.cxx)
  

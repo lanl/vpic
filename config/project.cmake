@@ -29,6 +29,8 @@ option(USE_V4_SSE "Enable V4 SSE" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
+option(USE_CATALYST "Link VPIC with Catalyst" OFF)
+
 #------------------------------------------------------------------------------#
 # Add library target
 #------------------------------------------------------------------------------#

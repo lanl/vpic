@@ -8,11 +8,11 @@
 #define V8_ACCELERATION
 #define V8_PORTABLE_ACCELERATION
 
+#include <math.h>
+
 #ifndef ALIGNED
 #define ALIGNED(n)
 #endif
-
-#include <math.h>
 
 namespace v8
 {
@@ -54,12 +54,13 @@ namespace v8
     friend inline void load_8x1( const void * ALIGNED(16) p, v8 &a );
     friend inline void store_8x1( const v8 &a, void * ALIGNED(16) p );
     friend inline void stream_8x1( const v8 &a, void * ALIGNED(16) p );
+    friend inline void clear_8x1( void * ALIGNED(16) dst );
     friend inline void copy_8x1( void * ALIGNED(16) dst,
                                  const void * ALIGNED(16) src );
     friend inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
 
     // v8 transposed memory manipulation friends
-    // Note: Half aligned values are permissible in the 8x2_tr variants!
+    // Note: Half aligned values are permissible in the 8x2_tr variants.
 
     friend inline void load_8x1_tr( const void *a0, const void *a1,
                                     const void *a2, const void *a3,
@@ -159,10 +160,13 @@ namespace v8
   public:
 
     v8() {}                    // Default constructor
-    v8(const v8 &a) {          // Copy constructor
+
+    v8( const v8 &a )          // Copy constructor
+    {
       i[0]=a.i[0]; i[1]=a.i[1]; i[2]=a.i[2]; i[3]=a.i[3];
       i[4]=a.i[4]; i[5]=a.i[5]; i[6]=a.i[6]; i[7]=a.i[7];
     }
+
     ~v8() {}                   // Default destructor
   };
 
@@ -213,7 +217,7 @@ namespace v8
 # define sw(x,y) x^=y, y^=x, x^=y
 
   inline void swap( v8 &a, v8 &b )
-  { 
+  {
     sw( a.i[0], b.i[0] );
     sw( a.i[1], b.i[1] );
     sw( a.i[2], b.i[2] );
@@ -240,7 +244,8 @@ namespace v8
 
   // v8 memory manipulation functions
 
-  inline void load_8x1( const void * ALIGNED(16) p, v8 &a )
+  inline void load_8x1( const void * ALIGNED(16) p,
+			v8 &a )
   {
     a.i[0] = ((const int * ALIGNED(16))p)[0];
     a.i[1] = ((const int * ALIGNED(16))p)[1];
@@ -252,7 +257,8 @@ namespace v8
     a.i[7] = ((const int * ALIGNED(16))p)[7];
   }
 
-  inline void store_8x1( const v8 &a, void * ALIGNED(16) p )
+  inline void store_8x1( const v8 &a,
+			 void * ALIGNED(16) p )
   {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
@@ -264,7 +270,8 @@ namespace v8
     ((int * ALIGNED(16))p)[7] = a.i[7];
   }
 
-  inline void stream_8x1( const v8 &a, void * ALIGNED(16) p )
+  inline void stream_8x1( const v8 &a,
+			  void * ALIGNED(16) p )
   {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
@@ -302,7 +309,8 @@ namespace v8
     ((int * ALIGNED(16))dst)[7] = ((const int * ALIGNED(16))src)[7];
   }
 
-  inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
+  inline void swap_8x1( void * ALIGNED(16) a,
+			void * ALIGNED(16) b )
   {
     int t;
     t = ((int * ALIGNED(16))a)[0];
@@ -837,7 +845,7 @@ namespace v8
 
     // v8float unary operator friends
 
-    friend inline v8int operator  !( const v8float & a ); 
+    friend inline v8int operator  !( const v8float & a );
 
     // v8float logical operator friends
 
@@ -902,7 +910,7 @@ namespace v8
       i[5] op b.i[5];                             \
       i[6] op b.i[6];                             \
       i[7] op b.i[7];                             \
-      return *this;	  			  \
+      return *this;                               \
     }
 
     ASSIGN( =)
@@ -921,8 +929,15 @@ namespace v8
 
     // v8int member access operator
 
-    inline int &operator []( int n ) { return i[n]; }
-    inline int  operator ()( int n ) { return i[n]; }
+    inline int &operator []( int n )
+    {
+      return i[n];
+    }
+
+    inline int  operator ()( int n )
+    {
+      return i[n];
+    }
   };
 
   // v8int prefix unary operators
@@ -1197,7 +1212,7 @@ namespace v8
     friend inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a );
     friend inline void scale_8x1(     float * ALIGNED(16) p, const v8float &a );
     // FIXME: crack
-    friend inline void trilinear( v8float & wl, v8float & wh );
+    friend inline void trilinear( v8float &wl, v8float &wh );
 
   public:
 
@@ -1258,8 +1273,15 @@ namespace v8
 
     // v8float member access operator
 
-    inline float &operator []( int n ) { return f[n]; }
-    inline float  operator ()( int n ) { return f[n]; }
+    inline float &operator []( int n )
+    {
+      return f[n];
+    }
+
+    inline float  operator ()( int n )
+    {
+      return f[n];
+    }
   };
 
   // v8float prefix unary operators
@@ -1438,7 +1460,7 @@ namespace v8
 # undef CMATH_FR1
 # undef CMATH_FR2
 
-  // v8float miscelleanous functions
+  // v8float miscellaneous functions
 
   inline v8float rsqrt_approx( const v8float &a )
   {

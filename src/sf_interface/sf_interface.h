@@ -27,7 +27,8 @@ typedef struct interpolator {
   float cbx, dcbxdx;
   float cby, dcbydy;
   float cbz, dcbzdz;
-  float _pad[2];  // 16-byte align
+  float _pad1[2];  // 16-byte align
+  float _pad2[4];  // More padding to get 32-byte align
 } interpolator_t;
 
 typedef struct interpolator_array {
@@ -72,6 +73,7 @@ typedef struct accumulator {
   float jx[4];   // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
   float jy[4];   // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
   float jz[4];   // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
+  float pad2[4]; // Padding to get 32-byte align
 } accumulator_t;
 
 typedef struct accumulator_array {

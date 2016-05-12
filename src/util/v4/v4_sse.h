@@ -914,7 +914,8 @@ namespace v4 {
     b.v = _mm_rsqrt_ps(a.v);
     return b;
   }
-  
+
+#if 0
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -927,18 +928,39 @@ namespace v4 {
                                                    _mm_mul_ps(b_v,b_v))))));
     return b;
   }
+#endif
+
+  inline v4float rsqrt( const v4float &a ) {
+    v4float b;
+    b.f[0] = ::sqrt( 1/a.f[0] );
+    b.f[1] = ::sqrt( 1/a.f[1] );
+    b.f[2] = ::sqrt( 1/a.f[2] );
+    b.f[3] = ::sqrt( 1/a.f[3] );
+    return b;
+  }
 
   inline v4float rcp_approx( const v4float &a ) {
     v4float b;
     b.v = _mm_rcp_ps(a.v);
     return b;
   }
-  
+
+#if 0
   inline v4float rcp( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
     b_v = _mm_rcp_ps(a_v);
     b.v = _mm_sub_ps(_mm_add_ps(b_v,b_v),_mm_mul_ps(a_v,_mm_mul_ps(b_v,b_v)));
+    return b;
+  }
+#endif
+
+  inline v4float rcp( const v4float &a ) {
+    v4float b;
+    b.f[0] = 1/a.f[0];
+    b.f[1] = 1/a.f[1];
+    b.f[2] = 1/a.f[2];
+    b.f[3] = 1/a.f[3];
     return b;
   }
 

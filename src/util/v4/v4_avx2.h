@@ -8,7 +8,7 @@
 #define V4_ACCELERATION
 #define V4_AVX2_ACCELERATION
 
-#include <xmmintrin.h>
+#include <immintrin.h>
 #include <math.h>
 
 #ifndef ALIGNED
@@ -114,6 +114,7 @@ namespace v4 {
                                      void * ALIGNED(16) a3 );
 
   protected:
+  public:
 
     union {
       int i[4];
@@ -248,6 +249,7 @@ namespace v4 {
     a.v = a_v; b.v = b_v; c.v = c_v;
   }
 
+#if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -267,6 +269,80 @@ namespace v4 {
     c_v = _mm_movelh_ps( t, u );
     d_v = _mm_movehl_ps( u, t );
     a.v = a_v; b.v = b_v; c.v = c_v; d.v = d_v;
+  }
+#endif
+
+#if 0
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    b.v = _mm_movehl_ps( c_v, a_v );
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    d.v = _mm_movehl_ps( u, t );
+  }
+#endif
+
+#if 0
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+    c.v = _mm_movelh_ps( t, u );
+  }
+#endif
+
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
   }
 
   inline void store_4x1_tr( const v4 &a,
@@ -914,7 +990,8 @@ namespace v4 {
     b.v = _mm_rsqrt_ps(a.v);
     return b;
   }
-  
+
+#if 0
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -927,13 +1004,57 @@ namespace v4 {
                                                    _mm_mul_ps(b_v,b_v))))));
     return b;
   }
+#endif
+
+#if 0
+  inline v4float rsqrt( const v4float &a ) {
+    v4float b;
+
+    __m128 a_v = a.v, b_v;
+
+    b_v = _mm_rsqrt_ps( a_v );
+
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+
+    b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
+			_mm_fnmadd_ps( a_v,
+				       _mm_mul_ps( b_v,
+						   _mm_mul_ps( b_v, b_v ) ),
+				       b_v ),
+			b_v );
+
+    return b;
+  }
+#endif
+
+  inline v4float rsqrt( const v4float &a ) {
+    v4float b;
+
+    __m128 b_v;
+
+    b_v = _mm_rsqrt_ps( a.v );
+
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+
+    b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
+			_mm_fnmadd_ps( a.v,
+				       _mm_mul_ps( b_v,
+						   _mm_mul_ps( b_v, b_v ) ),
+				       b_v ),
+			b_v );
+
+    return b;
+  }
 
   inline v4float rcp_approx( const v4float &a ) {
     v4float b;
     b.v = _mm_rcp_ps(a.v);
     return b;
   }
-  
+
+#if 0
   inline v4float rcp( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -941,22 +1062,77 @@ namespace v4 {
     b.v = _mm_sub_ps(_mm_add_ps(b_v,b_v),_mm_mul_ps(a_v,_mm_mul_ps(b_v,b_v)));
     return b;
   }
+#endif
 
+#if 0
+  inline v4float rcp( const v4float &a ) {
+    v4float b;
+
+    __m128 a_v = a.v, b_v;
+
+    b_v = _mm_rcp_ps( a_v );
+
+    b.v = _mm_fnmadd_ps( a_v,
+			 _mm_mul_ps( b_v, b_v ),
+			 _mm_add_ps( b_v, b_v ) );
+
+    return b;
+  }
+#endif
+
+  inline v4float rcp( const v4float &a ) {
+    v4float b;
+
+    __m128 b_v;
+
+    b_v = _mm_rcp_ps( a.v );
+
+    b.v = _mm_fnmadd_ps( a.v,
+			 _mm_mul_ps( b_v, b_v ),
+			 _mm_add_ps( b_v, b_v ) );
+
+    return b;
+  }
+
+#if 0
   inline v4float fma(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
     d.v = _mm_add_ps( _mm_mul_ps( a.v, b.v ), c.v );
     return d;
   }
+#endif
 
+  inline v4float fma(  const v4float &a, const v4float &b, const v4float &c ) {
+    v4float d;
+    d.v = _mm_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+
+#if 0
   inline v4float fms(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
     d.v = _mm_sub_ps( _mm_mul_ps( a.v, b.v ), c.v );
     return d;
   }
+#endif
 
+  inline v4float fms(  const v4float &a, const v4float &b, const v4float &c ) {
+    v4float d;
+    d.v = _mm_fmsub_ps( a.v, b.v, c.v );
+    return d;
+  }
+
+#if 0
   inline v4float fnms( const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
     d.v = _mm_sub_ps( c.v, _mm_mul_ps( a.v, b.v ) );
+    return d;
+  }
+#endif
+
+  inline v4float fnms( const v4float &a, const v4float &b, const v4float &c ) {
+    v4float d;
+    d.v = _mm_fnmadd_ps( a.v, b.v, c.v );
     return d;
   }
 

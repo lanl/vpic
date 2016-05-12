@@ -6,8 +6,6 @@
 #define HAS_V8_PIPELINE
 #include "spa_private.h"
 
-#include <iostream>
-
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
@@ -265,26 +263,8 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
   // Process the particle quads for this pipeline
 
-  int fred = 1;
   for( ; nq; nq--, p+=4 ) {
     load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
-
-    if ( fred == 1 )
-    {
-      std::cout << "dx = "
-		<< dx[0] << " , " << dx[1] << " , " << dx[2] << " , " << dx[3]
-		<< std::endl;
-      std::cout << "dy = "
-		<< dy[0] << " , " << dy[1] << " , " << dy[2] << " , " << dy[3]
-		<< std::endl;
-      std::cout << "dz = "
-		<< dz[0] << " , " << dz[1] << " , " << dz[2] << " , " << dz[3]
-		<< std::endl;
-      std::cout << "ii = "
-		<< ii[0] << " , " << ii[1] << " , " << ii[2] << " , " << ii[3]
-		<< std::endl;
-      fred = 2;
-    }
 
     // Interpolate fields
     vp0 = (float * ALIGNED(16))(f0 + ii(0));
@@ -1905,33 +1885,11 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Process the particle quads for this pipeline.
 
-  int fred = 1;
   for( ; nq; nq--, p+=8 )
   {
     load_8x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		 dx, dy, dz, ii );
-
-    if ( fred == 1 )
-    {
-      std::cout << "dx = "
-		<< dx[0] << " , " << dx[1] << " , " << dx[2] << " , " << dx[3] << " , "
-		<< dx[4] << " , " << dx[5] << " , " << dx[6] << " , " << dx[7]
-		<< std::endl;
-      std::cout << "dy = "
-		<< dy[0] << " , " << dy[1] << " , " << dy[2] << " , " << dy[3] << " , "
-		<< dy[4] << " , " << dy[5] << " , " << dy[6] << " , " << dy[7]
-		<< std::endl;
-      std::cout << "dz = "
-		<< dz[0] << " , " << dz[1] << " , " << dz[2] << " , " << dz[3] << " , "
-		<< dz[4] << " , " << dz[5] << " , " << dz[6] << " , " << dz[7]
-		<< std::endl;
-      std::cout << "ii = "
-		<< ii[0] << " , " << ii[1] << " , " << ii[2] << " , " << ii[3] << " , "
-		<< ii[4] << " , " << ii[5] << " , " << ii[6] << " , " << ii[7]
-		<< std::endl;
-      fred = 2;
-    }
 
     // Interpolate fields.
     vp0 = ( float * ALIGNED(16) ) ( f0 + ii(0) );
@@ -2517,8 +2475,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   // Determine which quads of particle quads this pipeline processes.
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
-
-  // std::cout << "Number of particles: " << nq << std::flush << std::endl;
 
   p = args->p0 + itmp;
 

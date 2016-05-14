@@ -392,6 +392,35 @@ namespace v8
                            const void * ALIGNED(8) a7,
                            v8 &a, v8 &b )
   {
+    __m128 zero;
+    __m128 t0, t1, t2, t3;
+    __m256 u0, u1;
+
+    zero = _mm_setzero_ps();
+
+    t0 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a0 ), (__m64 *)a1 );
+    t1 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a2 ), (__m64 *)a3 );
+    t2 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a4 ), (__m64 *)a5 );
+    t3 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a6 ), (__m64 *)a7 );
+
+    u0 = _mm256_setr_m128( t0, t2 );
+    u1 = _mm256_setr_m128( t1, t3 );
+
+    a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
+    b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
+  }
+
+#if 0
+  inline void load_8x2_tr( const void * ALIGNED(8) a0,
+                           const void * ALIGNED(8) a1,
+                           const void * ALIGNED(8) a2,
+                           const void * ALIGNED(8) a3,
+			   const void * ALIGNED(8) a4,
+                           const void * ALIGNED(8) a5,
+                           const void * ALIGNED(8) a6,
+                           const void * ALIGNED(8) a7,
+                           v8 &a, v8 &b )
+  {
     a.i[0] = ((const int * ALIGNED(8))a0)[0];
     b.i[0] = ((const int * ALIGNED(8))a0)[1];
 
@@ -416,6 +445,7 @@ namespace v8
     a.i[7] = ((const int * ALIGNED(8))a7)[0];
     b.i[7] = ((const int * ALIGNED(8))a7)[1];
   }
+#endif
 
   inline void load_8x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -470,7 +500,7 @@ namespace v8
                            const void * ALIGNED(16) a7,
                            v8 &a, v8 &b, v8 &c, v8 &d )
   {
-    __m128 ta0, ta1, ta2, ta3, ta4, ta5, ta6, ta7;
+    // __m128 ta0, ta1, ta2, ta3, ta4, ta5, ta6, ta7;
 
     __m256 row0, row1, row2, row3;
     __m256 tmp0, tmp1, tmp2, tmp3;
@@ -490,11 +520,20 @@ namespace v8
     // row2 = _mm256_setr_m128( ta2, ta6 );
     // row3 = _mm256_setr_m128( ta3, ta7 );
 
+    row0 = _mm256_setr_m128( _mm_load_ps( (const float *)a0 ),
+			     _mm_load_ps( (const float *)a4 ) );
+    row1 = _mm256_setr_m128( _mm_load_ps( (const float *)a1 ),
+			     _mm_load_ps( (const float *)a5 ) );
+    row2 = _mm256_setr_m128( _mm_load_ps( (const float *)a2 ),
+			     _mm_load_ps( (const float *)a6 ) );
+    row3 = _mm256_setr_m128( _mm_load_ps( (const float *)a3 ),
+			     _mm_load_ps( (const float *)a7 ) );
+
     // Method 2.
-    row0 = _mm256_loadu2_m128( (const float *)a4, (const float *)a0 );
-    row1 = _mm256_loadu2_m128( (const float *)a5, (const float *)a1 );
-    row2 = _mm256_loadu2_m128( (const float *)a6, (const float *)a2 );
-    row3 = _mm256_loadu2_m128( (const float *)a7, (const float *)a3 );
+    // row0 = _mm256_loadu2_m128( (const float *)a4, (const float *)a0 );
+    // row1 = _mm256_loadu2_m128( (const float *)a5, (const float *)a1 );
+    // row2 = _mm256_loadu2_m128( (const float *)a6, (const float *)a2 );
+    // row3 = _mm256_loadu2_m128( (const float *)a7, (const float *)a3 );
 
     // Method 3.  Does not compile.
     // row0 = _mm256_setr_m128( (const __m128 *)a0, (const __m128 *)a4 );
@@ -754,6 +793,37 @@ namespace v8
                             void * ALIGNED(8) a4, void * ALIGNED(8) a5,
                             void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
   {
+    __m256 u0, u1;
+    __m128 t0, t1, t2, t3;
+
+    u0 = _mm256_unpacklo_ps( a.v, b.v );
+    u1 = _mm256_unpackhi_ps( a.v, b.v );
+
+    t0 = _mm256_extractf128_ps( u0, 0 );
+    t1 = _mm256_extractf128_ps( u0, 1 );
+    t2 = _mm256_extractf128_ps( u1, 0 );
+    t3 = _mm256_extractf128_ps( u1, 1 );
+
+    _mm_storel_pi( (__m64 *) a0, t0 );
+    _mm_storeh_pi( (__m64 *) a1, t0 );
+
+    _mm_storel_pi( (__m64 *) a2, t1 );
+    _mm_storeh_pi( (__m64 *) a3, t1 );
+
+    _mm_storel_pi( (__m64 *) a4, t2 );
+    _mm_storeh_pi( (__m64 *) a5, t2 );
+
+    _mm_storel_pi( (__m64 *) a6, t3 );
+    _mm_storeh_pi( (__m64 *) a7, t3 );
+  }
+
+#if 0
+  inline void store_8x2_tr( const v8 &a, const v8 &b,
+                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
+                            void * ALIGNED(8) a2, void * ALIGNED(8) a3,
+                            void * ALIGNED(8) a4, void * ALIGNED(8) a5,
+                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
+  {
     ((int * ALIGNED(8))a0)[0] = a.i[0];
     ((int * ALIGNED(8))a0)[1] = b.i[0];
 
@@ -778,6 +848,7 @@ namespace v8
     ((int * ALIGNED(8))a7)[0] = a.i[7];
     ((int * ALIGNED(8))a7)[1] = b.i[7];
   }
+#endif
 
   inline void store_8x3_tr( const v8 &a, const v8 &b, const v8 &c,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,

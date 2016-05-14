@@ -525,6 +525,49 @@ TEST(v8, test_load_8x2_tr)
 		i != 64 );
 }
 
+TEST(v8, test_load_8x2_tr_a)
+{
+  DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );
+
+  v8int a0, a1, a2, a3, a4, a5, a6, a7;
+
+  int i;
+
+  for( i=0; i < 64; i++ ) mem[i] = i;
+
+  // load_8x2_tr( mem,   mem+8,  mem+16, mem+24, mem+32, mem+40, mem+48, mem+56, a0, a1 );
+  // load_8x2_tr( mem+2, mem+10, mem+18, mem+26, mem+34, mem+42, mem+50, mem+58, a2, a3 );
+  // load_8x2_tr( mem+4, mem+12, mem+20, mem+28, mem+36, mem+44, mem+52, mem+60, a4, a5 );
+  // load_8x2_tr( mem+6, mem+14, mem+22, mem+30, mem+38, mem+46, mem+54, mem+62, a6, a7 );
+
+  load_8x2_tr( mem,    mem+2,  mem+4,  mem+6,  mem+8,  mem+10, mem+12, mem+14, a0, a1 );
+  load_8x2_tr( mem+16, mem+18, mem+20, mem+22, mem+24, mem+26, mem+28, mem+30, a2, a3 );
+  load_8x2_tr( mem+32, mem+34, mem+36, mem+38, mem+40, mem+42, mem+44, mem+46, a4, a5 );
+  load_8x2_tr( mem+48, mem+50, mem+52, mem+54, mem+56, mem+58, mem+60, mem+62, a6, a7 );
+
+  for( i=0; i < 64; i++ ) if( mem[i] != i ) break;
+
+  ASSERT_FALSE( any( a0 != v8int( 0, 2, 4, 6, 8,10,12,14) ) ||
+		any( a1 != v8int( 1, 3, 5, 7, 9,11,13,15) ) ||
+		any( a2 != v8int(16,18,20,22,24,26,28,30) ) ||
+		any( a3 != v8int(17,19,21,23,25,27,29,31) ) ||
+		any( a4 != v8int(32,34,36,38,40,42,44,46) ) ||
+		any( a5 != v8int(33,35,37,39,41,43,45,47) ) ||
+		any( a6 != v8int(48,50,52,54,56,58,60,62) ) ||
+		any( a7 != v8int(49,51,53,55,57,59,61,63) ) ||
+		i != 64 );
+
+  // ASSERT_FALSE( any( a0 != v8int(0, 8,16,24,32,40,48,56) ) ||
+  // 		any( a1 != v8int(1, 9,17,25,33,41,49,57) ) ||
+  // 		any( a2 != v8int(2,10,18,26,34,42,50,58) ) ||
+  // 		any( a3 != v8int(3,11,19,27,35,43,51,59) ) ||
+  // 		any( a4 != v8int(4,12,20,28,36,44,52,60) ) ||
+  // 		any( a5 != v8int(5,13,21,29,37,45,53,61) ) ||
+  // 		any( a6 != v8int(6,14,22,30,38,46,54,62) ) ||
+  // 		any( a7 != v8int(7,15,23,31,39,47,55,63) ) ||
+  // 		i != 64 );
+}
+
 TEST(v8, test_load_8x3_tr)
 {
   DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );
@@ -691,6 +734,65 @@ TEST(v8, test_store_8x2_tr)
 		any( a6 != v8int(6,14,22,30,38,46,54,62) ) ||
 		any( a7 != v8int(7,15,23,31,39,47,55,63) ) ||
 		i != 64 );
+}
+
+TEST(v8, test_store_8x2_tr_a)
+{
+  DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );
+
+  // v8int a0(0, 8,16,24,32,40,48,56);
+  // v8int a1(1, 9,17,25,33,41,49,57);
+  // v8int a2(2,10,18,26,34,42,50,58);
+  // v8int a3(3,11,19,27,35,43,51,59);
+  // v8int a4(4,12,20,28,36,44,52,60);
+  // v8int a5(5,13,21,29,37,45,53,61);
+  // v8int a6(6,14,22,30,38,46,54,62);
+  // v8int a7(7,15,23,31,39,47,55,63);
+
+  v8int a0( 0, 2, 4, 6, 8,10,12,14);
+  v8int a1( 1, 3, 5, 7, 9,11,13,15);
+  v8int a2(16,18,20,22,24,26,28,30);
+  v8int a3(17,19,21,23,25,27,29,31);
+  v8int a4(32,34,36,38,40,42,44,46);
+  v8int a5(33,35,37,39,41,43,45,47);
+  v8int a6(48,50,52,54,56,58,60,62);
+  v8int a7(49,51,53,55,57,59,61,63);
+
+  int i;
+
+  for( i=0; i < 64; i++ ) mem[i] = 0;
+
+  // store_8x2_tr( a0, a1, mem,   mem+ 8, mem+16, mem+24, mem+32, mem+40, mem+48, mem+56 );
+  // store_8x2_tr( a2, a3, mem+2, mem+10, mem+18, mem+26, mem+34, mem+42, mem+50, mem+58 );
+  // store_8x2_tr( a4, a5, mem+4, mem+12, mem+20, mem+28, mem+36, mem+44, mem+52, mem+60 );
+  // store_8x2_tr( a6, a7, mem+6, mem+14, mem+22, mem+30, mem+38, mem+46, mem+54, mem+62 );
+
+  store_8x2_tr( a0, a1, mem,    mem+ 2, mem+ 4, mem+ 6, mem+ 8, mem+10, mem+12, mem+14 );
+  store_8x2_tr( a2, a3, mem+16, mem+18, mem+20, mem+22, mem+24, mem+26, mem+28, mem+30 );
+  store_8x2_tr( a4, a5, mem+32, mem+34, mem+36, mem+38, mem+40, mem+42, mem+44, mem+46 );
+  store_8x2_tr( a6, a7, mem+48, mem+50, mem+52, mem+54, mem+56, mem+58, mem+60, mem+62 );
+
+  for( i=0; i < 64; i++ ) if( mem[i] != i ) break;
+
+  ASSERT_FALSE( any( a0 != v8int( 0, 2, 4, 6, 8,10,12,14) ) ||
+		any( a1 != v8int( 1, 3, 5, 7, 9,11,13,15) ) ||
+		any( a2 != v8int(16,18,20,22,24,26,28,30) ) ||
+		any( a3 != v8int(17,19,21,23,25,27,29,31) ) ||
+		any( a4 != v8int(32,34,36,38,40,42,44,46) ) ||
+		any( a5 != v8int(33,35,37,39,41,43,45,47) ) ||
+		any( a6 != v8int(48,50,52,54,56,58,60,62) ) ||
+		any( a7 != v8int(49,51,53,55,57,59,61,63) ) ||
+		i != 64 );
+
+  // ASSERT_FALSE( any( a0 != v8int(0, 8,16,24,32,40,48,56) ) ||
+  // 		any( a1 != v8int(1, 9,17,25,33,41,49,57) ) ||
+  // 		any( a2 != v8int(2,10,18,26,34,42,50,58) ) ||
+  // 		any( a3 != v8int(3,11,19,27,35,43,51,59) ) ||
+  // 		any( a4 != v8int(4,12,20,28,36,44,52,60) ) ||
+  // 		any( a5 != v8int(5,13,21,29,37,45,53,61) ) ||
+  // 		any( a6 != v8int(6,14,22,30,38,46,54,62) ) ||
+  // 		any( a7 != v8int(7,15,23,31,39,47,55,63) ) ||
+  // 		i != 64 );
 }
 
 TEST(v8, test_store_8x3_tr)

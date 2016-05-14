@@ -568,6 +568,31 @@ TEST(v8, test_load_8x4_tr)
 		i != 64 );
 }
 
+TEST(v8, test_load_8x4_tr_a)
+{
+  DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );
+
+  v8int a0, a1, a2, a3;
+
+  int i;
+
+  for( i=0; i < 64; i++ ) mem[i] = i;
+
+  // load_8x4_tr( mem, mem+8, mem+16, mem+24, mem+32, mem+40, mem+48, mem+56,
+  // 	       a0, a1, a2, a3 );
+
+  load_8x4_tr( mem, mem+4, mem+8, mem+12, mem+16, mem+20, mem+24, mem+28,
+	       a0, a1, a2, a3 );
+
+  for( i=0; i < 64; i++ ) if( mem[i] != i ) break;
+
+  ASSERT_FALSE( any( a0 != v8int(0,4, 8,12,16,20,24,28) ) ||
+		any( a1 != v8int(1,5, 9,13,17,21,25,29) ) ||
+		any( a2 != v8int(2,6,10,14,18,22,26,30) ) ||
+		any( a3 != v8int(3,7,11,15,19,23,27,31) ) ||
+		i != 64 );
+}
+
 TEST(v8, test_load_8x8_tr)
 {
   DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );

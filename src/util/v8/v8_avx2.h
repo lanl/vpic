@@ -800,8 +800,8 @@ namespace v8
     u1 = _mm256_unpackhi_ps( a.v, b.v );
 
     t0 = _mm256_extractf128_ps( u0, 0 );
-    t1 = _mm256_extractf128_ps( u0, 1 );
-    t2 = _mm256_extractf128_ps( u1, 0 );
+    t1 = _mm256_extractf128_ps( u1, 0 );
+    t2 = _mm256_extractf128_ps( u0, 1 );
     t3 = _mm256_extractf128_ps( u1, 1 );
 
     _mm_storel_pi( (__m64 *) a0, t0 );

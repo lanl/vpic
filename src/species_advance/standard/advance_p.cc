@@ -2545,16 +2545,16 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     cbx = fma( v3, dx, cbx );
     cby = fma( v4, dy, cby );
 
-    // load_8x2_tr( vp0+16, vp1+16, vp2+16, vp3+16,
-    //              vp4+16, vp5+16, vp6+16, vp7+16,
-    //              cbz, v5 );
+    load_8x2_tr( vp0+16, vp1+16, vp2+16, vp3+16,
+                 vp4+16, vp5+16, vp6+16, vp7+16,
+                 cbz, v5 );
 
     // Use this until I can implement load_8x2_tr. This is a kludge
     // and I assume will perform slower than load_8x2_tr when
     // implemented.
-    load_8x8_tr( vp0+16, vp1+16, vp2+16, vp3+16,
-		 vp4+16, vp5+16, vp6+16, vp7+16,
-		 cbz, v5, v0, v1, v2, v3, v4, v6 );
+    // load_8x8_tr( vp0+16, vp1+16, vp2+16, vp3+16,
+    // 		 vp4+16, vp5+16, vp6+16, vp7+16,
+    // 		 cbz, v5, v0, v1, v2, v3, v4, v6 );
 
     cbz = fma( v5, dz, cbz );
 

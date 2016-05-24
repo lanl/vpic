@@ -3,7 +3,7 @@
 
 #include "../util_base.h"
 
-enum { MAX_PIPELINE = 64 };
+enum { MAX_PIPELINE = 272 };
 
 // A pipeline function takes a pointer to arguments for the pipeline
 // and a integer which gives the rank of the pipeline and the total

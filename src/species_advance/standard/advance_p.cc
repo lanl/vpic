@@ -6,6 +6,11 @@
 #define HAS_V8_PIPELINE
 #include "spa_private.h"
 
+#if defined(USE_INTEL_VTUNE)
+// Use this for Intel and VTune.
+#include "ittnotify.h"
+#endif
+
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
@@ -3893,8 +3898,16 @@ advance_p( /**/  species_t            * RESTRICT sp,
   // However, it is worth reconsidering this at some point in the
   // future.
 
+#if defined(USE_INTEL_VTUNE)
+  __itt_resume();
+#endif
+
   EXEC_PIPELINES( advance_p, args, 0 );
   WAIT_PIPELINES();
+
+#if defined(USE_INTEL_VTUNE)
+  __itt_pause();
+#endif
 
   // FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
   // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE

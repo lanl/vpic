@@ -23,6 +23,11 @@ as user-configurable diagnostics; a Monte-Carlo treatment of collisional
 processes capable of treating binary and unary collisions and secondary
 particle generation; and, flexible checkpoint-restart semantics enabling
 VPIC checkpoint files to be read as input for subsequent simulations.
+VPIC has a native I/O format that interfaces with the high-performance
+visualization software Ensight and Paraview. While the common use cases
+for VPIC employ low-order particles on rectilinear meshes, a framework
+exists to treat higher-order particles and curvilinear meshes, as well
+as more advanced field solvers.
 
 # Attribution
 

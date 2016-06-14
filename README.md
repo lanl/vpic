@@ -2,6 +2,27 @@
 
 VPIC is a fully relativistic plasma simulation code...
 
+# Attribution
+
+Researchers who use the VPIC code for scientific research are asked to cite
+the papers by Kevin Bowers listed below.
+
+1. Bowers, K. J., B. J. Albright, B. Bergen, L. Yin, K. J. Barker and
+D. J. Kerbyson, "0.374 Pflop/s Trillion-Particle Kinetic Modeling of
+Laser Plasma Interaction on Road-runner," Proc. 2008 ACM/IEEE Conf.
+Supercomputing (Gordon Bell Prize Finalist Paper).
+http://dl.acm.org/citation.cfm?id=1413435
+
+2. K.J. Bowers, B.J. Albright, B. Bergen and T.J.T. Kwan, Ultrahigh
+performance three-dimensional electromagnetic relativistic kinetic
+plasma simulation, Phys. Plasmas 15, 055703 (2008);
+http://dx.doi.org/10.1063/1.2840133
+
+3. K.J. Bowers, B.J. Albright, L. Yin, W. Daughton, V. Roytershteyn,
+B. Bergen and T.J.T Kwan, Advances in petascale kinetic simulations
+with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
+012055, 2009
+
 # Getting the Code
 
 VPIC uses nested submodules.  This requires the addition of the *--recursive*

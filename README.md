@@ -1,6 +1,28 @@
 # Vector Particle-In-Cell (VPIC) Project
 
-VPIC is a fully relativistic plasma simulation code...
+VPIC is a general purpose particle-in-cell simulation code for modeling
+kinetic plasmas in one, two, or three spatial dimensions. It employs a
+second-order, explicit, leapfrog algorithm to update charged particle
+positions and velocities in order to solve the relativistic kinetic
+equation for each species in the plasma, along with a full Maxwell
+description for the electric and magnetic fields evolved via a second-
+order finite-difference-time-domain (FDTD) solve. The VPIC code has been
+optimized for modern computing architectures and uses Message Passing
+Interface (MPI) calls for multi-node application as well as data
+parallelism using pthreads. VPIC employs a variety of short-vector,
+single-instruction-multiple-data (SIMD) intrinsics for high performance
+and has been designed so that the data structures align with cache
+boundaries. The current feature set for VPIC includes a flexible input
+deck format capable of treating a wide variety of problems. These
+include: the ability to treat electromagnetic materials (scalar and
+tensor dielectric, conductivity, and diamagnetic material properties);
+multiple emission models, including user-configurable models; arbitrary,
+user-configurable boundary conditions for particles and fields; user-
+definable simulation units; a suite of "standard" diagnostics, as well
+as user-configurable diagnostics; a Monte-Carlo treatment of collisional
+processes capable of treating binary and unary collisions and secondary
+particle generation; and, flexible checkpoint-restart semantics enabling
+VPIC checkpoint files to be read as input for subsequent simulations.
 
 # Attribution
 

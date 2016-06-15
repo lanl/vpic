@@ -34,6 +34,7 @@ set(util_HEADERS
   v4/v4_altivec.h
   v4/v4_portable.h
   v4/v4_sse.h
+  catalyst/VPICAdaptor.h
   PARENT_SCOPE
 )
 
@@ -52,6 +53,10 @@ set(util_SOURCES
   rng/rng_pool.c
   PARENT_SCOPE
 )
+
+if(USE_CATALYST)
+  add_subdirectory(catalyst)
+endif(USE_CATALYST)
 
 if(ENABLE_UNIT_TESTS)
 

@@ -67,7 +67,11 @@ namespace
         {
         if(action == PUT)
           {
+#ifdef NEW_VTK_ARRAY_API
+          localArray->GetTypedTuple(idmap[j], vals);
+#else
           localArray->GetTupleValue(idmap[j], vals);
+#endif
           for(int k=0;k<numberOfComponents;k++)
             {
             remoteData[counter+k] = vals[k];
@@ -81,7 +85,11 @@ namespace
             vals[k] = remoteData[counter+k];
             }
           counter += numberOfComponents;
+#ifdef NEW_VTK_ARRAY_API
+          localArray->SetTypedTuple(idmap[j], vals);
+#else
           localArray->SetTupleValue(idmap[j], vals);
+#endif
           }
         }
       }

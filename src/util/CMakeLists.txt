@@ -34,6 +34,7 @@ set(util_HEADERS
   v4/v4_altivec.h
   v4/v4_portable.h
   v4/v4_sse.h
+  catalyst/VPICAdaptor.h
   PARENT_SCOPE
 )
 

@@ -157,7 +157,10 @@ if(USE_CATALYST)
   string(SUBSTRING ${CATALYST_INFO} ${STRING_START} -1 CATALYST_CONFIG)
   set(CATALYST_CONFIG "-L${ParaView_DIR}/lib ${CATALYST_CONFIG}")
 
-  #message("ACB config is ${CATALYST_CONFIG}")
+  # if ParaView was built with shared libraries we have to tell
+  # VPIC where those are.
+  set(CATALYST_RPATH "-Wl,-rpath,${ParaView_DIR}/lib -Wl,-rpath-link,${ParaView_DIR}/lib")
+
   # Add in the extra VPICAdaptor library to list of libraries to be linked in
   # through vpic.on or vpic-local.in. It will be in the same location as
   # the vpic library.

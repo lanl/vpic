@@ -70,4 +70,3 @@ pipeline_dispatcher_t serial = {
   serial_dispatch, // dispatch
   serial_wait      // wait
 };
-

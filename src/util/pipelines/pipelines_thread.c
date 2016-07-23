@@ -172,11 +172,13 @@ thread_boot( int * pargc,
 
   if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
 
-# if defined(CELL_PPU_BUILD)
-  n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              2 );
-# else
+  // # if defined(CELL_PPU_BUILD)
+  //   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              2 );
+  // # else
+  //   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
+  // # endif
+
   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
-# endif
   Dispatch_To_Host = strip_cmdline_int( pargc, pargv, "--dispatch_to_host", 1 );
 
   if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )

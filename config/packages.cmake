@@ -104,6 +104,7 @@ endif(ENABLE_INTEGRATED_TESTS)
 #------------------------------------------------------------------------------#
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
+
 if(USE_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)
@@ -160,6 +161,10 @@ endif(USE_V8_AVX2)
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
+
+if(VPIC_PRINT_MORE_DIGITS)
+  add_definitions(-DVPIC_PRINT_MORE_DIGITS)
+endif(VPIC_PRINT_MORE_DIGITS)
 
 #------------------------------------------------------------------------------#
 # include cmake hacks

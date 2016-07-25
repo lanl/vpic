@@ -41,7 +41,7 @@ int
 main( int argc,
       char **argv ) {
   boot_services( &argc, &argv );
- 
+
   const char * fbase = strip_cmdline_string(&argc, &argv, "--restore", NULL);
   if( fbase ) {
 

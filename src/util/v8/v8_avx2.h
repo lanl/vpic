@@ -43,6 +43,20 @@ namespace v8
     friend inline void swap( v8 &a, v8 &b );
     friend inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
 				  v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    //--------------------------------------------------------------------------
+    friend inline void transpose_v0( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    friend inline void transpose_v1( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    friend inline void transpose_v2( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    friend inline void transpose_v3( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    friend inline void transpose_v4( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    friend inline void transpose_v5( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+    //--------------------------------------------------------------------------
 
     // v8int miscellaneous friends
 
@@ -319,6 +333,217 @@ namespace v8
     a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
+  //--------------------------------------------------------------------------
+  inline void transpose_v0( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void transpose_v1( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void transpose_v2( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void transpose_v3( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void transpose_v4( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void transpose_v5( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
+			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+  //--------------------------------------------------------------------------
 
   // v8 memory manipulation functions
 
@@ -799,6 +1024,15 @@ namespace v8
 			      v8 &a, v8 &b, v8 &c, v8 &d,
 			      v8 &e, v8 &f, v8 &g, v8 &h )
   {
+    a.v = _mm256_load_ps( (const float *)a0 );
+    b.v = _mm256_load_ps( (const float *)a1 );
+    c.v = _mm256_load_ps( (const float *)a2 );
+    d.v = _mm256_load_ps( (const float *)a3 );
+    e.v = _mm256_load_ps( (const float *)a4 );
+    f.v = _mm256_load_ps( (const float *)a5 );
+    g.v = _mm256_load_ps( (const float *)a6 );
+    h.v = _mm256_load_ps( (const float *)a7 );
+#if 0
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -840,6 +1074,7 @@ namespace v8
     f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+#endif
   }
 
   inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
@@ -853,6 +1088,15 @@ namespace v8
 			      v8 &a, v8 &b, v8 &c, v8 &d,
 			      v8 &e, v8 &f, v8 &g, v8 &h )
   {
+    a.v = _mm256_load_ps( (const float *)a0 );
+    b.v = _mm256_load_ps( (const float *)a1 );
+    c.v = _mm256_load_ps( (const float *)a2 );
+    d.v = _mm256_load_ps( (const float *)a3 );
+    e.v = _mm256_load_ps( (const float *)a4 );
+    f.v = _mm256_load_ps( (const float *)a5 );
+    g.v = _mm256_load_ps( (const float *)a6 );
+    h.v = _mm256_load_ps( (const float *)a7 );
+#if 0
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -894,6 +1138,7 @@ namespace v8
     f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+#endif
   }
 
   inline void load_8x8_tr_v2( const void * ALIGNED(16) a0,
@@ -907,6 +1152,15 @@ namespace v8
 			      v8 &a, v8 &b, v8 &c, v8 &d,
 			      v8 &e, v8 &f, v8 &g, v8 &h )
   {
+    a.v = _mm256_load_ps( (const float *)a0 );
+    b.v = _mm256_load_ps( (const float *)a1 );
+    c.v = _mm256_load_ps( (const float *)a2 );
+    d.v = _mm256_load_ps( (const float *)a3 );
+    e.v = _mm256_load_ps( (const float *)a4 );
+    f.v = _mm256_load_ps( (const float *)a5 );
+    g.v = _mm256_load_ps( (const float *)a6 );
+    h.v = _mm256_load_ps( (const float *)a7 );
+#if 0
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -948,6 +1202,7 @@ namespace v8
     f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+#endif
   }
   //--------------------------------------------------------------------
 
@@ -1317,6 +1572,7 @@ namespace v8
 			       void * ALIGNED(16) a4, void * ALIGNED(16) a5,
 			       void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
   {
+#if 0
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -1358,6 +1614,15 @@ namespace v8
     _mm256_store_ps( (float *)a5, f_v );
     _mm256_store_ps( (float *)a6, g_v );
     _mm256_store_ps( (float *)a7, h_v );
+#endif
+    _mm256_store_ps( (float *)a0, a.v );
+    _mm256_store_ps( (float *)a1, b.v );
+    _mm256_store_ps( (float *)a2, c.v );
+    _mm256_store_ps( (float *)a3, d.v );
+    _mm256_store_ps( (float *)a4, e.v );
+    _mm256_store_ps( (float *)a5, f.v );
+    _mm256_store_ps( (float *)a6, g.v );
+    _mm256_store_ps( (float *)a7, h.v );
   }
   //--------------------------------------------------------------------
 
@@ -1839,6 +2104,24 @@ namespace v8
     friend inline v8float set_bits(    const v8int &m, const v8float &a );
     friend inline v8float toggle_bits( const v8int &m, const v8float &a );
     friend inline void increment_8x1( float * ALIGNED(16) p, const v8float &a );
+    //---------------------------------------------------------------------------------
+    friend inline void increment_8x1_v00( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v01( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v02( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v03( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v04( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v05( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v06( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v07( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v08( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v09( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v10( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v11( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v12( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v13( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v14( float * ALIGNED(16) p, const v8float &a );
+    friend inline void increment_8x1_v15( float * ALIGNED(16) p, const v8float &a );
+    //---------------------------------------------------------------------------------
     friend inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a );
     friend inline void scale_8x1(     float * ALIGNED(16) p, const v8float &a );
     // FIXME: crack
@@ -2267,6 +2550,87 @@ namespace v8
   {
     _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
   }
+  //---------------------------------------------------------------------------------
+  inline void increment_8x1_v00( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v01( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v02( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v03( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v04( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v05( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v06( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v07( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v08( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v09( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v10( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v11( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v12( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v13( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v14( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+
+  inline void increment_8x1_v15( float * ALIGNED(16) p, const v8float &a )
+  {
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+  }
+  //---------------------------------------------------------------------------------
 
   inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a )
   {

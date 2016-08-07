@@ -1881,6 +1881,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 
   for( ; nq; nq--, p+=4 ) {
     load_4x4_tr_v0(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,ii);
+    transpose_v0(dx,dy,dz,ii);
 
     // Interpolate fields
     vp0 = (float * ALIGNED(16))(f0 + ii(0));
@@ -1889,15 +1890,19 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     vp3 = (float * ALIGNED(16))(f0 + ii(3));
 
     load_4x4_tr_v1(vp0,  vp1,  vp2,  vp3,  hax,v0,v1,v2);
+    transpose_v1(hax,v0,v1,v2);
     hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
 
     load_4x4_tr_v2(vp0+4,vp1+4,vp2+4,vp3+4,hay,v3,v4,v5);
+    transpose_v2(hay,v3,v4,v5);
     hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
 
     load_4x4_tr_v3(vp0+8,vp1+8,vp2+8,vp3+8,haz,v0,v1,v2);
+    transpose_v3(haz,v0,v1,v2);
     haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
 
     load_4x4_tr_v4(vp0+12,vp1+12,vp2+12,vp3+12,cbx,v3,cby,v4);
+    transpose_v4(cbx,v3,cby,v4);
     cbx = fma( v3, dx, cbx );
     cby = fma( v4, dy, cby );
 
@@ -1911,6 +1916,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // approaching the nyquist frequency.
 
     load_4x4_tr_v5(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,ux,uy,uz,q);
+    transpose_v5(ux,uy,uz,q);
     ux += hax;
     uy += hay;
     uz += haz;
@@ -1929,6 +1935,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     ux += hax;
     uy += hay;
     uz += haz;
+    transpose_v6(ux,uy,uz,q);
     store_4x4_tr_v0(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
     
     // Update the position of inbnd particles
@@ -1951,6 +1958,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     v3  = merge(outbnd,dx,v3); // Do not update outbnd particles
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
+    transpose_v7(v3,v4,v5,ii;
     store_4x4_tr_v1(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
     
     // Accumulate current of inbnd particles
@@ -4149,6 +4157,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr_v0( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		    &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		    dx, dy, dz, ii, ux, uy, uz, q );
+    transpose_v0( dx, dy, dz, ii, ux, uy, uz, q );
 
     // Interpolate fields.
     vp0 = ( float * ALIGNED(16) ) ( f0 + ii(0) );
@@ -4163,6 +4172,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr_v1( vp0, vp1, vp2, vp3,
 		    vp4, vp5, vp6, vp7,
 		    hax, v0, v1, v2, hay, v3, v4, v5 );
+    transpose_v1( hax, v0, v1, v2, hay, v3, v4, v5 );
 
     hax = qdt_2mc*fma( fma( v2, dy, v1 ), dz, fma( v0, dy, hax ) );
     hay = qdt_2mc*fma( fma( v5, dz, v4 ), dx, fma( v3, dz, hay ) );
@@ -4170,6 +4180,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr_v2( vp0+8, vp1+8, vp2+8, vp3+8,
 		    vp4+8, vp5+8, vp6+8, vp7+8,
 		    haz, v0, v1, v2, cbx, v3, cby, v4 );
+    transpose_v2( haz, v0, v1, v2, cbx, v3, cby, v4 );
 
     haz = qdt_2mc*fma( fma( v2, dx, v1 ), dy, fma( v0, dx, haz ) );
     cbx = fma( v3, dx, cbx );
@@ -4245,6 +4256,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v4  = merge( outbnd, dy, v4 );
     v5  = merge( outbnd, dz, v5 );
 
+    transpose_v3( v3, v4, v5, ii, v6, v7, v8, q );
     store_8x8_tr_v0( v3, v4, v5, ii, v6, v7, v8, q,
 		     &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		     &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
@@ -4328,18 +4340,18 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
     // Transpose the data in vectors v0-v7 so it can be added into the
     // accumulator arrays using vector operations.
-    transpose( v0, v1, v2, v3, v4, v5, v6, v7 );
+    transpose_v4( v0, v1, v2, v3, v4, v5, v6, v7 );
 
     // Add the contributions to Jx and Jy from 8 particles into the
     // accumulator arrays for Jx and Jy.
-    increment_8x1( vp0, v0 );
-    increment_8x1( vp1, v1 );
-    increment_8x1( vp2, v2 );
-    increment_8x1( vp3, v3 );
-    increment_8x1( vp4, v4 );
-    increment_8x1( vp5, v5 );
-    increment_8x1( vp6, v6 );
-    increment_8x1( vp7, v7 );
+    increment_8x1_v00( vp0, v0 );
+    increment_8x1_v01( vp1, v1 );
+    increment_8x1_v02( vp2, v2 );
+    increment_8x1_v03( vp3, v3 );
+    increment_8x1_v04( vp4, v4 );
+    increment_8x1_v05( vp5, v5 );
+    increment_8x1_v06( vp6, v6 );
+    increment_8x1_v07( vp7, v7 );
 
     // Accumulate Jz for 8 particles into the v0-v3 vectors.
     ACCUMULATE_JZ( z, x, y );
@@ -4352,18 +4364,18 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
     // Transpose the data in vectors v0-v7 so it can be added into the
     // accumulator arrays using vector operations.
-    transpose( v0, v1, v2, v3, v4, v5, v6, v7 );
+    transpose_v5( v0, v1, v2, v3, v4, v5, v6, v7 );
 
     // Add the contributions to Jz from 8 particles into the accumulator
     // arrays for Jz.
-    increment_8x1( vp0 + 8, v0 );
-    increment_8x1( vp1 + 8, v1 );
-    increment_8x1( vp2 + 8, v2 );
-    increment_8x1( vp3 + 8, v3 );
-    increment_8x1( vp4 + 8, v4 );
-    increment_8x1( vp5 + 8, v5 );
-    increment_8x1( vp6 + 8, v6 );
-    increment_8x1( vp7 + 8, v7 );
+    increment_8x1_v08( vp0 + 8, v0 );
+    increment_8x1_v09( vp1 + 8, v1 );
+    increment_8x1_v10( vp2 + 8, v2 );
+    increment_8x1_v11( vp3 + 8, v3 );
+    increment_8x1_v12( vp4 + 8, v4 );
+    increment_8x1_v13( vp5 + 8, v5 );
+    increment_8x1_v14( vp6 + 8, v6 );
+    increment_8x1_v15( vp7 + 8, v7 );
 
 #   undef ACCUMULATE_JX
 #   undef ACCUMULATE_JY

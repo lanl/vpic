@@ -1958,7 +1958,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     v3  = merge(outbnd,dx,v3); // Do not update outbnd particles
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
-    transpose_v7(v3,v4,v5,ii;
+    transpose_v7(v3,v4,v5,ii);
     store_4x4_tr_v1(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
     
     // Accumulate current of inbnd particles

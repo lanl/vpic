@@ -76,6 +76,17 @@ namespace v8
                                     const void * ALIGNED(8) a6,
                                     const void * ALIGNED(8) a7,
                                     v8 &a, v8 &b );
+    //------------------------------------------------------------------
+    friend inline void load_8x2_tr_v0( const void * ALIGNED(8) a0,
+				       const void * ALIGNED(8) a1,
+				       const void * ALIGNED(8) a2,
+				       const void * ALIGNED(8) a3,
+				       const void * ALIGNED(8) a4,
+				       const void * ALIGNED(8) a5,
+				       const void * ALIGNED(8) a6,
+				       const void * ALIGNED(8) a7,
+				       v8 &a, v8 &b );
+    //------------------------------------------------------------------
     friend inline void load_8x3_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -104,7 +115,38 @@ namespace v8
                                     const void * ALIGNED(16) a7,
                                     v8 &a, v8 &b, v8 &c, v8 &d,
                                     v8 &e, v8 &f, v8 &g, v8 &h );
-
+    //------------------------------------------------------------------
+    friend inline void load_8x8_tr_v0( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       const void * ALIGNED(16) a4,
+				       const void * ALIGNED(16) a5,
+				       const void * ALIGNED(16) a6,
+				       const void * ALIGNED(16) a7,
+				       v8 &a, v8 &b, v8 &c, v8 &d,
+				       v8 &e, v8 &f, v8 &g, v8 &h );
+    friend inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       const void * ALIGNED(16) a4,
+				       const void * ALIGNED(16) a5,
+				       const void * ALIGNED(16) a6,
+				       const void * ALIGNED(16) a7,
+				       v8 &a, v8 &b, v8 &c, v8 &d,
+				       v8 &e, v8 &f, v8 &g, v8 &h );
+    friend inline void load_8x8_tr_v2( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       const void * ALIGNED(16) a4,
+				       const void * ALIGNED(16) a5,
+				       const void * ALIGNED(16) a6,
+				       const void * ALIGNED(16) a7,
+				       v8 &a, v8 &b, v8 &c, v8 &d,
+				       v8 &e, v8 &f, v8 &g, v8 &h );
+    //------------------------------------------------------------------
     friend inline void store_8x1_tr( const v8 &a,
                                      void *a0, void *a1, void *a2, void *a3,
                                      void *a4, void *a5, void *a6, void *a7 );
@@ -148,6 +190,20 @@ namespace v8
                                      void * ALIGNED(16) a5,
                                      void * ALIGNED(16) a6,
                                      void * ALIGNED(16) a7 );
+    //------------------------------------------------------------------
+    friend inline void store_8x8_tr_v0( const v8 &a, const v8 &b,
+					const v8 &c, const v8 &d,
+					const v8 &e, const v8 &f,
+					const v8 &g, const v8 &h,
+					void * ALIGNED(16) a0,
+					void * ALIGNED(16) a1,
+					void * ALIGNED(16) a2,
+					void * ALIGNED(16) a3,
+					void * ALIGNED(16) a4,
+					void * ALIGNED(16) a5,
+					void * ALIGNED(16) a6,
+					void * ALIGNED(16) a7 );
+    //------------------------------------------------------------------
 
   protected:
 
@@ -409,6 +465,36 @@ namespace v8
     a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
     b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
   }
+
+  //--------------------------------------------------------------------
+  inline void load_8x2_tr_v0( const void * ALIGNED(8) a0,
+			      const void * ALIGNED(8) a1,
+			      const void * ALIGNED(8) a2,
+			      const void * ALIGNED(8) a3,
+			      const void * ALIGNED(8) a4,
+			      const void * ALIGNED(8) a5,
+			      const void * ALIGNED(8) a6,
+			      const void * ALIGNED(8) a7,
+			      v8 &a, v8 &b )
+  {
+    __m128 zero;
+    __m128 t0, t1, t2, t3;
+    __m256 u0, u1;
+
+    zero = _mm_setzero_ps();
+
+    t0 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a0 ), (__m64 *)a1 );
+    t1 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a2 ), (__m64 *)a3 );
+    t2 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a4 ), (__m64 *)a5 );
+    t3 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a6 ), (__m64 *)a7 );
+
+    u0 = _mm256_setr_m128( t0, t2 );
+    u1 = _mm256_setr_m128( t1, t3 );
+
+    a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
+    b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
+  }
+  //--------------------------------------------------------------------
 
 #if 0
   inline void load_8x2_tr( const void * ALIGNED(8) a0,
@@ -700,6 +786,170 @@ namespace v8
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
+
+  //--------------------------------------------------------------------
+  inline void load_8x8_tr_v0( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      const void * ALIGNED(16) a4,
+			      const void * ALIGNED(16) a5,
+			      const void * ALIGNED(16) a6,
+			      const void * ALIGNED(16) a7,
+			      v8 &a, v8 &b, v8 &c, v8 &d,
+			      v8 &e, v8 &f, v8 &g, v8 &h )
+  {
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    a_v = _mm256_load_ps( (const float *)a0 );
+    b_v = _mm256_load_ps( (const float *)a1 );
+    c_v = _mm256_load_ps( (const float *)a2 );
+    d_v = _mm256_load_ps( (const float *)a3 );
+    e_v = _mm256_load_ps( (const float *)a4 );
+    f_v = _mm256_load_ps( (const float *)a5 );
+    g_v = _mm256_load_ps( (const float *)a6 );
+    h_v = _mm256_load_ps( (const float *)a7 );
+
+    t0 = _mm256_unpacklo_ps( a_v, b_v );
+    t1 = _mm256_unpackhi_ps( a_v, b_v );
+    t2 = _mm256_unpacklo_ps( c_v, d_v );
+    t3 = _mm256_unpackhi_ps( c_v, d_v );
+    t4 = _mm256_unpacklo_ps( e_v, f_v );
+    t5 = _mm256_unpackhi_ps( e_v, f_v );
+    t6 = _mm256_unpacklo_ps( g_v, h_v );
+    t7 = _mm256_unpackhi_ps( g_v, h_v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      const void * ALIGNED(16) a4,
+			      const void * ALIGNED(16) a5,
+			      const void * ALIGNED(16) a6,
+			      const void * ALIGNED(16) a7,
+			      v8 &a, v8 &b, v8 &c, v8 &d,
+			      v8 &e, v8 &f, v8 &g, v8 &h )
+  {
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    a_v = _mm256_load_ps( (const float *)a0 );
+    b_v = _mm256_load_ps( (const float *)a1 );
+    c_v = _mm256_load_ps( (const float *)a2 );
+    d_v = _mm256_load_ps( (const float *)a3 );
+    e_v = _mm256_load_ps( (const float *)a4 );
+    f_v = _mm256_load_ps( (const float *)a5 );
+    g_v = _mm256_load_ps( (const float *)a6 );
+    h_v = _mm256_load_ps( (const float *)a7 );
+
+    t0 = _mm256_unpacklo_ps( a_v, b_v );
+    t1 = _mm256_unpackhi_ps( a_v, b_v );
+    t2 = _mm256_unpacklo_ps( c_v, d_v );
+    t3 = _mm256_unpackhi_ps( c_v, d_v );
+    t4 = _mm256_unpacklo_ps( e_v, f_v );
+    t5 = _mm256_unpackhi_ps( e_v, f_v );
+    t6 = _mm256_unpacklo_ps( g_v, h_v );
+    t7 = _mm256_unpackhi_ps( g_v, h_v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+
+  inline void load_8x8_tr_v2( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      const void * ALIGNED(16) a4,
+			      const void * ALIGNED(16) a5,
+			      const void * ALIGNED(16) a6,
+			      const void * ALIGNED(16) a7,
+			      v8 &a, v8 &b, v8 &c, v8 &d,
+			      v8 &e, v8 &f, v8 &g, v8 &h )
+  {
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    a_v = _mm256_load_ps( (const float *)a0 );
+    b_v = _mm256_load_ps( (const float *)a1 );
+    c_v = _mm256_load_ps( (const float *)a2 );
+    d_v = _mm256_load_ps( (const float *)a3 );
+    e_v = _mm256_load_ps( (const float *)a4 );
+    f_v = _mm256_load_ps( (const float *)a5 );
+    g_v = _mm256_load_ps( (const float *)a6 );
+    h_v = _mm256_load_ps( (const float *)a7 );
+
+    t0 = _mm256_unpacklo_ps( a_v, b_v );
+    t1 = _mm256_unpackhi_ps( a_v, b_v );
+    t2 = _mm256_unpacklo_ps( c_v, d_v );
+    t3 = _mm256_unpackhi_ps( c_v, d_v );
+    t4 = _mm256_unpacklo_ps( e_v, f_v );
+    t5 = _mm256_unpackhi_ps( e_v, f_v );
+    t6 = _mm256_unpacklo_ps( g_v, h_v );
+    t7 = _mm256_unpackhi_ps( g_v, h_v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+  }
+  //--------------------------------------------------------------------
 
 #if 0
   inline void load_8x8_tr( const void * ALIGNED(16) a0,
@@ -1058,6 +1308,58 @@ namespace v8
     _mm256_store_ps( (float *)a6, g_v );
     _mm256_store_ps( (float *)a7, h_v );
   }
+
+  //--------------------------------------------------------------------
+  inline void store_8x8_tr_v0( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
+			       const v8 &e, const v8 &f, const v8 &g, const v8 &h,
+			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+			       void * ALIGNED(16) a2, void * ALIGNED(16) a3,
+			       void * ALIGNED(16) a4, void * ALIGNED(16) a5,
+			       void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  {
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a.v, b.v );
+    t1 = _mm256_unpackhi_ps( a.v, b.v );
+    t2 = _mm256_unpacklo_ps( c.v, d.v );
+    t3 = _mm256_unpackhi_ps( c.v, d.v );
+    t4 = _mm256_unpacklo_ps( e.v, f.v );
+    t5 = _mm256_unpackhi_ps( e.v, f.v );
+    t6 = _mm256_unpacklo_ps( g.v, h.v );
+    t7 = _mm256_unpackhi_ps( g.v, h.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a_v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b_v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c_v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d_v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e_v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f_v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g_v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h_v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+
+    _mm256_store_ps( (float *)a0, a_v );
+    _mm256_store_ps( (float *)a1, b_v );
+    _mm256_store_ps( (float *)a2, c_v );
+    _mm256_store_ps( (float *)a3, d_v );
+    _mm256_store_ps( (float *)a4, e_v );
+    _mm256_store_ps( (float *)a5, f_v );
+    _mm256_store_ps( (float *)a6, g_v );
+    _mm256_store_ps( (float *)a7, h_v );
+  }
+  //--------------------------------------------------------------------
 
   //////////////
   // v8int class

@@ -83,6 +83,13 @@ namespace v4 {
                                     const void * ALIGNED(8) a2,
                                     const void * ALIGNED(8) a3,
                                     v4 &a, v4 &b );
+    //----------------------------------------------------------------------------
+    friend inline void load_4x2_tr_v0( const void * ALIGNED(8) a0,
+				       const void * ALIGNED(8) a1,
+				       const void * ALIGNED(8) a2,
+				       const void * ALIGNED(8) a3,
+				       v4 &a, v4 &b );
+    //----------------------------------------------------------------------------
     friend inline void load_4x3_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -93,7 +100,38 @@ namespace v4 {
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
-    
+    //----------------------------------------------------------------------------
+    friend inline void load_4x4_tr_v0( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    friend inline void load_4x4_tr_v1( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    friend inline void load_4x4_tr_v2( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    friend inline void load_4x4_tr_v3( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    friend inline void load_4x4_tr_v4( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    friend inline void load_4x4_tr_v5( const void * ALIGNED(16) a0,
+				       const void * ALIGNED(16) a1,
+				       const void * ALIGNED(16) a2,
+				       const void * ALIGNED(16) a3,
+				       v4 &a, v4 &b, v4 &c, v4 &d );
+    //----------------------------------------------------------------------------
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -112,6 +150,20 @@ namespace v4 {
                                      void * ALIGNED(16) a1,
                                      void * ALIGNED(16) a2,
                                      void * ALIGNED(16) a3 );
+    //----------------------------------------------------------------------------
+    friend inline void store_4x4_tr_v0( const v4 &a, const v4 &b,
+					const v4 &c, const v4 &d,
+					void * ALIGNED(16) a0,
+					void * ALIGNED(16) a1,
+					void * ALIGNED(16) a2,
+					void * ALIGNED(16) a3 );
+    friend inline void store_4x4_tr_v1( const v4 &a, const v4 &b,
+					const v4 &c, const v4 &d,
+					void * ALIGNED(16) a0,
+					void * ALIGNED(16) a1,
+					void * ALIGNED(16) a2,
+					void * ALIGNED(16) a3 );
+    //----------------------------------------------------------------------------
 
   protected:
   public:
@@ -229,6 +281,22 @@ namespace v4 {
     a.v = a_v; b.v = b_v;
   }
 
+  //----------------------------------------------------------------------------
+  inline void load_4x2_tr_v0( const void * ALIGNED(8) a0,
+			      const void * ALIGNED(8) a1,
+			      const void * ALIGNED(8) a2,
+			      const void * ALIGNED(8) a3,
+			      v4 &a, v4 &b ) {
+    __m128 a_v, b_v, t;
+    b_v = _mm_setzero_ps();
+    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a0 ), (__m64 *)a1 );
+    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a2 ), (__m64 *)a3 );
+    a_v = _mm_shuffle_ps( t, b_v, 0x88 );
+    b_v = _mm_shuffle_ps( t, b_v, 0xdd );
+    a.v = a_v; b.v = b_v;
+  }
+  //----------------------------------------------------------------------------
+
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -345,6 +413,146 @@ namespace v4 {
     d.v = _mm_movehl_ps( u, t );
   }
 
+  //----------------------------------------------------------------------------
+  inline void load_4x4_tr_v0( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+
+  inline void load_4x4_tr_v1( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+
+  inline void load_4x4_tr_v2( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+
+  inline void load_4x4_tr_v3( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+
+  inline void load_4x4_tr_v4( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+
+  inline void load_4x4_tr_v5( const void * ALIGNED(16) a0,
+			      const void * ALIGNED(16) a1,
+			      const void * ALIGNED(16) a2,
+			      const void * ALIGNED(16) a3,
+			      v4 &a, v4 &b, v4 &c, v4 &d ) {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+  //----------------------------------------------------------------------------
+
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 ) {
     ((float *)a0)[0] = a.f[0];
@@ -399,6 +607,44 @@ namespace v4 {
     _mm_store_ps( (float *)a2, c_v );
     _mm_store_ps( (float *)a3, d_v );
   }
+
+  //----------------------------------------------------------------------------
+  inline void store_4x4_tr_v0( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
+			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+			       void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
+    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+    b_v = _mm_movehl_ps( c_v, a_v );
+    a_v = _mm_movelh_ps( a_v, c_v );
+    c_v = _mm_movelh_ps( t, u );
+    d_v = _mm_movehl_ps( u, t );
+    _mm_store_ps( (float *)a0, a_v );
+    _mm_store_ps( (float *)a1, b_v );
+    _mm_store_ps( (float *)a2, c_v );
+    _mm_store_ps( (float *)a3, d_v );
+  }
+
+  inline void store_4x4_tr_v1( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
+			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
+			       void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
+    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+    b_v = _mm_movehl_ps( c_v, a_v );
+    a_v = _mm_movelh_ps( a_v, c_v );
+    c_v = _mm_movelh_ps( t, u );
+    d_v = _mm_movehl_ps( u, t );
+    _mm_store_ps( (float *)a0, a_v );
+    _mm_store_ps( (float *)a1, b_v );
+    _mm_store_ps( (float *)a2, c_v );
+    _mm_store_ps( (float *)a3, d_v );
+  }
+  //----------------------------------------------------------------------------
 
   //////////////
   // v4int class

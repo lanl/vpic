@@ -1024,6 +1024,7 @@ namespace v8
 			      v8 &a, v8 &b, v8 &c, v8 &d,
 			      v8 &e, v8 &f, v8 &g, v8 &h )
   {
+#if 0
     a.v = _mm256_load_ps( (const float *)a0 );
     b.v = _mm256_load_ps( (const float *)a1 );
     c.v = _mm256_load_ps( (const float *)a2 );
@@ -1032,7 +1033,7 @@ namespace v8
     f.v = _mm256_load_ps( (const float *)a5 );
     g.v = _mm256_load_ps( (const float *)a6 );
     h.v = _mm256_load_ps( (const float *)a7 );
-#if 0
+#endif
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -1074,7 +1075,6 @@ namespace v8
     f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-#endif
   }
 
   inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
@@ -1572,7 +1572,6 @@ namespace v8
 			       void * ALIGNED(16) a4, void * ALIGNED(16) a5,
 			       void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
   {
-#if 0
     __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
     __m256 t0, t1, t2, t3, t4, t5, t6, t7;
@@ -1614,7 +1613,7 @@ namespace v8
     _mm256_store_ps( (float *)a5, f_v );
     _mm256_store_ps( (float *)a6, g_v );
     _mm256_store_ps( (float *)a7, h_v );
-#endif
+#if 0
     _mm256_store_ps( (float *)a0, a.v );
     _mm256_store_ps( (float *)a1, b.v );
     _mm256_store_ps( (float *)a2, c.v );
@@ -1623,6 +1622,7 @@ namespace v8
     _mm256_store_ps( (float *)a5, f.v );
     _mm256_store_ps( (float *)a6, g.v );
     _mm256_store_ps( (float *)a7, h.v );
+#endif
   }
   //--------------------------------------------------------------------
 

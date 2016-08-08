@@ -4157,7 +4157,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr_v0( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		    &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		    dx, dy, dz, ii, ux, uy, uz, q );
-    transpose_v0( dx, dy, dz, ii, ux, uy, uz, q );
+    // transpose_v0( dx, dy, dz, ii, ux, uy, uz, q );
 
     // Interpolate fields.
     vp0 = ( float * ALIGNED(16) ) ( f0 + ii(0) );
@@ -4256,7 +4256,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v4  = merge( outbnd, dy, v4 );
     v5  = merge( outbnd, dz, v5 );
 
-    transpose_v3( v3, v4, v5, ii, v6, v7, v8, q );
+    // transpose_v3( v3, v4, v5, ii, v6, v7, v8, q );
     store_8x8_tr_v0( v3, v4, v5, ii, v6, v7, v8, q,
 		     &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		     &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );

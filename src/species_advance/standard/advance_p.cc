@@ -207,7 +207,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
 #if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
-#include advance_p_pipeline_v4.cc
+#include "advance_p_pipeline_v4.cc"
 
 #endif
 
@@ -217,7 +217,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
-#include advance_p_pipeline_v8.cc
+#include "advance_p_pipeline_v8.cc"
 
 #endif
 

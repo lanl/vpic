@@ -2095,9 +2095,96 @@ namespace v8
 
     friend inline v8float rsqrt_approx( const v8float &a );
     friend inline v8float rsqrt( const v8float &a );
+    //---------------------------------------------------------------------------------
+    friend inline v8float rsqrt_v0( const v8float &a );
+    friend inline v8float rsqrt_v1( const v8float &a );
+    //---------------------------------------------------------------------------------
     friend inline v8float rcp_approx( const v8float &a );
     friend inline v8float rcp( const v8float &a );
     friend inline v8float fma(  const v8float &a, const v8float &b, const v8float &c );
+    //---------------------------------------------------------------------------------
+    friend inline v8float fma_v00( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v01( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v02( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v03( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v04( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v05( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v06( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v07( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v08( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v09( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v10( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v11( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v12( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v13( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v14( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v15( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v16( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v17( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v18( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v19( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v20( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v21( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v22( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v23( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v24( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v25( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    friend inline v8float fma_v26( const v8float &a,
+				   const v8float &b,
+				   const v8float &c );
+    //---------------------------------------------------------------------------------
     friend inline v8float fms(  const v8float &a, const v8float &b, const v8float &c );
     friend inline v8float fnms( const v8float &a, const v8float &b, const v8float &c );
     friend inline v8float clear_bits(  const v8int &m, const v8float &a );
@@ -2403,6 +2490,36 @@ namespace v8
 											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
     return b;
   }
+  //---------------------------------------------------------------------------------
+  inline v8float rsqrt_v0( const v8float &a )
+  {
+    v8float b;
+    __m256 a_v = a.v, b_v;
+    b_v = _mm256_rsqrt_ps(a_v);
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
+					     _mm256_sub_ps( b_v,
+							    _mm256_mul_ps( a_v,
+									   _mm256_mul_ps( b_v,
+											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
+    return b;
+  }
+  inline v8float rsqrt_v1( const v8float &a )
+  {
+    v8float b;
+    __m256 a_v = a.v, b_v;
+    b_v = _mm256_rsqrt_ps(a_v);
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
+					     _mm256_sub_ps( b_v,
+							    _mm256_mul_ps( a_v,
+									   _mm256_mul_ps( b_v,
+											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
+    return b;
+  }
+  //---------------------------------------------------------------------------------
 
 #if 0
   inline v8float rsqrt( const v8float &a )
@@ -2469,6 +2586,170 @@ namespace v8
     d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
     return d;
   }
+  //---------------------------------------------------------------------------------
+  inline v8float fma_v00(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v01(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v02(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v03(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v04(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v05(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v06(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v07(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v08(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v09(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v10(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v11(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v12(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v13(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v14(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v15(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v16(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v17(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v18(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v19(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v20(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v21(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v22(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v23(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v24(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v25(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  inline v8float fma_v26(  const v8float &a, const v8float &b, const v8float &c )
+  {
+    v8float d;
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    return d;
+  }
+  //---------------------------------------------------------------------------------
 
 #if 0
   inline v8float fma(  const v8float &a, const v8float &b, const v8float &c )

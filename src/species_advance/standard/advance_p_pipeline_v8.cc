@@ -622,7 +622,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 }
 #endif // Method 2
 
-#if 0
+// #if 0
 // Method 3.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
@@ -966,7 +966,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-#endif // Method 3
+// #endif // Method 3
 
 #if 0
 // Method 4.
@@ -2035,7 +2035,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 }
 #endif // Method 4
 
-// #if 0
+#if 0
 // Method 5.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
@@ -2383,4 +2383,4 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-// #endif // Method 5
+#endif // Method 5

@@ -91,7 +91,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
            np = nk nl
          and:
            nc = round( sample max( nk, nl ) )
-         such that, for sample==1, on average every particle is thest
+         such that, for sample==1, on average every particle is tested
          for collision at least once. */
 
       l0 = spj_partition[v  ];

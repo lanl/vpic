@@ -114,6 +114,10 @@ if(USE_OPENMP)
   endif(OPENMP_FOUND)
 endif(USE_OPENMP)
 
+#------------------------------------------------------------------------------#
+# Add options for building with v4 simd vector support.
+#------------------------------------------------------------------------------#
+
 set(USE_V4)
 
 if(USE_V4_PORTABLE)
@@ -141,6 +145,10 @@ if(USE_V4_ALTIVEC)
   set(USE_V4 True)
 endif(USE_V4_ALTIVEC)
 
+#------------------------------------------------------------------------------#
+# Add options for building with v8 simd vector support.
+#------------------------------------------------------------------------------#
+
 set(USE_V8)
 
 if(USE_V8_PORTABLE)
@@ -157,6 +165,26 @@ if(USE_V8_AVX2)
   add_definitions(-DUSE_V8_AVX2)
   set(USE_V8 True)
 endif(USE_V8_AVX2)
+
+#------------------------------------------------------------------------------#
+# Add options for building with v16 simd vector support.
+#------------------------------------------------------------------------------#
+
+set(USE_V16)
+
+if(USE_V16_PORTABLE)
+  add_definitions(-DUSE_V16_PORTABLE)
+  set(USE_V16 True)
+endif(USE_V16_PORTABLE)
+
+if(USE_V16_AVX512)
+  add_definitions(-DUSE_V16_AVX512)
+  set(USE_V16 True)
+endif(USE_V16_AVX512)
+
+#------------------------------------------------------------------------------#
+# Miscellaneous options.
+#------------------------------------------------------------------------------#
 
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)

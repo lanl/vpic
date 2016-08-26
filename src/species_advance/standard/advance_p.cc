@@ -2,8 +2,11 @@
 // ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES
 
 #define IN_spa
+
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
+
 #include "spa_private.h"
 
 #if defined(VPIC_USE_VTUNE)
@@ -218,6 +221,16 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
 #include "advance_p_pipeline_v8.cc"
+
+#endif
+
+//----------------------------------------------------------------------------//
+// If using v16, include an implementation for advance_p_pipeline_v16.
+//----------------------------------------------------------------------------//
+
+#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
+
+#include "advance_p_pipeline_v16.cc"
 
 #endif
 

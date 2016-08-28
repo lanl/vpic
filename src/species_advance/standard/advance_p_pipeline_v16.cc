@@ -13,7 +13,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   const grid_t         *              g  = args->g;
 
   particle_t           * ALIGNED(128) p;
-  particle_mover_t     * ALIGNED(16)  pm; 
+  particle_mover_t     * ALIGNED(16)  pm;
 
   float                * ALIGNED(16)  vp00_a;
   float                * ALIGNED(16)  vp01_a;
@@ -157,7 +157,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     vp15_b = ( float * ALIGNED(16) ) ( f0 + ii_b(15) );
 
     //--------------------------------------------------------------------------
-    // Load 2 blocks of data for 16 particles per block.
+    // Load data for 16 particles for block a.
     //--------------------------------------------------------------------------
     load_16x16_tr( vp00_a, vp01_a, vp02_a, vp03_a,
 		   vp04_a, vp05_a, vp06_a, vp07_a,
@@ -243,6 +243,16 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     v03_a  = merge( outbnd_a, dx_a, v03_a ); // Do not update outbnd particles
     v04_a  = merge( outbnd_a, dy_a, v04_a );
     v05_a  = merge( outbnd_a, dz_a, v05_a );
+
+    //--------------------------------------------------------------------------
+    // Load data for 16 particles for block b.
+    //--------------------------------------------------------------------------
+    load_16x16_tr( vp00_b, vp01_b, vp02_b, vp03_b,
+		   vp04_b, vp05_b, vp06_b, vp07_b,
+		   vp08_b, vp09_b, vp10_b, vp11_b,
+		   vp12_b, vp13_b, vp14_b, vp15_b,
+		   hax_b, v00_b, v01_b, v02_b, hay_b, v03_b, v04_b, v05_b,
+		   haz_b, v06_b, v07_b, v08_b, cbx_b, v09_b, cby_b, v10_b );
 
     //--------------------------------------------------------------------------
     // Process particle block b.

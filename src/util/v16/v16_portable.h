@@ -2036,7 +2036,7 @@ namespace v16
 
     v16int( const v16int &a )                   // Copy constructor
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	i[j] = a.i[j];
 
       /* i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3]; */
@@ -2045,7 +2045,7 @@ namespace v16
 
     v16int( const v16 &a )                      // Init from mixed
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	i[j] = a.i[j];
 
       /* i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3]; */
@@ -2054,7 +2054,7 @@ namespace v16
 
     v16int( int a )                            // Init from scalar
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	i[j] = a;
 
       /* i[0] = a; i[1] = a; i[2] = a; i[3] = a; */
@@ -2487,7 +2487,7 @@ namespace v16
 
     v16float( const v16float &a )                          // Copy constructor
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	f[j] = a.f[j];
 
       /* f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3]; */
@@ -2496,7 +2496,7 @@ namespace v16
 
     v16float( const v16 &a )                               // Init from mixed
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	f[j] = a.f[j];
 
       /* f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3]; */
@@ -2505,7 +2505,7 @@ namespace v16
 
     v16float( float a )                                    // Init from scalar
     {
-      for( j = 0; j < 16; j++ )
+      for( int j = 0; j < 16; j++ )
 	f[j] = a;
 
       /* f[0] = a; f[1] = a; f[2] = a; f[3] = a; */

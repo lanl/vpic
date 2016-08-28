@@ -180,7 +180,7 @@ namespace v16
 				      void * ALIGNED(8) a08,
 				      void * ALIGNED(8) a09,
 				      void * ALIGNED(8) a10,
-				      void * ALIGNED(8) a11
+				      void * ALIGNED(8) a11,
 				      void * ALIGNED(8) a12,
 				      void * ALIGNED(8) a13,
 				      void * ALIGNED(8) a14,

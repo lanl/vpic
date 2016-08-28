@@ -40,6 +40,9 @@ set(util_HEADERS
   v8/v8_avx.h
   v8/v8_avx2.h
   v8/v8_portable.h
+  v16/v16.h
+  v16/v16_avx512.h
+  v16/v16_portable.h
   PARENT_SCOPE
 )
 
@@ -70,7 +73,12 @@ if(ENABLE_UNIT_TESTS)
     cinch_add_unit(v8
       SOURCES v8/test/v8.cc)
   endif(USE_V8)
-  
+
+  if(USE_V16)
+    cinch_add_unit(v16
+      SOURCES v16/test/v16.cc)
+  endif(USE_V16)
+
   cinch_add_unit(rng
     SOURCES rng/test/rng.cc
     LIBRARIES vpic dl

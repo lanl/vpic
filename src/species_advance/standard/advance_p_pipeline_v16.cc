@@ -508,13 +508,33 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
     // Update position and accumulate outbnd
 
+// #   define MOVE_OUTBND(N)                                               \
+//     if ( outbnd_a(N) )                              /* Unlikely */      \
+//     {                                                                   \
+//       local_pm->dispx = ux_a(N);                                        \
+//       local_pm->dispy = uy_a(N);                                        \
+//       local_pm->dispz = uz_a(N);                                        \
+//       local_pm->i     = ( p - p0 ) + N;                                 \
+//       if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
+//       {                                                                 \
+//         if ( nm < max_nm )                                              \
+//         {                                                               \
+// 	  v4::copy_4x1( &pm[nm++], local_pm ); 	                        \
+// 	}                                                               \
+//         else                                        /* Unlikely */      \
+// 	{                                                               \
+// 	  itmp++;                                                       \
+// 	}                                                               \
+//       }                                                                 \
+//     }
+
 #   define MOVE_OUTBND(N)                                               \
     if ( outbnd_a(N) )                              /* Unlikely */      \
     {                                                                   \
       local_pm->dispx = ux_a(N);                                        \
       local_pm->dispy = uy_a(N);                                        \
       local_pm->dispz = uz_a(N);                                        \
-      local_pm->i     = ( p - p0 ) + N;                                 \
+      local_pm->i     = ( p - p0 ) + 2*N;                               \
       if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
       {                                                                 \
         if ( nm < max_nm )                                              \
@@ -713,13 +733,33 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
     // Update position and accumulate outbnd
 
+// #   define MOVE_OUTBND(N)                                               \
+//     if ( outbnd_b(N) )                              /* Unlikely */      \
+//     {                                                                   \
+//       local_pm->dispx = ux_b(N);                                        \
+//       local_pm->dispy = uy_b(N);                                        \
+//       local_pm->dispz = uz_b(N);                                        \
+//       local_pm->i     = ( p - p0 ) + N;                                 \
+//       if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
+//       {                                                                 \
+//         if ( nm < max_nm )                                              \
+//         {                                                               \
+// 	  v4::copy_4x1( &pm[nm++], local_pm ); 	                        \
+// 	}                                                               \
+//         else                                        /* Unlikely */      \
+// 	{                                                               \
+// 	  itmp++;                                                       \
+// 	}                                                               \
+//       }                                                                 \
+//     }
+
 #   define MOVE_OUTBND(N)                                               \
     if ( outbnd_b(N) )                              /* Unlikely */      \
     {                                                                   \
       local_pm->dispx = ux_b(N);                                        \
       local_pm->dispy = uy_b(N);                                        \
       local_pm->dispz = uz_b(N);                                        \
-      local_pm->i     = ( p - p0 ) + N;                                 \
+      local_pm->i     = ( p - p0 ) + 2*N + 1;                           \
       if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
       {                                                                 \
         if ( nm < max_nm )                                              \

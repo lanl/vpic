@@ -520,6 +520,34 @@ void coprocessorProcess (long long timestep, double time,
           }
         varlistscalarcounter += numarrayscalars;
         } // iterating over vars
+
+        // Dump particles
+        //
+        // Probably want a separate parameter set in dumpParams but piggly backing
+        // off the fluid descriptions for now.
+        //
+        // Loop over all particles
+        for(int i=0;i<sp->np;i++)
+          {
+          // Get individual particle and check it is in box
+          particle_t *p = sp->p;
+          std::cout << "PARTICLE Index: " << p->i << std::endl;
+          std::cout << "PARTICLE position: " << p->dx << "," << p->dy << "," << p->dz << std::endl;
+          std::cout << "PARTICLE momentum: " << p->ux << "," << p->uy << "," << p->uz << std::endl;
+
+          // How do we check if particle is in box?
+          // Construct set of indices that cover the entire box?
+          //
+          // Calculate the full x,y,z postions of the particle from index
+          // and do nested conditionals?
+
+          // Two possibilites:
+          // 1) Copy particles in a box into separate species. Avoids having
+          //    to deal with time offset in ParaView code but grows memory.
+          // 2) Point to particles in a box. Would require implementing the
+          //    particle update in ParaView code or tolerating the particles
+          //    being time shifted in visualizations.
+          }
       } // iterating over dumpParams
 
 

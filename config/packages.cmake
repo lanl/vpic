@@ -159,7 +159,7 @@ if(USE_CATALYST)
 
   # if ParaView was built with shared libraries we have to tell
   # VPIC where those are.
-  set(CATALYST_RPATH "-Wl,-rpath,${ParaView_DIR}/lib -Wl")
+  set(CATALYST_RPATH "-Wl,-rpath,${ParaView_DIR}/lib")
 
   # Add in the extra VPICAdaptor library to list of libraries to be linked in
   # through vpic.on or vpic-local.in. It will be in the same location as

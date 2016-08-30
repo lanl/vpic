@@ -9,7 +9,9 @@
 #include "vtkImageData.h"
 #include "vtkMultiProcessController.h"
 #include "vtkNew.h"
+#include "vtkPoints.h"
 #include "vtkPointData.h"
+#include "vtkPolyData.h"
 #include "vtkSmartPointer.h"
 
 #include <float.h>
@@ -302,6 +304,7 @@ void coprocessorProcess (long long timestep, double time,
   if (coProcessor->RequestDataDescription (coProcessorData))
     {
     vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
+    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
 
     int ix, iy, iz;
     RANK_TO_INDEX(topology, vtkMultiProcessController::GetGlobalController()->GetLocalProcessId(),
@@ -538,6 +541,8 @@ void coprocessorProcess (long long timestep, double time,
         } // iterating over vars
 
         // Dump particles
+        vtkSmartPointer<vtkPoints> positions = vtkSmartPointer<vtkPoints>::New();
+        positions->SetNumberOfPoints(sp->np);
         static particle_t * ALIGNED(128) p_buf = NULL;
 # define PBUF_SIZE 32768 // 1MB of particles
         if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
@@ -559,18 +564,26 @@ void coprocessorProcess (long long timestep, double time,
           // Now loop over centered particles to populate VTK data structure
           for (int i=0; i<sp->np; i++)
             {
-            if (i%5000)
+            std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
+            // TODO: Probably should check with the LANL guys if this is the correct
+            //       or best way to extract the physical positions. Also ask about units.
+            positions->SetPoint(buf_start*PBUF_SIZE + i,
+                               sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
+                               sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
+                               sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
+            if (i/1000)
               {
-                std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
                 std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
                 std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
-						   << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << "," 
-						   << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
+                                                   << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << ","
+                                                   << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
                 std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
                 std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
               }
             }
           }
+
+        polyData->SetPoints(positions);
         // Set the species back to the uncentered particles
         sp->p      = sp_p;
         sp->np     = sp_np;
@@ -587,6 +600,7 @@ void coprocessorProcess (long long timestep, double time,
                           0, static_cast<int>(sim->grid->nz*sim->pz-1)};
 
     coProcessorData->GetInputDescriptionByName("input")->SetWholeExtent(wholeExtent);
+    coProcessorData->GetInputDescriptionByName("particles")->SetGrid(polyData);
     coProcessor->CoProcess(coProcessorData);
     }
 }

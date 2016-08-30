@@ -64,7 +64,7 @@ namespace
 
     retVal.push_back(index%(nx + 2));
     retVal.push_back((index - retVal[0])%(ny + 2));
-    retVal.push_back(index - retVal[0] - retVal[1]*(nx + 2)/(ny + 2));
+    retVal.push_back(index/(nx + 2)/(ny + 2));
 
     return retVal;
   }
@@ -559,12 +559,15 @@ void coprocessorProcess (long long timestep, double time,
           // Now loop over centered particles to populate VTK data structure
           for (int i=0; i<sp->np; i++)
             {
-            if (i%1000)
+            if (i%5000)
               {
                 std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
                 std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
-                std::cout << "PARTICLE position: " << sp->p[i].dx << "," << sp->p[i].dy << "," << sp->p[i].dz << std::endl;
+                std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
+						   << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << "," 
+						   << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
                 std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
+                std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
               }
             }
           }

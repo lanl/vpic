@@ -54,6 +54,21 @@ namespace
     return (ix + topology[0]*( iy + topology[1]*iz ));
   }
 
+  // Converts scalar vpic grid/voxel index to grid positions
+  // TODO: if an existing vpic method is found to do this fall back on that
+  // No bounds checking is currently done so the index is assume to be in the
+  // correct range
+  std::vector<int> VOXEL_TO_GRID(int index, int nx, int ny, int nz)
+  {
+    std::vector<int> retVal;
+
+    retVal.push_back(index%(nx + 2));
+    retVal.push_back((index - retVal[0])%(ny + 2));
+    retVal.push_back(index - retVal[0] - retVal[1]*(nx + 2)/(ny + 2));
+
+    return retVal;
+  }
+
   void FillData(action_t action, vtkPointData* localArrays, std::vector<float>& remoteData,
                 std::vector<vtkIdType>& idmap )
   {
@@ -282,6 +297,7 @@ void coprocessorProcess (long long timestep, double time,
   vtkSmartPointer<vtkCPDataDescription> coProcessorData =
     vtkSmartPointer<vtkCPDataDescription>::New();
   coProcessorData->AddInput("input");
+  coProcessorData->AddInput("particles");
   coProcessorData->SetTimeData (time, static_cast<vtkIdType>(timestep));
   if (coProcessor->RequestDataDescription (coProcessorData))
     {
@@ -522,32 +538,40 @@ void coprocessorProcess (long long timestep, double time,
         } // iterating over vars
 
         // Dump particles
-        //
-        // Probably want a separate parameter set in dumpParams but piggly backing
-        // off the fluid descriptions for now.
-        //
-        // Loop over all particles
-        for(int i=0;i<sp->np;i++)
+        static particle_t * ALIGNED(128) p_buf = NULL;
+# define PBUF_SIZE 32768 // 1MB of particles
+        if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
+
+        // Copy a PBUF_SIZE hunk of the particle list into the particle
+        // buffer, timecenter it. Loop over these new particles to find their
+        // physical positions and the write positions, momentum and weight
+        // vtkPolyData. This is done this way to guarantee the particle list
+        // unchanged while not requiring too much memory.
+        particle_t * sp_p = sp->p;      sp->p      = p_buf;
+        int sp_np         = sp->np;     sp->np     = 0;
+        int sp_max_np     = sp->max_np; sp->max_np = PBUF_SIZE;
+        for(int buf_start=0; buf_start<sp_np; buf_start += PBUF_SIZE )
           {
-          // Get individual particle and check it is in box
-          particle_t *p = sp->p;
-          std::cout << "PARTICLE Index: " << p->i << std::endl;
-          std::cout << "PARTICLE position: " << p->dx << "," << p->dy << "," << p->dz << std::endl;
-          std::cout << "PARTICLE momentum: " << p->ux << "," << p->uy << "," << p->uz << std::endl;
+          sp->np = sp_np-buf_start; if( sp->np > PBUF_SIZE ) sp->np = PBUF_SIZE;
+          COPY( sp->p, &sp_p[buf_start], sp->np );
+          center_p( sp, sim->interpolator_array );
 
-          // How do we check if particle is in box?
-          // Construct set of indices that cover the entire box?
-          //
-          // Calculate the full x,y,z postions of the particle from index
-          // and do nested conditionals?
-
-          // Two possibilites:
-          // 1) Copy particles in a box into separate species. Avoids having
-          //    to deal with time offset in ParaView code but grows memory.
-          // 2) Point to particles in a box. Would require implementing the
-          //    particle update in ParaView code or tolerating the particles
-          //    being time shifted in visualizations.
+          // Now loop over centered particles to populate VTK data structure
+          for (int i=0; i<sp->np; i++)
+            {
+            if (i%1000)
+              {
+                std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
+                std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
+                std::cout << "PARTICLE position: " << sp->p[i].dx << "," << sp->p[i].dy << "," << sp->p[i].dz << std::endl;
+                std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
+              }
+            }
           }
+        // Set the species back to the uncentered particles
+        sp->p      = sp_p;
+        sp->np     = sp_np;
+        sp->max_np = sp_max_np;
       } // iterating over dumpParams
 
 

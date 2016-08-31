@@ -37,9 +37,11 @@
 // (?) Signal blocking in pipelines
 // (?) Timeouts in thread_halt, thread_boot (spin wait)
 
-#include <pthread.h>
-
 #include "pipelines.h"
+
+#if defined(VPIC_USE_PTHREADS)
+
+#include <pthread.h>
 
 static void *
 pipeline_mgr( void *_id );
@@ -575,3 +577,4 @@ pipeline_dispatcher_t thread = {
   thread_wait      // wait
 };
 
+#endif

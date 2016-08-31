@@ -25,6 +25,8 @@ set(util_HEADERS
   mp/MPWrapper.h
   mp/RelayPolicy.h
   pipelines/pipelines.h
+  pipelines/pipelines_openmp.h
+  pipelines/pipelines_pthreads.h
   profile/profile.h
   rng/drandn_table.h
   rng/frandn_table.h
@@ -54,6 +56,7 @@ set(util_SOURCES
   util_base.c
   pipelines/pipelines_serial.c
   pipelines/pipelines_thread.c
+  pipelines/pipelines_helper.c
   profile/profile.c
   rng/drandn_table.c
   rng/frandn_table.c

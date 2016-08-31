@@ -105,12 +105,23 @@ endif(ENABLE_INTEGRATED_TESTS)
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
 
+#------------------------------------------------------------------------------#
+# Add options for building with a threading model.
+#------------------------------------------------------------------------------#
+
+if(USE_PTHREADS)
+  add_definitions(-DVPIC_USE_PTHREADS)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
+endif(USE_PTHREADS)
+
 if(USE_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)
+    add_definitions(-DVPIC_USE_OPENMP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_OPENMP")
   endif(OPENMP_FOUND)
 endif(USE_OPENMP)
 
@@ -122,26 +133,31 @@ set(USE_V4)
 
 if(USE_V4_PORTABLE)
   add_definitions(-DUSE_V4_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_PORTABLE")
   set(USE_V4 True)
 endif(USE_V4_PORTABLE)
 
 if(USE_V4_SSE)
   add_definitions(-DUSE_V4_SSE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_SSE")
   set(USE_V4 True)
 endif(USE_V4_SSE)
 
 if(USE_V4_AVX)
   add_definitions(-DUSE_V4_AVX)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_AVX")
   set(USE_V4 True)
 endif(USE_V4_AVX)
 
 if(USE_V4_AVX2)
   add_definitions(-DUSE_V4_AVX2)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_AVX2")
   set(USE_V4 True)
 endif(USE_V4_AVX2)
 
 if(USE_V4_ALTIVEC)
   add_definitions(-DUSE_V4_ALTIVEC)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_ALTIVEC")
   set(USE_V4 True)
 endif(USE_V4_ALTIVEC)
 
@@ -153,16 +169,19 @@ set(USE_V8)
 
 if(USE_V8_PORTABLE)
   add_definitions(-DUSE_V8_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_PORTABLE")
   set(USE_V8 True)
 endif(USE_V8_PORTABLE)
 
 if(USE_V8_AVX)
   add_definitions(-DUSE_V8_AVX)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_AVX")
   set(USE_V8 True)
 endif(USE_V8_AVX)
 
 if(USE_V8_AVX2)
   add_definitions(-DUSE_V8_AVX2)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_AVX2")
   set(USE_V8 True)
 endif(USE_V8_AVX2)
 
@@ -174,11 +193,13 @@ set(USE_V16)
 
 if(USE_V16_PORTABLE)
   add_definitions(-DUSE_V16_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_PORTABLE")
   set(USE_V16 True)
 endif(USE_V16_PORTABLE)
 
 if(USE_V16_AVX512)
   add_definitions(-DUSE_V16_AVX512)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_AVX512")
   set(USE_V16 True)
 endif(USE_V16_AVX512)
 
@@ -192,6 +213,7 @@ endif(ENABLE_OPENSSL)
 
 if(VPIC_PRINT_MORE_DIGITS)
   add_definitions(-DVPIC_PRINT_MORE_DIGITS)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
 endif(VPIC_PRINT_MORE_DIGITS)
 
 #------------------------------------------------------------------------------#

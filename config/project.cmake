@@ -19,6 +19,8 @@ option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
 option(USE_OPENMP "Use OpenMP" OFF)
 
+option(USE_PTHREADS "Use Pthreads" ON)
+
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
 
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)

@@ -1,212 +1,48 @@
 #ifndef _pipelines_h_
 #define _pipelines_h_
 
-#include "../util_base.h"
-
-enum { MAX_PIPELINE = 272 };
-
-// A pipeline function takes a pointer to arguments for the pipeline
-// and a integer which gives the rank of the pipeline and the total
-// number of pipelines dispatched.
-
-typedef void
-(*pipeline_func_t)( void * args,
-                    int pipeline_rank,
-                    int n_pipeline );
-
-////////////////////////////////////////////////////////////////////////////////
+//Redirect pipelines macros depending on pthreads vs. openmp
 
 //----------------------------------------------------------------------------//
-// Macro defines to support v16 simd vector acceleration.  Uses thread
-// dispatcher on the v16 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
+// Make sure that pipelines_pthreads.h and pipelines_openmp.h can only be
+// included via this header file.
 //----------------------------------------------------------------------------//
 
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-# define N_PIPELINE thread.n_pipeline
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v16,         \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v16( args_t *args,        \
-                       int pipeline_rank,   \
-                       int n_pipeline );    \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-# define PAD_STRUCT( sz )
+#define THREAD_REROUTE
 
 //----------------------------------------------------------------------------//
-// Macro defines to support v8 simd vector acceleration.  Uses thread
-// dispatcher on the v8 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
+// If using Pthreads, include pipelines_pthreads.h.
 //----------------------------------------------------------------------------//
 
-#elif defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
+#if defined(VPIC_USE_PTHREADS)
 
-# define N_PIPELINE thread.n_pipeline
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v8,          \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-// Do I really need this?
-// # define EXEC_PIPELINES_V4(name,args,str)			       \
-//   thread.dispatch( (pipeline_func_t)name##_pipeline_v4,	       \
-//                    args, sizeof(*args), str );		       \
-//   name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v8( args_t *args,         \
-                      int pipeline_rank,    \
-                      int n_pipeline );     \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-// Do I really need this?
-// # define PROTOTYPE_PIPELINE_V4( name, args_t )	\
-//   void						\
-//   name##_pipeline_v4( args_t * args,			\
-//                       int pipeline_rank,		\
-//                       int n_pipeline );		\
-// 							\
-//   void						\
-//   name##_pipeline( args_t * args,			\
-//                    int pipeline_rank,		\
-//                    int n_pipeline )
-
-# define PAD_STRUCT( sz )
+#include "pipelines_pthreads.h"
 
 //----------------------------------------------------------------------------//
-// Macro defines to support v4 simd vector acceleration.  Uses thread
-// dispatcher on the v4 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
+// If using OpenMP, include pipelines_openmp.h.
 //----------------------------------------------------------------------------//
 
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
+#elif defined(VPIC_USE_OPENMP)
 
-# define N_PIPELINE thread.n_pipeline
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v4,          \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-# define WAIT_PIPELINES() thread.wait()
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v4( args_t *args,         \
-                      int pipeline_rank,    \
-                      int n_pipeline );     \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-# define PAD_STRUCT( sz )
+#include "pipelines_openmp.h"
 
 //----------------------------------------------------------------------------//
-// Macro defines to support the standard implementation which does not use
-// explicit simd vectorization.  Uses thread dispatcher on the scalar pipeline
-// and the caller does straggler cleanup with the scalar pipeline.
+// I wonder if VPIC will actually run without a threading model.
 //----------------------------------------------------------------------------//
 
 #else
 
-# define N_PIPELINE thread.n_pipeline
+// Need to figure out how to handle this case.
 
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline,             \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
-
-# define PAD_STRUCT( sz )
+#error "VPIC_USE_OPENMP or VPIC_USE_PTHREADS must be specified"
 
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------//
+// Make sure that pipelines_pthreads.h and pipelines_openmp.h can only be
+// included via this header file.
+//----------------------------------------------------------------------------//
 
-typedef struct pipeline_dispatcher {
-
-  // n_pipelines indicates the number of pipelines currently running.
-  // Technically, this should be read only for users!
-
-  int n_pipeline;
-
-  // boot creates the number of pipelines requested (in the command
-  // line args).  Generally, this is number of cores on a node if
-  // using symmetric multiprocessing or the number of pipeline
-  // processors if using heterogeneous multiprocessing.
-
-  void
-  (*boot)( int * pargc,
-           char *** pargv );
-
-  // halt destroys all the resources used by the dispatcher created
-  // in boot.
-
-  void (*halt)( void );
-
-  // dispatch begins executing the given pipeline function on all the
-  // pipelines.
-  //
-  // pipeline is the pipeline function to execute on the pipelines.
-  //
-  // args is an array of arguments to pass to each pipeline.
-  //
-  // sz gives the byte size of an element of the argument
-  // array.
-  //
-  // str gives the element stride between elements of the argument
-  // array.  Pass 0 if you want all pipelines to get the same
-  // arguments.
-  //
-  // If the pipeline functions do not take arguments, use NULL for
-  // args and 0 for sz and str
-                    
-  void
-  (*dispatch)( pipeline_func_t pipeline,
-               void * args,
-               int sz,
-               int str );
-
-  // wait waits for the previous dispatch to complete.
-
-  void
-  (*wait)( void );
-
-} pipeline_dispatcher_t;
-
-BEGIN_C_DECLS
-
-extern pipeline_dispatcher_t serial; // For debugging purposes
-extern pipeline_dispatcher_t thread;
-
-END_C_DECLS
+#undef THREAD_REROUTE
 
 #endif // _pipelines_h_ 

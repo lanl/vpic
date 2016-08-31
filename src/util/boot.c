@@ -26,14 +26,21 @@ boot_services( int * pargc,
 
   // Boot up the communications layer
 
-#if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
-  boot_mp( pargc, pargv );      // Boot communication layer first.
-  serial.boot( pargc, pargv );
-  thread.boot( pargc, pargv );
-#else
-  serial.boot( pargc, pargv );
-  thread.boot( pargc, pargv );
-  boot_mp( pargc, pargv );      // Boot communication layer last.
+#if defined(VPIC_USE_PTHREADS)
+  #if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
+    boot_mp( pargc, pargv );      // Boot communication layer first.
+    serial.boot( pargc, pargv );
+    thread.boot( pargc, pargv );
+  #else
+    serial.boot( pargc, pargv );
+    thread.boot( pargc, pargv );
+    boot_mp( pargc, pargv );      // Boot communication layer last.
+  #endif
+
+#elif defined(VPIC_USE_OPENMP)
+  boot_mp( pargc, pargv );        // Boot communication layer first.
+  omp_helper.boot( pargc, pargv );
+
 #endif
 
   // Set the boot_timestamp
@@ -50,14 +57,20 @@ halt_services( void )
 {
   _boot_timestamp = 0;
 
-#if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
-  thread.halt();
-  serial.halt();
+#if defined(VPIC_USE_PTHREADS)
+  #if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
+    thread.halt();
+    serial.halt();
+    halt_mp();
+  #else
+    halt_mp();
+    thread.halt();
+    serial.halt();
+  #endif
+
+#elif defined(VPIC_USE_OPENMP)
   halt_mp();
-#else
-  halt_mp();
-  thread.halt();
-  serial.halt();
+
 #endif
 
   halt_checkpt();

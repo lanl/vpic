@@ -280,6 +280,60 @@ void coprocessorinitialize (std::vector<std::string>& pythonScripts)
     }
 }
 
+// Process the particles for the given species
+void processParticles (species_t *sp,
+                       const interpolator_array_t * ia,
+                       vtkSmartPointer<vtkPolyData> polyData)
+{
+  vtkSmartPointer<vtkPoints> positions = vtkSmartPointer<vtkPoints>::New();
+  positions->SetNumberOfPoints(sp->np);
+  static particle_t * ALIGNED(128) p_buf = NULL;
+# define PBUF_SIZE 32768 // 1MB of particles
+  if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
+
+  // Copy a PBUF_SIZE hunk of the particle list into the particle
+  // buffer, timecenter it. Loop over these new particles to find their
+  // physical positions and the write positions, momentum and weight
+  // vtkPolyData. This is done this way to guarantee the particle list
+  // unchanged while not requiring too much memory.
+  particle_t * sp_p = sp->p;      sp->p      = p_buf;
+  int sp_np         = sp->np;     sp->np     = 0;
+  int sp_max_np     = sp->max_np; sp->max_np = PBUF_SIZE;
+  for(int buf_start=0; buf_start<sp_np; buf_start += PBUF_SIZE )
+    {
+    sp->np = sp_np-buf_start; if( sp->np > PBUF_SIZE ) sp->np = PBUF_SIZE;
+    COPY( sp->p, &sp_p[buf_start], sp->np );
+    center_p( sp, ia );
+
+    // Now loop over centered particles to populate VTK data structure
+    for (int i=0; i<sp->np; i++)
+      {
+      std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
+      // TODO: Probably should check with the LANL guys if this is the correct
+      //       or best way to extract the physical positions. Also ask about units.
+      positions->SetPoint(buf_start*PBUF_SIZE + i,
+                         sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
+                         sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
+                         sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
+      if (i/1000)
+        {
+          std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
+          std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
+                                             << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << ","
+                                             << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
+          std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
+          std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
+        }
+      }
+    }
+
+  polyData->SetPoints(positions);
+  // Set the species back to the uncentered particles
+  sp->p      = sp_p;
+  sp->np     = sp_np;
+  sp->max_np = sp_max_np;
+}
+
 // topology is number of blocks in each direction
 void coprocessorProcess (long long timestep, double time,
                          vpic_simulation* sim, int topology[3],
@@ -540,54 +594,8 @@ void coprocessorProcess (long long timestep, double time,
         varlistscalarcounter += numarrayscalars;
         } // iterating over vars
 
-        // Dump particles
-        vtkSmartPointer<vtkPoints> positions = vtkSmartPointer<vtkPoints>::New();
-        positions->SetNumberOfPoints(sp->np);
-        static particle_t * ALIGNED(128) p_buf = NULL;
-# define PBUF_SIZE 32768 // 1MB of particles
-        if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
-
-        // Copy a PBUF_SIZE hunk of the particle list into the particle
-        // buffer, timecenter it. Loop over these new particles to find their
-        // physical positions and the write positions, momentum and weight
-        // vtkPolyData. This is done this way to guarantee the particle list
-        // unchanged while not requiring too much memory.
-        particle_t * sp_p = sp->p;      sp->p      = p_buf;
-        int sp_np         = sp->np;     sp->np     = 0;
-        int sp_max_np     = sp->max_np; sp->max_np = PBUF_SIZE;
-        for(int buf_start=0; buf_start<sp_np; buf_start += PBUF_SIZE )
-          {
-          sp->np = sp_np-buf_start; if( sp->np > PBUF_SIZE ) sp->np = PBUF_SIZE;
-          COPY( sp->p, &sp_p[buf_start], sp->np );
-          center_p( sp, sim->interpolator_array );
-
-          // Now loop over centered particles to populate VTK data structure
-          for (int i=0; i<sp->np; i++)
-            {
-            std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
-            // TODO: Probably should check with the LANL guys if this is the correct
-            //       or best way to extract the physical positions. Also ask about units.
-            positions->SetPoint(buf_start*PBUF_SIZE + i,
-                               sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
-                               sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
-                               sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
-            if (i/1000)
-              {
-                std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
-                std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
-                                                   << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << ","
-                                                   << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
-                std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
-                std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
-              }
-            }
-          }
-
-        polyData->SetPoints(positions);
-        // Set the species back to the uncentered particles
-        sp->p      = sp_p;
-        sp->np     = sp_np;
-        sp->max_np = sp_max_np;
+        // Process particles
+        processParticles(sp, sim->interpolator_array, polyData);
       } // iterating over dumpParams
 
 
@@ -598,13 +606,11 @@ void coprocessorProcess (long long timestep, double time,
     int wholeExtent[6] = {0, static_cast<int>(sim->grid->nx*sim->px-1),
                           0, static_cast<int>(sim->grid->ny*sim->py-1),
                           0, static_cast<int>(sim->grid->nz*sim->pz-1)};
-
     coProcessorData->GetInputDescriptionByName("input")->SetWholeExtent(wholeExtent);
     coProcessorData->GetInputDescriptionByName("particles")->SetGrid(polyData);
     coProcessor->CoProcess(coProcessorData);
     }
 }
-
 
 void coprocessorfinalize ()
 {

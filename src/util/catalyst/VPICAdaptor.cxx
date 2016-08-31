@@ -311,11 +311,11 @@ void processParticles (species_t *sp,
       std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
       // TODO: Probably should check with the LANL guys if this is the correct
       //       or best way to extract the physical positions. Also ask about units.
-      positions->SetPoint(buf_start*PBUF_SIZE + i,
+      positions->SetPoint(buf_start + i,
                          sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
                          sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
                          sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
-      if (i/1000)
+      if (i/10000)
         {
           std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
           std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
@@ -595,7 +595,10 @@ void coprocessorProcess (long long timestep, double time,
         } // iterating over vars
 
         // Process particles
-        processParticles(sp, sim->interpolator_array, polyData);
+        if (coProcessorData->GetIfGridIsNecessary("particles"))
+	  {
+          processParticles(sp, sim->interpolator_array, polyData);
+          }
       } // iterating over dumpParams
 
 

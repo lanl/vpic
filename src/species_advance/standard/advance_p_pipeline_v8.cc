@@ -47,7 +47,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particle quads this pipeline processes.
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, nq );
 
   p = args->p0 + itmp;
 
@@ -330,7 +330,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particle quads this pipeline processes.
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, nq );
 
   p = args->p0 + itmp;
 
@@ -669,7 +669,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particle quads this pipeline processes.
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, nq );
 
   p = args->p0 + itmp;
 
@@ -1017,7 +1017,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particle quads this pipeline processes.
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, nq );
 
   p = args->p0 + itmp;
 
@@ -2082,7 +2082,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particle quads this pipeline processes.
 
-  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
+  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, nq );
 
   p = args->p0 + itmp;
 

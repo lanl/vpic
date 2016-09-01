@@ -285,6 +285,8 @@ void processParticles (species_t *sp,
                        const interpolator_array_t * ia,
                        vtkSmartPointer<vtkPolyData> polyData)
 {
+  std::cout << "PARTICLE: processing particles." << std::endl;
+
   vtkSmartPointer<vtkPoints> positions = vtkSmartPointer<vtkPoints>::New();
   positions->SetNumberOfPoints(sp->np);
   static particle_t * ALIGNED(128) p_buf = NULL;
@@ -315,7 +317,8 @@ void processParticles (species_t *sp,
                          sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
                          sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
                          sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
-      if (i/10000)
+#if 0
+      if (i/10000 == 0)
         {
           std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
           std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
@@ -324,6 +327,7 @@ void processParticles (species_t *sp,
           std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
           std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
         }
+#endif
       }
     }
 

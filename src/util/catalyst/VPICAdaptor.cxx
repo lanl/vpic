@@ -293,6 +293,11 @@ void processParticles (species_t *sp,
 # define PBUF_SIZE 32768 // 1MB of particles
   if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
 
+  // TODO: is there more current way to do this? Smart pointer? vtkNew?
+  vtkFloatArray* momentum = vtkFloatArray::New();
+  momentum->SetNumberOfComponents(3);
+  momentum->SetNumberOfTuples(sp->np);
+
   // Copy a PBUF_SIZE hunk of the particle list into the particle
   // buffer, timecenter it. Loop over these new particles to find their
   // physical positions and the write positions, momentum and weight
@@ -317,6 +322,8 @@ void processParticles (species_t *sp,
                          sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
                          sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
                          sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
+
+      momentum->SetTuple3(buf_start + i, sp->p[i].ux, sp->p[i].uy, sp->p[i].uz);
 #if 0
       if (i/10000 == 0)
         {
@@ -332,6 +339,7 @@ void processParticles (species_t *sp,
     }
 
   polyData->SetPoints(positions);
+  polyData->GetPointData()->SetVectors(momentum);
   // Set the species back to the uncentered particles
   sp->p      = sp_p;
   sp->np     = sp_np;

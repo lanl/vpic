@@ -2,9 +2,6 @@ from paraview.simple import *
 
 from paraview import coprocessing
 
-# the frequency to output everything
-outputfrequency = 10
-
 #--------------------------------------------------------------
 # Code generated from cpstate.py to create the CoProcessor.
 
@@ -14,16 +11,18 @@ outputfrequency = 10
 def CreateCoProcessor():
   def _CreatePipeline(coprocessor, datadescription):
     class Pipeline:
-      adaptorinput = coprocessor.CreateProducer( datadescription, "particles" )
-      grid = adaptorinput.GetClientSideObject().GetOutputDataObject(0)
-      filename = None
-      if  grid.IsA('vtkPolyData'):
-        writer = coprocessor.CreateWriter( XMLPPolyDataWriter, "particles_%t.pvtp", 1 )
-      else:
-        print "Particle data expected to be vtkPolyData not ", grid.GetClassName()
+      for name in ["electron","ion"]:
+        adaptorinput = coprocessor.CreateProducer( datadescription, name )
+        grid = adaptorinput.GetClientSideObject().GetOutputDataObject(0)
+        filename = None
+        if  grid.IsA('vtkPolyData'):
+          writer = servermanager.writers.XMLPPolyDataWriter(Input=adaptorinput)
+          filename = name + '_%t.pvtp'
+        else:
+          print "Particle data expected to be vtkPolyData not ", grid.GetClassName()
 
-      if filename:
-        coprocessor.RegisterWriter(writer, filename, freq=outputfrequency)
+        if filename:
+          coprocessor.RegisterWriter(writer, filename, freq=10)
 
     return Pipeline()
 
@@ -32,7 +31,7 @@ def CreateCoProcessor():
       self.Pipeline = _CreatePipeline(self, datadescription)
 
   coprocessor = CoProcessor()
-  freqs = {'electron': [outputfrequency], 'ion': [outputfrequency]}
+  freqs = {'electron': [5], 'ion': [10]}
   coprocessor.SetUpdateFrequencies(freqs)
   return coprocessor
 

@@ -297,6 +297,7 @@ void processParticles (species_t *sp,
   vtkFloatArray* momentum = vtkFloatArray::New();
   momentum->SetNumberOfComponents(3);
   momentum->SetNumberOfTuples(sp->np);
+  momentum->SetName("momentum");
 
   // Copy a PBUF_SIZE hunk of the particle list into the particle
   // buffer, timecenter it. Loop over these new particles to find their
@@ -365,12 +366,12 @@ void coprocessorProcess (long long timestep, double time,
   vtkSmartPointer<vtkCPDataDescription> coProcessorData =
     vtkSmartPointer<vtkCPDataDescription>::New();
   coProcessorData->AddInput("input");
-  coProcessorData->AddInput("particles");
+  coProcessorData->AddInput("electron");
+  coProcessorData->AddInput("ion");
   coProcessorData->SetTimeData (time, static_cast<vtkIdType>(timestep));
   if (coProcessor->RequestDataDescription (coProcessorData))
     {
     vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
 
     int ix, iy, iz;
     RANK_TO_INDEX(topology, vtkMultiProcessController::GetGlobalController()->GetLocalProcessId(),
@@ -607,9 +608,11 @@ void coprocessorProcess (long long timestep, double time,
         } // iterating over vars
 
         // Process particles
-        if (coProcessorData->GetIfGridIsNecessary("particles"))
-	  {
+        if (coProcessorData->GetIfGridIsNecessary(sp_name.c_str()))
+          {
+          vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
           processParticles(sp, sim->interpolator_array, polyData);
+          coProcessorData->GetInputDescriptionByName(sp_name.c_str())->SetGrid(polyData);
           }
       } // iterating over dumpParams
 
@@ -622,7 +625,6 @@ void coprocessorProcess (long long timestep, double time,
                           0, static_cast<int>(sim->grid->ny*sim->py-1),
                           0, static_cast<int>(sim->grid->nz*sim->pz-1)};
     coProcessorData->GetInputDescriptionByName("input")->SetWholeExtent(wholeExtent);
-    coProcessorData->GetInputDescriptionByName("particles")->SetGrid(polyData);
     coProcessor->CoProcess(coProcessorData);
     }
 }

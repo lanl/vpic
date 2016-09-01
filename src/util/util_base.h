@@ -121,8 +121,8 @@ typedef struct collective collective_t;
 // scope of context in which it is declared.  Note: This macro is
 // really two statements (there is no way to bundle the macro into one
 // semantic statement linguistically without defeating the purpose of
-// the macro).  Thus, it is not as robust as it could be.  Thus, sure
-// any usage of this macro occurs in contexts where two back-to-back
+// the macro).  Thus, it is not as robust as it could be.  Thus, make
+// sure any usage of this macro occurs in contexts where two back-to-back
 // statments in the same context would be in the same scope.  That is:
 //
 //   if(...) { DECLARE_ALIGNED_ARRAY(type,align,name,count); ... } // OKAY!

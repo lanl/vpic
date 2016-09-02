@@ -26,6 +26,9 @@ namespace
 {
   vtkCPProcessor* coProcessor = 0;
 
+  const char* electronName = "electron";
+  const char* ionName = "ion";
+
   // functions to share VPIC fields and hydros between procs
   enum action_t
   {
@@ -374,8 +377,8 @@ void coprocessorProcess (long long timestep, double time,
   vtkSmartPointer<vtkCPDataDescription> coProcessorData =
     vtkSmartPointer<vtkCPDataDescription>::New();
   coProcessorData->AddInput("input");
-  coProcessorData->AddInput("electron");
-  coProcessorData->AddInput("ion");
+  coProcessorData->AddInput(electronName);
+  coProcessorData->AddInput(ionName);
   coProcessorData->SetTimeData (time, static_cast<vtkIdType>(timestep));
   if (coProcessor->RequestDataDescription (coProcessorData))
     {
@@ -503,11 +506,11 @@ void coprocessorProcess (long long timestep, double time,
       std::string sp_name;
       if(strcmp(dumpParams[dumpParam]->baseFileName, "ehydro") == 0)
         {
-        sp_name = "electron";
+        sp_name = electronName;
         }
       else if(strcmp(dumpParams[dumpParam]->baseFileName, "Hhydro") == 0)
         {
-        sp_name = "ion";
+        sp_name = ionName;
         }
       else
         {

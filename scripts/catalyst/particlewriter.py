@@ -11,6 +11,7 @@ from paraview import coprocessing
 def CreateCoProcessor():
   def _CreatePipeline(coprocessor, datadescription):
     class Pipeline:
+      dumpFreq = 5
       for name in ["electron","ion"]:
         adaptorinput = coprocessor.CreateProducer( datadescription, name )
         grid = adaptorinput.GetClientSideObject().GetOutputDataObject(0)
@@ -22,7 +23,8 @@ def CreateCoProcessor():
           print "Particle data expected to be vtkPolyData not ", grid.GetClassName()
 
         if filename:
-          coprocessor.RegisterWriter(writer, filename, freq=10)
+          coprocessor.RegisterWriter(writer, filename, freq=dumpFreq)
+        dumpFreq *= 2
 
     return Pipeline()
 
@@ -31,8 +33,6 @@ def CreateCoProcessor():
       self.Pipeline = _CreatePipeline(self, datadescription)
 
   coprocessor = CoProcessor()
-  freqs = {'electron': [5], 'ion': [10]}
-  coprocessor.SetUpdateFrequencies(freqs)
   return coprocessor
 
 #--------------------------------------------------------------

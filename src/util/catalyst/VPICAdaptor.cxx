@@ -304,9 +304,9 @@ void processParticles (species_t *sp,
   if (coProcessorData->GetInputDescriptionByName(sp->name)->IsFieldNeeded("weights"))
     {
     weights = vtkSmartPointer<vtkFloatArray>::New();
-    momentum->SetNumberOfComponents(1);
-    momentum->SetNumberOfTuples(sp->np);
-    momentum->SetName("weights");
+    weights->SetNumberOfComponents(1);
+    weights->SetNumberOfTuples(sp->np);
+    weights->SetName("weights");
     }
 
   // Copy a PBUF_SIZE hunk of the particle list into the particle
@@ -345,6 +345,10 @@ void processParticles (species_t *sp,
   polyData->SetPoints(positions);
   polyData->GetPointData()->SetVectors(momentum);
   coProcessorData->GetInputDescriptionByName(sp->name)->SetGrid(polyData);
+  if (coProcessorData->GetInputDescriptionByName(sp->name)->IsFieldNeeded("weights"))
+    {
+    polyData->GetPointData()->SetScalars(weights);
+    }
   // Set the species back to the uncentered particles
   sp->p      = sp_p;
   sp->np     = sp_np;

@@ -283,25 +283,35 @@ void coprocessorinitialize (std::vector<std::string>& pythonScripts)
 // Process the particles for the given species
 void processParticles (species_t *sp,
                        const interpolator_array_t * ia,
-                       vtkSmartPointer<vtkPolyData> polyData)
+                       vtkCPDataDescription* coProcessorData)
 {
-  std::cout << "PARTICLE: processing particles." << std::endl;
-
+  vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
   vtkSmartPointer<vtkPoints> positions = vtkSmartPointer<vtkPoints>::New();
   positions->SetNumberOfPoints(sp->np);
   static particle_t * ALIGNED(128) p_buf = NULL;
 # define PBUF_SIZE 32768 // 1MB of particles
   if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
 
-  // TODO: is there more current way to do this? Smart pointer? vtkNew?
-  vtkFloatArray* momentum = vtkFloatArray::New();
+  // Setup array to hold momentum
+  vtkSmartPointer<vtkFloatArray> momentum =
+    vtkSmartPointer<vtkFloatArray>::New();
   momentum->SetNumberOfComponents(3);
   momentum->SetNumberOfTuples(sp->np);
   momentum->SetName("momentum");
 
+  // Setup array to hold weights
+  vtkSmartPointer<vtkFloatArray> weights;
+  if (coProcessorData->GetInputDescriptionByName(sp->name)->IsFieldNeeded("weights"))
+    {
+    weights = vtkSmartPointer<vtkFloatArray>::New();
+    momentum->SetNumberOfComponents(1);
+    momentum->SetNumberOfTuples(sp->np);
+    momentum->SetName("weights");
+    }
+
   // Copy a PBUF_SIZE hunk of the particle list into the particle
   // buffer, timecenter it. Loop over these new particles to find their
-  // physical positions and the write positions, momentum and weight
+  // physical positions and the write positions, momentum and weight to
   // vtkPolyData. This is done this way to guarantee the particle list
   // unchanged while not requiring too much memory.
   particle_t * sp_p = sp->p;      sp->p      = p_buf;
@@ -318,29 +328,23 @@ void processParticles (species_t *sp,
       {
       std::vector<int> gridCells = VOXEL_TO_GRID(sp->p[i].i, sp->g->nx, sp->g->ny, sp->g->nz);
       // TODO: Probably should check with the LANL guys if this is the correct
-      //       or best way to extract the physical positions. Also ask about units.
+      //       or best way to extract the physical positions with the grid. Also ask about units.
       positions->SetPoint(buf_start + i,
                          sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx),
                          sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy),
                          sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz));
 
       momentum->SetTuple3(buf_start + i, sp->p[i].ux, sp->p[i].uy, sp->p[i].uz);
-#if 0
-      if (i/10000 == 0)
+      if (coProcessorData->GetInputDescriptionByName(sp->name)->IsFieldNeeded("weights"))
         {
-          std::cout << "PARTICLE in cell: " << gridCells[0] << "," << gridCells[1] << "," << gridCells[2] << std::endl;
-          std::cout << "PARTICLE position: " << sp->g->x0 + sp->g->dx*(gridCells[0]+sp->p[i].dx) << ","
-                                             << sp->g->y0 + sp->g->dy*(gridCells[1]+sp->p[i].dy) << ","
-                                             << sp->g->z0 + sp->g->dz*(gridCells[2]+sp->p[i].dz) << "," << std::endl;
-          std::cout << "PARTICLE momentum: " << sp->p[i].ux << "," << sp->p[i].uy << "," << sp->p[i].uz << std::endl;
-          std::cout << "PARTICLE weight: " << sp->p[i].w << std::endl;
+        weights->SetTuple1(buf_start + i, sp->p[i].w);
         }
-#endif
       }
     }
 
   polyData->SetPoints(positions);
   polyData->GetPointData()->SetVectors(momentum);
+  coProcessorData->GetInputDescriptionByName(sp->name)->SetGrid(polyData);
   // Set the species back to the uncentered particles
   sp->p      = sp_p;
   sp->np     = sp_np;
@@ -610,9 +614,7 @@ void coprocessorProcess (long long timestep, double time,
         // Process particles
         if (coProcessorData->GetIfGridIsNecessary(sp_name.c_str()))
           {
-          vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
-          processParticles(sp, sim->interpolator_array, polyData);
-          coProcessorData->GetInputDescriptionByName(sp_name.c_str())->SetGrid(polyData);
+          processParticles(sp, sim->interpolator_array, coProcessorData);
           }
       } // iterating over dumpParams
 

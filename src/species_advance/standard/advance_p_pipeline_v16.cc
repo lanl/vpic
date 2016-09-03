@@ -66,14 +66,14 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   v16float hax_a, hay_a, haz_a, cbx_a, cby_a, cbz_a;
   v16float v00_a, v01_a, v02_a, v03_a, v04_a, v05_a, v06_a, v07_a;
   v16float v08_a, v09_a, v10_a, v11_a, v12_a, v13_a, v14_a, v15_a;
-  v16int   ii_a, outbnd_a;
+  v16int   ii_aa, ii_a, outbnd_a;
 
   v16float dx_bb, dy_bb, dz_bb, ux_bb, uy_bb, uz_bb, q_bb;
   v16float dx_b, dy_b, dz_b, ux_b, uy_b, uz_b, q_b;
   v16float hax_b, hay_b, haz_b, cbx_b, cby_b, cbz_b;
   v16float v00_b, v01_b, v02_b, v03_b, v04_b, v05_b, v06_b, v07_b;
   v16float v08_b, v09_b, v10_b, v11_b, v12_b, v13_b, v14_b, v15_b;
-  v16int   ii_b, outbnd_b;
+  v16int   ii_bb, ii_b, outbnd_b;
 
   int itmp, nq, nm, max_nm;
 

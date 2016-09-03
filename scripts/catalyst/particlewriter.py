@@ -33,6 +33,8 @@ def CreateCoProcessor():
       self.Pipeline = _CreatePipeline(self, datadescription)
 
   coprocessor = CoProcessor()
+  freqs = {'electron': [5], 'ion': [10]}
+  coprocessor.SetUpdateFrequencies(freqs)
   return coprocessor
 
 #--------------------------------------------------------------

@@ -277,15 +277,10 @@ namespace v16
 
     v16() {}                    // Default constructor
 
-    v16( const v16 &a )          // Copy constructor
+    v16( const v16 &a )         // Copy constructor
     {
       for( int j = 0; j < 16; j++ )
 	i[j] = a.i[j];
-
-      /* i[0]=a.i[0]; i[1]=a.i[1]; i[2]=a.i[2]; i[3]=a.i[3]; */
-      /* i[4]=a.i[4]; i[5]=a.i[5]; i[6]=a.i[6]; i[7]=a.i[7]; */
-      /* i[8]=a.i[8]; i[9]=a.i[9]; i[10]=a.i[10]; i[11]=a.i[11]; */
-      /* i[12]=a.i[12]; i[13]=a.i[13]; i[14]=a.i[14]; i[15]=a.i[15]; */
     }
 
     ~v16() {}                   // Default destructor
@@ -355,23 +350,29 @@ namespace v16
 
   inline void swap( v16 &a, v16 &b )
   {
-    sw( a.i[ 0], b.i[ 0] );
-    sw( a.i[ 1], b.i[ 1] );
-    sw( a.i[ 2], b.i[ 2] );
-    sw( a.i[ 3], b.i[ 3] );
-    sw( a.i[ 4], b.i[ 4] );
-    sw( a.i[ 5], b.i[ 5] );
-    sw( a.i[ 6], b.i[ 6] );
-    sw( a.i[ 7], b.i[ 7] );
-    sw( a.i[ 8], b.i[ 8] );
-    sw( a.i[ 9], b.i[ 9] );
-    sw( a.i[10], b.i[10] );
-    sw( a.i[11], b.i[11] );
-    sw( a.i[12], b.i[12] );
-    sw( a.i[13], b.i[13] );
-    sw( a.i[14], b.i[14] );
-    sw( a.i[15], b.i[15] );
+    for( int j = 0; j < 16; j++ )
+      sw( a.i[j], b.i[j] );
   }
+
+  /* inline void swap( v16 &a, v16 &b ) */
+  /* { */
+  /*   sw( a.i[ 0], b.i[ 0] ); */
+  /*   sw( a.i[ 1], b.i[ 1] ); */
+  /*   sw( a.i[ 2], b.i[ 2] ); */
+  /*   sw( a.i[ 3], b.i[ 3] ); */
+  /*   sw( a.i[ 4], b.i[ 4] ); */
+  /*   sw( a.i[ 5], b.i[ 5] ); */
+  /*   sw( a.i[ 6], b.i[ 6] ); */
+  /*   sw( a.i[ 7], b.i[ 7] ); */
+  /*   sw( a.i[ 8], b.i[ 8] ); */
+  /*   sw( a.i[ 9], b.i[ 9] ); */
+  /*   sw( a.i[10], b.i[10] ); */
+  /*   sw( a.i[11], b.i[11] ); */
+  /*   sw( a.i[12], b.i[12] ); */
+  /*   sw( a.i[13], b.i[13] ); */
+  /*   sw( a.i[14], b.i[14] ); */
+  /*   sw( a.i[15], b.i[15] ); */
+  /* } */
 
   inline void transpose( v16 &a00, v16 &a01, v16 &a02, v16 &a03,
 			 v16 &a04, v16 &a05, v16 &a06, v16 &a07,
@@ -404,15 +405,6 @@ namespace v16
   {
     for( int j = 0; j < 16; j++ )
       a.i[j] = ((const int * ALIGNED(64))p)[j];
-
-    /* a.i[0] = ((const int * ALIGNED(64))p)[0]; */
-    /* a.i[1] = ((const int * ALIGNED(64))p)[1]; */
-    /* a.i[2] = ((const int * ALIGNED(64))p)[2]; */
-    /* a.i[3] = ((const int * ALIGNED(64))p)[3]; */
-    /* a.i[4] = ((const int * ALIGNED(64))p)[4]; */
-    /* a.i[5] = ((const int * ALIGNED(64))p)[5]; */
-    /* a.i[6] = ((const int * ALIGNED(64))p)[6]; */
-    /* a.i[7] = ((const int * ALIGNED(64))p)[7]; */
   }
 
   inline void store_16x1( const v16 &a,
@@ -420,15 +412,6 @@ namespace v16
   {
     for( int j = 0; j < 16; j++ )
       ((int * ALIGNED(64))p)[j] = a.i[j];
-
-    /* ((int * ALIGNED(64))p)[0] = a.i[0]; */
-    /* ((int * ALIGNED(64))p)[1] = a.i[1]; */
-    /* ((int * ALIGNED(64))p)[2] = a.i[2]; */
-    /* ((int * ALIGNED(64))p)[3] = a.i[3]; */
-    /* ((int * ALIGNED(64))p)[4] = a.i[4]; */
-    /* ((int * ALIGNED(64))p)[5] = a.i[5]; */
-    /* ((int * ALIGNED(64))p)[6] = a.i[6]; */
-    /* ((int * ALIGNED(64))p)[7] = a.i[7]; */
   }
 
   inline void stream_16x1( const v16 &a,
@@ -436,30 +419,12 @@ namespace v16
   {
     for( int j = 0; j < 16; j++ )
       ((int * ALIGNED(64))p)[j] = a.i[j];
-
-    /* ((int * ALIGNED(64))p)[0] = a.i[0]; */
-    /* ((int * ALIGNED(64))p)[1] = a.i[1]; */
-    /* ((int * ALIGNED(64))p)[2] = a.i[2]; */
-    /* ((int * ALIGNED(64))p)[3] = a.i[3]; */
-    /* ((int * ALIGNED(64))p)[4] = a.i[4]; */
-    /* ((int * ALIGNED(64))p)[5] = a.i[5]; */
-    /* ((int * ALIGNED(64))p)[6] = a.i[6]; */
-    /* ((int * ALIGNED(64))p)[7] = a.i[7]; */
   }
 
   inline void clear_16x1( void * ALIGNED(64) p )
   {
     for( int j = 0; j < 16; j++ )
       ((int * ALIGNED(64))p)[j] = 0;
-
-    /* ((int * ALIGNED(64))p)[0] = 0; */
-    /* ((int * ALIGNED(64))p)[1] = 0; */
-    /* ((int * ALIGNED(64))p)[2] = 0; */
-    /* ((int * ALIGNED(64))p)[3] = 0; */
-    /* ((int * ALIGNED(64))p)[4] = 0; */
-    /* ((int * ALIGNED(64))p)[5] = 0; */
-    /* ((int * ALIGNED(64))p)[6] = 0; */
-    /* ((int * ALIGNED(64))p)[7] = 0; */
   }
 
   // FIXME: Ordering semantics
@@ -468,15 +433,6 @@ namespace v16
   {
     for( int j = 0; j < 16; j++ )
       ((int * ALIGNED(64))dst)[j] = ((const int * ALIGNED(64))src)[j];
-
-    /* ((int * ALIGNED(64))dst)[0] = ((const int * ALIGNED(64))src)[0]; */
-    /* ((int * ALIGNED(64))dst)[1] = ((const int * ALIGNED(64))src)[1]; */
-    /* ((int * ALIGNED(64))dst)[2] = ((const int * ALIGNED(64))src)[2]; */
-    /* ((int * ALIGNED(64))dst)[3] = ((const int * ALIGNED(64))src)[3]; */
-    /* ((int * ALIGNED(64))dst)[4] = ((const int * ALIGNED(64))src)[4]; */
-    /* ((int * ALIGNED(64))dst)[5] = ((const int * ALIGNED(64))src)[5]; */
-    /* ((int * ALIGNED(64))dst)[6] = ((const int * ALIGNED(64))src)[6]; */
-    /* ((int * ALIGNED(64))dst)[7] = ((const int * ALIGNED(64))src)[7]; */
   }
 
   inline void swap_16x1( void * ALIGNED(64) a,
@@ -490,38 +446,6 @@ namespace v16
       ((int * ALIGNED(64))a)[j] = ((int * ALIGNED(64))b)[j];
       ((int * ALIGNED(64))b)[j] = t;
     }
-
-    /* t = ((int * ALIGNED(64))a)[0]; */
-    /* ((int * ALIGNED(64))a)[0] = ((int * ALIGNED(64))b)[0]; */
-    /* ((int * ALIGNED(64))b)[0] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[1]; */
-    /* ((int * ALIGNED(64))a)[1] = ((int * ALIGNED(64))b)[1]; */
-    /* ((int * ALIGNED(64))b)[1] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[2]; */
-    /* ((int * ALIGNED(64))a)[2] = ((int * ALIGNED(64))b)[2]; */
-    /* ((int * ALIGNED(64))b)[2] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[3]; */
-    /* ((int * ALIGNED(64))a)[3] = ((int * ALIGNED(64))b)[3]; */
-    /* ((int * ALIGNED(64))b)[3] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[4]; */
-    /* ((int * ALIGNED(64))a)[4] = ((int * ALIGNED(64))b)[4]; */
-    /* ((int * ALIGNED(64))b)[4] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[5]; */
-    /* ((int * ALIGNED(64))a)[5] = ((int * ALIGNED(64))b)[5]; */
-    /* ((int * ALIGNED(64))b)[5] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[6]; */
-    /* ((int * ALIGNED(64))a)[6] = ((int * ALIGNED(64))b)[6]; */
-    /* ((int * ALIGNED(64))b)[6] = t; */
-
-    /* t = ((int * ALIGNED(64))a)[7]; */
-    /* ((int * ALIGNED(64))a)[7] = ((int * ALIGNED(64))b)[7]; */
-    /* ((int * ALIGNED(64))b)[7] = t; */
   }
 
   // v16 transposed memory manipulation functions
@@ -2032,39 +1956,30 @@ namespace v16
 
     // v16int constructors / destructors
 
-    v16int() {}                                // Default constructor
+    v16int() {}                                  // Default constructor
 
-    v16int( const v16int &a )                   // Copy constructor
+    v16int( const v16int &a )                    // Copy constructor
     {
       for( int j = 0; j < 16; j++ )
 	i[j] = a.i[j];
-
-      /* i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3]; */
-      /* i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7]; */
     }
 
-    v16int( const v16 &a )                      // Init from mixed
+    v16int( const v16 &a )                       // Init from mixed
     {
       for( int j = 0; j < 16; j++ )
 	i[j] = a.i[j];
-
-      /* i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3]; */
-      /* i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7]; */
     }
 
-    v16int( int a )                            // Init from scalar
+    v16int( int a )                              // Init from scalar
     {
       for( int j = 0; j < 16; j++ )
 	i[j] = a;
-
-      /* i[0] = a; i[1] = a; i[2] = a; i[3] = a; */
-      /* i[4] = a; i[5] = a; i[6] = a; i[7] = a; */
     }
 
     v16int( int i00, int i01, int i02, int i03,
 	    int i04, int i05, int i06, int i07,
 	    int i08, int i09, int i10, int i11,
-	    int i12, int i13, int i14, int i15 )   // Init from scalars
+	    int i12, int i13, int i14, int i15 ) // Init from scalars
     {
       i[ 0] = i00; i[ 1] = i01; i[ 2] = i02; i[ 3] = i03;
       i[ 4] = i04; i[ 5] = i05; i[ 6] = i06; i[ 7] = i07;
@@ -2072,31 +1987,39 @@ namespace v16
       i[12] = i12; i[13] = i13; i[14] = i14; i[15] = i15;
     }
 
-    ~v16int() {}                               // Destructor
+    ~v16int() {}                                 // Destructor
 
     // v16int assignment operators
 
 #   define ASSIGN(op)			          \
     inline v16int &operator op( const v16int &b ) \
     {						  \
-      i[ 0] op b.i[ 0];                           \
-      i[ 1] op b.i[ 1];                           \
-      i[ 2] op b.i[ 2];                           \
-      i[ 3] op b.i[ 3];                           \
-      i[ 4] op b.i[ 4];                           \
-      i[ 5] op b.i[ 5];                           \
-      i[ 6] op b.i[ 6];                           \
-      i[ 7] op b.i[ 7];                           \
-      i[ 8] op b.i[ 8];                           \
-      i[ 9] op b.i[ 9];                           \
-      i[10] op b.i[10];                           \
-      i[11] op b.i[11];                           \
-      i[12] op b.i[12];                           \
-      i[13] op b.i[13];                           \
-      i[14] op b.i[14];                           \
-      i[15] op b.i[15];                           \
+      for( int j = 0; j < 16; j++ )               \
+        i[j] op b.i[j];                           \
       return *this;                               \
     }
+
+/* #   define ASSIGN(op)			          \ */
+/*     inline v16int &operator op( const v16int &b ) \ */
+/*     {						  \ */
+/*       i[ 0] op b.i[ 0];                           \ */
+/*       i[ 1] op b.i[ 1];                           \ */
+/*       i[ 2] op b.i[ 2];                           \ */
+/*       i[ 3] op b.i[ 3];                           \ */
+/*       i[ 4] op b.i[ 4];                           \ */
+/*       i[ 5] op b.i[ 5];                           \ */
+/*       i[ 6] op b.i[ 6];                           \ */
+/*       i[ 7] op b.i[ 7];                           \ */
+/*       i[ 8] op b.i[ 8];                           \ */
+/*       i[ 9] op b.i[ 9];                           \ */
+/*       i[10] op b.i[10];                           \ */
+/*       i[11] op b.i[11];                           \ */
+/*       i[12] op b.i[12];                           \ */
+/*       i[13] op b.i[13];                           \ */
+/*       i[14] op b.i[14];                           \ */
+/*       i[15] op b.i[15];                           \ */
+/*       return *this;                               \ */
+/*     } */
 
     ASSIGN( =)
     ASSIGN(+=)
@@ -2131,24 +2054,33 @@ namespace v16
   inline v16int operator op( const v16int & a ) \
   {						\
     v16int b;                                   \
-    b.i[ 0] = (op a.i[ 0]);                     \
-    b.i[ 1] = (op a.i[ 1]);                     \
-    b.i[ 2] = (op a.i[ 2]);                     \
-    b.i[ 3] = (op a.i[ 3]);                     \
-    b.i[ 4] = (op a.i[ 4]);                     \
-    b.i[ 5] = (op a.i[ 5]);                     \
-    b.i[ 6] = (op a.i[ 6]);                     \
-    b.i[ 7] = (op a.i[ 7]);                     \
-    b.i[ 8] = (op a.i[ 8]);                     \
-    b.i[ 9] = (op a.i[ 9]);                     \
-    b.i[10] = (op a.i[10]);                     \
-    b.i[11] = (op a.i[11]);                     \
-    b.i[12] = (op a.i[12]);                     \
-    b.i[13] = (op a.i[13]);                     \
-    b.i[14] = (op a.i[14]);                     \
-    b.i[15] = (op a.i[15]);                     \
+    for( int j = 0; j < 16; j++ )               \
+      b.i[j] = (op a.i[j]);                     \
     return b;                                   \
   }
+
+/* # define PREFIX_UNARY(op)                       \ */
+/*   inline v16int operator op( const v16int & a ) \ */
+/*   {						\ */
+/*     v16int b;                                   \ */
+/*     b.i[ 0] = (op a.i[ 0]);                     \ */
+/*     b.i[ 1] = (op a.i[ 1]);                     \ */
+/*     b.i[ 2] = (op a.i[ 2]);                     \ */
+/*     b.i[ 3] = (op a.i[ 3]);                     \ */
+/*     b.i[ 4] = (op a.i[ 4]);                     \ */
+/*     b.i[ 5] = (op a.i[ 5]);                     \ */
+/*     b.i[ 6] = (op a.i[ 6]);                     \ */
+/*     b.i[ 7] = (op a.i[ 7]);                     \ */
+/*     b.i[ 8] = (op a.i[ 8]);                     \ */
+/*     b.i[ 9] = (op a.i[ 9]);                     \ */
+/*     b.i[10] = (op a.i[10]);                     \ */
+/*     b.i[11] = (op a.i[11]);                     \ */
+/*     b.i[12] = (op a.i[12]);                     \ */
+/*     b.i[13] = (op a.i[13]);                     \ */
+/*     b.i[14] = (op a.i[14]);                     \ */
+/*     b.i[15] = (op a.i[15]);                     \ */
+/*     return b;                                   \ */
+/*   } */
 
   PREFIX_UNARY(+)
   PREFIX_UNARY(-)
@@ -2156,22 +2088,8 @@ namespace v16
   inline v16int operator !( const v16int & a )
   {
     v16int b;
-    b.i[ 0] = -(!a.i[ 0]);
-    b.i[ 1] = -(!a.i[ 1]);
-    b.i[ 2] = -(!a.i[ 2]);
-    b.i[ 3] = -(!a.i[ 3]);
-    b.i[ 4] = -(!a.i[ 4]);
-    b.i[ 5] = -(!a.i[ 5]);
-    b.i[ 6] = -(!a.i[ 6]);
-    b.i[ 7] = -(!a.i[ 7]);
-    b.i[ 8] = -(!a.i[ 8]);
-    b.i[ 9] = -(!a.i[ 9]);
-    b.i[10] = -(!a.i[10]);
-    b.i[11] = -(!a.i[11]);
-    b.i[12] = -(!a.i[12]);
-    b.i[13] = -(!a.i[13]);
-    b.i[14] = -(!a.i[14]);
-    b.i[15] = -(!a.i[15]);
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = -(!a.i[j]);
     return b;
   }
 
@@ -2185,24 +2103,33 @@ namespace v16
   inline v16int operator op( v16int & a )       \
   {						\
     v16int b;                                   \
-    b.i[ 0] = (op a.i[ 0]);                     \
-    b.i[ 1] = (op a.i[ 1]);                     \
-    b.i[ 2] = (op a.i[ 2]);                     \
-    b.i[ 3] = (op a.i[ 3]);                     \
-    b.i[ 4] = (op a.i[ 4]);                     \
-    b.i[ 5] = (op a.i[ 5]);                     \
-    b.i[ 6] = (op a.i[ 6]);                     \
-    b.i[ 7] = (op a.i[ 7]);                     \
-    b.i[ 8] = (op a.i[ 8]);                     \
-    b.i[ 9] = (op a.i[ 9]);                     \
-    b.i[10] = (op a.i[10]);                     \
-    b.i[11] = (op a.i[11]);                     \
-    b.i[12] = (op a.i[12]);                     \
-    b.i[13] = (op a.i[13]);                     \
-    b.i[14] = (op a.i[14]);                     \
-    b.i[15] = (op a.i[15]);                     \
+    for( int j = 0; j < 16; j++ )               \
+      b.i[j] = (op a.i[j]);                     \
     return b;                                   \
   }
+
+/* # define PREFIX_INCDEC(op)                      \ */
+/*   inline v16int operator op( v16int & a )       \ */
+/*   {						\ */
+/*     v16int b;                                   \ */
+/*     b.i[ 0] = (op a.i[ 0]);                     \ */
+/*     b.i[ 1] = (op a.i[ 1]);                     \ */
+/*     b.i[ 2] = (op a.i[ 2]);                     \ */
+/*     b.i[ 3] = (op a.i[ 3]);                     \ */
+/*     b.i[ 4] = (op a.i[ 4]);                     \ */
+/*     b.i[ 5] = (op a.i[ 5]);                     \ */
+/*     b.i[ 6] = (op a.i[ 6]);                     \ */
+/*     b.i[ 7] = (op a.i[ 7]);                     \ */
+/*     b.i[ 8] = (op a.i[ 8]);                     \ */
+/*     b.i[ 9] = (op a.i[ 9]);                     \ */
+/*     b.i[10] = (op a.i[10]);                     \ */
+/*     b.i[11] = (op a.i[11]);                     \ */
+/*     b.i[12] = (op a.i[12]);                     \ */
+/*     b.i[13] = (op a.i[13]);                     \ */
+/*     b.i[14] = (op a.i[14]);                     \ */
+/*     b.i[15] = (op a.i[15]);                     \ */
+/*     return b;                                   \ */
+/*   } */
 
   PREFIX_INCDEC(++)
   PREFIX_INCDEC(--)
@@ -2215,24 +2142,33 @@ namespace v16
   inline v16int operator op( v16int & a, int ) \
   {					       \
     v16int b;                                  \
-    b.i[ 0] = (a.i[ 0] op);                    \
-    b.i[ 1] = (a.i[ 1] op);                    \
-    b.i[ 2] = (a.i[ 2] op);                    \
-    b.i[ 3] = (a.i[ 3] op);                    \
-    b.i[ 4] = (a.i[ 4] op);                    \
-    b.i[ 5] = (a.i[ 5] op);                    \
-    b.i[ 6] = (a.i[ 6] op);                    \
-    b.i[ 7] = (a.i[ 7] op);                    \
-    b.i[ 8] = (a.i[ 8] op);                    \
-    b.i[ 9] = (a.i[ 9] op);                    \
-    b.i[10] = (a.i[10] op);                    \
-    b.i[11] = (a.i[11] op);                    \
-    b.i[12] = (a.i[12] op);                    \
-    b.i[13] = (a.i[13] op);                    \
-    b.i[14] = (a.i[14] op);                    \
-    b.i[15] = (a.i[15] op);                    \
+    for( int j = 0; j < 16; j++ )              \
+      b.i[j] = (a.i[j] op);                    \
     return b;                                  \
   }
+
+/* # define POSTFIX_INCDEC(op)                    \ */
+/*   inline v16int operator op( v16int & a, int ) \ */
+/*   {					       \ */
+/*     v16int b;                                  \ */
+/*     b.i[ 0] = (a.i[ 0] op);                    \ */
+/*     b.i[ 1] = (a.i[ 1] op);                    \ */
+/*     b.i[ 2] = (a.i[ 2] op);                    \ */
+/*     b.i[ 3] = (a.i[ 3] op);                    \ */
+/*     b.i[ 4] = (a.i[ 4] op);                    \ */
+/*     b.i[ 5] = (a.i[ 5] op);                    \ */
+/*     b.i[ 6] = (a.i[ 6] op);                    \ */
+/*     b.i[ 7] = (a.i[ 7] op);                    \ */
+/*     b.i[ 8] = (a.i[ 8] op);                    \ */
+/*     b.i[ 9] = (a.i[ 9] op);                    \ */
+/*     b.i[10] = (a.i[10] op);                    \ */
+/*     b.i[11] = (a.i[11] op);                    \ */
+/*     b.i[12] = (a.i[12] op);                    \ */
+/*     b.i[13] = (a.i[13] op);                    \ */
+/*     b.i[14] = (a.i[14] op);                    \ */
+/*     b.i[15] = (a.i[15] op);                    \ */
+/*     return b;                                  \ */
+/*   } */
 
   POSTFIX_INCDEC(++)
   POSTFIX_INCDEC(--)
@@ -2245,24 +2181,33 @@ namespace v16
   inline v16int operator op( const v16int &a, const v16int &b ) \
   {								\
     v16int c;                                                   \
-    c.i[ 0] = a.i[ 0] op b.i[ 0];                               \
-    c.i[ 1] = a.i[ 1] op b.i[ 1];                               \
-    c.i[ 2] = a.i[ 2] op b.i[ 2];                               \
-    c.i[ 3] = a.i[ 3] op b.i[ 3];                               \
-    c.i[ 4] = a.i[ 4] op b.i[ 4];                               \
-    c.i[ 5] = a.i[ 5] op b.i[ 5];                               \
-    c.i[ 6] = a.i[ 6] op b.i[ 6];                               \
-    c.i[ 7] = a.i[ 7] op b.i[ 7];                               \
-    c.i[ 8] = a.i[ 8] op b.i[ 8];                               \
-    c.i[ 9] = a.i[ 9] op b.i[ 9];                               \
-    c.i[10] = a.i[10] op b.i[10];                               \
-    c.i[11] = a.i[11] op b.i[11];                               \
-    c.i[12] = a.i[12] op b.i[12];                               \
-    c.i[13] = a.i[13] op b.i[13];                               \
-    c.i[14] = a.i[14] op b.i[14];                               \
-    c.i[15] = a.i[15] op b.i[15];                               \
+    for( int j = 0; j < 16; j++ )                               \
+      c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
   }
+
+/* # define BINARY(op)                                             \ */
+/*   inline v16int operator op( const v16int &a, const v16int &b ) \ */
+/*   {								\ */
+/*     v16int c;                                                   \ */
+/*     c.i[ 0] = a.i[ 0] op b.i[ 0];                               \ */
+/*     c.i[ 1] = a.i[ 1] op b.i[ 1];                               \ */
+/*     c.i[ 2] = a.i[ 2] op b.i[ 2];                               \ */
+/*     c.i[ 3] = a.i[ 3] op b.i[ 3];                               \ */
+/*     c.i[ 4] = a.i[ 4] op b.i[ 4];                               \ */
+/*     c.i[ 5] = a.i[ 5] op b.i[ 5];                               \ */
+/*     c.i[ 6] = a.i[ 6] op b.i[ 6];                               \ */
+/*     c.i[ 7] = a.i[ 7] op b.i[ 7];                               \ */
+/*     c.i[ 8] = a.i[ 8] op b.i[ 8];                               \ */
+/*     c.i[ 9] = a.i[ 9] op b.i[ 9];                               \ */
+/*     c.i[10] = a.i[10] op b.i[10];                               \ */
+/*     c.i[11] = a.i[11] op b.i[11];                               \ */
+/*     c.i[12] = a.i[12] op b.i[12];                               \ */
+/*     c.i[13] = a.i[13] op b.i[13];                               \ */
+/*     c.i[14] = a.i[14] op b.i[14];                               \ */
+/*     c.i[15] = a.i[15] op b.i[15];                               \ */
+/*     return c;                                                   \ */
+/*   } */
 
   BINARY(+)
   BINARY(-)
@@ -2283,24 +2228,33 @@ namespace v16
   inline v16int operator op( const v16int &a, const v16int &b ) \
   {                                                             \
     v16int c;                                                   \
-    c.i[ 0] = -(a.i[ 0] op b.i[ 0]);                            \
-    c.i[ 1] = -(a.i[ 1] op b.i[ 1]);                            \
-    c.i[ 2] = -(a.i[ 2] op b.i[ 2]);                            \
-    c.i[ 3] = -(a.i[ 3] op b.i[ 3]);                            \
-    c.i[ 4] = -(a.i[ 4] op b.i[ 4]);                            \
-    c.i[ 5] = -(a.i[ 5] op b.i[ 5]);                            \
-    c.i[ 6] = -(a.i[ 6] op b.i[ 6]);                            \
-    c.i[ 7] = -(a.i[ 7] op b.i[ 7]);                            \
-    c.i[ 8] = -(a.i[ 8] op b.i[ 8]);                            \
-    c.i[ 9] = -(a.i[ 9] op b.i[ 9]);                            \
-    c.i[10] = -(a.i[10] op b.i[10]);                            \
-    c.i[11] = -(a.i[11] op b.i[11]);                            \
-    c.i[12] = -(a.i[12] op b.i[12]);                            \
-    c.i[13] = -(a.i[13] op b.i[13]);                            \
-    c.i[14] = -(a.i[14] op b.i[14]);                            \
-    c.i[15] = -(a.i[15] op b.i[15]);                            \
+    for( int j = 0; j < 16; j++ )                               \
+      c.i[j] = -(a.i[j] op b.i[j]);                             \
     return c;                                                   \
   }
+
+/* # define LOGICAL(op)                                            \ */
+/*   inline v16int operator op( const v16int &a, const v16int &b ) \ */
+/*   {                                                             \ */
+/*     v16int c;                                                   \ */
+/*     c.i[ 0] = -(a.i[ 0] op b.i[ 0]);                            \ */
+/*     c.i[ 1] = -(a.i[ 1] op b.i[ 1]);                            \ */
+/*     c.i[ 2] = -(a.i[ 2] op b.i[ 2]);                            \ */
+/*     c.i[ 3] = -(a.i[ 3] op b.i[ 3]);                            \ */
+/*     c.i[ 4] = -(a.i[ 4] op b.i[ 4]);                            \ */
+/*     c.i[ 5] = -(a.i[ 5] op b.i[ 5]);                            \ */
+/*     c.i[ 6] = -(a.i[ 6] op b.i[ 6]);                            \ */
+/*     c.i[ 7] = -(a.i[ 7] op b.i[ 7]);                            \ */
+/*     c.i[ 8] = -(a.i[ 8] op b.i[ 8]);                            \ */
+/*     c.i[ 9] = -(a.i[ 9] op b.i[ 9]);                            \ */
+/*     c.i[10] = -(a.i[10] op b.i[10]);                            \ */
+/*     c.i[11] = -(a.i[11] op b.i[11]);                            \ */
+/*     c.i[12] = -(a.i[12] op b.i[12]);                            \ */
+/*     c.i[13] = -(a.i[13] op b.i[13]);                            \ */
+/*     c.i[14] = -(a.i[14] op b.i[14]);                            \ */
+/*     c.i[15] = -(a.i[15] op b.i[15]);                            \ */
+/*     return c;                                                   \ */
+/*   } */
 
   LOGICAL(<)
   LOGICAL(>)
@@ -2318,90 +2272,122 @@ namespace v16
   inline v16int abs( const v16int &a )
   {
     v16int b;
-    b.i[ 0] = (a.i[ 0]>=0) ? a.i[ 0] : -a.i[ 0];
-    b.i[ 1] = (a.i[ 1]>=0) ? a.i[ 1] : -a.i[ 1];
-    b.i[ 2] = (a.i[ 2]>=0) ? a.i[ 2] : -a.i[ 2];
-    b.i[ 3] = (a.i[ 3]>=0) ? a.i[ 3] : -a.i[ 3];
-    b.i[ 4] = (a.i[ 4]>=0) ? a.i[ 4] : -a.i[ 4];
-    b.i[ 5] = (a.i[ 5]>=0) ? a.i[ 5] : -a.i[ 5];
-    b.i[ 6] = (a.i[ 6]>=0) ? a.i[ 6] : -a.i[ 6];
-    b.i[ 7] = (a.i[ 7]>=0) ? a.i[ 7] : -a.i[ 7];
-    b.i[ 8] = (a.i[ 8]>=0) ? a.i[ 8] : -a.i[ 8];
-    b.i[ 9] = (a.i[ 9]>=0) ? a.i[ 9] : -a.i[ 9];
-    b.i[10] = (a.i[10]>=0) ? a.i[10] : -a.i[10];
-    b.i[11] = (a.i[11]>=0) ? a.i[11] : -a.i[11];
-    b.i[12] = (a.i[12]>=0) ? a.i[12] : -a.i[12];
-    b.i[13] = (a.i[13]>=0) ? a.i[13] : -a.i[13];
-    b.i[14] = (a.i[14]>=0) ? a.i[14] : -a.i[14];
-    b.i[15] = (a.i[15]>=0) ? a.i[15] : -a.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = (a.i[j]>=0) ? a.i[j] : -a.i[j];
     return b;
   }
+
+  /* inline v16int abs( const v16int &a ) */
+  /* { */
+  /*   v16int b; */
+  /*   b.i[ 0] = (a.i[ 0]>=0) ? a.i[ 0] : -a.i[ 0]; */
+  /*   b.i[ 1] = (a.i[ 1]>=0) ? a.i[ 1] : -a.i[ 1]; */
+  /*   b.i[ 2] = (a.i[ 2]>=0) ? a.i[ 2] : -a.i[ 2]; */
+  /*   b.i[ 3] = (a.i[ 3]>=0) ? a.i[ 3] : -a.i[ 3]; */
+  /*   b.i[ 4] = (a.i[ 4]>=0) ? a.i[ 4] : -a.i[ 4]; */
+  /*   b.i[ 5] = (a.i[ 5]>=0) ? a.i[ 5] : -a.i[ 5]; */
+  /*   b.i[ 6] = (a.i[ 6]>=0) ? a.i[ 6] : -a.i[ 6]; */
+  /*   b.i[ 7] = (a.i[ 7]>=0) ? a.i[ 7] : -a.i[ 7]; */
+  /*   b.i[ 8] = (a.i[ 8]>=0) ? a.i[ 8] : -a.i[ 8]; */
+  /*   b.i[ 9] = (a.i[ 9]>=0) ? a.i[ 9] : -a.i[ 9]; */
+  /*   b.i[10] = (a.i[10]>=0) ? a.i[10] : -a.i[10]; */
+  /*   b.i[11] = (a.i[11]>=0) ? a.i[11] : -a.i[11]; */
+  /*   b.i[12] = (a.i[12]>=0) ? a.i[12] : -a.i[12]; */
+  /*   b.i[13] = (a.i[13]>=0) ? a.i[13] : -a.i[13]; */
+  /*   b.i[14] = (a.i[14]>=0) ? a.i[14] : -a.i[14]; */
+  /*   b.i[15] = (a.i[15]>=0) ? a.i[15] : -a.i[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
-    b.i[ 0] = a.i[ 0] & ~c.i[ 0];
-    b.i[ 1] = a.i[ 1] & ~c.i[ 1];
-    b.i[ 2] = a.i[ 2] & ~c.i[ 2];
-    b.i[ 3] = a.i[ 3] & ~c.i[ 3];
-    b.i[ 4] = a.i[ 4] & ~c.i[ 4];
-    b.i[ 5] = a.i[ 5] & ~c.i[ 5];
-    b.i[ 6] = a.i[ 6] & ~c.i[ 6];
-    b.i[ 7] = a.i[ 7] & ~c.i[ 7];
-    b.i[ 8] = a.i[ 8] & ~c.i[ 8];
-    b.i[ 9] = a.i[ 9] & ~c.i[ 9];
-    b.i[10] = a.i[10] & ~c.i[10];
-    b.i[11] = a.i[11] & ~c.i[11];
-    b.i[12] = a.i[12] & ~c.i[12];
-    b.i[13] = a.i[13] & ~c.i[13];
-    b.i[14] = a.i[14] & ~c.i[14];
-    b.i[15] = a.i[15] & ~c.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] & ~c.i[j];
     return b;
   }
+
+  /* inline v16 czero( const v16int &c, const v16 &a ) */
+  /* { */
+  /*   v16 b; */
+  /*   b.i[ 0] = a.i[ 0] & ~c.i[ 0]; */
+  /*   b.i[ 1] = a.i[ 1] & ~c.i[ 1]; */
+  /*   b.i[ 2] = a.i[ 2] & ~c.i[ 2]; */
+  /*   b.i[ 3] = a.i[ 3] & ~c.i[ 3]; */
+  /*   b.i[ 4] = a.i[ 4] & ~c.i[ 4]; */
+  /*   b.i[ 5] = a.i[ 5] & ~c.i[ 5]; */
+  /*   b.i[ 6] = a.i[ 6] & ~c.i[ 6]; */
+  /*   b.i[ 7] = a.i[ 7] & ~c.i[ 7]; */
+  /*   b.i[ 8] = a.i[ 8] & ~c.i[ 8]; */
+  /*   b.i[ 9] = a.i[ 9] & ~c.i[ 9]; */
+  /*   b.i[10] = a.i[10] & ~c.i[10]; */
+  /*   b.i[11] = a.i[11] & ~c.i[11]; */
+  /*   b.i[12] = a.i[12] & ~c.i[12]; */
+  /*   b.i[13] = a.i[13] & ~c.i[13]; */
+  /*   b.i[14] = a.i[14] & ~c.i[14]; */
+  /*   b.i[15] = a.i[15] & ~c.i[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16 notczero( const v16int &c, const v16 &a )
   {
     v16 b;
-    b.i[ 0] = a.i[ 0] & c.i[ 0];
-    b.i[ 1] = a.i[ 1] & c.i[ 1];
-    b.i[ 2] = a.i[ 2] & c.i[ 2];
-    b.i[ 3] = a.i[ 3] & c.i[ 3];
-    b.i[ 4] = a.i[ 4] & c.i[ 4];
-    b.i[ 5] = a.i[ 5] & c.i[ 5];
-    b.i[ 6] = a.i[ 6] & c.i[ 6];
-    b.i[ 7] = a.i[ 7] & c.i[ 7];
-    b.i[ 8] = a.i[ 8] & c.i[ 8];
-    b.i[ 9] = a.i[ 9] & c.i[ 9];
-    b.i[10] = a.i[10] & c.i[10];
-    b.i[11] = a.i[11] & c.i[11];
-    b.i[12] = a.i[12] & c.i[12];
-    b.i[13] = a.i[13] & c.i[13];
-    b.i[14] = a.i[14] & c.i[14];
-    b.i[15] = a.i[15] & c.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] & c.i[j];
     return b;
   }
+
+  /* inline v16 notczero( const v16int &c, const v16 &a ) */
+  /* { */
+  /*   v16 b; */
+  /*   b.i[ 0] = a.i[ 0] & c.i[ 0]; */
+  /*   b.i[ 1] = a.i[ 1] & c.i[ 1]; */
+  /*   b.i[ 2] = a.i[ 2] & c.i[ 2]; */
+  /*   b.i[ 3] = a.i[ 3] & c.i[ 3]; */
+  /*   b.i[ 4] = a.i[ 4] & c.i[ 4]; */
+  /*   b.i[ 5] = a.i[ 5] & c.i[ 5]; */
+  /*   b.i[ 6] = a.i[ 6] & c.i[ 6]; */
+  /*   b.i[ 7] = a.i[ 7] & c.i[ 7]; */
+  /*   b.i[ 8] = a.i[ 8] & c.i[ 8]; */
+  /*   b.i[ 9] = a.i[ 9] & c.i[ 9]; */
+  /*   b.i[10] = a.i[10] & c.i[10]; */
+  /*   b.i[11] = a.i[11] & c.i[11]; */
+  /*   b.i[12] = a.i[12] & c.i[12]; */
+  /*   b.i[13] = a.i[13] & c.i[13]; */
+  /*   b.i[14] = a.i[14] & c.i[14]; */
+  /*   b.i[15] = a.i[15] & c.i[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     v16 m;
-    m.i[ 0] = (f.i[ 0] & ~c.i[ 0]) | (t.i[ 0] & c.i[ 0] );
-    m.i[ 1] = (f.i[ 1] & ~c.i[ 1]) | (t.i[ 1] & c.i[ 1] );
-    m.i[ 2] = (f.i[ 2] & ~c.i[ 2]) | (t.i[ 2] & c.i[ 2] );
-    m.i[ 3] = (f.i[ 3] & ~c.i[ 3]) | (t.i[ 3] & c.i[ 3] );
-    m.i[ 4] = (f.i[ 4] & ~c.i[ 4]) | (t.i[ 4] & c.i[ 4] );
-    m.i[ 5] = (f.i[ 5] & ~c.i[ 5]) | (t.i[ 5] & c.i[ 5] );
-    m.i[ 6] = (f.i[ 6] & ~c.i[ 6]) | (t.i[ 6] & c.i[ 6] );
-    m.i[ 7] = (f.i[ 7] & ~c.i[ 7]) | (t.i[ 7] & c.i[ 7] );
-    m.i[ 8] = (f.i[ 8] & ~c.i[ 8]) | (t.i[ 8] & c.i[ 8] );
-    m.i[ 9] = (f.i[ 9] & ~c.i[ 9]) | (t.i[ 9] & c.i[ 9] );
-    m.i[10] = (f.i[10] & ~c.i[10]) | (t.i[10] & c.i[10] );
-    m.i[11] = (f.i[11] & ~c.i[11]) | (t.i[11] & c.i[11] );
-    m.i[12] = (f.i[12] & ~c.i[12]) | (t.i[12] & c.i[12] );
-    m.i[13] = (f.i[13] & ~c.i[13]) | (t.i[13] & c.i[13] );
-    m.i[14] = (f.i[14] & ~c.i[14]) | (t.i[14] & c.i[14] );
-    m.i[15] = (f.i[15] & ~c.i[15]) | (t.i[15] & c.i[15] );
+    for( int j = 0; j < 16; j++ )
+      m.i[j] = (f.i[j] & ~c.i[j]) | (t.i[j] & c.i[j] );
     return m;
   }
+
+  /* inline v16 merge( const v16int &c, const v16 &t, const v16 &f ) */
+  /* { */
+  /*   v16 m; */
+  /*   m.i[ 0] = (f.i[ 0] & ~c.i[ 0]) | (t.i[ 0] & c.i[ 0] ); */
+  /*   m.i[ 1] = (f.i[ 1] & ~c.i[ 1]) | (t.i[ 1] & c.i[ 1] ); */
+  /*   m.i[ 2] = (f.i[ 2] & ~c.i[ 2]) | (t.i[ 2] & c.i[ 2] ); */
+  /*   m.i[ 3] = (f.i[ 3] & ~c.i[ 3]) | (t.i[ 3] & c.i[ 3] ); */
+  /*   m.i[ 4] = (f.i[ 4] & ~c.i[ 4]) | (t.i[ 4] & c.i[ 4] ); */
+  /*   m.i[ 5] = (f.i[ 5] & ~c.i[ 5]) | (t.i[ 5] & c.i[ 5] ); */
+  /*   m.i[ 6] = (f.i[ 6] & ~c.i[ 6]) | (t.i[ 6] & c.i[ 6] ); */
+  /*   m.i[ 7] = (f.i[ 7] & ~c.i[ 7]) | (t.i[ 7] & c.i[ 7] ); */
+  /*   m.i[ 8] = (f.i[ 8] & ~c.i[ 8]) | (t.i[ 8] & c.i[ 8] ); */
+  /*   m.i[ 9] = (f.i[ 9] & ~c.i[ 9]) | (t.i[ 9] & c.i[ 9] ); */
+  /*   m.i[10] = (f.i[10] & ~c.i[10]) | (t.i[10] & c.i[10] ); */
+  /*   m.i[11] = (f.i[11] & ~c.i[11]) | (t.i[11] & c.i[11] ); */
+  /*   m.i[12] = (f.i[12] & ~c.i[12]) | (t.i[12] & c.i[12] ); */
+  /*   m.i[13] = (f.i[13] & ~c.i[13]) | (t.i[13] & c.i[13] ); */
+  /*   m.i[14] = (f.i[14] & ~c.i[14]) | (t.i[14] & c.i[14] ); */
+  /*   m.i[15] = (f.i[15] & ~c.i[15]) | (t.i[15] & c.i[15] ); */
+  /*   return m; */
+  /* } */
 
   ////////////////
   // v16float class
@@ -2489,27 +2475,18 @@ namespace v16
     {
       for( int j = 0; j < 16; j++ )
 	f[j] = a.f[j];
-
-      /* f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3]; */
-      /* f[4] = a.f[4]; f[5] = a.f[5]; f[6] = a.f[6]; f[7] = a.f[7]; */
     }
 
     v16float( const v16 &a )                               // Init from mixed
     {
       for( int j = 0; j < 16; j++ )
 	f[j] = a.f[j];
-
-      /* f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3]; */
-      /* f[4] = a.f[4]; f[5] = a.f[5]; f[6] = a.f[6]; f[7] = a.f[7]; */
     }
 
     v16float( float a )                                    // Init from scalar
     {
       for( int j = 0; j < 16; j++ )
 	f[j] = a;
-
-      /* f[0] = a; f[1] = a; f[2] = a; f[3] = a; */
-      /* f[4] = a; f[5] = a; f[6] = a; f[7] = a; */
     }
 
     v16float( float f00, float f01, float f02, float f03,
@@ -2530,24 +2507,32 @@ namespace v16
 #   define ASSIGN(op)                                   \
     inline v16float &operator op( const v16float &b )   \
     {							\
-      f[ 0] op b.f[ 0];	                                \
-      f[ 1] op b.f[ 1];                                 \
-      f[ 2] op b.f[ 2];                                 \
-      f[ 3] op b.f[ 3];                                 \
-      f[ 4] op b.f[ 4];                                 \
-      f[ 5] op b.f[ 5];                                 \
-      f[ 6] op b.f[ 6];                                 \
-      f[ 7] op b.f[ 7];                                 \
-      f[ 8] op b.f[ 8];                                 \
-      f[ 9] op b.f[ 9];                                 \
-      f[10] op b.f[10];                                 \
-      f[11] op b.f[11];                                 \
-      f[12] op b.f[12];                                 \
-      f[13] op b.f[13];                                 \
-      f[14] op b.f[14];                                 \
-      f[15] op b.f[15];                                 \
+      for( int j = 0; j < 16; j++ )                     \
+        f[j] op b.f[j];	                                \
       return *this;                                     \
     }
+
+/* #   define ASSIGN(op)                                   \ */
+/*     inline v16float &operator op( const v16float &b )   \ */
+/*     {							\ */
+/*       f[ 0] op b.f[ 0];	                                \ */
+/*       f[ 1] op b.f[ 1];                                 \ */
+/*       f[ 2] op b.f[ 2];                                 \ */
+/*       f[ 3] op b.f[ 3];                                 \ */
+/*       f[ 4] op b.f[ 4];                                 \ */
+/*       f[ 5] op b.f[ 5];                                 \ */
+/*       f[ 6] op b.f[ 6];                                 \ */
+/*       f[ 7] op b.f[ 7];                                 \ */
+/*       f[ 8] op b.f[ 8];                                 \ */
+/*       f[ 9] op b.f[ 9];                                 \ */
+/*       f[10] op b.f[10];                                 \ */
+/*       f[11] op b.f[11];                                 \ */
+/*       f[12] op b.f[12];                                 \ */
+/*       f[13] op b.f[13];                                 \ */
+/*       f[14] op b.f[14];                                 \ */
+/*       f[15] op b.f[15];                                 \ */
+/*       return *this;                                     \ */
+/*     } */
 
     ASSIGN(=)
     ASSIGN(+=)
@@ -2575,160 +2560,216 @@ namespace v16
   inline v16float operator +( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = +a.f[ 0];
-    b.f[ 1] = +a.f[ 1];
-    b.f[ 2] = +a.f[ 2];
-    b.f[ 3] = +a.f[ 3];
-    b.f[ 4] = +a.f[ 4];
-    b.f[ 5] = +a.f[ 5];
-    b.f[ 6] = +a.f[ 6];
-    b.f[ 7] = +a.f[ 7];
-    b.f[ 8] = +a.f[ 8];
-    b.f[ 9] = +a.f[ 9];
-    b.f[10] = +a.f[10];
-    b.f[11] = +a.f[11];
-    b.f[12] = +a.f[12];
-    b.f[13] = +a.f[13];
-    b.f[14] = +a.f[14];
-    b.f[15] = +a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = +a.f[j];
     return b;
   }
+
+  /* inline v16float operator +( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = +a.f[ 0]; */
+  /*   b.f[ 1] = +a.f[ 1]; */
+  /*   b.f[ 2] = +a.f[ 2]; */
+  /*   b.f[ 3] = +a.f[ 3]; */
+  /*   b.f[ 4] = +a.f[ 4]; */
+  /*   b.f[ 5] = +a.f[ 5]; */
+  /*   b.f[ 6] = +a.f[ 6]; */
+  /*   b.f[ 7] = +a.f[ 7]; */
+  /*   b.f[ 8] = +a.f[ 8]; */
+  /*   b.f[ 9] = +a.f[ 9]; */
+  /*   b.f[10] = +a.f[10]; */
+  /*   b.f[11] = +a.f[11]; */
+  /*   b.f[12] = +a.f[12]; */
+  /*   b.f[13] = +a.f[13]; */
+  /*   b.f[14] = +a.f[14]; */
+  /*   b.f[15] = +a.f[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float operator -( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = -a.f[ 0];
-    b.f[ 1] = -a.f[ 1];
-    b.f[ 2] = -a.f[ 2];
-    b.f[ 3] = -a.f[ 3];
-    b.f[ 4] = -a.f[ 4];
-    b.f[ 5] = -a.f[ 5];
-    b.f[ 6] = -a.f[ 6];
-    b.f[ 7] = -a.f[ 7];
-    b.f[ 8] = -a.f[ 8];
-    b.f[ 9] = -a.f[ 9];
-    b.f[10] = -a.f[10];
-    b.f[11] = -a.f[11];
-    b.f[12] = -a.f[12];
-    b.f[13] = -a.f[13];
-    b.f[14] = -a.f[14];
-    b.f[15] = -a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = -a.f[j];
     return b;
   }
+
+  /* inline v16float operator -( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = -a.f[ 0]; */
+  /*   b.f[ 1] = -a.f[ 1]; */
+  /*   b.f[ 2] = -a.f[ 2]; */
+  /*   b.f[ 3] = -a.f[ 3]; */
+  /*   b.f[ 4] = -a.f[ 4]; */
+  /*   b.f[ 5] = -a.f[ 5]; */
+  /*   b.f[ 6] = -a.f[ 6]; */
+  /*   b.f[ 7] = -a.f[ 7]; */
+  /*   b.f[ 8] = -a.f[ 8]; */
+  /*   b.f[ 9] = -a.f[ 9]; */
+  /*   b.f[10] = -a.f[10]; */
+  /*   b.f[11] = -a.f[11]; */
+  /*   b.f[12] = -a.f[12]; */
+  /*   b.f[13] = -a.f[13]; */
+  /*   b.f[14] = -a.f[14]; */
+  /*   b.f[15] = -a.f[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16int operator !( const v16float &a )
   {
     v16int b;
-    b.i[ 0] = a.i[ 0] ? 0 : -1;
-    b.i[ 1] = a.i[ 1] ? 0 : -1;
-    b.i[ 2] = a.i[ 2] ? 0 : -1;
-    b.i[ 3] = a.i[ 3] ? 0 : -1;
-    b.i[ 4] = a.i[ 4] ? 0 : -1;
-    b.i[ 5] = a.i[ 5] ? 0 : -1;
-    b.i[ 6] = a.i[ 6] ? 0 : -1;
-    b.i[ 7] = a.i[ 7] ? 0 : -1;
-    b.i[ 8] = a.i[ 8] ? 0 : -1;
-    b.i[ 9] = a.i[ 9] ? 0 : -1;
-    b.i[10] = a.i[10] ? 0 : -1;
-    b.i[11] = a.i[11] ? 0 : -1;
-    b.i[12] = a.i[12] ? 0 : -1;
-    b.i[13] = a.i[13] ? 0 : -1;
-    b.i[14] = a.i[14] ? 0 : -1;
-    b.i[15] = a.i[15] ? 0 : -1;
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] ? 0 : -1;
     return b;
   }
+
+  /* inline v16int operator !( const v16float &a ) */
+  /* { */
+  /*   v16int b; */
+  /*   b.i[ 0] = a.i[ 0] ? 0 : -1; */
+  /*   b.i[ 1] = a.i[ 1] ? 0 : -1; */
+  /*   b.i[ 2] = a.i[ 2] ? 0 : -1; */
+  /*   b.i[ 3] = a.i[ 3] ? 0 : -1; */
+  /*   b.i[ 4] = a.i[ 4] ? 0 : -1; */
+  /*   b.i[ 5] = a.i[ 5] ? 0 : -1; */
+  /*   b.i[ 6] = a.i[ 6] ? 0 : -1; */
+  /*   b.i[ 7] = a.i[ 7] ? 0 : -1; */
+  /*   b.i[ 8] = a.i[ 8] ? 0 : -1; */
+  /*   b.i[ 9] = a.i[ 9] ? 0 : -1; */
+  /*   b.i[10] = a.i[10] ? 0 : -1; */
+  /*   b.i[11] = a.i[11] ? 0 : -1; */
+  /*   b.i[12] = a.i[12] ? 0 : -1; */
+  /*   b.i[13] = a.i[13] ? 0 : -1; */
+  /*   b.i[14] = a.i[14] ? 0 : -1; */
+  /*   b.i[15] = a.i[15] ? 0 : -1; */
+  /*   return b; */
+  /* } */
 
   // v16float prefix increment / decrement operators
 
   inline v16float operator ++( v16float &a )
   {
     v16float b;
-    b.f[ 0] = ++a.f[ 0];
-    b.f[ 1] = ++a.f[ 1];
-    b.f[ 2] = ++a.f[ 2];
-    b.f[ 3] = ++a.f[ 3];
-    b.f[ 4] = ++a.f[ 4];
-    b.f[ 5] = ++a.f[ 5];
-    b.f[ 6] = ++a.f[ 6];
-    b.f[ 7] = ++a.f[ 7];
-    b.f[ 8] = ++a.f[ 8];
-    b.f[ 9] = ++a.f[ 9];
-    b.f[10] = ++a.f[10];
-    b.f[11] = ++a.f[11];
-    b.f[12] = ++a.f[12];
-    b.f[13] = ++a.f[13];
-    b.f[14] = ++a.f[14];
-    b.f[15] = ++a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = ++a.f[j];
     return b;
   }
+
+  /* inline v16float operator ++( v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = ++a.f[ 0]; */
+  /*   b.f[ 1] = ++a.f[ 1]; */
+  /*   b.f[ 2] = ++a.f[ 2]; */
+  /*   b.f[ 3] = ++a.f[ 3]; */
+  /*   b.f[ 4] = ++a.f[ 4]; */
+  /*   b.f[ 5] = ++a.f[ 5]; */
+  /*   b.f[ 6] = ++a.f[ 6]; */
+  /*   b.f[ 7] = ++a.f[ 7]; */
+  /*   b.f[ 8] = ++a.f[ 8]; */
+  /*   b.f[ 9] = ++a.f[ 9]; */
+  /*   b.f[10] = ++a.f[10]; */
+  /*   b.f[11] = ++a.f[11]; */
+  /*   b.f[12] = ++a.f[12]; */
+  /*   b.f[13] = ++a.f[13]; */
+  /*   b.f[14] = ++a.f[14]; */
+  /*   b.f[15] = ++a.f[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float operator --( v16float &a )
   {
     v16float b;
-    b.f[ 0] = --a.f[ 0];
-    b.f[ 1] = --a.f[ 1];
-    b.f[ 2] = --a.f[ 2];
-    b.f[ 3] = --a.f[ 3];
-    b.f[ 4] = --a.f[ 4];
-    b.f[ 5] = --a.f[ 5];
-    b.f[ 6] = --a.f[ 6];
-    b.f[ 7] = --a.f[ 7];
-    b.f[ 8] = --a.f[ 8];
-    b.f[ 9] = --a.f[ 9];
-    b.f[10] = --a.f[10];
-    b.f[11] = --a.f[11];
-    b.f[12] = --a.f[12];
-    b.f[13] = --a.f[13];
-    b.f[14] = --a.f[14];
-    b.f[15] = --a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = --a.f[j];
     return b;
   }
+
+  /* inline v16float operator --( v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = --a.f[ 0]; */
+  /*   b.f[ 1] = --a.f[ 1]; */
+  /*   b.f[ 2] = --a.f[ 2]; */
+  /*   b.f[ 3] = --a.f[ 3]; */
+  /*   b.f[ 4] = --a.f[ 4]; */
+  /*   b.f[ 5] = --a.f[ 5]; */
+  /*   b.f[ 6] = --a.f[ 6]; */
+  /*   b.f[ 7] = --a.f[ 7]; */
+  /*   b.f[ 8] = --a.f[ 8]; */
+  /*   b.f[ 9] = --a.f[ 9]; */
+  /*   b.f[10] = --a.f[10]; */
+  /*   b.f[11] = --a.f[11]; */
+  /*   b.f[12] = --a.f[12]; */
+  /*   b.f[13] = --a.f[13]; */
+  /*   b.f[14] = --a.f[14]; */
+  /*   b.f[15] = --a.f[15]; */
+  /*   return b; */
+  /* } */
 
   // v16float postfix increment / decrement operators
 
   inline v16float operator ++( v16float &a, int )
   {
     v16float b;
-    b.f[ 0] = a.f[ 0]++;
-    b.f[ 1] = a.f[ 1]++;
-    b.f[ 2] = a.f[ 2]++;
-    b.f[ 3] = a.f[ 3]++;
-    b.f[ 4] = a.f[ 4]++;
-    b.f[ 5] = a.f[ 5]++;
-    b.f[ 6] = a.f[ 6]++;
-    b.f[ 7] = a.f[ 7]++;
-    b.f[ 8] = a.f[ 8]++;
-    b.f[ 9] = a.f[ 9]++;
-    b.f[10] = a.f[10]++;
-    b.f[11] = a.f[11]++;
-    b.f[12] = a.f[12]++;
-    b.f[13] = a.f[13]++;
-    b.f[14] = a.f[14]++;
-    b.f[15] = a.f[15]++;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = a.f[j]++;
     return b;
   }
+
+  /* inline v16float operator ++( v16float &a, int ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = a.f[ 0]++; */
+  /*   b.f[ 1] = a.f[ 1]++; */
+  /*   b.f[ 2] = a.f[ 2]++; */
+  /*   b.f[ 3] = a.f[ 3]++; */
+  /*   b.f[ 4] = a.f[ 4]++; */
+  /*   b.f[ 5] = a.f[ 5]++; */
+  /*   b.f[ 6] = a.f[ 6]++; */
+  /*   b.f[ 7] = a.f[ 7]++; */
+  /*   b.f[ 8] = a.f[ 8]++; */
+  /*   b.f[ 9] = a.f[ 9]++; */
+  /*   b.f[10] = a.f[10]++; */
+  /*   b.f[11] = a.f[11]++; */
+  /*   b.f[12] = a.f[12]++; */
+  /*   b.f[13] = a.f[13]++; */
+  /*   b.f[14] = a.f[14]++; */
+  /*   b.f[15] = a.f[15]++; */
+  /*   return b; */
+  /* } */
 
   inline v16float operator --( v16float &a, int )
   {
     v16float b;
-    b.f[ 0] = a.f[ 0]--;
-    b.f[ 1] = a.f[ 1]--;
-    b.f[ 2] = a.f[ 2]--;
-    b.f[ 3] = a.f[ 3]--;
-    b.f[ 4] = a.f[ 4]--;
-    b.f[ 5] = a.f[ 5]--;
-    b.f[ 6] = a.f[ 6]--;
-    b.f[ 7] = a.f[ 7]--;
-    b.f[ 8] = a.f[ 8]--;
-    b.f[ 9] = a.f[ 9]--;
-    b.f[10] = a.f[10]--;
-    b.f[11] = a.f[11]--;
-    b.f[12] = a.f[12]--;
-    b.f[13] = a.f[13]--;
-    b.f[14] = a.f[14]--;
-    b.f[15] = a.f[15]--;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = a.f[j]--;
     return b;
   }
+
+  /* inline v16float operator --( v16float &a, int ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = a.f[ 0]--; */
+  /*   b.f[ 1] = a.f[ 1]--; */
+  /*   b.f[ 2] = a.f[ 2]--; */
+  /*   b.f[ 3] = a.f[ 3]--; */
+  /*   b.f[ 4] = a.f[ 4]--; */
+  /*   b.f[ 5] = a.f[ 5]--; */
+  /*   b.f[ 6] = a.f[ 6]--; */
+  /*   b.f[ 7] = a.f[ 7]--; */
+  /*   b.f[ 8] = a.f[ 8]--; */
+  /*   b.f[ 9] = a.f[ 9]--; */
+  /*   b.f[10] = a.f[10]--; */
+  /*   b.f[11] = a.f[11]--; */
+  /*   b.f[12] = a.f[12]--; */
+  /*   b.f[13] = a.f[13]--; */
+  /*   b.f[14] = a.f[14]--; */
+  /*   b.f[15] = a.f[15]--; */
+  /*   return b; */
+  /* } */
 
   // v16float binary operators
 
@@ -2736,24 +2777,33 @@ namespace v16
   inline v16float operator op( const v16float &a, const v16float &b ) \
   {								      \
     v16float c;                                                       \
-    c.f[ 0] = a.f[ 0] op b.f[ 0];                                     \
-    c.f[ 1] = a.f[ 1] op b.f[ 1];                                     \
-    c.f[ 2] = a.f[ 2] op b.f[ 2];                                     \
-    c.f[ 3] = a.f[ 3] op b.f[ 3];                                     \
-    c.f[ 4] = a.f[ 4] op b.f[ 4];                                     \
-    c.f[ 5] = a.f[ 5] op b.f[ 5];                                     \
-    c.f[ 6] = a.f[ 6] op b.f[ 6];                                     \
-    c.f[ 7] = a.f[ 7] op b.f[ 7];                                     \
-    c.f[ 8] = a.f[ 8] op b.f[ 8];                                     \
-    c.f[ 9] = a.f[ 9] op b.f[ 9];                                     \
-    c.f[10] = a.f[10] op b.f[10];                                     \
-    c.f[11] = a.f[11] op b.f[11];                                     \
-    c.f[12] = a.f[12] op b.f[12];                                     \
-    c.f[13] = a.f[13] op b.f[13];                                     \
-    c.f[14] = a.f[14] op b.f[14];                                     \
-    c.f[15] = a.f[15] op b.f[15];                                     \
+    for( int j = 0; j < 16; j++ )                                     \
+      c.f[j] = a.f[j] op b.f[j];                                      \
     return c;                                                         \
   }
+
+/* # define BINARY(op)                                                   \ */
+/*   inline v16float operator op( const v16float &a, const v16float &b ) \ */
+/*   {								      \ */
+/*     v16float c;                                                       \ */
+/*     c.f[ 0] = a.f[ 0] op b.f[ 0];                                     \ */
+/*     c.f[ 1] = a.f[ 1] op b.f[ 1];                                     \ */
+/*     c.f[ 2] = a.f[ 2] op b.f[ 2];                                     \ */
+/*     c.f[ 3] = a.f[ 3] op b.f[ 3];                                     \ */
+/*     c.f[ 4] = a.f[ 4] op b.f[ 4];                                     \ */
+/*     c.f[ 5] = a.f[ 5] op b.f[ 5];                                     \ */
+/*     c.f[ 6] = a.f[ 6] op b.f[ 6];                                     \ */
+/*     c.f[ 7] = a.f[ 7] op b.f[ 7];                                     \ */
+/*     c.f[ 8] = a.f[ 8] op b.f[ 8];                                     \ */
+/*     c.f[ 9] = a.f[ 9] op b.f[ 9];                                     \ */
+/*     c.f[10] = a.f[10] op b.f[10];                                     \ */
+/*     c.f[11] = a.f[11] op b.f[11];                                     \ */
+/*     c.f[12] = a.f[12] op b.f[12];                                     \ */
+/*     c.f[13] = a.f[13] op b.f[13];                                     \ */
+/*     c.f[14] = a.f[14] op b.f[14];                                     \ */
+/*     c.f[15] = a.f[15] op b.f[15];                                     \ */
+/*     return c;                                                         \ */
+/*   } */
 
   BINARY(+)
   BINARY(-)
@@ -2768,24 +2818,33 @@ namespace v16
   inline v16int operator op( const v16float &a, const v16float &b ) \
   {								    \
     v16int c;                                                       \
-    c.i[ 0] = -( a.f[ 0] op b.f[ 0] );                              \
-    c.i[ 1] = -( a.f[ 1] op b.f[ 1] );                              \
-    c.i[ 2] = -( a.f[ 2] op b.f[ 2] );                              \
-    c.i[ 3] = -( a.f[ 3] op b.f[ 3] );                              \
-    c.i[ 4] = -( a.f[ 4] op b.f[ 4] );                              \
-    c.i[ 5] = -( a.f[ 5] op b.f[ 5] );                              \
-    c.i[ 6] = -( a.f[ 6] op b.f[ 6] );                              \
-    c.i[ 7] = -( a.f[ 7] op b.f[ 7] );                              \
-    c.i[ 8] = -( a.f[ 8] op b.f[ 8] );                              \
-    c.i[ 9] = -( a.f[ 9] op b.f[ 9] );                              \
-    c.i[10] = -( a.f[10] op b.f[10] );                              \
-    c.i[11] = -( a.f[11] op b.f[11] );                              \
-    c.i[12] = -( a.f[12] op b.f[12] );                              \
-    c.i[13] = -( a.f[13] op b.f[13] );                              \
-    c.i[14] = -( a.f[14] op b.f[14] );                              \
-    c.i[15] = -( a.f[15] op b.f[15] );                              \
+    for( int j = 0; j < 16; j++ )                                   \
+      c.i[j] = -( a.f[j] op b.f[j] );                               \
     return c;                                                       \
   }
+
+/* # define LOGICAL(op)                                                \ */
+/*   inline v16int operator op( const v16float &a, const v16float &b ) \ */
+/*   {								    \ */
+/*     v16int c;                                                       \ */
+/*     c.i[ 0] = -( a.f[ 0] op b.f[ 0] );                              \ */
+/*     c.i[ 1] = -( a.f[ 1] op b.f[ 1] );                              \ */
+/*     c.i[ 2] = -( a.f[ 2] op b.f[ 2] );                              \ */
+/*     c.i[ 3] = -( a.f[ 3] op b.f[ 3] );                              \ */
+/*     c.i[ 4] = -( a.f[ 4] op b.f[ 4] );                              \ */
+/*     c.i[ 5] = -( a.f[ 5] op b.f[ 5] );                              \ */
+/*     c.i[ 6] = -( a.f[ 6] op b.f[ 6] );                              \ */
+/*     c.i[ 7] = -( a.f[ 7] op b.f[ 7] );                              \ */
+/*     c.i[ 8] = -( a.f[ 8] op b.f[ 8] );                              \ */
+/*     c.i[ 9] = -( a.f[ 9] op b.f[ 9] );                              \ */
+/*     c.i[10] = -( a.f[10] op b.f[10] );                              \ */
+/*     c.i[11] = -( a.f[11] op b.f[11] );                              \ */
+/*     c.i[12] = -( a.f[12] op b.f[12] );                              \ */
+/*     c.i[13] = -( a.f[13] op b.f[13] );                              \ */
+/*     c.i[14] = -( a.f[14] op b.f[14] );                              \ */
+/*     c.i[15] = -( a.f[15] op b.f[15] );                              \ */
+/*     return c;                                                       \ */
+/*   } */
 
   LOGICAL(< )
   LOGICAL(> )
@@ -2804,47 +2863,65 @@ namespace v16
   inline v16float fn( const v16float &a )       \
   {						\
     v16float b;                                 \
-    b.f[ 0] = ::fn(a.f[ 0]);                    \
-    b.f[ 1] = ::fn(a.f[ 1]);                    \
-    b.f[ 2] = ::fn(a.f[ 2]);                    \
-    b.f[ 3] = ::fn(a.f[ 3]);                    \
-    b.f[ 4] = ::fn(a.f[ 4]);                    \
-    b.f[ 5] = ::fn(a.f[ 5]);                    \
-    b.f[ 6] = ::fn(a.f[ 6]);                    \
-    b.f[ 7] = ::fn(a.f[ 7]);                    \
-    b.f[ 8] = ::fn(a.f[ 8]);                    \
-    b.f[ 9] = ::fn(a.f[ 9]);                    \
-    b.f[10] = ::fn(a.f[10]);                    \
-    b.f[11] = ::fn(a.f[11]);                    \
-    b.f[12] = ::fn(a.f[12]);                    \
-    b.f[13] = ::fn(a.f[13]);                    \
-    b.f[14] = ::fn(a.f[14]);                    \
-    b.f[15] = ::fn(a.f[15]);                    \
+    for( int j = 0; j < 16; j++ )               \
+      b.f[j] = ::fn(a.f[j]);                    \
     return b;                                   \
   }
+
+/* # define CMATH_FR1(fn)                          \ */
+/*   inline v16float fn( const v16float &a )       \ */
+/*   {						\ */
+/*     v16float b;                                 \ */
+/*     b.f[ 0] = ::fn(a.f[ 0]);                    \ */
+/*     b.f[ 1] = ::fn(a.f[ 1]);                    \ */
+/*     b.f[ 2] = ::fn(a.f[ 2]);                    \ */
+/*     b.f[ 3] = ::fn(a.f[ 3]);                    \ */
+/*     b.f[ 4] = ::fn(a.f[ 4]);                    \ */
+/*     b.f[ 5] = ::fn(a.f[ 5]);                    \ */
+/*     b.f[ 6] = ::fn(a.f[ 6]);                    \ */
+/*     b.f[ 7] = ::fn(a.f[ 7]);                    \ */
+/*     b.f[ 8] = ::fn(a.f[ 8]);                    \ */
+/*     b.f[ 9] = ::fn(a.f[ 9]);                    \ */
+/*     b.f[10] = ::fn(a.f[10]);                    \ */
+/*     b.f[11] = ::fn(a.f[11]);                    \ */
+/*     b.f[12] = ::fn(a.f[12]);                    \ */
+/*     b.f[13] = ::fn(a.f[13]);                    \ */
+/*     b.f[14] = ::fn(a.f[14]);                    \ */
+/*     b.f[15] = ::fn(a.f[15]);                    \ */
+/*     return b;                                   \ */
+/*   } */
 
 # define CMATH_FR2(fn)                                          \
   inline v16float fn( const v16float &a, const v16float &b )    \
   {								\
     v16float c;                                                 \
-    c.f[ 0] = ::fn( a.f[ 0], b.f[ 0] );                         \
-    c.f[ 1] = ::fn( a.f[ 1], b.f[ 1] );                         \
-    c.f[ 2] = ::fn( a.f[ 2], b.f[ 2] );                         \
-    c.f[ 3] = ::fn( a.f[ 3], b.f[ 3] );                         \
-    c.f[ 4] = ::fn( a.f[ 4], b.f[ 4] );                         \
-    c.f[ 5] = ::fn( a.f[ 5], b.f[ 5] );                         \
-    c.f[ 6] = ::fn( a.f[ 6], b.f[ 6] );                         \
-    c.f[ 7] = ::fn( a.f[ 7], b.f[ 7] );                         \
-    c.f[ 8] = ::fn( a.f[ 8], b.f[ 8] );                         \
-    c.f[ 9] = ::fn( a.f[ 9], b.f[ 9] );                         \
-    c.f[10] = ::fn( a.f[10], b.f[10] );                         \
-    c.f[11] = ::fn( a.f[11], b.f[11] );                         \
-    c.f[12] = ::fn( a.f[12], b.f[12] );                         \
-    c.f[13] = ::fn( a.f[13], b.f[13] );                         \
-    c.f[14] = ::fn( a.f[14], b.f[14] );                         \
-    c.f[15] = ::fn( a.f[15], b.f[15] );                         \
+    for( int j = 0; j < 16; j++ )                               \
+      c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \
   }
+
+/* # define CMATH_FR2(fn)                                          \ */
+/*   inline v16float fn( const v16float &a, const v16float &b )    \ */
+/*   {								\ */
+/*     v16float c;                                                 \ */
+/*     c.f[ 0] = ::fn( a.f[ 0], b.f[ 0] );                         \ */
+/*     c.f[ 1] = ::fn( a.f[ 1], b.f[ 1] );                         \ */
+/*     c.f[ 2] = ::fn( a.f[ 2], b.f[ 2] );                         \ */
+/*     c.f[ 3] = ::fn( a.f[ 3], b.f[ 3] );                         \ */
+/*     c.f[ 4] = ::fn( a.f[ 4], b.f[ 4] );                         \ */
+/*     c.f[ 5] = ::fn( a.f[ 5], b.f[ 5] );                         \ */
+/*     c.f[ 6] = ::fn( a.f[ 6], b.f[ 6] );                         \ */
+/*     c.f[ 7] = ::fn( a.f[ 7], b.f[ 7] );                         \ */
+/*     c.f[ 8] = ::fn( a.f[ 8], b.f[ 8] );                         \ */
+/*     c.f[ 9] = ::fn( a.f[ 9], b.f[ 9] );                         \ */
+/*     c.f[10] = ::fn( a.f[10], b.f[10] );                         \ */
+/*     c.f[11] = ::fn( a.f[11], b.f[11] );                         \ */
+/*     c.f[12] = ::fn( a.f[12], b.f[12] );                         \ */
+/*     c.f[13] = ::fn( a.f[13], b.f[13] );                         \ */
+/*     c.f[14] = ::fn( a.f[14], b.f[14] );                         \ */
+/*     c.f[15] = ::fn( a.f[15], b.f[15] );                         \ */
+/*     return c;                                                   \ */
+/*   } */
 
   CMATH_FR1(acos)     CMATH_FR1(asin)  CMATH_FR1(atan) CMATH_FR2(atan2)
   CMATH_FR1(ceil)     CMATH_FR1(cos)   CMATH_FR1(cosh) CMATH_FR1(exp)
@@ -2856,24 +2933,37 @@ namespace v16
   {
     v16float c;
     float t;
-    t = ::fabs( a.f[ 0] ); if( b.f[ 0] < 0 ) t = -t; c.f[ 0] = t;
-    t = ::fabs( a.f[ 1] ); if( b.f[ 1] < 0 ) t = -t; c.f[ 1] = t;
-    t = ::fabs( a.f[ 2] ); if( b.f[ 2] < 0 ) t = -t; c.f[ 2] = t;
-    t = ::fabs( a.f[ 3] ); if( b.f[ 3] < 0 ) t = -t; c.f[ 3] = t;
-    t = ::fabs( a.f[ 4] ); if( b.f[ 4] < 0 ) t = -t; c.f[ 4] = t;
-    t = ::fabs( a.f[ 5] ); if( b.f[ 5] < 0 ) t = -t; c.f[ 5] = t;
-    t = ::fabs( a.f[ 6] ); if( b.f[ 6] < 0 ) t = -t; c.f[ 6] = t;
-    t = ::fabs( a.f[ 7] ); if( b.f[ 7] < 0 ) t = -t; c.f[ 7] = t;
-    t = ::fabs( a.f[ 8] ); if( b.f[ 8] < 0 ) t = -t; c.f[ 8] = t;
-    t = ::fabs( a.f[ 9] ); if( b.f[ 9] < 0 ) t = -t; c.f[ 9] = t;
-    t = ::fabs( a.f[10] ); if( b.f[10] < 0 ) t = -t; c.f[10] = t;
-    t = ::fabs( a.f[11] ); if( b.f[11] < 0 ) t = -t; c.f[11] = t;
-    t = ::fabs( a.f[12] ); if( b.f[12] < 0 ) t = -t; c.f[12] = t;
-    t = ::fabs( a.f[13] ); if( b.f[13] < 0 ) t = -t; c.f[13] = t;
-    t = ::fabs( a.f[14] ); if( b.f[14] < 0 ) t = -t; c.f[14] = t;
-    t = ::fabs( a.f[15] ); if( b.f[15] < 0 ) t = -t; c.f[15] = t;
+    for( int j = 0; j < 16; j++ )
+    {
+      t = ::fabs( a.f[j] );
+      if( b.f[j] < 0 ) t = -t;
+      c.f[j] = t;
+    }
     return c;
   }
+
+  /* inline v16float copysign( const v16float &a, const v16float &b ) */
+  /* { */
+  /*   v16float c; */
+  /*   float t; */
+  /*   t = ::fabs( a.f[ 0] ); if( b.f[ 0] < 0 ) t = -t; c.f[ 0] = t; */
+  /*   t = ::fabs( a.f[ 1] ); if( b.f[ 1] < 0 ) t = -t; c.f[ 1] = t; */
+  /*   t = ::fabs( a.f[ 2] ); if( b.f[ 2] < 0 ) t = -t; c.f[ 2] = t; */
+  /*   t = ::fabs( a.f[ 3] ); if( b.f[ 3] < 0 ) t = -t; c.f[ 3] = t; */
+  /*   t = ::fabs( a.f[ 4] ); if( b.f[ 4] < 0 ) t = -t; c.f[ 4] = t; */
+  /*   t = ::fabs( a.f[ 5] ); if( b.f[ 5] < 0 ) t = -t; c.f[ 5] = t; */
+  /*   t = ::fabs( a.f[ 6] ); if( b.f[ 6] < 0 ) t = -t; c.f[ 6] = t; */
+  /*   t = ::fabs( a.f[ 7] ); if( b.f[ 7] < 0 ) t = -t; c.f[ 7] = t; */
+  /*   t = ::fabs( a.f[ 8] ); if( b.f[ 8] < 0 ) t = -t; c.f[ 8] = t; */
+  /*   t = ::fabs( a.f[ 9] ); if( b.f[ 9] < 0 ) t = -t; c.f[ 9] = t; */
+  /*   t = ::fabs( a.f[10] ); if( b.f[10] < 0 ) t = -t; c.f[10] = t; */
+  /*   t = ::fabs( a.f[11] ); if( b.f[11] < 0 ) t = -t; c.f[11] = t; */
+  /*   t = ::fabs( a.f[12] ); if( b.f[12] < 0 ) t = -t; c.f[12] = t; */
+  /*   t = ::fabs( a.f[13] ); if( b.f[13] < 0 ) t = -t; c.f[13] = t; */
+  /*   t = ::fabs( a.f[14] ); if( b.f[14] < 0 ) t = -t; c.f[14] = t; */
+  /*   t = ::fabs( a.f[15] ); if( b.f[15] < 0 ) t = -t; c.f[15] = t; */
+  /*   return c; */
+  /* } */
 
 # undef CMATH_FR1
 # undef CMATH_FR2
@@ -2883,300 +2973,380 @@ namespace v16
   inline v16float rsqrt_approx( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = ::sqrt( 1/a.f[ 0] );
-    b.f[ 1] = ::sqrt( 1/a.f[ 1] );
-    b.f[ 2] = ::sqrt( 1/a.f[ 2] );
-    b.f[ 3] = ::sqrt( 1/a.f[ 3] );
-    b.f[ 4] = ::sqrt( 1/a.f[ 4] );
-    b.f[ 5] = ::sqrt( 1/a.f[ 5] );
-    b.f[ 6] = ::sqrt( 1/a.f[ 6] );
-    b.f[ 7] = ::sqrt( 1/a.f[ 7] );
-    b.f[ 8] = ::sqrt( 1/a.f[ 8] );
-    b.f[ 9] = ::sqrt( 1/a.f[ 9] );
-    b.f[10] = ::sqrt( 1/a.f[10] );
-    b.f[11] = ::sqrt( 1/a.f[11] );
-    b.f[12] = ::sqrt( 1/a.f[12] );
-    b.f[13] = ::sqrt( 1/a.f[13] );
-    b.f[14] = ::sqrt( 1/a.f[14] );
-    b.f[15] = ::sqrt( 1/a.f[15] );
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = ::sqrt( 1.0f/a.f[j] );
     return b;
   }
+
+  /* inline v16float rsqrt_approx( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = ::sqrt( 1/a.f[ 0] ); */
+  /*   b.f[ 1] = ::sqrt( 1/a.f[ 1] ); */
+  /*   b.f[ 2] = ::sqrt( 1/a.f[ 2] ); */
+  /*   b.f[ 3] = ::sqrt( 1/a.f[ 3] ); */
+  /*   b.f[ 4] = ::sqrt( 1/a.f[ 4] ); */
+  /*   b.f[ 5] = ::sqrt( 1/a.f[ 5] ); */
+  /*   b.f[ 6] = ::sqrt( 1/a.f[ 6] ); */
+  /*   b.f[ 7] = ::sqrt( 1/a.f[ 7] ); */
+  /*   b.f[ 8] = ::sqrt( 1/a.f[ 8] ); */
+  /*   b.f[ 9] = ::sqrt( 1/a.f[ 9] ); */
+  /*   b.f[10] = ::sqrt( 1/a.f[10] ); */
+  /*   b.f[11] = ::sqrt( 1/a.f[11] ); */
+  /*   b.f[12] = ::sqrt( 1/a.f[12] ); */
+  /*   b.f[13] = ::sqrt( 1/a.f[13] ); */
+  /*   b.f[14] = ::sqrt( 1/a.f[14] ); */
+  /*   b.f[15] = ::sqrt( 1/a.f[15] ); */
+  /*   return b; */
+  /* } */
 
   inline v16float rsqrt( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = ::sqrt( 1/a.f[ 0] );
-    b.f[ 1] = ::sqrt( 1/a.f[ 1] );
-    b.f[ 2] = ::sqrt( 1/a.f[ 2] );
-    b.f[ 3] = ::sqrt( 1/a.f[ 3] );
-    b.f[ 4] = ::sqrt( 1/a.f[ 4] );
-    b.f[ 5] = ::sqrt( 1/a.f[ 5] );
-    b.f[ 6] = ::sqrt( 1/a.f[ 6] );
-    b.f[ 7] = ::sqrt( 1/a.f[ 7] );
-    b.f[ 8] = ::sqrt( 1/a.f[ 8] );
-    b.f[ 9] = ::sqrt( 1/a.f[ 9] );
-    b.f[10] = ::sqrt( 1/a.f[10] );
-    b.f[11] = ::sqrt( 1/a.f[11] );
-    b.f[12] = ::sqrt( 1/a.f[12] );
-    b.f[13] = ::sqrt( 1/a.f[13] );
-    b.f[14] = ::sqrt( 1/a.f[14] );
-    b.f[15] = ::sqrt( 1/a.f[15] );
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = ::sqrt( 1.0f/a.f[j] );
     return b;
   }
+
+  /* inline v16float rsqrt( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = ::sqrt( 1/a.f[ 0] ); */
+  /*   b.f[ 1] = ::sqrt( 1/a.f[ 1] ); */
+  /*   b.f[ 2] = ::sqrt( 1/a.f[ 2] ); */
+  /*   b.f[ 3] = ::sqrt( 1/a.f[ 3] ); */
+  /*   b.f[ 4] = ::sqrt( 1/a.f[ 4] ); */
+  /*   b.f[ 5] = ::sqrt( 1/a.f[ 5] ); */
+  /*   b.f[ 6] = ::sqrt( 1/a.f[ 6] ); */
+  /*   b.f[ 7] = ::sqrt( 1/a.f[ 7] ); */
+  /*   b.f[ 8] = ::sqrt( 1/a.f[ 8] ); */
+  /*   b.f[ 9] = ::sqrt( 1/a.f[ 9] ); */
+  /*   b.f[10] = ::sqrt( 1/a.f[10] ); */
+  /*   b.f[11] = ::sqrt( 1/a.f[11] ); */
+  /*   b.f[12] = ::sqrt( 1/a.f[12] ); */
+  /*   b.f[13] = ::sqrt( 1/a.f[13] ); */
+  /*   b.f[14] = ::sqrt( 1/a.f[14] ); */
+  /*   b.f[15] = ::sqrt( 1/a.f[15] ); */
+  /*   return b; */
+  /* } */
 
   inline v16float rcp_approx( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = 1/a.f[ 0];
-    b.f[ 1] = 1/a.f[ 1];
-    b.f[ 2] = 1/a.f[ 2];
-    b.f[ 3] = 1/a.f[ 3];
-    b.f[ 4] = 1/a.f[ 4];
-    b.f[ 5] = 1/a.f[ 5];
-    b.f[ 6] = 1/a.f[ 6];
-    b.f[ 7] = 1/a.f[ 7];
-    b.f[ 8] = 1/a.f[ 8];
-    b.f[ 9] = 1/a.f[ 9];
-    b.f[10] = 1/a.f[10];
-    b.f[11] = 1/a.f[11];
-    b.f[12] = 1/a.f[12];
-    b.f[13] = 1/a.f[13];
-    b.f[14] = 1/a.f[14];
-    b.f[15] = 1/a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = 1.0f/a.f[j];
     return b;
   }
+
+  /* inline v16float rcp_approx( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = 1/a.f[ 0]; */
+  /*   b.f[ 1] = 1/a.f[ 1]; */
+  /*   b.f[ 2] = 1/a.f[ 2]; */
+  /*   b.f[ 3] = 1/a.f[ 3]; */
+  /*   b.f[ 4] = 1/a.f[ 4]; */
+  /*   b.f[ 5] = 1/a.f[ 5]; */
+  /*   b.f[ 6] = 1/a.f[ 6]; */
+  /*   b.f[ 7] = 1/a.f[ 7]; */
+  /*   b.f[ 8] = 1/a.f[ 8]; */
+  /*   b.f[ 9] = 1/a.f[ 9]; */
+  /*   b.f[10] = 1/a.f[10]; */
+  /*   b.f[11] = 1/a.f[11]; */
+  /*   b.f[12] = 1/a.f[12]; */
+  /*   b.f[13] = 1/a.f[13]; */
+  /*   b.f[14] = 1/a.f[14]; */
+  /*   b.f[15] = 1/a.f[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float rcp( const v16float &a )
   {
     v16float b;
-    b.f[ 0] = 1/a.f[ 0];
-    b.f[ 1] = 1/a.f[ 1];
-    b.f[ 2] = 1/a.f[ 2];
-    b.f[ 3] = 1/a.f[ 3];
-    b.f[ 4] = 1/a.f[ 4];
-    b.f[ 5] = 1/a.f[ 5];
-    b.f[ 6] = 1/a.f[ 6];
-    b.f[ 7] = 1/a.f[ 7];
-    b.f[ 8] = 1/a.f[ 8];
-    b.f[ 9] = 1/a.f[ 9];
-    b.f[10] = 1/a.f[10];
-    b.f[11] = 1/a.f[11];
-    b.f[12] = 1/a.f[12];
-    b.f[13] = 1/a.f[13];
-    b.f[14] = 1/a.f[14];
-    b.f[15] = 1/a.f[15];
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = 1.0f/a.f[j];
     return b;
   }
+
+  /* inline v16float rcp( const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.f[ 0] = 1/a.f[ 0]; */
+  /*   b.f[ 1] = 1/a.f[ 1]; */
+  /*   b.f[ 2] = 1/a.f[ 2]; */
+  /*   b.f[ 3] = 1/a.f[ 3]; */
+  /*   b.f[ 4] = 1/a.f[ 4]; */
+  /*   b.f[ 5] = 1/a.f[ 5]; */
+  /*   b.f[ 6] = 1/a.f[ 6]; */
+  /*   b.f[ 7] = 1/a.f[ 7]; */
+  /*   b.f[ 8] = 1/a.f[ 8]; */
+  /*   b.f[ 9] = 1/a.f[ 9]; */
+  /*   b.f[10] = 1/a.f[10]; */
+  /*   b.f[11] = 1/a.f[11]; */
+  /*   b.f[12] = 1/a.f[12]; */
+  /*   b.f[13] = 1/a.f[13]; */
+  /*   b.f[14] = 1/a.f[14]; */
+  /*   b.f[15] = 1/a.f[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float fma( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
-    d.f[ 0] = a.f[ 0] * b.f[ 0] + c.f[ 0];
-    d.f[ 1] = a.f[ 1] * b.f[ 1] + c.f[ 1];
-    d.f[ 2] = a.f[ 2] * b.f[ 2] + c.f[ 2];
-    d.f[ 3] = a.f[ 3] * b.f[ 3] + c.f[ 3];
-    d.f[ 4] = a.f[ 4] * b.f[ 4] + c.f[ 4];
-    d.f[ 5] = a.f[ 5] * b.f[ 5] + c.f[ 5];
-    d.f[ 6] = a.f[ 6] * b.f[ 6] + c.f[ 6];
-    d.f[ 7] = a.f[ 7] * b.f[ 7] + c.f[ 7];
-    d.f[ 8] = a.f[ 8] * b.f[ 8] + c.f[ 8];
-    d.f[ 9] = a.f[ 9] * b.f[ 9] + c.f[ 9];
-    d.f[10] = a.f[10] * b.f[10] + c.f[10];
-    d.f[11] = a.f[11] * b.f[11] + c.f[11];
-    d.f[12] = a.f[12] * b.f[12] + c.f[12];
-    d.f[13] = a.f[13] * b.f[13] + c.f[13];
-    d.f[14] = a.f[14] * b.f[14] + c.f[14];
-    d.f[15] = a.f[15] * b.f[15] + c.f[15];
+    for( int j = 0; j < 16; j++ )
+      d.f[j] = a.f[j] * b.f[j] + c.f[j];
     return d;
   }
+
+  /* inline v16float fma( const v16float &a, const v16float &b, const v16float &c ) */
+  /* { */
+  /*   v16float d; */
+  /*   d.f[ 0] = a.f[ 0] * b.f[ 0] + c.f[ 0]; */
+  /*   d.f[ 1] = a.f[ 1] * b.f[ 1] + c.f[ 1]; */
+  /*   d.f[ 2] = a.f[ 2] * b.f[ 2] + c.f[ 2]; */
+  /*   d.f[ 3] = a.f[ 3] * b.f[ 3] + c.f[ 3]; */
+  /*   d.f[ 4] = a.f[ 4] * b.f[ 4] + c.f[ 4]; */
+  /*   d.f[ 5] = a.f[ 5] * b.f[ 5] + c.f[ 5]; */
+  /*   d.f[ 6] = a.f[ 6] * b.f[ 6] + c.f[ 6]; */
+  /*   d.f[ 7] = a.f[ 7] * b.f[ 7] + c.f[ 7]; */
+  /*   d.f[ 8] = a.f[ 8] * b.f[ 8] + c.f[ 8]; */
+  /*   d.f[ 9] = a.f[ 9] * b.f[ 9] + c.f[ 9]; */
+  /*   d.f[10] = a.f[10] * b.f[10] + c.f[10]; */
+  /*   d.f[11] = a.f[11] * b.f[11] + c.f[11]; */
+  /*   d.f[12] = a.f[12] * b.f[12] + c.f[12]; */
+  /*   d.f[13] = a.f[13] * b.f[13] + c.f[13]; */
+  /*   d.f[14] = a.f[14] * b.f[14] + c.f[14]; */
+  /*   d.f[15] = a.f[15] * b.f[15] + c.f[15]; */
+  /*   return d; */
+  /* } */
 
   inline v16float fms( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
-    d.f[ 0] = a.f[ 0] * b.f[ 0] - c.f[ 0];
-    d.f[ 1] = a.f[ 1] * b.f[ 1] - c.f[ 1];
-    d.f[ 2] = a.f[ 2] * b.f[ 2] - c.f[ 2];
-    d.f[ 3] = a.f[ 3] * b.f[ 3] - c.f[ 3];
-    d.f[ 4] = a.f[ 4] * b.f[ 4] - c.f[ 4];
-    d.f[ 5] = a.f[ 5] * b.f[ 5] - c.f[ 5];
-    d.f[ 6] = a.f[ 6] * b.f[ 6] - c.f[ 6];
-    d.f[ 7] = a.f[ 7] * b.f[ 7] - c.f[ 7];
-    d.f[ 8] = a.f[ 8] * b.f[ 8] - c.f[ 8];
-    d.f[ 9] = a.f[ 9] * b.f[ 9] - c.f[ 9];
-    d.f[10] = a.f[10] * b.f[10] - c.f[10];
-    d.f[11] = a.f[11] * b.f[11] - c.f[11];
-    d.f[12] = a.f[12] * b.f[12] - c.f[12];
-    d.f[13] = a.f[13] * b.f[13] - c.f[13];
-    d.f[14] = a.f[14] * b.f[14] - c.f[14];
-    d.f[15] = a.f[15] * b.f[15] - c.f[15];
+    for( int j = 0; j < 16; j++ )
+      d.f[j] = a.f[j] * b.f[j] - c.f[j];
     return d;
   }
+
+  /* inline v16float fms( const v16float &a, const v16float &b, const v16float &c ) */
+  /* { */
+  /*   v16float d; */
+  /*   d.f[ 0] = a.f[ 0] * b.f[ 0] - c.f[ 0]; */
+  /*   d.f[ 1] = a.f[ 1] * b.f[ 1] - c.f[ 1]; */
+  /*   d.f[ 2] = a.f[ 2] * b.f[ 2] - c.f[ 2]; */
+  /*   d.f[ 3] = a.f[ 3] * b.f[ 3] - c.f[ 3]; */
+  /*   d.f[ 4] = a.f[ 4] * b.f[ 4] - c.f[ 4]; */
+  /*   d.f[ 5] = a.f[ 5] * b.f[ 5] - c.f[ 5]; */
+  /*   d.f[ 6] = a.f[ 6] * b.f[ 6] - c.f[ 6]; */
+  /*   d.f[ 7] = a.f[ 7] * b.f[ 7] - c.f[ 7]; */
+  /*   d.f[ 8] = a.f[ 8] * b.f[ 8] - c.f[ 8]; */
+  /*   d.f[ 9] = a.f[ 9] * b.f[ 9] - c.f[ 9]; */
+  /*   d.f[10] = a.f[10] * b.f[10] - c.f[10]; */
+  /*   d.f[11] = a.f[11] * b.f[11] - c.f[11]; */
+  /*   d.f[12] = a.f[12] * b.f[12] - c.f[12]; */
+  /*   d.f[13] = a.f[13] * b.f[13] - c.f[13]; */
+  /*   d.f[14] = a.f[14] * b.f[14] - c.f[14]; */
+  /*   d.f[15] = a.f[15] * b.f[15] - c.f[15]; */
+  /*   return d; */
+  /* } */
 
   inline v16float fnms( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
-    d.f[ 0] = c.f[ 0] - a.f[ 0] * b.f[ 0];
-    d.f[ 1] = c.f[ 1] - a.f[ 1] * b.f[ 1];
-    d.f[ 2] = c.f[ 2] - a.f[ 2] * b.f[ 2];
-    d.f[ 3] = c.f[ 3] - a.f[ 3] * b.f[ 3];
-    d.f[ 4] = c.f[ 4] - a.f[ 4] * b.f[ 4];
-    d.f[ 5] = c.f[ 5] - a.f[ 5] * b.f[ 5];
-    d.f[ 6] = c.f[ 6] - a.f[ 6] * b.f[ 6];
-    d.f[ 7] = c.f[ 7] - a.f[ 7] * b.f[ 7];
-    d.f[ 8] = c.f[ 8] - a.f[ 8] * b.f[ 8];
-    d.f[ 9] = c.f[ 9] - a.f[ 9] * b.f[ 9];
-    d.f[10] = c.f[10] - a.f[10] * b.f[10];
-    d.f[11] = c.f[11] - a.f[11] * b.f[11];
-    d.f[12] = c.f[12] - a.f[12] * b.f[12];
-    d.f[13] = c.f[13] - a.f[13] * b.f[13];
-    d.f[14] = c.f[14] - a.f[14] * b.f[14];
-    d.f[15] = c.f[15] - a.f[15] * b.f[15];
+    for( int j = 0; j < 16; j++ )
+      d.f[j] = c.f[j] - a.f[j] * b.f[j];
     return d;
   }
+
+  /* inline v16float fnms( const v16float &a, const v16float &b, const v16float &c ) */
+  /* { */
+  /*   v16float d; */
+  /*   d.f[ 0] = c.f[ 0] - a.f[ 0] * b.f[ 0]; */
+  /*   d.f[ 1] = c.f[ 1] - a.f[ 1] * b.f[ 1]; */
+  /*   d.f[ 2] = c.f[ 2] - a.f[ 2] * b.f[ 2]; */
+  /*   d.f[ 3] = c.f[ 3] - a.f[ 3] * b.f[ 3]; */
+  /*   d.f[ 4] = c.f[ 4] - a.f[ 4] * b.f[ 4]; */
+  /*   d.f[ 5] = c.f[ 5] - a.f[ 5] * b.f[ 5]; */
+  /*   d.f[ 6] = c.f[ 6] - a.f[ 6] * b.f[ 6]; */
+  /*   d.f[ 7] = c.f[ 7] - a.f[ 7] * b.f[ 7]; */
+  /*   d.f[ 8] = c.f[ 8] - a.f[ 8] * b.f[ 8]; */
+  /*   d.f[ 9] = c.f[ 9] - a.f[ 9] * b.f[ 9]; */
+  /*   d.f[10] = c.f[10] - a.f[10] * b.f[10]; */
+  /*   d.f[11] = c.f[11] - a.f[11] * b.f[11]; */
+  /*   d.f[12] = c.f[12] - a.f[12] * b.f[12]; */
+  /*   d.f[13] = c.f[13] - a.f[13] * b.f[13]; */
+  /*   d.f[14] = c.f[14] - a.f[14] * b.f[14]; */
+  /*   d.f[15] = c.f[15] - a.f[15] * b.f[15]; */
+  /*   return d; */
+  /* } */
 
   inline v16float clear_bits( const v16int &m, const v16float &a )
   {
     v16float b;
-    b.i[ 0] = ( ~m.i[ 0] ) & a.i[ 0];
-    b.i[ 1] = ( ~m.i[ 1] ) & a.i[ 1];
-    b.i[ 2] = ( ~m.i[ 2] ) & a.i[ 2];
-    b.i[ 3] = ( ~m.i[ 3] ) & a.i[ 3];
-    b.i[ 4] = ( ~m.i[ 4] ) & a.i[ 4];
-    b.i[ 5] = ( ~m.i[ 5] ) & a.i[ 5];
-    b.i[ 6] = ( ~m.i[ 6] ) & a.i[ 6];
-    b.i[ 7] = ( ~m.i[ 7] ) & a.i[ 7];
-    b.i[ 8] = ( ~m.i[ 8] ) & a.i[ 8];
-    b.i[ 9] = ( ~m.i[ 9] ) & a.i[ 9];
-    b.i[10] = ( ~m.i[10] ) & a.i[10];
-    b.i[11] = ( ~m.i[11] ) & a.i[11];
-    b.i[12] = ( ~m.i[12] ) & a.i[12];
-    b.i[13] = ( ~m.i[13] ) & a.i[13];
-    b.i[14] = ( ~m.i[14] ) & a.i[14];
-    b.i[15] = ( ~m.i[15] ) & a.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = ( ~m.i[j] ) & a.i[j];
     return b;
   }
+
+  /* inline v16float clear_bits( const v16int &m, const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.i[ 0] = ( ~m.i[ 0] ) & a.i[ 0]; */
+  /*   b.i[ 1] = ( ~m.i[ 1] ) & a.i[ 1]; */
+  /*   b.i[ 2] = ( ~m.i[ 2] ) & a.i[ 2]; */
+  /*   b.i[ 3] = ( ~m.i[ 3] ) & a.i[ 3]; */
+  /*   b.i[ 4] = ( ~m.i[ 4] ) & a.i[ 4]; */
+  /*   b.i[ 5] = ( ~m.i[ 5] ) & a.i[ 5]; */
+  /*   b.i[ 6] = ( ~m.i[ 6] ) & a.i[ 6]; */
+  /*   b.i[ 7] = ( ~m.i[ 7] ) & a.i[ 7]; */
+  /*   b.i[ 8] = ( ~m.i[ 8] ) & a.i[ 8]; */
+  /*   b.i[ 9] = ( ~m.i[ 9] ) & a.i[ 9]; */
+  /*   b.i[10] = ( ~m.i[10] ) & a.i[10]; */
+  /*   b.i[11] = ( ~m.i[11] ) & a.i[11]; */
+  /*   b.i[12] = ( ~m.i[12] ) & a.i[12]; */
+  /*   b.i[13] = ( ~m.i[13] ) & a.i[13]; */
+  /*   b.i[14] = ( ~m.i[14] ) & a.i[14]; */
+  /*   b.i[15] = ( ~m.i[15] ) & a.i[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float set_bits( const v16int &m, const v16float &a )
   {
     v16float b;
-    b.i[ 0] = m.i[ 0] | a.i[ 0];
-    b.i[ 1] = m.i[ 1] | a.i[ 1];
-    b.i[ 2] = m.i[ 2] | a.i[ 2];
-    b.i[ 3] = m.i[ 3] | a.i[ 3];
-    b.i[ 4] = m.i[ 4] | a.i[ 4];
-    b.i[ 5] = m.i[ 5] | a.i[ 5];
-    b.i[ 6] = m.i[ 6] | a.i[ 6];
-    b.i[ 7] = m.i[ 7] | a.i[ 7];
-    b.i[ 8] = m.i[ 8] | a.i[ 8];
-    b.i[ 9] = m.i[ 9] | a.i[ 9];
-    b.i[10] = m.i[10] | a.i[10];
-    b.i[11] = m.i[11] | a.i[11];
-    b.i[12] = m.i[12] | a.i[12];
-    b.i[13] = m.i[13] | a.i[13];
-    b.i[14] = m.i[14] | a.i[14];
-    b.i[15] = m.i[15] | a.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = m.i[j] | a.i[j];
     return b;
   }
+
+  /* inline v16float set_bits( const v16int &m, const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.i[ 0] = m.i[ 0] | a.i[ 0]; */
+  /*   b.i[ 1] = m.i[ 1] | a.i[ 1]; */
+  /*   b.i[ 2] = m.i[ 2] | a.i[ 2]; */
+  /*   b.i[ 3] = m.i[ 3] | a.i[ 3]; */
+  /*   b.i[ 4] = m.i[ 4] | a.i[ 4]; */
+  /*   b.i[ 5] = m.i[ 5] | a.i[ 5]; */
+  /*   b.i[ 6] = m.i[ 6] | a.i[ 6]; */
+  /*   b.i[ 7] = m.i[ 7] | a.i[ 7]; */
+  /*   b.i[ 8] = m.i[ 8] | a.i[ 8]; */
+  /*   b.i[ 9] = m.i[ 9] | a.i[ 9]; */
+  /*   b.i[10] = m.i[10] | a.i[10]; */
+  /*   b.i[11] = m.i[11] | a.i[11]; */
+  /*   b.i[12] = m.i[12] | a.i[12]; */
+  /*   b.i[13] = m.i[13] | a.i[13]; */
+  /*   b.i[14] = m.i[14] | a.i[14]; */
+  /*   b.i[15] = m.i[15] | a.i[15]; */
+  /*   return b; */
+  /* } */
 
   inline v16float toggle_bits( const v16int &m, const v16float &a )
   {
     v16float b;
-    b.i[ 0] = m.i[ 0] ^ a.i[ 0];
-    b.i[ 1] = m.i[ 1] ^ a.i[ 1];
-    b.i[ 2] = m.i[ 2] ^ a.i[ 2];
-    b.i[ 3] = m.i[ 3] ^ a.i[ 3];
-    b.i[ 4] = m.i[ 4] ^ a.i[ 4];
-    b.i[ 5] = m.i[ 5] ^ a.i[ 5];
-    b.i[ 6] = m.i[ 6] ^ a.i[ 6];
-    b.i[ 7] = m.i[ 7] ^ a.i[ 7];
-    b.i[ 8] = m.i[ 8] ^ a.i[ 8];
-    b.i[ 9] = m.i[ 9] ^ a.i[ 9];
-    b.i[10] = m.i[10] ^ a.i[10];
-    b.i[11] = m.i[11] ^ a.i[11];
-    b.i[12] = m.i[12] ^ a.i[12];
-    b.i[13] = m.i[13] ^ a.i[13];
-    b.i[14] = m.i[14] ^ a.i[14];
-    b.i[15] = m.i[15] ^ a.i[15];
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = m.i[j] ^ a.i[j];
     return b;
   }
 
+  /* inline v16float toggle_bits( const v16int &m, const v16float &a ) */
+  /* { */
+  /*   v16float b; */
+  /*   b.i[ 0] = m.i[ 0] ^ a.i[ 0]; */
+  /*   b.i[ 1] = m.i[ 1] ^ a.i[ 1]; */
+  /*   b.i[ 2] = m.i[ 2] ^ a.i[ 2]; */
+  /*   b.i[ 3] = m.i[ 3] ^ a.i[ 3]; */
+  /*   b.i[ 4] = m.i[ 4] ^ a.i[ 4]; */
+  /*   b.i[ 5] = m.i[ 5] ^ a.i[ 5]; */
+  /*   b.i[ 6] = m.i[ 6] ^ a.i[ 6]; */
+  /*   b.i[ 7] = m.i[ 7] ^ a.i[ 7]; */
+  /*   b.i[ 8] = m.i[ 8] ^ a.i[ 8]; */
+  /*   b.i[ 9] = m.i[ 9] ^ a.i[ 9]; */
+  /*   b.i[10] = m.i[10] ^ a.i[10]; */
+  /*   b.i[11] = m.i[11] ^ a.i[11]; */
+  /*   b.i[12] = m.i[12] ^ a.i[12]; */
+  /*   b.i[13] = m.i[13] ^ a.i[13]; */
+  /*   b.i[14] = m.i[14] ^ a.i[14]; */
+  /*   b.i[15] = m.i[15] ^ a.i[15]; */
+  /*   return b; */
+  /* } */
+
   inline void increment_16x1( float * ALIGNED(64) p, const v16float &a )
   {
-    p[ 0] += a.f[ 0];
-    p[ 1] += a.f[ 1];
-    p[ 2] += a.f[ 2];
-    p[ 3] += a.f[ 3];
-    p[ 4] += a.f[ 4];
-    p[ 5] += a.f[ 5];
-    p[ 6] += a.f[ 6];
-    p[ 7] += a.f[ 7];
-    p[ 8] += a.f[ 8];
-    p[ 9] += a.f[ 9];
-    p[10] += a.f[10];
-    p[11] += a.f[11];
-    p[12] += a.f[12];
-    p[13] += a.f[13];
-    p[14] += a.f[14];
-    p[15] += a.f[15];
+    for( int j = 0; j < 16; j++ )
+      p[j] += a.f[j];
   }
+
+  /* inline void increment_16x1( float * ALIGNED(64) p, const v16float &a ) */
+  /* { */
+  /*   p[ 0] += a.f[ 0]; */
+  /*   p[ 1] += a.f[ 1]; */
+  /*   p[ 2] += a.f[ 2]; */
+  /*   p[ 3] += a.f[ 3]; */
+  /*   p[ 4] += a.f[ 4]; */
+  /*   p[ 5] += a.f[ 5]; */
+  /*   p[ 6] += a.f[ 6]; */
+  /*   p[ 7] += a.f[ 7]; */
+  /*   p[ 8] += a.f[ 8]; */
+  /*   p[ 9] += a.f[ 9]; */
+  /*   p[10] += a.f[10]; */
+  /*   p[11] += a.f[11]; */
+  /*   p[12] += a.f[12]; */
+  /*   p[13] += a.f[13]; */
+  /*   p[14] += a.f[14]; */
+  /*   p[15] += a.f[15]; */
+  /* } */
 
   inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a )
   {
-    p[ 0] -= a.f[ 0];
-    p[ 1] -= a.f[ 1];
-    p[ 2] -= a.f[ 2];
-    p[ 3] -= a.f[ 3];
-    p[ 4] -= a.f[ 4];
-    p[ 5] -= a.f[ 5];
-    p[ 6] -= a.f[ 6];
-    p[ 7] -= a.f[ 7];
-    p[ 8] -= a.f[ 8];
-    p[ 9] -= a.f[ 9];
-    p[10] -= a.f[10];
-    p[11] -= a.f[11];
-    p[12] -= a.f[12];
-    p[13] -= a.f[13];
-    p[14] -= a.f[14];
-    p[15] -= a.f[15];
+    for( int j = 0; j < 16; j++ )
+      p[j] -= a.f[j];
   }
+
+  /* inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a ) */
+  /* { */
+  /*   p[ 0] -= a.f[ 0]; */
+  /*   p[ 1] -= a.f[ 1]; */
+  /*   p[ 2] -= a.f[ 2]; */
+  /*   p[ 3] -= a.f[ 3]; */
+  /*   p[ 4] -= a.f[ 4]; */
+  /*   p[ 5] -= a.f[ 5]; */
+  /*   p[ 6] -= a.f[ 6]; */
+  /*   p[ 7] -= a.f[ 7]; */
+  /*   p[ 8] -= a.f[ 8]; */
+  /*   p[ 9] -= a.f[ 9]; */
+  /*   p[10] -= a.f[10]; */
+  /*   p[11] -= a.f[11]; */
+  /*   p[12] -= a.f[12]; */
+  /*   p[13] -= a.f[13]; */
+  /*   p[14] -= a.f[14]; */
+  /*   p[15] -= a.f[15]; */
+  /* } */
 
   inline void scale_16x1( float * ALIGNED(64) p, const v16float &a )
   {
-    p[ 0] *= a.f[ 0];
-    p[ 1] *= a.f[ 1];
-    p[ 2] *= a.f[ 2];
-    p[ 3] *= a.f[ 3];
-    p[ 4] *= a.f[ 4];
-    p[ 5] *= a.f[ 5];
-    p[ 6] *= a.f[ 6];
-    p[ 7] *= a.f[ 7];
-    p[ 8] *= a.f[ 8];
-    p[ 9] *= a.f[ 9];
-    p[10] *= a.f[10];
-    p[11] *= a.f[11];
-    p[12] *= a.f[12];
-    p[13] *= a.f[13];
-    p[14] *= a.f[14];
-    p[15] *= a.f[15];
+    for( int j = 0; j < 16; j++ )
+      p[j] *= a.f[j];
   }
 
-  // wdn: this function is not currently used.  also, it seems like it
-  //      is not a SIMD function in the same way as the rest of the
-  //      functions in this class.
-  //  inline void trilinear( v16float & wl, v16float & wh )
-  //  {
-  //    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
-
-  //    wl.f[0] = ((1-x)*(1-y))*(1-z);
-  //    wl.f[1] = ((1+x)*(1-y))*(1-z);
-  //    wl.f[2] = ((1-x)*(1+y))*(1-z);
-  //    wl.f[3] = ((1+x)*(1+y))*(1-z);
-
-  //    wh.f[0] = ((1-x)*(1-y))*(1+z);
-  //    wh.f[1] = ((1+x)*(1-y))*(1+z);
-  //    wh.f[2] = ((1-x)*(1+y))*(1+z);
-  //    wh.f[3] = ((1+x)*(1+y))*(1+z);
-  //  }
+  /* inline void scale_16x1( float * ALIGNED(64) p, const v16float &a ) */
+  /* { */
+  /*   p[ 0] *= a.f[ 0]; */
+  /*   p[ 1] *= a.f[ 1]; */
+  /*   p[ 2] *= a.f[ 2]; */
+  /*   p[ 3] *= a.f[ 3]; */
+  /*   p[ 4] *= a.f[ 4]; */
+  /*   p[ 5] *= a.f[ 5]; */
+  /*   p[ 6] *= a.f[ 6]; */
+  /*   p[ 7] *= a.f[ 7]; */
+  /*   p[ 8] *= a.f[ 8]; */
+  /*   p[ 9] *= a.f[ 9]; */
+  /*   p[10] *= a.f[10]; */
+  /*   p[11] *= a.f[11]; */
+  /*   p[12] *= a.f[12]; */
+  /*   p[13] *= a.f[13]; */
+  /*   p[14] *= a.f[14]; */
+  /*   p[15] *= a.f[15]; */
+  /* } */
 
 } // namespace v16
 

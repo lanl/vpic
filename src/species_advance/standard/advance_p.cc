@@ -53,7 +53,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
   // Determine which quads of particles quads this pipeline processes
 
-  DISTRIBUTE( args->np, 32, pipeline_rank, n_pipeline, itmp, n );
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, n );
   p = args->p0 + itmp;
 
   // Determine which movers are reserved for this pipeline

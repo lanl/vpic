@@ -1,12 +1,12 @@
-#ifndef _v8_avx2_h_
-#define _v8_avx2_h_
+#ifndef _v16_portable_h_
+#define _v16_portable_h_
 
-#ifndef IN_v8_h
-#error "Do not include v8_avx2.h directly; use v8.h"
+#ifndef IN_v16_h
+#error "Do not include v16_portable.h directly; use v16.h"
 #endif
 
-#define V8_ACCELERATION
-#define V8_AVX2_ACCELERATION
+#define V16_ACCELERATION
+#define V16_AVX512_ACCELERATION
 
 #include <immintrin.h>
 #include <math.h>
@@ -15,1710 +15,2032 @@
 #define ALIGNED(n)
 #endif
 
-namespace v8
+namespace v16
 {
-  class v8;
-  class v8int;
-  class v8float;
+  class v16;
+  class v16int;
+  class v16float;
 
   ////////////////
-  // v8 base class
+  // v16 base class
 
-  class v8
+  class v16
   {
-    friend class v8int;
-    friend class v8float;
+    friend class v16int;
+    friend class v16float;
 
-    // v8 miscellaneous friends
+    // v16 miscellaneous friends
 
-    friend inline int any( const v8 &a );
-    friend inline int all( const v8 &a );
+    friend inline int any( const v16 &a );
+    friend inline int all( const v16 &a );
 
     template<int n>
-    friend inline v8 splat( const v8 &a );
+    friend inline v16 splat( const v16 &a );
 
-    template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
-    friend inline v8 shuffle( const v8 &a );
+    template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13, int i14, int i15>
+    friend inline v16 shuffle( const v16 &a );
 
-    friend inline void swap( v8 &a, v8 &b );
-    friend inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				  v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    //--------------------------------------------------------------------------
-    friend inline void transpose_v0( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    friend inline void transpose_v1( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    friend inline void transpose_v2( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    friend inline void transpose_v3( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    friend inline void transpose_v4( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    friend inline void transpose_v5( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				     v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
-    //--------------------------------------------------------------------------
+    friend inline void swap( v16 &a, v16 &b );
+    friend inline void transpose( v16 &a00, v16 &a01, v16 &a02, v16 &a03,
+				  v16 &a04, v16 &a05, v16 &a06, v16 &a07,
+				  v16 &a08, v16 &a09, v16 &a10, v16 &a11,
+				  v16 &a12, v16 &a13, v16 &a14, v16 &a15 );
 
-    // v8int miscellaneous friends
+    // v16int miscellaneous friends
 
-    friend inline v8 czero(    const v8int &c, const v8 &a );
-    friend inline v8 notczero( const v8int &c, const v8 &a );
-    friend inline v8 merge(    const v8int &c, const v8 &a, const v8 &b );
+    friend inline v16    czero( const v16int &c, const v16 &a );
+    friend inline v16 notczero( const v16int &c, const v16 &a );
+    friend inline v16    merge( const v16int &c, const v16 &a, const v16 &b );
 
-    // v8 memory manipulation friends
+    // v16 memory manipulation friends
 
-    friend inline void load_8x1( const void * ALIGNED(16) p, v8 &a );
-    friend inline void store_8x1( const v8 &a, void * ALIGNED(16) p );
-    friend inline void stream_8x1( const v8 &a, void * ALIGNED(16) p );
-    friend inline void copy_8x1( void * ALIGNED(16) dst,
-                                 const void * ALIGNED(16) src );
-    friend inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
+    friend inline void   load_16x1( const void * ALIGNED(64) p, v16 &a );
+    friend inline void  store_16x1( const v16 &a, void * ALIGNED(64) p );
+    friend inline void stream_16x1( const v16 &a, void * ALIGNED(64) p );
+    friend inline void  clear_16x1( void * ALIGNED(64) dst );
+    friend inline void   copy_16x1( void * ALIGNED(64) dst,
+				    const void * ALIGNED(64) src );
+    friend inline void   swap_16x1( void * ALIGNED(64) a, void * ALIGNED(64) b );
 
-    // v8 transposed memory manipulation friends
-    // Note: Half aligned values are permissible in the 8x2_tr variants.
+    // v16 transposed memory manipulation friends
+    // Note: Half aligned values are permissible in the 16x2_tr variants.
 
-    friend inline void load_8x1_tr( const void *a0, const void *a1,
-                                    const void *a2, const void *a3,
-				    const void *a4, const void *a5,
-                                    const void *a6, const void *a7,
-                                    v8 &a );
-    friend inline void load_8x2_tr( const void * ALIGNED(8) a0,
-                                    const void * ALIGNED(8) a1,
-                                    const void * ALIGNED(8) a2,
-                                    const void * ALIGNED(8) a3,
-				    const void * ALIGNED(8) a4,
-                                    const void * ALIGNED(8) a5,
-                                    const void * ALIGNED(8) a6,
-                                    const void * ALIGNED(8) a7,
-                                    v8 &a, v8 &b );
-    //------------------------------------------------------------------
-    friend inline void load_8x2_tr_v0( const void * ALIGNED(8) a0,
-				       const void * ALIGNED(8) a1,
-				       const void * ALIGNED(8) a2,
-				       const void * ALIGNED(8) a3,
-				       const void * ALIGNED(8) a4,
-				       const void * ALIGNED(8) a5,
-				       const void * ALIGNED(8) a6,
-				       const void * ALIGNED(8) a7,
-				       v8 &a, v8 &b );
-    //------------------------------------------------------------------
-    friend inline void load_8x3_tr( const void * ALIGNED(16) a0,
-                                    const void * ALIGNED(16) a1,
-                                    const void * ALIGNED(16) a2,
-                                    const void * ALIGNED(16) a3,
-				    const void * ALIGNED(16) a4,
-                                    const void * ALIGNED(16) a5,
-                                    const void * ALIGNED(16) a6,
-                                    const void * ALIGNED(16) a7,
-                                    v8 &a, v8 &b, v8 &c );
-    friend inline void load_8x4_tr( const void * ALIGNED(16) a0,
-                                    const void * ALIGNED(16) a1,
-                                    const void * ALIGNED(16) a2,
-                                    const void * ALIGNED(16) a3,
-				    const void * ALIGNED(16) a4,
-                                    const void * ALIGNED(16) a5,
-                                    const void * ALIGNED(16) a6,
-                                    const void * ALIGNED(16) a7,
-                                    v8 &a, v8 &b, v8 &c, v8 &d );
-    friend inline void load_8x8_tr( const void * ALIGNED(16) a0,
-                                    const void * ALIGNED(16) a1,
-                                    const void * ALIGNED(16) a2,
-                                    const void * ALIGNED(16) a3,
-				    const void * ALIGNED(16) a4,
-                                    const void * ALIGNED(16) a5,
-                                    const void * ALIGNED(16) a6,
-                                    const void * ALIGNED(16) a7,
-                                    v8 &a, v8 &b, v8 &c, v8 &d,
-                                    v8 &e, v8 &f, v8 &g, v8 &h );
-    //------------------------------------------------------------------
-    friend inline void load_8x8_tr_v0( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       const void * ALIGNED(16) a4,
-				       const void * ALIGNED(16) a5,
-				       const void * ALIGNED(16) a6,
-				       const void * ALIGNED(16) a7,
-				       v8 &a, v8 &b, v8 &c, v8 &d,
-				       v8 &e, v8 &f, v8 &g, v8 &h );
-    friend inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       const void * ALIGNED(16) a4,
-				       const void * ALIGNED(16) a5,
-				       const void * ALIGNED(16) a6,
-				       const void * ALIGNED(16) a7,
-				       v8 &a, v8 &b, v8 &c, v8 &d,
-				       v8 &e, v8 &f, v8 &g, v8 &h );
-    friend inline void load_8x8_tr_v2( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       const void * ALIGNED(16) a4,
-				       const void * ALIGNED(16) a5,
-				       const void * ALIGNED(16) a6,
-				       const void * ALIGNED(16) a7,
-				       v8 &a, v8 &b, v8 &c, v8 &d,
-				       v8 &e, v8 &f, v8 &g, v8 &h );
-    //------------------------------------------------------------------
-    friend inline void store_8x1_tr( const v8 &a,
-                                     void *a0, void *a1, void *a2, void *a3,
-                                     void *a4, void *a5, void *a6, void *a7 );
-    friend inline void store_8x2_tr( const v8 &a, const v8 &b,
-                                     void * ALIGNED(8) a0,
-                                     void * ALIGNED(8) a1,
-                                     void * ALIGNED(8) a2,
-                                     void * ALIGNED(8) a3,
-                                     void * ALIGNED(8) a4,
-                                     void * ALIGNED(8) a5,
-                                     void * ALIGNED(8) a6,
-                                     void * ALIGNED(8) a7 );
-    friend inline void store_8x3_tr( const v8 &a, const v8 &b, const v8 &c,
-                                     void * ALIGNED(16) a0,
-                                     void * ALIGNED(16) a1,
-                                     void * ALIGNED(16) a2,
-                                     void * ALIGNED(16) a3,
-                                     void * ALIGNED(16) a4,
-                                     void * ALIGNED(16) a5,
-                                     void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
-    friend inline void store_8x4_tr( const v8 &a, const v8 &b,
-                                     const v8 &c, const v8 &d,
-                                     void * ALIGNED(16) a0,
-                                     void * ALIGNED(16) a1,
-                                     void * ALIGNED(16) a2,
-                                     void * ALIGNED(16) a3,
-                                     void * ALIGNED(16) a4,
-                                     void * ALIGNED(16) a5,
-                                     void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
-    friend inline void store_8x8_tr( const v8 &a, const v8 &b,
-                                     const v8 &c, const v8 &d,
-                                     const v8 &e, const v8 &f,
-                                     const v8 &g, const v8 &h,
-                                     void * ALIGNED(16) a0,
-                                     void * ALIGNED(16) a1,
-                                     void * ALIGNED(16) a2,
-                                     void * ALIGNED(16) a3,
-                                     void * ALIGNED(16) a4,
-                                     void * ALIGNED(16) a5,
-                                     void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
-    //------------------------------------------------------------------
-    friend inline void store_8x8_tr_v0( const v8 &a, const v8 &b,
-					const v8 &c, const v8 &d,
-					const v8 &e, const v8 &f,
-					const v8 &g, const v8 &h,
-					void * ALIGNED(16) a0,
-					void * ALIGNED(16) a1,
-					void * ALIGNED(16) a2,
-					void * ALIGNED(16) a3,
-					void * ALIGNED(16) a4,
-					void * ALIGNED(16) a5,
-					void * ALIGNED(16) a6,
-					void * ALIGNED(16) a7 );
-    //------------------------------------------------------------------
+    friend inline void load_16x1_tr( const void *a00, const void *a01,
+				     const void *a02, const void *a03,
+				     const void *a04, const void *a05,
+				     const void *a06, const void *a07,
+				     const void *a08, const void *a09,
+				     const void *a10, const void *a11,
+				     const void *a12, const void *a13,
+				     const void *a14, const void *a15,
+				     v16 &a );
+    friend inline void load_16x2_tr( const void * ALIGNED(8) a00,
+				     const void * ALIGNED(8) a01,
+				     const void * ALIGNED(8) a02,
+				     const void * ALIGNED(8) a03,
+				     const void * ALIGNED(8) a04,
+				     const void * ALIGNED(8) a05,
+				     const void * ALIGNED(8) a06,
+				     const void * ALIGNED(8) a07,
+				     const void * ALIGNED(8) a08,
+				     const void * ALIGNED(8) a09,
+				     const void * ALIGNED(8) a10,
+				     const void * ALIGNED(8) a11,
+				     const void * ALIGNED(8) a12,
+				     const void * ALIGNED(8) a13,
+				     const void * ALIGNED(8) a14,
+				     const void * ALIGNED(8) a15,
+				     v16 &a, v16 &b );
+    friend inline void load_16x3_tr( const void * ALIGNED(64) a00,
+				     const void * ALIGNED(64) a01,
+				     const void * ALIGNED(64) a02,
+				     const void * ALIGNED(64) a03,
+				     const void * ALIGNED(64) a04,
+				     const void * ALIGNED(64) a05,
+				     const void * ALIGNED(64) a06,
+				     const void * ALIGNED(64) a07,
+				     const void * ALIGNED(64) a08,
+				     const void * ALIGNED(64) a09,
+				     const void * ALIGNED(64) a10,
+				     const void * ALIGNED(64) a11,
+				     const void * ALIGNED(64) a12,
+				     const void * ALIGNED(64) a13,
+				     const void * ALIGNED(64) a14,
+				     const void * ALIGNED(64) a15,
+				     v16 &a, v16 &b, v16 &c );
+    friend inline void load_16x4_tr( const void * ALIGNED(64) a00,
+				     const void * ALIGNED(64) a01,
+				     const void * ALIGNED(64) a02,
+				     const void * ALIGNED(64) a03,
+				     const void * ALIGNED(64) a04,
+				     const void * ALIGNED(64) a05,
+				     const void * ALIGNED(64) a06,
+				     const void * ALIGNED(64) a07,
+				     const void * ALIGNED(64) a08,
+				     const void * ALIGNED(64) a09,
+				     const void * ALIGNED(64) a10,
+				     const void * ALIGNED(64) a11,
+				     const void * ALIGNED(64) a12,
+				     const void * ALIGNED(64) a13,
+				     const void * ALIGNED(64) a14,
+				     const void * ALIGNED(64) a15,
+				     v16 &a, v16 &b, v16 &c, v16 &d );
+    friend inline void load_16x8_tr( const void * ALIGNED(64) a00,
+				     const void * ALIGNED(64) a01,
+				     const void * ALIGNED(64) a02,
+				     const void * ALIGNED(64) a03,
+				     const void * ALIGNED(64) a04,
+				     const void * ALIGNED(64) a05,
+				     const void * ALIGNED(64) a06,
+				     const void * ALIGNED(64) a07,
+				     const void * ALIGNED(64) a08,
+				     const void * ALIGNED(64) a09,
+				     const void * ALIGNED(64) a10,
+				     const void * ALIGNED(64) a11,
+				     const void * ALIGNED(64) a12,
+				     const void * ALIGNED(64) a13,
+				     const void * ALIGNED(64) a14,
+				     const void * ALIGNED(64) a15,
+				     v16 &a, v16 &b, v16 &c, v16 &d,
+				     v16 &e, v16 &f, v16 &g, v16 &h );
+    friend inline void load_16x16_tr( const void * ALIGNED(64) a00,
+				      const void * ALIGNED(64) a01,
+				      const void * ALIGNED(64) a02,
+				      const void * ALIGNED(64) a03,
+				      const void * ALIGNED(64) a04,
+				      const void * ALIGNED(64) a05,
+				      const void * ALIGNED(64) a06,
+				      const void * ALIGNED(64) a07,
+				      const void * ALIGNED(64) a08,
+				      const void * ALIGNED(64) a09,
+				      const void * ALIGNED(64) a10,
+				      const void * ALIGNED(64) a11,
+				      const void * ALIGNED(64) a12,
+				      const void * ALIGNED(64) a13,
+				      const void * ALIGNED(64) a14,
+				      const void * ALIGNED(64) a15,
+				      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
+				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
+				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+
+    friend inline void store_16x1_tr( const v16 &a,
+				      void *a00, void *a01, void *a02, void *a03,
+				      void *a04, void *a05, void *a06, void *a07,
+				      void *a08, void *a09, void *a10, void *a11,
+				      void *a12, void *a13, void *a14, void *a15 );
+    friend inline void store_16x2_tr( const v16 &a, const v16 &b,
+				      void * ALIGNED(8) a00,
+				      void * ALIGNED(8) a01,
+				      void * ALIGNED(8) a02,
+				      void * ALIGNED(8) a03,
+				      void * ALIGNED(8) a04,
+				      void * ALIGNED(8) a05,
+				      void * ALIGNED(8) a06,
+				      void * ALIGNED(8) a07,
+				      void * ALIGNED(8) a08,
+				      void * ALIGNED(8) a09,
+				      void * ALIGNED(8) a10,
+				      void * ALIGNED(8) a11,
+				      void * ALIGNED(8) a12,
+				      void * ALIGNED(8) a13,
+				      void * ALIGNED(8) a14,
+				      void * ALIGNED(8) a15 );
+    friend inline void store_16x3_tr( const v16 &a, const v16 &b, const v16 &c,
+				      void * ALIGNED(64) a00,
+				      void * ALIGNED(64) a01,
+				      void * ALIGNED(64) a02,
+				      void * ALIGNED(64) a03,
+				      void * ALIGNED(64) a04,
+				      void * ALIGNED(64) a05,
+				      void * ALIGNED(64) a06,
+				      void * ALIGNED(64) a07,
+				      void * ALIGNED(64) a08,
+				      void * ALIGNED(64) a09,
+				      void * ALIGNED(64) a10,
+				      void * ALIGNED(64) a11,
+				      void * ALIGNED(64) a12,
+				      void * ALIGNED(64) a13,
+				      void * ALIGNED(64) a14,
+				      void * ALIGNED(64) a15 );
+    friend inline void store_16x4_tr( const v16 &a, const v16 &b,
+				      const v16 &c, const v16 &d,
+				      void * ALIGNED(64) a00,
+				      void * ALIGNED(64) a01,
+				      void * ALIGNED(64) a02,
+				      void * ALIGNED(64) a03,
+				      void * ALIGNED(64) a04,
+				      void * ALIGNED(64) a05,
+				      void * ALIGNED(64) a06,
+				      void * ALIGNED(64) a07,
+				      void * ALIGNED(64) a08,
+				      void * ALIGNED(64) a09,
+				      void * ALIGNED(64) a10,
+				      void * ALIGNED(64) a11,
+				      void * ALIGNED(64) a12,
+				      void * ALIGNED(64) a13,
+				      void * ALIGNED(64) a14,
+				      void * ALIGNED(64) a15 );
+    friend inline void store_16x8_tr( const v16 &a, const v16 &b,
+				      const v16 &c, const v16 &d,
+				      const v16 &e, const v16 &f,
+				      const v16 &g, const v16 &h,
+				      void * ALIGNED(64) a00,
+				      void * ALIGNED(64) a01,
+				      void * ALIGNED(64) a02,
+				      void * ALIGNED(64) a03,
+				      void * ALIGNED(64) a04,
+				      void * ALIGNED(64) a05,
+				      void * ALIGNED(64) a06,
+				      void * ALIGNED(64) a07,
+				      void * ALIGNED(64) a08,
+				      void * ALIGNED(64) a09,
+				      void * ALIGNED(64) a10,
+				      void * ALIGNED(64) a11,
+				      void * ALIGNED(64) a12,
+				      void * ALIGNED(64) a13,
+				      void * ALIGNED(64) a14,
+				      void * ALIGNED(64) a15 );
+    friend inline void store_16x16_tr( const v16 &b00, const v16 &b01,
+				       const v16 &b02, const v16 &b03,
+				       const v16 &b04, const v16 &b05,
+				       const v16 &b06, const v16 &b07,
+				       const v16 &b08, const v16 &b09,
+				       const v16 &b10, const v16 &b11,
+				       const v16 &b12, const v16 &b13,
+				       const v16 &b14, const v16 &b15,
+				       void * ALIGNED(64) a00,
+				       void * ALIGNED(64) a01,
+				       void * ALIGNED(64) a02,
+				       void * ALIGNED(64) a03,
+				       void * ALIGNED(64) a04,
+				       void * ALIGNED(64) a05,
+				       void * ALIGNED(64) a06,
+				       void * ALIGNED(64) a07,
+				       void * ALIGNED(64) a08,
+				       void * ALIGNED(64) a09,
+				       void * ALIGNED(64) a10,
+				       void * ALIGNED(64) a11,
+				       void * ALIGNED(64) a12,
+				       void * ALIGNED(64) a13,
+				       void * ALIGNED(64) a14,
+				       void * ALIGNED(64) a15 );
 
   protected:
 
     union
     {
-      int i[8];
-      float f[8];
-      __m256 v;
+      int   i[16];
+      float f[16];
+      __m512 v;
     };
 
   public:
 
-    v8() {}                    // Default constructor
+    v16() {}                    // Default constructor
 
-    v8( const v8 &a )          // Copy constructor
+    v16( const v16 &a )          // Copy constructor
     {
       v = a.v;
     }
 
-    ~v8() {}                   // Default destructor
+    ~v16() {}                   // Default destructor
   };
 
-  // v8 miscellaneous functions
+  // v16 miscellaneous functions
 
-  inline int any( const v8 &a )
+  inline int any( const v16 &a )
   {
-    return a.i[0] || a.i[1] || a.i[2] || a.i[3] ||
-           a.i[4] || a.i[5] || a.i[6] || a.i[7];
+    return a.i[ 0] || a.i[ 1] || a.i[ 2] || a.i[ 3] ||
+           a.i[ 4] || a.i[ 5] || a.i[ 6] || a.i[ 7] ||
+           a.i[ 8] || a.i[ 9] || a.i[10] || a.i[11] ||
+           a.i[12] || a.i[13] || a.i[14] || a.i[15];
   }
 
-  inline int all( const v8 &a )
+  inline int all( const v16 &a )
   {
-    return a.i[0] && a.i[1] && a.i[2] && a.i[3] &&
-           a.i[4] && a.i[5] && a.i[6] && a.i[7];
+    return a.i[ 0] && a.i[ 1] && a.i[ 2] && a.i[ 3] &&
+           a.i[ 4] && a.i[ 5] && a.i[ 6] && a.i[ 7] &&
+           a.i[ 8] && a.i[ 9] && a.i[10] && a.i[11] &&
+           a.i[12] && a.i[13] && a.i[14] && a.i[15];
   }
 
   template<int n>
-  inline v8 splat( const v8 & a )
+  inline v16 splat( const v16 & a )
   {
-    v8 b;
+    v16 b;
 
-    b.v = _mm256_set1_ps( a.v[n] );
+    b.v = _mm512_set1_ps( a.v[n] );
+
+    // for( int j = 0; j < 16; j++ )
+    //   b.i[j] = a.i[n];
 
     return b;
   }
 
-#if 0
-  template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
-  inline v8 shuffle( const v8 & a )
+  template<int i00, int i01, int i02, int i03, int i04, int i05, int i06, int i07, int i08, int i09, int i10, int i11, int i12, int i13, int i14, int i16>
+  inline v16 shuffle( const v16 & a )
   {
-    __m256 a_v = a.v;
-    v8 b;
-    b.v = _mm256_shuffle_ps( a_v, a_v, (permute<i0,i1,i2,i3,i4,i5,i6,i7>::value) );
-    return b;
-  }
-#endif
-
-  template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
-  inline v8 shuffle( const v8 & a )
-  {
-    v8 b;
-    b.i[0] = a.i[i0];
-    b.i[1] = a.i[i1];
-    b.i[2] = a.i[i2];
-    b.i[3] = a.i[i3];
-    b.i[4] = a.i[i4];
-    b.i[5] = a.i[i5];
-    b.i[6] = a.i[i6];
-    b.i[7] = a.i[i7];
+    v16 b;
+    b.i[ 0] = a.i[i00];
+    b.i[ 1] = a.i[i01];
+    b.i[ 2] = a.i[i02];
+    b.i[ 3] = a.i[i03];
+    b.i[ 4] = a.i[i04];
+    b.i[ 5] = a.i[i05];
+    b.i[ 6] = a.i[i06];
+    b.i[ 7] = a.i[i07];
+    b.i[ 8] = a.i[i08];
+    b.i[ 9] = a.i[i09];
+    b.i[10] = a.i[i10];
+    b.i[11] = a.i[i11];
+    b.i[12] = a.i[i12];
+    b.i[13] = a.i[i13];
+    b.i[14] = a.i[i14];
+    b.i[15] = a.i[i15];
     return b;
   }
 
-  inline void swap( v8 &a, v8 &b )
+# define sw(x,y) x^=y, y^=x, x^=y
+
+  inline void swap( v16 &a, v16 &b )
   {
-    __m256 a_v = a.v;
+    __m512 a_v = a.v;
 
     a.v = b.v;
 
     b.v = a_v;
+
+    // sw( a.i[ 0], b.i[ 0] );
+    // sw( a.i[ 1], b.i[ 1] );
+    // sw( a.i[ 2], b.i[ 2] );
+    // sw( a.i[ 3], b.i[ 3] );
+    // sw( a.i[ 4], b.i[ 4] );
+    // sw( a.i[ 5], b.i[ 5] );
+    // sw( a.i[ 6], b.i[ 6] );
+    // sw( a.i[ 7], b.i[ 7] );
+    // sw( a.i[ 8], b.i[ 8] );
+    // sw( a.i[ 9], b.i[ 9] );
+    // sw( a.i[10], b.i[10] );
+    // sw( a.i[11], b.i[11] );
+    // sw( a.i[12], b.i[12] );
+    // sw( a.i[13], b.i[13] );
+    // sw( a.i[14], b.i[14] );
+    // sw( a.i[15], b.i[15] );
   }
 
-  inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			 v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  inline void transpose( v16 &a00, v16 &a01, v16 &a02, v16 &a03,
+			 v16 &a04, v16 &a05, v16 &a06, v16 &a07,
+			 v16 &a08, v16 &a09, v16 &a10, v16 &a11,
+			 v16 &a12, v16 &a13, v16 &a14, v16 &a15 )
   {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
-
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-  }
-  //--------------------------------------------------------------------------
-  inline void transpose_v0( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
-  {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
-
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    sw( a00.i[1],a01.i[0] ); sw( a00.i[2],a02.i[0] ); sw( a00.i[3],a03.i[0] ); sw( a00.i[4],a04.i[0] ); sw( a00.i[5],a05.i[0] ); sw( a00.i[6],a06.i[0] ); sw( a00.i[7],a07.i[0] ); sw( a00.i[8],a08.i[0] ); sw( a00.i[9],a09.i[0] ); sw( a00.i[10],a10.i[0] ); sw( a00.i[11],a11.i[ 0] ); sw( a00.i[12],a12.i[ 0] ); sw( a00.i[13],a13.i[ 0] ); sw( a00.i[14],a14.i[ 0] ); sw( a00.i[15],a15.i[ 0] );
+                             sw( a01.i[2],a02.i[1] ); sw( a01.i[3],a03.i[1] ); sw( a01.i[4],a04.i[1] ); sw( a01.i[5],a05.i[1] ); sw( a01.i[6],a06.i[1] ); sw( a01.i[7],a07.i[1] ); sw( a01.i[8],a08.i[1] ); sw( a01.i[9],a09.i[1] ); sw( a01.i[10],a10.i[1] ); sw( a01.i[11],a11.i[ 1] ); sw( a01.i[12],a12.i[ 1] ); sw( a01.i[13],a13.i[ 1] ); sw( a01.i[14],a14.i[ 1] ); sw( a01.i[15],a15.i[ 1] );
+                                                      sw( a02.i[3],a03.i[2] ); sw( a02.i[4],a04.i[2] ); sw( a02.i[5],a05.i[2] ); sw( a02.i[6],a06.i[2] ); sw( a02.i[7],a07.i[2] ); sw( a02.i[8],a08.i[2] ); sw( a02.i[9],a09.i[2] ); sw( a02.i[10],a10.i[2] ); sw( a02.i[11],a11.i[ 2] ); sw( a02.i[12],a12.i[ 2] ); sw( a02.i[13],a13.i[ 2] ); sw( a02.i[14],a14.i[ 2] ); sw( a02.i[15],a15.i[ 2] );
+                                                                               sw( a03.i[4],a04.i[3] ); sw( a03.i[5],a05.i[3] ); sw( a03.i[6],a06.i[3] ); sw( a03.i[7],a07.i[3] ); sw( a03.i[8],a08.i[3] ); sw( a03.i[9],a09.i[3] ); sw( a03.i[10],a10.i[3] ); sw( a03.i[11],a11.i[ 3] ); sw( a03.i[12],a12.i[ 3] ); sw( a03.i[13],a13.i[ 3] ); sw( a03.i[14],a14.i[ 3] ); sw( a03.i[15],a15.i[ 3] );
+                                                                                                        sw( a04.i[5],a05.i[4] ); sw( a04.i[6],a06.i[4] ); sw( a04.i[7],a07.i[4] ); sw( a04.i[8],a08.i[4] ); sw( a04.i[9],a09.i[4] ); sw( a04.i[10],a10.i[4] ); sw( a04.i[11],a11.i[ 4] ); sw( a04.i[12],a12.i[ 4] ); sw( a04.i[13],a13.i[ 4] ); sw( a04.i[14],a14.i[ 4] ); sw( a04.i[15],a15.i[ 4] );
+                                                                                                                                 sw( a05.i[6],a06.i[5] ); sw( a05.i[7],a07.i[5] ); sw( a05.i[8],a08.i[5] ); sw( a05.i[9],a09.i[5] ); sw( a05.i[10],a10.i[5] ); sw( a05.i[11],a11.i[ 5] ); sw( a05.i[12],a12.i[ 5] ); sw( a05.i[13],a13.i[ 5] ); sw( a05.i[14],a14.i[ 5] ); sw( a05.i[15],a15.i[ 5] );
+                                                                                                                                                          sw( a06.i[7],a07.i[6] ); sw( a06.i[8],a08.i[6] ); sw( a06.i[9],a09.i[6] ); sw( a06.i[10],a10.i[6] ); sw( a06.i[11],a11.i[ 6] ); sw( a06.i[12],a12.i[ 6] ); sw( a06.i[13],a13.i[ 6] ); sw( a06.i[14],a14.i[ 6] ); sw( a06.i[15],a15.i[ 6] );
+                                                                                                                                                                                   sw( a07.i[8],a08.i[7] ); sw( a07.i[9],a09.i[7] ); sw( a07.i[10],a10.i[7] ); sw( a07.i[11],a11.i[ 7] ); sw( a07.i[12],a12.i[ 7] ); sw( a07.i[13],a13.i[ 7] ); sw( a07.i[14],a14.i[ 7] ); sw( a07.i[15],a15.i[ 7] );
+                                                                                                                                                                                                            sw( a08.i[9],a09.i[8] ); sw( a08.i[10],a10.i[8] ); sw( a08.i[11],a11.i[ 8] ); sw( a08.i[12],a12.i[ 8] ); sw( a08.i[13],a13.i[ 8] ); sw( a08.i[14],a14.i[ 8] ); sw( a08.i[15],a15.i[ 8] );
+                                                                                                                                                                                                                                     sw( a09.i[10],a10.i[9] ); sw( a09.i[11],a11.i[ 9] ); sw( a09.i[12],a12.i[ 9] ); sw( a09.i[13],a13.i[ 9] ); sw( a09.i[14],a14.i[ 9] ); sw( a09.i[15],a15.i[ 9] );
+                                                                                                                                                                                                                                                               sw( a10.i[11],a11.i[10] ); sw( a10.i[12],a12.i[10] ); sw( a10.i[13],a13.i[10] ); sw( a10.i[14],a14.i[10] ); sw( a10.i[15],a15.i[10] );
+                                                                                                                                                                                                                                                                                          sw( a11.i[12],a12.i[11] ); sw( a11.i[13],a13.i[11] ); sw( a11.i[14],a14.i[11] ); sw( a11.i[15],a15.i[11] );
+                                                                                                                                                                                                                                                                                                                     sw( a12.i[13],a13.i[12] ); sw( a12.i[14],a14.i[12] ); sw( a12.i[15],a15.i[12] );
+                                                                                                                                                                                                                                                                                                                                                sw( a13.i[14],a14.i[13] ); sw( a13.i[15],a15.i[13] );
+                                                                                                                                                                                                                                                                                                                                                                           sw( a14.i[15],a15.i[14] );
   }
 
-  inline void transpose_v1( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+# undef sw
+
+  // v16 memory manipulation functions
+
+  inline void load_16x1( const void * ALIGNED(64) p,
+			 v16 &a )
   {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    for( int j = 0; j < 16; j++ )
+      a.i[j] = ((const int * ALIGNED(64))p)[j];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    /* a.i[0] = ((const int * ALIGNED(64))p)[0]; */
+    /* a.i[1] = ((const int * ALIGNED(64))p)[1]; */
+    /* a.i[2] = ((const int * ALIGNED(64))p)[2]; */
+    /* a.i[3] = ((const int * ALIGNED(64))p)[3]; */
+    /* a.i[4] = ((const int * ALIGNED(64))p)[4]; */
+    /* a.i[5] = ((const int * ALIGNED(64))p)[5]; */
+    /* a.i[6] = ((const int * ALIGNED(64))p)[6]; */
+    /* a.i[7] = ((const int * ALIGNED(64))p)[7]; */
   }
 
-  inline void transpose_v2( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  inline void store_16x1( const v16 &a,
+			  void * ALIGNED(64) p )
   {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    for( int j = 0; j < 16; j++ )
+      ((int * ALIGNED(64))p)[j] = a.i[j];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    /* ((int * ALIGNED(64))p)[0] = a.i[0]; */
+    /* ((int * ALIGNED(64))p)[1] = a.i[1]; */
+    /* ((int * ALIGNED(64))p)[2] = a.i[2]; */
+    /* ((int * ALIGNED(64))p)[3] = a.i[3]; */
+    /* ((int * ALIGNED(64))p)[4] = a.i[4]; */
+    /* ((int * ALIGNED(64))p)[5] = a.i[5]; */
+    /* ((int * ALIGNED(64))p)[6] = a.i[6]; */
+    /* ((int * ALIGNED(64))p)[7] = a.i[7]; */
   }
 
-  inline void transpose_v3( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  inline void stream_16x1( const v16 &a,
+			   void * ALIGNED(64) p )
   {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    for( int j = 0; j < 16; j++ )
+      ((int * ALIGNED(64))p)[j] = a.i[j];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    /* ((int * ALIGNED(64))p)[0] = a.i[0]; */
+    /* ((int * ALIGNED(64))p)[1] = a.i[1]; */
+    /* ((int * ALIGNED(64))p)[2] = a.i[2]; */
+    /* ((int * ALIGNED(64))p)[3] = a.i[3]; */
+    /* ((int * ALIGNED(64))p)[4] = a.i[4]; */
+    /* ((int * ALIGNED(64))p)[5] = a.i[5]; */
+    /* ((int * ALIGNED(64))p)[6] = a.i[6]; */
+    /* ((int * ALIGNED(64))p)[7] = a.i[7]; */
   }
 
-  inline void transpose_v4( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
+  inline void clear_16x1( void * ALIGNED(64) p )
   {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    for( int j = 0; j < 16; j++ )
+      ((int * ALIGNED(64))p)[j] = 0;
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-  }
-
-  inline void transpose_v5( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-			    v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
-  {
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
-
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
-    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
-    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
-    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
-    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
-    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
-    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
-    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-  }
-  //--------------------------------------------------------------------------
-
-  // v8 memory manipulation functions
-
-  inline void load_8x1( const void * ALIGNED(16) p, v8 &a )
-  {
-    a.i[0] = ((const int * ALIGNED(16))p)[0];
-    a.i[1] = ((const int * ALIGNED(16))p)[1];
-    a.i[2] = ((const int * ALIGNED(16))p)[2];
-    a.i[3] = ((const int * ALIGNED(16))p)[3];
-    a.i[4] = ((const int * ALIGNED(16))p)[4];
-    a.i[5] = ((const int * ALIGNED(16))p)[5];
-    a.i[6] = ((const int * ALIGNED(16))p)[6];
-    a.i[7] = ((const int * ALIGNED(16))p)[7];
-  }
-
-  inline void store_8x1( const v8 &a, void * ALIGNED(16) p )
-  {
-    ((int * ALIGNED(16))p)[0] = a.i[0];
-    ((int * ALIGNED(16))p)[1] = a.i[1];
-    ((int * ALIGNED(16))p)[2] = a.i[2];
-    ((int * ALIGNED(16))p)[3] = a.i[3];
-    ((int * ALIGNED(16))p)[4] = a.i[4];
-    ((int * ALIGNED(16))p)[5] = a.i[5];
-    ((int * ALIGNED(16))p)[6] = a.i[6];
-    ((int * ALIGNED(16))p)[7] = a.i[7];
-  }
-
-  inline void stream_8x1( const v8 &a, void * ALIGNED(16) p )
-  {
-    ((int * ALIGNED(16))p)[0] = a.i[0];
-    ((int * ALIGNED(16))p)[1] = a.i[1];
-    ((int * ALIGNED(16))p)[2] = a.i[2];
-    ((int * ALIGNED(16))p)[3] = a.i[3];
-    ((int * ALIGNED(16))p)[4] = a.i[4];
-    ((int * ALIGNED(16))p)[5] = a.i[5];
-    ((int * ALIGNED(16))p)[6] = a.i[6];
-    ((int * ALIGNED(16))p)[7] = a.i[7];
-  }
-
-  inline void clear_8x1( void * ALIGNED(16) p )
-  {
-    ((int * ALIGNED(16))p)[0] = 0;
-    ((int * ALIGNED(16))p)[1] = 0;
-    ((int * ALIGNED(16))p)[2] = 0;
-    ((int * ALIGNED(16))p)[3] = 0;
-    ((int * ALIGNED(16))p)[4] = 0;
-    ((int * ALIGNED(16))p)[5] = 0;
-    ((int * ALIGNED(16))p)[6] = 0;
-    ((int * ALIGNED(16))p)[7] = 0;
+    /* ((int * ALIGNED(64))p)[0] = 0; */
+    /* ((int * ALIGNED(64))p)[1] = 0; */
+    /* ((int * ALIGNED(64))p)[2] = 0; */
+    /* ((int * ALIGNED(64))p)[3] = 0; */
+    /* ((int * ALIGNED(64))p)[4] = 0; */
+    /* ((int * ALIGNED(64))p)[5] = 0; */
+    /* ((int * ALIGNED(64))p)[6] = 0; */
+    /* ((int * ALIGNED(64))p)[7] = 0; */
   }
 
   // FIXME: Ordering semantics
-  inline void copy_8x1( void * ALIGNED(16) dst,
-                        const void * ALIGNED(16) src )
+  inline void copy_16x1( void * ALIGNED(64) dst,
+			 const void * ALIGNED(64) src )
   {
-    ((int * ALIGNED(16))dst)[0] = ((const int * ALIGNED(16))src)[0];
-    ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
-    ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
-    ((int * ALIGNED(16))dst)[3] = ((const int * ALIGNED(16))src)[3];
-    ((int * ALIGNED(16))dst)[4] = ((const int * ALIGNED(16))src)[4];
-    ((int * ALIGNED(16))dst)[5] = ((const int * ALIGNED(16))src)[5];
-    ((int * ALIGNED(16))dst)[6] = ((const int * ALIGNED(16))src)[6];
-    ((int * ALIGNED(16))dst)[7] = ((const int * ALIGNED(16))src)[7];
+    for( int j = 0; j < 16; j++ )
+      ((int * ALIGNED(64))dst)[j] = ((const int * ALIGNED(64))src)[j];
+
+    /* ((int * ALIGNED(64))dst)[0] = ((const int * ALIGNED(64))src)[0]; */
+    /* ((int * ALIGNED(64))dst)[1] = ((const int * ALIGNED(64))src)[1]; */
+    /* ((int * ALIGNED(64))dst)[2] = ((const int * ALIGNED(64))src)[2]; */
+    /* ((int * ALIGNED(64))dst)[3] = ((const int * ALIGNED(64))src)[3]; */
+    /* ((int * ALIGNED(64))dst)[4] = ((const int * ALIGNED(64))src)[4]; */
+    /* ((int * ALIGNED(64))dst)[5] = ((const int * ALIGNED(64))src)[5]; */
+    /* ((int * ALIGNED(64))dst)[6] = ((const int * ALIGNED(64))src)[6]; */
+    /* ((int * ALIGNED(64))dst)[7] = ((const int * ALIGNED(64))src)[7]; */
   }
 
-  inline void swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
+  inline void swap_16x1( void * ALIGNED(64) a,
+			 void * ALIGNED(64) b )
   {
     int t;
-    t = ((int * ALIGNED(16))a)[0];
-    ((int * ALIGNED(16))a)[0] = ((int * ALIGNED(16))b)[0];
-    ((int * ALIGNED(16))b)[0] = t;
 
-    t = ((int * ALIGNED(16))a)[1];
-    ((int * ALIGNED(16))a)[1] = ((int * ALIGNED(16))b)[1];
-    ((int * ALIGNED(16))b)[1] = t;
+    for( int j = 0; j < 16; j++ )
+    {
+      t = ((int * ALIGNED(64))a)[j];
+      ((int * ALIGNED(64))a)[j] = ((int * ALIGNED(64))b)[j];
+      ((int * ALIGNED(64))b)[j] = t;
+    }
 
-    t = ((int * ALIGNED(16))a)[2];
-    ((int * ALIGNED(16))a)[2] = ((int * ALIGNED(16))b)[2];
-    ((int * ALIGNED(16))b)[2] = t;
+    /* t = ((int * ALIGNED(64))a)[0]; */
+    /* ((int * ALIGNED(64))a)[0] = ((int * ALIGNED(64))b)[0]; */
+    /* ((int * ALIGNED(64))b)[0] = t; */
 
-    t = ((int * ALIGNED(16))a)[3];
-    ((int * ALIGNED(16))a)[3] = ((int * ALIGNED(16))b)[3];
-    ((int * ALIGNED(16))b)[3] = t;
+    /* t = ((int * ALIGNED(64))a)[1]; */
+    /* ((int * ALIGNED(64))a)[1] = ((int * ALIGNED(64))b)[1]; */
+    /* ((int * ALIGNED(64))b)[1] = t; */
 
-    t = ((int * ALIGNED(16))a)[4];
-    ((int * ALIGNED(16))a)[4] = ((int * ALIGNED(16))b)[4];
-    ((int * ALIGNED(16))b)[4] = t;
+    /* t = ((int * ALIGNED(64))a)[2]; */
+    /* ((int * ALIGNED(64))a)[2] = ((int * ALIGNED(64))b)[2]; */
+    /* ((int * ALIGNED(64))b)[2] = t; */
 
-    t = ((int * ALIGNED(16))a)[5];
-    ((int * ALIGNED(16))a)[5] = ((int * ALIGNED(16))b)[5];
-    ((int * ALIGNED(16))b)[5] = t;
+    /* t = ((int * ALIGNED(64))a)[3]; */
+    /* ((int * ALIGNED(64))a)[3] = ((int * ALIGNED(64))b)[3]; */
+    /* ((int * ALIGNED(64))b)[3] = t; */
 
-    t = ((int * ALIGNED(16))a)[6];
-    ((int * ALIGNED(16))a)[6] = ((int * ALIGNED(16))b)[6];
-    ((int * ALIGNED(16))b)[6] = t;
+    /* t = ((int * ALIGNED(64))a)[4]; */
+    /* ((int * ALIGNED(64))a)[4] = ((int * ALIGNED(64))b)[4]; */
+    /* ((int * ALIGNED(64))b)[4] = t; */
 
-    t = ((int * ALIGNED(16))a)[7];
-    ((int * ALIGNED(16))a)[7] = ((int * ALIGNED(16))b)[7];
-    ((int * ALIGNED(16))b)[7] = t;
+    /* t = ((int * ALIGNED(64))a)[5]; */
+    /* ((int * ALIGNED(64))a)[5] = ((int * ALIGNED(64))b)[5]; */
+    /* ((int * ALIGNED(64))b)[5] = t; */
+
+    /* t = ((int * ALIGNED(64))a)[6]; */
+    /* ((int * ALIGNED(64))a)[6] = ((int * ALIGNED(64))b)[6]; */
+    /* ((int * ALIGNED(64))b)[6] = t; */
+
+    /* t = ((int * ALIGNED(64))a)[7]; */
+    /* ((int * ALIGNED(64))a)[7] = ((int * ALIGNED(64))b)[7]; */
+    /* ((int * ALIGNED(64))b)[7] = t; */
   }
 
-  // v8 transposed memory manipulation functions
+  // v16 transposed memory manipulation functions
 
-  inline void load_8x1_tr( const void *a0, const void *a1,
-                           const void *a2, const void *a3,
-                           const void *a4, const void *a5,
-                           const void *a6, const void *a7,
-			   v8 &a )
+  inline void load_16x1_tr( const void *a00, const void *a01,
+                            const void *a02, const void *a03,
+                            const void *a04, const void *a05,
+                            const void *a06, const void *a07,
+			    const void *a08, const void *a09,
+                            const void *a10, const void *a11,
+                            const void *a12, const void *a13,
+                            const void *a14, const void *a15,
+			    v16 &a )
   {
-    a.i[0] = ((const int *)a0)[0];
-    a.i[1] = ((const int *)a1)[0];
-    a.i[2] = ((const int *)a2)[0];
-    a.i[3] = ((const int *)a3)[0];
-    a.i[4] = ((const int *)a4)[0];
-    a.i[5] = ((const int *)a5)[0];
-    a.i[6] = ((const int *)a6)[0];
-    a.i[7] = ((const int *)a7)[0];
+    a.i[ 0] = ((const int *)a00)[0];
+    a.i[ 1] = ((const int *)a01)[0];
+    a.i[ 2] = ((const int *)a02)[0];
+    a.i[ 3] = ((const int *)a03)[0];
+    a.i[ 4] = ((const int *)a04)[0];
+    a.i[ 5] = ((const int *)a05)[0];
+    a.i[ 6] = ((const int *)a06)[0];
+    a.i[ 7] = ((const int *)a07)[0];
+    a.i[ 8] = ((const int *)a08)[0];
+    a.i[ 9] = ((const int *)a09)[0];
+    a.i[10] = ((const int *)a10)[0];
+    a.i[11] = ((const int *)a11)[0];
+    a.i[12] = ((const int *)a12)[0];
+    a.i[13] = ((const int *)a13)[0];
+    a.i[14] = ((const int *)a14)[0];
+    a.i[15] = ((const int *)a15)[0];
   }
 
-  inline void load_8x2_tr( const void * ALIGNED(8) a0,
-                           const void * ALIGNED(8) a1,
-                           const void * ALIGNED(8) a2,
-                           const void * ALIGNED(8) a3,
-			   const void * ALIGNED(8) a4,
-                           const void * ALIGNED(8) a5,
-                           const void * ALIGNED(8) a6,
-                           const void * ALIGNED(8) a7,
-                           v8 &a, v8 &b )
+  inline void load_16x2_tr( const void * ALIGNED(8) a00,
+			    const void * ALIGNED(8) a01,
+			    const void * ALIGNED(8) a02,
+			    const void * ALIGNED(8) a03,
+			    const void * ALIGNED(8) a04,
+			    const void * ALIGNED(8) a05,
+			    const void * ALIGNED(8) a06,
+			    const void * ALIGNED(8) a07,
+			    const void * ALIGNED(8) a08,
+			    const void * ALIGNED(8) a09,
+			    const void * ALIGNED(8) a10,
+			    const void * ALIGNED(8) a11,
+			    const void * ALIGNED(8) a12,
+			    const void * ALIGNED(8) a13,
+			    const void * ALIGNED(8) a14,
+			    const void * ALIGNED(8) a15,
+			    v16 &a, v16 &b )
   {
-    __m128 zero;
-    __m128 t0, t1, t2, t3;
-    __m256 u0, u1;
+    a.i[ 0] = ((const int * ALIGNED(8))a00)[0];
+    b.i[ 0] = ((const int * ALIGNED(8))a00)[1];
 
-    zero = _mm_setzero_ps();
+    a.i[ 1] = ((const int * ALIGNED(8))a01)[0];
+    b.i[ 1] = ((const int * ALIGNED(8))a01)[1];
 
-    t0 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a0 ), (__m64 *)a1 );
-    t1 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a2 ), (__m64 *)a3 );
-    t2 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a4 ), (__m64 *)a5 );
-    t3 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a6 ), (__m64 *)a7 );
+    a.i[ 2] = ((const int * ALIGNED(8))a02)[0];
+    b.i[ 2] = ((const int * ALIGNED(8))a02)[1];
 
-    u0 = _mm256_setr_m128( t0, t2 );
-    u1 = _mm256_setr_m128( t1, t3 );
+    a.i[ 3] = ((const int * ALIGNED(8))a03)[0];
+    b.i[ 3] = ((const int * ALIGNED(8))a03)[1];
 
-    a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
-    b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
+    a.i[ 4] = ((const int * ALIGNED(8))a04)[0];
+    b.i[ 4] = ((const int * ALIGNED(8))a04)[1];
+
+    a.i[ 5] = ((const int * ALIGNED(8))a05)[0];
+    b.i[ 5] = ((const int * ALIGNED(8))a05)[1];
+
+    a.i[ 6] = ((const int * ALIGNED(8))a06)[0];
+    b.i[ 6] = ((const int * ALIGNED(8))a06)[1];
+
+    a.i[ 7] = ((const int * ALIGNED(8))a07)[0];
+    b.i[ 7] = ((const int * ALIGNED(8))a07)[1];
+
+    a.i[ 8] = ((const int * ALIGNED(8))a08)[0];
+    b.i[ 8] = ((const int * ALIGNED(8))a08)[1];
+
+    a.i[ 9] = ((const int * ALIGNED(8))a09)[0];
+    b.i[ 9] = ((const int * ALIGNED(8))a09)[1];
+
+    a.i[10] = ((const int * ALIGNED(8))a10)[0];
+    b.i[10] = ((const int * ALIGNED(8))a10)[1];
+
+    a.i[11] = ((const int * ALIGNED(8))a11)[0];
+    b.i[11] = ((const int * ALIGNED(8))a11)[1];
+
+    a.i[12] = ((const int * ALIGNED(8))a12)[0];
+    b.i[12] = ((const int * ALIGNED(8))a12)[1];
+
+    a.i[13] = ((const int * ALIGNED(8))a13)[0];
+    b.i[13] = ((const int * ALIGNED(8))a13)[1];
+
+    a.i[14] = ((const int * ALIGNED(8))a14)[0];
+    b.i[14] = ((const int * ALIGNED(8))a14)[1];
+
+    a.i[15] = ((const int * ALIGNED(8))a15)[0];
+    b.i[15] = ((const int * ALIGNED(8))a15)[1];
   }
 
-  //--------------------------------------------------------------------
-  inline void load_8x2_tr_v0( const void * ALIGNED(8) a0,
-			      const void * ALIGNED(8) a1,
-			      const void * ALIGNED(8) a2,
-			      const void * ALIGNED(8) a3,
-			      const void * ALIGNED(8) a4,
-			      const void * ALIGNED(8) a5,
-			      const void * ALIGNED(8) a6,
-			      const void * ALIGNED(8) a7,
-			      v8 &a, v8 &b )
+  inline void load_16x3_tr( const void * ALIGNED(64) a00,
+                            const void * ALIGNED(64) a01,
+                            const void * ALIGNED(64) a02,
+                            const void * ALIGNED(64) a03,
+			    const void * ALIGNED(64) a04,
+			    const void * ALIGNED(64) a05,
+			    const void * ALIGNED(64) a06,
+			    const void * ALIGNED(64) a07,
+			    const void * ALIGNED(64) a08,
+                            const void * ALIGNED(64) a09,
+                            const void * ALIGNED(64) a10,
+                            const void * ALIGNED(64) a11,
+			    const void * ALIGNED(64) a12,
+			    const void * ALIGNED(64) a13,
+			    const void * ALIGNED(64) a14,
+			    const void * ALIGNED(64) a15,
+			    v16 &a, v16 &b, v16 &c )
   {
-    __m128 zero;
-    __m128 t0, t1, t2, t3;
-    __m256 u0, u1;
+    a.i[ 0] = ((const int * ALIGNED(64))a00)[0];
+    b.i[ 0] = ((const int * ALIGNED(64))a00)[1];
+    c.i[ 0] = ((const int * ALIGNED(64))a00)[2];
 
-    zero = _mm_setzero_ps();
+    a.i[ 1] = ((const int * ALIGNED(64))a01)[0];
+    b.i[ 1] = ((const int * ALIGNED(64))a01)[1];
+    c.i[ 1] = ((const int * ALIGNED(64))a01)[2];
 
-    t0 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a0 ), (__m64 *)a1 );
-    t1 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a2 ), (__m64 *)a3 );
-    t2 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a4 ), (__m64 *)a5 );
-    t3 = _mm_loadh_pi( _mm_loadl_pi( zero, (__m64 *)a6 ), (__m64 *)a7 );
+    a.i[ 2] = ((const int * ALIGNED(64))a02)[0];
+    b.i[ 2] = ((const int * ALIGNED(64))a02)[1];
+    c.i[ 2] = ((const int * ALIGNED(64))a02)[2];
 
-    u0 = _mm256_setr_m128( t0, t2 );
-    u1 = _mm256_setr_m128( t1, t3 );
+    a.i[ 3] = ((const int * ALIGNED(64))a03)[0];
+    b.i[ 3] = ((const int * ALIGNED(64))a03)[1];
+    c.i[ 3] = ((const int * ALIGNED(64))a03)[2]; 
 
-    a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
-    b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
-  }
-  //--------------------------------------------------------------------
+    a.i[ 4] = ((const int * ALIGNED(64))a04)[0];
+    b.i[ 4] = ((const int * ALIGNED(64))a04)[1];
+    c.i[ 4] = ((const int * ALIGNED(64))a04)[2];
 
-#if 0
-  inline void load_8x2_tr( const void * ALIGNED(8) a0,
-                           const void * ALIGNED(8) a1,
-                           const void * ALIGNED(8) a2,
-                           const void * ALIGNED(8) a3,
-			   const void * ALIGNED(8) a4,
-                           const void * ALIGNED(8) a5,
-                           const void * ALIGNED(8) a6,
-                           const void * ALIGNED(8) a7,
-                           v8 &a, v8 &b )
-  {
-    a.i[0] = ((const int * ALIGNED(8))a0)[0];
-    b.i[0] = ((const int * ALIGNED(8))a0)[1];
+    a.i[ 5] = ((const int * ALIGNED(64))a05)[0];
+    b.i[ 5] = ((const int * ALIGNED(64))a05)[1];
+    c.i[ 5] = ((const int * ALIGNED(64))a05)[2];
 
-    a.i[1] = ((const int * ALIGNED(8))a1)[0];
-    b.i[1] = ((const int * ALIGNED(8))a1)[1];
+    a.i[ 6] = ((const int * ALIGNED(64))a06)[0];
+    b.i[ 6] = ((const int * ALIGNED(64))a06)[1];
+    c.i[ 6] = ((const int * ALIGNED(64))a06)[2];
 
-    a.i[2] = ((const int * ALIGNED(8))a2)[0];
-    b.i[2] = ((const int * ALIGNED(8))a2)[1];
+    a.i[ 7] = ((const int * ALIGNED(64))a07)[0];
+    b.i[ 7] = ((const int * ALIGNED(64))a07)[1];
+    c.i[ 7] = ((const int * ALIGNED(64))a07)[2]; 
 
-    a.i[3] = ((const int * ALIGNED(8))a3)[0];
-    b.i[3] = ((const int * ALIGNED(8))a3)[1];
+    a.i[ 8] = ((const int * ALIGNED(64))a08)[0];
+    b.i[ 8] = ((const int * ALIGNED(64))a08)[1];
+    c.i[ 8] = ((const int * ALIGNED(64))a08)[2];
 
-    a.i[4] = ((const int * ALIGNED(8))a4)[0];
-    b.i[4] = ((const int * ALIGNED(8))a4)[1];
+    a.i[ 9] = ((const int * ALIGNED(64))a09)[0];
+    b.i[ 9] = ((const int * ALIGNED(64))a09)[1];
+    c.i[ 9] = ((const int * ALIGNED(64))a09)[2];
 
-    a.i[5] = ((const int * ALIGNED(8))a5)[0];
-    b.i[5] = ((const int * ALIGNED(8))a5)[1];
+    a.i[10] = ((const int * ALIGNED(64))a10)[0];
+    b.i[10] = ((const int * ALIGNED(64))a10)[1];
+    c.i[10] = ((const int * ALIGNED(64))a10)[2];
 
-    a.i[6] = ((const int * ALIGNED(8))a6)[0];
-    b.i[6] = ((const int * ALIGNED(8))a6)[1];
+    a.i[11] = ((const int * ALIGNED(64))a11)[0];
+    b.i[11] = ((const int * ALIGNED(64))a11)[1];
+    c.i[11] = ((const int * ALIGNED(64))a11)[2]; 
 
-    a.i[7] = ((const int * ALIGNED(8))a7)[0];
-    b.i[7] = ((const int * ALIGNED(8))a7)[1];
-  }
-#endif
+    a.i[12] = ((const int * ALIGNED(64))a12)[0];
+    b.i[12] = ((const int * ALIGNED(64))a12)[1];
+    c.i[12] = ((const int * ALIGNED(64))a12)[2];
 
-#if 0
-  inline void load_8x3_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
- 			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c )
-  {
-  }
-#endif
+    a.i[13] = ((const int * ALIGNED(64))a13)[0];
+    b.i[13] = ((const int * ALIGNED(64))a13)[1];
+    c.i[13] = ((const int * ALIGNED(64))a13)[2];
 
-  inline void load_8x3_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
- 			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c )
-  {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
+    a.i[14] = ((const int * ALIGNED(64))a14)[0];
+    b.i[14] = ((const int * ALIGNED(64))a14)[1];
+    c.i[14] = ((const int * ALIGNED(64))a14)[2];
 
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
-
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2]; 
-   }
-
-  inline void load_8x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d )
-  {
-    // __m128 ta0, ta1, ta2, ta3, ta4, ta5, ta6, ta7;
-
-    __m256 row0, row1, row2, row3;
-    __m256 tmp0, tmp1, tmp2, tmp3;
-
-    // Method 1.
-    // ta0 = _mm_load_ps( (const float *)a0 );
-    // ta1 = _mm_load_ps( (const float *)a1 );
-    // ta2 = _mm_load_ps( (const float *)a2 );
-    // ta3 = _mm_load_ps( (const float *)a3 );
-    // ta4 = _mm_load_ps( (const float *)a4 );
-    // ta5 = _mm_load_ps( (const float *)a5 );
-    // ta6 = _mm_load_ps( (const float *)a6 );
-    // ta7 = _mm_load_ps( (const float *)a7 );
-
-    // row0 = _mm256_setr_m128( ta0, ta4 );
-    // row1 = _mm256_setr_m128( ta1, ta5 );
-    // row2 = _mm256_setr_m128( ta2, ta6 );
-    // row3 = _mm256_setr_m128( ta3, ta7 );
-
-    row0 = _mm256_setr_m128( _mm_load_ps( (const float *)a0 ),
-			     _mm_load_ps( (const float *)a4 ) );
-    row1 = _mm256_setr_m128( _mm_load_ps( (const float *)a1 ),
-			     _mm_load_ps( (const float *)a5 ) );
-    row2 = _mm256_setr_m128( _mm_load_ps( (const float *)a2 ),
-			     _mm_load_ps( (const float *)a6 ) );
-    row3 = _mm256_setr_m128( _mm_load_ps( (const float *)a3 ),
-			     _mm_load_ps( (const float *)a7 ) );
-
-    // Method 2.
-    // row0 = _mm256_loadu2_m128( (const float *)a4, (const float *)a0 );
-    // row1 = _mm256_loadu2_m128( (const float *)a5, (const float *)a1 );
-    // row2 = _mm256_loadu2_m128( (const float *)a6, (const float *)a2 );
-    // row3 = _mm256_loadu2_m128( (const float *)a7, (const float *)a3 );
-
-    // Method 3.  Does not compile.
-    // row0 = _mm256_setr_m128( (const __m128 *)a0, (const __m128 *)a4 );
-    // row1 = _mm256_setr_m128( (const __m128 *)a1, (const __m128 *)a5 );
-    // row2 = _mm256_setr_m128( (const __m128 *)a2, (const __m128 *)a6 );
-    // row3 = _mm256_setr_m128( (const __m128 *)a3, (const __m128 *)a7 );
-
-    // Method 4.  Does not compile.
-    // row0 = _mm256_castps128_ps256( (__m128 *)a0 );
-    // row1 = _mm256_castps128_ps256( (__m128 *)a1 );
-    // row2 = _mm256_castps128_ps256( (__m128 *)a2 );
-    // row3 = _mm256_castps128_ps256( (__m128 *)a3 );
-
-    // row0 = _mm256_insertf128_ps( row0, (__m128 *)a4, 1 );
-    // row1 = _mm256_insertf128_ps( row1, (__m128 *)a5, 1 );
-    // row2 = _mm256_insertf128_ps( row2, (__m128 *)a6, 1 );
-    // row3 = _mm256_insertf128_ps( row3, (__m128 *)a7, 1 );
-
-    tmp0 = _mm256_shuffle_ps( row0, row1, 0x44 );
-    tmp2 = _mm256_shuffle_ps( row0, row1, 0xEE );
-    tmp1 = _mm256_shuffle_ps( row2, row3, 0x44 );
-    tmp3 = _mm256_shuffle_ps( row2, row3, 0xEE );
-
-    a.v = _mm256_shuffle_ps( tmp0, tmp1, 0x88 );
-    b.v = _mm256_shuffle_ps( tmp0, tmp1, 0xDD );
-    c.v = _mm256_shuffle_ps( tmp2, tmp3, 0x88 );
-    d.v = _mm256_shuffle_ps( tmp2, tmp3, 0xDD );
-
-    //    void Transpose8x4(__m256 dst[4], __m128 src[8]) {
-    //  __m256 row0 = _mm256_setr_m128(src[0], src[4]);
-    //  __m256 row1 = _mm256_setr_m128(src[1], src[5]);
-    //  __m256 row2 = _mm256_setr_m128(src[2], src[6]);
-    //  __m256 row3 = _mm256_setr_m128(src[3], src[7]);
-    //  __m256 tmp3, tmp2, tmp1, tmp0;
-    //  tmp0 = _mm256_shuffle_ps(row0, row1, 0x44);
-    //  tmp2 = _mm256_shuffle_ps(row0, row1, 0xEE);
-    //  tmp1 = _mm256_shuffle_ps(row2, row3, 0x44);
-    //  tmp3 = _mm256_shuffle_ps(row2, row3, 0xEE);
-    //  row0 = _mm256_shuffle_ps(tmp0, tmp1, 0x88);
-    //  row1 = _mm256_shuffle_ps(tmp0, tmp1, 0xDD);
-    //  row2 = _mm256_shuffle_ps(tmp2, tmp3, 0x88);
-    //  row3 = _mm256_shuffle_ps(tmp2, tmp3, 0xDD);
-    //  dst[0] = row0; dst[1] = row1; dst[2] = row2; dst[3] = row3;
-    //}
+    a.i[15] = ((const int * ALIGNED(64))a15)[0];
+    b.i[15] = ((const int * ALIGNED(64))a15)[1];
+    c.i[15] = ((const int * ALIGNED(64))a15)[2]; 
   }
 
-#if 0
-  inline void load_8x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d )
+  inline void load_16x4_tr( const void * ALIGNED(64) a00,
+			    const void * ALIGNED(64) a01,
+			    const void * ALIGNED(64) a02,
+			    const void * ALIGNED(64) a03,
+			    const void * ALIGNED(64) a04,
+			    const void * ALIGNED(64) a05,
+			    const void * ALIGNED(64) a06,
+			    const void * ALIGNED(64) a07,
+			    const void * ALIGNED(64) a08,
+			    const void * ALIGNED(64) a09,
+			    const void * ALIGNED(64) a10,
+			    const void * ALIGNED(64) a11,
+			    const void * ALIGNED(64) a12,
+			    const void * ALIGNED(64) a13,
+			    const void * ALIGNED(64) a14,
+			    const void * ALIGNED(64) a15,
+			    v16 &a, v16 &b, v16 &c, v16 &d )
   {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
+    a.i[ 0] = ((const int * ALIGNED(64))a00)[0];
+    b.i[ 0] = ((const int * ALIGNED(64))a00)[1];
+    c.i[ 0] = ((const int * ALIGNED(64))a00)[2];
+    d.i[ 0] = ((const int * ALIGNED(64))a00)[3];
 
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
+    a.i[ 1] = ((const int * ALIGNED(64))a01)[0];
+    b.i[ 1] = ((const int * ALIGNED(64))a01)[1];
+    c.i[ 1] = ((const int * ALIGNED(64))a01)[2];
+    d.i[ 1] = ((const int * ALIGNED(64))a01)[3];
 
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
+    a.i[ 2] = ((const int * ALIGNED(64))a02)[0];
+    b.i[ 2] = ((const int * ALIGNED(64))a02)[1];
+    c.i[ 2] = ((const int * ALIGNED(64))a02)[2];
+    d.i[ 2] = ((const int * ALIGNED(64))a02)[3];
 
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
+    a.i[ 3] = ((const int * ALIGNED(64))a03)[0];
+    b.i[ 3] = ((const int * ALIGNED(64))a03)[1];
+    c.i[ 3] = ((const int * ALIGNED(64))a03)[2];
+    d.i[ 3] = ((const int * ALIGNED(64))a03)[3];
 
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    d.i[4] = ((const int * ALIGNED(16))a4)[3];
+    a.i[ 4] = ((const int * ALIGNED(64))a04)[0];
+    b.i[ 4] = ((const int * ALIGNED(64))a04)[1];
+    c.i[ 4] = ((const int * ALIGNED(64))a04)[2];
+    d.i[ 4] = ((const int * ALIGNED(64))a04)[3];
 
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    d.i[5] = ((const int * ALIGNED(16))a5)[3];
+    a.i[ 5] = ((const int * ALIGNED(64))a05)[0];
+    b.i[ 5] = ((const int * ALIGNED(64))a05)[1];
+    c.i[ 5] = ((const int * ALIGNED(64))a05)[2];
+    d.i[ 5] = ((const int * ALIGNED(64))a05)[3];
 
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    d.i[6] = ((const int * ALIGNED(16))a6)[3];
+    a.i[ 6] = ((const int * ALIGNED(64))a06)[0];
+    b.i[ 6] = ((const int * ALIGNED(64))a06)[1];
+    c.i[ 6] = ((const int * ALIGNED(64))a06)[2];
+    d.i[ 6] = ((const int * ALIGNED(64))a06)[3];
 
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2];
-    d.i[7] = ((const int * ALIGNED(16))a7)[3];
-  }
-#endif
+    a.i[ 7] = ((const int * ALIGNED(64))a07)[0];
+    b.i[ 7] = ((const int * ALIGNED(64))a07)[1];
+    c.i[ 7] = ((const int * ALIGNED(64))a07)[2];
+    d.i[ 7] = ((const int * ALIGNED(64))a07)[3];
 
-  inline void load_8x8_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d,
-                           v8 &e, v8 &f, v8 &g, v8 &h )
-  {
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+    a.i[ 8] = ((const int * ALIGNED(64))a08)[0];
+    b.i[ 8] = ((const int * ALIGNED(64))a08)[1];
+    c.i[ 8] = ((const int * ALIGNED(64))a08)[2];
+    d.i[ 8] = ((const int * ALIGNED(64))a08)[3];
 
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    a.i[ 9] = ((const int * ALIGNED(64))a09)[0];
+    b.i[ 9] = ((const int * ALIGNED(64))a09)[1];
+    c.i[ 9] = ((const int * ALIGNED(64))a09)[2];
+    d.i[ 9] = ((const int * ALIGNED(64))a09)[3];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+    a.i[10] = ((const int * ALIGNED(64))a10)[0];
+    b.i[10] = ((const int * ALIGNED(64))a10)[1];
+    c.i[10] = ((const int * ALIGNED(64))a10)[2];
+    d.i[10] = ((const int * ALIGNED(64))a10)[3];
 
-    a_v = _mm256_load_ps( (const float *)a0 );
-    b_v = _mm256_load_ps( (const float *)a1 );
-    c_v = _mm256_load_ps( (const float *)a2 );
-    d_v = _mm256_load_ps( (const float *)a3 );
-    e_v = _mm256_load_ps( (const float *)a4 );
-    f_v = _mm256_load_ps( (const float *)a5 );
-    g_v = _mm256_load_ps( (const float *)a6 );
-    h_v = _mm256_load_ps( (const float *)a7 );
+    a.i[11] = ((const int * ALIGNED(64))a11)[0];
+    b.i[11] = ((const int * ALIGNED(64))a11)[1];
+    c.i[11] = ((const int * ALIGNED(64))a11)[2];
+    d.i[11] = ((const int * ALIGNED(64))a11)[3];
 
-    t0 = _mm256_unpacklo_ps( a_v, b_v );
-    t1 = _mm256_unpackhi_ps( a_v, b_v );
-    t2 = _mm256_unpacklo_ps( c_v, d_v );
-    t3 = _mm256_unpackhi_ps( c_v, d_v );
-    t4 = _mm256_unpacklo_ps( e_v, f_v );
-    t5 = _mm256_unpackhi_ps( e_v, f_v );
-    t6 = _mm256_unpacklo_ps( g_v, h_v );
-    t7 = _mm256_unpackhi_ps( g_v, h_v );
+    a.i[12] = ((const int * ALIGNED(64))a12)[0];
+    b.i[12] = ((const int * ALIGNED(64))a12)[1];
+    c.i[12] = ((const int * ALIGNED(64))a12)[2];
+    d.i[12] = ((const int * ALIGNED(64))a12)[3];
 
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    a.i[13] = ((const int * ALIGNED(64))a13)[0];
+    b.i[13] = ((const int * ALIGNED(64))a13)[1];
+    c.i[13] = ((const int * ALIGNED(64))a13)[2];
+    d.i[13] = ((const int * ALIGNED(64))a13)[3];
 
-    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    a.i[14] = ((const int * ALIGNED(64))a14)[0];
+    b.i[14] = ((const int * ALIGNED(64))a14)[1];
+    c.i[14] = ((const int * ALIGNED(64))a14)[2];
+    d.i[14] = ((const int * ALIGNED(64))a14)[3];
+
+    a.i[15] = ((const int * ALIGNED(64))a15)[0];
+    b.i[15] = ((const int * ALIGNED(64))a15)[1];
+    c.i[15] = ((const int * ALIGNED(64))a15)[2];
+    d.i[15] = ((const int * ALIGNED(64))a15)[3];
   }
 
-  //--------------------------------------------------------------------
-  inline void load_8x8_tr_v0( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      const void * ALIGNED(16) a4,
-			      const void * ALIGNED(16) a5,
-			      const void * ALIGNED(16) a6,
-			      const void * ALIGNED(16) a7,
-			      v8 &a, v8 &b, v8 &c, v8 &d,
-			      v8 &e, v8 &f, v8 &g, v8 &h )
+  inline void load_16x8_tr( const void * ALIGNED(64) a00,
+			    const void * ALIGNED(64) a01,
+			    const void * ALIGNED(64) a02,
+			    const void * ALIGNED(64) a03,
+			    const void * ALIGNED(64) a04,
+			    const void * ALIGNED(64) a05,
+			    const void * ALIGNED(64) a06,
+			    const void * ALIGNED(64) a07,
+			    const void * ALIGNED(64) a08,
+			    const void * ALIGNED(64) a09,
+			    const void * ALIGNED(64) a10,
+			    const void * ALIGNED(64) a11,
+			    const void * ALIGNED(64) a12,
+			    const void * ALIGNED(64) a13,
+			    const void * ALIGNED(64) a14,
+			    const void * ALIGNED(64) a15,
+			    v16 &a, v16 &b, v16 &c, v16 &d,
+			    v16 &e, v16 &f, v16 &g, v16 &h )
   {
-#if 0
-    a.v = _mm256_load_ps( (const float *)a0 );
-    b.v = _mm256_load_ps( (const float *)a1 );
-    c.v = _mm256_load_ps( (const float *)a2 );
-    d.v = _mm256_load_ps( (const float *)a3 );
-    e.v = _mm256_load_ps( (const float *)a4 );
-    f.v = _mm256_load_ps( (const float *)a5 );
-    g.v = _mm256_load_ps( (const float *)a6 );
-    h.v = _mm256_load_ps( (const float *)a7 );
-#endif
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+    a.i[ 0] = ((const int * ALIGNED(64))a00)[0];
+    b.i[ 0] = ((const int * ALIGNED(64))a00)[1];
+    c.i[ 0] = ((const int * ALIGNED(64))a00)[2];
+    d.i[ 0] = ((const int * ALIGNED(64))a00)[3];
+    e.i[ 0] = ((const int * ALIGNED(64))a00)[4];
+    f.i[ 0] = ((const int * ALIGNED(64))a00)[5];
+    g.i[ 0] = ((const int * ALIGNED(64))a00)[6];
+    h.i[ 0] = ((const int * ALIGNED(64))a00)[7];
 
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    a.i[ 1] = ((const int * ALIGNED(64))a01)[0];
+    b.i[ 1] = ((const int * ALIGNED(64))a01)[1];
+    c.i[ 1] = ((const int * ALIGNED(64))a01)[2];
+    d.i[ 1] = ((const int * ALIGNED(64))a01)[3];
+    e.i[ 1] = ((const int * ALIGNED(64))a01)[4];
+    f.i[ 1] = ((const int * ALIGNED(64))a01)[5];
+    g.i[ 1] = ((const int * ALIGNED(64))a01)[6];
+    h.i[ 1] = ((const int * ALIGNED(64))a01)[7];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+    a.i[ 2] = ((const int * ALIGNED(64))a02)[0];
+    b.i[ 2] = ((const int * ALIGNED(64))a02)[1];
+    c.i[ 2] = ((const int * ALIGNED(64))a02)[2];
+    d.i[ 2] = ((const int * ALIGNED(64))a02)[3];
+    e.i[ 2] = ((const int * ALIGNED(64))a02)[4];
+    f.i[ 2] = ((const int * ALIGNED(64))a02)[5];
+    g.i[ 2] = ((const int * ALIGNED(64))a02)[6];
+    h.i[ 2] = ((const int * ALIGNED(64))a02)[7];
 
-    a_v = _mm256_load_ps( (const float *)a0 );
-    b_v = _mm256_load_ps( (const float *)a1 );
-    c_v = _mm256_load_ps( (const float *)a2 );
-    d_v = _mm256_load_ps( (const float *)a3 );
-    e_v = _mm256_load_ps( (const float *)a4 );
-    f_v = _mm256_load_ps( (const float *)a5 );
-    g_v = _mm256_load_ps( (const float *)a6 );
-    h_v = _mm256_load_ps( (const float *)a7 );
+    a.i[ 3] = ((const int * ALIGNED(64))a03)[0];
+    b.i[ 3] = ((const int * ALIGNED(64))a03)[1];
+    c.i[ 3] = ((const int * ALIGNED(64))a03)[2];
+    d.i[ 3] = ((const int * ALIGNED(64))a03)[3];
+    e.i[ 3] = ((const int * ALIGNED(64))a03)[4];
+    f.i[ 3] = ((const int * ALIGNED(64))a03)[5];
+    g.i[ 3] = ((const int * ALIGNED(64))a03)[6];
+    h.i[ 3] = ((const int * ALIGNED(64))a03)[7];
 
-    t0 = _mm256_unpacklo_ps( a_v, b_v );
-    t1 = _mm256_unpackhi_ps( a_v, b_v );
-    t2 = _mm256_unpacklo_ps( c_v, d_v );
-    t3 = _mm256_unpackhi_ps( c_v, d_v );
-    t4 = _mm256_unpacklo_ps( e_v, f_v );
-    t5 = _mm256_unpackhi_ps( e_v, f_v );
-    t6 = _mm256_unpacklo_ps( g_v, h_v );
-    t7 = _mm256_unpackhi_ps( g_v, h_v );
+    a.i[ 4] = ((const int * ALIGNED(64))a04)[0];
+    b.i[ 4] = ((const int * ALIGNED(64))a04)[1];
+    c.i[ 4] = ((const int * ALIGNED(64))a04)[2];
+    d.i[ 4] = ((const int * ALIGNED(64))a04)[3];
+    e.i[ 4] = ((const int * ALIGNED(64))a04)[4];
+    f.i[ 4] = ((const int * ALIGNED(64))a04)[5];
+    g.i[ 4] = ((const int * ALIGNED(64))a04)[6];
+    h.i[ 4] = ((const int * ALIGNED(64))a04)[7];
 
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    a.i[ 5] = ((const int * ALIGNED(64))a05)[0];
+    b.i[ 5] = ((const int * ALIGNED(64))a05)[1];
+    c.i[ 5] = ((const int * ALIGNED(64))a05)[2];
+    d.i[ 5] = ((const int * ALIGNED(64))a05)[3];
+    e.i[ 5] = ((const int * ALIGNED(64))a05)[4];
+    f.i[ 5] = ((const int * ALIGNED(64))a05)[5];
+    g.i[ 5] = ((const int * ALIGNED(64))a05)[6];
+    h.i[ 5] = ((const int * ALIGNED(64))a05)[7];
 
-    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    a.i[ 6] = ((const int * ALIGNED(64))a06)[0];
+    b.i[ 6] = ((const int * ALIGNED(64))a06)[1];
+    c.i[ 6] = ((const int * ALIGNED(64))a06)[2];
+    d.i[ 6] = ((const int * ALIGNED(64))a06)[3];
+    e.i[ 6] = ((const int * ALIGNED(64))a06)[4];
+    f.i[ 6] = ((const int * ALIGNED(64))a06)[5];
+    g.i[ 6] = ((const int * ALIGNED(64))a06)[6];
+    h.i[ 6] = ((const int * ALIGNED(64))a06)[7];
+
+    a.i[ 7] = ((const int * ALIGNED(64))a07)[0];
+    b.i[ 7] = ((const int * ALIGNED(64))a07)[1];
+    c.i[ 7] = ((const int * ALIGNED(64))a07)[2];
+    d.i[ 7] = ((const int * ALIGNED(64))a07)[3];
+    e.i[ 7] = ((const int * ALIGNED(64))a07)[4];
+    f.i[ 7] = ((const int * ALIGNED(64))a07)[5];
+    g.i[ 7] = ((const int * ALIGNED(64))a07)[6];
+    h.i[ 7] = ((const int * ALIGNED(64))a07)[7];
+
+    a.i[ 8] = ((const int * ALIGNED(64))a08)[0];
+    b.i[ 8] = ((const int * ALIGNED(64))a08)[1];
+    c.i[ 8] = ((const int * ALIGNED(64))a08)[2];
+    d.i[ 8] = ((const int * ALIGNED(64))a08)[3];
+    e.i[ 8] = ((const int * ALIGNED(64))a08)[4];
+    f.i[ 8] = ((const int * ALIGNED(64))a08)[5];
+    g.i[ 8] = ((const int * ALIGNED(64))a08)[6];
+    h.i[ 8] = ((const int * ALIGNED(64))a08)[7];
+
+    a.i[ 9] = ((const int * ALIGNED(64))a09)[0];
+    b.i[ 9] = ((const int * ALIGNED(64))a09)[1];
+    c.i[ 9] = ((const int * ALIGNED(64))a09)[2];
+    d.i[ 9] = ((const int * ALIGNED(64))a09)[3];
+    e.i[ 9] = ((const int * ALIGNED(64))a09)[4];
+    f.i[ 9] = ((const int * ALIGNED(64))a09)[5];
+    g.i[ 9] = ((const int * ALIGNED(64))a09)[6];
+    h.i[ 9] = ((const int * ALIGNED(64))a09)[7];
+
+    a.i[10] = ((const int * ALIGNED(64))a10)[0];
+    b.i[10] = ((const int * ALIGNED(64))a10)[1];
+    c.i[10] = ((const int * ALIGNED(64))a10)[2];
+    d.i[10] = ((const int * ALIGNED(64))a10)[3];
+    e.i[10] = ((const int * ALIGNED(64))a10)[4];
+    f.i[10] = ((const int * ALIGNED(64))a10)[5];
+    g.i[10] = ((const int * ALIGNED(64))a10)[6];
+    h.i[10] = ((const int * ALIGNED(64))a10)[7];
+
+    a.i[11] = ((const int * ALIGNED(64))a11)[0];
+    b.i[11] = ((const int * ALIGNED(64))a11)[1];
+    c.i[11] = ((const int * ALIGNED(64))a11)[2];
+    d.i[11] = ((const int * ALIGNED(64))a11)[3];
+    e.i[11] = ((const int * ALIGNED(64))a11)[4];
+    f.i[11] = ((const int * ALIGNED(64))a11)[5];
+    g.i[11] = ((const int * ALIGNED(64))a11)[6];
+    h.i[11] = ((const int * ALIGNED(64))a11)[7];
+
+    a.i[12] = ((const int * ALIGNED(64))a12)[0];
+    b.i[12] = ((const int * ALIGNED(64))a12)[1];
+    c.i[12] = ((const int * ALIGNED(64))a12)[2];
+    d.i[12] = ((const int * ALIGNED(64))a12)[3];
+    e.i[12] = ((const int * ALIGNED(64))a12)[4];
+    f.i[12] = ((const int * ALIGNED(64))a12)[5];
+    g.i[12] = ((const int * ALIGNED(64))a12)[6];
+    h.i[12] = ((const int * ALIGNED(64))a12)[7];
+
+    a.i[13] = ((const int * ALIGNED(64))a13)[0];
+    b.i[13] = ((const int * ALIGNED(64))a13)[1];
+    c.i[13] = ((const int * ALIGNED(64))a13)[2];
+    d.i[13] = ((const int * ALIGNED(64))a13)[3];
+    e.i[13] = ((const int * ALIGNED(64))a13)[4];
+    f.i[13] = ((const int * ALIGNED(64))a13)[5];
+    g.i[13] = ((const int * ALIGNED(64))a13)[6];
+    h.i[13] = ((const int * ALIGNED(64))a13)[7];
+
+    a.i[14] = ((const int * ALIGNED(64))a14)[0];
+    b.i[14] = ((const int * ALIGNED(64))a14)[1];
+    c.i[14] = ((const int * ALIGNED(64))a14)[2];
+    d.i[14] = ((const int * ALIGNED(64))a14)[3];
+    e.i[14] = ((const int * ALIGNED(64))a14)[4];
+    f.i[14] = ((const int * ALIGNED(64))a14)[5];
+    g.i[14] = ((const int * ALIGNED(64))a14)[6];
+    h.i[14] = ((const int * ALIGNED(64))a14)[7];
+
+    a.i[15] = ((const int * ALIGNED(64))a15)[0];
+    b.i[15] = ((const int * ALIGNED(64))a15)[1];
+    c.i[15] = ((const int * ALIGNED(64))a15)[2];
+    d.i[15] = ((const int * ALIGNED(64))a15)[3];
+    e.i[15] = ((const int * ALIGNED(64))a15)[4];
+    f.i[15] = ((const int * ALIGNED(64))a15)[5];
+    g.i[15] = ((const int * ALIGNED(64))a15)[6];
+    h.i[15] = ((const int * ALIGNED(64))a15)[7];
   }
 
-  inline void load_8x8_tr_v1( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      const void * ALIGNED(16) a4,
-			      const void * ALIGNED(16) a5,
-			      const void * ALIGNED(16) a6,
-			      const void * ALIGNED(16) a7,
-			      v8 &a, v8 &b, v8 &c, v8 &d,
-			      v8 &e, v8 &f, v8 &g, v8 &h )
+  inline void load_16x16_tr( const void * ALIGNED(64) a00,
+			     const void * ALIGNED(64) a01,
+			     const void * ALIGNED(64) a02,
+			     const void * ALIGNED(64) a03,
+			     const void * ALIGNED(64) a04,
+			     const void * ALIGNED(64) a05,
+			     const void * ALIGNED(64) a06,
+			     const void * ALIGNED(64) a07,
+			     const void * ALIGNED(64) a08,
+			     const void * ALIGNED(64) a09,
+			     const void * ALIGNED(64) a10,
+			     const void * ALIGNED(64) a11,
+			     const void * ALIGNED(64) a12,
+			     const void * ALIGNED(64) a13,
+			     const void * ALIGNED(64) a14,
+			     const void * ALIGNED(64) a15,
+			     v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			     v16 &b04, v16 &b05, v16 &b06, v16 &b07,
+			     v16 &b08, v16 &b09, v16 &b10, v16 &b11,
+			     v16 &b12, v16 &b13, v16 &b14, v16 &b15 )
   {
-    a.v = _mm256_load_ps( (const float *)a0 );
-    b.v = _mm256_load_ps( (const float *)a1 );
-    c.v = _mm256_load_ps( (const float *)a2 );
-    d.v = _mm256_load_ps( (const float *)a3 );
-    e.v = _mm256_load_ps( (const float *)a4 );
-    f.v = _mm256_load_ps( (const float *)a5 );
-    g.v = _mm256_load_ps( (const float *)a6 );
-    h.v = _mm256_load_ps( (const float *)a7 );
-#if 0
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+    b00.i[ 0] = ((const int * ALIGNED(64))a00)[ 0];
+    b01.i[ 0] = ((const int * ALIGNED(64))a00)[ 1];
+    b02.i[ 0] = ((const int * ALIGNED(64))a00)[ 2];
+    b03.i[ 0] = ((const int * ALIGNED(64))a00)[ 3];
+    b04.i[ 0] = ((const int * ALIGNED(64))a00)[ 4];
+    b05.i[ 0] = ((const int * ALIGNED(64))a00)[ 5];
+    b06.i[ 0] = ((const int * ALIGNED(64))a00)[ 6];
+    b07.i[ 0] = ((const int * ALIGNED(64))a00)[ 7];
+    b08.i[ 0] = ((const int * ALIGNED(64))a00)[ 8];
+    b09.i[ 0] = ((const int * ALIGNED(64))a00)[ 9];
+    b10.i[ 0] = ((const int * ALIGNED(64))a00)[10];
+    b11.i[ 0] = ((const int * ALIGNED(64))a00)[11];
+    b12.i[ 0] = ((const int * ALIGNED(64))a00)[12];
+    b13.i[ 0] = ((const int * ALIGNED(64))a00)[13];
+    b14.i[ 0] = ((const int * ALIGNED(64))a00)[14];
+    b15.i[ 0] = ((const int * ALIGNED(64))a00)[15];
 
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    b00.i[ 1] = ((const int * ALIGNED(64))a01)[ 0];
+    b01.i[ 1] = ((const int * ALIGNED(64))a01)[ 1];
+    b02.i[ 1] = ((const int * ALIGNED(64))a01)[ 2];
+    b03.i[ 1] = ((const int * ALIGNED(64))a01)[ 3];
+    b04.i[ 1] = ((const int * ALIGNED(64))a01)[ 4];
+    b05.i[ 1] = ((const int * ALIGNED(64))a01)[ 5];
+    b06.i[ 1] = ((const int * ALIGNED(64))a01)[ 6];
+    b07.i[ 1] = ((const int * ALIGNED(64))a01)[ 7];
+    b08.i[ 1] = ((const int * ALIGNED(64))a01)[ 8];
+    b09.i[ 1] = ((const int * ALIGNED(64))a01)[ 9];
+    b10.i[ 1] = ((const int * ALIGNED(64))a01)[10];
+    b11.i[ 1] = ((const int * ALIGNED(64))a01)[11];
+    b12.i[ 1] = ((const int * ALIGNED(64))a01)[12];
+    b13.i[ 1] = ((const int * ALIGNED(64))a01)[13];
+    b14.i[ 1] = ((const int * ALIGNED(64))a01)[14];
+    b15.i[ 1] = ((const int * ALIGNED(64))a01)[15];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+    b00.i[ 2] = ((const int * ALIGNED(64))a02)[ 0];
+    b01.i[ 2] = ((const int * ALIGNED(64))a02)[ 1];
+    b02.i[ 2] = ((const int * ALIGNED(64))a02)[ 2];
+    b03.i[ 2] = ((const int * ALIGNED(64))a02)[ 3];
+    b04.i[ 2] = ((const int * ALIGNED(64))a02)[ 4];
+    b05.i[ 2] = ((const int * ALIGNED(64))a02)[ 5];
+    b06.i[ 2] = ((const int * ALIGNED(64))a02)[ 6];
+    b07.i[ 2] = ((const int * ALIGNED(64))a02)[ 7];
+    b08.i[ 2] = ((const int * ALIGNED(64))a02)[ 8];
+    b09.i[ 2] = ((const int * ALIGNED(64))a02)[ 9];
+    b10.i[ 2] = ((const int * ALIGNED(64))a02)[10];
+    b11.i[ 2] = ((const int * ALIGNED(64))a02)[11];
+    b12.i[ 2] = ((const int * ALIGNED(64))a02)[12];
+    b13.i[ 2] = ((const int * ALIGNED(64))a02)[13];
+    b14.i[ 2] = ((const int * ALIGNED(64))a02)[14];
+    b15.i[ 2] = ((const int * ALIGNED(64))a02)[15];
 
-    a_v = _mm256_load_ps( (const float *)a0 );
-    b_v = _mm256_load_ps( (const float *)a1 );
-    c_v = _mm256_load_ps( (const float *)a2 );
-    d_v = _mm256_load_ps( (const float *)a3 );
-    e_v = _mm256_load_ps( (const float *)a4 );
-    f_v = _mm256_load_ps( (const float *)a5 );
-    g_v = _mm256_load_ps( (const float *)a6 );
-    h_v = _mm256_load_ps( (const float *)a7 );
+    b00.i[ 3] = ((const int * ALIGNED(64))a03)[ 0];
+    b01.i[ 3] = ((const int * ALIGNED(64))a03)[ 1];
+    b02.i[ 3] = ((const int * ALIGNED(64))a03)[ 2];
+    b03.i[ 3] = ((const int * ALIGNED(64))a03)[ 3];
+    b04.i[ 3] = ((const int * ALIGNED(64))a03)[ 4];
+    b05.i[ 3] = ((const int * ALIGNED(64))a03)[ 5];
+    b06.i[ 3] = ((const int * ALIGNED(64))a03)[ 6];
+    b07.i[ 3] = ((const int * ALIGNED(64))a03)[ 7];
+    b08.i[ 3] = ((const int * ALIGNED(64))a03)[ 8];
+    b09.i[ 3] = ((const int * ALIGNED(64))a03)[ 9];
+    b10.i[ 3] = ((const int * ALIGNED(64))a03)[10];
+    b11.i[ 3] = ((const int * ALIGNED(64))a03)[11];
+    b12.i[ 3] = ((const int * ALIGNED(64))a03)[12];
+    b13.i[ 3] = ((const int * ALIGNED(64))a03)[13];
+    b14.i[ 3] = ((const int * ALIGNED(64))a03)[14];
+    b15.i[ 3] = ((const int * ALIGNED(64))a03)[15];
 
-    t0 = _mm256_unpacklo_ps( a_v, b_v );
-    t1 = _mm256_unpackhi_ps( a_v, b_v );
-    t2 = _mm256_unpacklo_ps( c_v, d_v );
-    t3 = _mm256_unpackhi_ps( c_v, d_v );
-    t4 = _mm256_unpacklo_ps( e_v, f_v );
-    t5 = _mm256_unpackhi_ps( e_v, f_v );
-    t6 = _mm256_unpacklo_ps( g_v, h_v );
-    t7 = _mm256_unpackhi_ps( g_v, h_v );
+    b00.i[ 4] = ((const int * ALIGNED(64))a04)[ 0];
+    b01.i[ 4] = ((const int * ALIGNED(64))a04)[ 1];
+    b02.i[ 4] = ((const int * ALIGNED(64))a04)[ 2];
+    b03.i[ 4] = ((const int * ALIGNED(64))a04)[ 3];
+    b04.i[ 4] = ((const int * ALIGNED(64))a04)[ 4];
+    b05.i[ 4] = ((const int * ALIGNED(64))a04)[ 5];
+    b06.i[ 4] = ((const int * ALIGNED(64))a04)[ 6];
+    b07.i[ 4] = ((const int * ALIGNED(64))a04)[ 7];
+    b08.i[ 4] = ((const int * ALIGNED(64))a04)[ 8];
+    b09.i[ 4] = ((const int * ALIGNED(64))a04)[ 9];
+    b10.i[ 4] = ((const int * ALIGNED(64))a04)[10];
+    b11.i[ 4] = ((const int * ALIGNED(64))a04)[11];
+    b12.i[ 4] = ((const int * ALIGNED(64))a04)[12];
+    b13.i[ 4] = ((const int * ALIGNED(64))a04)[13];
+    b14.i[ 4] = ((const int * ALIGNED(64))a04)[14];
+    b15.i[ 4] = ((const int * ALIGNED(64))a04)[15];
 
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    b00.i[ 5] = ((const int * ALIGNED(64))a05)[ 0];
+    b01.i[ 5] = ((const int * ALIGNED(64))a05)[ 1];
+    b02.i[ 5] = ((const int * ALIGNED(64))a05)[ 2];
+    b03.i[ 5] = ((const int * ALIGNED(64))a05)[ 3];
+    b04.i[ 5] = ((const int * ALIGNED(64))a05)[ 4];
+    b05.i[ 5] = ((const int * ALIGNED(64))a05)[ 5];
+    b06.i[ 5] = ((const int * ALIGNED(64))a05)[ 6];
+    b07.i[ 5] = ((const int * ALIGNED(64))a05)[ 7];
+    b08.i[ 5] = ((const int * ALIGNED(64))a05)[ 8];
+    b09.i[ 5] = ((const int * ALIGNED(64))a05)[ 9];
+    b10.i[ 5] = ((const int * ALIGNED(64))a05)[10];
+    b11.i[ 5] = ((const int * ALIGNED(64))a05)[11];
+    b12.i[ 5] = ((const int * ALIGNED(64))a05)[12];
+    b13.i[ 5] = ((const int * ALIGNED(64))a05)[13];
+    b14.i[ 5] = ((const int * ALIGNED(64))a05)[14];
+    b15.i[ 5] = ((const int * ALIGNED(64))a05)[15];
 
-    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-#endif
+    b00.i[ 6] = ((const int * ALIGNED(64))a06)[ 0];
+    b01.i[ 6] = ((const int * ALIGNED(64))a06)[ 1];
+    b02.i[ 6] = ((const int * ALIGNED(64))a06)[ 2];
+    b03.i[ 6] = ((const int * ALIGNED(64))a06)[ 3];
+    b04.i[ 6] = ((const int * ALIGNED(64))a06)[ 4];
+    b05.i[ 6] = ((const int * ALIGNED(64))a06)[ 5];
+    b06.i[ 6] = ((const int * ALIGNED(64))a06)[ 6];
+    b07.i[ 6] = ((const int * ALIGNED(64))a06)[ 7];
+    b08.i[ 6] = ((const int * ALIGNED(64))a06)[ 8];
+    b09.i[ 6] = ((const int * ALIGNED(64))a06)[ 9];
+    b10.i[ 6] = ((const int * ALIGNED(64))a06)[10];
+    b11.i[ 6] = ((const int * ALIGNED(64))a06)[11];
+    b12.i[ 6] = ((const int * ALIGNED(64))a06)[12];
+    b13.i[ 6] = ((const int * ALIGNED(64))a06)[13];
+    b14.i[ 6] = ((const int * ALIGNED(64))a06)[14];
+    b15.i[ 6] = ((const int * ALIGNED(64))a06)[15];
+
+    b00.i[ 7] = ((const int * ALIGNED(64))a07)[ 0];
+    b01.i[ 7] = ((const int * ALIGNED(64))a07)[ 1];
+    b02.i[ 7] = ((const int * ALIGNED(64))a07)[ 2];
+    b03.i[ 7] = ((const int * ALIGNED(64))a07)[ 3];
+    b04.i[ 7] = ((const int * ALIGNED(64))a07)[ 4];
+    b05.i[ 7] = ((const int * ALIGNED(64))a07)[ 5];
+    b06.i[ 7] = ((const int * ALIGNED(64))a07)[ 6];
+    b07.i[ 7] = ((const int * ALIGNED(64))a07)[ 7];
+    b08.i[ 7] = ((const int * ALIGNED(64))a07)[ 8];
+    b09.i[ 7] = ((const int * ALIGNED(64))a07)[ 9];
+    b10.i[ 7] = ((const int * ALIGNED(64))a07)[10];
+    b11.i[ 7] = ((const int * ALIGNED(64))a07)[11];
+    b12.i[ 7] = ((const int * ALIGNED(64))a07)[12];
+    b13.i[ 7] = ((const int * ALIGNED(64))a07)[13];
+    b14.i[ 7] = ((const int * ALIGNED(64))a07)[14];
+    b15.i[ 7] = ((const int * ALIGNED(64))a07)[15];
+
+    b00.i[ 8] = ((const int * ALIGNED(64))a08)[ 0];
+    b01.i[ 8] = ((const int * ALIGNED(64))a08)[ 1];
+    b02.i[ 8] = ((const int * ALIGNED(64))a08)[ 2];
+    b03.i[ 8] = ((const int * ALIGNED(64))a08)[ 3];
+    b04.i[ 8] = ((const int * ALIGNED(64))a08)[ 4];
+    b05.i[ 8] = ((const int * ALIGNED(64))a08)[ 5];
+    b06.i[ 8] = ((const int * ALIGNED(64))a08)[ 6];
+    b07.i[ 8] = ((const int * ALIGNED(64))a08)[ 7];
+    b08.i[ 8] = ((const int * ALIGNED(64))a08)[ 8];
+    b09.i[ 8] = ((const int * ALIGNED(64))a08)[ 9];
+    b10.i[ 8] = ((const int * ALIGNED(64))a08)[10];
+    b11.i[ 8] = ((const int * ALIGNED(64))a08)[11];
+    b12.i[ 8] = ((const int * ALIGNED(64))a08)[12];
+    b13.i[ 8] = ((const int * ALIGNED(64))a08)[13];
+    b14.i[ 8] = ((const int * ALIGNED(64))a08)[14];
+    b15.i[ 8] = ((const int * ALIGNED(64))a08)[15];
+
+    b00.i[ 9] = ((const int * ALIGNED(64))a09)[ 0];
+    b01.i[ 9] = ((const int * ALIGNED(64))a09)[ 1];
+    b02.i[ 9] = ((const int * ALIGNED(64))a09)[ 2];
+    b03.i[ 9] = ((const int * ALIGNED(64))a09)[ 3];
+    b04.i[ 9] = ((const int * ALIGNED(64))a09)[ 4];
+    b05.i[ 9] = ((const int * ALIGNED(64))a09)[ 5];
+    b06.i[ 9] = ((const int * ALIGNED(64))a09)[ 6];
+    b07.i[ 9] = ((const int * ALIGNED(64))a09)[ 7];
+    b08.i[ 9] = ((const int * ALIGNED(64))a09)[ 8];
+    b09.i[ 9] = ((const int * ALIGNED(64))a09)[ 9];
+    b10.i[ 9] = ((const int * ALIGNED(64))a09)[10];
+    b11.i[ 9] = ((const int * ALIGNED(64))a09)[11];
+    b12.i[ 9] = ((const int * ALIGNED(64))a09)[12];
+    b13.i[ 9] = ((const int * ALIGNED(64))a09)[13];
+    b14.i[ 9] = ((const int * ALIGNED(64))a09)[14];
+    b15.i[ 9] = ((const int * ALIGNED(64))a09)[15];
+
+    b00.i[10] = ((const int * ALIGNED(64))a10)[ 0];
+    b01.i[10] = ((const int * ALIGNED(64))a10)[ 1];
+    b02.i[10] = ((const int * ALIGNED(64))a10)[ 2];
+    b03.i[10] = ((const int * ALIGNED(64))a10)[ 3];
+    b04.i[10] = ((const int * ALIGNED(64))a10)[ 4];
+    b05.i[10] = ((const int * ALIGNED(64))a10)[ 5];
+    b06.i[10] = ((const int * ALIGNED(64))a10)[ 6];
+    b07.i[10] = ((const int * ALIGNED(64))a10)[ 7];
+    b08.i[10] = ((const int * ALIGNED(64))a10)[ 8];
+    b09.i[10] = ((const int * ALIGNED(64))a10)[ 9];
+    b10.i[10] = ((const int * ALIGNED(64))a10)[10];
+    b11.i[10] = ((const int * ALIGNED(64))a10)[11];
+    b12.i[10] = ((const int * ALIGNED(64))a10)[12];
+    b13.i[10] = ((const int * ALIGNED(64))a10)[13];
+    b14.i[10] = ((const int * ALIGNED(64))a10)[14];
+    b15.i[10] = ((const int * ALIGNED(64))a10)[15];
+
+    b00.i[11] = ((const int * ALIGNED(64))a11)[ 0];
+    b01.i[11] = ((const int * ALIGNED(64))a11)[ 1];
+    b02.i[11] = ((const int * ALIGNED(64))a11)[ 2];
+    b03.i[11] = ((const int * ALIGNED(64))a11)[ 3];
+    b04.i[11] = ((const int * ALIGNED(64))a11)[ 4];
+    b05.i[11] = ((const int * ALIGNED(64))a11)[ 5];
+    b06.i[11] = ((const int * ALIGNED(64))a11)[ 6];
+    b07.i[11] = ((const int * ALIGNED(64))a11)[ 7];
+    b08.i[11] = ((const int * ALIGNED(64))a11)[ 8];
+    b09.i[11] = ((const int * ALIGNED(64))a11)[ 9];
+    b10.i[11] = ((const int * ALIGNED(64))a11)[10];
+    b11.i[11] = ((const int * ALIGNED(64))a11)[11];
+    b12.i[11] = ((const int * ALIGNED(64))a11)[12];
+    b13.i[11] = ((const int * ALIGNED(64))a11)[13];
+    b14.i[11] = ((const int * ALIGNED(64))a11)[14];
+    b15.i[11] = ((const int * ALIGNED(64))a11)[15];
+
+    b00.i[12] = ((const int * ALIGNED(64))a12)[ 0];
+    b01.i[12] = ((const int * ALIGNED(64))a12)[ 1];
+    b02.i[12] = ((const int * ALIGNED(64))a12)[ 2];
+    b03.i[12] = ((const int * ALIGNED(64))a12)[ 3];
+    b04.i[12] = ((const int * ALIGNED(64))a12)[ 4];
+    b05.i[12] = ((const int * ALIGNED(64))a12)[ 5];
+    b06.i[12] = ((const int * ALIGNED(64))a12)[ 6];
+    b07.i[12] = ((const int * ALIGNED(64))a12)[ 7];
+    b08.i[12] = ((const int * ALIGNED(64))a12)[ 8];
+    b09.i[12] = ((const int * ALIGNED(64))a12)[ 9];
+    b10.i[12] = ((const int * ALIGNED(64))a12)[10];
+    b11.i[12] = ((const int * ALIGNED(64))a12)[11];
+    b12.i[12] = ((const int * ALIGNED(64))a12)[12];
+    b13.i[12] = ((const int * ALIGNED(64))a12)[13];
+    b14.i[12] = ((const int * ALIGNED(64))a12)[14];
+    b15.i[12] = ((const int * ALIGNED(64))a12)[15];
+
+    b00.i[13] = ((const int * ALIGNED(64))a13)[ 0];
+    b01.i[13] = ((const int * ALIGNED(64))a13)[ 1];
+    b02.i[13] = ((const int * ALIGNED(64))a13)[ 2];
+    b03.i[13] = ((const int * ALIGNED(64))a13)[ 3];
+    b04.i[13] = ((const int * ALIGNED(64))a13)[ 4];
+    b05.i[13] = ((const int * ALIGNED(64))a13)[ 5];
+    b06.i[13] = ((const int * ALIGNED(64))a13)[ 6];
+    b07.i[13] = ((const int * ALIGNED(64))a13)[ 7];
+    b08.i[13] = ((const int * ALIGNED(64))a13)[ 8];
+    b09.i[13] = ((const int * ALIGNED(64))a13)[ 9];
+    b10.i[13] = ((const int * ALIGNED(64))a13)[10];
+    b11.i[13] = ((const int * ALIGNED(64))a13)[11];
+    b12.i[13] = ((const int * ALIGNED(64))a13)[12];
+    b13.i[13] = ((const int * ALIGNED(64))a13)[13];
+    b14.i[13] = ((const int * ALIGNED(64))a13)[14];
+    b15.i[13] = ((const int * ALIGNED(64))a13)[15];
+
+    b00.i[14] = ((const int * ALIGNED(64))a14)[ 0];
+    b01.i[14] = ((const int * ALIGNED(64))a14)[ 1];
+    b02.i[14] = ((const int * ALIGNED(64))a14)[ 2];
+    b03.i[14] = ((const int * ALIGNED(64))a14)[ 3];
+    b04.i[14] = ((const int * ALIGNED(64))a14)[ 4];
+    b05.i[14] = ((const int * ALIGNED(64))a14)[ 5];
+    b06.i[14] = ((const int * ALIGNED(64))a14)[ 6];
+    b07.i[14] = ((const int * ALIGNED(64))a14)[ 7];
+    b08.i[14] = ((const int * ALIGNED(64))a14)[ 8];
+    b09.i[14] = ((const int * ALIGNED(64))a14)[ 9];
+    b10.i[14] = ((const int * ALIGNED(64))a14)[10];
+    b11.i[14] = ((const int * ALIGNED(64))a14)[11];
+    b12.i[14] = ((const int * ALIGNED(64))a14)[12];
+    b13.i[14] = ((const int * ALIGNED(64))a14)[13];
+    b14.i[14] = ((const int * ALIGNED(64))a14)[14];
+    b15.i[14] = ((const int * ALIGNED(64))a14)[15];
+
+    b00.i[15] = ((const int * ALIGNED(64))a15)[ 0];
+    b01.i[15] = ((const int * ALIGNED(64))a15)[ 1];
+    b02.i[15] = ((const int * ALIGNED(64))a15)[ 2];
+    b03.i[15] = ((const int * ALIGNED(64))a15)[ 3];
+    b04.i[15] = ((const int * ALIGNED(64))a15)[ 4];
+    b05.i[15] = ((const int * ALIGNED(64))a15)[ 5];
+    b06.i[15] = ((const int * ALIGNED(64))a15)[ 6];
+    b07.i[15] = ((const int * ALIGNED(64))a15)[ 7];
+    b08.i[15] = ((const int * ALIGNED(64))a15)[ 8];
+    b09.i[15] = ((const int * ALIGNED(64))a15)[ 9];
+    b10.i[15] = ((const int * ALIGNED(64))a15)[10];
+    b11.i[15] = ((const int * ALIGNED(64))a15)[11];
+    b12.i[15] = ((const int * ALIGNED(64))a15)[12];
+    b13.i[15] = ((const int * ALIGNED(64))a15)[13];
+    b14.i[15] = ((const int * ALIGNED(64))a15)[14];
+    b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
 
-  inline void load_8x8_tr_v2( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      const void * ALIGNED(16) a4,
-			      const void * ALIGNED(16) a5,
-			      const void * ALIGNED(16) a6,
-			      const void * ALIGNED(16) a7,
-			      v8 &a, v8 &b, v8 &c, v8 &d,
-			      v8 &e, v8 &f, v8 &g, v8 &h )
+  inline void store_16x1_tr( const v16 &a,
+			     void *a00, void *a01, void *a02, void *a03,
+			     void *a04, void *a05, void *a06, void *a07,
+			     void *a08, void *a09, void *a10, void *a11,
+			     void *a12, void *a13, void *a14, void *a15 )
   {
-    a.v = _mm256_load_ps( (const float *)a0 );
-    b.v = _mm256_load_ps( (const float *)a1 );
-    c.v = _mm256_load_ps( (const float *)a2 );
-    d.v = _mm256_load_ps( (const float *)a3 );
-    e.v = _mm256_load_ps( (const float *)a4 );
-    f.v = _mm256_load_ps( (const float *)a5 );
-    g.v = _mm256_load_ps( (const float *)a6 );
-    h.v = _mm256_load_ps( (const float *)a7 );
-#if 0
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
-
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
-
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    a_v = _mm256_load_ps( (const float *)a0 );
-    b_v = _mm256_load_ps( (const float *)a1 );
-    c_v = _mm256_load_ps( (const float *)a2 );
-    d_v = _mm256_load_ps( (const float *)a3 );
-    e_v = _mm256_load_ps( (const float *)a4 );
-    f_v = _mm256_load_ps( (const float *)a5 );
-    g_v = _mm256_load_ps( (const float *)a6 );
-    h_v = _mm256_load_ps( (const float *)a7 );
-
-    t0 = _mm256_unpacklo_ps( a_v, b_v );
-    t1 = _mm256_unpackhi_ps( a_v, b_v );
-    t2 = _mm256_unpacklo_ps( c_v, d_v );
-    t3 = _mm256_unpackhi_ps( c_v, d_v );
-    t4 = _mm256_unpacklo_ps( e_v, f_v );
-    t5 = _mm256_unpackhi_ps( e_v, f_v );
-    t6 = _mm256_unpacklo_ps( g_v, h_v );
-    t7 = _mm256_unpackhi_ps( g_v, h_v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-#endif
-  }
-  //--------------------------------------------------------------------
-
-#if 0
-  inline void load_8x8_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d,
-                           v8 &e, v8 &f, v8 &g, v8 &h )
-  {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
-    e.i[0] = ((const int * ALIGNED(16))a0)[4];
-    f.i[0] = ((const int * ALIGNED(16))a0)[5];
-    g.i[0] = ((const int * ALIGNED(16))a0)[6];
-    h.i[0] = ((const int * ALIGNED(16))a0)[7];
-
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
-    e.i[1] = ((const int * ALIGNED(16))a1)[4];
-    f.i[1] = ((const int * ALIGNED(16))a1)[5];
-    g.i[1] = ((const int * ALIGNED(16))a1)[6];
-    h.i[1] = ((const int * ALIGNED(16))a1)[7];
-
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
-    e.i[2] = ((const int * ALIGNED(16))a2)[4];
-    f.i[2] = ((const int * ALIGNED(16))a2)[5];
-    g.i[2] = ((const int * ALIGNED(16))a2)[6];
-    h.i[2] = ((const int * ALIGNED(16))a2)[7];
-
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
-    e.i[3] = ((const int * ALIGNED(16))a3)[4];
-    f.i[3] = ((const int * ALIGNED(16))a3)[5];
-    g.i[3] = ((const int * ALIGNED(16))a3)[6];
-    h.i[3] = ((const int * ALIGNED(16))a3)[7];
-
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    d.i[4] = ((const int * ALIGNED(16))a4)[3];
-    e.i[4] = ((const int * ALIGNED(16))a4)[4];
-    f.i[4] = ((const int * ALIGNED(16))a4)[5];
-    g.i[4] = ((const int * ALIGNED(16))a4)[6];
-    h.i[4] = ((const int * ALIGNED(16))a4)[7];
-
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    d.i[5] = ((const int * ALIGNED(16))a5)[3];
-    e.i[5] = ((const int * ALIGNED(16))a5)[4];
-    f.i[5] = ((const int * ALIGNED(16))a5)[5];
-    g.i[5] = ((const int * ALIGNED(16))a5)[6];
-    h.i[5] = ((const int * ALIGNED(16))a5)[7];
-
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    d.i[6] = ((const int * ALIGNED(16))a6)[3];
-    e.i[6] = ((const int * ALIGNED(16))a6)[4];
-    f.i[6] = ((const int * ALIGNED(16))a6)[5];
-    g.i[6] = ((const int * ALIGNED(16))a6)[6];
-    h.i[6] = ((const int * ALIGNED(16))a6)[7];
-
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2];
-    d.i[7] = ((const int * ALIGNED(16))a7)[3];
-    e.i[7] = ((const int * ALIGNED(16))a7)[4];
-    f.i[7] = ((const int * ALIGNED(16))a7)[5];
-    g.i[7] = ((const int * ALIGNED(16))a7)[6];
-    h.i[7] = ((const int * ALIGNED(16))a7)[7];
-  }
-#endif
-
-  inline void store_8x1_tr( const v8 &a,
-                            void *a0, void *a1, void *a2, void *a3,
-                            void *a4, void *a5, void *a6, void *a7 )
-  {
-    ((int *)a0)[0] = a.i[0];
-    ((int *)a1)[0] = a.i[1];
-    ((int *)a2)[0] = a.i[2];
-    ((int *)a3)[0] = a.i[3];
-    ((int *)a4)[0] = a.i[4];
-    ((int *)a5)[0] = a.i[5];
-    ((int *)a6)[0] = a.i[6];
-    ((int *)a7)[0] = a.i[7];
+    ((int *)a00)[0] = a.i[ 0];
+    ((int *)a01)[0] = a.i[ 1];
+    ((int *)a02)[0] = a.i[ 2];
+    ((int *)a03)[0] = a.i[ 3];
+    ((int *)a04)[0] = a.i[ 4];
+    ((int *)a05)[0] = a.i[ 5];
+    ((int *)a06)[0] = a.i[ 6];
+    ((int *)a07)[0] = a.i[ 7];
+    ((int *)a08)[0] = a.i[ 8];
+    ((int *)a09)[0] = a.i[ 9];
+    ((int *)a10)[0] = a.i[10];
+    ((int *)a11)[0] = a.i[11];
+    ((int *)a12)[0] = a.i[12];
+    ((int *)a13)[0] = a.i[13];
+    ((int *)a14)[0] = a.i[14];
+    ((int *)a15)[0] = a.i[15];
   }
 
-  inline void store_8x2_tr( const v8 &a, const v8 &b,
-                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
-                            void * ALIGNED(8) a2, void * ALIGNED(8) a3,
-                            void * ALIGNED(8) a4, void * ALIGNED(8) a5,
-                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
+  inline void store_16x2_tr( const v16 &a, const v16 &b,
+			     void * ALIGNED(8) a00, void * ALIGNED(8) a01,
+			     void * ALIGNED(8) a02, void * ALIGNED(8) a03,
+			     void * ALIGNED(8) a04, void * ALIGNED(8) a05,
+			     void * ALIGNED(8) a06, void * ALIGNED(8) a07,
+			     void * ALIGNED(8) a08, void * ALIGNED(8) a09,
+			     void * ALIGNED(8) a10, void * ALIGNED(8) a11,
+			     void * ALIGNED(8) a12, void * ALIGNED(8) a13,
+			     void * ALIGNED(8) a14, void * ALIGNED(8) a15 )
   {
-    __m256 u0, u1;
-    __m128 t0, t1, t2, t3;
+    ((int * ALIGNED(8))a00)[0] = a.i[ 0];
+    ((int * ALIGNED(8))a00)[1] = b.i[ 0];
 
-    u0 = _mm256_unpacklo_ps( a.v, b.v );
-    u1 = _mm256_unpackhi_ps( a.v, b.v );
+    ((int * ALIGNED(8))a01)[0] = a.i[ 1];
+    ((int * ALIGNED(8))a01)[1] = b.i[ 1];
 
-    t0 = _mm256_extractf128_ps( u0, 0 );
-    t1 = _mm256_extractf128_ps( u1, 0 );
-    t2 = _mm256_extractf128_ps( u0, 1 );
-    t3 = _mm256_extractf128_ps( u1, 1 );
+    ((int * ALIGNED(8))a02)[0] = a.i[ 2];
+    ((int * ALIGNED(8))a02)[1] = b.i[ 2];
 
-    _mm_storel_pi( (__m64 *) a0, t0 );
-    _mm_storeh_pi( (__m64 *) a1, t0 );
+    ((int * ALIGNED(8))a03)[0] = a.i[ 3];
+    ((int * ALIGNED(8))a03)[1] = b.i[ 3];
 
-    _mm_storel_pi( (__m64 *) a2, t1 );
-    _mm_storeh_pi( (__m64 *) a3, t1 );
+    ((int * ALIGNED(8))a04)[0] = a.i[ 4];
+    ((int * ALIGNED(8))a04)[1] = b.i[ 4];
 
-    _mm_storel_pi( (__m64 *) a4, t2 );
-    _mm_storeh_pi( (__m64 *) a5, t2 );
+    ((int * ALIGNED(8))a05)[0] = a.i[ 5];
+    ((int * ALIGNED(8))a05)[1] = b.i[ 5];
 
-    _mm_storel_pi( (__m64 *) a6, t3 );
-    _mm_storeh_pi( (__m64 *) a7, t3 );
+    ((int * ALIGNED(8))a06)[0] = a.i[ 6];
+    ((int * ALIGNED(8))a06)[1] = b.i[ 6];
+
+    ((int * ALIGNED(8))a07)[0] = a.i[ 7];
+    ((int * ALIGNED(8))a07)[1] = b.i[ 7];
+
+    ((int * ALIGNED(8))a08)[0] = a.i[ 8];
+    ((int * ALIGNED(8))a08)[1] = b.i[ 8];
+
+    ((int * ALIGNED(8))a09)[0] = a.i[ 9];
+    ((int * ALIGNED(8))a09)[1] = b.i[ 9];
+
+    ((int * ALIGNED(8))a10)[0] = a.i[10];
+    ((int * ALIGNED(8))a10)[1] = b.i[10];
+
+    ((int * ALIGNED(8))a11)[0] = a.i[11];
+    ((int * ALIGNED(8))a11)[1] = b.i[11];
+
+    ((int * ALIGNED(8))a12)[0] = a.i[12];
+    ((int * ALIGNED(8))a12)[1] = b.i[12];
+
+    ((int * ALIGNED(8))a13)[0] = a.i[13];
+    ((int * ALIGNED(8))a13)[1] = b.i[13];
+
+    ((int * ALIGNED(8))a14)[0] = a.i[14];
+    ((int * ALIGNED(8))a14)[1] = b.i[14];
+
+    ((int * ALIGNED(8))a15)[0] = a.i[15];
+    ((int * ALIGNED(8))a15)[1] = b.i[15];
   }
 
-#if 0
-  inline void store_8x2_tr( const v8 &a, const v8 &b,
-                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
-                            void * ALIGNED(8) a2, void * ALIGNED(8) a3,
-                            void * ALIGNED(8) a4, void * ALIGNED(8) a5,
-                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
+  inline void store_16x3_tr( const v16 &a, const v16 &b, const v16 &c,
+			     void * ALIGNED(64) a00, void * ALIGNED(64) a01,
+			     void * ALIGNED(64) a02, void * ALIGNED(64) a03,
+			     void * ALIGNED(64) a04, void * ALIGNED(64) a05,
+			     void * ALIGNED(64) a06, void * ALIGNED(64) a07,
+			     void * ALIGNED(64) a08, void * ALIGNED(64) a09,
+			     void * ALIGNED(64) a10, void * ALIGNED(64) a11,
+			     void * ALIGNED(64) a12, void * ALIGNED(64) a13,
+			     void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
   {
-    ((int * ALIGNED(8))a0)[0] = a.i[0];
-    ((int * ALIGNED(8))a0)[1] = b.i[0];
+    ((int * ALIGNED(64))a00)[0] = a.i[ 0];
+    ((int * ALIGNED(64))a00)[1] = b.i[ 0];
+    ((int * ALIGNED(64))a00)[2] = c.i[ 0];
 
-    ((int * ALIGNED(8))a1)[0] = a.i[1];
-    ((int * ALIGNED(8))a1)[1] = b.i[1];
+    ((int * ALIGNED(64))a01)[0] = a.i[ 1];
+    ((int * ALIGNED(64))a01)[1] = b.i[ 1];
+    ((int * ALIGNED(64))a01)[2] = c.i[ 1];
 
-    ((int * ALIGNED(8))a2)[0] = a.i[2];
-    ((int * ALIGNED(8))a2)[1] = b.i[2];
+    ((int * ALIGNED(64))a02)[0] = a.i[ 2];
+    ((int * ALIGNED(64))a02)[1] = b.i[ 2];
+    ((int * ALIGNED(64))a02)[2] = c.i[ 2];
 
-    ((int * ALIGNED(8))a3)[0] = a.i[3];
-    ((int * ALIGNED(8))a3)[1] = b.i[3];
+    ((int * ALIGNED(64))a03)[0] = a.i[ 3];
+    ((int * ALIGNED(64))a03)[1] = b.i[ 3];
+    ((int * ALIGNED(64))a03)[2] = c.i[ 3];
 
-    ((int * ALIGNED(8))a4)[0] = a.i[4];
-    ((int * ALIGNED(8))a4)[1] = b.i[4];
+    ((int * ALIGNED(64))a04)[0] = a.i[ 4];
+    ((int * ALIGNED(64))a04)[1] = b.i[ 4];
+    ((int * ALIGNED(64))a04)[2] = c.i[ 4];
 
-    ((int * ALIGNED(8))a5)[0] = a.i[5];
-    ((int * ALIGNED(8))a5)[1] = b.i[5];
+    ((int * ALIGNED(64))a05)[0] = a.i[ 5];
+    ((int * ALIGNED(64))a05)[1] = b.i[ 5];
+    ((int * ALIGNED(64))a05)[2] = c.i[ 5];
 
-    ((int * ALIGNED(8))a6)[0] = a.i[6];
-    ((int * ALIGNED(8))a6)[1] = b.i[6];
+    ((int * ALIGNED(64))a06)[0] = a.i[ 6];
+    ((int * ALIGNED(64))a06)[1] = b.i[ 6];
+    ((int * ALIGNED(64))a06)[2] = c.i[ 6];
 
-    ((int * ALIGNED(8))a7)[0] = a.i[7];
-    ((int * ALIGNED(8))a7)[1] = b.i[7];
-  }
-#endif
+    ((int * ALIGNED(64))a07)[0] = a.i[ 7];
+    ((int * ALIGNED(64))a07)[1] = b.i[ 7];
+    ((int * ALIGNED(64))a07)[2] = c.i[ 7];
 
-#if 0
-  inline void store_8x3_tr( const v8 &a, const v8 &b, const v8 &c,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
-  {
-  }
-#endif
+    ((int * ALIGNED(64))a08)[0] = a.i[ 8];
+    ((int * ALIGNED(64))a08)[1] = b.i[ 8];
+    ((int * ALIGNED(64))a08)[2] = c.i[ 8];
 
-  inline void store_8x3_tr( const v8 &a, const v8 &b, const v8 &c,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
-  {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
+    ((int * ALIGNED(64))a09)[0] = a.i[ 9];
+    ((int * ALIGNED(64))a09)[1] = b.i[ 9];
+    ((int * ALIGNED(64))a09)[2] = c.i[ 9];
 
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
+    ((int * ALIGNED(64))a10)[0] = a.i[10];
+    ((int * ALIGNED(64))a10)[1] = b.i[10];
+    ((int * ALIGNED(64))a10)[2] = c.i[10];
 
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
+    ((int * ALIGNED(64))a11)[0] = a.i[11];
+    ((int * ALIGNED(64))a11)[1] = b.i[11];
+    ((int * ALIGNED(64))a11)[2] = c.i[11];
 
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
+    ((int * ALIGNED(64))a12)[0] = a.i[12];
+    ((int * ALIGNED(64))a12)[1] = b.i[12];
+    ((int * ALIGNED(64))a12)[2] = c.i[12];
 
-    ((int * ALIGNED(16))a4)[0] = a.i[4];
-    ((int * ALIGNED(16))a4)[1] = b.i[4];
-    ((int * ALIGNED(16))a4)[2] = c.i[4];
+    ((int * ALIGNED(64))a13)[0] = a.i[13];
+    ((int * ALIGNED(64))a13)[1] = b.i[13];
+    ((int * ALIGNED(64))a13)[2] = c.i[13];
 
-    ((int * ALIGNED(16))a5)[0] = a.i[5];
-    ((int * ALIGNED(16))a5)[1] = b.i[5];
-    ((int * ALIGNED(16))a5)[2] = c.i[5];
+    ((int * ALIGNED(64))a14)[0] = a.i[14];
+    ((int * ALIGNED(64))a14)[1] = b.i[14];
+    ((int * ALIGNED(64))a14)[2] = c.i[14];
 
-    ((int * ALIGNED(16))a6)[0] = a.i[6];
-    ((int * ALIGNED(16))a6)[1] = b.i[6];
-    ((int * ALIGNED(16))a6)[2] = c.i[6];
-
-    ((int * ALIGNED(16))a7)[0] = a.i[7];
-    ((int * ALIGNED(16))a7)[1] = b.i[7];
-    ((int * ALIGNED(16))a7)[2] = c.i[7];
+    ((int * ALIGNED(64))a15)[0] = a.i[15];
+    ((int * ALIGNED(64))a15)[1] = b.i[15];
+    ((int * ALIGNED(64))a15)[2] = c.i[15];
   }
 
-  inline void store_8x4_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  inline void store_16x4_tr( const v16 &a, const v16 &b, const v16 &c, const v16 &d,
+			     void * ALIGNED(64) a00, void * ALIGNED(64) a01,
+			     void * ALIGNED(64) a02, void * ALIGNED(64) a03,
+			     void * ALIGNED(64) a04, void * ALIGNED(64) a05,
+			     void * ALIGNED(64) a06, void * ALIGNED(64) a07,
+			     void * ALIGNED(64) a08, void * ALIGNED(64) a09,
+			     void * ALIGNED(64) a10, void * ALIGNED(64) a11,
+			     void * ALIGNED(64) a12, void * ALIGNED(64) a13,
+			     void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
   {
-    __m256 u0, u1, u2, u3;
-    __m256 t0, t1, t2, t3;
-    __m128 s0, s1, s2, s3, s4, s5, s6, s7;
+    ((int * ALIGNED(64))a00)[0] = a.i[ 0];
+    ((int * ALIGNED(64))a00)[1] = b.i[ 0];
+    ((int * ALIGNED(64))a00)[2] = c.i[ 0];
+    ((int * ALIGNED(64))a00)[3] = d.i[ 0];
 
-    u0 = _mm256_unpacklo_ps( a.v, b.v );
-    u1 = _mm256_unpacklo_ps( c.v, d.v );
-    u2 = _mm256_unpackhi_ps( a.v, b.v );
-    u3 = _mm256_unpackhi_ps( c.v, d.v );
+    ((int * ALIGNED(64))a01)[0] = a.i[ 1];
+    ((int * ALIGNED(64))a01)[1] = b.i[ 1];
+    ((int * ALIGNED(64))a01)[2] = c.i[ 1];
+    ((int * ALIGNED(64))a01)[3] = d.i[ 1];
 
-    t0 = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    t1 = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    t2 = _mm256_shuffle_ps( u2, u3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    t3 = _mm256_shuffle_ps( u2, u3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    ((int * ALIGNED(64))a02)[0] = a.i[ 2];
+    ((int * ALIGNED(64))a02)[1] = b.i[ 2];
+    ((int * ALIGNED(64))a02)[2] = c.i[ 2];
+    ((int * ALIGNED(64))a02)[3] = d.i[ 2];
 
-    // Method 1.
-    // _mm256_storeu2_m128( (float *) a4, (float *) a0, t0 );
-    // _mm256_storeu2_m128( (float *) a5, (float *) a1, t1 );
-    // _mm256_storeu2_m128( (float *) a6, (float *) a2, t2 );
-    // _mm256_storeu2_m128( (float *) a7, (float *) a3, t3 );
+    ((int * ALIGNED(64))a03)[0] = a.i[ 3];
+    ((int * ALIGNED(64))a03)[1] = b.i[ 3];
+    ((int * ALIGNED(64))a03)[2] = c.i[ 3];
+    ((int * ALIGNED(64))a03)[3] = d.i[ 3];
 
-    // Method 2.
-    s0 = _mm256_extractf128_ps( t0, 0 );
-    s1 = _mm256_extractf128_ps( t1, 0 );
-    s2 = _mm256_extractf128_ps( t2, 0 );
-    s3 = _mm256_extractf128_ps( t3, 0 );
+    ((int * ALIGNED(64))a04)[0] = a.i[ 4];
+    ((int * ALIGNED(64))a04)[1] = b.i[ 4];
+    ((int * ALIGNED(64))a04)[2] = c.i[ 4];
+    ((int * ALIGNED(64))a04)[3] = d.i[ 4];
 
-    s4 = _mm256_extractf128_ps( t0, 1 );
-    s5 = _mm256_extractf128_ps( t1, 1 );
-    s6 = _mm256_extractf128_ps( t2, 1 );
-    s7 = _mm256_extractf128_ps( t3, 1 );
+    ((int * ALIGNED(64))a05)[0] = a.i[ 5];
+    ((int * ALIGNED(64))a05)[1] = b.i[ 5];
+    ((int * ALIGNED(64))a05)[2] = c.i[ 5];
+    ((int * ALIGNED(64))a05)[3] = d.i[ 5];
 
-    _mm_store_ps( (float *) a0, s0 );
-    _mm_store_ps( (float *) a1, s1 );
-    _mm_store_ps( (float *) a2, s2 );
-    _mm_store_ps( (float *) a3, s3 );
-    _mm_store_ps( (float *) a4, s4 );
-    _mm_store_ps( (float *) a5, s5 );
-    _mm_store_ps( (float *) a6, s6 );
-    _mm_store_ps( (float *) a7, s7 );
+    ((int * ALIGNED(64))a06)[0] = a.i[ 6];
+    ((int * ALIGNED(64))a06)[1] = b.i[ 6];
+    ((int * ALIGNED(64))a06)[2] = c.i[ 6];
+    ((int * ALIGNED(64))a06)[3] = d.i[ 6];
+
+    ((int * ALIGNED(64))a07)[0] = a.i[ 7];
+    ((int * ALIGNED(64))a07)[1] = b.i[ 7];
+    ((int * ALIGNED(64))a07)[2] = c.i[ 7];
+    ((int * ALIGNED(64))a07)[3] = d.i[ 7];
+
+    ((int * ALIGNED(64))a08)[0] = a.i[ 8];
+    ((int * ALIGNED(64))a08)[1] = b.i[ 8];
+    ((int * ALIGNED(64))a08)[2] = c.i[ 8];
+    ((int * ALIGNED(64))a08)[3] = d.i[ 8];
+
+    ((int * ALIGNED(64))a09)[0] = a.i[ 9];
+    ((int * ALIGNED(64))a09)[1] = b.i[ 9];
+    ((int * ALIGNED(64))a09)[2] = c.i[ 9];
+    ((int * ALIGNED(64))a09)[3] = d.i[ 9];
+
+    ((int * ALIGNED(64))a10)[0] = a.i[10];
+    ((int * ALIGNED(64))a10)[1] = b.i[10];
+    ((int * ALIGNED(64))a10)[2] = c.i[10];
+    ((int * ALIGNED(64))a10)[3] = d.i[10];
+
+    ((int * ALIGNED(64))a11)[0] = a.i[11];
+    ((int * ALIGNED(64))a11)[1] = b.i[11];
+    ((int * ALIGNED(64))a11)[2] = c.i[11];
+    ((int * ALIGNED(64))a11)[3] = d.i[11];
+
+    ((int * ALIGNED(64))a12)[0] = a.i[12];
+    ((int * ALIGNED(64))a12)[1] = b.i[12];
+    ((int * ALIGNED(64))a12)[2] = c.i[12];
+    ((int * ALIGNED(64))a12)[3] = d.i[12];
+
+    ((int * ALIGNED(64))a13)[0] = a.i[13];
+    ((int * ALIGNED(64))a13)[1] = b.i[13];
+    ((int * ALIGNED(64))a13)[2] = c.i[13];
+    ((int * ALIGNED(64))a13)[3] = d.i[13];
+
+    ((int * ALIGNED(64))a14)[0] = a.i[14];
+    ((int * ALIGNED(64))a14)[1] = b.i[14];
+    ((int * ALIGNED(64))a14)[2] = c.i[14];
+    ((int * ALIGNED(64))a14)[3] = d.i[14];
+
+    ((int * ALIGNED(64))a15)[0] = a.i[15];
+    ((int * ALIGNED(64))a15)[1] = b.i[15];
+    ((int * ALIGNED(64))a15)[2] = c.i[15];
+    ((int * ALIGNED(64))a15)[3] = d.i[15];
   }
 
-#if 0
-  inline void store_8x4_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  inline void store_16x8_tr( const v16 &a, const v16 &b, const v16 &c, const v16 &d,
+			     const v16 &e, const v16 &f, const v16 &g, const v16 &h,
+			     void * ALIGNED(64) a00, void * ALIGNED(64) a01,
+			     void * ALIGNED(64) a02, void * ALIGNED(64) a03,
+			     void * ALIGNED(64) a04, void * ALIGNED(64) a05,
+			     void * ALIGNED(64) a06, void * ALIGNED(64) a07,
+			     void * ALIGNED(64) a08, void * ALIGNED(64) a09,
+			     void * ALIGNED(64) a10, void * ALIGNED(64) a11,
+			     void * ALIGNED(64) a12, void * ALIGNED(64) a13,
+			     void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
   {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
-    ((int * ALIGNED(16))a0)[3] = d.i[0];
+    ((int * ALIGNED(64))a00)[0] = a.i[ 0];
+    ((int * ALIGNED(64))a00)[1] = b.i[ 0];
+    ((int * ALIGNED(64))a00)[2] = c.i[ 0];
+    ((int * ALIGNED(64))a00)[3] = d.i[ 0];
+    ((int * ALIGNED(64))a00)[4] = e.i[ 0];
+    ((int * ALIGNED(64))a00)[5] = f.i[ 0];
+    ((int * ALIGNED(64))a00)[6] = g.i[ 0];
+    ((int * ALIGNED(64))a00)[7] = h.i[ 0];
 
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
-    ((int * ALIGNED(16))a1)[3] = d.i[1];
+    ((int * ALIGNED(64))a01)[0] = a.i[ 1];
+    ((int * ALIGNED(64))a01)[1] = b.i[ 1];
+    ((int * ALIGNED(64))a01)[2] = c.i[ 1];
+    ((int * ALIGNED(64))a01)[3] = d.i[ 1];
+    ((int * ALIGNED(64))a01)[4] = e.i[ 1];
+    ((int * ALIGNED(64))a01)[5] = f.i[ 1];
+    ((int * ALIGNED(64))a01)[6] = g.i[ 1];
+    ((int * ALIGNED(64))a01)[7] = h.i[ 1];
 
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
-    ((int * ALIGNED(16))a2)[3] = d.i[2];
+    ((int * ALIGNED(64))a02)[0] = a.i[ 2];
+    ((int * ALIGNED(64))a02)[1] = b.i[ 2];
+    ((int * ALIGNED(64))a02)[2] = c.i[ 2];
+    ((int * ALIGNED(64))a02)[3] = d.i[ 2];
+    ((int * ALIGNED(64))a02)[4] = e.i[ 2];
+    ((int * ALIGNED(64))a02)[5] = f.i[ 2];
+    ((int * ALIGNED(64))a02)[6] = g.i[ 2];
+    ((int * ALIGNED(64))a02)[7] = h.i[ 2];
 
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
-    ((int * ALIGNED(16))a3)[3] = d.i[3];
+    ((int * ALIGNED(64))a03)[0] = a.i[ 3];
+    ((int * ALIGNED(64))a03)[1] = b.i[ 3];
+    ((int * ALIGNED(64))a03)[2] = c.i[ 3];
+    ((int * ALIGNED(64))a03)[3] = d.i[ 3];
+    ((int * ALIGNED(64))a03)[4] = e.i[ 3];
+    ((int * ALIGNED(64))a03)[5] = f.i[ 3];
+    ((int * ALIGNED(64))a03)[6] = g.i[ 3];
+    ((int * ALIGNED(64))a03)[7] = h.i[ 3];
 
-    ((int * ALIGNED(16))a4)[0] = a.i[4];
-    ((int * ALIGNED(16))a4)[1] = b.i[4];
-    ((int * ALIGNED(16))a4)[2] = c.i[4];
-    ((int * ALIGNED(16))a4)[3] = d.i[4];
+    ((int * ALIGNED(64))a04)[0] = a.i[ 4];
+    ((int * ALIGNED(64))a04)[1] = b.i[ 4];
+    ((int * ALIGNED(64))a04)[2] = c.i[ 4];
+    ((int * ALIGNED(64))a04)[3] = d.i[ 4];
+    ((int * ALIGNED(64))a04)[4] = e.i[ 4];
+    ((int * ALIGNED(64))a04)[5] = f.i[ 4];
+    ((int * ALIGNED(64))a04)[6] = g.i[ 4];
+    ((int * ALIGNED(64))a04)[7] = h.i[ 4];
 
-    ((int * ALIGNED(16))a5)[0] = a.i[5];
-    ((int * ALIGNED(16))a5)[1] = b.i[5];
-    ((int * ALIGNED(16))a5)[2] = c.i[5];
-    ((int * ALIGNED(16))a5)[3] = d.i[5];
+    ((int * ALIGNED(64))a05)[0] = a.i[ 5];
+    ((int * ALIGNED(64))a05)[1] = b.i[ 5];
+    ((int * ALIGNED(64))a05)[2] = c.i[ 5];
+    ((int * ALIGNED(64))a05)[3] = d.i[ 5];
+    ((int * ALIGNED(64))a05)[4] = e.i[ 5];
+    ((int * ALIGNED(64))a05)[5] = f.i[ 5];
+    ((int * ALIGNED(64))a05)[6] = g.i[ 5];
+    ((int * ALIGNED(64))a05)[7] = h.i[ 5];
 
-    ((int * ALIGNED(16))a6)[0] = a.i[6];
-    ((int * ALIGNED(16))a6)[1] = b.i[6];
-    ((int * ALIGNED(16))a6)[2] = c.i[6];
-    ((int * ALIGNED(16))a6)[3] = d.i[6];
+    ((int * ALIGNED(64))a06)[0] = a.i[ 6];
+    ((int * ALIGNED(64))a06)[1] = b.i[ 6];
+    ((int * ALIGNED(64))a06)[2] = c.i[ 6];
+    ((int * ALIGNED(64))a06)[3] = d.i[ 6];
+    ((int * ALIGNED(64))a06)[4] = e.i[ 6];
+    ((int * ALIGNED(64))a06)[5] = f.i[ 6];
+    ((int * ALIGNED(64))a06)[6] = g.i[ 6];
+    ((int * ALIGNED(64))a06)[7] = h.i[ 6];
 
-    ((int * ALIGNED(16))a7)[0] = a.i[7];
-    ((int * ALIGNED(16))a7)[1] = b.i[7];
-    ((int * ALIGNED(16))a7)[2] = c.i[7];
-    ((int * ALIGNED(16))a7)[3] = d.i[7];
+    ((int * ALIGNED(64))a07)[0] = a.i[ 7];
+    ((int * ALIGNED(64))a07)[1] = b.i[ 7];
+    ((int * ALIGNED(64))a07)[2] = c.i[ 7];
+    ((int * ALIGNED(64))a07)[3] = d.i[ 7];
+    ((int * ALIGNED(64))a07)[4] = e.i[ 7];
+    ((int * ALIGNED(64))a07)[5] = f.i[ 7];
+    ((int * ALIGNED(64))a07)[6] = g.i[ 7];
+    ((int * ALIGNED(64))a07)[7] = h.i[ 7];
+
+    ((int * ALIGNED(64))a08)[0] = a.i[ 8];
+    ((int * ALIGNED(64))a08)[1] = b.i[ 8];
+    ((int * ALIGNED(64))a08)[2] = c.i[ 8];
+    ((int * ALIGNED(64))a08)[3] = d.i[ 8];
+    ((int * ALIGNED(64))a08)[4] = e.i[ 8];
+    ((int * ALIGNED(64))a08)[5] = f.i[ 8];
+    ((int * ALIGNED(64))a08)[6] = g.i[ 8];
+    ((int * ALIGNED(64))a08)[7] = h.i[ 8];
+
+    ((int * ALIGNED(64))a09)[0] = a.i[ 9];
+    ((int * ALIGNED(64))a09)[1] = b.i[ 9];
+    ((int * ALIGNED(64))a09)[2] = c.i[ 9];
+    ((int * ALIGNED(64))a09)[3] = d.i[ 9];
+    ((int * ALIGNED(64))a09)[4] = e.i[ 9];
+    ((int * ALIGNED(64))a09)[5] = f.i[ 9];
+    ((int * ALIGNED(64))a09)[6] = g.i[ 9];
+    ((int * ALIGNED(64))a09)[7] = h.i[ 9];
+
+    ((int * ALIGNED(64))a10)[0] = a.i[10];
+    ((int * ALIGNED(64))a10)[1] = b.i[10];
+    ((int * ALIGNED(64))a10)[2] = c.i[10];
+    ((int * ALIGNED(64))a10)[3] = d.i[10];
+    ((int * ALIGNED(64))a10)[4] = e.i[10];
+    ((int * ALIGNED(64))a10)[5] = f.i[10];
+    ((int * ALIGNED(64))a10)[6] = g.i[10];
+    ((int * ALIGNED(64))a10)[7] = h.i[10];
+
+    ((int * ALIGNED(64))a11)[0] = a.i[11];
+    ((int * ALIGNED(64))a11)[1] = b.i[11];
+    ((int * ALIGNED(64))a11)[2] = c.i[11];
+    ((int * ALIGNED(64))a11)[3] = d.i[11];
+    ((int * ALIGNED(64))a11)[4] = e.i[11];
+    ((int * ALIGNED(64))a11)[5] = f.i[11];
+    ((int * ALIGNED(64))a11)[6] = g.i[11];
+    ((int * ALIGNED(64))a11)[7] = h.i[11];
+
+    ((int * ALIGNED(64))a12)[0] = a.i[12];
+    ((int * ALIGNED(64))a12)[1] = b.i[12];
+    ((int * ALIGNED(64))a12)[2] = c.i[12];
+    ((int * ALIGNED(64))a12)[3] = d.i[12];
+    ((int * ALIGNED(64))a12)[4] = e.i[12];
+    ((int * ALIGNED(64))a12)[5] = f.i[12];
+    ((int * ALIGNED(64))a12)[6] = g.i[12];
+    ((int * ALIGNED(64))a12)[7] = h.i[12];
+
+    ((int * ALIGNED(64))a13)[0] = a.i[13];
+    ((int * ALIGNED(64))a13)[1] = b.i[13];
+    ((int * ALIGNED(64))a13)[2] = c.i[13];
+    ((int * ALIGNED(64))a13)[3] = d.i[13];
+    ((int * ALIGNED(64))a13)[4] = e.i[13];
+    ((int * ALIGNED(64))a13)[5] = f.i[13];
+    ((int * ALIGNED(64))a13)[6] = g.i[13];
+    ((int * ALIGNED(64))a13)[7] = h.i[13];
+
+    ((int * ALIGNED(64))a14)[0] = a.i[14];
+    ((int * ALIGNED(64))a14)[1] = b.i[14];
+    ((int * ALIGNED(64))a14)[2] = c.i[14];
+    ((int * ALIGNED(64))a14)[3] = d.i[14];
+    ((int * ALIGNED(64))a14)[4] = e.i[14];
+    ((int * ALIGNED(64))a14)[5] = f.i[14];
+    ((int * ALIGNED(64))a14)[6] = g.i[14];
+    ((int * ALIGNED(64))a14)[7] = h.i[14];
+
+    ((int * ALIGNED(64))a15)[0] = a.i[15];
+    ((int * ALIGNED(64))a15)[1] = b.i[15];
+    ((int * ALIGNED(64))a15)[2] = c.i[15];
+    ((int * ALIGNED(64))a15)[3] = d.i[15];
+    ((int * ALIGNED(64))a15)[4] = e.i[15];
+    ((int * ALIGNED(64))a15)[5] = f.i[15];
+    ((int * ALIGNED(64))a15)[6] = g.i[15];
+    ((int * ALIGNED(64))a15)[7] = h.i[15];
   }
-#endif
 
-  inline void store_8x8_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-			    const v8 &e, const v8 &f, const v8 &g, const v8 &h,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
+  inline void store_16x16_tr( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
+			      const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,
+			      const v16 &b08, const v16 &b09, const v16 &b10, const v16 &b11,
+			      const v16 &b12, const v16 &b13, const v16 &b14, const v16 &b15,
+			      void * ALIGNED(64) a00, void * ALIGNED(64) a01,
+			      void * ALIGNED(64) a02, void * ALIGNED(64) a03,
+			      void * ALIGNED(64) a04, void * ALIGNED(64) a05,
+			      void * ALIGNED(64) a06, void * ALIGNED(64) a07,
+			      void * ALIGNED(64) a08, void * ALIGNED(64) a09,
+			      void * ALIGNED(64) a10, void * ALIGNED(64) a11,
+			      void * ALIGNED(64) a12, void * ALIGNED(64) a13,
+			      void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
   {
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+    ((int * ALIGNED(64))a00)[ 0] = b00.i[ 0];
+    ((int * ALIGNED(64))a00)[ 1] = b01.i[ 0];
+    ((int * ALIGNED(64))a00)[ 2] = b02.i[ 0];
+    ((int * ALIGNED(64))a00)[ 3] = b03.i[ 0];
+    ((int * ALIGNED(64))a00)[ 4] = b04.i[ 0];
+    ((int * ALIGNED(64))a00)[ 5] = b05.i[ 0];
+    ((int * ALIGNED(64))a00)[ 6] = b06.i[ 0];
+    ((int * ALIGNED(64))a00)[ 7] = b07.i[ 0];
+    ((int * ALIGNED(64))a00)[ 8] = b08.i[ 0];
+    ((int * ALIGNED(64))a00)[ 9] = b09.i[ 0];
+    ((int * ALIGNED(64))a00)[10] = b10.i[ 0];
+    ((int * ALIGNED(64))a00)[11] = b11.i[ 0];
+    ((int * ALIGNED(64))a00)[12] = b12.i[ 0];
+    ((int * ALIGNED(64))a00)[13] = b13.i[ 0];
+    ((int * ALIGNED(64))a00)[14] = b14.i[ 0];
+    ((int * ALIGNED(64))a00)[15] = b15.i[ 0];
 
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    ((int * ALIGNED(64))a01)[ 0] = b00.i[ 1];
+    ((int * ALIGNED(64))a01)[ 1] = b01.i[ 1];
+    ((int * ALIGNED(64))a01)[ 2] = b02.i[ 1];
+    ((int * ALIGNED(64))a01)[ 3] = b03.i[ 1];
+    ((int * ALIGNED(64))a01)[ 4] = b04.i[ 1];
+    ((int * ALIGNED(64))a01)[ 5] = b05.i[ 1];
+    ((int * ALIGNED(64))a01)[ 6] = b06.i[ 1];
+    ((int * ALIGNED(64))a01)[ 7] = b07.i[ 1];
+    ((int * ALIGNED(64))a01)[ 8] = b08.i[ 1];
+    ((int * ALIGNED(64))a01)[ 9] = b09.i[ 1];
+    ((int * ALIGNED(64))a01)[10] = b10.i[ 1];
+    ((int * ALIGNED(64))a01)[11] = b11.i[ 1];
+    ((int * ALIGNED(64))a01)[12] = b12.i[ 1];
+    ((int * ALIGNED(64))a01)[13] = b13.i[ 1];
+    ((int * ALIGNED(64))a01)[14] = b14.i[ 1];
+    ((int * ALIGNED(64))a01)[15] = b15.i[ 1];
 
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+    ((int * ALIGNED(64))a02)[ 0] = b00.i[ 2];
+    ((int * ALIGNED(64))a02)[ 1] = b01.i[ 2];
+    ((int * ALIGNED(64))a02)[ 2] = b02.i[ 2];
+    ((int * ALIGNED(64))a02)[ 3] = b03.i[ 2];
+    ((int * ALIGNED(64))a02)[ 4] = b04.i[ 2];
+    ((int * ALIGNED(64))a02)[ 5] = b05.i[ 2];
+    ((int * ALIGNED(64))a02)[ 6] = b06.i[ 2];
+    ((int * ALIGNED(64))a02)[ 7] = b07.i[ 2];
+    ((int * ALIGNED(64))a02)[ 8] = b08.i[ 2];
+    ((int * ALIGNED(64))a02)[ 9] = b09.i[ 2];
+    ((int * ALIGNED(64))a02)[10] = b10.i[ 2];
+    ((int * ALIGNED(64))a02)[11] = b11.i[ 2];
+    ((int * ALIGNED(64))a02)[12] = b12.i[ 2];
+    ((int * ALIGNED(64))a02)[13] = b13.i[ 2];
+    ((int * ALIGNED(64))a02)[14] = b14.i[ 2];
+    ((int * ALIGNED(64))a02)[15] = b15.i[ 2];
 
-    t0 = _mm256_unpacklo_ps( a.v, b.v );
-    t1 = _mm256_unpackhi_ps( a.v, b.v );
-    t2 = _mm256_unpacklo_ps( c.v, d.v );
-    t3 = _mm256_unpackhi_ps( c.v, d.v );
-    t4 = _mm256_unpacklo_ps( e.v, f.v );
-    t5 = _mm256_unpackhi_ps( e.v, f.v );
-    t6 = _mm256_unpacklo_ps( g.v, h.v );
-    t7 = _mm256_unpackhi_ps( g.v, h.v );
+    ((int * ALIGNED(64))a03)[ 0] = b00.i[ 3];
+    ((int * ALIGNED(64))a03)[ 1] = b01.i[ 3];
+    ((int * ALIGNED(64))a03)[ 2] = b02.i[ 3];
+    ((int * ALIGNED(64))a03)[ 3] = b03.i[ 3];
+    ((int * ALIGNED(64))a03)[ 4] = b04.i[ 3];
+    ((int * ALIGNED(64))a03)[ 5] = b05.i[ 3];
+    ((int * ALIGNED(64))a03)[ 6] = b06.i[ 3];
+    ((int * ALIGNED(64))a03)[ 7] = b07.i[ 3];
+    ((int * ALIGNED(64))a03)[ 8] = b08.i[ 3];
+    ((int * ALIGNED(64))a03)[ 9] = b09.i[ 3];
+    ((int * ALIGNED(64))a03)[10] = b10.i[ 3];
+    ((int * ALIGNED(64))a03)[11] = b11.i[ 3];
+    ((int * ALIGNED(64))a03)[12] = b12.i[ 3];
+    ((int * ALIGNED(64))a03)[13] = b13.i[ 3];
+    ((int * ALIGNED(64))a03)[14] = b14.i[ 3];
+    ((int * ALIGNED(64))a03)[15] = b15.i[ 3];
 
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    ((int * ALIGNED(64))a04)[ 0] = b00.i[ 4];
+    ((int * ALIGNED(64))a04)[ 1] = b01.i[ 4];
+    ((int * ALIGNED(64))a04)[ 2] = b02.i[ 4];
+    ((int * ALIGNED(64))a04)[ 3] = b03.i[ 4];
+    ((int * ALIGNED(64))a04)[ 4] = b04.i[ 4];
+    ((int * ALIGNED(64))a04)[ 5] = b05.i[ 4];
+    ((int * ALIGNED(64))a04)[ 6] = b06.i[ 4];
+    ((int * ALIGNED(64))a04)[ 7] = b07.i[ 4];
+    ((int * ALIGNED(64))a04)[ 8] = b08.i[ 4];
+    ((int * ALIGNED(64))a04)[ 9] = b09.i[ 4];
+    ((int * ALIGNED(64))a04)[10] = b10.i[ 4];
+    ((int * ALIGNED(64))a04)[11] = b11.i[ 4];
+    ((int * ALIGNED(64))a04)[12] = b12.i[ 4];
+    ((int * ALIGNED(64))a04)[13] = b13.i[ 4];
+    ((int * ALIGNED(64))a04)[14] = b14.i[ 4];
+    ((int * ALIGNED(64))a04)[15] = b15.i[ 4];
 
-    a_v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b_v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c_v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d_v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e_v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f_v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g_v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h_v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+    ((int * ALIGNED(64))a05)[ 0] = b00.i[ 5];
+    ((int * ALIGNED(64))a05)[ 1] = b01.i[ 5];
+    ((int * ALIGNED(64))a05)[ 2] = b02.i[ 5];
+    ((int * ALIGNED(64))a05)[ 3] = b03.i[ 5];
+    ((int * ALIGNED(64))a05)[ 4] = b04.i[ 5];
+    ((int * ALIGNED(64))a05)[ 5] = b05.i[ 5];
+    ((int * ALIGNED(64))a05)[ 6] = b06.i[ 5];
+    ((int * ALIGNED(64))a05)[ 7] = b07.i[ 5];
+    ((int * ALIGNED(64))a05)[ 8] = b08.i[ 5];
+    ((int * ALIGNED(64))a05)[ 9] = b09.i[ 5];
+    ((int * ALIGNED(64))a05)[10] = b10.i[ 5];
+    ((int * ALIGNED(64))a05)[11] = b11.i[ 5];
+    ((int * ALIGNED(64))a05)[12] = b12.i[ 5];
+    ((int * ALIGNED(64))a05)[13] = b13.i[ 5];
+    ((int * ALIGNED(64))a05)[14] = b14.i[ 5];
+    ((int * ALIGNED(64))a05)[15] = b15.i[ 5];
 
-    _mm256_store_ps( (float *)a0, a_v );
-    _mm256_store_ps( (float *)a1, b_v );
-    _mm256_store_ps( (float *)a2, c_v );
-    _mm256_store_ps( (float *)a3, d_v );
-    _mm256_store_ps( (float *)a4, e_v );
-    _mm256_store_ps( (float *)a5, f_v );
-    _mm256_store_ps( (float *)a6, g_v );
-    _mm256_store_ps( (float *)a7, h_v );
+    ((int * ALIGNED(64))a06)[ 0] = b00.i[ 6];
+    ((int * ALIGNED(64))a06)[ 1] = b01.i[ 6];
+    ((int * ALIGNED(64))a06)[ 2] = b02.i[ 6];
+    ((int * ALIGNED(64))a06)[ 3] = b03.i[ 6];
+    ((int * ALIGNED(64))a06)[ 4] = b04.i[ 6];
+    ((int * ALIGNED(64))a06)[ 5] = b05.i[ 6];
+    ((int * ALIGNED(64))a06)[ 6] = b06.i[ 6];
+    ((int * ALIGNED(64))a06)[ 7] = b07.i[ 6];
+    ((int * ALIGNED(64))a06)[ 8] = b08.i[ 6];
+    ((int * ALIGNED(64))a06)[ 9] = b09.i[ 6];
+    ((int * ALIGNED(64))a06)[10] = b10.i[ 6];
+    ((int * ALIGNED(64))a06)[11] = b11.i[ 6];
+    ((int * ALIGNED(64))a06)[12] = b12.i[ 6];
+    ((int * ALIGNED(64))a06)[13] = b13.i[ 6];
+    ((int * ALIGNED(64))a06)[14] = b14.i[ 6];
+    ((int * ALIGNED(64))a06)[15] = b15.i[ 6];
+
+    ((int * ALIGNED(64))a07)[ 0] = b00.i[ 7];
+    ((int * ALIGNED(64))a07)[ 1] = b01.i[ 7];
+    ((int * ALIGNED(64))a07)[ 2] = b02.i[ 7];
+    ((int * ALIGNED(64))a07)[ 3] = b03.i[ 7];
+    ((int * ALIGNED(64))a07)[ 4] = b04.i[ 7];
+    ((int * ALIGNED(64))a07)[ 5] = b05.i[ 7];
+    ((int * ALIGNED(64))a07)[ 6] = b06.i[ 7];
+    ((int * ALIGNED(64))a07)[ 7] = b07.i[ 7];
+    ((int * ALIGNED(64))a07)[ 8] = b08.i[ 7];
+    ((int * ALIGNED(64))a07)[ 9] = b09.i[ 7];
+    ((int * ALIGNED(64))a07)[10] = b10.i[ 7];
+    ((int * ALIGNED(64))a07)[11] = b11.i[ 7];
+    ((int * ALIGNED(64))a07)[12] = b12.i[ 7];
+    ((int * ALIGNED(64))a07)[13] = b13.i[ 7];
+    ((int * ALIGNED(64))a07)[14] = b14.i[ 7];
+    ((int * ALIGNED(64))a07)[15] = b15.i[ 7];
+
+    ((int * ALIGNED(64))a08)[ 0] = b00.i[ 8];
+    ((int * ALIGNED(64))a08)[ 1] = b01.i[ 8];
+    ((int * ALIGNED(64))a08)[ 2] = b02.i[ 8];
+    ((int * ALIGNED(64))a08)[ 3] = b03.i[ 8];
+    ((int * ALIGNED(64))a08)[ 4] = b04.i[ 8];
+    ((int * ALIGNED(64))a08)[ 5] = b05.i[ 8];
+    ((int * ALIGNED(64))a08)[ 6] = b06.i[ 8];
+    ((int * ALIGNED(64))a08)[ 7] = b07.i[ 8];
+    ((int * ALIGNED(64))a08)[ 8] = b08.i[ 8];
+    ((int * ALIGNED(64))a08)[ 9] = b09.i[ 8];
+    ((int * ALIGNED(64))a08)[10] = b10.i[ 8];
+    ((int * ALIGNED(64))a08)[11] = b11.i[ 8];
+    ((int * ALIGNED(64))a08)[12] = b12.i[ 8];
+    ((int * ALIGNED(64))a08)[13] = b13.i[ 8];
+    ((int * ALIGNED(64))a08)[14] = b14.i[ 8];
+    ((int * ALIGNED(64))a08)[15] = b15.i[ 8];
+
+    ((int * ALIGNED(64))a09)[ 0] = b00.i[ 9];
+    ((int * ALIGNED(64))a09)[ 1] = b01.i[ 9];
+    ((int * ALIGNED(64))a09)[ 2] = b02.i[ 9];
+    ((int * ALIGNED(64))a09)[ 3] = b03.i[ 9];
+    ((int * ALIGNED(64))a09)[ 4] = b04.i[ 9];
+    ((int * ALIGNED(64))a09)[ 5] = b05.i[ 9];
+    ((int * ALIGNED(64))a09)[ 6] = b06.i[ 9];
+    ((int * ALIGNED(64))a09)[ 7] = b07.i[ 9];
+    ((int * ALIGNED(64))a09)[ 8] = b08.i[ 9];
+    ((int * ALIGNED(64))a09)[ 9] = b09.i[ 9];
+    ((int * ALIGNED(64))a09)[10] = b10.i[ 9];
+    ((int * ALIGNED(64))a09)[11] = b11.i[ 9];
+    ((int * ALIGNED(64))a09)[12] = b12.i[ 9];
+    ((int * ALIGNED(64))a09)[13] = b13.i[ 9];
+    ((int * ALIGNED(64))a09)[14] = b14.i[ 9];
+    ((int * ALIGNED(64))a09)[15] = b15.i[ 9];
+
+    ((int * ALIGNED(64))a10)[ 0] = b00.i[10];
+    ((int * ALIGNED(64))a10)[ 1] = b01.i[10];
+    ((int * ALIGNED(64))a10)[ 2] = b02.i[10];
+    ((int * ALIGNED(64))a10)[ 3] = b03.i[10];
+    ((int * ALIGNED(64))a10)[ 4] = b04.i[10];
+    ((int * ALIGNED(64))a10)[ 5] = b05.i[10];
+    ((int * ALIGNED(64))a10)[ 6] = b06.i[10];
+    ((int * ALIGNED(64))a10)[ 7] = b07.i[10];
+    ((int * ALIGNED(64))a10)[ 8] = b08.i[10];
+    ((int * ALIGNED(64))a10)[ 9] = b09.i[10];
+    ((int * ALIGNED(64))a10)[10] = b10.i[10];
+    ((int * ALIGNED(64))a10)[11] = b11.i[10];
+    ((int * ALIGNED(64))a10)[12] = b12.i[10];
+    ((int * ALIGNED(64))a10)[13] = b13.i[10];
+    ((int * ALIGNED(64))a10)[14] = b14.i[10];
+    ((int * ALIGNED(64))a10)[15] = b15.i[10];
+
+    ((int * ALIGNED(64))a11)[ 0] = b00.i[11];
+    ((int * ALIGNED(64))a11)[ 1] = b01.i[11];
+    ((int * ALIGNED(64))a11)[ 2] = b02.i[11];
+    ((int * ALIGNED(64))a11)[ 3] = b03.i[11];
+    ((int * ALIGNED(64))a11)[ 4] = b04.i[11];
+    ((int * ALIGNED(64))a11)[ 5] = b05.i[11];
+    ((int * ALIGNED(64))a11)[ 6] = b06.i[11];
+    ((int * ALIGNED(64))a11)[ 7] = b07.i[11];
+    ((int * ALIGNED(64))a11)[ 8] = b08.i[11];
+    ((int * ALIGNED(64))a11)[ 9] = b09.i[11];
+    ((int * ALIGNED(64))a11)[10] = b10.i[11];
+    ((int * ALIGNED(64))a11)[11] = b11.i[11];
+    ((int * ALIGNED(64))a11)[12] = b12.i[11];
+    ((int * ALIGNED(64))a11)[13] = b13.i[11];
+    ((int * ALIGNED(64))a11)[14] = b14.i[11];
+    ((int * ALIGNED(64))a11)[15] = b15.i[11];
+
+    ((int * ALIGNED(64))a12)[ 0] = b00.i[12];
+    ((int * ALIGNED(64))a12)[ 1] = b01.i[12];
+    ((int * ALIGNED(64))a12)[ 2] = b02.i[12];
+    ((int * ALIGNED(64))a12)[ 3] = b03.i[12];
+    ((int * ALIGNED(64))a12)[ 4] = b04.i[12];
+    ((int * ALIGNED(64))a12)[ 5] = b05.i[12];
+    ((int * ALIGNED(64))a12)[ 6] = b06.i[12];
+    ((int * ALIGNED(64))a12)[ 7] = b07.i[12];
+    ((int * ALIGNED(64))a12)[ 8] = b08.i[12];
+    ((int * ALIGNED(64))a12)[ 9] = b09.i[12];
+    ((int * ALIGNED(64))a12)[10] = b10.i[12];
+    ((int * ALIGNED(64))a12)[11] = b11.i[12];
+    ((int * ALIGNED(64))a12)[12] = b12.i[12];
+    ((int * ALIGNED(64))a12)[13] = b13.i[12];
+    ((int * ALIGNED(64))a12)[14] = b14.i[12];
+    ((int * ALIGNED(64))a12)[15] = b15.i[12];
+
+    ((int * ALIGNED(64))a13)[ 0] = b00.i[13];
+    ((int * ALIGNED(64))a13)[ 1] = b01.i[13];
+    ((int * ALIGNED(64))a13)[ 2] = b02.i[13];
+    ((int * ALIGNED(64))a13)[ 3] = b03.i[13];
+    ((int * ALIGNED(64))a13)[ 4] = b04.i[13];
+    ((int * ALIGNED(64))a13)[ 5] = b05.i[13];
+    ((int * ALIGNED(64))a13)[ 6] = b06.i[13];
+    ((int * ALIGNED(64))a13)[ 7] = b07.i[13];
+    ((int * ALIGNED(64))a13)[ 8] = b08.i[13];
+    ((int * ALIGNED(64))a13)[ 9] = b09.i[13];
+    ((int * ALIGNED(64))a13)[10] = b10.i[13];
+    ((int * ALIGNED(64))a13)[11] = b11.i[13];
+    ((int * ALIGNED(64))a13)[12] = b12.i[13];
+    ((int * ALIGNED(64))a13)[13] = b13.i[13];
+    ((int * ALIGNED(64))a13)[14] = b14.i[13];
+    ((int * ALIGNED(64))a13)[15] = b15.i[13];
+
+    ((int * ALIGNED(64))a14)[ 0] = b00.i[14];
+    ((int * ALIGNED(64))a14)[ 1] = b01.i[14];
+    ((int * ALIGNED(64))a14)[ 2] = b02.i[14];
+    ((int * ALIGNED(64))a14)[ 3] = b03.i[14];
+    ((int * ALIGNED(64))a14)[ 4] = b04.i[14];
+    ((int * ALIGNED(64))a14)[ 5] = b05.i[14];
+    ((int * ALIGNED(64))a14)[ 6] = b06.i[14];
+    ((int * ALIGNED(64))a14)[ 7] = b07.i[14];
+    ((int * ALIGNED(64))a14)[ 8] = b08.i[14];
+    ((int * ALIGNED(64))a14)[ 9] = b09.i[14];
+    ((int * ALIGNED(64))a14)[10] = b10.i[14];
+    ((int * ALIGNED(64))a14)[11] = b11.i[14];
+    ((int * ALIGNED(64))a14)[12] = b12.i[14];
+    ((int * ALIGNED(64))a14)[13] = b13.i[14];
+    ((int * ALIGNED(64))a14)[14] = b14.i[14];
+    ((int * ALIGNED(64))a14)[15] = b15.i[14];
+
+    ((int * ALIGNED(64))a15)[ 0] = b00.i[15];
+    ((int * ALIGNED(64))a15)[ 1] = b01.i[15];
+    ((int * ALIGNED(64))a15)[ 2] = b02.i[15];
+    ((int * ALIGNED(64))a15)[ 3] = b03.i[15];
+    ((int * ALIGNED(64))a15)[ 4] = b04.i[15];
+    ((int * ALIGNED(64))a15)[ 5] = b05.i[15];
+    ((int * ALIGNED(64))a15)[ 6] = b06.i[15];
+    ((int * ALIGNED(64))a15)[ 7] = b07.i[15];
+    ((int * ALIGNED(64))a15)[ 8] = b08.i[15];
+    ((int * ALIGNED(64))a15)[ 9] = b09.i[15];
+    ((int * ALIGNED(64))a15)[10] = b10.i[15];
+    ((int * ALIGNED(64))a15)[11] = b11.i[15];
+    ((int * ALIGNED(64))a15)[12] = b12.i[15];
+    ((int * ALIGNED(64))a15)[13] = b13.i[15];
+    ((int * ALIGNED(64))a15)[14] = b14.i[15];
+    ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
-
-  //--------------------------------------------------------------------
-  inline void store_8x8_tr_v0( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-			       const v8 &e, const v8 &f, const v8 &g, const v8 &h,
-			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-			       void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-			       void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-			       void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
-  {
-    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
-
-    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
-
-    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
-
-    t0 = _mm256_unpacklo_ps( a.v, b.v );
-    t1 = _mm256_unpackhi_ps( a.v, b.v );
-    t2 = _mm256_unpacklo_ps( c.v, d.v );
-    t3 = _mm256_unpackhi_ps( c.v, d.v );
-    t4 = _mm256_unpacklo_ps( e.v, f.v );
-    t5 = _mm256_unpackhi_ps( e.v, f.v );
-    t6 = _mm256_unpacklo_ps( g.v, h.v );
-    t7 = _mm256_unpackhi_ps( g.v, h.v );
-
-    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
-    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
-
-    a_v = _mm256_permute2f128_ps( u0, u4, 0x20 );
-    b_v = _mm256_permute2f128_ps( u1, u5, 0x20 );
-    c_v = _mm256_permute2f128_ps( u2, u6, 0x20 );
-    d_v = _mm256_permute2f128_ps( u3, u7, 0x20 );
-    e_v = _mm256_permute2f128_ps( u0, u4, 0x31 );
-    f_v = _mm256_permute2f128_ps( u1, u5, 0x31 );
-    g_v = _mm256_permute2f128_ps( u2, u6, 0x31 );
-    h_v = _mm256_permute2f128_ps( u3, u7, 0x31 );
-
-    _mm256_store_ps( (float *)a0, a_v );
-    _mm256_store_ps( (float *)a1, b_v );
-    _mm256_store_ps( (float *)a2, c_v );
-    _mm256_store_ps( (float *)a3, d_v );
-    _mm256_store_ps( (float *)a4, e_v );
-    _mm256_store_ps( (float *)a5, f_v );
-    _mm256_store_ps( (float *)a6, g_v );
-    _mm256_store_ps( (float *)a7, h_v );
-#if 0
-    _mm256_store_ps( (float *)a0, a.v );
-    _mm256_store_ps( (float *)a1, b.v );
-    _mm256_store_ps( (float *)a2, c.v );
-    _mm256_store_ps( (float *)a3, d.v );
-    _mm256_store_ps( (float *)a4, e.v );
-    _mm256_store_ps( (float *)a5, f.v );
-    _mm256_store_ps( (float *)a6, g.v );
-    _mm256_store_ps( (float *)a7, h.v );
-#endif
-  }
-  //--------------------------------------------------------------------
 
   //////////////
-  // v8int class
+  // v16int class
 
-  class v8int : public v8
+  class v16int : public v16
   {
-    // v8int prefix unary operator friends
+    // v16int prefix unary operator friends
 
-    friend inline v8int operator  +( const v8int & a );
-    friend inline v8int operator  -( const v8int & a );
-    friend inline v8int operator  ~( const v8int & a );
-    friend inline v8int operator  !( const v8int & a );
+    friend inline v16int operator  +( const v16int & a );
+    friend inline v16int operator  -( const v16int & a );
+    friend inline v16int operator  ~( const v16int & a );
+    friend inline v16int operator  !( const v16int & a );
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
-    // v8int prefix increment / decrement operator friends
+    // v16int prefix increment / decrement operator friends
 
-    friend inline v8int operator ++( v8int & a );
-    friend inline v8int operator --( v8int & a );
+    friend inline v16int operator ++( v16int & a );
+    friend inline v16int operator --( v16int & a );
 
-    // v8int postfix increment / decrement operator friends
+    // v16int postfix increment / decrement operator friends
 
-    friend inline v8int operator ++( v8int & a, int );
-    friend inline v8int operator --( v8int & a, int );
+    friend inline v16int operator ++( v16int & a, int );
+    friend inline v16int operator --( v16int & a, int );
 
-    // v8int binary operator friends
+    // v16int binary operator friends
 
-    friend inline v8int operator  +( const v8int &a, const v8int &b );
-    friend inline v8int operator  -( const v8int &a, const v8int &b );
-    friend inline v8int operator  *( const v8int &a, const v8int &b );
-    friend inline v8int operator  /( const v8int &a, const v8int &b );
-    friend inline v8int operator  %( const v8int &a, const v8int &b );
-    friend inline v8int operator  ^( const v8int &a, const v8int &b );
-    friend inline v8int operator  &( const v8int &a, const v8int &b );
-    friend inline v8int operator  |( const v8int &a, const v8int &b );
-    friend inline v8int operator <<( const v8int &a, const v8int &b );
-    friend inline v8int operator >>( const v8int &a, const v8int &b );
+    friend inline v16int operator  +( const v16int &a, const v16int &b );
+    friend inline v16int operator  -( const v16int &a, const v16int &b );
+    friend inline v16int operator  *( const v16int &a, const v16int &b );
+    friend inline v16int operator  /( const v16int &a, const v16int &b );
+    friend inline v16int operator  %( const v16int &a, const v16int &b );
+    friend inline v16int operator  ^( const v16int &a, const v16int &b );
+    friend inline v16int operator  &( const v16int &a, const v16int &b );
+    friend inline v16int operator  |( const v16int &a, const v16int &b );
+    friend inline v16int operator <<( const v16int &a, const v16int &b );
+    friend inline v16int operator >>( const v16int &a, const v16int &b );
 
-    // v8int logical operator friends
+    // v16int logical operator friends
 
-    friend inline v8int operator  <( const v8int &a, const v8int &b );
-    friend inline v8int operator  >( const v8int &a, const v8int &b );
-    friend inline v8int operator ==( const v8int &a, const v8int &b );
-    friend inline v8int operator !=( const v8int &a, const v8int &b );
-    friend inline v8int operator <=( const v8int &a, const v8int &b );
-    friend inline v8int operator >=( const v8int &a, const v8int &b );
-    friend inline v8int operator &&( const v8int &a, const v8int &b );
-    friend inline v8int operator ||( const v8int &a, const v8int &b );
+    friend inline v16int operator  <( const v16int &a, const v16int &b );
+    friend inline v16int operator  >( const v16int &a, const v16int &b );
+    friend inline v16int operator ==( const v16int &a, const v16int &b );
+    friend inline v16int operator !=( const v16int &a, const v16int &b );
+    friend inline v16int operator <=( const v16int &a, const v16int &b );
+    friend inline v16int operator >=( const v16int &a, const v16int &b );
+    friend inline v16int operator &&( const v16int &a, const v16int &b );
+    friend inline v16int operator ||( const v16int &a, const v16int &b );
 
-    // v8int miscellaneous friends
+    // v16int miscellaneous friends
 
-    friend inline v8int abs( const v8int &a );
-    friend inline v8    czero( const v8int &c, const v8 &a );
-    friend inline v8 notczero( const v8int &c, const v8 &a );
+    friend inline v16int abs( const v16int &a );
+    friend inline v16    czero( const v16int &c, const v16 &a );
+    friend inline v16 notczero( const v16int &c, const v16 &a );
     // FIXME: cswap, notcswap!
-    friend inline v8 merge( const v8int &c, const v8 &t, const v8 &f );
+    friend inline v16 merge( const v16int &c, const v16 &t, const v16 &f );
 
-    // v8float unary operator friends
+    // v16float unary operator friends
 
-    friend inline v8int operator  !( const v8float & a );
+    friend inline v16int operator  !( const v16float & a );
 
-    // v8float logical operator friends
+    // v16float logical operator friends
 
-    friend inline v8int operator  <( const v8float &a, const v8float &b );
-    friend inline v8int operator  >( const v8float &a, const v8float &b );
-    friend inline v8int operator ==( const v8float &a, const v8float &b );
-    friend inline v8int operator !=( const v8float &a, const v8float &b );
-    friend inline v8int operator <=( const v8float &a, const v8float &b );
-    friend inline v8int operator >=( const v8float &a, const v8float &b );
-    friend inline v8int operator &&( const v8float &a, const v8float &b );
-    friend inline v8int operator ||( const v8float &a, const v8float &b );
+    friend inline v16int operator  <( const v16float &a, const v16float &b );
+    friend inline v16int operator  >( const v16float &a, const v16float &b );
+    friend inline v16int operator ==( const v16float &a, const v16float &b );
+    friend inline v16int operator !=( const v16float &a, const v16float &b );
+    friend inline v16int operator <=( const v16float &a, const v16float &b );
+    friend inline v16int operator >=( const v16float &a, const v16float &b );
+    friend inline v16int operator &&( const v16float &a, const v16float &b );
+    friend inline v16int operator ||( const v16float &a, const v16float &b );
 
-    // v8float miscellaneous friends
+    // v16float miscellaneous friends
 
-    friend inline v8float clear_bits(  const v8int &m, const v8float &a );
-    friend inline v8float set_bits(    const v8int &m, const v8float &a );
-    friend inline v8float toggle_bits( const v8int &m, const v8float &a );
+    friend inline v16float clear_bits(  const v16int &m, const v16float &a );
+    friend inline v16float set_bits(    const v16int &m, const v16float &a );
+    friend inline v16float toggle_bits( const v16int &m, const v16float &a );
 
   public:
 
-    // v8int constructors / destructors
+    // v16int constructors / destructors
 
-    v8int() {}                                // Default constructor
+    v16int() {}                                // Default constructor
 
-    v8int( const v8int &a )                   // Copy constructor
+    v16int( const v16int &a )                  // Copy constructor
     {
       v = a.v;
     }
 
-    v8int( const v8 &a )                      // Init from mixed
+    v16int( const v16 &a )                     // Init from mixed
     {
       v = a.v;
     }
 
-    v8int( int a )                            // Init from scalar
+    v16int( int a )                            // Init from scalar
     {
       union
       {
@@ -1726,44 +2048,59 @@ namespace v8
 	float f;
       } u;
       u.i = a;
-      v = _mm256_set1_ps( u.f );
+      v = _mm512_set1_ps( u.f );
     }
 
-    v8int( int i0, int i1, int i2, int i3,
-	   int i4, int i5, int i6, int i7 )   // Init from scalars
+    v16int( int i00, int i01, int i02, int i03,
+	    int i04, int i05, int i06, int i07,
+	    int i08, int i09, int i10, int i11,
+	    int i12, int i13, int i14, int i15 )   // Init from scalars
     {
       union
       {
 	int i;
 	float f;
-      } u0, u1, u2, u3, u4, u5, u6, u7;
+      } u00, u01, u02, u03, u04, u05, u06, u07,
+	u08, u09, u10, u11, u12, u13, u14, u15;
 
-      u0.i = i0; u1.i = i1; u2.i = i2; u3.i = i3;
-      u4.i = i4; u5.i = i5; u6.i = i6; u7.i = i7;
+      u00.i = i00; u01.i = i01; u02.i = i02; u03.i = i03;
+      u04.i = i04; u05.i = i05; u06.i = i06; u07.i = i07;
+      u08.i = i08; u09.i = i09; u10.i = i10; u11.i = i11;
+      u12.i = i12; u13.i = i13; u14.i = i14; u15.i = i15;
 
-      v = _mm256_setr_ps( u0.f, u1.f, u2.f, u3.f,
-			  u4.f, u5.f, u6.f, u7.f );
+      v = _mm512_setr_ps( u00.f, u01.f, u02.f, u03.f,
+			  u04.f, u05.f, u06.f, u07.f,
+			  u08.f, u09.f, u10.f, u11.f,
+			  u12.f, u13.f, u14.f, u15.f );
     }
 
-    ~v8int() {}                               // Destructor
+    ~v16int() {}                               // Destructor
 
-    // v8int assignment operators
+    // v16int assignment operators
 
 #   define ASSIGN(op)			          \
-    inline v8int &operator op( const v8int &b )   \
+    inline v16int &operator op( const v16int &b ) \
     {						  \
-      i[0] op b.i[0];                             \
-      i[1] op b.i[1];                             \
-      i[2] op b.i[2];                             \
-      i[3] op b.i[3];                             \
-      i[4] op b.i[4];                             \
-      i[5] op b.i[5];                             \
-      i[6] op b.i[6];                             \
-      i[7] op b.i[7];                             \
+      i[ 0] op b.i[ 0];                           \
+      i[ 1] op b.i[ 1];                           \
+      i[ 2] op b.i[ 2];                           \
+      i[ 3] op b.i[ 3];                           \
+      i[ 4] op b.i[ 4];                           \
+      i[ 5] op b.i[ 5];                           \
+      i[ 6] op b.i[ 6];                           \
+      i[ 7] op b.i[ 7];                           \
+      i[ 8] op b.i[ 8];                           \
+      i[ 9] op b.i[ 9];                           \
+      i[10] op b.i[10];                           \
+      i[11] op b.i[11];                           \
+      i[12] op b.i[12];                           \
+      i[13] op b.i[13];                           \
+      i[14] op b.i[14];                           \
+      i[15] op b.i[15];                           \
       return *this;                               \
     }
 
-    inline v8int &operator =( const v8int &b )
+    inline v16int &operator =( const v16int &b )
     {
       v = b.v;
       return *this;
@@ -1775,21 +2112,21 @@ namespace v8
     ASSIGN(/=)
     ASSIGN(%=)
 
-    inline v8int &operator ^=( const v8int &b )
+    inline v16int &operator ^=( const v16int &b )
     {
-      v = _mm256_xor_ps( v, b.v );
+      v = _mm512_xor_ps( v, b.v );
       return *this;
     }
 
-    inline v8int &operator &=( const v8int &b )
+    inline v16int &operator &=( const v16int &b )
     {
-      v = _mm256_and_ps( v, b.v );
+      v = _mm512_and_ps( v, b.v );
       return *this;
     }
 
-    inline v8int &operator |=( const v8int &b )
+    inline v16int &operator |=( const v16int &b )
     {
-      v = _mm256_or_ps( v, b.v );
+      v = _mm512_or_ps( v, b.v );
       return *this;
     }
 
@@ -1798,7 +2135,7 @@ namespace v8
 
 #   undef ASSIGN
 
-    // v8int member access operator
+    // v16int member access operator
 
     inline int &operator []( int n )
     {
@@ -1811,75 +2148,99 @@ namespace v8
     }
   };
 
-  // v8int prefix unary operators
+  // v16int prefix unary operators
 
 # define PREFIX_UNARY(op)                       \
-  inline v8int operator op( const v8int & a )   \
+  inline v16int operator op( const v16int & a ) \
   {						\
-    v8int b;                                    \
-    b.i[0] = (op a.i[0]);                       \
-    b.i[1] = (op a.i[1]);                       \
-    b.i[2] = (op a.i[2]);                       \
-    b.i[3] = (op a.i[3]);                       \
-    b.i[4] = (op a.i[4]);                       \
-    b.i[5] = (op a.i[5]);                       \
-    b.i[6] = (op a.i[6]);                       \
-    b.i[7] = (op a.i[7]);                       \
+    v16int b;                                   \
+    b.i[ 0] = (op a.i[ 0]);                     \
+    b.i[ 1] = (op a.i[ 1]);                     \
+    b.i[ 2] = (op a.i[ 2]);                     \
+    b.i[ 3] = (op a.i[ 3]);                     \
+    b.i[ 4] = (op a.i[ 4]);                     \
+    b.i[ 5] = (op a.i[ 5]);                     \
+    b.i[ 6] = (op a.i[ 6]);                     \
+    b.i[ 7] = (op a.i[ 7]);                     \
+    b.i[ 8] = (op a.i[ 8]);                     \
+    b.i[ 9] = (op a.i[ 9]);                     \
+    b.i[10] = (op a.i[10]);                     \
+    b.i[11] = (op a.i[11]);                     \
+    b.i[12] = (op a.i[12]);                     \
+    b.i[13] = (op a.i[13]);                     \
+    b.i[14] = (op a.i[14]);                     \
+    b.i[15] = (op a.i[15]);                     \
     return b;                                   \
   }
 
-  inline v8int operator +( const v8int & a )
+  inline v16int operator +( const v16int & a )
   {
-    v8int b;
+    v16int b;
     b.v = a.v;
     return b;
   }
 
   PREFIX_UNARY(-)
 
-  inline v8int operator !( const v8int & a )
+  inline v16int operator !( const v16int & a )
   {
-    v8int b;
-    b.i[0] = -(!a.i[0]);
-    b.i[1] = -(!a.i[1]);
-    b.i[2] = -(!a.i[2]);
-    b.i[3] = -(!a.i[3]);
-    b.i[4] = -(!a.i[4]);
-    b.i[5] = -(!a.i[5]);
-    b.i[6] = -(!a.i[6]);
-    b.i[7] = -(!a.i[7]);
+    v16int b;
+    b.i[ 0] = -(!a.i[ 0]);
+    b.i[ 1] = -(!a.i[ 1]);
+    b.i[ 2] = -(!a.i[ 2]);
+    b.i[ 3] = -(!a.i[ 3]);
+    b.i[ 4] = -(!a.i[ 4]);
+    b.i[ 5] = -(!a.i[ 5]);
+    b.i[ 6] = -(!a.i[ 6]);
+    b.i[ 7] = -(!a.i[ 7]);
+    b.i[ 8] = -(!a.i[ 8]);
+    b.i[ 9] = -(!a.i[ 9]);
+    b.i[10] = -(!a.i[10]);
+    b.i[11] = -(!a.i[11]);
+    b.i[12] = -(!a.i[12]);
+    b.i[13] = -(!a.i[13]);
+    b.i[14] = -(!a.i[14]);
+    b.i[15] = -(!a.i[15]);
     return b;
   }
 
-  inline v8int operator ~( const v8int & a )
+  inline v16int operator ~( const v16int & a )
   {
-    v8int b;
+    v16int b;
     union
     {
       int i;
       float f;
     } u;
     u.i = -1;
-    b.v = _mm256_xor_ps( a.v, _mm256_set1_ps( u.f ) );
+    b.v = _mm512_xor_ps( a.v, _mm512_set1_ps( u.f ) );
     return b;
   }
 
 # undef PREFIX_UNARY
 
-  // v8int prefix increment / decrement
+  // v16int prefix increment / decrement
 
 # define PREFIX_INCDEC(op)                      \
-  inline v8int operator op( v8int & a )         \
+  inline v16int operator op( v16int & a )       \
   {						\
-    v8int b;                                    \
-    b.i[0] = (op a.i[0]);                       \
-    b.i[1] = (op a.i[1]);                       \
-    b.i[2] = (op a.i[2]);                       \
-    b.i[3] = (op a.i[3]);                       \
-    b.i[4] = (op a.i[4]);                       \
-    b.i[5] = (op a.i[5]);                       \
-    b.i[6] = (op a.i[6]);                       \
-    b.i[7] = (op a.i[7]);                       \
+    v16int b;                                   \
+    b.i[ 0] = (op a.i[ 0]);                     \
+    b.i[ 1] = (op a.i[ 1]);                     \
+    b.i[ 2] = (op a.i[ 2]);                     \
+    b.i[ 3] = (op a.i[ 3]);                     \
+    b.i[ 4] = (op a.i[ 4]);                     \
+    b.i[ 5] = (op a.i[ 5]);                     \
+    b.i[ 6] = (op a.i[ 6]);                     \
+    b.i[ 7] = (op a.i[ 7]);                     \
+    b.i[ 8] = (op a.i[ 8]);                     \
+    b.i[ 9] = (op a.i[ 9]);                     \
+    b.i[10] = (op a.i[10]);                     \
+    b.i[11] = (op a.i[11]);                     \
+    b.i[12] = (op a.i[12]);                     \
+    b.i[13] = (op a.i[13]);                     \
+    b.i[14] = (op a.i[14]);                     \
+    b.i[15] = (op a.i[15]);                     \
     return b;                                   \
   }
 
@@ -1888,20 +2249,28 @@ namespace v8
 
 # undef PREFIX_INCDEC
 
-  // v8int postfix increment / decrement
+  // v16int postfix increment / decrement
 
 # define POSTFIX_INCDEC(op)                    \
-  inline v8int operator op( v8int & a, int )   \
+  inline v16int operator op( v16int & a, int ) \
   {					       \
-    v8int b;                                   \
-    b.i[0] = (a.i[0] op);                      \
-    b.i[1] = (a.i[1] op);                      \
-    b.i[2] = (a.i[2] op);                      \
-    b.i[3] = (a.i[3] op);                      \
-    b.i[4] = (a.i[4] op);                      \
-    b.i[5] = (a.i[5] op);                      \
-    b.i[6] = (a.i[6] op);                      \
-    b.i[7] = (a.i[7] op);                      \
+    v16int b;                                  \
+    b.i[ 0] = (a.i[ 0] op);                    \
+    b.i[ 1] = (a.i[ 1] op);                    \
+    b.i[ 2] = (a.i[ 2] op);                    \
+    b.i[ 3] = (a.i[ 3] op);                    \
+    b.i[ 4] = (a.i[ 4] op);                    \
+    b.i[ 5] = (a.i[ 5] op);                    \
+    b.i[ 6] = (a.i[ 6] op);                    \
+    b.i[ 7] = (a.i[ 7] op);                    \
+    b.i[ 8] = (a.i[ 8] op);                    \
+    b.i[ 9] = (a.i[ 9] op);                    \
+    b.i[10] = (a.i[10] op);                    \
+    b.i[11] = (a.i[11] op);                    \
+    b.i[12] = (a.i[12] op);                    \
+    b.i[13] = (a.i[13] op);                    \
+    b.i[14] = (a.i[14] op);                    \
+    b.i[15] = (a.i[15] op);                    \
     return b;                                  \
   }
 
@@ -1910,20 +2279,28 @@ namespace v8
 
 # undef POSTFIX_INCDEC
 
-  // v8int binary operators
+  // v16int binary operators
 
 # define BINARY(op)                                             \
-  inline v8int operator op( const v8int &a, const v8int &b )    \
+  inline v16int operator op( const v16int &a, const v16int &b ) \
   {								\
-    v8int c;                                                    \
-    c.i[0] = a.i[0] op b.i[0];                                  \
-    c.i[1] = a.i[1] op b.i[1];                                  \
-    c.i[2] = a.i[2] op b.i[2];                                  \
-    c.i[3] = a.i[3] op b.i[3];                                  \
-    c.i[4] = a.i[4] op b.i[4];                                  \
-    c.i[5] = a.i[5] op b.i[5];                                  \
-    c.i[6] = a.i[6] op b.i[6];                                  \
-    c.i[7] = a.i[7] op b.i[7];                                  \
+    v16int c;                                                   \
+    c.i[ 0] = a.i[ 0] op b.i[ 0];                               \
+    c.i[ 1] = a.i[ 1] op b.i[ 1];                               \
+    c.i[ 2] = a.i[ 2] op b.i[ 2];                               \
+    c.i[ 3] = a.i[ 3] op b.i[ 3];                               \
+    c.i[ 4] = a.i[ 4] op b.i[ 4];                               \
+    c.i[ 5] = a.i[ 5] op b.i[ 5];                               \
+    c.i[ 6] = a.i[ 6] op b.i[ 6];                               \
+    c.i[ 7] = a.i[ 7] op b.i[ 7];                               \
+    c.i[ 8] = a.i[ 8] op b.i[ 8];                               \
+    c.i[ 9] = a.i[ 9] op b.i[ 9];                               \
+    c.i[10] = a.i[10] op b.i[10];                               \
+    c.i[11] = a.i[11] op b.i[11];                               \
+    c.i[12] = a.i[12] op b.i[12];                               \
+    c.i[13] = a.i[13] op b.i[13];                               \
+    c.i[14] = a.i[14] op b.i[14];                               \
+    c.i[15] = a.i[15] op b.i[15];                               \
     return c;                                                   \
   }
 
@@ -1933,24 +2310,24 @@ namespace v8
   BINARY(/)
   BINARY(%)
 
-  inline v8int operator ^( const v8int &a, const v8int &b )
+  inline v16int operator ^( const v16int &a, const v16int &b )
   {
-    v8int c;
-    c.v = _mm256_xor_ps( a.v, b.v );
+    v16int c;
+    c.v = _mm512_xor_ps( a.v, b.v );
     return c;
   }
 
-  inline v8int operator &( const v8int &a, const v8int &b )
+  inline v16int operator &( const v16int &a, const v16int &b )
   {
-    v8int c;
-    c.v = _mm256_and_ps( a.v, b.v );
+    v16int c;
+    c.v = _mm512_and_ps( a.v, b.v );
     return c;
   }
 
-  inline v8int operator |( const v8int &a, const v8int &b )
+  inline v16int operator |( const v16int &a, const v16int &b )
   {
-    v8int c;
-    c.v = _mm256_or_ps( a.v, b.v );
+    v16int c;
+    c.v = _mm512_or_ps( a.v, b.v );
     return c;
   }
 
@@ -1959,21 +2336,29 @@ namespace v8
 
 # undef BINARY
 
-  // v8int logical operators
+  // v16int logical operators
 
-# define LOGICAL(op)                                           \
-  inline v8int operator op( const v8int &a, const v8int &b )   \
-  {							       \
-    v8int c;                                                   \
-    c.i[0] = -(a.i[0] op b.i[0]);                              \
-    c.i[1] = -(a.i[1] op b.i[1]);                              \
-    c.i[2] = -(a.i[2] op b.i[2]);                              \
-    c.i[3] = -(a.i[3] op b.i[3]);                              \
-    c.i[4] = -(a.i[4] op b.i[4]);                              \
-    c.i[5] = -(a.i[5] op b.i[5]);                              \
-    c.i[6] = -(a.i[6] op b.i[6]);                              \
-    c.i[7] = -(a.i[7] op b.i[7]);                              \
-    return c;                                                  \
+# define LOGICAL(op)                                            \
+  inline v16int operator op( const v16int &a, const v16int &b ) \
+  {                                                             \
+    v16int c;                                                   \
+    c.i[ 0] = -(a.i[ 0] op b.i[ 0]);                            \
+    c.i[ 1] = -(a.i[ 1] op b.i[ 1]);                            \
+    c.i[ 2] = -(a.i[ 2] op b.i[ 2]);                            \
+    c.i[ 3] = -(a.i[ 3] op b.i[ 3]);                            \
+    c.i[ 4] = -(a.i[ 4] op b.i[ 4]);                            \
+    c.i[ 5] = -(a.i[ 5] op b.i[ 5]);                            \
+    c.i[ 6] = -(a.i[ 6] op b.i[ 6]);                            \
+    c.i[ 7] = -(a.i[ 7] op b.i[ 7]);                            \
+    c.i[ 8] = -(a.i[ 8] op b.i[ 8]);                            \
+    c.i[ 9] = -(a.i[ 9] op b.i[ 9]);                            \
+    c.i[10] = -(a.i[10] op b.i[10]);                            \
+    c.i[11] = -(a.i[11] op b.i[11]);                            \
+    c.i[12] = -(a.i[12] op b.i[12]);                            \
+    c.i[13] = -(a.i[13] op b.i[13]);                            \
+    c.i[14] = -(a.i[14] op b.i[14]);                            \
+    c.i[15] = -(a.i[15] op b.i[15]);                            \
+    return c;                                                   \
   }
 
   LOGICAL(<)
@@ -1987,98 +2372,106 @@ namespace v8
 
 # undef LOGICAL
 
-  // v8int miscellaneous functions
+  // v16int miscellaneous functions
 
-  inline v8int abs( const v8int &a )
+  inline v16int abs( const v16int &a )
   {
-    v8int b;
-    b.i[0] = (a.i[0]>=0) ? a.i[0] : -a.i[0];
-    b.i[1] = (a.i[1]>=0) ? a.i[1] : -a.i[1];
-    b.i[2] = (a.i[2]>=0) ? a.i[2] : -a.i[2];
-    b.i[3] = (a.i[3]>=0) ? a.i[3] : -a.i[3];
-    b.i[4] = (a.i[4]>=0) ? a.i[4] : -a.i[4];
-    b.i[5] = (a.i[5]>=0) ? a.i[5] : -a.i[5];
-    b.i[6] = (a.i[6]>=0) ? a.i[6] : -a.i[6];
-    b.i[7] = (a.i[7]>=0) ? a.i[7] : -a.i[7];
+    v16int b;
+    b.i[ 0] = (a.i[ 0]>=0) ? a.i[ 0] : -a.i[ 0];
+    b.i[ 1] = (a.i[ 1]>=0) ? a.i[ 1] : -a.i[ 1];
+    b.i[ 2] = (a.i[ 2]>=0) ? a.i[ 2] : -a.i[ 2];
+    b.i[ 3] = (a.i[ 3]>=0) ? a.i[ 3] : -a.i[ 3];
+    b.i[ 4] = (a.i[ 4]>=0) ? a.i[ 4] : -a.i[ 4];
+    b.i[ 5] = (a.i[ 5]>=0) ? a.i[ 5] : -a.i[ 5];
+    b.i[ 6] = (a.i[ 6]>=0) ? a.i[ 6] : -a.i[ 6];
+    b.i[ 7] = (a.i[ 7]>=0) ? a.i[ 7] : -a.i[ 7];
+    b.i[ 8] = (a.i[ 8]>=0) ? a.i[ 8] : -a.i[ 8];
+    b.i[ 9] = (a.i[ 9]>=0) ? a.i[ 9] : -a.i[ 9];
+    b.i[10] = (a.i[10]>=0) ? a.i[10] : -a.i[10];
+    b.i[11] = (a.i[11]>=0) ? a.i[11] : -a.i[11];
+    b.i[12] = (a.i[12]>=0) ? a.i[12] : -a.i[12];
+    b.i[13] = (a.i[13]>=0) ? a.i[13] : -a.i[13];
+    b.i[14] = (a.i[14]>=0) ? a.i[14] : -a.i[14];
+    b.i[15] = (a.i[15]>=0) ? a.i[15] : -a.i[15];
     return b;
   }
 
-  inline v8 czero( const v8int &c, const v8 &a )
+  inline v16 czero( const v16int &c, const v16 &a )
   {
-    v8 b;
+    v16 b;
 
-    b.v = _mm256_andnot_ps( c.v, a.v );
+    b.v = _mm512_andnot_ps( c.v, a.v );
 
     return b;
   }
 
-  inline v8 notczero( const v8int &c, const v8 &a )
+  inline v16 notczero( const v16int &c, const v16 &a )
   {
-    v8 b;
+    v16 b;
 
-    b.v = _mm256_and_ps( c.v, a.v );
+    b.v = _mm512_and_ps( c.v, a.v );
 
     return b;
   }
 
-  inline v8 merge( const v8int &c, const v8 &t, const v8 &f )
+  inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
-    __m256 c_v = c.v;
+    __m512 c_v = c.v;
 
-    v8 tf;
+    v16 tf;
 
-    tf.v = _mm256_or_ps( _mm256_andnot_ps( c_v, f.v ),
-			 _mm256_and_ps( c_v, t.v ) );
+    tf.v = _mm512_or_ps( _mm512_andnot_ps( c_v, f.v ),
+			 _mm512_and_ps( c_v, t.v ) );
 
     return tf;
   }
 
   ////////////////
-  // v8float class
+  // v16float class
 
-  class v8float : public v8
+  class v16float : public v16
   {
-    // v8float prefix unary operator friends
+    // v16float prefix unary operator friends
 
-    friend inline v8float operator  +( const v8float &a );
-    friend inline v8float operator  -( const v8float &a );
-    friend inline v8float operator  ~( const v8float &a );
-    friend inline v8int   operator  !( const v8float &a );
+    friend inline v16float operator  +( const v16float &a );
+    friend inline v16float operator  -( const v16float &a );
+    friend inline v16float operator  ~( const v16float &a );
+    friend inline v16int   operator  !( const v16float &a );
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
-    // v8float prefix increment / decrement operator friends
+    // v16float prefix increment / decrement operator friends
 
-    friend inline v8float operator ++( v8float &a );
-    friend inline v8float operator --( v8float &a );
+    friend inline v16float operator ++( v16float &a );
+    friend inline v16float operator --( v16float &a );
 
-    // v8float postfix increment / decrement operator friends
+    // v16float postfix increment / decrement operator friends
 
-    friend inline v8float operator ++( v8float &a, int );
-    friend inline v8float operator --( v8float &a, int );
+    friend inline v16float operator ++( v16float &a, int );
+    friend inline v16float operator --( v16float &a, int );
 
-    // v8float binary operator friends
+    // v16float binary operator friends
 
-    friend inline v8float operator  +( const v8float &a, const v8float &b );
-    friend inline v8float operator  -( const v8float &a, const v8float &b );
-    friend inline v8float operator  *( const v8float &a, const v8float &b );
-    friend inline v8float operator  /( const v8float &a, const v8float &b );
+    friend inline v16float operator  +( const v16float &a, const v16float &b );
+    friend inline v16float operator  -( const v16float &a, const v16float &b );
+    friend inline v16float operator  *( const v16float &a, const v16float &b );
+    friend inline v16float operator  /( const v16float &a, const v16float &b );
 
-    // v8float logical operator friends
+    // v16float logical operator friends
 
-    friend inline v8int operator  <( const v8float &a, const v8float &b );
-    friend inline v8int operator  >( const v8float &a, const v8float &b );
-    friend inline v8int operator ==( const v8float &a, const v8float &b );
-    friend inline v8int operator !=( const v8float &a, const v8float &b );
-    friend inline v8int operator <=( const v8float &a, const v8float &b );
-    friend inline v8int operator >=( const v8float &a, const v8float &b );
-    friend inline v8int operator &&( const v8float &a, const v8float &b );
-    friend inline v8int operator ||( const v8float &a, const v8float &b );
+    friend inline v16int operator  <( const v16float &a, const v16float &b );
+    friend inline v16int operator  >( const v16float &a, const v16float &b );
+    friend inline v16int operator ==( const v16float &a, const v16float &b );
+    friend inline v16int operator !=( const v16float &a, const v16float &b );
+    friend inline v16int operator <=( const v16float &a, const v16float &b );
+    friend inline v16int operator >=( const v16float &a, const v16float &b );
+    friend inline v16int operator &&( const v16float &a, const v16float &b );
+    friend inline v16int operator ||( const v16float &a, const v16float &b );
 
-    // v8float math library friends
+    // v16float math library friends
 
-#   define CMATH_FR1(fn) friend inline v8float fn( const v8float &a )
-#   define CMATH_FR2(fn) friend inline v8float fn( const v8float &a,  \
-                                                   const v8float &b )
+#   define CMATH_FR1(fn) friend inline v16float fn( const v16float &a )
+#   define CMATH_FR2(fn) friend inline v16float fn( const v16float &a,  \
+                                                    const v16float &b )
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -2091,181 +2484,79 @@ namespace v8
 #   undef CMATH_FR1
 #   undef CMATH_FR2
 
-    // v8float miscellaneous friends
+    // v16float miscellaneous friends
 
-    friend inline v8float rsqrt_approx( const v8float &a );
-    friend inline v8float rsqrt( const v8float &a );
-    //---------------------------------------------------------------------------------
-    friend inline v8float rsqrt_v0( const v8float &a );
-    friend inline v8float rsqrt_v1( const v8float &a );
-    //---------------------------------------------------------------------------------
-    friend inline v8float rcp_approx( const v8float &a );
-    friend inline v8float rcp( const v8float &a );
-    friend inline v8float fma(  const v8float &a, const v8float &b, const v8float &c );
-    //---------------------------------------------------------------------------------
-    friend inline v8float fma_v00( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v01( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v02( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v03( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v04( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v05( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v06( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v07( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v08( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v09( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v10( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v11( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v12( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v13( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v14( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v15( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v16( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v17( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v18( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v19( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v20( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v21( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v22( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v23( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v24( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v25( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    friend inline v8float fma_v26( const v8float &a,
-				   const v8float &b,
-				   const v8float &c );
-    //---------------------------------------------------------------------------------
-    friend inline v8float fms(  const v8float &a, const v8float &b, const v8float &c );
-    friend inline v8float fnms( const v8float &a, const v8float &b, const v8float &c );
-    friend inline v8float clear_bits(  const v8int &m, const v8float &a );
-    friend inline v8float set_bits(    const v8int &m, const v8float &a );
-    friend inline v8float toggle_bits( const v8int &m, const v8float &a );
-    friend inline void increment_8x1( float * ALIGNED(16) p, const v8float &a );
-    //---------------------------------------------------------------------------------
-    friend inline void increment_8x1_v00( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v01( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v02( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v03( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v04( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v05( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v06( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v07( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v08( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v09( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v10( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v11( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v12( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v13( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v14( float * ALIGNED(16) p, const v8float &a );
-    friend inline void increment_8x1_v15( float * ALIGNED(16) p, const v8float &a );
-    //---------------------------------------------------------------------------------
-    friend inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a );
-    friend inline void scale_8x1(     float * ALIGNED(16) p, const v8float &a );
+    friend inline v16float rsqrt_approx( const v16float &a );
+    friend inline v16float rsqrt( const v16float &a );
+    friend inline v16float rcp_approx( const v16float &a );
+    friend inline v16float rcp( const v16float &a );
+    friend inline v16float fma(  const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float fms(  const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float fnms( const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float clear_bits(  const v16int &m, const v16float &a );
+    friend inline v16float set_bits(    const v16int &m, const v16float &a );
+    friend inline v16float toggle_bits( const v16int &m, const v16float &a );
+    friend inline void increment_16x1( float * ALIGNED(64) p, const v16float &a );
+    friend inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a );
+    friend inline void     scale_16x1( float * ALIGNED(64) p, const v16float &a );
     // FIXME: crack
-    friend inline void trilinear( v8float &wl, v8float &wh );
+    friend inline void trilinear( v16float &wl, v16float &wh );
 
   public:
 
-    // v8float constructors / destructors
+    // v16float constructors / destructors
 
-    v8float() {}                                        // Default constructor
+    v16float() {}                                          // Default constructor
 
-    v8float( const v8float &a )                         // Copy constructor
+    v16float( const v16float &a )                          // Copy constructor
     {
       v = a.v;
     }
 
-    v8float( const v8 &a )                              // Init from mixed
+    v16float( const v16 &a )                               // Init from mixed
     {
       v = a.v;
     }
 
-    v8float( float a )                                  // Init from scalar
+    v16float( float a )                                    // Init from scalar
     {
-      v = _mm256_set1_ps( a );
+      v = _mm512_set1_ps( a );
     }
 
-    v8float( float f0, float f1, float f2, float f3,
-	     float f4, float f5, float f6, float f7 )   // Init from scalars
+    v16float( float f00, float f01, float f02, float f03,
+	      float f04, float f05, float f06, float f07,
+	      float f08, float f09, float f10, float f11,
+	      float f12, float f13, float f14, float f15 ) // Init from scalars
     {
-      v = _mm256_setr_ps( f0, f1, f2, f3, f4, f5, f6, f7 );
+      v = _mm512_setr_ps( f00, f01, f02, f03, f04, f05, f06, f07,
+			  f08, f09, f10, f11, f12, f13, f14, f15 );
     }
 
-    ~v8float() {}                                       // Destructor
+    ~v16float() {}                                         // Destructor
 
-    // v8float assignment operators
+    // v16float assignment operators
 
 #   define ASSIGN(op,intrin)				\
-    inline v8float &operator op( const v8float &b )     \
+    inline v16float &operator op( const v16float &b )   \
     {							\
       v = intrin(v,b.v);				\
       return *this;					\
     }
 
-    inline v8float &operator =( const v8float &b )
+    inline v16float &operator =( const v16float &b )
     {
       v = b.v;
       return *this;
     }
 
-    ASSIGN(+=,_mm256_add_ps)
-    ASSIGN(-=,_mm256_sub_ps)
-    ASSIGN(*=,_mm256_mul_ps)
-    ASSIGN(/=,_mm256_div_ps)
+    ASSIGN(+=,_mm512_add_ps)
+    ASSIGN(-=,_mm512_sub_ps)
+    ASSIGN(*=,_mm512_mul_ps)
+    ASSIGN(/=,_mm512_div_ps)
 
 #   undef ASSIGN
 
-    // v8float member access operator
+    // v16float member access operator
 
     inline float &operator []( int n )
     {
@@ -2278,152 +2569,168 @@ namespace v8
     }
   };
 
-  // v8float prefix unary operators
+  // v16float prefix unary operators
 
-  inline v8float operator +( const v8float &a )
+  inline v16float operator +( const v16float &a )
   {
-    v8float b;
+    v16float b;
     b.v = a.v;
     return b;
   }
 
-  inline v8float operator -( const v8float &a )
+  inline v16float operator -( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_sub_ps( _mm256_setzero_ps(), a.v );
+    v16float b;
+    b.v = _mm512_sub_ps( _mm512_setzero_ps(), a.v );
     return b;
   }
 
-  inline v8int operator !( const v8float &a )
+  inline v16int operator !( const v16float &a )
   {
-    v8int b;
-    b.v = _mm256_cmp_ps( _mm256_setzero_ps(), a.v, _CMP_EQ_OS );
+    v16int b;
+    b.v = _mm512_cmp_ps( _mm512_setzero_ps(), a.v, _CMP_EQ_OS );
     return b;
   }
 
-  // v8float prefix increment / decrement operators
+  // v16float prefix increment / decrement operators
 
-  inline v8float operator ++( v8float &a )
+  inline v16float operator ++( v16float &a )
   {
-    v8float b;
-    __m256 t = _mm256_add_ps( a.v, _mm256_set1_ps( 1 ) );
+    v16float b;
+    __m512 t = _mm512_add_ps( a.v, _mm512_set1_ps( 1 ) );
     a.v = t;
     b.v = t;
     return b;
   }
 
-  inline v8float operator --( v8float &a )
+  inline v16float operator --( v16float &a )
   {
-    v8float b;
-    __m256 t = _mm256_sub_ps( a.v, _mm256_set1_ps( 1 ) );
+    v16float b;
+    __m512 t = _mm512_sub_ps( a.v, _mm512_set1_ps( 1 ) );
     a.v = t;
     b.v = t;
     return b;
   }
 
-  // v8float postfix increment / decrement operators
+  // v16float postfix increment / decrement operators
 
-  inline v8float operator ++( v8float &a, int )
+  inline v16float operator ++( v16float &a, int )
   {
-    v8float b;
-    __m256 a_v = a.v;
-    a.v = _mm256_add_ps( a_v, _mm256_set1_ps( 1 ) );
+    v16float b;
+    __m512 a_v = a.v;
+    a.v = _mm512_add_ps( a_v, _mm512_set1_ps( 1 ) );
     b.v = a_v;
     return b;
   }
 
-  inline v8float operator --( v8float &a, int )
+  inline v16float operator --( v16float &a, int )
   {
-    v8float b;
-    __m256 a_v = a.v;
-    a.v = _mm256_sub_ps(a_v, _mm256_set1_ps( 1 ) );
+    v16float b;
+    __m512 a_v = a.v;
+    a.v = _mm512_sub_ps(a_v, _mm512_set1_ps( 1 ) );
     b.v = a_v;
     return b;
   }
 
-  // v8float binary operators
+  // v16float binary operators
 
-# define BINARY(op,intrin)                                           \
-  inline v8float operator op( const v8float &a, const v8float &b )   \
-  {								     \
-    v8float c;                                                       \
-    c.v = intrin( a.v, b.v );                                        \
-    return c;                                                        \
+# define BINARY(op,intrin)                                            \
+  inline v16float operator op( const v16float &a, const v16float &b ) \
+  {								      \
+    v16float c;                                                       \
+    c.v = intrin( a.v, b.v );                                         \
+    return c;                                                         \
   }
 
-  BINARY( +, _mm256_add_ps )
-  BINARY( -, _mm256_sub_ps )
-  BINARY( *, _mm256_mul_ps )
-  BINARY( /, _mm256_div_ps )
+  BINARY( +, _mm512_add_ps )
+  BINARY( -, _mm512_sub_ps )
+  BINARY( *, _mm512_mul_ps )
+  BINARY( /, _mm512_div_ps )
 
 # undef BINARY
 
-  // v8float logical operators
+  // v16float logical operators
 
-# define LOGICAL(op,intrin,flag)                                   \
-  inline v8int operator op( const v8float &a, const v8float &b )   \
-  {								   \
-    v8int c;                                                       \
-    c.v = intrin( a.v, b.v, flag );				   \
-    return c;                                                      \
+# define LOGICAL(op,intrin,flag)                                    \
+  inline v16int operator op( const v16float &a, const v16float &b ) \
+  {							            \
+    v16int c;                                                       \
+    c.v = intrin( a.v, b.v, flag );				    \
+    return c;                                                       \
   }
 
-  LOGICAL( <,  _mm256_cmp_ps, _CMP_LT_OS  )
-  LOGICAL( >,  _mm256_cmp_ps, _CMP_GT_OS  )
-  LOGICAL( ==, _mm256_cmp_ps, _CMP_EQ_OS  )
-  LOGICAL( !=, _mm256_cmp_ps, _CMP_NEQ_OS )
-  LOGICAL( <=, _mm256_cmp_ps, _CMP_LE_OS  )
-  LOGICAL( >=, _mm256_cmp_ps, _CMP_GE_OS  )
+  LOGICAL( <,  _mm512_cmp_ps, _CMP_LT_OS  )
+  LOGICAL( >,  _mm512_cmp_ps, _CMP_GT_OS  )
+  LOGICAL( ==, _mm512_cmp_ps, _CMP_EQ_OS  )
+  LOGICAL( !=, _mm512_cmp_ps, _CMP_NEQ_OS )
+  LOGICAL( <=, _mm512_cmp_ps, _CMP_LE_OS  )
+  LOGICAL( >=, _mm512_cmp_ps, _CMP_GE_OS  )
 
-  inline v8int operator &&( const v8float &a, const v8float &b )
+  inline v16int operator &&( const v16float &a, const v16float &b )
   {
-    v8int c;
-    __m256 vzero = _mm256_setzero_ps();
-    c.v = _mm256_and_ps( _mm256_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
-			 _mm256_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
+    v16int c;
+    __m512 vzero = _mm512_setzero_ps();
+    c.v = _mm512_and_ps( _mm512_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
+			 _mm512_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
     return c;
   }
 
-  inline v8int operator ||( const v8float &a, const v8float &b )
+  inline v16int operator ||( const v16float &a, const v16float &b )
   {
-    v8int c;
-    __m256 vzero = _mm256_setzero_ps();
-    c.v = _mm256_or_ps( _mm256_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
-			_mm256_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
+    v16int c;
+    __m512 vzero = _mm512_setzero_ps();
+    c.v = _mm512_or_ps( _mm512_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
+			_mm512_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
     return c;
   }
 
 # undef LOGICAL
 
-  // v8float math library functions
+  // v16float math library functions
 
 # define CMATH_FR1(fn)                          \
-  inline v8float fn( const v8float &a )         \
+  inline v16float fn( const v16float &a )       \
   {						\
-    v8float b;                                  \
-    b.f[0] = ::fn(a.f[0]);                      \
-    b.f[1] = ::fn(a.f[1]);                      \
-    b.f[2] = ::fn(a.f[2]);                      \
-    b.f[3] = ::fn(a.f[3]);                      \
-    b.f[4] = ::fn(a.f[4]);                      \
-    b.f[5] = ::fn(a.f[5]);                      \
-    b.f[6] = ::fn(a.f[6]);                      \
-    b.f[7] = ::fn(a.f[7]);                      \
+    v16float b;                                 \
+    b.f[ 0] = ::fn(a.f[ 0]);                    \
+    b.f[ 1] = ::fn(a.f[ 1]);                    \
+    b.f[ 2] = ::fn(a.f[ 2]);                    \
+    b.f[ 3] = ::fn(a.f[ 3]);                    \
+    b.f[ 4] = ::fn(a.f[ 4]);                    \
+    b.f[ 5] = ::fn(a.f[ 5]);                    \
+    b.f[ 6] = ::fn(a.f[ 6]);                    \
+    b.f[ 7] = ::fn(a.f[ 7]);                    \
+    b.f[ 8] = ::fn(a.f[ 8]);                    \
+    b.f[ 9] = ::fn(a.f[ 9]);                    \
+    b.f[10] = ::fn(a.f[10]);                    \
+    b.f[11] = ::fn(a.f[11]);                    \
+    b.f[12] = ::fn(a.f[12]);                    \
+    b.f[13] = ::fn(a.f[13]);                    \
+    b.f[14] = ::fn(a.f[14]);                    \
+    b.f[15] = ::fn(a.f[15]);                    \
     return b;                                   \
   }
 
 # define CMATH_FR2(fn)                                          \
-  inline v8float fn( const v8float &a, const v8float &b )       \
+  inline v16float fn( const v16float &a, const v16float &b )    \
   {								\
-    v8float c;                                                  \
-    c.f[0] = ::fn(a.f[0],b.f[0]);                               \
-    c.f[1] = ::fn(a.f[1],b.f[1]);                               \
-    c.f[2] = ::fn(a.f[2],b.f[2]);                               \
-    c.f[3] = ::fn(a.f[3],b.f[3]);                               \
-    c.f[4] = ::fn(a.f[4],b.f[4]);                               \
-    c.f[5] = ::fn(a.f[5],b.f[5]);                               \
-    c.f[6] = ::fn(a.f[6],b.f[6]);                               \
-    c.f[7] = ::fn(a.f[7],b.f[7]);                               \
+    v16float c;                                                 \
+    c.f[ 0] = ::fn( a.f[ 0], b.f[ 0] );                         \
+    c.f[ 1] = ::fn( a.f[ 1], b.f[ 1] );                         \
+    c.f[ 2] = ::fn( a.f[ 2], b.f[ 2] );                         \
+    c.f[ 3] = ::fn( a.f[ 3], b.f[ 3] );                         \
+    c.f[ 4] = ::fn( a.f[ 4], b.f[ 4] );                         \
+    c.f[ 5] = ::fn( a.f[ 5], b.f[ 5] );                         \
+    c.f[ 6] = ::fn( a.f[ 6], b.f[ 6] );                         \
+    c.f[ 7] = ::fn( a.f[ 7], b.f[ 7] );                         \
+    c.f[ 8] = ::fn( a.f[ 8], b.f[ 8] );                         \
+    c.f[ 9] = ::fn( a.f[ 9], b.f[ 9] );                         \
+    c.f[10] = ::fn( a.f[10], b.f[10] );                         \
+    c.f[11] = ::fn( a.f[11], b.f[11] );                         \
+    c.f[12] = ::fn( a.f[12], b.f[12] );                         \
+    c.f[13] = ::fn( a.f[13], b.f[13] );                         \
+    c.f[14] = ::fn( a.f[14], b.f[14] );                         \
+    c.f[15] = ::fn( a.f[15], b.f[15] );                         \
     return c;                                                   \
   }
 
@@ -2433,500 +2740,176 @@ namespace v8
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
   /*CMATH_FR1(sqrt)*/ CMATH_FR1(tan)   CMATH_FR1(tanh)
 
-  inline v8float fabs( const v8float &a )
+  inline v16float fabs( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_andnot_ps( _mm256_set1_ps( -0.f ), a.v );
+    v16float b;
+    b.v = _mm512_andnot_ps( _mm512_set1_ps( -0.f ), a.v );
     return b;
   }
 
-  inline v8float sqrt( const v8float &a )
+  inline v16float sqrt( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_sqrt_ps( a.v );
+    v16float b;
+    b.v = _mm512_sqrt_ps( a.v );
     return b;
   }
 
-  inline v8float copysign( const v8float &a, const v8float &b )
+  inline v16float copysign( const v16float &a, const v16float &b )
   {
-    v8float c;
-    __m256 t = _mm256_set1_ps( -0.f );
-    c.v = _mm256_or_ps( _mm256_and_ps( t, b.v ), _mm256_andnot_ps( t, a.v ) );
+    v16float c;
+    __m512 t = _mm512_set1_ps( -0.f );
+    c.v = _mm512_or_ps( _mm512_and_ps( t, b.v ), _mm512_andnot_ps( t, a.v ) );
     return c;
   }
 
 # undef CMATH_FR1
 # undef CMATH_FR2
 
-  // v8float miscellaneous functions
+  // v16float miscellaneous functions
 
-  inline v8float rsqrt_approx( const v8float &a )
+  inline v16float rsqrt_approx( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_rsqrt_ps(a.v);
+    v16float b;
+    b.v = _mm512_rsqrt_ps(a.v);
     return b;
   }
 
 #if 0
-  inline v8float rsqrt( const v8float &a )
+  inline v16float rsqrt( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_div_ps( _mm256_set1_ps( 1.0f ), _mm256_sqrt_ps( a.v ) );
+    v16float b;
+    b.v = _mm512_div_ps( _mm512_set1_ps( 1.0f ), _mm512_sqrt_ps( a.v ) );
     return b;
   }
 #endif
 
-  inline v8float rsqrt( const v8float &a )
+  inline v16float rsqrt( const v16float &a )
   {
-    v8float b;
-    __m256 a_v = a.v, b_v;
-    b_v = _mm256_rsqrt_ps(a_v);
+    v16float b;
+    __m512 a_v = a.v, b_v;
+    b_v = _mm512_rsqrt_ps(a_v);
     // Note: It is quicker to just call div_ps and sqrt_ps if more
     // refinement desired!
-    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
-					     _mm256_sub_ps( b_v,
-							    _mm256_mul_ps( a_v,
-									   _mm256_mul_ps( b_v,
-											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
+    b.v = _mm512_add_ps( b_v, _mm512_mul_ps( _mm512_set1_ps( 0.5f ),
+					     _mm512_sub_ps( b_v,
+							    _mm512_mul_ps( a_v,
+									   _mm512_mul_ps( b_v,
+											  _mm512_mul_ps( b_v, b_v ) ) ) ) ) );
     return b;
   }
-  //---------------------------------------------------------------------------------
-  inline v8float rsqrt_v0( const v8float &a )
-  {
-    v8float b;
-    __m256 a_v = a.v, b_v;
-    b_v = _mm256_rsqrt_ps(a_v);
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
-					     _mm256_sub_ps( b_v,
-							    _mm256_mul_ps( a_v,
-									   _mm256_mul_ps( b_v,
-											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
-    return b;
-  }
-  inline v8float rsqrt_v1( const v8float &a )
-  {
-    v8float b;
-    __m256 a_v = a.v, b_v;
-    b_v = _mm256_rsqrt_ps(a_v);
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
-					     _mm256_sub_ps( b_v,
-							    _mm256_mul_ps( a_v,
-									   _mm256_mul_ps( b_v,
-											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
-    return b;
-  }
-  //---------------------------------------------------------------------------------
 
-#if 0
-  inline v8float rsqrt( const v8float &a )
+  inline v16float rcp_approx( const v16float &a )
   {
-    v8float b;
-    b.f[0] = ::sqrt( 1/a.f[0] );
-    b.f[1] = ::sqrt( 1/a.f[1] );
-    b.f[2] = ::sqrt( 1/a.f[2] );
-    b.f[3] = ::sqrt( 1/a.f[3] );
-    b.f[4] = ::sqrt( 1/a.f[4] );
-    b.f[5] = ::sqrt( 1/a.f[5] );
-    b.f[6] = ::sqrt( 1/a.f[6] );
-    b.f[7] = ::sqrt( 1/a.f[7] );
-    return b;
-  }
-#endif
-
-  inline v8float rcp_approx( const v8float &a )
-  {
-    v8float b;
-    b.v = _mm256_rcp_ps( a.v );
+    v16float b;
+    b.v = _mm512_rcp_ps( a.v );
     return b;
   }
 
 #if 0
-  inline v8float rcp( const v8float &a )
+  inline v16float rcp( const v16float &a )
   {
-    v8float b;
-    b.v = _mm256_div_ps( _mm256_set1_ps( 1.0f ), a.v );
+    v16float b;
+    b.v = _mm512_div_ps( _mm512_set1_ps( 1.0f ), a.v );
     return b;
   }
 #endif
 
-  inline v8float rcp( const v8float &a )
+  inline v16float rcp( const v16float &a )
   {
-    v8float b;
-    __m256 a_v = a.v, b_v;
+    v16float b;
+    __m512 a_v = a.v, b_v;
 
-    b_v = _mm256_rcp_ps( a_v );
-    b.v = _mm256_sub_ps( _mm256_add_ps( b_v, b_v ),
-			 _mm256_mul_ps( a_v, _mm256_mul_ps( b_v, b_v ) ) );
-    return b;
-  }
-
-#if 0
-  inline v8float rcp( const v8float &a )
-  {
-    v8float b;
-    b.f[0] = 1/a.f[0];
-    b.f[1] = 1/a.f[1];
-    b.f[2] = 1/a.f[2];
-    b.f[3] = 1/a.f[3];
-    b.f[4] = 1/a.f[4];
-    b.f[5] = 1/a.f[5];
-    b.f[6] = 1/a.f[6];
-    b.f[7] = 1/a.f[7];
-    return b;
-  }
-#endif
-
-  inline v8float fma(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  //---------------------------------------------------------------------------------
-  inline v8float fma_v00(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v01(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v02(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v03(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v04(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v05(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v06(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v07(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v08(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v09(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v10(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v11(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v12(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v13(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v14(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v15(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v16(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v17(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v18(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v19(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v20(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v21(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v22(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v23(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v24(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v25(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  inline v8float fma_v26(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-  //---------------------------------------------------------------------------------
-
-#if 0
-  inline v8float fma(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_add_ps( _mm256_mul_ps( a.v, b.v ), c.v );
-    return d;
-  }
-#endif
-
-  inline v8float fms(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fmsub_ps( a.v, b.v, c.v );
-    return d;
-  }
-
-#if 0
-  inline v8float fms(  const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_sub_ps( _mm256_mul_ps( a.v, b.v ), c.v );
-    return d;
-  }
-#endif
-
-  inline v8float fnms( const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_fnmadd_ps( a.v, b.v, c.v );
-    return d;
-  }
-
-#if 0
-  inline v8float fnms( const v8float &a, const v8float &b, const v8float &c )
-  {
-    v8float d;
-    d.v = _mm256_sub_ps( c.v, _mm256_mul_ps( a.v, b.v ) );
-    return d;
-  }
-#endif
-
-  inline v8float clear_bits( const v8int &m, const v8float &a )
-  {
-    v8float b;
-    b.v = _mm256_andnot_ps( m.v, a.v );
-    return b;
-  }
-
-  inline v8float set_bits( const v8int &m, const v8float &a )
-  {
-    v8float b;
-    b.v = _mm256_or_ps( m.v, a.v );
-    return b;
-  }
-
-  inline v8float toggle_bits( const v8int &m, const v8float &a )
-  {
-    v8float b;
-    b.v = _mm256_xor_ps( m.v, a.v );
+    b_v = _mm512_rcp_ps( a_v );
+    b.v = _mm512_sub_ps( _mm512_add_ps( b_v, b_v ),
+			 _mm512_mul_ps( a_v, _mm512_mul_ps( b_v, b_v ) ) );
     return b;
   }
 
 #if 0
-  inline void increment_8x1( float * ALIGNED(16) p, const v8float &a )
+  inline v16float rcp( const v16float &a )
   {
-    p[0] += a.f[0];
-    p[1] += a.f[1];
-    p[2] += a.f[2];
-    p[3] += a.f[3];
-    p[4] += a.f[4];
-    p[5] += a.f[5];
-    p[6] += a.f[6];
-    p[7] += a.f[7];
+    v16float b;
+    b.f[ 0] = 1/a.f[ 0];
+    b.f[ 1] = 1/a.f[ 1];
+    b.f[ 2] = 1/a.f[ 2];
+    b.f[ 3] = 1/a.f[ 3];
+    b.f[ 4] = 1/a.f[ 4];
+    b.f[ 5] = 1/a.f[ 5];
+    b.f[ 6] = 1/a.f[ 6];
+    b.f[ 7] = 1/a.f[ 7];
+    b.f[ 8] = 1/a.f[ 8];
+    b.f[ 9] = 1/a.f[ 9];
+    b.f[10] = 1/a.f[10];
+    b.f[11] = 1/a.f[11];
+    b.f[12] = 1/a.f[12];
+    b.f[13] = 1/a.f[13];
+    b.f[14] = 1/a.f[14];
+    b.f[15] = 1/a.f[15];
+    return b;
   }
 #endif
 
-  inline void increment_8x1( float * ALIGNED(16) p, const v8float &a )
+  inline v16float fma(  const v16float &a, const v16float &b, const v16float &c )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-  //---------------------------------------------------------------------------------
-  inline void increment_8x1_v00( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float d;
+    d.v = _mm512_fmadd_ps( a.v, b.v, c.v );
+    return d;
   }
 
-  inline void increment_8x1_v01( float * ALIGNED(16) p, const v8float &a )
+  inline v16float fms(  const v16float &a, const v16float &b, const v16float &c )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float d;
+    d.v = _mm512_fmsub_ps( a.v, b.v, c.v );
+    return d;
   }
 
-  inline void increment_8x1_v02( float * ALIGNED(16) p, const v8float &a )
+  inline v16float fnms( const v16float &a, const v16float &b, const v16float &c )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float d;
+    d.v = _mm512_fnmadd_ps( a.v, b.v, c.v );
+    return d;
   }
 
-  inline void increment_8x1_v03( float * ALIGNED(16) p, const v8float &a )
+  inline v16float clear_bits( const v16int &m, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float b;
+    b.v = _mm512_andnot_ps( m.v, a.v );
+    return b;
   }
 
-  inline void increment_8x1_v04( float * ALIGNED(16) p, const v8float &a )
+  inline v16float set_bits( const v16int &m, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float b;
+    b.v = _mm512_or_ps( m.v, a.v );
+    return b;
   }
 
-  inline void increment_8x1_v05( float * ALIGNED(16) p, const v8float &a )
+  inline v16float toggle_bits( const v16int &m, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    v16float b;
+    b.v = _mm512_xor_ps( m.v, a.v );
+    return b;
   }
 
-  inline void increment_8x1_v06( float * ALIGNED(16) p, const v8float &a )
+  inline void increment_16x1( float * ALIGNED(16) p, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    _mm512_store_ps( p, _mm512_add_ps( _mm512_load_ps( p ), a.v ) );
   }
 
-  inline void increment_8x1_v07( float * ALIGNED(16) p, const v8float &a )
+  inline void decrement_16x1( float * ALIGNED(16) p, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
+    _mm512_store_ps( p, _mm512_sub_ps( _mm512_load_ps( p ), a.v ) );
   }
 
-  inline void increment_8x1_v08( float * ALIGNED(16) p, const v8float &a )
+  inline void scale_16x1( float * ALIGNED(16) p, const v16float &a )
   {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v09( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v10( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v11( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v12( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v13( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v14( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void increment_8x1_v15( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
-  }
-  //---------------------------------------------------------------------------------
-
-  inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_sub_ps( _mm256_load_ps( p ), a.v ) );
-  }
-
-  inline void scale_8x1( float * ALIGNED(16) p, const v8float &a )
-  {
-    _mm256_store_ps( p, _mm256_mul_ps( _mm256_load_ps( p ), a.v ) );
+    _mm512_store_ps( p, _mm512_mul_ps( _mm512_load_ps( p ), a.v ) );
   }
 
   // wdn: this function is not currently used.  also, it seems like it
   //      is not a SIMD function in the same way as the rest of the
   //      functions in this class.
-  //  inline void trilinear( v8float & wl, v8float & wh )
+  //  inline void trilinear( v16float & wl, v16float & wh )
   //  {
   //    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
 
@@ -2941,6 +2924,6 @@ namespace v8
   //    wh.f[3] = ((1+x)*(1+y))*(1+z);
   //  }
 
-} // namespace v8
+} // namespace v16
 
-#endif // _v8_avx2_h_
+#endif // _v16_portable_h_

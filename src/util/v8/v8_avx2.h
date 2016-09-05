@@ -673,6 +673,42 @@ namespace v8
                            const void * ALIGNED(8) a7,
                            v8 &a, v8 &b )
   {
+    a.i[0] = ((const int * ALIGNED(8))a0)[0];
+    b.i[0] = ((const int * ALIGNED(8))a0)[1];
+
+    a.i[1] = ((const int * ALIGNED(8))a1)[0];
+    b.i[1] = ((const int * ALIGNED(8))a1)[1];
+
+    a.i[2] = ((const int * ALIGNED(8))a2)[0];
+    b.i[2] = ((const int * ALIGNED(8))a2)[1];
+
+    a.i[3] = ((const int * ALIGNED(8))a3)[0];
+    b.i[3] = ((const int * ALIGNED(8))a3)[1];
+
+    a.i[4] = ((const int * ALIGNED(8))a4)[0];
+    b.i[4] = ((const int * ALIGNED(8))a4)[1];
+
+    a.i[5] = ((const int * ALIGNED(8))a5)[0];
+    b.i[5] = ((const int * ALIGNED(8))a5)[1];
+
+    a.i[6] = ((const int * ALIGNED(8))a6)[0];
+    b.i[6] = ((const int * ALIGNED(8))a6)[1];
+
+    a.i[7] = ((const int * ALIGNED(8))a7)[0];
+    b.i[7] = ((const int * ALIGNED(8))a7)[1];
+  }
+
+#if 0
+  inline void load_8x2_tr( const void * ALIGNED(8) a0,
+                           const void * ALIGNED(8) a1,
+                           const void * ALIGNED(8) a2,
+                           const void * ALIGNED(8) a3,
+			   const void * ALIGNED(8) a4,
+                           const void * ALIGNED(8) a5,
+                           const void * ALIGNED(8) a6,
+                           const void * ALIGNED(8) a7,
+                           v8 &a, v8 &b )
+  {
     __m128 zero;
     __m128 t0, t1, t2, t3;
     __m256 u0, u1;
@@ -690,6 +726,7 @@ namespace v8
     a.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 2, 0, 2, 0 ) );
     b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
   }
+#endif
 
   //--------------------------------------------------------------------
   inline void load_8x2_tr_v0( const void * ALIGNED(8) a0,
@@ -2479,6 +2516,15 @@ namespace v8
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
+    for( int j = 0; j < 8; j++ )
+      b.f[j] = ::sqrt( 1.0f/a.f[j] );
+    return b;
+  }
+
+#if 0
+  inline v8float rsqrt( const v8float &a )
+  {
+    v8float b;
     __m256 a_v = a.v, b_v;
     b_v = _mm256_rsqrt_ps(a_v);
     // Note: It is quicker to just call div_ps and sqrt_ps if more
@@ -2490,6 +2536,8 @@ namespace v8
 											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
     return b;
   }
+#endif
+
   //---------------------------------------------------------------------------------
   inline v8float rsqrt_v0( const v8float &a )
   {

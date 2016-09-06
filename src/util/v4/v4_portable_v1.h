@@ -112,10 +112,8 @@ namespace v4
 
     v4( const v4 &a )          // Copy constructor
     {
-      i[0]=a.i[0];
-      i[1]=a.i[1];
-      i[2]=a.i[2];
-      i[3]=a.i[3];
+      for( int j = 0; j < 4; j++ )
+	i[j] = a.i[j];
     }
 
     ~v4() {}                   // Default destructor
@@ -138,10 +136,8 @@ namespace v4
   {
     v4 b;
 
-    b.i[0] = a.i[n];
-    b.i[1] = a.i[n];
-    b.i[2] = a.i[n];
-    b.i[3] = a.i[n];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[n];
 
     return b;
   }
@@ -163,10 +159,8 @@ namespace v4
 
   inline void swap( v4 &a, v4 &b )
   { 
-    sw( a.i[0], b.i[0] );
-    sw( a.i[1], b.i[1] );
-    sw( a.i[2], b.i[2] );
-    sw( a.i[3], b.i[3] );
+    for( int j = 0; j < 4; j++ )
+      sw( a.i[j], b.i[j] );
   }
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
@@ -182,65 +176,46 @@ namespace v4
   
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a )
   {
-    a.i[0] = ((const int * ALIGNED(16))p)[0];
-    a.i[1] = ((const int * ALIGNED(16))p)[1];
-    a.i[2] = ((const int * ALIGNED(16))p)[2];
-    a.i[3] = ((const int * ALIGNED(16))p)[3];
+    for( int j = 0; j < 4; j++ )
+      a.i[j] = ((const int * ALIGNED(16))p)[j];
   }
 
   inline void store_4x1( const v4 &a, void * ALIGNED(16) p )
   {
-    ((int * ALIGNED(16))p)[0] = a.i[0];
-    ((int * ALIGNED(16))p)[1] = a.i[1];
-    ((int * ALIGNED(16))p)[2] = a.i[2];
-    ((int * ALIGNED(16))p)[3] = a.i[3];
+    for( int j = 0; j < 4; j++ )
+      ((int * ALIGNED(16))p)[j] = a.i[j];
   }
 
   inline void stream_4x1( const v4 &a, void * ALIGNED(16) p )
   {
-    ((int * ALIGNED(16))p)[0] = a.i[0];
-    ((int * ALIGNED(16))p)[1] = a.i[1];
-    ((int * ALIGNED(16))p)[2] = a.i[2];
-    ((int * ALIGNED(16))p)[3] = a.i[3];
+    for( int j = 0; j < 4; j++ )
+      ((int * ALIGNED(16))p)[j] = a.i[j];
   }
 
   inline void clear_4x1( void * ALIGNED(16) p )
   {
-    ((int * ALIGNED(16))p)[0] = 0;
-    ((int * ALIGNED(16))p)[1] = 0;
-    ((int * ALIGNED(16))p)[2] = 0;
-    ((int * ALIGNED(16))p)[3] = 0;
+    for( int j = 0; j < 4; j++ )
+      ((int * ALIGNED(16))p)[j] = 0;
   }
 
   // FIXME: Ordering semantics
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
-    ((int * ALIGNED(16))dst)[0] = ((const int * ALIGNED(16))src)[0];
-    ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
-    ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
-    ((int * ALIGNED(16))dst)[3] = ((const int * ALIGNED(16))src)[3];
+    for( int j = 0; j < 4; j++ )
+      ((int * ALIGNED(16))dst)[j] = ((const int * ALIGNED(16))src)[j];
   }
 
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
   {
     int t;
 
-    t = ((int * ALIGNED(16))a)[0];
-    ((int * ALIGNED(16))a)[0] = ((int * ALIGNED(16))b)[0];
-    ((int * ALIGNED(16))b)[0] = t;
-
-    t = ((int * ALIGNED(16))a)[1];
-    ((int * ALIGNED(16))a)[1] = ((int * ALIGNED(16))b)[1];
-    ((int * ALIGNED(16))b)[1] = t;
-
-    t = ((int * ALIGNED(16))a)[2];
-    ((int * ALIGNED(16))a)[2] = ((int * ALIGNED(16))b)[2];
-    ((int * ALIGNED(16))b)[2] = t;
-
-    t = ((int * ALIGNED(16))a)[3];
-    ((int * ALIGNED(16))a)[3] = ((int * ALIGNED(16))b)[3];
-    ((int * ALIGNED(16))b)[3] = t;
+    for( int j = 0; j < 4; j++ )
+    {
+      t = ((int * ALIGNED(16))a)[j];
+      ((int * ALIGNED(16))a)[j] = ((int * ALIGNED(16))b)[j];
+      ((int * ALIGNED(16))b)[j] = t;
+    }
   }
 
   // v4 transposed memory manipulation functions
@@ -480,34 +455,25 @@ namespace v4
 
     v4int( const v4int &a )                   // Copy constructor
     {
-      i[0] = a.i[0];
-      i[1] = a.i[1];
-      i[2] = a.i[2];
-      i[3] = a.i[3];
+      for( int j = 0; j < 4; j++ )
+	i[j] = a.i[j];
     }
 
     v4int( const v4 &a )                      // Init from mixed
     {
-      i[0] = a.i[0];
-      i[1] = a.i[1];
-      i[2] = a.i[2];
-      i[3] = a.i[3];
+      for( int j = 0; j < 4; j++ )
+	i[j] = a.i[j];
     }
 
     v4int( int a )                            // Init from scalar
     {
-      i[0] = a;
-      i[1] = a;
-      i[2] = a;
-      i[3] = a;
+      for( int j = 0; j < 4; j++ )
+	i[j] = a;
     }
 
     v4int( int i0, int i1, int i2, int i3 )   // Init from scalars
     {
-      i[0] = i0;
-      i[1] = i1;
-      i[2] = i2;
-      i[3] = i3;
+      i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
     }
 
     ~v4int() {}                               // Destructor
@@ -517,10 +483,8 @@ namespace v4
 #   define ASSIGN(op)			          \
     inline v4int &operator op( const v4int &b )   \
     {						  \
-      i[0] op b.i[0];                             \
-      i[1] op b.i[1];                             \
-      i[2] op b.i[2];                             \
-      i[3] op b.i[3];                             \
+      for( int j = 0; j < 4; j++ )                \
+        i[j] op b.i[j];                           \
       return *this;                               \
     }
 
@@ -557,10 +521,8 @@ namespace v4
   inline v4int operator op( const v4int & a )   \
   {						\
     v4int b;                                    \
-    b.i[0] = ( op a.i[0] );                     \
-    b.i[1] = ( op a.i[1] );                     \
-    b.i[2] = ( op a.i[2] );                     \
-    b.i[3] = ( op a.i[3] );                     \
+    for( int j = 0; j < 4; j++ )                \
+      b.i[j] = (op a.i[j]);                     \
     return b;                                   \
   }
 
@@ -570,12 +532,8 @@ namespace v4
   inline v4int operator !( const v4int & a )
   {
     v4int b;
-
-    b.i[0] = - ( !a.i[0] );
-    b.i[1] = - ( !a.i[1] );
-    b.i[2] = - ( !a.i[2] );
-    b.i[3] = - ( !a.i[3] );
-
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = -(!a.i[j]);
     return b;
   }
 
@@ -589,10 +547,8 @@ namespace v4
   inline v4int operator op( v4int & a )         \
   {						\
     v4int b;                                    \
-    b.i[0] = ( op a.i[0] );                     \
-    b.i[1] = ( op a.i[1] );                     \
-    b.i[2] = ( op a.i[2] );                     \
-    b.i[3] = ( op a.i[3] );                     \
+    for( int j = 0; j < 4; j++ )                \
+      b.i[j] = (op a.i[j]);                     \
     return b;                                   \
   }
 
@@ -607,10 +563,8 @@ namespace v4
   inline v4int operator op( v4int & a, int )   \
   {					       \
     v4int b;                                   \
-    b.i[0] = ( a.i[0] op );                    \
-    b.i[1] = ( a.i[1] op );                    \
-    b.i[2] = ( a.i[2] op );                    \
-    b.i[3] = ( a.i[3] op );                    \
+    for( int j = 0; j < 4; j++ )               \
+      b.i[j] = (a.i[j] op);                    \
     return b;                                  \
   }
 
@@ -625,10 +579,8 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {								\
     v4int c;                                                    \
-    c.i[0] = a.i[0] op b.i[0];                                  \
-    c.i[1] = a.i[1] op b.i[1];                                  \
-    c.i[2] = a.i[2] op b.i[2];                                  \
-    c.i[3] = a.i[3] op b.i[3];                                  \
+    for( int j = 0; j < 4; j++ )                                \
+      c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
   }
 
@@ -651,10 +603,8 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {							       \
     v4int c;                                                   \
-    c.i[0] = -(a.i[0] op b.i[0]);                              \
-    c.i[1] = -(a.i[1] op b.i[1]);                              \
-    c.i[2] = -(a.i[2] op b.i[2]);                              \
-    c.i[3] = -(a.i[3] op b.i[3]);                              \
+    for( int j = 0; j < 4; j++ )                               \
+      c.i[j] = -(a.i[j] op b.i[j]);                            \
     return c;                                                  \
   }
 
@@ -675,10 +625,8 @@ namespace v4
   {
     v4int b;
 
-    b.i[0] = ( a.i[0] >= 0 ) ? a.i[0] : -a.i[0];
-    b.i[1] = ( a.i[1] >= 0 ) ? a.i[1] : -a.i[1];
-    b.i[2] = ( a.i[2] >= 0 ) ? a.i[2] : -a.i[2];
-    b.i[3] = ( a.i[3] >= 0 ) ? a.i[3] : -a.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
 
     return b;
   }
@@ -687,10 +635,8 @@ namespace v4
   {
     v4 b;
 
-    b.i[0] = a.i[0] & ~c.i[0];
-    b.i[1] = a.i[1] & ~c.i[1];
-    b.i[2] = a.i[2] & ~c.i[2];
-    b.i[3] = a.i[3] & ~c.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[j] & ~c.i[j];
 
     return b;
   }
@@ -699,10 +645,8 @@ namespace v4
   {
     v4 b;
 
-    b.i[0] = a.i[0] & c.i[0];
-    b.i[1] = a.i[1] & c.i[1];
-    b.i[2] = a.i[2] & c.i[2];
-    b.i[3] = a.i[3] & c.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[j] & c.i[j];
 
     return b;
   }
@@ -711,10 +655,8 @@ namespace v4
   {
     v4 m;
 
-    m.i[0] = ( f.i[0] & ~c.i[0] ) | ( t.i[0] & c.i[0] );
-    m.i[1] = ( f.i[1] & ~c.i[1] ) | ( t.i[1] & c.i[1] );
-    m.i[2] = ( f.i[2] & ~c.i[2] ) | ( t.i[2] & c.i[2] );
-    m.i[3] = ( f.i[3] & ~c.i[3] ) | ( t.i[3] & c.i[3] );
+    for( int j = 0; j < 4; j++ )
+      m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
     return m;
   }
@@ -803,26 +745,20 @@ namespace v4
 
     v4float( const v4float &a )                         // Copy constructor
     {
-      f[0] = a.f[0];
-      f[1] = a.f[1];
-      f[2] = a.f[2];
-      f[3] = a.f[3];
+      for( int j = 0; j < 4; j++ )
+	f[j] = a.f[j];
     }
 
     v4float( const v4 &a )                              // Init from mixed
     {
-      f[0] = a.f[0];
-      f[1] = a.f[1];
-      f[2] = a.f[2];
-      f[3] = a.f[3];
+      for( int j = 0; j < 4; j++ )
+	f[j] = a.f[j];
     }
 
     v4float( float a )                                  // Init from scalar
     {
-      f[0] = a;
-      f[1] = a;
-      f[2] = a;
-      f[3] = a;
+      for( int j = 0; j < 4; j++ )
+	f[j] = a;
     }
 
     v4float( float f0, float f1, float f2, float f3 )   // Init from scalars
@@ -840,10 +776,8 @@ namespace v4
 #   define ASSIGN(op)                                   \
     inline v4float &operator op( const v4float &b )     \
     {							\
-      f[0] op b.f[0];		             		\
-      f[1] op b.f[1];                                   \
-      f[2] op b.f[2];                                   \
-      f[3] op b.f[3];                                   \
+      for( int j = 0; j < 4; j++ )                      \
+        f[j] op b.f[j];		             		\
       return *this;                                     \
     }
 
@@ -874,10 +808,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = +a.f[0];
-    b.f[1] = +a.f[1];
-    b.f[2] = +a.f[2];
-    b.f[3] = +a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = +a.f[j];
 
     return b;
   }
@@ -886,10 +818,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = -a.f[0];
-    b.f[1] = -a.f[1];
-    b.f[2] = -a.f[2];
-    b.f[3] = -a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = -a.f[j];
 
     return b;
   }
@@ -898,10 +828,8 @@ namespace v4
   {
     v4int b;
 
-    b.i[0] = a.i[0] ? 0 : -1;
-    b.i[1] = a.i[1] ? 0 : -1;
-    b.i[2] = a.i[2] ? 0 : -1;
-    b.i[3] = a.i[3] ? 0 : -1;
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[j] ? 0 : -1;
 
     return b;
   }
@@ -912,10 +840,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = ++a.f[0];
-    b.f[1] = ++a.f[1];
-    b.f[2] = ++a.f[2];
-    b.f[3] = ++a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = ++a.f[j];
 
     return b;
   }
@@ -924,10 +850,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = --a.f[0];
-    b.f[1] = --a.f[1];
-    b.f[2] = --a.f[2];
-    b.f[3] = --a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = --a.f[j];
 
     return b;
   }
@@ -938,10 +862,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = a.f[0]++;
-    b.f[1] = a.f[1]++;
-    b.f[2] = a.f[2]++;
-    b.f[3] = a.f[3]++;
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = a.f[j]++;
 
     return b;
   }
@@ -950,10 +872,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = a.f[0]--;
-    b.f[1] = a.f[1]--;
-    b.f[2] = a.f[2]--;
-    b.f[3] = a.f[3]--;
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = a.f[j]--;
 
     return b;
   }
@@ -964,10 +884,8 @@ namespace v4
   inline v4float operator op( const v4float &a, const v4float &b )   \
   {								     \
     v4float c;                                                       \
-    c.f[0] = a.f[0] op b.f[0];                                       \
-    c.f[1] = a.f[1] op b.f[1];                                       \
-    c.f[2] = a.f[2] op b.f[2];                                       \
-    c.f[3] = a.f[3] op b.f[3];                                       \
+    for( int j = 0; j < 4; j++ )                                     \
+      c.f[j] = a.f[j] op b.f[j];                                     \
     return c;                                                        \
   }
 
@@ -984,10 +902,8 @@ namespace v4
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {								   \
     v4int c;                                                       \
-    c.i[0] = - ( a.f[0] op b.f[0] );                               \
-    c.i[1] = - ( a.f[1] op b.f[1] );                               \
-    c.i[2] = - ( a.f[2] op b.f[2] );                               \
-    c.i[3] = - ( a.f[3] op b.f[3] );                               \
+    for( int j = 0; j < 4; j++ )                                   \
+      c.i[j] = - ( a.f[j] op b.f[j] );                             \
     return c;                                                      \
   }
 
@@ -1008,10 +924,8 @@ namespace v4
   inline v4float fn( const v4float &a )         \
   {						\
     v4float b;                                  \
-    b.f[0] = ::fn( a.f[0] );                    \
-    b.f[1] = ::fn( a.f[1] );                    \
-    b.f[2] = ::fn( a.f[2] );                    \
-    b.f[3] = ::fn( a.f[3] );                    \
+    for( int j = 0; j < 4; j++ )                \
+      b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
   }
 
@@ -1019,10 +933,8 @@ namespace v4
   inline v4float fn( const v4float &a, const v4float &b )       \
   {								\
     v4float c;                                                  \
-    c.f[0] = ::fn( a.f[0], b.f[0] );                            \
-    c.f[1] = ::fn( a.f[1], b.f[1] );                            \
-    c.f[2] = ::fn( a.f[2], b.f[2] );                            \
-    c.f[3] = ::fn( a.f[3], b.f[3] );                            \
+    for( int j = 0; j < 4; j++ )                                \
+      c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \
   }
 
@@ -1036,23 +948,12 @@ namespace v4
   {
     v4float c;
     float t;
-
-    t = ::fabs( a.f[0] );
-    if( b.f[0] < 0 ) t = -t;
-    c.f[0] = t;
-
-    t = ::fabs( a.f[1] );
-    if( b.f[1] < 0 ) t = -t;
-    c.f[1] = t;
-
-    t = ::fabs( a.f[2] );
-    if( b.f[2] < 0 ) t = -t;
-    c.f[2] = t;
-
-    t = ::fabs( a.f[3] );
-    if( b.f[3] < 0 ) t = -t;
-    c.f[3] = t;
-
+    for( int j = 0; j < 4; j++ )
+    {
+      t = ::fabs( a.f[j] );
+      if( b.f[j] < 0 ) t = -t;
+      c.f[j] = t;
+    }
     return c;
   }
 
@@ -1065,10 +966,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = ::sqrt( 1.0f / a.f[0] );
-    b.f[1] = ::sqrt( 1.0f / a.f[1] );
-    b.f[2] = ::sqrt( 1.0f / a.f[2] );
-    b.f[3] = ::sqrt( 1.0f / a.f[3] );
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1077,10 +976,8 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = ::sqrt( 1.0f / a.f[0] );
-    b.f[1] = ::sqrt( 1.0f / a.f[1] );
-    b.f[2] = ::sqrt( 1.0f / a.f[2] );
-    b.f[3] = ::sqrt( 1.0f / a.f[3] );
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1089,22 +986,18 @@ namespace v4
   {
     v4float b;
 
-    b.f[0] = 1.0f / a.f[0];
-    b.f[1] = 1.0f / a.f[1];
-    b.f[2] = 1.0f / a.f[2];
-    b.f[3] = 1.0f / a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
-  
+
   inline v4float rcp( const v4float &a )
   {
     v4float b;
 
-    b.f[0] = 1.0f / a.f[0];
-    b.f[1] = 1.0f / a.f[1];
-    b.f[2] = 1.0f / a.f[2];
-    b.f[3] = 1.0f / a.f[3];
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
@@ -1113,10 +1006,8 @@ namespace v4
   {
     v4float d;
 
-    d.f[0] = a.f[0] * b.f[0] + c.f[0];
-    d.f[1] = a.f[1] * b.f[1] + c.f[1];
-    d.f[2] = a.f[2] * b.f[2] + c.f[2];
-    d.f[3] = a.f[3] * b.f[3] + c.f[3];
+    for( int j = 0; j < 4; j++ )
+      d.f[j] = a.f[j] * b.f[j] + c.f[j];
 
     return d;
   }
@@ -1125,10 +1016,8 @@ namespace v4
   {
     v4float d;
 
-    d.f[0] = a.f[0] * b.f[0] - c.f[0];
-    d.f[1] = a.f[1] * b.f[1] - c.f[1];
-    d.f[2] = a.f[2] * b.f[2] - c.f[2];
-    d.f[3] = a.f[3] * b.f[3] - c.f[3];
+    for( int j = 0; j < 4; j++ )
+      d.f[j] = a.f[j] * b.f[j] - c.f[j];
 
     return d;
   }
@@ -1137,10 +1026,8 @@ namespace v4
   {
     v4float d;
 
-    d.f[0] = c.f[0] - a.f[0] * b.f[0];
-    d.f[1] = c.f[1] - a.f[1] * b.f[1];
-    d.f[2] = c.f[2] - a.f[2] * b.f[2];
-    d.f[3] = c.f[3] - a.f[3] * b.f[3];
+    for( int j = 0; j < 4; j++ )
+      d.f[j] = c.f[j] - a.f[j] * b.f[j];
 
     return d;
   }
@@ -1149,10 +1036,8 @@ namespace v4
   {
     v4float b;
 
-    b.i[0] = ( ~m.i[0] ) & a.i[0];
-    b.i[1] = ( ~m.i[1] ) & a.i[1];
-    b.i[2] = ( ~m.i[2] ) & a.i[2];
-    b.i[3] = ( ~m.i[3] ) & a.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = ( ~m.i[j] ) & a.i[j];
 
     return b;
   }
@@ -1161,10 +1046,8 @@ namespace v4
   {
     v4float b;
 
-    b.i[0] = m.i[0] | a.i[0];
-    b.i[1] = m.i[1] | a.i[1];
-    b.i[2] = m.i[2] | a.i[2];
-    b.i[3] = m.i[3] | a.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = m.i[j] | a.i[j];
 
     return b;
   }
@@ -1173,36 +1056,28 @@ namespace v4
   {
     v4float b;
 
-    b.i[0] = m.i[0] ^ a.i[0];
-    b.i[1] = m.i[1] ^ a.i[1];
-    b.i[2] = m.i[2] ^ a.i[2];
-    b.i[3] = m.i[3] ^ a.i[3];
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = m.i[j] ^ a.i[j];
 
     return b;
   }
 
   inline void increment_4x1( float * ALIGNED(16) p, const v4float &a )
   {
-    p[0] += a.f[0];
-    p[1] += a.f[1];
-    p[2] += a.f[2];
-    p[3] += a.f[3];
+    for( int j = 0; j < 4; j++ )
+      p[j] += a.f[j];
   }
 
   inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a )
   {
-    p[0] -= a.f[0];
-    p[1] -= a.f[1];
-    p[2] -= a.f[2];
-    p[3] -= a.f[3];
+    for( int j = 0; j < 4; j++ )
+      p[j] -= a.f[j];
   }
 
   inline void scale_4x1( float * ALIGNED(16) p, const v4float &a )
   {
-    p[0] *= a.f[0];
-    p[1] *= a.f[1];
-    p[2] *= a.f[2];
-    p[3] *= a.f[3];
+    for( int j = 0; j < 4; j++ )
+      p[j] *= a.f[j];
   }
 
   inline void trilinear( v4float & wl, v4float & wh )

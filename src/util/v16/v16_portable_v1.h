@@ -319,6 +319,7 @@ namespace v16
   inline v16 shuffle( const v16 & a )
   {
     v16 b;
+
     b.i[ 0] = a.i[i00];
     b.i[ 1] = a.i[i01];
     b.i[ 2] = a.i[i02];
@@ -335,6 +336,7 @@ namespace v16
     b.i[13] = a.i[i13];
     b.i[14] = a.i[i14];
     b.i[15] = a.i[i15];
+
     return b;
   }
 
@@ -2005,7 +2007,7 @@ namespace v16
   {						\
     v16int b;                                   \
     for( int j = 0; j < 16; j++ )               \
-      b.i[j] = (op a.i[j]);                     \
+      b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
   }
 
@@ -2016,7 +2018,7 @@ namespace v16
   {
     v16int b;
     for( int j = 0; j < 16; j++ )
-      b.i[j] = -(!a.i[j]);
+      b.i[j] = - ( !a.i[j] );
     return b;
   }
 
@@ -2031,7 +2033,7 @@ namespace v16
   {						\
     v16int b;                                   \
     for( int j = 0; j < 16; j++ )               \
-      b.i[j] = (op a.i[j]);                     \
+      b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
   }
 
@@ -2047,7 +2049,7 @@ namespace v16
   {					       \
     v16int b;                                  \
     for( int j = 0; j < 16; j++ )              \
-      b.i[j] = (a.i[j] op);                    \
+      b.i[j] = ( a.i[j] op );                  \
     return b;                                  \
   }
 
@@ -2087,7 +2089,7 @@ namespace v16
   {                                                             \
     v16int c;                                                   \
     for( int j = 0; j < 16; j++ )                               \
-      c.i[j] = -(a.i[j] op b.i[j]);                             \
+      c.i[j] = - ( a.i[j] op b.i[j] );                          \
     return c;                                                   \
   }
 
@@ -2108,7 +2110,7 @@ namespace v16
   {
     v16int b;
     for( int j = 0; j < 16; j++ )
-      b.i[j] = (a.i[j]>=0) ? a.i[j] : -a.i[j];
+      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
     return b;
   }
 
@@ -2132,7 +2134,7 @@ namespace v16
   {
     v16 m;
     for( int j = 0; j < 16; j++ )
-      m.i[j] = (f.i[j] & ~c.i[j]) | (t.i[j] & c.i[j] );
+      m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
     return m;
   }
 
@@ -2197,20 +2199,18 @@ namespace v16
     // v16float miscellaneous friends
 
     friend inline v16float rsqrt_approx( const v16float &a );
-    friend inline v16float rsqrt( const v16float &a );
+    friend inline v16float rsqrt       ( const v16float &a );
     friend inline v16float rcp_approx( const v16float &a );
-    friend inline v16float rcp( const v16float &a );
-    friend inline v16float fma(  const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float fms(  const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float rcp       ( const v16float &a );
+    friend inline v16float fma ( const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float fms ( const v16float &a, const v16float &b, const v16float &c );
     friend inline v16float fnms( const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float clear_bits(  const v16int &m, const v16float &a );
-    friend inline v16float set_bits(    const v16int &m, const v16float &a );
+    friend inline v16float  clear_bits( const v16int &m, const v16float &a );
+    friend inline v16float    set_bits( const v16int &m, const v16float &a );
     friend inline v16float toggle_bits( const v16int &m, const v16float &a );
     friend inline void increment_16x1( float * ALIGNED(64) p, const v16float &a );
     friend inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a );
     friend inline void     scale_16x1( float * ALIGNED(64) p, const v16float &a );
-    // FIXME: crack
-    friend inline void trilinear( v16float &wl, v16float &wh );
 
   public:
 
@@ -2285,24 +2285,30 @@ namespace v16
   inline v16float operator +( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = +a.f[j];
+
     return b;
   }
 
   inline v16float operator -( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = -a.f[j];
+
     return b;
   }
 
   inline v16int operator !( const v16float &a )
   {
     v16int b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = a.i[j] ? 0 : -1;
+
     return b;
   }
 
@@ -2311,16 +2317,20 @@ namespace v16
   inline v16float operator ++( v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = ++a.f[j];
+
     return b;
   }
 
   inline v16float operator --( v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = --a.f[j];
+
     return b;
   }
 
@@ -2329,16 +2339,20 @@ namespace v16
   inline v16float operator ++( v16float &a, int )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = a.f[j]++;
+
     return b;
   }
 
   inline v16float operator --( v16float &a, int )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = a.f[j]--;
+
     return b;
   }
 
@@ -2389,7 +2403,7 @@ namespace v16
   {						\
     v16float b;                                 \
     for( int j = 0; j < 16; j++ )               \
-      b.f[j] = ::fn(a.f[j]);                    \
+      b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
   }
 
@@ -2412,12 +2426,14 @@ namespace v16
   {
     v16float c;
     float t;
+
     for( int j = 0; j < 16; j++ )
     {
       t = ::fabs( a.f[j] );
       if( b.f[j] < 0 ) t = -t;
       c.f[j] = t;
     }
+
     return c;
   }
 
@@ -2429,80 +2445,100 @@ namespace v16
   inline v16float rsqrt_approx( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = ::sqrt( 1.0f/a.f[j] );
+
     return b;
   }
 
   inline v16float rsqrt( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = ::sqrt( 1.0f/a.f[j] );
+
     return b;
   }
 
   inline v16float rcp_approx( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = 1.0f/a.f[j];
+
     return b;
   }
 
   inline v16float rcp( const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.f[j] = 1.0f/a.f[j];
+
     return b;
   }
 
   inline v16float fma( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
+
     for( int j = 0; j < 16; j++ )
       d.f[j] = a.f[j] * b.f[j] + c.f[j];
+
     return d;
   }
 
   inline v16float fms( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
+
     for( int j = 0; j < 16; j++ )
       d.f[j] = a.f[j] * b.f[j] - c.f[j];
+
     return d;
   }
 
   inline v16float fnms( const v16float &a, const v16float &b, const v16float &c )
   {
     v16float d;
+
     for( int j = 0; j < 16; j++ )
       d.f[j] = c.f[j] - a.f[j] * b.f[j];
+
     return d;
   }
 
   inline v16float clear_bits( const v16int &m, const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = ( ~m.i[j] ) & a.i[j];
+
     return b;
   }
 
   inline v16float set_bits( const v16int &m, const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = m.i[j] | a.i[j];
+
     return b;
   }
 
   inline v16float toggle_bits( const v16int &m, const v16float &a )
   {
     v16float b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = m.i[j] ^ a.i[j];
+
     return b;
   }
 

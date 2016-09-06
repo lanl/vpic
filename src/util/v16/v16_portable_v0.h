@@ -2524,14 +2524,14 @@ namespace v16
     // v16float miscellaneous friends
 
     friend inline v16float rsqrt_approx( const v16float &a );
-    friend inline v16float rsqrt( const v16float &a );
+    friend inline v16float rsqrt       ( const v16float &a );
     friend inline v16float rcp_approx( const v16float &a );
-    friend inline v16float rcp( const v16float &a );
-    friend inline v16float fma(  const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float fms(  const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float rcp       ( const v16float &a );
+    friend inline v16float fma ( const v16float &a, const v16float &b, const v16float &c );
+    friend inline v16float fms ( const v16float &a, const v16float &b, const v16float &c );
     friend inline v16float fnms( const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float clear_bits(  const v16int &m, const v16float &a );
-    friend inline v16float set_bits(    const v16int &m, const v16float &a );
+    friend inline v16float  clear_bits( const v16int &m, const v16float &a );
+    friend inline v16float    set_bits( const v16int &m, const v16float &a );
     friend inline v16float toggle_bits( const v16int &m, const v16float &a );
     friend inline void increment_16x1( float * ALIGNED(64) p, const v16float &a );
     friend inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a );

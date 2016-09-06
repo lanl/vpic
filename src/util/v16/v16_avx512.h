@@ -2661,13 +2661,13 @@ namespace v16
 
   // v16float logical operators
 
-# define LOGICAL(op)                                            \
-  inline v16int operator op( const v16int &a, const v16int &b ) \
-  {                                                             \
-    v16int c;                                                   \
-    for( int j = 0; j < 16; j++ )                               \
-      c.i[j] = -(a.i[j] op b.i[j]);                             \
-    return c;                                                   \
+# define LOGICAL(op)                                                \
+  inline v16int operator op( const v16float &a, const v16float &b ) \
+  {								    \
+    v16int c;                                                       \
+    for( int j = 0; j < 16; j++ )                                   \
+      c.i[j] = -( a.f[j] op b.f[j] );                               \
+    return c;                                                       \
   }
 
   LOGICAL(<)
@@ -2802,9 +2802,19 @@ namespace v16
   inline v16float rsqrt_approx( const v16float &a )
   {
     v16float b;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = ::sqrt( 1.0f/a.f[j] );
+    return b;
+  }
+
+#if 0
+  inline v16float rsqrt_approx( const v16float &a )
+  {
+    v16float b;
     b.v = _mm512_rsqrt_ps(a.v);
     return b;
   }
+#endif
 
   inline v16float rsqrt( const v16float &a )
   {
@@ -2843,9 +2853,19 @@ namespace v16
   inline v16float rcp_approx( const v16float &a )
   {
     v16float b;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = 1.0f/a.f[j];
+    return b;
+  }
+
+#if 0
+  inline v16float rcp_approx( const v16float &a )
+  {
+    v16float b;
     b.v = _mm512_rcp_ps( a.v );
     return b;
   }
+#endif
 
   inline v16float rcp( const v16float &a )
   {

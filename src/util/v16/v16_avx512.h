@@ -1,8 +1,8 @@
-#ifndef _v16_portable_h_
-#define _v16_portable_h_
+#ifndef _v16_avx512_h_
+#define _v16_avx512_h_
 
 #ifndef IN_v16_h
-#error "Do not include v16_portable.h directly; use v16.h"
+#error "Do not include v16_avx512.h directly; use v16.h"
 #endif
 
 #define V16_ACCELERATION
@@ -2588,9 +2588,19 @@ namespace v16
   inline v16int operator !( const v16float &a )
   {
     v16int b;
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] ? 0 : -1;
+    return b;
+  }
+
+#if 0
+  inline v16int operator !( const v16float &a )
+  {
+    v16int b;
     b.v = _mm512_cmp_ps( _mm512_setzero_ps(), a.v, _CMP_EQ_OS );
     return b;
   }
+#endif
 
   // v16float prefix increment / decrement operators
 
@@ -2651,6 +2661,27 @@ namespace v16
 
   // v16float logical operators
 
+# define LOGICAL(op)                                            \
+  inline v16int operator op( const v16int &a, const v16int &b ) \
+  {                                                             \
+    v16int c;                                                   \
+    for( int j = 0; j < 16; j++ )                               \
+      c.i[j] = -(a.i[j] op b.i[j]);                             \
+    return c;                                                   \
+  }
+
+  LOGICAL(<)
+  LOGICAL(>)
+  LOGICAL(==)
+  LOGICAL(!=)
+  LOGICAL(<=)
+  LOGICAL(>=)
+  LOGICAL(&&)
+  LOGICAL(||)
+
+# undef LOGICAL
+
+#if 0
 # define LOGICAL(op,intrin,flag)                                    \
   inline v16int operator op( const v16float &a, const v16float &b ) \
   {							            \
@@ -2685,6 +2716,7 @@ namespace v16
   }
 
 # undef LOGICAL
+#endif
 
   // v16float math library functions
 
@@ -2774,6 +2806,14 @@ namespace v16
     return b;
   }
 
+  inline v16float rsqrt( const v16float &a )
+  {
+    v16float b;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = ::sqrt( 1.0f/a.f[j] );
+    return b;
+  }
+
 #if 0
   inline v16float rsqrt( const v16float &a )
   {
@@ -2783,6 +2823,7 @@ namespace v16
   }
 #endif
 
+#if 0
   inline v16float rsqrt( const v16float &a )
   {
     v16float b;
@@ -2797,11 +2838,20 @@ namespace v16
 											  _mm512_mul_ps( b_v, b_v ) ) ) ) ) );
     return b;
   }
+#endif
 
   inline v16float rcp_approx( const v16float &a )
   {
     v16float b;
     b.v = _mm512_rcp_ps( a.v );
+    return b;
+  }
+
+  inline v16float rcp( const v16float &a )
+  {
+    v16float b;
+    for( int j = 0; j < 16; j++ )
+      b.f[j] = 1.0f/a.f[j];
     return b;
   }
 
@@ -2814,6 +2864,7 @@ namespace v16
   }
 #endif
 
+#if 0
   inline v16float rcp( const v16float &a )
   {
     v16float b;
@@ -2824,6 +2875,7 @@ namespace v16
 			 _mm512_mul_ps( a_v, _mm512_mul_ps( b_v, b_v ) ) );
     return b;
   }
+#endif
 
 #if 0
   inline v16float rcp( const v16float &a )
@@ -2906,24 +2958,6 @@ namespace v16
     _mm512_store_ps( p, _mm512_mul_ps( _mm512_load_ps( p ), a.v ) );
   }
 
-  // wdn: this function is not currently used.  also, it seems like it
-  //      is not a SIMD function in the same way as the rest of the
-  //      functions in this class.
-  //  inline void trilinear( v16float & wl, v16float & wh )
-  //  {
-  //    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
-
-  //    wl.f[0] = ((1-x)*(1-y))*(1-z);
-  //    wl.f[1] = ((1+x)*(1-y))*(1-z);
-  //    wl.f[2] = ((1-x)*(1+y))*(1-z);
-  //    wl.f[3] = ((1+x)*(1+y))*(1-z);
-
-  //    wh.f[0] = ((1-x)*(1-y))*(1+z);
-  //    wh.f[1] = ((1+x)*(1-y))*(1+z);
-  //    wh.f[2] = ((1-x)*(1+y))*(1+z);
-  //    wh.f[3] = ((1+x)*(1+y))*(1+z);
-  //  }
-
 } // namespace v16
 
-#endif // _v16_portable_h_
+#endif // _v16_avx512_h_

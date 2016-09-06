@@ -2513,6 +2513,7 @@ namespace v8
   }
 #endif
 
+#if 0
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
@@ -2520,8 +2521,8 @@ namespace v8
       b.f[j] = ::sqrt( 1.0f/a.f[j] );
     return b;
   }
+#endif
 
-#if 0
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
@@ -2536,7 +2537,6 @@ namespace v8
 											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
     return b;
   }
-#endif
 
   //---------------------------------------------------------------------------------
   inline v8float rsqrt_v0( const v8float &a )

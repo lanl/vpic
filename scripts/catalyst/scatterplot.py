@@ -38,7 +38,7 @@ def CreateCoProcessor():
       # and provide it with information such as the filename to use,
       # how frequently to write the images, etc.
       coprocessor.RegisterView(renderView1,
-          filename='image_%t.png', freq=1, fittoscreen=0, magnification=1, width=791, height=512, cinema={})
+          filename='electron_scatterplot_%t.png', freq=1, fittoscreen=0, magnification=1, width=791, height=512, cinema={})
       renderView1.ViewTime = datadescription.GetTime()
 
       # ----------------------------------------------------------------

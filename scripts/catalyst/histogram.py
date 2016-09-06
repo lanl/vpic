@@ -33,7 +33,7 @@ def CreateCoProcessor():
       # and provide it with information such as the filename to use,
       # how frequently to write the images, etc.
       coprocessor.RegisterView(barChartView1,
-          filename='image_1_%t.png', freq=1, fittoscreen=0, magnification=1, width=598, height=942, cinema={})
+          filename='ion_histogram_1_%t.png', freq=1, fittoscreen=0, magnification=1, width=598, height=942, cinema={})
       barChartView1.ViewTime = datadescription.GetTime()
 
       # Create a new 'Render View'
@@ -51,7 +51,7 @@ def CreateCoProcessor():
       # and provide it with information such as the filename to use,
       # how frequently to write the images, etc.
       coprocessor.RegisterView(renderView1,
-          filename='image_0_%t.png', freq=1, fittoscreen=0, magnification=1, width=599, height=942, cinema={})
+          filename='ion_histogram_0_%t.png', freq=1, fittoscreen=0, magnification=1, width=599, height=942, cinema={})
       renderView1.ViewTime = datadescription.GetTime()
 
       # ----------------------------------------------------------------
@@ -138,7 +138,7 @@ def CreateCoProcessor():
 
   coprocessor = CoProcessor()
   # these are the frequencies at which the coprocessor updates.
-  freqs = {'ion': [1, 1]}
+  freqs = {'ion': [10]}
   coprocessor.SetUpdateFrequencies(freqs)
   return coprocessor
 

@@ -1,13 +1,14 @@
-#ifndef _v8_portable_h_
-#define _v8_portable_h_
+#ifndef _v8_avx2_h_
+#define _v8_avx2_h_
 
 #ifndef IN_v8_h
-#error "Do not include v8_portable.h directly; use v8.h"
+#error "Do not include v8_avx2.h directly; use v8.h"
 #endif
 
 #define V8_ACCELERATION
-#define V8_PORTABLE_ACCELERATION
+#define V8_AVX2_ACCELERATION
 
+#include <immintrin.h>
 #include <math.h>
 
 #ifndef ALIGNED
@@ -155,6 +156,7 @@ namespace v8
     {
       int i[8];
       float f[8];
+      __m256 v;
     };
 
   public:
@@ -163,8 +165,7 @@ namespace v8
 
     v8( const v8 &a )          // Copy constructor
     {
-      i[0]=a.i[0]; i[1]=a.i[1]; i[2]=a.i[2]; i[3]=a.i[3];
-      i[4]=a.i[4]; i[5]=a.i[5]; i[6]=a.i[6]; i[7]=a.i[7];
+      v = a.v;
     }
 
     ~v8() {}                   // Default destructor
@@ -189,14 +190,7 @@ namespace v8
   {
     v8 b;
 
-    b.i[0] = a.i[n];
-    b.i[1] = a.i[n];
-    b.i[2] = a.i[n];
-    b.i[3] = a.i[n];
-    b.i[4] = a.i[n];
-    b.i[5] = a.i[n];
-    b.i[6] = a.i[n];
-    b.i[7] = a.i[n];
+    b.v = _mm256_set1_ps( a.v[n] );
 
     return b;
   }
@@ -222,14 +216,11 @@ namespace v8
 
   inline void swap( v8 &a, v8 &b )
   {
-    sw( a.i[0], b.i[0] );
-    sw( a.i[1], b.i[1] );
-    sw( a.i[2], b.i[2] );
-    sw( a.i[3], b.i[3] );
-    sw( a.i[4], b.i[4] );
-    sw( a.i[5], b.i[5] );
-    sw( a.i[6], b.i[6] );
-    sw( a.i[7], b.i[7] );
+    __m256 a_v = a.v;
+
+    a.v = b.v;
+
+    b.v = a_v;
   }
 
   inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
@@ -877,27 +868,39 @@ namespace v8
 
     v8int( const v8int &a )                   // Copy constructor
     {
-      i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
-      i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7];
+      v = a.v;
     }
 
     v8int( const v8 &a )                      // Init from mixed
     {
-      i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
-      i[4] = a.i[4]; i[5] = a.i[5]; i[6] = a.i[6]; i[7] = a.i[7];
+      v = a.v;
     }
 
     v8int( int a )                            // Init from scalar
     {
-      i[0] = a; i[1] = a; i[2] = a; i[3] = a;
-      i[4] = a; i[5] = a; i[6] = a; i[7] = a;
+      union
+      {
+	int i;
+	float f;
+      } u;
+      u.i = a;
+      v = _mm256_set1_ps( u.f );
     }
 
     v8int( int i0, int i1, int i2, int i3,
 	   int i4, int i5, int i6, int i7 )   // Init from scalars
     {
-      i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
-      i[4] = i4; i[5] = i5; i[6] = i6; i[7] = i7;
+      union
+      {
+	int i;
+	float f;
+      } u0, u1, u2, u3, u4, u5, u6, u7;
+
+      u0.i = i0; u1.i = i1; u2.i = i2; u3.i = i3;
+      u4.i = i4; u5.i = i5; u6.i = i6; u7.i = i7;
+
+      v = _mm256_setr_ps( u0.f, u1.f, u2.f, u3.f,
+			  u4.f, u5.f, u6.f, u7.f );
     }
 
     ~v8int() {}                               // Destructor
@@ -918,15 +921,36 @@ namespace v8
       return *this;                               \
     }
 
-    ASSIGN( =)
+    inline v8int &operator =( const v8int &b )
+    {
+      v = b.v;
+      return *this;
+    }
+
     ASSIGN(+=)
     ASSIGN(-=)
     ASSIGN(*=)
     ASSIGN(/=)
     ASSIGN(%=)
-    ASSIGN(^=)
-    ASSIGN(&=)
-    ASSIGN(|=)
+
+    inline v8int &operator ^=( const v8int &b )
+    {
+      v = _mm256_xor_ps( v, b.v );
+      return *this;
+    }
+
+    inline v8int &operator &=( const v8int &b )
+    {
+      v = _mm256_and_ps( v, b.v );
+      return *this;
+    }
+
+    inline v8int &operator |=( const v8int &b )
+    {
+      v = _mm256_or_ps( v, b.v );
+      return *this;
+    }
+
     ASSIGN(<<=)
     ASSIGN(>>=)
 
@@ -962,7 +986,15 @@ namespace v8
     return b;                                   \
   }
 
-  PREFIX_UNARY(+)
+  inline v8int operator +( const v8int & a )
+  {
+    v8int b;
+
+    b.v = a.v;
+
+    return b;
+  }
+
   PREFIX_UNARY(-)
 
   inline v8int operator !( const v8int & a )
@@ -981,7 +1013,20 @@ namespace v8
     return b;
   }
 
-  PREFIX_UNARY(~)
+  inline v8int operator ~( const v8int & a )
+  {
+    v8int b;
+
+    union
+    {
+      int i;
+      float f;
+    } u;
+    u.i = -1;
+    b.v = _mm256_xor_ps( a.v, _mm256_set1_ps( u.f ) );
+
+    return b;
+  }
 
 # undef PREFIX_UNARY
 
@@ -1051,9 +1096,34 @@ namespace v8
   BINARY(*)
   BINARY(/)
   BINARY(%)
-  BINARY(^)
-  BINARY(&)
-  BINARY(|)
+
+  inline v8int operator ^( const v8int &a, const v8int &b )
+  {
+    v8int c;
+
+    c.v = _mm256_xor_ps( a.v, b.v );
+
+    return c;
+  }
+
+  inline v8int operator &( const v8int &a, const v8int &b )
+  {
+    v8int c;
+
+    c.v = _mm256_and_ps( a.v, b.v );
+
+    return c;
+  }
+
+  inline v8int operator |( const v8int &a, const v8int &b )
+  {
+    v8int c;
+
+    c.v = _mm256_or_ps( a.v, b.v );
+
+    return c;
+  }
+
   BINARY(<<)
   BINARY(>>)
 
@@ -1109,14 +1179,7 @@ namespace v8
   {
     v8 b;
 
-    b.i[0] = a.i[0] & ~c.i[0];
-    b.i[1] = a.i[1] & ~c.i[1];
-    b.i[2] = a.i[2] & ~c.i[2];
-    b.i[3] = a.i[3] & ~c.i[3];
-    b.i[4] = a.i[4] & ~c.i[4];
-    b.i[5] = a.i[5] & ~c.i[5];
-    b.i[6] = a.i[6] & ~c.i[6];
-    b.i[7] = a.i[7] & ~c.i[7];
+    b.v = _mm256_andnot_ps( c.v, a.v );
 
     return b;
   }
@@ -1125,32 +1188,21 @@ namespace v8
   {
     v8 b;
 
-    b.i[0] = a.i[0] & c.i[0];
-    b.i[1] = a.i[1] & c.i[1];
-    b.i[2] = a.i[2] & c.i[2];
-    b.i[3] = a.i[3] & c.i[3];
-    b.i[4] = a.i[4] & c.i[4];
-    b.i[5] = a.i[5] & c.i[5];
-    b.i[6] = a.i[6] & c.i[6];
-    b.i[7] = a.i[7] & c.i[7];
+    b.v = _mm256_and_ps( c.v, a.v );
 
     return b;
   }
 
   inline v8 merge( const v8int &c, const v8 &t, const v8 &f )
   {
-    v8 m;
+    __m256 c_v = c.v;
 
-    m.i[0] = ( f.i[0] & ~c.i[0] ) | ( t.i[0] & c.i[0] );
-    m.i[1] = ( f.i[1] & ~c.i[1] ) | ( t.i[1] & c.i[1] );
-    m.i[2] = ( f.i[2] & ~c.i[2] ) | ( t.i[2] & c.i[2] );
-    m.i[3] = ( f.i[3] & ~c.i[3] ) | ( t.i[3] & c.i[3] );
-    m.i[4] = ( f.i[4] & ~c.i[4] ) | ( t.i[4] & c.i[4] );
-    m.i[5] = ( f.i[5] & ~c.i[5] ) | ( t.i[5] & c.i[5] );
-    m.i[6] = ( f.i[6] & ~c.i[6] ) | ( t.i[6] & c.i[6] );
-    m.i[7] = ( f.i[7] & ~c.i[7] ) | ( t.i[7] & c.i[7] );
+    v8 tf;
 
-    return m;
+    tf.v = _mm256_or_ps( _mm256_andnot_ps( c_v, f.v ),
+			 _mm256_and_ps( c_v, t.v ) );
+
+    return tf;
   }
 
   ////////////////
@@ -1235,76 +1287,46 @@ namespace v8
 
     v8float( const v8float &a )                         // Copy constructor
     {
-      f[0] = a.f[0];
-      f[1] = a.f[1];
-      f[2] = a.f[2];
-      f[3] = a.f[3];
-      f[4] = a.f[4];
-      f[5] = a.f[5];
-      f[6] = a.f[6];
-      f[7] = a.f[7];
+      v = a.v;
     }
 
     v8float( const v8 &a )                              // Init from mixed
     {
-      f[0] = a.f[0];
-      f[1] = a.f[1];
-      f[2] = a.f[2];
-      f[3] = a.f[3];
-      f[4] = a.f[4];
-      f[5] = a.f[5];
-      f[6] = a.f[6];
-      f[7] = a.f[7];
+      v = a.v;
     }
 
     v8float( float a )                                  // Init from scalar
     {
-      f[0] = a;
-      f[1] = a;
-      f[2] = a;
-      f[3] = a;
-      f[4] = a;
-      f[5] = a;
-      f[6] = a;
-      f[7] = a;
+      v = _mm256_set1_ps( a );
     }
 
     v8float( float f0, float f1, float f2, float f3,
 	     float f4, float f5, float f6, float f7 )   // Init from scalars
     {
-      f[0] = f0;
-      f[1] = f1;
-      f[2] = f2;
-      f[3] = f3;
-      f[4] = f4;
-      f[5] = f5;
-      f[6] = f6;
-      f[7] = f7;
+      v = _mm256_setr_ps( f0, f1, f2, f3, f4, f5, f6, f7 );
     }
 
     ~v8float() {}                                       // Destructor
 
     // v8float assignment operators
 
-#   define ASSIGN(op)                                   \
+#   define ASSIGN(op,intrin)				\
     inline v8float &operator op( const v8float &b )     \
     {							\
-      f[0] op b.f[0];		             		\
-      f[1] op b.f[1];                                   \
-      f[2] op b.f[2];                                   \
-      f[3] op b.f[3];                                   \
-      f[4] op b.f[4];		             		\
-      f[5] op b.f[5];                                   \
-      f[6] op b.f[6];                                   \
-      f[7] op b.f[7];                                   \
-      return *this;                                     \
+      v = intrin(v,b.v);				\
+      return *this;					\
     }
 
-    ASSIGN(=)
-    ASSIGN(+=)
-    ASSIGN(-=)
-    ASSIGN(*=)
-    ASSIGN(/=)
+    inline v8float &operator =( const v8float &b )
+    {
+      v = b.v;
+      return *this;
+    }
+
+    ASSIGN( +=, _mm256_add_ps )
+    ASSIGN( -=, _mm256_sub_ps )
+    ASSIGN( *=, _mm256_mul_ps )
+    ASSIGN( /=, _mm256_div_ps )
 
 #   undef ASSIGN
 
@@ -1327,14 +1349,7 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = +a.f[0];
-    b.f[1] = +a.f[1];
-    b.f[2] = +a.f[2];
-    b.f[3] = +a.f[3];
-    b.f[4] = +a.f[4];
-    b.f[5] = +a.f[5];
-    b.f[6] = +a.f[6];
-    b.f[7] = +a.f[7];
+    b.v = a.v;
 
     return b;
   }
@@ -1343,14 +1358,7 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = -a.f[0];
-    b.f[1] = -a.f[1];
-    b.f[2] = -a.f[2];
-    b.f[3] = -a.f[3];
-    b.f[4] = -a.f[4];
-    b.f[5] = -a.f[5];
-    b.f[6] = -a.f[6];
-    b.f[7] = -a.f[7];
+    b.v = _mm256_sub_ps( _mm256_setzero_ps(), a.v );
 
     return b;
   }
@@ -1359,14 +1367,7 @@ namespace v8
   {
     v8int b;
 
-    b.i[0] = a.i[0] ? 0 : -1;
-    b.i[1] = a.i[1] ? 0 : -1;
-    b.i[2] = a.i[2] ? 0 : -1;
-    b.i[3] = a.i[3] ? 0 : -1;
-    b.i[4] = a.i[4] ? 0 : -1;
-    b.i[5] = a.i[5] ? 0 : -1;
-    b.i[6] = a.i[6] ? 0 : -1;
-    b.i[7] = a.i[7] ? 0 : -1;
+    b.v = _mm256_cmp_ps( _mm256_setzero_ps(), a.v, _CMP_EQ_OS );
 
     return b;
   }
@@ -1377,14 +1378,10 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = ++a.f[0];
-    b.f[1] = ++a.f[1];
-    b.f[2] = ++a.f[2];
-    b.f[3] = ++a.f[3];
-    b.f[4] = ++a.f[4];
-    b.f[5] = ++a.f[5];
-    b.f[6] = ++a.f[6];
-    b.f[7] = ++a.f[7];
+    __m256 t = _mm256_add_ps( a.v, _mm256_set1_ps( 1 ) );
+
+    a.v = t;
+    b.v = t;
 
     return b;
   }
@@ -1393,14 +1390,10 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = --a.f[0];
-    b.f[1] = --a.f[1];
-    b.f[2] = --a.f[2];
-    b.f[3] = --a.f[3];
-    b.f[4] = --a.f[4];
-    b.f[5] = --a.f[5];
-    b.f[6] = --a.f[6];
-    b.f[7] = --a.f[7];
+    __m256 t = _mm256_sub_ps( a.v, _mm256_set1_ps( 1 ) );
+
+    a.v = t;
+    b.v = t;
 
     return b;
   }
@@ -1411,14 +1404,10 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = a.f[0]++;
-    b.f[1] = a.f[1]++;
-    b.f[2] = a.f[2]++;
-    b.f[3] = a.f[3]++;
-    b.f[4] = a.f[4]++;
-    b.f[5] = a.f[5]++;
-    b.f[6] = a.f[6]++;
-    b.f[7] = a.f[7]++;
+    __m256 a_v = a.v;
+
+    a.v = _mm256_add_ps( a_v, _mm256_set1_ps( 1 ) );
+    b.v = a_v;
 
     return b;
   }
@@ -1427,67 +1416,71 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = a.f[0]--;
-    b.f[1] = a.f[1]--;
-    b.f[2] = a.f[2]--;
-    b.f[3] = a.f[3]--;
-    b.f[4] = a.f[4]--;
-    b.f[5] = a.f[5]--;
-    b.f[6] = a.f[6]--;
-    b.f[7] = a.f[7]--;
+    __m256 a_v = a.v;
+
+    a.v = _mm256_sub_ps(a_v, _mm256_set1_ps( 1 ) );
+    b.v = a_v;
 
     return b;
   }
 
   // v8float binary operators
 
-# define BINARY(op)                                                  \
+# define BINARY(op,intrin)                                           \
   inline v8float operator op( const v8float &a, const v8float &b )   \
   {								     \
     v8float c;                                                       \
-    c.f[0] = a.f[0] op b.f[0];                                       \
-    c.f[1] = a.f[1] op b.f[1];                                       \
-    c.f[2] = a.f[2] op b.f[2];                                       \
-    c.f[3] = a.f[3] op b.f[3];                                       \
-    c.f[4] = a.f[4] op b.f[4];                                       \
-    c.f[5] = a.f[5] op b.f[5];                                       \
-    c.f[6] = a.f[6] op b.f[6];                                       \
-    c.f[7] = a.f[7] op b.f[7];                                       \
+    c.v = intrin( a.v, b.v );                                        \
     return c;                                                        \
   }
 
-  BINARY(+)
-  BINARY(-)
-  BINARY(*)
-  BINARY(/)
+  BINARY( +, _mm256_add_ps )
+  BINARY( -, _mm256_sub_ps )
+  BINARY( *, _mm256_mul_ps )
+  BINARY( /, _mm256_div_ps )
 
 # undef BINARY
 
   // v8float logical operators
 
-# define LOGICAL(op)                                               \
+# define LOGICAL(op,intrin,flag)                                   \
   inline v8int operator op( const v8float &a, const v8float &b )   \
   {								   \
     v8int c;                                                       \
-    c.i[0] = -( a.f[0] op b.f[0] );                                \
-    c.i[1] = -( a.f[1] op b.f[1] );                                \
-    c.i[2] = -( a.f[2] op b.f[2] );                                \
-    c.i[3] = -( a.f[3] op b.f[3] );                                \
-    c.i[4] = -( a.f[4] op b.f[4] );                                \
-    c.i[5] = -( a.f[5] op b.f[5] );                                \
-    c.i[6] = -( a.f[6] op b.f[6] );                                \
-    c.i[7] = -( a.f[7] op b.f[7] );                                \
+    c.v = intrin( a.v, b.v, flag );				   \
     return c;                                                      \
   }
 
-  LOGICAL(< )
-  LOGICAL(> )
-  LOGICAL(==)
-  LOGICAL(!=)
-  LOGICAL(<=)
-  LOGICAL(>=)
-  LOGICAL(&&)
-  LOGICAL(||)
+  LOGICAL( <,  _mm256_cmp_ps, _CMP_LT_OS  )
+  LOGICAL( >,  _mm256_cmp_ps, _CMP_GT_OS  )
+  LOGICAL( ==, _mm256_cmp_ps, _CMP_EQ_OS  )
+  LOGICAL( !=, _mm256_cmp_ps, _CMP_NEQ_OS )
+  LOGICAL( <=, _mm256_cmp_ps, _CMP_LE_OS  )
+  LOGICAL( >=, _mm256_cmp_ps, _CMP_GE_OS  )
+
+  inline v8int operator &&( const v8float &a, const v8float &b )
+  {
+    v8int c;
+
+    __m256 vzero = _mm256_setzero_ps();
+
+    c.v = _mm256_and_ps( _mm256_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
+			 _mm256_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
+
+    return c;
+  }
+
+  inline v8int operator ||( const v8float &a, const v8float &b )
+  {
+    v8int c;
+
+    __m256 vzero = _mm256_setzero_ps();
+
+    c.v = _mm256_or_ps( _mm256_cmp_ps( a.v, vzero, _CMP_NEQ_OS ),
+			_mm256_cmp_ps( b.v, vzero, _CMP_NEQ_OS ) );
+
+    return c;
+  }
 
 # undef LOGICAL
 
@@ -1525,46 +1518,35 @@ namespace v8
 
   CMATH_FR1(acos)     CMATH_FR1(asin)  CMATH_FR1(atan) CMATH_FR2(atan2)
   CMATH_FR1(ceil)     CMATH_FR1(cos)   CMATH_FR1(cosh) CMATH_FR1(exp)
-  CMATH_FR1(fabs)     CMATH_FR1(floor) CMATH_FR2(fmod) CMATH_FR1(log)
+  /*CMATH_FR1(fabs)*/ CMATH_FR1(floor) CMATH_FR2(fmod) CMATH_FR1(log)
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
-  CMATH_FR1(sqrt)     CMATH_FR1(tan)   CMATH_FR1(tanh)
+  /*CMATH_FR1(sqrt)*/ CMATH_FR1(tan)   CMATH_FR1(tanh)
+
+  inline v8float fabs( const v8float &a )
+  {
+    v8float b;
+
+    b.v = _mm256_andnot_ps( _mm256_set1_ps( -0.f ), a.v );
+
+    return b;
+  }
+
+  inline v8float sqrt( const v8float &a )
+  {
+    v8float b;
+
+    b.v = _mm256_sqrt_ps( a.v );
+
+    return b;
+  }
 
   inline v8float copysign( const v8float &a, const v8float &b )
   {
     v8float c;
-    float t;
 
-    t = ::fabs( a.f[0] );
-    if( b.f[0] < 0 ) t = -t;
-    c.f[0] = t;
+    __m256 t = _mm256_set1_ps( -0.f );
 
-    t = ::fabs( a.f[1] );
-    if( b.f[1] < 0 ) t = -t;
-    c.f[1] = t;
-
-    t = ::fabs( a.f[2] );
-    if( b.f[2] < 0 ) t = -t;
-    c.f[2] = t;
-
-    t = ::fabs( a.f[3] );
-    if( b.f[3] < 0 ) t = -t;
-    c.f[3] = t;
-
-    t = ::fabs( a.f[4] );
-    if( b.f[4] < 0 ) t = -t;
-    c.f[4] = t;
-
-    t = ::fabs( a.f[5] );
-    if( b.f[5] < 0 ) t = -t;
-    c.f[5] = t;
-
-    t = ::fabs( a.f[6] );
-    if( b.f[6] < 0 ) t = -t;
-    c.f[6] = t;
-
-    t = ::fabs( a.f[7] );
-    if( b.f[7] < 0 ) t = -t;
-    c.f[7] = t;
+    c.v = _mm256_or_ps( _mm256_and_ps( t, b.v ), _mm256_andnot_ps( t, a.v ) );
 
     return c;
   }
@@ -1578,14 +1560,7 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = ::sqrt( 1.0f / a.f[0] );
-    b.f[1] = ::sqrt( 1.0f / a.f[1] );
-    b.f[2] = ::sqrt( 1.0f / a.f[2] );
-    b.f[3] = ::sqrt( 1.0f / a.f[3] );
-    b.f[4] = ::sqrt( 1.0f / a.f[4] );
-    b.f[5] = ::sqrt( 1.0f / a.f[5] );
-    b.f[6] = ::sqrt( 1.0f / a.f[6] );
-    b.f[7] = ::sqrt( 1.0f / a.f[7] );
+    b.v = _mm256_rsqrt_ps(a.v);
 
     return b;
   }
@@ -1594,14 +1569,16 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = ::sqrt( 1.0f / a.f[0] );
-    b.f[1] = ::sqrt( 1.0f / a.f[1] );
-    b.f[2] = ::sqrt( 1.0f / a.f[2] );
-    b.f[3] = ::sqrt( 1.0f / a.f[3] );
-    b.f[4] = ::sqrt( 1.0f / a.f[4] );
-    b.f[5] = ::sqrt( 1.0f / a.f[5] );
-    b.f[6] = ::sqrt( 1.0f / a.f[6] );
-    b.f[7] = ::sqrt( 1.0f / a.f[7] );
+    __m256 a_v = a.v, b_v;
+
+    b_v = _mm256_rsqrt_ps(a_v);
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+    b.v = _mm256_add_ps( b_v, _mm256_mul_ps( _mm256_set1_ps( 0.5f ),
+					     _mm256_sub_ps( b_v,
+							    _mm256_mul_ps( a_v,
+									   _mm256_mul_ps( b_v,
+											  _mm256_mul_ps( b_v, b_v ) ) ) ) ) );
 
     return b;
   }
@@ -1610,14 +1587,7 @@ namespace v8
   {
     v8float b;
 
-    b.f[0] = 1.0f / a.f[0];
-    b.f[1] = 1.0f / a.f[1];
-    b.f[2] = 1.0f / a.f[2];
-    b.f[3] = 1.0f / a.f[3];
-    b.f[4] = 1.0f / a.f[4];
-    b.f[5] = 1.0f / a.f[5];
-    b.f[6] = 1.0f / a.f[6];
-    b.f[7] = 1.0f / a.f[7];
+    b.v = _mm256_rcp_ps( a.v );
 
     return b;
   }
@@ -1625,15 +1595,11 @@ namespace v8
   inline v8float rcp( const v8float &a )
   {
     v8float b;
+    __m256 a_v = a.v, b_v;
 
-    b.f[0] = 1.0f / a.f[0];
-    b.f[1] = 1.0f / a.f[1];
-    b.f[2] = 1.0f / a.f[2];
-    b.f[3] = 1.0f / a.f[3];
-    b.f[4] = 1.0f / a.f[4];
-    b.f[5] = 1.0f / a.f[5];
-    b.f[6] = 1.0f / a.f[6];
-    b.f[7] = 1.0f / a.f[7];
+    b_v = _mm256_rcp_ps( a_v );
+    b.v = _mm256_sub_ps( _mm256_add_ps( b_v, b_v ),
+			 _mm256_mul_ps( a_v, _mm256_mul_ps( b_v, b_v ) ) );
 
     return b;
   }
@@ -1642,14 +1608,7 @@ namespace v8
   {
     v8float d;
 
-    d.f[0] = a.f[0] * b.f[0] + c.f[0];
-    d.f[1] = a.f[1] * b.f[1] + c.f[1];
-    d.f[2] = a.f[2] * b.f[2] + c.f[2];
-    d.f[3] = a.f[3] * b.f[3] + c.f[3];
-    d.f[4] = a.f[4] * b.f[4] + c.f[4];
-    d.f[5] = a.f[5] * b.f[5] + c.f[5];
-    d.f[6] = a.f[6] * b.f[6] + c.f[6];
-    d.f[7] = a.f[7] * b.f[7] + c.f[7];
+    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
 
     return d;
   }
@@ -1658,14 +1617,7 @@ namespace v8
   {
     v8float d;
 
-    d.f[0] = a.f[0] * b.f[0] - c.f[0];
-    d.f[1] = a.f[1] * b.f[1] - c.f[1];
-    d.f[2] = a.f[2] * b.f[2] - c.f[2];
-    d.f[3] = a.f[3] * b.f[3] - c.f[3];
-    d.f[4] = a.f[4] * b.f[4] - c.f[4];
-    d.f[5] = a.f[5] * b.f[5] - c.f[5];
-    d.f[6] = a.f[6] * b.f[6] - c.f[6];
-    d.f[7] = a.f[7] * b.f[7] - c.f[7];
+    d.v = _mm256_fmsub_ps( a.v, b.v, c.v );
 
     return d;
   }
@@ -1674,14 +1626,7 @@ namespace v8
   {
     v8float d;
 
-    d.f[0] = c.f[0] - a.f[0] * b.f[0];
-    d.f[1] = c.f[1] - a.f[1] * b.f[1];
-    d.f[2] = c.f[2] - a.f[2] * b.f[2];
-    d.f[3] = c.f[3] - a.f[3] * b.f[3];
-    d.f[4] = c.f[4] - a.f[4] * b.f[4];
-    d.f[5] = c.f[5] - a.f[5] * b.f[5];
-    d.f[6] = c.f[6] - a.f[6] * b.f[6];
-    d.f[7] = c.f[7] - a.f[7] * b.f[7];
+    d.v = _mm256_fnmadd_ps( a.v, b.v, c.v );
 
     return d;
   }
@@ -1690,14 +1635,7 @@ namespace v8
   {
     v8float b;
 
-    b.i[0] = ( ~m.i[0] ) & a.i[0];
-    b.i[1] = ( ~m.i[1] ) & a.i[1];
-    b.i[2] = ( ~m.i[2] ) & a.i[2];
-    b.i[3] = ( ~m.i[3] ) & a.i[3];
-    b.i[4] = ( ~m.i[4] ) & a.i[4];
-    b.i[5] = ( ~m.i[5] ) & a.i[5];
-    b.i[6] = ( ~m.i[6] ) & a.i[6];
-    b.i[7] = ( ~m.i[7] ) & a.i[7];
+    b.v = _mm256_andnot_ps( m.v, a.v );
 
     return b;
   }
@@ -1706,14 +1644,7 @@ namespace v8
   {
     v8float b;
 
-    b.i[0] = m.i[0] | a.i[0];
-    b.i[1] = m.i[1] | a.i[1];
-    b.i[2] = m.i[2] | a.i[2];
-    b.i[3] = m.i[3] | a.i[3];
-    b.i[4] = m.i[4] | a.i[4];
-    b.i[5] = m.i[5] | a.i[5];
-    b.i[6] = m.i[6] | a.i[6];
-    b.i[7] = m.i[7] | a.i[7];
+    b.v = _mm256_or_ps( m.v, a.v );
 
     return b;
   }
@@ -1722,54 +1653,26 @@ namespace v8
   {
     v8float b;
 
-    b.i[0] = m.i[0] ^ a.i[0];
-    b.i[1] = m.i[1] ^ a.i[1];
-    b.i[2] = m.i[2] ^ a.i[2];
-    b.i[3] = m.i[3] ^ a.i[3];
-    b.i[4] = m.i[4] ^ a.i[4];
-    b.i[5] = m.i[5] ^ a.i[5];
-    b.i[6] = m.i[6] ^ a.i[6];
-    b.i[7] = m.i[7] ^ a.i[7];
+    b.v = _mm256_xor_ps( m.v, a.v );
 
     return b;
   }
 
   inline void increment_8x1( float * ALIGNED(16) p, const v8float &a )
   {
-    p[0] += a.f[0];
-    p[1] += a.f[1];
-    p[2] += a.f[2];
-    p[3] += a.f[3];
-    p[4] += a.f[4];
-    p[5] += a.f[5];
-    p[6] += a.f[6];
-    p[7] += a.f[7];
+    _mm256_store_ps( p, _mm256_add_ps( _mm256_load_ps( p ), a.v ) );
   }
 
   inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a )
   {
-    p[0] -= a.f[0];
-    p[1] -= a.f[1];
-    p[2] -= a.f[2];
-    p[3] -= a.f[3];
-    p[4] -= a.f[4];
-    p[5] -= a.f[5];
-    p[6] -= a.f[6];
-    p[7] -= a.f[7];
+    _mm256_store_ps( p, _mm256_sub_ps( _mm256_load_ps( p ), a.v ) );
   }
 
   inline void scale_8x1( float * ALIGNED(16) p, const v8float &a )
   {
-    p[0] *= a.f[0];
-    p[1] *= a.f[1];
-    p[2] *= a.f[2];
-    p[3] *= a.f[3];
-    p[4] *= a.f[4];
-    p[5] *= a.f[5];
-    p[6] *= a.f[6];
-    p[7] *= a.f[7];
+    _mm256_store_ps( p, _mm256_mul_ps( _mm256_load_ps( p ), a.v ) );
   }
 
 } // namespace v8
 
-#endif // _v8_portable_h_
+#endif // _v8_avx2_h_

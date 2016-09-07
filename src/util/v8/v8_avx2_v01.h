@@ -1,13 +1,14 @@
-#ifndef _v8_portable_h_
-#define _v8_portable_h_
+#ifndef _v8_avx2_h_
+#define _v8_avx2_h_
 
 #ifndef IN_v8_h
-#error "Do not include v8_portable.h directly; use v8.h"
+#error "Do not include v8_avx2.h directly; use v8.h"
 #endif
 
 #define V8_ACCELERATION
-#define V8_PORTABLE_ACCELERATION
+#define V8_AVX2_ACCELERATION
 
+#include <immintrin.h>
 #include <math.h>
 
 #ifndef ALIGNED
@@ -155,6 +156,7 @@ namespace v8
     {
       int i[8];
       float f[8];
+      __m256 v;
     };
 
   public:
@@ -235,13 +237,36 @@ namespace v8
   inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
 			 v8 &a4, v8 &a5, v8 &a6, v8 &a7 )
   {
-    sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] ); sw( a0.i[4],a4.i[0] ); sw( a0.i[5],a5.i[0] ); sw( a0.i[6],a6.i[0] ); sw( a0.i[7],a7.i[0] );
-                           sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] ); sw( a1.i[4],a4.i[1] ); sw( a1.i[5],a5.i[1] ); sw( a1.i[6],a6.i[1] ); sw( a1.i[7],a7.i[1] );
-                                                  sw( a2.i[3],a3.i[2] ); sw( a2.i[4],a4.i[2] ); sw( a2.i[5],a5.i[2] ); sw( a2.i[6],a6.i[2] ); sw( a2.i[7],a7.i[2] );
-                                                                         sw( a3.i[4],a4.i[3] ); sw( a3.i[5],a5.i[3] ); sw( a3.i[6],a6.i[3] ); sw( a3.i[7],a7.i[3] );
-                                                                                                sw( a4.i[5],a5.i[4] ); sw( a4.i[6],a6.i[4] ); sw( a4.i[7],a7.i[4] );
-                                                                                                                       sw( a5.i[6],a6.i[5] ); sw( a5.i[7],a7.i[5] );
-                                                                                                                                              sw( a6.i[7],a7.i[6] );
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a0.v, a1.v );
+    t1 = _mm256_unpackhi_ps( a0.v, a1.v );
+    t2 = _mm256_unpacklo_ps( a2.v, a3.v );
+    t3 = _mm256_unpackhi_ps( a2.v, a3.v );
+    t4 = _mm256_unpacklo_ps( a4.v, a5.v );
+    t5 = _mm256_unpackhi_ps( a4.v, a5.v );
+    t6 = _mm256_unpacklo_ps( a6.v, a7.v );
+    t7 = _mm256_unpackhi_ps( a6.v, a7.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a0.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    a1.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    a2.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    a3.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    a4.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    a5.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    a6.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    a7.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
 
 # undef sw
@@ -509,77 +534,47 @@ namespace v8
                            v8 &a, v8 &b, v8 &c, v8 &d,
                            v8 &e, v8 &f, v8 &g, v8 &h )
   {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
-    e.i[0] = ((const int * ALIGNED(16))a0)[4];
-    f.i[0] = ((const int * ALIGNED(16))a0)[5];
-    g.i[0] = ((const int * ALIGNED(16))a0)[6];
-    h.i[0] = ((const int * ALIGNED(16))a0)[7];
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
-    e.i[1] = ((const int * ALIGNED(16))a1)[4];
-    f.i[1] = ((const int * ALIGNED(16))a1)[5];
-    g.i[1] = ((const int * ALIGNED(16))a1)[6];
-    h.i[1] = ((const int * ALIGNED(16))a1)[7];
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
 
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
-    e.i[2] = ((const int * ALIGNED(16))a2)[4];
-    f.i[2] = ((const int * ALIGNED(16))a2)[5];
-    g.i[2] = ((const int * ALIGNED(16))a2)[6];
-    h.i[2] = ((const int * ALIGNED(16))a2)[7];
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
 
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
-    e.i[3] = ((const int * ALIGNED(16))a3)[4];
-    f.i[3] = ((const int * ALIGNED(16))a3)[5];
-    g.i[3] = ((const int * ALIGNED(16))a3)[6];
-    h.i[3] = ((const int * ALIGNED(16))a3)[7];
+    a_v = _mm256_load_ps( (const float *)a0 );
+    b_v = _mm256_load_ps( (const float *)a1 );
+    c_v = _mm256_load_ps( (const float *)a2 );
+    d_v = _mm256_load_ps( (const float *)a3 );
+    e_v = _mm256_load_ps( (const float *)a4 );
+    f_v = _mm256_load_ps( (const float *)a5 );
+    g_v = _mm256_load_ps( (const float *)a6 );
+    h_v = _mm256_load_ps( (const float *)a7 );
 
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    d.i[4] = ((const int * ALIGNED(16))a4)[3];
-    e.i[4] = ((const int * ALIGNED(16))a4)[4];
-    f.i[4] = ((const int * ALIGNED(16))a4)[5];
-    g.i[4] = ((const int * ALIGNED(16))a4)[6];
-    h.i[4] = ((const int * ALIGNED(16))a4)[7];
+    t0 = _mm256_unpacklo_ps( a_v, b_v );
+    t1 = _mm256_unpackhi_ps( a_v, b_v );
+    t2 = _mm256_unpacklo_ps( c_v, d_v );
+    t3 = _mm256_unpackhi_ps( c_v, d_v );
+    t4 = _mm256_unpacklo_ps( e_v, f_v );
+    t5 = _mm256_unpackhi_ps( e_v, f_v );
+    t6 = _mm256_unpacklo_ps( g_v, h_v );
+    t7 = _mm256_unpackhi_ps( g_v, h_v );
 
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    d.i[5] = ((const int * ALIGNED(16))a5)[3];
-    e.i[5] = ((const int * ALIGNED(16))a5)[4];
-    f.i[5] = ((const int * ALIGNED(16))a5)[5];
-    g.i[5] = ((const int * ALIGNED(16))a5)[6];
-    h.i[5] = ((const int * ALIGNED(16))a5)[7];
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
 
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    d.i[6] = ((const int * ALIGNED(16))a6)[3];
-    e.i[6] = ((const int * ALIGNED(16))a6)[4];
-    f.i[6] = ((const int * ALIGNED(16))a6)[5];
-    g.i[6] = ((const int * ALIGNED(16))a6)[6];
-    h.i[6] = ((const int * ALIGNED(16))a6)[7];
-
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2];
-    d.i[7] = ((const int * ALIGNED(16))a7)[3];
-    e.i[7] = ((const int * ALIGNED(16))a7)[4];
-    f.i[7] = ((const int * ALIGNED(16))a7)[5];
-    g.i[7] = ((const int * ALIGNED(16))a7)[6];
-    h.i[7] = ((const int * ALIGNED(16))a7)[7];
+    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
 
   inline void store_8x1_tr( const v8 &a,
@@ -720,77 +715,47 @@ namespace v8
                             void * ALIGNED(16) a4, void * ALIGNED(16) a5,
                             void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
   {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
-    ((int * ALIGNED(16))a0)[3] = d.i[0];
-    ((int * ALIGNED(16))a0)[4] = e.i[0];
-    ((int * ALIGNED(16))a0)[5] = f.i[0];
-    ((int * ALIGNED(16))a0)[6] = g.i[0];
-    ((int * ALIGNED(16))a0)[7] = h.i[0];
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
 
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
-    ((int * ALIGNED(16))a1)[3] = d.i[1];
-    ((int * ALIGNED(16))a1)[4] = e.i[1];
-    ((int * ALIGNED(16))a1)[5] = f.i[1];
-    ((int * ALIGNED(16))a1)[6] = g.i[1];
-    ((int * ALIGNED(16))a1)[7] = h.i[1];
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
 
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
-    ((int * ALIGNED(16))a2)[3] = d.i[2];
-    ((int * ALIGNED(16))a2)[4] = e.i[2];
-    ((int * ALIGNED(16))a2)[5] = f.i[2];
-    ((int * ALIGNED(16))a2)[6] = g.i[2];
-    ((int * ALIGNED(16))a2)[7] = h.i[2];
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
 
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
-    ((int * ALIGNED(16))a3)[3] = d.i[3];
-    ((int * ALIGNED(16))a3)[4] = e.i[3];
-    ((int * ALIGNED(16))a3)[5] = f.i[3];
-    ((int * ALIGNED(16))a3)[6] = g.i[3];
-    ((int * ALIGNED(16))a3)[7] = h.i[3];
+    t0 = _mm256_unpacklo_ps( a.v, b.v );
+    t1 = _mm256_unpackhi_ps( a.v, b.v );
+    t2 = _mm256_unpacklo_ps( c.v, d.v );
+    t3 = _mm256_unpackhi_ps( c.v, d.v );
+    t4 = _mm256_unpacklo_ps( e.v, f.v );
+    t5 = _mm256_unpackhi_ps( e.v, f.v );
+    t6 = _mm256_unpacklo_ps( g.v, h.v );
+    t7 = _mm256_unpackhi_ps( g.v, h.v );
 
-    ((int * ALIGNED(16))a4)[0] = a.i[4];
-    ((int * ALIGNED(16))a4)[1] = b.i[4];
-    ((int * ALIGNED(16))a4)[2] = c.i[4];
-    ((int * ALIGNED(16))a4)[3] = d.i[4];
-    ((int * ALIGNED(16))a4)[4] = e.i[4];
-    ((int * ALIGNED(16))a4)[5] = f.i[4];
-    ((int * ALIGNED(16))a4)[6] = g.i[4];
-    ((int * ALIGNED(16))a4)[7] = h.i[4];
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
 
-    ((int * ALIGNED(16))a5)[0] = a.i[5];
-    ((int * ALIGNED(16))a5)[1] = b.i[5];
-    ((int * ALIGNED(16))a5)[2] = c.i[5];
-    ((int * ALIGNED(16))a5)[3] = d.i[5];
-    ((int * ALIGNED(16))a5)[4] = e.i[5];
-    ((int * ALIGNED(16))a5)[5] = f.i[5];
-    ((int * ALIGNED(16))a5)[6] = g.i[5];
-    ((int * ALIGNED(16))a5)[7] = h.i[5];
+    a_v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b_v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c_v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d_v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e_v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f_v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g_v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h_v = _mm256_permute2f128_ps( u3, u7, 0x31 );
 
-    ((int * ALIGNED(16))a6)[0] = a.i[6];
-    ((int * ALIGNED(16))a6)[1] = b.i[6];
-    ((int * ALIGNED(16))a6)[2] = c.i[6];
-    ((int * ALIGNED(16))a6)[3] = d.i[6];
-    ((int * ALIGNED(16))a6)[4] = e.i[6];
-    ((int * ALIGNED(16))a6)[5] = f.i[6];
-    ((int * ALIGNED(16))a6)[6] = g.i[6];
-    ((int * ALIGNED(16))a6)[7] = h.i[6];
-
-    ((int * ALIGNED(16))a7)[0] = a.i[7];
-    ((int * ALIGNED(16))a7)[1] = b.i[7];
-    ((int * ALIGNED(16))a7)[2] = c.i[7];
-    ((int * ALIGNED(16))a7)[3] = d.i[7];
-    ((int * ALIGNED(16))a7)[4] = e.i[7];
-    ((int * ALIGNED(16))a7)[5] = f.i[7];
-    ((int * ALIGNED(16))a7)[6] = g.i[7];
-    ((int * ALIGNED(16))a7)[7] = h.i[7];
+    _mm256_store_ps( (float *)a0, a_v );
+    _mm256_store_ps( (float *)a1, b_v );
+    _mm256_store_ps( (float *)a2, c_v );
+    _mm256_store_ps( (float *)a3, d_v );
+    _mm256_store_ps( (float *)a4, e_v );
+    _mm256_store_ps( (float *)a5, f_v );
+    _mm256_store_ps( (float *)a6, g_v );
+    _mm256_store_ps( (float *)a7, h_v );
   }
 
   //////////////
@@ -1772,4 +1737,4 @@ namespace v8
 
 } // namespace v8
 
-#endif // _v8_portable_h_
+#endif // _v8_avx2_h_

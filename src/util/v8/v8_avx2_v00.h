@@ -1,13 +1,14 @@
-#ifndef _v8_portable_h_
-#define _v8_portable_h_
+#ifndef _v8_avx2_h_
+#define _v8_avx2_h_
 
 #ifndef IN_v8_h
-#error "Do not include v8_portable.h directly; use v8.h"
+#error "Do not include v8_avx2.h directly; use v8.h"
 #endif
 
 #define V8_ACCELERATION
-#define V8_PORTABLE_ACCELERATION
+#define V8_AVX2_ACCELERATION
 
+#include <immintrin.h>
 #include <math.h>
 
 #ifndef ALIGNED
@@ -155,6 +156,7 @@ namespace v8
     {
       int i[8];
       float f[8];
+      __m256 v;
     };
 
   public:
@@ -1772,4 +1774,4 @@ namespace v8
 
 } // namespace v8
 
-#endif // _v8_portable_h_
+#endif // _v8_avx2_h_

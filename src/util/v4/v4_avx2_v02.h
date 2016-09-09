@@ -15,27 +15,11 @@
 #define ALIGNED(n)
 #endif
 
-// FIXME: IN PORTABLE, ALTIVEC, SPU
-// - UPDATE V4INT, V4FLOAT
-
-// This requires gcc-3.3 and up
-// Also, Bug 12902 has not been resolved on gcc-3.x.x. See README.patches for
-// details.  gcc-4.x.x does not seem to have this bug but may suffer from
-// other problems (use "-fno-strict-aliasing" on these platforms)
-
 namespace v4
 {
   class v4;
   class v4int;
   class v4float;
-
-  template<int i0, int i1, int i2, int i3>
-  struct permute
-  {
-    constexpr static int value = i0 + i1*4 + i2*16 + i3*64;
-  };
-
-# define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
 
   ////////////////
   // v4 base class
@@ -58,16 +42,6 @@ namespace v4
 
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    //-----------------------------------------------------------------------
-    friend inline void transpose_v0( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v1( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v2( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v3( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v4( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v5( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v6( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    friend inline void transpose_v7( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
-    //-----------------------------------------------------------------------
 
     // v4int miscellaneous friends
 
@@ -80,12 +54,12 @@ namespace v4
     friend inline void   load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void  store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
-    friend inline void  clear_4x1( void * ALIGNED(16) dst );
     friend inline void   copy_4x1( void * ALIGNED(16) dst,
                                    const void * ALIGNED(16) src );
     friend inline void   swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
 
     // v4 transposed memory manipulation friends
+    // Note: Half aligned values are permissible in the 4x2_tr variants!
 
     friend inline void load_4x1_tr( const void *a0, const void *a1,
                                     const void *a2, const void *a3,
@@ -95,13 +69,6 @@ namespace v4
                                     const void * ALIGNED(8) a2,
                                     const void * ALIGNED(8) a3,
                                     v4 &a, v4 &b );
-    //----------------------------------------------------------------------------
-    friend inline void load_4x2_tr_v0( const void * ALIGNED(8) a0,
-				       const void * ALIGNED(8) a1,
-				       const void * ALIGNED(8) a2,
-				       const void * ALIGNED(8) a3,
-				       v4 &a, v4 &b );
-    //----------------------------------------------------------------------------
     friend inline void load_4x3_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -112,38 +79,7 @@ namespace v4
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
-    //----------------------------------------------------------------------------
-    friend inline void load_4x4_tr_v0( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    friend inline void load_4x4_tr_v1( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    friend inline void load_4x4_tr_v2( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    friend inline void load_4x4_tr_v3( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    friend inline void load_4x4_tr_v4( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    friend inline void load_4x4_tr_v5( const void * ALIGNED(16) a0,
-				       const void * ALIGNED(16) a1,
-				       const void * ALIGNED(16) a2,
-				       const void * ALIGNED(16) a3,
-				       v4 &a, v4 &b, v4 &c, v4 &d );
-    //----------------------------------------------------------------------------
+
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -162,23 +98,8 @@ namespace v4
                                      void * ALIGNED(16) a1,
                                      void * ALIGNED(16) a2,
                                      void * ALIGNED(16) a3 );
-    //----------------------------------------------------------------------------
-    friend inline void store_4x4_tr_v0( const v4 &a, const v4 &b,
-					const v4 &c, const v4 &d,
-					void * ALIGNED(16) a0,
-					void * ALIGNED(16) a1,
-					void * ALIGNED(16) a2,
-					void * ALIGNED(16) a3 );
-    friend inline void store_4x4_tr_v1( const v4 &a, const v4 &b,
-					const v4 &c, const v4 &d,
-					void * ALIGNED(16) a0,
-					void * ALIGNED(16) a1,
-					void * ALIGNED(16) a2,
-					void * ALIGNED(16) a3 );
-    //----------------------------------------------------------------------------
 
   protected:
-  public:
 
     union
     {
@@ -211,29 +132,29 @@ namespace v4
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
 
-  // Note: n MUST BE AN IMMEDIATE.
   template<int n>
   inline v4 splat( const v4 & a )
   {
-    __m128 a_v = a.v;
     v4 b;
+    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a_v, a_v, ( n*permute<1,1,1,1>::value ) );
 
     return b;
   }
 
-  // Note: i0:3 MUST BE IMMEDIATES.
   template<int i0, int i1, int i2, int i3>
   inline v4 shuffle( const v4 & a )
   {
-    __m128 a_v = a.v;
     v4 b;
+    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a_v, a_v, ( permute<i0,i1,i2,i3>::value ) );
 
     return b;
   }
+
+# define sw(x,y) x^=y, y^=x, x^=y
 
   inline void swap( v4 &a, v4 &b )
   { 
@@ -246,167 +167,76 @@ namespace v4
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-
-    a0.v = a0_v;
-    a1.v = a1_v;
-    a2.v = a2_v;
-    a3.v = a3_v;
-  }
-  //-----------------------------------------------------------------------
-  inline void transpose_v0( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
+    sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
+                           sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
+                                                  sw( a2.i[3],a3.i[2] );
   }
 
-  inline void transpose_v1( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v2( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v3( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v4( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v5( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v6( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-
-  inline void transpose_v7( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
-    a0.v = a0_v; a1.v = a1_v; a2.v = a2_v; a3.v = a3_v;
-  }
-  //-----------------------------------------------------------------------
+# undef sw
 
   // v4 memory manipulation functions
-
-  inline void load_4x1( const void * ALIGNED(16) p,
-			v4 &a )
+  
+  inline void load_4x1( const void * ALIGNED(16) p, v4 &a )
   {
-    a.v = _mm_load_ps( (float *)p );
+    a.i[0] = ((const int * ALIGNED(16))p)[0];
+    a.i[1] = ((const int * ALIGNED(16))p)[1];
+    a.i[2] = ((const int * ALIGNED(16))p)[2];
+    a.i[3] = ((const int * ALIGNED(16))p)[3];
   }
 
-  inline void store_4x1( const v4 &a,
-			 void * ALIGNED(16) p )
+  inline void store_4x1( const v4 &a, void * ALIGNED(16) p )
   {
-    _mm_store_ps( (float *)p, a.v );
+    ((int * ALIGNED(16))p)[0] = a.i[0];
+    ((int * ALIGNED(16))p)[1] = a.i[1];
+    ((int * ALIGNED(16))p)[2] = a.i[2];
+    ((int * ALIGNED(16))p)[3] = a.i[3];
   }
 
-  inline void stream_4x1( const v4 &a,
-			  void * ALIGNED(16) p )
+  inline void stream_4x1( const v4 &a, void * ALIGNED(16) p )
   {
-    _mm_stream_ps( (float *)p, a.v );
+    ((int * ALIGNED(16))p)[0] = a.i[0];
+    ((int * ALIGNED(16))p)[1] = a.i[1];
+    ((int * ALIGNED(16))p)[2] = a.i[2];
+    ((int * ALIGNED(16))p)[3] = a.i[3];
   }
 
   inline void clear_4x1( void * ALIGNED(16) p )
   {
-    _mm_store_ps( (float *)p, _mm_setzero_ps() );
+    ((int * ALIGNED(16))p)[0] = 0;
+    ((int * ALIGNED(16))p)[1] = 0;
+    ((int * ALIGNED(16))p)[2] = 0;
+    ((int * ALIGNED(16))p)[3] = 0;
   }
 
+  // FIXME: Ordering semantics
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
-    _mm_store_ps( (float *)dst, _mm_load_ps( (const float *)src ) );
+    ((int * ALIGNED(16))dst)[0] = ((const int * ALIGNED(16))src)[0];
+    ((int * ALIGNED(16))dst)[1] = ((const int * ALIGNED(16))src)[1];
+    ((int * ALIGNED(16))dst)[2] = ((const int * ALIGNED(16))src)[2];
+    ((int * ALIGNED(16))dst)[3] = ((const int * ALIGNED(16))src)[3];
   }
 
-  /* FIXME: MAKE ROBUST AGAINST ALIASING ISSUES */
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
   {
-    __m128 t = _mm_load_ps((float *)a);
+    int t;
 
-    _mm_store_ps( (float *)a, _mm_load_ps( (float *)b ) );
-    _mm_store_ps( (float *)b, t );
+    t = ((int * ALIGNED(16))a)[0];
+    ((int * ALIGNED(16))a)[0] = ((int * ALIGNED(16))b)[0];
+    ((int * ALIGNED(16))b)[0] = t;
+
+    t = ((int * ALIGNED(16))a)[1];
+    ((int * ALIGNED(16))a)[1] = ((int * ALIGNED(16))b)[1];
+    ((int * ALIGNED(16))b)[1] = t;
+
+    t = ((int * ALIGNED(16))a)[2];
+    ((int * ALIGNED(16))a)[2] = ((int * ALIGNED(16))b)[2];
+    ((int * ALIGNED(16))b)[2] = t;
+
+    t = ((int * ALIGNED(16))a)[3];
+    ((int * ALIGNED(16))a)[3] = ((int * ALIGNED(16))b)[3];
+    ((int * ALIGNED(16))b)[3] = t;
   }
 
   // v4 transposed memory manipulation functions
@@ -415,10 +245,10 @@ namespace v4
                            const void *a2, const void *a3,
 			   v4 &a )
   {
-    a.v = _mm_setr_ps( ((const float *)a0)[0],
-                       ((const float *)a1)[0],
-                       ((const float *)a2)[0],
-                       ((const float *)a3)[0] );
+    a.i[0] = ((const int *)a0)[0];
+    a.i[1] = ((const int *)a1)[0];
+    a.i[2] = ((const int *)a2)[0];
+    a.i[3] = ((const int *)a3)[0];
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
@@ -427,35 +257,18 @@ namespace v4
                            const void * ALIGNED(8) a3,
                            v4 &a, v4 &b )
   {
-    __m128 a_v, b_v, t;
+    a.i[0] = ((const int * ALIGNED(8))a0)[0];
+    b.i[0] = ((const int * ALIGNED(8))a0)[1];
 
-    b_v = _mm_setzero_ps();
+    a.i[1] = ((const int * ALIGNED(8))a1)[0];
+    b.i[1] = ((const int * ALIGNED(8))a1)[1];
 
-    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a0 ), (__m64 *)a1 );
-    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a2 ), (__m64 *)a3 );
+    a.i[2] = ((const int * ALIGNED(8))a2)[0];
+    b.i[2] = ((const int * ALIGNED(8))a2)[1];
 
-    a_v = _mm_shuffle_ps( t, b_v, 0x88 );
-    b_v = _mm_shuffle_ps( t, b_v, 0xdd );
-
-    a.v = a_v;
-    b.v = b_v;
+    a.i[3] = ((const int * ALIGNED(8))a3)[0];
+    b.i[3] = ((const int * ALIGNED(8))a3)[1];
   }
-
-  //----------------------------------------------------------------------------
-  inline void load_4x2_tr_v0( const void * ALIGNED(8) a0,
-			      const void * ALIGNED(8) a1,
-			      const void * ALIGNED(8) a2,
-			      const void * ALIGNED(8) a3,
-			      v4 &a, v4 &b ) {
-    __m128 a_v, b_v, t;
-    b_v = _mm_setzero_ps();
-    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a0 ), (__m64 *)a1 );
-    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a2 ), (__m64 *)a3 );
-    a_v = _mm_shuffle_ps( t, b_v, 0x88 );
-    b_v = _mm_shuffle_ps( t, b_v, 0xdd );
-    a.v = a_v; b.v = b_v;
-  }
-  //----------------------------------------------------------------------------
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -463,99 +276,22 @@ namespace v4
                            const void * ALIGNED(16) a3,
                            v4 &a, v4 &b, v4 &c )
   {
-    __m128 a_v, b_v, c_v, t, u;
+    a.i[0] = ((const int * ALIGNED(16))a0)[0];
+    b.i[0] = ((const int * ALIGNED(16))a0)[1];
+    c.i[0] = ((const int * ALIGNED(16))a0)[2];
 
-    t   = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    u   = _mm_load_ps( (const float *)a3 );
+    a.i[1] = ((const int * ALIGNED(16))a1)[0];
+    b.i[1] = ((const int * ALIGNED(16))a1)[1];
+    c.i[1] = ((const int * ALIGNED(16))a1)[2];
 
-    a_v = _mm_unpacklo_ps( t, b_v );
-    b_v = _mm_unpackhi_ps( t, b_v );
-    t   = _mm_unpacklo_ps( c_v, u );
-    u   = _mm_unpackhi_ps( c_v, u );
+    a.i[2] = ((const int * ALIGNED(16))a2)[0];
+    b.i[2] = ((const int * ALIGNED(16))a2)[1];
+    c.i[2] = ((const int * ALIGNED(16))a2)[2];
 
-    c_v = _mm_movelh_ps( b_v, u );
-    b_v = _mm_movehl_ps( t, a_v );
-    a_v = _mm_movelh_ps( a_v, t );
-
-    a.v = a_v;
-    b.v = b_v;
-    c.v = c_v;
+    a.i[3] = ((const int * ALIGNED(16))a3)[0];
+    b.i[3] = ((const int * ALIGNED(16))a3)[1];
+    c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
   }
-
-#if 0
-  inline void load_4x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
-    __m128 a_v, b_v, c_v, d_v, t, u;
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-    b_v = _mm_movehl_ps( c_v, a_v );
-    a_v = _mm_movelh_ps( a_v, c_v );
-    c_v = _mm_movelh_ps( t, u );
-    d_v = _mm_movehl_ps( u, t );
-    a.v = a_v; b.v = b_v; c.v = c_v; d.v = d_v;
-  }
-#endif
-
-#if 0
-  inline void load_4x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    b.v = _mm_movehl_ps( c_v, a_v );
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    d.v = _mm_movehl_ps( u, t );
-  }
-#endif
-
-#if 0
-  inline void load_4x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-    c.v = _mm_movelh_ps( t, u );
-  }
-#endif
 
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -563,328 +299,98 @@ namespace v4
                            const void * ALIGNED(16) a3,
                            v4 &a, v4 &b, v4 &c, v4 &d )
   {
-    __m128 a_v, b_v, c_v, d_v, t, u;
+    a.i[0] = ((const int * ALIGNED(16))a0)[0];
+    b.i[0] = ((const int * ALIGNED(16))a0)[1];
+    c.i[0] = ((const int * ALIGNED(16))a0)[2];
+    d.i[0] = ((const int * ALIGNED(16))a0)[3];
 
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
+    a.i[1] = ((const int * ALIGNED(16))a1)[0];
+    b.i[1] = ((const int * ALIGNED(16))a1)[1];
+    c.i[1] = ((const int * ALIGNED(16))a1)[2];
+    d.i[1] = ((const int * ALIGNED(16))a1)[3];
 
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
+    a.i[2] = ((const int * ALIGNED(16))a2)[0];
+    b.i[2] = ((const int * ALIGNED(16))a2)[1];
+    c.i[2] = ((const int * ALIGNED(16))a2)[2];
+    d.i[2] = ((const int * ALIGNED(16))a2)[3];
 
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
+    a.i[3] = ((const int * ALIGNED(16))a3)[0];
+    b.i[3] = ((const int * ALIGNED(16))a3)[1];
+    c.i[3] = ((const int * ALIGNED(16))a3)[2];
+    d.i[3] = ((const int * ALIGNED(16))a3)[3];
   }
-
-  //----------------------------------------------------------------------------
-  inline void load_4x4_tr_v0( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-
-  inline void load_4x4_tr_v1( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-
-  inline void load_4x4_tr_v2( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-
-  inline void load_4x4_tr_v3( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-
-  inline void load_4x4_tr_v4( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-
-  inline void load_4x4_tr_v5( const void * ALIGNED(16) a0,
-			      const void * ALIGNED(16) a1,
-			      const void * ALIGNED(16) a2,
-			      const void * ALIGNED(16) a3,
-			      v4 &a, v4 &b, v4 &c, v4 &d ) {
-    a.v = _mm_load_ps( (const float *)a0 );
-    b.v = _mm_load_ps( (const float *)a1 );
-    c.v = _mm_load_ps( (const float *)a2 );
-    d.v = _mm_load_ps( (const float *)a3 );
-
-#if 0
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-#endif
-  }
-  //----------------------------------------------------------------------------
 
   inline void store_4x1_tr( const v4 &a,
-                            void *a0, void *a1,
-			    void *a2, void *a3 )
+                            void *a0, void *a1, void *a2, void *a3 )
   {
-    ((float *)a0)[0] = a.f[0];
-    ((float *)a1)[0] = a.f[1];
-    ((float *)a2)[0] = a.f[2];
-    ((float *)a3)[0] = a.f[3];
+    ((int *)a0)[0] = a.i[0];
+    ((int *)a1)[0] = a.i[1];
+    ((int *)a2)[0] = a.i[2];
+    ((int *)a3)[0] = a.i[3];
   }
 
   inline void store_4x2_tr( const v4 &a, const v4 &b,
                             void * ALIGNED(8) a0, void * ALIGNED(8) a1,
                             void * ALIGNED(8) a2, void * ALIGNED(8) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, t;
+    ((int * ALIGNED(8))a0)[0] = a.i[0];
+    ((int * ALIGNED(8))a0)[1] = b.i[0];
 
-    t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
+    ((int * ALIGNED(8))a1)[0] = a.i[1];
+    ((int * ALIGNED(8))a1)[1] = b.i[1];
 
-    _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
+    ((int * ALIGNED(8))a2)[0] = a.i[2];
+    ((int * ALIGNED(8))a2)[1] = b.i[2];
 
-    t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
-
-    _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
+    ((int * ALIGNED(8))a3)[0] = a.i[3];
+    ((int * ALIGNED(8))a3)[1] = b.i[3];
   }
 
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, t;
+    ((int * ALIGNED(16))a0)[0] = a.i[0];
+    ((int * ALIGNED(16))a0)[1] = b.i[0];
+    ((int * ALIGNED(16))a0)[2] = c.i[0];
 
-    t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
+    ((int * ALIGNED(16))a1)[0] = a.i[1];
+    ((int * ALIGNED(16))a1)[1] = b.i[1];
+    ((int * ALIGNED(16))a1)[2] = c.i[1];
 
-    _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
+    ((int * ALIGNED(16))a2)[0] = a.i[2];
+    ((int * ALIGNED(16))a2)[1] = b.i[2];
+    ((int * ALIGNED(16))a2)[2] = c.i[2];
 
-    t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
-
-    _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
-
-    ((float *)a0)[2] = c.f[0];
-    ((float *)a1)[2] = c.f[1];
-    ((float *)a2)[2] = c.f[2];
-    ((float *)a3)[2] = c.f[3];
+    ((int * ALIGNED(16))a3)[0] = a.i[3];
+    ((int * ALIGNED(16))a3)[1] = b.i[3];
+    ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
 
-  // FIXME: IS THIS FASTER THAN THE OLD WAY (HAD MORE STORE INSTR)
-  inline void store_4x4_tr( const v4 &a, const v4 &b,
-			    const v4 &c, const v4 &d,
+  inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
+    ((int * ALIGNED(16))a0)[0] = a.i[0];
+    ((int * ALIGNED(16))a0)[1] = b.i[0];
+    ((int * ALIGNED(16))a0)[2] = c.i[0];
+    ((int * ALIGNED(16))a0)[3] = d.i[0];
 
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
+    ((int * ALIGNED(16))a1)[0] = a.i[1];
+    ((int * ALIGNED(16))a1)[1] = b.i[1];
+    ((int * ALIGNED(16))a1)[2] = c.i[1];
+    ((int * ALIGNED(16))a1)[3] = d.i[1];
 
-    b_v = _mm_movehl_ps( c_v, a_v );
-    a_v = _mm_movelh_ps( a_v, c_v );
-    c_v = _mm_movelh_ps( t, u );
-    d_v = _mm_movehl_ps( u, t );
+    ((int * ALIGNED(16))a2)[0] = a.i[2];
+    ((int * ALIGNED(16))a2)[1] = b.i[2];
+    ((int * ALIGNED(16))a2)[2] = c.i[2];
+    ((int * ALIGNED(16))a2)[3] = d.i[2];
 
-    _mm_store_ps( (float *)a0, a_v );
-    _mm_store_ps( (float *)a1, b_v );
-    _mm_store_ps( (float *)a2, c_v );
-    _mm_store_ps( (float *)a3, d_v );
+    ((int * ALIGNED(16))a3)[0] = a.i[3];
+    ((int * ALIGNED(16))a3)[1] = b.i[3];
+    ((int * ALIGNED(16))a3)[2] = c.i[3];
+    ((int * ALIGNED(16))a3)[3] = d.i[3];
   }
-
-  //----------------------------------------------------------------------------
-  inline void store_4x4_tr_v0( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-			       void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
-#if 0
-    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-    b_v = _mm_movehl_ps( c_v, a_v );
-    a_v = _mm_movelh_ps( a_v, c_v );
-    c_v = _mm_movelh_ps( t, u );
-    d_v = _mm_movehl_ps( u, t );
-    _mm_store_ps( (float *)a0, a_v );
-    _mm_store_ps( (float *)a1, b_v );
-    _mm_store_ps( (float *)a2, c_v );
-    _mm_store_ps( (float *)a3, d_v );
-#endif
-    _mm_store_ps( (float *)a0, a.v );
-    _mm_store_ps( (float *)a1, b.v );
-    _mm_store_ps( (float *)a2, c.v );
-    _mm_store_ps( (float *)a3, d.v );
-  }
-
-  inline void store_4x4_tr_v1( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-			       void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-			       void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
-#if 0
-    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-    b_v = _mm_movehl_ps( c_v, a_v );
-    a_v = _mm_movelh_ps( a_v, c_v );
-    c_v = _mm_movelh_ps( t, u );
-    d_v = _mm_movehl_ps( u, t );
-    _mm_store_ps( (float *)a0, a_v );
-    _mm_store_ps( (float *)a1, b_v );
-    _mm_store_ps( (float *)a2, c_v );
-    _mm_store_ps( (float *)a3, d_v );
-#endif
-    _mm_store_ps( (float *)a0, a.v );
-    _mm_store_ps( (float *)a1, b.v );
-    _mm_store_ps( (float *)a2, c.v );
-    _mm_store_ps( (float *)a3, d.v );
-  }
-  //----------------------------------------------------------------------------
 
   //////////////
   // v4int class
@@ -958,8 +464,8 @@ namespace v4
 
     // v4float miscellaneous friends
 
-    friend inline v4float  clear_bits( const v4int &m, const v4float &a );
-    friend inline v4float    set_bits( const v4int &m, const v4float &a );
+    friend inline v4float clear_bits(  const v4int &m, const v4float &a );
+    friend inline v4float set_bits(    const v4int &m, const v4float &a );
     friend inline v4float toggle_bits( const v4int &m, const v4float &a );
 
   public:
@@ -1006,10 +512,10 @@ namespace v4
       v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
     }
 
-    ~v4int() {};                              // Destructor
+    ~v4int() {}                               // Destructor
 
     // v4int assignment operators
-
+  
 #   define ASSIGN(op)			          \
     inline v4int &operator op( const v4int &b )   \
     {						  \
@@ -1163,7 +669,7 @@ namespace v4
 # undef POSTFIX_INCDEC
 
   // v4int binary operators
-
+  
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {								\
@@ -1219,10 +725,10 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {							       \
     v4int c;                                                   \
-    c.i[0] = - ( a.i[0] op b.i[0] );                           \
-    c.i[1] = - ( a.i[1] op b.i[1] );                           \
-    c.i[2] = - ( a.i[2] op b.i[2] );                           \
-    c.i[3] = - ( a.i[3] op b.i[3] );                           \
+    c.i[0] = -(a.i[0] op b.i[0]);                              \
+    c.i[1] = -(a.i[1] op b.i[1]);                              \
+    c.i[2] = -(a.i[2] op b.i[2]);                              \
+    c.i[3] = -(a.i[3] op b.i[3]);                              \
     return c;                                                  \
   }
 
@@ -1354,7 +860,7 @@ namespace v4
     friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
     friend inline void     scale_4x1( float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
-    friend inline void trilinear( v4float &wl, v4float &wh );
+    friend inline void trilinear( v4float & wl, v4float & wh );
 
   public:
 
@@ -1627,62 +1133,13 @@ namespace v4
   // v4float miscelleanous functions
 
   inline v4float rsqrt_approx( const v4float &a )
- {
+  {
     v4float b;
 
     b.v = _mm_rsqrt_ps( a.v );
 
     return b;
   }
-
-#if 0
-  inline v4float rsqrt( const v4float &a )
-  {
-    v4float b;
-
-    __m128 a_v = a.v, b_v;
-
-    b_v = _mm_rsqrt_ps( a_v );
-
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-    b.v = _mm_add_ps( b_v, _mm_mul_ps( _mm_set1_ps( 0.5f ),
-				       _mm_sub_ps( b_v,
-						   _mm_mul_ps( a_v,
-							       _mm_mul_ps( b_v,
-									   _mm_mul_ps( b_v, b_v )
-									 )
-							     )
-						 )
-				     )
-		    );
-
-    return b;
-  }
-#endif
-
-#if 0
-  inline v4float rsqrt( const v4float &a )
-  {
-    v4float b;
-
-    __m128 a_v = a.v, b_v;
-
-    b_v = _mm_rsqrt_ps( a_v );
-
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-
-    b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
-			_mm_fnmadd_ps( a_v,
-				       _mm_mul_ps( b_v,
-						   _mm_mul_ps( b_v, b_v ) ),
-				       b_v ),
-			b_v );
-
-    return b;
-  }
-#endif
 
   inline v4float rsqrt( const v4float &a )
   {
@@ -1693,7 +1150,7 @@ namespace v4
     b_v = _mm_rsqrt_ps( a.v );
 
     // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
+    // refinement desired.
 
     b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
 			_mm_fnmadd_ps( a.v,
@@ -1713,43 +1170,7 @@ namespace v4
 
     return b;
   }
-
-#if 0
-  inline v4float rcp( const v4float &a )
-  {
-    v4float b;
-
-    __m128 a_v = a.v, b_v;
-
-    b_v = _mm_rcp_ps( a_v );
-
-    b.v = _mm_sub_ps( _mm_add_ps( b_v, b_v ),
-		      _mm_mul_ps( a_v,
-				  _mm_mul_ps( b_v, b_v )
-				)
-		    );
-
-    return b;
-  }
-#endif
-
-#if 0
-  inline v4float rcp( const v4float &a )
-  {
-    v4float b;
-
-    __m128 a_v = a.v, b_v;
-
-    b_v = _mm_rcp_ps( a_v );
-
-    b.v = _mm_fnmadd_ps( a_v,
-			 _mm_mul_ps( b_v, b_v ),
-			 _mm_add_ps( b_v, b_v ) );
-
-    return b;
-  }
-#endif
-
+  
   inline v4float rcp( const v4float &a )
   {
     v4float b;
@@ -1765,17 +1186,6 @@ namespace v4
     return b;
   }
 
-#if 0
-  inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_add_ps( _mm_mul_ps( a.v, b.v ), c.v );
-
-    return d;
-  }
-#endif
-
   inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
@@ -1785,17 +1195,6 @@ namespace v4
     return d;
   }
 
-#if 0
-  inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_sub_ps( _mm_mul_ps( a.v, b.v ), c.v );
-
-    return d;
-  }
-#endif
-
   inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
@@ -1804,17 +1203,6 @@ namespace v4
 
     return d;
   }
-
-#if 0
-  inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_sub_ps( c.v, _mm_mul_ps( a.v, b.v ) );
-
-    return d;
-  }
-#endif
 
   inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
   {
@@ -1886,8 +1274,6 @@ namespace v4
 
     wh.v = _mm_mul_ps( xy, _mm_shuffle_ps( z,z, PERM(1,1,1,1) ) );
   }
-
-# undef PERM
 
 } // namespace v4
 

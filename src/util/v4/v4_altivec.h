@@ -51,7 +51,39 @@ namespace v4 {
     
     friend class v4int;
     friend class v4float;
-      
+
+    // -----------------------------------------------------------------------------
+    // hacks that need to be resolved more elegantly
+
+    friend inline v4 operator *( const v4 &a, const v4 &b );
+
+#   define ASSIGN(op,instr)                             \
+    inline v4 &operator op( const v4 &b )               \
+    {							\
+      instr;                                            \
+      return *this;                                     \
+    }
+
+    ASSIGN(=, v = b.v );
+
+#   undef ASSIGN
+
+#   define BINARY(op,instr)                                            \
+    inline v4 operator op( const v4 &a, const v4 &b )                  \
+    {								       \
+      v4 c;                                                            \
+      instr;                                                           \
+      return c;                                                        \
+    }
+
+    BINARY(+, c.v = vec_add( a.v, b.v ) )
+    BINARY(-, c.v = vec_sub( a.v, b.v ) )
+    BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
+
+#   undef BINARY
+    // end hacks
+    // -----------------------------------------------------------------------------
+
     // v4 miscellenous friends
 
     friend inline int any( const v4 &a );
@@ -151,22 +183,12 @@ namespace v4 {
   }
 
   inline v4 shuffle( const v4 & a,
-                     unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 ) { // wdn
-    _v4_float a_v = a.v;
-    v4 b;
-    b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
-    return b;
-  }
-
-#if 0
-  inline v4 shuffle( const v4 & a,
                      int i0, int i1, int i2, int i3 ) {
     _v4_float a_v = a.v;
     v4 b;
     b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
     return b;
   }
-#endif
 
   inline void swap( v4 &a, v4 &b ) { 
     _v4_float t;

@@ -42,10 +42,10 @@ def CreateCoProcessor():
 
       # create a new 'XML Partitioned Polydata Reader'
       # create a producer from a simulation input
-      ionData = coprocessor.CreateProducer(datadescription, 'ion')
+      ion = coprocessor.CreateProducer(datadescription, 'ion')
 
       # create a new 'Histogram'
-      histogram1 = Histogram(Input=ionData)
+      histogram1 = Histogram(Input=ion)
       histogram1.SelectInputArray = ['POINTS', 'momentum']
       histogram1.BinCount = 30
       histogram1.CustomBinRanges = [0.00257492065429688, 0.00257492065429688]

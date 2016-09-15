@@ -47,10 +47,10 @@ def CreateCoProcessor():
 
       # create a new 'XML Partitioned Polydata Reader'
       # create a producer from a simulation input
-      electron_pvtp = coprocessor.CreateProducer(datadescription, 'electron')
+      electron = coprocessor.CreateProducer(datadescription, 'electron')
 
       # create a new 'Glyph'
-      glyph1 = Glyph(Input=electron_pvtp,
+      glyph1 = Glyph(Input=electron,
           GlyphType='Sphere')
       glyph1.Scalars = ['POINTS', 'None']
       glyph1.Vectors = ['POINTS', 'momentum']
@@ -88,17 +88,17 @@ def CreateCoProcessor():
       # setup the visualization in view 'renderView1'
       # ----------------------------------------------------------------
 
-      # show data from electron_pvtp
-      electron_pvtpDisplay = Show(electron_pvtp, renderView1)
+      # show data from electron
+      electronDisplay = Show(electron, renderView1)
       # trace defaults for the display properties.
-      electron_pvtpDisplay.ColorArrayName = [None, '']
-      electron_pvtpDisplay.OSPRayScaleArray = 'momentum'
-      electron_pvtpDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
-      electron_pvtpDisplay.GlyphType = 'Arrow'
-      electron_pvtpDisplay.SetScaleArray = [None, '']
-      electron_pvtpDisplay.ScaleTransferFunction = 'PiecewiseFunction'
-      electron_pvtpDisplay.OpacityArray = [None, '']
-      electron_pvtpDisplay.OpacityTransferFunction = 'PiecewiseFunction'
+      electronDisplay.ColorArrayName = [None, '']
+      electronDisplay.OSPRayScaleArray = 'momentum'
+      electronDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
+      electronDisplay.GlyphType = 'Arrow'
+      electronDisplay.SetScaleArray = [None, '']
+      electronDisplay.ScaleTransferFunction = 'PiecewiseFunction'
+      electronDisplay.OpacityArray = [None, '']
+      electronDisplay.OpacityTransferFunction = 'PiecewiseFunction'
 
       # show data from glyph1
       glyph1Display = Show(glyph1, renderView1)

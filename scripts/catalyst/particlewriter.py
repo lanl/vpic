@@ -14,13 +14,13 @@ def CreateCoProcessor():
       dumpFreq = 5
       for name in ["electron","ion"]:
         adaptorinput = coprocessor.CreateProducer( datadescription, name )
-        grid = adaptorinput.GetClientSideObject().GetOutputDataObject(0)
+        particleData = adaptorinput.GetClientSideObject().GetOutputDataObject(0)
         filename = None
-        if  grid.IsA('vtkPolyData'):
+        if  particleData.IsA('vtkPolyData'):
           writer = servermanager.writers.XMLPPolyDataWriter(Input=adaptorinput)
           filename = name + '_%t.pvtp'
         else:
-          print "Particle data expected to be vtkPolyData not ", grid.GetClassName()
+          print "Particle data expected to be vtkPolyData not ", particleData.GetClassName()
 
         if filename:
           coprocessor.RegisterWriter(writer, filename, freq=dumpFreq)

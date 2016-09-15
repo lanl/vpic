@@ -78,7 +78,8 @@ namespace v4 {
 
     BINARY(+, c.v = vec_add( a.v, b.v ) )
     BINARY(-, c.v = vec_sub( a.v, b.v ) )
-    BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
+    BINARY(*, c.v = vec_mul( a.v, b.v ) )
+      // BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
 
 #   undef BINARY
     // end hacks

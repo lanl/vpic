@@ -89,9 +89,13 @@ namespace v4 {
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, int n );
-    friend inline v4 shuffle( const v4 &a,
-                              int i0, int i1, int i2, int i3 );
+    template<int n>
+    friend inline v4 splat( const v4 &a );
+    // friend inline v4 splat( const v4 &a, int n );
+    template<int i0, int i1, int i2, int i3>
+    friend inline v4 shuffle( const v4 &a );
+    // friend inline v4 shuffle( const v4 &a,
+    //                           int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -176,13 +180,31 @@ namespace v4 {
   inline int all( const v4 &a ) {
     return vec_all_ne( (_v4_int)a.v, _false );
   }
-  
-  inline v4 splat( const v4 & a, int n ) {
+
+  template<int n>
+  inline v4 splat( const v4 & a ) {
     v4 b;
     b.v = vec_splat( a.v, n );
     return b;
   }
 
+#if 0
+  inline v4 splat( const v4 & a, int n ) {
+    v4 b;
+    b.v = vec_splat( a.v, n );
+    return b;
+  }
+#endif
+
+  template<int i0, int i1, int i2, int i3>
+  inline v4 shuffle( const v4 & a ) {
+    _v4_float a_v = a.v;
+    v4 b;
+    b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
+    return b;
+  }
+
+#if 0
   inline v4 shuffle( const v4 & a,
                      int i0, int i1, int i2, int i3 ) {
     _v4_float a_v = a.v;
@@ -190,6 +212,7 @@ namespace v4 {
     b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
     return b;
   }
+#endif
 
   inline void swap( v4 &a, v4 &b ) { 
     _v4_float t;
@@ -735,7 +758,7 @@ namespace v4 {
 
     // -------------------------------------------------------------------------
     // begin hacks
-    friend inline v4float operator  *( const v4float &a, const v4 &b );
+    // friend inline v4float operator  *( const v4float &a, const v4 &b );
     // end hacks
     // -------------------------------------------------------------------------
 
@@ -955,16 +978,16 @@ namespace v4 {
 
   // -------------------------------------------------------------------------
   // begin hacks
-# define BINARY(op,instr)                                            \
-  inline v4float operator op( const v4float &a, const v4 &b ) {      \
-    v4float c;                                                       \
-    instr;                                                           \
-    return c;                                                        \
-  }
+/* # define BINARY(op,instr)                                            \ */
+/*   inline v4float operator op( const v4float &a, const v4 &b ) {      \ */
+/*     v4float c;                                                       \ */
+/*     instr;                                                           \ */
+/*     return c;                                                        \ */
+/*   } */
 
-  BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
+/*   BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) ) */
 
-# undef BINARY
+/* # undef BINARY */
   // end hacks
   // -------------------------------------------------------------------------
 

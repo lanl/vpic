@@ -55,33 +55,33 @@ namespace v4 {
     // -----------------------------------------------------------------------------
     // hacks that need to be resolved more elegantly
 
-    friend inline v4 operator *( const v4 &a, const v4 &b );
+/*     friend inline v4 operator *( const v4 &a, const v4 &b ); */
 
-#   define ASSIGN(op,instr)                             \
-    inline v4 &operator op( const v4 &b )               \
-    {							\
-      instr;                                            \
-      return *this;                                     \
-    }
+/* #   define ASSIGN(op,instr)                             \ */
+/*     inline v4 &operator op( const v4 &b )               \ */
+/*     {							\ */
+/*       instr;                                            \ */
+/*       return *this;                                     \ */
+/*     } */
 
-    ASSIGN(=, v = b.v );
+/*     ASSIGN(=, v = b.v ); */
 
-#   undef ASSIGN
+/* #   undef ASSIGN */
 
-#   define BINARY(op,instr)                                            \
-    inline v4 operator op( const v4 &a, const v4 &b )                  \
-    {								       \
-      v4 c;                                                            \
-      instr;                                                           \
-      return c;                                                        \
-    }
+/* #   define BINARY(op,instr)                                            \ */
+/*     inline v4 operator op( const v4 &a, const v4 &b )                  \ */
+/*     {								       \ */
+/*       v4 c;                                                            \ */
+/*       instr;                                                           \ */
+/*       return c;                                                        \ */
+/*     } */
 
-    BINARY(+, c.v = vec_add( a.v, b.v ) )
-    BINARY(-, c.v = vec_sub( a.v, b.v ) )
-    BINARY(*, c.v = vec_mul( a.v, b.v ) )
-      // BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
+/*     BINARY(+, c.v = vec_add( a.v, b.v ) ) */
+/*     BINARY(-, c.v = vec_sub( a.v, b.v ) ) */
+/*     BINARY(*, c.v = vec_mul( a.v, b.v ) ) */
+/*       // BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) ) */
 
-#   undef BINARY
+/* #   undef BINARY */
     // end hacks
     // -----------------------------------------------------------------------------
 

@@ -733,6 +733,12 @@ namespace v4 {
     friend inline v4float operator  *( const v4float &a, const v4float &b );
     friend inline v4float operator  /( const v4float &a, const v4float &b );
 
+    // -------------------------------------------------------------------------
+    // begin hacks
+    friend inline v4float operator  *( const v4float &a, const v4 &b );
+    // end hacks
+    // -------------------------------------------------------------------------
+
     // v4float logical operator friends
 
     friend inline v4int operator  <( const v4float &a, const v4float &b );
@@ -907,7 +913,7 @@ namespace v4 {
   }
 
   // v4float binary operators
-    
+
 # define BINARY(op,instr)                                            \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
@@ -946,6 +952,21 @@ namespace v4 {
   }
 
 # undef BINARY
+
+  // -------------------------------------------------------------------------
+  // begin hacks
+# define BINARY(op,instr)                                            \
+  inline v4float operator op( const v4float &a, const v4 &b ) {      \
+    v4float c;                                                       \
+    instr;                                                           \
+    return c;                                                        \
+  }
+
+  BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) )
+
+# undef BINARY
+  // end hacks
+  // -------------------------------------------------------------------------
 
   // v4float logical operators
 

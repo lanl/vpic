@@ -120,6 +120,7 @@ namespace v4 {
                                      void * ALIGNED(16) a3 );
 
   protected:
+  public: // wdn
 
     _v4_float v;
     
@@ -150,7 +151,7 @@ namespace v4 {
   }
 
   inline v4 shuffle( const v4 & a,
-                     unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 ) {
+                     unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 ) { // wdn
     _v4_float a_v = a.v;
     v4 b;
     b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );

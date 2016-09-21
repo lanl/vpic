@@ -1,7 +1,12 @@
 using namespace v16;
 
 // #if 0
-// Method 1.
+// Method 1.  This method processes the particles in the same order
+// as the reference implementation and gives good reproducibility.
+// This is achieved by an extra reordering step after the load and
+// transpose step and before the transpose and store step.  A better
+// approach is to modify the transpose step and put the particles in
+// the correct order in a single step instead of two steps.
 void
 advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 		        int pipeline_rank,
@@ -922,7 +927,11 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 // #endif // Method 1
 
 #if 0
-// Method 2.
+// Method 2.  This approach does not process the particles in the same
+// order as that of the reference implementation.  As a result, for
+// certain configurations such as those that use Maxwellian reflux
+// boundary conditions, reproducibility is lost because of random
+// numbers being assigned to particles in a different order.
 void
 advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 		        int pipeline_rank,

@@ -2951,7 +2951,7 @@ namespace v16
 
     // v16float assignment operators
 
-#   define ASSIGN(op)                                   \
+#   define ASSIGN(op,intrin)				\
     inline v16float &operator op( const v16float &b )   \
     {							\
       v = intrin( v, b.v );                             \
@@ -3075,7 +3075,7 @@ namespace v16
 
   // v16float binary operators
 
-# define BINARY(op)                                                   \
+# define BINARY(op,intrin)                                            \
   inline v16float operator op( const v16float &a, const v16float &b ) \
   {								      \
     v16float c;                                                       \

@@ -2648,6 +2648,11 @@ namespace v16
     ASSIGN(/=)
     ASSIGN(%=)
 
+    ASSIGN(^=)
+    ASSIGN(&=)
+    ASSIGN(|=)
+
+#if 0
     inline v16int &operator ^=( const v16int &b )
     {
       v = _mm512_xor_ps( v, b.v );
@@ -2665,6 +2670,7 @@ namespace v16
       v = _mm512_or_ps( v, b.v );
       return *this;
     }
+#endif
 
     ASSIGN(<<=)
     ASSIGN(>>=)
@@ -2698,7 +2704,9 @@ namespace v16
   inline v16int operator +( const v16int & a )
   {
     v16int b;
+
     b.v = a.v;
+
     return b;
   }
 
@@ -2782,6 +2790,11 @@ namespace v16
   BINARY(/)
   BINARY(%)
 
+  BINARY(^)
+  BINARY(&)
+  BINARY(|)
+
+#if 0
   inline v16int operator ^( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -2802,6 +2815,7 @@ namespace v16
     c.v = _mm512_or_ps( a.v, b.v );
     return c;
   }
+#endif
 
   BINARY(<<)
   BINARY(>>)
@@ -2835,11 +2849,34 @@ namespace v16
   inline v16int abs( const v16int &a )
   {
     v16int b;
+
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
+
+    return b;
+  }
+
+#if 0
+  inline v16int abs( const v16int &a )
+  {
+    v16int b;
     for( int j = 0; j < 16; j++ )
       b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
     return b;
   }
+#endif
 
+  inline v16 czero( const v16int &c, const v16 &a )
+  {
+    v16 b;
+
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] & ~c.i[j];
+
+    return b;
+  }
+
+#if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2848,7 +2885,19 @@ namespace v16
 
     return b;
   }
+#endif
 
+  inline v16 notczero( const v16int &c, const v16 &a )
+  {
+    v16 b;
+
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = a.i[j] & c.i[j];
+
+    return b;
+  }
+
+#if 0
   inline v16 notczero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2857,7 +2906,19 @@ namespace v16
 
     return b;
   }
+#endif
 
+  inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
+  {
+    v16 m;
+
+    for( int j = 0; j < 16; j++ )
+      m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
+
+    return m;
+  }
+
+#if 0
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     __m512 c_v = c.v;
@@ -2869,6 +2930,7 @@ namespace v16
 
     return tf;
   }
+#endif
 
   ////////////////
   // v16float class
@@ -3094,7 +3156,7 @@ namespace v16
     v16float b;
     __m512 a_v = a.v;
 
-    a.v = _mm512_sub_ps(a_v, _mm512_set1_ps( 1.0f ) );
+    a.v = _mm512_sub_ps( a_v, _mm512_set1_ps( 1.0f ) );
     b.v = a_v;
 
     return b;

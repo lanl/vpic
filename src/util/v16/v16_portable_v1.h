@@ -2641,8 +2641,10 @@ namespace v16
   inline v16int operator !( const v16int & a )
   {
     v16int b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = - ( !a.i[j] );
+
     return b;
   }
 
@@ -2733,32 +2735,40 @@ namespace v16
   inline v16int abs( const v16int &a )
   {
     v16int b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
+
     return b;
   }
 
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = a.i[j] & ~c.i[j];
+
     return b;
   }
 
   inline v16 notczero( const v16int &c, const v16 &a )
   {
     v16 b;
+
     for( int j = 0; j < 16; j++ )
       b.i[j] = a.i[j] & c.i[j];
+
     return b;
   }
 
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     v16 m;
+
     for( int j = 0; j < 16; j++ )
       m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
+
     return m;
   }
 

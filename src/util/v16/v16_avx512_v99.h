@@ -2722,9 +2722,10 @@ namespace v16
     return b;
   }
 
-  PREFIX_UNARY(~)
-
 #if 0
+  PREFIX_UNARY(~)
+#endif
+
   inline v16int operator ~( const v16int & a )
   {
     v16int b;
@@ -2737,7 +2738,6 @@ namespace v16
     b.v = _mm512_xor_ps( a.v, _mm512_set1_ps( u.f ) );
     return b;
   }
-#endif
 
 # undef PREFIX_UNARY
 
@@ -2790,11 +2790,12 @@ namespace v16
   BINARY(/)
   BINARY(%)
 
+#if 0
   BINARY(^)
   BINARY(&)
   BINARY(|)
+#endif
 
-#if 0
   inline v16int operator ^( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -2815,7 +2816,6 @@ namespace v16
     c.v = _mm512_or_ps( a.v, b.v );
     return c;
   }
-#endif
 
   BINARY(<<)
   BINARY(>>)

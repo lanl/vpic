@@ -2569,14 +2569,6 @@ namespace v16
       v = a.v;
     }
 
-#if 0
-    v16int( int a )                              // Init from scalar
-    {
-      for( int j = 0; j < 16; j++ )
-	i[j] = a;
-    }
-#endif
-
     v16int( int a )                              // Init from scalar
     {
       union
@@ -2587,19 +2579,6 @@ namespace v16
       u.i = a;
       v = _mm512_set1_ps( u.f );
     }
-
-#if 0
-    v16int( int i00, int i01, int i02, int i03,
-	    int i04, int i05, int i06, int i07,
-	    int i08, int i09, int i10, int i11,
-	    int i12, int i13, int i14, int i15 ) // Init from scalars
-    {
-      i[ 0] = i00; i[ 1] = i01; i[ 2] = i02; i[ 3] = i03;
-      i[ 4] = i04; i[ 5] = i05; i[ 6] = i06; i[ 7] = i07;
-      i[ 8] = i08; i[ 9] = i09; i[10] = i10; i[11] = i11;
-      i[12] = i12; i[13] = i13; i[14] = i14; i[15] = i15;
-    }
-#endif
 
     v16int( int i00, int i01, int i02, int i03,
 	    int i04, int i05, int i06, int i07,
@@ -2647,12 +2626,6 @@ namespace v16
     ASSIGN(*=)
     ASSIGN(/=)
     ASSIGN(%=)
-
-#if 0
-    ASSIGN(^=)
-    ASSIGN(&=)
-    ASSIGN(|=)
-#endif
 
     inline v16int &operator ^=( const v16int &b )
     {
@@ -2721,10 +2694,6 @@ namespace v16
 
     return b;
   }
-
-#if 0
-  PREFIX_UNARY(~)
-#endif
 
   inline v16int operator ~( const v16int & a )
   {

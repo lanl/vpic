@@ -2889,7 +2889,6 @@ namespace v16
     return b;
   }
 
-#if 0
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     v16 m;
@@ -2899,8 +2898,8 @@ namespace v16
 
     return m;
   }
-#endif
 
+#if 0
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     __m512 c_v = c.v;
@@ -2912,6 +2911,7 @@ namespace v16
 
     return tf;
   }
+#endif
 
   ////////////////
   // v16float class

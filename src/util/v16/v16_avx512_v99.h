@@ -2790,10 +2790,6 @@ namespace v16
   BINARY(/)
   BINARY(%)
 
-  // BINARY(^)
-  // BINARY(&)
-  // BINARY(|)
-
   inline v16int operator ^( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -2812,6 +2808,7 @@ namespace v16
     return c;
   }
 
+#if 0
   inline v16int operator |( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -2820,9 +2817,9 @@ namespace v16
 
     return c;
   }
-#if 0
 #endif
 
+  BINARY(|)
   BINARY(<<)
   BINARY(>>)
 
@@ -2862,6 +2859,7 @@ namespace v16
     return b;
   }
 
+#if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2871,8 +2869,8 @@ namespace v16
 
     return b;
   }
+#endif
 
-#if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2881,7 +2879,6 @@ namespace v16
 
     return b;
   }
-#endif
 
   inline v16 notczero( const v16int &c, const v16 &a )
   {

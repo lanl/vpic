@@ -2790,32 +2790,38 @@ namespace v16
   BINARY(/)
   BINARY(%)
 
-#if 0
   BINARY(^)
   BINARY(&)
   BINARY(|)
-#endif
 
+#if 0
   inline v16int operator ^( const v16int &a, const v16int &b )
   {
     v16int c;
+
     c.v = _mm512_xor_ps( a.v, b.v );
+
     return c;
   }
 
   inline v16int operator &( const v16int &a, const v16int &b )
   {
     v16int c;
+
     c.v = _mm512_and_ps( a.v, b.v );
+
     return c;
   }
 
   inline v16int operator |( const v16int &a, const v16int &b )
   {
     v16int c;
+
     c.v = _mm512_or_ps( a.v, b.v );
+
     return c;
   }
+#endif
 
   BINARY(<<)
   BINARY(>>)

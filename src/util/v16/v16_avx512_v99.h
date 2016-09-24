@@ -2846,25 +2846,25 @@ namespace v16
 
   // v16int miscellaneous functions
 
-  inline v16int abs( const v16int &a )
-  {
-    v16int b;
-
-    for( int j = 0; j < 16; j++ )
-      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
-
-    return b;
-  }
-
 #if 0
   inline v16int abs( const v16int &a )
   {
     v16int b;
+
+    for( int j = 0; j < 16; j++ )
+      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
+
+    return b;
+  }
+#endif
+
+  inline v16int abs( const v16int &a )
+  {
+    v16int b;
     for( int j = 0; j < 16; j++ )
       b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
     return b;
   }
-#endif
 
   inline v16 czero( const v16int &c, const v16 &a )
   {

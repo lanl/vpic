@@ -2859,7 +2859,6 @@ namespace v16
     return b;
   }
 
-#if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2869,8 +2868,8 @@ namespace v16
 
     return b;
   }
-#endif
 
+#if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2879,7 +2878,9 @@ namespace v16
 
     return b;
   }
+#endif
 
+#if 0
   inline v16 notczero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2889,8 +2890,8 @@ namespace v16
 
     return b;
   }
+#endif
 
-#if 0
   inline v16 notczero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -2899,7 +2900,6 @@ namespace v16
 
     return b;
   }
-#endif
 
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {

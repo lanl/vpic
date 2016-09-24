@@ -45,9 +45,9 @@ namespace v8
 
     // v8int miscellaneous friends
 
-    friend inline v8 czero(    const v8int &c, const v8 &a );
+    friend inline v8    czero( const v8int &c, const v8 &a );
     friend inline v8 notczero( const v8int &c, const v8 &a );
-    friend inline v8 merge(    const v8int &c, const v8 &a, const v8 &b );
+    friend inline v8 merge( const v8int &c, const v8 &a, const v8 &b );
 
     // v8 memory manipulation friends
 

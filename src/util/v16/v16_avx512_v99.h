@@ -2792,7 +2792,7 @@ namespace v16
 
   // BINARY(^)
   // BINARY(&)
-  BINARY(|)
+  // BINARY(|)
 
   inline v16int operator ^( const v16int &a, const v16int &b )
   {
@@ -2812,7 +2812,6 @@ namespace v16
     return c;
   }
 
-#if 0
   inline v16int operator |( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -2821,6 +2820,7 @@ namespace v16
 
     return c;
   }
+#if 0
 #endif
 
   BINARY(<<)

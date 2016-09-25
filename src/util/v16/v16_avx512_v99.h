@@ -1151,6 +1151,177 @@ namespace v16
 			     v16 &b08, v16 &b09, v16 &b10, v16 &b11,
 			     v16 &b12, v16 &b13, v16 &b14, v16 &b15 )
   {
+    __m512 t00, t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13, t14, t15;
+
+    b00.v = _mm512_load_ps( (const float *)a00 );
+    b01.v = _mm512_load_ps( (const float *)a01 );
+    b02.v = _mm512_load_ps( (const float *)a02 );
+    b03.v = _mm512_load_ps( (const float *)a03 );
+    b04.v = _mm512_load_ps( (const float *)a04 );
+    b05.v = _mm512_load_ps( (const float *)a05 );
+    b06.v = _mm512_load_ps( (const float *)a06 );
+    b07.v = _mm512_load_ps( (const float *)a07 );
+    b08.v = _mm512_load_ps( (const float *)a08 );
+    b09.v = _mm512_load_ps( (const float *)a09 );
+    b10.v = _mm512_load_ps( (const float *)a10 );
+    b11.v = _mm512_load_ps( (const float *)a11 );
+    b12.v = _mm512_load_ps( (const float *)a12 );
+    b13.v = _mm512_load_ps( (const float *)a13 );
+    b14.v = _mm512_load_ps( (const float *)a14 );
+    b15.v = _mm512_load_ps( (const float *)a15 );
+
+    // Start                                 b00 =   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    //                                       b01 =  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+    //                                       b02 =  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+    //                                       b03 =  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+    //                                       b04 =  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+    //                                       b05 =  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+    //                                       b06 =  96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
+    //                                       b07 = 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+    //                                       b08 = 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+    //                                       b09 = 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+    //                                       b10 = 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
+    //                                       b11 = 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191
+    //                                       b12 = 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207
+    //                                       b13 = 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223
+    //                                       b14 = 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+    //                                       b15 = 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255
+
+    t00   = _mm512_unpacklo_ps( b00.v, b01.v ); //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
+    t01   = _mm512_unpackhi_ps( b00.v, b01.v ); //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
+    t02   = _mm512_unpacklo_ps( b02.v, b03.v ); //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
+    t03   = _mm512_unpackhi_ps( b02.v, b03.v ); //  34  50  35  51  38  54  39  55  42  58  43  59  46  62  47  63
+    t04   = _mm512_unpacklo_ps( b04.v, b05.v ); //  64  80  65  81  68  84  69  85  72  88  73  89  76  92  77  93
+    t05   = _mm512_unpackhi_ps( b04.v, b05.v ); //  66  82  67  83  70  86  71  87  74  90  75  91  78  94  79  95
+    t06   = _mm512_unpacklo_ps( b06.v, b07.v ); //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
+    t07   = _mm512_unpackhi_ps( b06.v, b07.v ); //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
+    t08   = _mm512_unpacklo_ps( b08.v, b09.v ); // 128 144 129 145 132 148 133 149 136 152 137 153 140 156 141 157
+    t09   = _mm512_unpackhi_ps( b08.v, b09.v ); // 130 146 131 147 134 150 135 151 138 154 139 155 142 158 143 159
+    t10   = _mm512_unpacklo_ps( b10.v, b11.v ); // 160 176 161 177 164 180 165 181 168 184 169 185 172 188 173 189
+    t11   = _mm512_unpackhi_ps( b10.v, b11.v ); // 162 178 163 179 166 182 167 183 170 186 171 187 174 190 175 191
+    t12   = _mm512_unpacklo_ps( b12.v, b13.v ); // 192 208 193 209 196 212 197 213 200 216 201 217 204 220 205 221
+    t13   = _mm512_unpackhi_ps( b12.v, b13.v ); // 194 210 195 211 198 214 199 215 202 218 203 219 206 222 207 223
+    t14   = _mm512_unpacklo_ps( b14.v, b15.v ); // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
+    t15   = _mm512_unpackhi_ps( b14.v, b15.v ); // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
+
+    b00.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48 
+    b01.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49 
+    b02.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   2  18  34  50 
+    b03.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   3  19  35  51 
+    b04.v = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  64  80  96 112 
+    b05.v = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  65  81  97 113 
+    b06.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  66  82  98 114 
+    b07.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  67  83  99 115 
+    b08.v = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 128 144 160 176 
+    b09.v = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 129 145 161 177 
+    b10.v = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 130 146 162 178 
+    b11.v = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 131 147 163 179 
+    b12.v = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 192 208 228 240 
+    b13.v = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 193 209 229 241 
+    b14.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 194 210 230 242 
+    b15.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 195 211 231 243 
+
+    t00   = _mm512_shuffle_f32x4( b00.v, b04.v, 0x88 ); //   0  16  32  48   8  24  40  56  64  80  96  112 ...
+    t01   = _mm512_shuffle_f32x4( b01.v, b05.v, 0x88 ); //   1  17  33  49 ...
+    t02   = _mm512_shuffle_f32x4( b02.v, b06.v, 0x88 ); //   2  18  34  50 ...
+    t03   = _mm512_shuffle_f32x4( b03.v, b07.v, 0x88 ); //   3  19  35  51 ...
+    t04   = _mm512_shuffle_f32x4( b00.v, b04.v, 0xdd ); //   4  20  36  52 ...
+    t05   = _mm512_shuffle_f32x4( b01.v, b05.v, 0xdd ); //   5  21  37  53 ...
+    t06   = _mm512_shuffle_f32x4( b02.v, b06.v, 0xdd ); //   6  22  38  54 ...
+    t07   = _mm512_shuffle_f32x4( b03.v, b07.v, 0xdd ); //   7  23  39  55 ...
+    t08   = _mm512_shuffle_f32x4( b08.v, b12.v, 0x88 ); // 128 144 160 176 ...
+    t09   = _mm512_shuffle_f32x4( b09.v, b13.v, 0x88 ); // 129 145 161 177 ...
+    t10   = _mm512_shuffle_f32x4( b10.v, b14.v, 0x88 ); // 130 146 162 178 ...
+    t11   = _mm512_shuffle_f32x4( b11.v, b15.v, 0x88 ); // 131 147 163 179 ...
+    t12   = _mm512_shuffle_f32x4( b08.v, b12.v, 0xdd ); // 132 148 164 180 ...
+    t13   = _mm512_shuffle_f32x4( b09.v, b13.v, 0xdd ); // 133 149 165 181 ...
+    t14   = _mm512_shuffle_f32x4( b10.v, b14.v, 0xdd ); // 134 150 166 182 ...
+    t15   = _mm512_shuffle_f32x4( b11.v, b15.v, 0xdd ); // 135 151 167 183 ...
+
+    b00.v = _mm512_shuffle_f32x4( t00, t08, 0x88 ); //   0  16  32  48  64  80  96 112 ... 240
+    b01.v = _mm512_shuffle_f32x4( t01, t09, 0x88 ); //   1  17  33  49  66  81  97 113 ... 241
+    b02.v = _mm512_shuffle_f32x4( t02, t10, 0x88 ); //   2  18  34  50  67  82  98 114 ... 242
+    b03.v = _mm512_shuffle_f32x4( t03, t11, 0x88 ); //   3  19  35  51  68  83  99 115 ... 243
+    b04.v = _mm512_shuffle_f32x4( t04, t12, 0x88 ); //   4 ...
+    b05.v = _mm512_shuffle_f32x4( t05, t13, 0x88 ); //   5 ...
+    b06.v = _mm512_shuffle_f32x4( t06, t14, 0x88 ); //   6 ...
+    b07.v = _mm512_shuffle_f32x4( t07, t15, 0x88 ); //   7 ...
+    b08.v = _mm512_shuffle_f32x4( t00, t08, 0xdd ); //   8 ...
+    b09.v = _mm512_shuffle_f32x4( t01, t09, 0xdd ); //   9 ...
+    b10.v = _mm512_shuffle_f32x4( t02, t10, 0xdd ); //  10 ...
+    b11.v = _mm512_shuffle_f32x4( t03, t11, 0xdd ); //  11 ...
+    b12.v = _mm512_shuffle_f32x4( t04, t12, 0xdd ); //  12 ...
+    b13.v = _mm512_shuffle_f32x4( t05, t13, 0xdd ); //  13 ...
+    b14.v = _mm512_shuffle_f32x4( t06, t14, 0xdd ); //  14 ...
+    b15.v = _mm512_shuffle_f32x4( t07, t15, 0xdd ); //  15  31  47  63  79  96 111 127 ... 255
+
+#if 0
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    a_v = _mm256_load_ps( (const float *)a0 );
+    b_v = _mm256_load_ps( (const float *)a1 );
+    c_v = _mm256_load_ps( (const float *)a2 );
+    d_v = _mm256_load_ps( (const float *)a3 );
+    e_v = _mm256_load_ps( (const float *)a4 );
+    f_v = _mm256_load_ps( (const float *)a5 );
+    g_v = _mm256_load_ps( (const float *)a6 );
+    h_v = _mm256_load_ps( (const float *)a7 );
+
+    t0 = _mm256_unpacklo_ps( a_v, b_v );
+    t1 = _mm256_unpackhi_ps( a_v, b_v );
+    t2 = _mm256_unpacklo_ps( c_v, d_v );
+    t3 = _mm256_unpackhi_ps( c_v, d_v );
+    t4 = _mm256_unpacklo_ps( e_v, f_v );
+    t5 = _mm256_unpackhi_ps( e_v, f_v );
+    t6 = _mm256_unpacklo_ps( g_v, h_v );
+    t7 = _mm256_unpackhi_ps( g_v, h_v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a.v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b.v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c.v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d.v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e.v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f.v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+#endif
+  }
+
+#if 0
+  inline void load_16x16_tr( const void * ALIGNED(64) a00,
+			     const void * ALIGNED(64) a01,
+			     const void * ALIGNED(64) a02,
+			     const void * ALIGNED(64) a03,
+			     const void * ALIGNED(64) a04,
+			     const void * ALIGNED(64) a05,
+			     const void * ALIGNED(64) a06,
+			     const void * ALIGNED(64) a07,
+			     const void * ALIGNED(64) a08,
+			     const void * ALIGNED(64) a09,
+			     const void * ALIGNED(64) a10,
+			     const void * ALIGNED(64) a11,
+			     const void * ALIGNED(64) a12,
+			     const void * ALIGNED(64) a13,
+			     const void * ALIGNED(64) a14,
+			     const void * ALIGNED(64) a15,
+			     v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			     v16 &b04, v16 &b05, v16 &b06, v16 &b07,
+			     v16 &b08, v16 &b09, v16 &b10, v16 &b11,
+			     v16 &b12, v16 &b13, v16 &b14, v16 &b15 )
+  {
     b00.i[ 0] = ((const int * ALIGNED(64))a00)[ 0];
     b01.i[ 0] = ((const int * ALIGNED(64))a00)[ 1];
     b02.i[ 0] = ((const int * ALIGNED(64))a00)[ 2];
@@ -1423,6 +1594,7 @@ namespace v16
     b14.i[15] = ((const int * ALIGNED(64))a15)[14];
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
+#endif
 
   inline void load_16x16_tr_a( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
@@ -2136,6 +2308,170 @@ namespace v16
 			      void * ALIGNED(64) a12, void * ALIGNED(64) a13,
 			      void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
   {
+    __m512 t00, t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13, t14, t15;
+    __m512 u00, u01, u02, u03, u04, u05, u06, u07, u08, u09, u10, u11, u12, u13, u14, u15;
+
+    // Start                                 a00 =   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    //                                       a01 =  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+    //                                       a02 =  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+    //                                       a03 =  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+    //                                       a04 =  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+    //                                       a05 =  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+    //                                       a06 =  96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
+    //                                       a07 = 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+    //                                       a08 = 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+    //                                       a09 = 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+    //                                       a10 = 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
+    //                                       a11 = 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191
+    //                                       a12 = 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207
+    //                                       a13 = 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223
+    //                                       a14 = 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+    //                                       a15 = 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255
+
+    t00 = _mm512_unpacklo_ps( b00.v, b01.v ); //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
+    t01 = _mm512_unpackhi_ps( b00.v, b01.v ); //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
+    t02 = _mm512_unpacklo_ps( b02.v, b03.v ); //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
+    t03 = _mm512_unpackhi_ps( b02.v, b03.v ); //  34  50  35  51  38  54  39  55  42  58  43  59  46  62  47  63
+    t04 = _mm512_unpacklo_ps( b04.v, b05.v ); //  64  80  65  81  68  84  69  85  72  88  73  89  76  92  77  93
+    t05 = _mm512_unpackhi_ps( b04.v, b05.v ); //  66  82  67  83  70  86  71  87  74  90  75  91  78  94  79  95
+    t06 = _mm512_unpacklo_ps( b06.v, b07.v ); //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
+    t07 = _mm512_unpackhi_ps( b06.v, b07.v ); //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
+    t08 = _mm512_unpacklo_ps( b08.v, b09.v ); // 128 144 129 145 132 148 133 149 136 152 137 153 140 156 141 157
+    t09 = _mm512_unpackhi_ps( b08.v, b09.v ); // 130 146 131 147 134 150 135 151 138 154 139 155 142 158 143 159
+    t10 = _mm512_unpacklo_ps( b10.v, b11.v ); // 160 176 161 177 164 180 165 181 168 184 169 185 172 188 173 189
+    t11 = _mm512_unpackhi_ps( b10.v, b11.v ); // 162 178 163 179 166 182 167 183 170 186 171 187 174 190 175 191
+    t12 = _mm512_unpacklo_ps( b12.v, b13.v ); // 192 208 193 209 196 212 197 213 200 216 201 217 204 220 205 221
+    t13 = _mm512_unpackhi_ps( b12.v, b13.v ); // 194 210 195 211 198 214 199 215 202 218 203 219 206 222 207 223
+    t14 = _mm512_unpacklo_ps( b14.v, b15.v ); // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
+    t15 = _mm512_unpackhi_ps( b14.v, b15.v ); // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
+
+    u00 = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48 
+    u01 = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49 
+    u02 = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   2  18  34  50 
+    u03 = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   3  19  35  51 
+    u04 = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  64  80  96 112 
+    u05 = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  65  81  97 113 
+    u06 = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  66  82  98 114 
+    u07 = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  67  83  99 115 
+    u08 = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 128 144 160 176 
+    u09 = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 129 145 161 177 
+    u10 = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 130 146 162 178 
+    u11 = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 131 147 163 179 
+    u12 = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 192 208 228 240 
+    u13 = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 193 209 229 241 
+    u14 = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 194 210 230 242 
+    u15 = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 195 211 231 243 
+
+    t00 = _mm512_shuffle_f32x4( u00, u04, 0x88 ); //   0  16  32  48   8  24  40  56  64  80  96  112 ...
+    t01 = _mm512_shuffle_f32x4( u01, u05, 0x88 ); //   1  17  33  49 ...
+    t02 = _mm512_shuffle_f32x4( u02, u06, 0x88 ); //   2  18  34  50 ...
+    t03 = _mm512_shuffle_f32x4( u03, u07, 0x88 ); //   3  19  35  51 ...
+    t04 = _mm512_shuffle_f32x4( u00, u04, 0xdd ); //   4  20  36  52 ...
+    t05 = _mm512_shuffle_f32x4( u01, u05, 0xdd ); //   5  21  37  53 ...
+    t06 = _mm512_shuffle_f32x4( u02, u06, 0xdd ); //   6  22  38  54 ...
+    t07 = _mm512_shuffle_f32x4( u03, u07, 0xdd ); //   7  23  39  55 ...
+    t08 = _mm512_shuffle_f32x4( u08, u12, 0x88 ); // 128 144 160 176 ...
+    t09 = _mm512_shuffle_f32x4( u09, u13, 0x88 ); // 129 145 161 177 ...
+    t10 = _mm512_shuffle_f32x4( u10, u14, 0x88 ); // 130 146 162 178 ...
+    t11 = _mm512_shuffle_f32x4( u11, u15, 0x88 ); // 131 147 163 179 ...
+    t12 = _mm512_shuffle_f32x4( u08, u12, 0xdd ); // 132 148 164 180 ...
+    t13 = _mm512_shuffle_f32x4( u09, u13, 0xdd ); // 133 149 165 181 ...
+    t14 = _mm512_shuffle_f32x4( u10, u14, 0xdd ); // 134 150 166 182 ...
+    t15 = _mm512_shuffle_f32x4( u11, u15, 0xdd ); // 135 151 167 183 ...
+
+    u00 = _mm512_shuffle_f32x4( t00, t08, 0x88 ); //   0  16  32  48  64  80  96 112 ... 240
+    u01 = _mm512_shuffle_f32x4( t01, t09, 0x88 ); //   1  17  33  49  66  81  97 113 ... 241
+    u02 = _mm512_shuffle_f32x4( t02, t10, 0x88 ); //   2  18  34  50  67  82  98 114 ... 242
+    u03 = _mm512_shuffle_f32x4( t03, t11, 0x88 ); //   3  19  35  51  68  83  99 115 ... 243
+    u04 = _mm512_shuffle_f32x4( t04, t12, 0x88 ); //   4 ...
+    u05 = _mm512_shuffle_f32x4( t05, t13, 0x88 ); //   5 ...
+    u06 = _mm512_shuffle_f32x4( t06, t14, 0x88 ); //   6 ...
+    u07 = _mm512_shuffle_f32x4( t07, t15, 0x88 ); //   7 ...
+    u08 = _mm512_shuffle_f32x4( t00, t08, 0xdd ); //   8 ...
+    u09 = _mm512_shuffle_f32x4( t01, t09, 0xdd ); //   9 ...
+    u10 = _mm512_shuffle_f32x4( t02, t10, 0xdd ); //  10 ...
+    u11 = _mm512_shuffle_f32x4( t03, t11, 0xdd ); //  11 ...
+    u12 = _mm512_shuffle_f32x4( t04, t12, 0xdd ); //  12 ...
+    u13 = _mm512_shuffle_f32x4( t05, t13, 0xdd ); //  13 ...
+    u14 = _mm512_shuffle_f32x4( t06, t14, 0xdd ); //  14 ...
+    u15 = _mm512_shuffle_f32x4( t07, t15, 0xdd ); //  15  31  47  63  79  96 111 127 ... 255
+
+    _mm512_store_ps( (float *)a00, u00 );
+    _mm512_store_ps( (float *)a01, u01 );
+    _mm512_store_ps( (float *)a02, u02 );
+    _mm512_store_ps( (float *)a03, u03 );
+    _mm512_store_ps( (float *)a04, u04 );
+    _mm512_store_ps( (float *)a05, u05 );
+    _mm512_store_ps( (float *)a06, u06 );
+    _mm512_store_ps( (float *)a07, u07 );
+    _mm512_store_ps( (float *)a08, u08 );
+    _mm512_store_ps( (float *)a09, u09 );
+    _mm512_store_ps( (float *)a10, u10 );
+    _mm512_store_ps( (float *)a11, u11 );
+    _mm512_store_ps( (float *)a12, u12 );
+    _mm512_store_ps( (float *)a13, u13 );
+    _mm512_store_ps( (float *)a14, u14 );
+    _mm512_store_ps( (float *)a15, u15 );
+
+#if 0
+    __m256 a_v, b_v, c_v, d_v, e_v, f_v, g_v, h_v;
+
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    __m256 u0, u1, u2, u3, u4, u5, u6, u7;
+
+    t0 = _mm256_unpacklo_ps( a.v, b.v );
+    t1 = _mm256_unpackhi_ps( a.v, b.v );
+    t2 = _mm256_unpacklo_ps( c.v, d.v );
+    t3 = _mm256_unpackhi_ps( c.v, d.v );
+    t4 = _mm256_unpacklo_ps( e.v, f.v );
+    t5 = _mm256_unpackhi_ps( e.v, f.v );
+    t6 = _mm256_unpacklo_ps( g.v, h.v );
+    t7 = _mm256_unpackhi_ps( g.v, h.v );
+
+    u0 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u1 = _mm256_shuffle_ps( t0, t2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u2 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u3 = _mm256_shuffle_ps( t1, t3, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u4 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u5 = _mm256_shuffle_ps( t4, t6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    u6 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    u7 = _mm256_shuffle_ps( t5, t7, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    a_v = _mm256_permute2f128_ps( u0, u4, 0x20 );
+    b_v = _mm256_permute2f128_ps( u1, u5, 0x20 );
+    c_v = _mm256_permute2f128_ps( u2, u6, 0x20 );
+    d_v = _mm256_permute2f128_ps( u3, u7, 0x20 );
+    e_v = _mm256_permute2f128_ps( u0, u4, 0x31 );
+    f_v = _mm256_permute2f128_ps( u1, u5, 0x31 );
+    g_v = _mm256_permute2f128_ps( u2, u6, 0x31 );
+    h_v = _mm256_permute2f128_ps( u3, u7, 0x31 );
+
+    _mm256_store_ps( (float *)a0, a_v );
+    _mm256_store_ps( (float *)a1, b_v );
+    _mm256_store_ps( (float *)a2, c_v );
+    _mm256_store_ps( (float *)a3, d_v );
+    _mm256_store_ps( (float *)a4, e_v );
+    _mm256_store_ps( (float *)a5, f_v );
+    _mm256_store_ps( (float *)a6, g_v );
+    _mm256_store_ps( (float *)a7, h_v );
+#endif
+  }
+
+#if 0
+  inline void store_16x16_tr( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
+			      const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,
+			      const v16 &b08, const v16 &b09, const v16 &b10, const v16 &b11,
+			      const v16 &b12, const v16 &b13, const v16 &b14, const v16 &b15,
+			      void * ALIGNED(64) a00, void * ALIGNED(64) a01,
+			      void * ALIGNED(64) a02, void * ALIGNED(64) a03,
+			      void * ALIGNED(64) a04, void * ALIGNED(64) a05,
+			      void * ALIGNED(64) a06, void * ALIGNED(64) a07,
+			      void * ALIGNED(64) a08, void * ALIGNED(64) a09,
+			      void * ALIGNED(64) a10, void * ALIGNED(64) a11,
+			      void * ALIGNED(64) a12, void * ALIGNED(64) a13,
+			      void * ALIGNED(64) a14, void * ALIGNED(64) a15 )
+  {
     ((int * ALIGNED(64))a00)[ 0] = b00.i[ 0];
     ((int * ALIGNED(64))a00)[ 1] = b01.i[ 0];
     ((int * ALIGNED(64))a00)[ 2] = b02.i[ 0];
@@ -2408,6 +2744,7 @@ namespace v16
     ((int * ALIGNED(64))a15)[14] = b14.i[15];
     ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
+#endif
 
   inline void store_16x16_tr_a( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
 				const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,

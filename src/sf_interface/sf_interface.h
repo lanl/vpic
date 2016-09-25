@@ -29,7 +29,7 @@ typedef struct interpolator {
   float cbz, dcbzdz;
   float _pad1[2];  // 16-byte align
   float _pad2[4];  // More padding to get 32-byte align, make conditional
-  float _pad2[8];  // More padding to get 64-byte align, make conditional
+  float _pad3[8];  // More padding to get 64-byte align, make conditional
 } interpolator_t;
 
 typedef struct interpolator_array {

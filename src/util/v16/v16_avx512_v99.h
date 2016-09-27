@@ -1791,7 +1791,6 @@ namespace v16
   }
 #endif
 
-#if 0
   inline void load_16x16_tr_a( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
 			       const void * ALIGNED(64) a02,
@@ -1902,8 +1901,8 @@ namespace v16
     b14.v = _mm512_permutexvar_ps( idx, t14 );                         // 134 142 150 158 166 174 182 190 198 206 214 222 230 238 246 254
     b15.v = _mm512_permutexvar_ps( idx, t15 );                         // 135 143 151 159 167 175 183 191 199 207 215 223 231 239 247 255
   }
-#endif
 
+#if 0
   inline void load_16x16_tr_a( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
 			       const void * ALIGNED(64) a02,
@@ -2197,6 +2196,7 @@ namespace v16
     b14.i[15] = ((const int * ALIGNED(64))a15)[14];
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
+#endif
 
   inline void store_16x1_tr( const v16 &a,
 			     void *a00, void *a01, void *a02, void *a03,

@@ -1,6 +1,6 @@
 using namespace v16;
 
-// #if 0
+#if 0
 //----------------------------------------------------------------------------//
 // Method 1
 //----------------------------------------------------------------------------//
@@ -662,7 +662,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-// #endif // Method 1
+#endif // Method 1
 
 #if 0
 //----------------------------------------------------------------------------//
@@ -2099,15 +2099,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 }
 #endif // Method 3
 
-
-
-
-
-
-
-
-
-#if 0
+// #if 0
 //----------------------------------------------------------------------------//
 // Method 4
 //----------------------------------------------------------------------------//
@@ -2501,4 +2493,4 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-#endif // Method 4
+// #endif // Method 4

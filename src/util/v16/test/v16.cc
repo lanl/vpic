@@ -85,7 +85,7 @@ TEST(v16, test_load_16x16_tr)
                 i != 256 );
 }
 
-TEST(v16, test_load_16x16_tr_a)
+TEST(v16, test_load_16x16_tr_p)
 {
   DECLARE_ALIGNED_ARRAY( int, 64, mem, 256 );
 
@@ -95,7 +95,7 @@ TEST(v16, test_load_16x16_tr_a)
 
   for( i=0; i < 256; i++ ) mem[i] = i;
 
-  load_16x16_tr_a( mem,     mem+ 16, mem+ 32, mem+ 48,
+  load_16x16_tr_p( mem,     mem+ 16, mem+ 32, mem+ 48,
                    mem+ 64, mem+ 80, mem+ 96, mem+112,
                    mem+128, mem+144, mem+160, mem+176,
                    mem+192, mem+208, mem+224, mem+240,
@@ -176,7 +176,7 @@ TEST(v16, test_store_16x16_tr)
                 i != 256 );
 }
 
-TEST(v16, test_store_16x16_tr_a)
+TEST(v16, test_store_16x16_tr_p)
 {
   DECLARE_ALIGNED_ARRAY( int, 64, mem, 256 );
 
@@ -201,7 +201,7 @@ TEST(v16, test_store_16x16_tr_a)
 
   for( i=0; i < 256; i++ ) mem[i] = 0;
 
-  store_16x16_tr_a( a00, a01, a02, a03, a04, a05, a06, a07,
+  store_16x16_tr_p( a00, a01, a02, a03, a04, a05, a06, a07,
                     a08, a09, a10, a11, a12, a13, a14, a15,
                     mem,     mem+ 16, mem+ 32, mem+ 48,
                     mem+ 64, mem+ 80, mem+ 96, mem+112,

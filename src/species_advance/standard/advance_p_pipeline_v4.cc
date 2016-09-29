@@ -1,6 +1,6 @@
 using namespace v4;
 
-// #if 0
+#if 0
 // Method 1.
 void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
@@ -23,10 +23,10 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   const v4float cdt_dy(args->cdt_dy);
   const v4float cdt_dz(args->cdt_dz);
   const v4float qsp(args->qsp);
-  const v4float one(1.);
-  const v4float one_third(1./3.);
-  const v4float two_fifteenths(2./15.);
-  const v4float neg_one(-1.);
+  const v4float one(1.0f);
+  const v4float one_third(1.0f/3.0f);
+  const v4float two_fifteenths(2.0f/15.0f);
+  const v4float neg_one(-1.0f);
 
   const float _qsp = args->qsp;
 
@@ -210,7 +210,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-// #endif // Method 1.
+#endif // Method 1.
 
 #if 0
 // Method 2.
@@ -429,7 +429,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 }
 #endif // Method 2.
 
-#if 0
+// #if 0
 // Method 3.
 void
 advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
@@ -1609,7 +1609,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-#endif // Method 3.
+// #endif // Method 3.
 
 #if 0
 // Method 4.

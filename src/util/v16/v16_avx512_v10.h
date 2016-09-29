@@ -163,7 +163,7 @@ namespace v16
 				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
 				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
-    friend inline void load_16x16_tr_a( const void * ALIGNED(64) a00,
+    friend inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 					const void * ALIGNED(64) a01,
 					const void * ALIGNED(64) a02,
 					const void * ALIGNED(64) a03,
@@ -285,7 +285,7 @@ namespace v16
 				       void * ALIGNED(64) a13,
 				       void * ALIGNED(64) a14,
 				       void * ALIGNED(64) a15 );
-    friend inline void store_16x16_tr_a( const v16 &b00, const v16 &b01,
+    friend inline void store_16x16_tr_p( const v16 &b00, const v16 &b01,
 					 const v16 &b02, const v16 &b03,
 					 const v16 &b04, const v16 &b05,
 					 const v16 &b06, const v16 &b07,
@@ -1205,7 +1205,7 @@ namespace v16
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
 
-  inline void load_16x16_tr_a( const void * ALIGNED(64) a00,
+  inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
 			       const void * ALIGNED(64) a02,
 			       const void * ALIGNED(64) a03,
@@ -2190,7 +2190,7 @@ namespace v16
     ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
 
-  inline void store_16x16_tr_a( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
+  inline void store_16x16_tr_p( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
 				const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,
 				const v16 &b08, const v16 &b09, const v16 &b10, const v16 &b11,
 				const v16 &b12, const v16 &b13, const v16 &b14, const v16 &b15,

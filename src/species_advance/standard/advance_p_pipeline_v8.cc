@@ -622,7 +622,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 }
 #endif // Method 2
 
-// #if 0
+#if 0
 // Method 3.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
@@ -651,10 +651,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   const v8float cdt_dy(args->cdt_dy);
   const v8float cdt_dz(args->cdt_dz);
   const v8float qsp(args->qsp);
-  const v8float one(1.);
-  const v8float one_third(1./3.);
-  const v8float two_fifteenths(2./15.);
-  const v8float neg_one(-1.);
+  const v8float one(1.0f);
+  const v8float one_third(1.0f/3.0f);
+  const v8float two_fifteenths(2.0f/15.0f);
+  const v8float neg_one(-1.0f);
 
   const float _qsp = args->qsp;
 
@@ -737,13 +737,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
                  vp4+16, vp5+16, vp6+16, vp7+16,
                  cbz, v5 );
 
-    // Use this until I can implement load_8x2_tr. This is a kludge
-    // and I assume will perform slower than load_8x2_tr when
-    // implemented.
-    // load_8x8_tr( vp0+16, vp1+16, vp2+16, vp3+16,
-    // 		 vp4+16, vp5+16, vp6+16, vp7+16,
-    // 		 cbz, v5, v0, v1, v2, v3, v4, v6 );
-
     cbz = fma( v5, dz, cbz );
 
     // Update momentum
@@ -776,10 +769,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     v7  = uy;
     v8  = uz;
 
-    // store_8x4_tr( ux, uy, uz, q,
-    // 		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
-    // 		  &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
-
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     ux *= cdt_dx;
@@ -806,10 +795,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     store_8x8_tr( v3, v4, v5, ii, v6, v7, v8, q,
 		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
-
-    // store_8x4_tr( v3, v4, v5, ii,
-    // 		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
-    // 		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
 
     // Accumulate current of inbnd particles.
     // Note: accumulator values are 4 times the total physical charge that
@@ -966,9 +951,9 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-// #endif // Method 3
+#endif // Method 3
 
-#if 0
+//#if 0
 // Method 4.
 void
 advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
@@ -997,10 +982,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   const v8float cdt_dy(args->cdt_dy);
   const v8float cdt_dz(args->cdt_dz);
   const v8float qsp(args->qsp);
-  const v8float one(1.);
-  const v8float one_third(1./3.);
-  const v8float two_fifteenths(2./15.);
-  const v8float neg_one(-1.);
+  const v8float one(1.0f);
+  const v8float one_third(1.0f/3.0f);
+  const v8float two_fifteenths(2.0f/15.0f);
+  const v8float neg_one(-1.0f);
 
   const float _qsp = args->qsp;
 
@@ -2033,7 +2018,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
-#endif // Method 4
+// #endif // Method 4
 
 #if 0
 // Method 5.

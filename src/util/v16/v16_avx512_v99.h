@@ -163,6 +163,16 @@ namespace v16
 				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
 				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+    friend inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
+				       const void * ALIGNED(64) a01,
+				       const void * ALIGNED(64) a02,
+				       const void * ALIGNED(64) a03,
+				       const void * ALIGNED(64) a04,
+				       const void * ALIGNED(64) a05,
+				       const void * ALIGNED(64) a06,
+				       const void * ALIGNED(64) a07,
+				       v16 &a, v16 &b, v16 &c, v16 &d,
+				       v16 &e, v16 &f, v16 &g, v16 &h );
     friend inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 					const void * ALIGNED(64) a01,
 					const void * ALIGNED(64) a02,
@@ -285,6 +295,18 @@ namespace v16
 				       void * ALIGNED(64) a13,
 				       void * ALIGNED(64) a14,
 				       void * ALIGNED(64) a15 );
+    friend inline void store_16x8_tr_p( const v16 &a, const v16 &b,
+					const v16 &c, const v16 &d,
+					const v16 &e, const v16 &f,
+					const v16 &g, const v16 &h,
+					void * ALIGNED(64) a00,
+					void * ALIGNED(64) a01,
+					void * ALIGNED(64) a02,
+					void * ALIGNED(64) a03,
+					void * ALIGNED(64) a04,
+					void * ALIGNED(64) a05,
+					void * ALIGNED(64) a06,
+					void * ALIGNED(64) a07 );
     friend inline void store_16x16_tr_p( const v16 &b00, const v16 &b01,
 					 const v16 &b02, const v16 &b03,
 					 const v16 &b04, const v16 &b05,
@@ -1411,6 +1433,257 @@ namespace v16
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
 #endif
+
+#if 0
+  inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
+			      const void * ALIGNED(64) a01,
+			      const void * ALIGNED(64) a02,
+			      const void * ALIGNED(64) a03,
+			      const void * ALIGNED(64) a04,
+			      const void * ALIGNED(64) a05,
+			      const void * ALIGNED(64) a06,
+			      const void * ALIGNED(64) a07,
+			      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			      v16 &b04, v16 &b05, v16 &b06, v16 &b07 )
+  {
+    __m512 t00, t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13, t14, t15;
+
+    __m512i idx = _mm512_set_epi32( 15, 11, 14, 10, 13, 9, 12, 8, 7, 3, 6, 2, 5, 1, 4, 0 );
+
+    b00.v = _mm512_load_ps( (const float *)a00 );                      //   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    b01.v = _mm512_load_ps( (const float *)a01 );                      //  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+    b02.v = _mm512_load_ps( (const float *)a02 );                      //  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+    b03.v = _mm512_load_ps( (const float *)a03 );                      //  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+    b04.v = _mm512_load_ps( (const float *)a04 );                      //  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+    b05.v = _mm512_load_ps( (const float *)a05 );                      //  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+    b06.v = _mm512_load_ps( (const float *)a06 );                      //  96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
+    b07.v = _mm512_load_ps( (const float *)a07 );                      // 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+    b08.v = _mm512_load_ps( (const float *)a08 );                      // 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+    b09.v = _mm512_load_ps( (const float *)a09 );                      // 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+    b10.v = _mm512_load_ps( (const float *)a10 );                      // 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
+    b11.v = _mm512_load_ps( (const float *)a11 );                      // 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191
+    b12.v = _mm512_load_ps( (const float *)a12 );                      // 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207
+    b13.v = _mm512_load_ps( (const float *)a13 );                      // 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223
+    b14.v = _mm512_load_ps( (const float *)a14 );                      // 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+    b15.v = _mm512_load_ps( (const float *)a15 );                      // 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255
+
+    t00   = _mm512_unpacklo_ps( b00.v, b01.v );                        //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
+    t01   = _mm512_unpackhi_ps( b00.v, b01.v );                        //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
+    t02   = _mm512_unpacklo_ps( b02.v, b03.v );                        //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
+    t03   = _mm512_unpackhi_ps( b02.v, b03.v );                        //  34  50  35  51  38  54  39  55  42  58  43  59  46  62  47  63
+    t04   = _mm512_unpacklo_ps( b04.v, b05.v );                        //  64  80  65  81  68  84  69  85  72  88  73  89  76  92  77  93
+    t05   = _mm512_unpackhi_ps( b04.v, b05.v );                        //  66  82  67  83  70  86  71  87  74  90  75  91  78  94  79  95
+    t06   = _mm512_unpacklo_ps( b06.v, b07.v );                        //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
+    t07   = _mm512_unpackhi_ps( b06.v, b07.v );                        //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
+    t08   = _mm512_unpacklo_ps( b08.v, b09.v );                        // 128 144 129 145 132 148 133 149 136 152 137 153 140 156 141 157
+    t09   = _mm512_unpackhi_ps( b08.v, b09.v );                        // 130 146 131 147 134 150 135 151 138 154 139 155 142 158 143 159
+    t10   = _mm512_unpacklo_ps( b10.v, b11.v );                        // 160 176 161 177 164 180 165 181 168 184 169 185 172 188 173 189
+    t11   = _mm512_unpackhi_ps( b10.v, b11.v );                        // 162 178 163 179 166 182 167 183 170 186 171 187 174 190 175 191
+    t12   = _mm512_unpacklo_ps( b12.v, b13.v );                        // 192 208 193 209 196 212 197 213 200 216 201 217 204 220 205 221
+    t13   = _mm512_unpackhi_ps( b12.v, b13.v );                        // 194 210 195 211 198 214 199 215 202 218 203 219 206 222 207 223
+    t14   = _mm512_unpacklo_ps( b14.v, b15.v );                        // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
+    t15   = _mm512_unpackhi_ps( b14.v, b15.v );                        // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
+
+    b00.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
+    b01.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
+    b02.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   2  18  34  50   6  22  38  54  10  26  42  58  14  30  46  62
+    b03.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   3  19  35  51   7  23  39  55  11  27  43  59  15  31  47  63
+    b04.v = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  64  80  96 112  68  84 100 116  72  88 104 120  76  92 108 124
+    b05.v = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  65  81  97 113  69  85 101 117  73  89 105 121  77  93 109 125
+    b06.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  66  82  98 114  70  86 102 118  74  90 106 122  78  94 110 126
+    b07.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  67  83  99 115  71  87 103 119  75  91 107 123  79  95 111 127
+    b08.v = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 128 144 160 176 132 148 164 180 136 152 168 184 140 156 172 188
+    b09.v = _mm512_shuffle_ps( t08, t10, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 129 145 161 177 133 149 165 181 137 153 169 185 141 157 173 189
+    b10.v = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 130 146 162 178 134 150 166 182 138 154 170 186 142 158 174 190
+    b11.v = _mm512_shuffle_ps( t09, t11, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 131 147 163 179 135 151 167 183 139 155 171 187 143 159 175 191
+    b12.v = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 192 208 224 240 196 212 228 244 200 216 232 248 204 220 236 252
+    b13.v = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 193 209 225 241 197 213 229 245 201 217 233 249 205 221 237 253
+    b14.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 194 210 226 242 198 214 230 246 202 218 234 250 206 222 238 254
+    b15.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 195 211 227 243 199 215 231 247 203 219 235 251 207 223 239 255
+
+    t00   = _mm512_shuffle_f32x4( b00.v, b04.v, 0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
+    t01   = _mm512_shuffle_f32x4( b01.v, b05.v, 0x88 );                //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
+    t02   = _mm512_shuffle_f32x4( b02.v, b06.v, 0x88 );                //   2  18  34  50  10  26  42  58  66  82  98 114  74  90 106 122
+    t03   = _mm512_shuffle_f32x4( b03.v, b07.v, 0x88 );                //   3  19  35  51  11  27  43  59  67  83  99 115  75  91 107 123
+    t04   = _mm512_shuffle_f32x4( b00.v, b04.v, 0xdd );                //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
+    t05   = _mm512_shuffle_f32x4( b01.v, b05.v, 0xdd );                //   5  21  37  53  13  29  45  61  69  85 101 117  77  93 109 125
+    t06   = _mm512_shuffle_f32x4( b02.v, b06.v, 0xdd );                //   6  22  38  54  14  30  46  62  70  86 102 118  78  94 110 126
+    t07   = _mm512_shuffle_f32x4( b03.v, b07.v, 0xdd );                //   7  23  39  55  15  31  47  63  71  87 103 119  79  95 111 127
+    t08   = _mm512_shuffle_f32x4( b08.v, b12.v, 0x88 );                // 128 144 160 176 136 152 168 184 192 208 224 240 200 216 232 248
+    t09   = _mm512_shuffle_f32x4( b09.v, b13.v, 0x88 );                // 129 145 161 177 137 153 169 185 193 209 225 241 201 217 233 249
+    t10   = _mm512_shuffle_f32x4( b10.v, b14.v, 0x88 );                // 130 146 162 178 138 154 170 186 194 210 226 242 202 218 234 250
+    t11   = _mm512_shuffle_f32x4( b11.v, b15.v, 0x88 );                // 131 147 163 179 139 155 171 187 195 211 227 243 203 219 235 251
+    t12   = _mm512_shuffle_f32x4( b08.v, b12.v, 0xdd );                // 132 148 164 180 140 156 172 188 196 212 228 244 204 220 236 252
+    t13   = _mm512_shuffle_f32x4( b09.v, b13.v, 0xdd );                // 133 149 165 181 141 157 173 189 197 213 229 245 205 221 237 253
+    t14   = _mm512_shuffle_f32x4( b10.v, b14.v, 0xdd );                // 134 150 166 182 142 158 174 190 198 214 230 246 206 222 238 254
+    t15   = _mm512_shuffle_f32x4( b11.v, b15.v, 0xdd );                // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
+
+    b00.v = _mm512_permutexvar_ps( idx, t00 );                         //   0   8  16  24  32  40  48  56  64  72  80  88  96 104 112 120
+    b01.v = _mm512_permutexvar_ps( idx, t01 );                         //   1   9  17  25  33  41  49  57  65  73  81  89  97 105 113 121
+    b02.v = _mm512_permutexvar_ps( idx, t02 );                         //   2  10  18  26  34  42  50  58  66  74  82  90  98 106 114 122
+    b03.v = _mm512_permutexvar_ps( idx, t03 );                         //   3  11  19  27  35  43  51  59  67  75  83  91  99 107 115 123
+    b04.v = _mm512_permutexvar_ps( idx, t04 );                         //   4  12  20  28  36  44  52  60  68  76  84  92 100 108 116 124
+    b05.v = _mm512_permutexvar_ps( idx, t05 );                         //   5  13  21  29  37  45  53  61  69  77  85  93 101 109 117 125
+    b06.v = _mm512_permutexvar_ps( idx, t06 );                         //   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
+    b07.v = _mm512_permutexvar_ps( idx, t07 );                         //   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
+    b08.v = _mm512_permutexvar_ps( idx, t08 );                         // 128 136 144 152 160 168 176 184 192 200 208 216 224 232 240 248
+    b09.v = _mm512_permutexvar_ps( idx, t09 );                         // 129 137 145 153 161 169 177 185 193 201 209 217 225 233 241 249
+    b10.v = _mm512_permutexvar_ps( idx, t10 );                         // 130 138 146 154 162 170 178 186 194 202 210 218 226 234 242 250
+    b11.v = _mm512_permutexvar_ps( idx, t11 );                         // 131 139 147 155 163 171 179 187 195 203 211 219 227 235 243 251
+    b12.v = _mm512_permutexvar_ps( idx, t12 );                         // 132 140 148 156 164 172 180 188 196 204 212 220 228 236 244 252
+    b13.v = _mm512_permutexvar_ps( idx, t13 );                         // 133 141 149 157 165 173 181 189 197 205 213 221 229 237 245 253
+    b14.v = _mm512_permutexvar_ps( idx, t14 );                         // 134 142 150 158 166 174 182 190 198 206 214 222 230 238 246 254
+    b15.v = _mm512_permutexvar_ps( idx, t15 );                         // 135 143 151 159 167 175 183 191 199 207 215 223 231 239 247 255
+  }
+#endif
+
+  inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
+			      const void * ALIGNED(64) a01,
+			      const void * ALIGNED(64) a02,
+			      const void * ALIGNED(64) a03,
+			      const void * ALIGNED(64) a04,
+			      const void * ALIGNED(64) a05,
+			      const void * ALIGNED(64) a06,
+			      const void * ALIGNED(64) a07,
+			      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			      v16 &b04, v16 &b05, v16 &b06, v16 &b07 )
+  {
+    b00.i[ 0] = ((const int * ALIGNED(64))a00)[ 0];
+    b01.i[ 0] = ((const int * ALIGNED(64))a00)[ 1];
+    b02.i[ 0] = ((const int * ALIGNED(64))a00)[ 2];
+    b03.i[ 0] = ((const int * ALIGNED(64))a00)[ 3];
+    b04.i[ 0] = ((const int * ALIGNED(64))a00)[ 4];
+    b05.i[ 0] = ((const int * ALIGNED(64))a00)[ 5];
+    b06.i[ 0] = ((const int * ALIGNED(64))a00)[ 6];
+    b07.i[ 0] = ((const int * ALIGNED(64))a00)[ 7];
+    b00.i[ 1] = ((const int * ALIGNED(64))a00)[ 8];
+    b01.i[ 1] = ((const int * ALIGNED(64))a00)[ 9];
+    b02.i[ 1] = ((const int * ALIGNED(64))a00)[10];
+    b03.i[ 1] = ((const int * ALIGNED(64))a00)[11];
+    b04.i[ 1] = ((const int * ALIGNED(64))a00)[12];
+    b05.i[ 1] = ((const int * ALIGNED(64))a00)[13];
+    b06.i[ 1] = ((const int * ALIGNED(64))a00)[14];
+    b07.i[ 1] = ((const int * ALIGNED(64))a00)[15];
+
+    b00.i[ 2] = ((const int * ALIGNED(64))a01)[ 0];
+    b01.i[ 2] = ((const int * ALIGNED(64))a01)[ 1];
+    b02.i[ 2] = ((const int * ALIGNED(64))a01)[ 2];
+    b03.i[ 2] = ((const int * ALIGNED(64))a01)[ 3];
+    b04.i[ 2] = ((const int * ALIGNED(64))a01)[ 4];
+    b05.i[ 2] = ((const int * ALIGNED(64))a01)[ 5];
+    b06.i[ 2] = ((const int * ALIGNED(64))a01)[ 6];
+    b07.i[ 2] = ((const int * ALIGNED(64))a01)[ 7];
+    b00.i[ 3] = ((const int * ALIGNED(64))a01)[ 8];
+    b01.i[ 3] = ((const int * ALIGNED(64))a01)[ 9];
+    b02.i[ 3] = ((const int * ALIGNED(64))a01)[10];
+    b03.i[ 3] = ((const int * ALIGNED(64))a01)[11];
+    b04.i[ 3] = ((const int * ALIGNED(64))a01)[12];
+    b05.i[ 3] = ((const int * ALIGNED(64))a01)[13];
+    b06.i[ 3] = ((const int * ALIGNED(64))a01)[14];
+    b07.i[ 3] = ((const int * ALIGNED(64))a01)[15];
+
+    b00.i[ 4] = ((const int * ALIGNED(64))a02)[ 0];
+    b01.i[ 4] = ((const int * ALIGNED(64))a02)[ 1];
+    b02.i[ 4] = ((const int * ALIGNED(64))a02)[ 2];
+    b03.i[ 4] = ((const int * ALIGNED(64))a02)[ 3];
+    b04.i[ 4] = ((const int * ALIGNED(64))a02)[ 4];
+    b05.i[ 4] = ((const int * ALIGNED(64))a02)[ 5];
+    b06.i[ 4] = ((const int * ALIGNED(64))a02)[ 6];
+    b07.i[ 4] = ((const int * ALIGNED(64))a02)[ 7];
+    b00.i[ 5] = ((const int * ALIGNED(64))a02)[ 8];
+    b01.i[ 5] = ((const int * ALIGNED(64))a02)[ 9];
+    b02.i[ 5] = ((const int * ALIGNED(64))a02)[10];
+    b03.i[ 5] = ((const int * ALIGNED(64))a02)[11];
+    b04.i[ 5] = ((const int * ALIGNED(64))a02)[12];
+    b05.i[ 5] = ((const int * ALIGNED(64))a02)[13];
+    b06.i[ 5] = ((const int * ALIGNED(64))a02)[14];
+    b07.i[ 5] = ((const int * ALIGNED(64))a02)[15];
+
+    b00.i[ 6] = ((const int * ALIGNED(64))a03)[ 0];
+    b01.i[ 6] = ((const int * ALIGNED(64))a03)[ 1];
+    b02.i[ 6] = ((const int * ALIGNED(64))a03)[ 2];
+    b03.i[ 6] = ((const int * ALIGNED(64))a03)[ 3];
+    b04.i[ 6] = ((const int * ALIGNED(64))a03)[ 4];
+    b05.i[ 6] = ((const int * ALIGNED(64))a03)[ 5];
+    b06.i[ 6] = ((const int * ALIGNED(64))a03)[ 6];
+    b07.i[ 6] = ((const int * ALIGNED(64))a03)[ 7];
+    b00.i[ 7] = ((const int * ALIGNED(64))a03)[ 8];
+    b01.i[ 7] = ((const int * ALIGNED(64))a03)[ 9];
+    b02.i[ 7] = ((const int * ALIGNED(64))a03)[10];
+    b03.i[ 7] = ((const int * ALIGNED(64))a03)[11];
+    b04.i[ 7] = ((const int * ALIGNED(64))a03)[12];
+    b05.i[ 7] = ((const int * ALIGNED(64))a03)[13];
+    b06.i[ 7] = ((const int * ALIGNED(64))a03)[14];
+    b07.i[ 7] = ((const int * ALIGNED(64))a03)[15];
+
+    b00.i[ 8] = ((const int * ALIGNED(64))a04)[ 0];
+    b01.i[ 8] = ((const int * ALIGNED(64))a04)[ 1];
+    b02.i[ 8] = ((const int * ALIGNED(64))a04)[ 2];
+    b03.i[ 8] = ((const int * ALIGNED(64))a04)[ 3];
+    b04.i[ 8] = ((const int * ALIGNED(64))a04)[ 4];
+    b05.i[ 8] = ((const int * ALIGNED(64))a04)[ 5];
+    b06.i[ 8] = ((const int * ALIGNED(64))a04)[ 6];
+    b07.i[ 8] = ((const int * ALIGNED(64))a04)[ 7];
+    b00.i[ 9] = ((const int * ALIGNED(64))a04)[ 8];
+    b01.i[ 9] = ((const int * ALIGNED(64))a04)[ 9];
+    b02.i[ 9] = ((const int * ALIGNED(64))a04)[10];
+    b03.i[ 9] = ((const int * ALIGNED(64))a04)[11];
+    b04.i[ 9] = ((const int * ALIGNED(64))a04)[12];
+    b05.i[ 9] = ((const int * ALIGNED(64))a04)[13];
+    b06.i[ 9] = ((const int * ALIGNED(64))a04)[14];
+    b07.i[ 9] = ((const int * ALIGNED(64))a04)[15];
+
+    b00.i[10] = ((const int * ALIGNED(64))a05)[ 0];
+    b01.i[10] = ((const int * ALIGNED(64))a05)[ 1];
+    b02.i[10] = ((const int * ALIGNED(64))a05)[ 2];
+    b03.i[10] = ((const int * ALIGNED(64))a05)[ 3];
+    b04.i[10] = ((const int * ALIGNED(64))a05)[ 4];
+    b05.i[10] = ((const int * ALIGNED(64))a05)[ 5];
+    b06.i[10] = ((const int * ALIGNED(64))a05)[ 6];
+    b07.i[10] = ((const int * ALIGNED(64))a05)[ 7];
+    b00.i[11] = ((const int * ALIGNED(64))a05)[ 8];
+    b01.i[11] = ((const int * ALIGNED(64))a05)[ 9];
+    b02.i[11] = ((const int * ALIGNED(64))a05)[10];
+    b03.i[11] = ((const int * ALIGNED(64))a05)[11];
+    b04.i[11] = ((const int * ALIGNED(64))a05)[12];
+    b05.i[11] = ((const int * ALIGNED(64))a05)[13];
+    b06.i[11] = ((const int * ALIGNED(64))a05)[14];
+    b07.i[11] = ((const int * ALIGNED(64))a05)[15];
+
+    b00.i[12] = ((const int * ALIGNED(64))a06)[ 0];
+    b01.i[12] = ((const int * ALIGNED(64))a06)[ 1];
+    b02.i[12] = ((const int * ALIGNED(64))a06)[ 2];
+    b03.i[12] = ((const int * ALIGNED(64))a06)[ 3];
+    b04.i[12] = ((const int * ALIGNED(64))a06)[ 4];
+    b05.i[12] = ((const int * ALIGNED(64))a06)[ 5];
+    b06.i[12] = ((const int * ALIGNED(64))a06)[ 6];
+    b07.i[12] = ((const int * ALIGNED(64))a06)[ 7];
+    b00.i[13] = ((const int * ALIGNED(64))a06)[ 8];
+    b01.i[13] = ((const int * ALIGNED(64))a06)[ 9];
+    b02.i[13] = ((const int * ALIGNED(64))a06)[10];
+    b03.i[13] = ((const int * ALIGNED(64))a06)[11];
+    b04.i[13] = ((const int * ALIGNED(64))a06)[12];
+    b05.i[13] = ((const int * ALIGNED(64))a06)[13];
+    b06.i[13] = ((const int * ALIGNED(64))a06)[14];
+    b07.i[13] = ((const int * ALIGNED(64))a06)[15];
+
+    b00.i[14] = ((const int * ALIGNED(64))a07)[ 0];
+    b01.i[14] = ((const int * ALIGNED(64))a07)[ 1];
+    b02.i[14] = ((const int * ALIGNED(64))a07)[ 2];
+    b03.i[14] = ((const int * ALIGNED(64))a07)[ 3];
+    b04.i[14] = ((const int * ALIGNED(64))a07)[ 4];
+    b05.i[14] = ((const int * ALIGNED(64))a07)[ 5];
+    b06.i[14] = ((const int * ALIGNED(64))a07)[ 6];
+    b07.i[14] = ((const int * ALIGNED(64))a07)[ 7];
+    b00.i[15] = ((const int * ALIGNED(64))a07)[ 8];
+    b01.i[15] = ((const int * ALIGNED(64))a07)[ 9];
+    b02.i[15] = ((const int * ALIGNED(64))a07)[10];
+    b03.i[15] = ((const int * ALIGNED(64))a07)[11];
+    b04.i[15] = ((const int * ALIGNED(64))a07)[12];
+    b05.i[15] = ((const int * ALIGNED(64))a07)[13];
+    b06.i[15] = ((const int * ALIGNED(64))a07)[14];
+    b07.i[15] = ((const int * ALIGNED(64))a07)[15];
+  }
 
   inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
@@ -2630,6 +2903,292 @@ namespace v16
     ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
 #endif
+
+#if 0
+  inline void store_16x8_tr_p( const v16 &b00,
+			       const v16 &b01,
+			       const v16 &b02,
+			       const v16 &b03,
+			       const v16 &b04,
+			       const v16 &b05,
+			       const v16 &b06,
+			       const v16 &b07,
+			       void * ALIGNED(64) a00,
+			       void * ALIGNED(64) a01,
+			       void * ALIGNED(64) a02,
+			       void * ALIGNED(64) a03,
+			       void * ALIGNED(64) a04,
+			       void * ALIGNED(64) a05,
+			       void * ALIGNED(64) a06,
+			       void * ALIGNED(64) a07 )
+  {
+    __m512 t00, t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12, t13, t14, t15;
+    __m512 u00, u01, u02, u03, u04, u05, u06, u07, u08, u09, u10, u11, u12, u13, u14, u15;
+
+    __m512i idx = _mm512_set_epi32( 15, 13, 11, 9, 14, 12, 10, 8, 7, 5, 3, 1, 6, 4, 2, 0 );
+
+    __m512i idx1, idx2;
+
+    // Start                                                     b00 =   0   8  16  24  32  40  48  56  64  72  80  88  96 104 112 120
+    //                                                           b01 =   1   9  17  25  33  41  49  57  65  73  81  89  97 105 113 121
+    //                                                           b02 =   2  10  18  26  34  42  50  58  66  74  82  90  98 106 114 122
+    //                                                           b03 =   3  11  19  27  35  43  51  59  67  75  83  91  99 107 115 123
+    //                                                           b04 =   4  12  20  28  36  44  52  60  68  76  84  92 100 108 116 124
+    //                                                           b05 =   5  13  21  29  37  45  53  61  69  77  85  93 101 109 117 125
+    //                                                           b06 =   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
+    //                                                           b07 =   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
+    //                                                           b08 = 128 136 144 152 160 168 176 184 192 200 208 216 224 232 240 248
+    //                                                           b09 = 129 137 145 153 161 169 177 185 193 201 209 217 225 233 241 249
+    //                                                           b10 = 130 138 146 154 162 170 178 186 194 202 210 218 226 234 242 250
+    //                                                           b11 = 131 139 147 155 163 171 179 187 195 203 211 219 227 235 243 251
+    //                                                           b12 = 132 140 148 156 164 172 180 188 196 204 212 220 228 236 244 252
+    //                                                           b13 = 133 141 149 157 165 173 181 189 197 205 213 221 229 237 245 253
+    //                                                           b14 = 134 142 150 158 166 174 182 190 198 206 214 222 230 238 246 254
+    //                                                           b15 = 135 143 151 159 167 175 183 191 199 207 215 223 231 239 247 255
+
+    t00 = _mm512_permutexvar_ps( idx, b00.v );                      //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
+    t01 = _mm512_permutexvar_ps( idx, b01.v );                      //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
+    t02 = _mm512_permutexvar_ps( idx, b02.v );                      //   2  18  34  50  10  26  42  58  66  82  98 114  74  90 106 122
+    t03 = _mm512_permutexvar_ps( idx, b03.v );                      //   3  19  35  51  11  27  43  59  67  83  99 115  75  91 107 123
+    t04 = _mm512_permutexvar_ps( idx, b04.v );                      //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
+    t05 = _mm512_permutexvar_ps( idx, b05.v );                      //   5  21  37  53  13  29  45  61  69  85 101 117  77  93 109 125
+    t06 = _mm512_permutexvar_ps( idx, b06.v );                      //   6  22  38  54  14  30  46  62  70  86 102 118  78  94 110 126
+    t07 = _mm512_permutexvar_ps( idx, b07.v );                      //   7  23  39  55  15  31  47  63  71  87 103 119  79  95 111 127
+    t08 = _mm512_permutexvar_ps( idx, b08.v );                      // 128 144 160 176 136 152 168 184 192 208 228 240 200 216 232 248
+    t09 = _mm512_permutexvar_ps( idx, b09.v );                      // 129 145 161 177 137 153 169 185 193 209 229 241 201 217 233 249
+    t10 = _mm512_permutexvar_ps( idx, b10.v );                      // 130 146 162 178 138 154 170 186 194 210 230 242 202 218 234 250
+    t11 = _mm512_permutexvar_ps( idx, b11.v );                      // 131 147 163 179 139 155 171 187 195 211 231 243 203 219 235 251
+    t12 = _mm512_permutexvar_ps( idx, b12.v );                      // 132 148 164 180 140 156 172 188 196 212 228 244 204 220 236 252
+    t13 = _mm512_permutexvar_ps( idx, b13.v );                      // 133 149 165 181 141 157 173 189 197 213 229 245 205 221 237 253
+    t14 = _mm512_permutexvar_ps( idx, b14.v );                      // 134 150 166 182 142 158 174 190 198 214 230 246 206 222 238 254
+    t15 = _mm512_permutexvar_ps( idx, b15.v );                      // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
+
+    idx1 = _mm512_set_epi32(  7+16,  6+16,  5+16,  4+16,  7,  6,  5,  4,  3+16,  2+16, 1+16, 0+16,  3,  2, 1, 0 );
+    idx2 = _mm512_set_epi32( 15+16, 14+16, 13+16, 12+16, 15, 14, 13, 12, 11+16, 10+16, 9+16, 8+16, 11, 10, 9, 8 );
+
+    u00 = _mm512_permutex2var_ps( t00, idx1, t04 );                 //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
+    u01 = _mm512_permutex2var_ps( t01, idx1, t05 );                 //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
+    u02 = _mm512_permutex2var_ps( t02, idx1, t06 );                 //   2  18  34  50   6  22  38  54  10  26  42  58  14  30  46  62
+    u03 = _mm512_permutex2var_ps( t03, idx1, t07 );                 //   3  19  35  51   7  23  39  55  11  27  43  59  15  31  47  63
+    u04 = _mm512_permutex2var_ps( t00, idx2, t04 );                 //  64  80  96 112  68  84 100 116  72  88 104 120  76  92 108 124
+    u05 = _mm512_permutex2var_ps( t01, idx2, t05 );                 //  65  81  97 113  69  85 101 117  73  89 105 121  77  93 109 125
+    u06 = _mm512_permutex2var_ps( t02, idx2, t06 );                 //  66  82  98 114  70  86 102 118  74  90 106 122  78  94 110 126
+    u07 = _mm512_permutex2var_ps( t03, idx2, t07 );                 //  67  83  99 115  71  87 103 119  75  91 107 123  79  95 111 127
+    u08 = _mm512_permutex2var_ps( t08, idx1, t12 );                 // 128 144 160 176 132 148 164 180 136 152 168 184 140 156 172 188
+    u09 = _mm512_permutex2var_ps( t09, idx1, t13 );                 // 129 145 161 177 133 149 165 181 137 153 169 185 141 157 173 189
+    u10 = _mm512_permutex2var_ps( t10, idx1, t14 );                 // 130 146 162 178 134 150 166 182 138 154 170 186 142 158 174 190
+    u11 = _mm512_permutex2var_ps( t11, idx1, t15 );                 // 131 147 163 179 135 151 167 183 139 155 171 187 143 159 175 191
+    u12 = _mm512_permutex2var_ps( t08, idx2, t12 );                 // 192 208 224 240 196 212 228 244 200 216 232 248 204 220 236 252
+    u13 = _mm512_permutex2var_ps( t09, idx2, t13 );                 // 193 209 225 241 197 213 229 245 201 217 233 249 205 221 237 253
+    u14 = _mm512_permutex2var_ps( t10, idx2, t14 );                 // 194 210 226 242 198 214 230 246 202 218 234 250 206 222 238 254
+    u15 = _mm512_permutex2var_ps( t11, idx2, t15 );                 // 195 211 227 243 199 215 231 247 203 219 235 251 207 223 239 255
+
+    t00 = _mm512_shuffle_ps( u00, u01, _MM_SHUFFLE( 1, 0, 1, 0 ) ); //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
+    t01 = _mm512_shuffle_ps( u02, u03, _MM_SHUFFLE( 1, 0, 1, 0 ) ); //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
+    t02 = _mm512_shuffle_ps( u00, u01, _MM_SHUFFLE( 3, 2, 3, 2 ) ); //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
+    t03 = _mm512_shuffle_ps( u02, u03, _MM_SHUFFLE( 3, 2, 3, 2 ) ); //  34  50  35  51  38  54  39  55  42  58  43  59  46  62  47  63
+    t04 = _mm512_shuffle_ps( u04, u05, _MM_SHUFFLE( 1, 0, 1, 0 ) ); //  64  80  65  81  68  84  69  85  72  88  73  89  76  92  77  93
+    t05 = _mm512_shuffle_ps( u06, u07, _MM_SHUFFLE( 1, 0, 1, 0 ) ); //  66  82  67  83  70  86  71  87  74  90  75  91  78  94  79  95
+    t06 = _mm512_shuffle_ps( u04, u05, _MM_SHUFFLE( 3, 2, 3, 2 ) ); //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
+    t07 = _mm512_shuffle_ps( u06, u07, _MM_SHUFFLE( 3, 2, 3, 2 ) ); //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
+    t08 = _mm512_shuffle_ps( u08, u09, _MM_SHUFFLE( 1, 0, 1, 0 ) ); // 128 144 129 145 132 148 133 149 136 152 137 153 140 156 141 157
+    t09 = _mm512_shuffle_ps( u10, u11, _MM_SHUFFLE( 1, 0, 1, 0 ) ); // 130 146 131 147 134 150 135 151 138 154 139 155 142 158 143 159
+    t10 = _mm512_shuffle_ps( u08, u09, _MM_SHUFFLE( 3, 2, 3, 2 ) ); // 160 176 161 177 164 180 165 181 168 184 169 185 172 188 173 189
+    t11 = _mm512_shuffle_ps( u10, u11, _MM_SHUFFLE( 3, 2, 3, 2 ) ); // 162 178 163 179 166 182 167 183 170 186 171 187 174 190 175 191
+    t12 = _mm512_shuffle_ps( u12, u13, _MM_SHUFFLE( 1, 0, 1, 0 ) ); // 192 208 193 209 196 212 197 213 200 216 201 217 204 220 205 221
+    t13 = _mm512_shuffle_ps( u14, u15, _MM_SHUFFLE( 1, 0, 1, 0 ) ); // 194 210 195 211 198 214 199 215 202 218 203 219 206 222 207 223
+    t14 = _mm512_shuffle_ps( u12, u13, _MM_SHUFFLE( 3, 2, 3, 2 ) ); // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
+    t15 = _mm512_shuffle_ps( u14, u15, _MM_SHUFFLE( 3, 2, 3, 2 ) ); // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
+
+    u00 = _mm512_shuffle_ps( t00, t01, _MM_SHUFFLE( 2, 0, 2, 0 ) ); //   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    u01 = _mm512_shuffle_ps( t00, t01, _MM_SHUFFLE( 3, 1, 3, 1 ) ); //  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+    u02 = _mm512_shuffle_ps( t02, t03, _MM_SHUFFLE( 2, 0, 2, 0 ) ); //  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+    u03 = _mm512_shuffle_ps( t02, t03, _MM_SHUFFLE( 3, 1, 3, 1 ) ); //  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+    u04 = _mm512_shuffle_ps( t04, t05, _MM_SHUFFLE( 2, 0, 2, 0 ) ); //  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+    u05 = _mm512_shuffle_ps( t04, t05, _MM_SHUFFLE( 3, 1, 3, 1 ) ); //  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+    u06 = _mm512_shuffle_ps( t06, t07, _MM_SHUFFLE( 2, 0, 2, 0 ) ); //  96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
+    u07 = _mm512_shuffle_ps( t06, t07, _MM_SHUFFLE( 3, 1, 3, 1 ) ); // 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+    u08 = _mm512_shuffle_ps( t08, t09, _MM_SHUFFLE( 2, 0, 2, 0 ) ); // 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+    u09 = _mm512_shuffle_ps( t08, t09, _MM_SHUFFLE( 3, 1, 3, 1 ) ); // 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+    u10 = _mm512_shuffle_ps( t10, t11, _MM_SHUFFLE( 2, 0, 2, 0 ) ); // 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
+    u11 = _mm512_shuffle_ps( t10, t11, _MM_SHUFFLE( 3, 1, 3, 1 ) ); // 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191
+    u12 = _mm512_shuffle_ps( t12, t13, _MM_SHUFFLE( 2, 0, 2, 0 ) ); // 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207
+    u13 = _mm512_shuffle_ps( t12, t13, _MM_SHUFFLE( 3, 1, 3, 1 ) ); // 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223
+    u14 = _mm512_shuffle_ps( t14, t15, _MM_SHUFFLE( 2, 0, 2, 0 ) ); // 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+    u15 = _mm512_shuffle_ps( t14, t15, _MM_SHUFFLE( 3, 1, 3, 1 ) ); // 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255
+
+    _mm512_store_ps( (float *)a00, u00 );
+    _mm512_store_ps( (float *)a01, u01 );
+    _mm512_store_ps( (float *)a02, u02 );
+    _mm512_store_ps( (float *)a03, u03 );
+    _mm512_store_ps( (float *)a04, u04 );
+    _mm512_store_ps( (float *)a05, u05 );
+    _mm512_store_ps( (float *)a06, u06 );
+    _mm512_store_ps( (float *)a07, u07 );
+    _mm512_store_ps( (float *)a08, u08 );
+    _mm512_store_ps( (float *)a09, u09 );
+    _mm512_store_ps( (float *)a10, u10 );
+    _mm512_store_ps( (float *)a11, u11 );
+    _mm512_store_ps( (float *)a12, u12 );
+    _mm512_store_ps( (float *)a13, u13 );
+    _mm512_store_ps( (float *)a14, u14 );
+    _mm512_store_ps( (float *)a15, u15 );
+  }
+#endif
+
+  inline void store_16x8_tr_p( const v16 &b00,
+			       const v16 &b01,
+			       const v16 &b02,
+			       const v16 &b03,
+			       const v16 &b04,
+			       const v16 &b05,
+			       const v16 &b06,
+			       const v16 &b07,
+			       void * ALIGNED(64) a00,
+			       void * ALIGNED(64) a01,
+			       void * ALIGNED(64) a02,
+			       void * ALIGNED(64) a03,
+			       void * ALIGNED(64) a04,
+			       void * ALIGNED(64) a05,
+			       void * ALIGNED(64) a06,
+			       void * ALIGNED(64) a07 )
+  {
+    ((int * ALIGNED(64))a00)[ 0] = b00.i[ 0];
+    ((int * ALIGNED(64))a00)[ 1] = b01.i[ 0];
+    ((int * ALIGNED(64))a00)[ 2] = b02.i[ 0];
+    ((int * ALIGNED(64))a00)[ 3] = b03.i[ 0];
+    ((int * ALIGNED(64))a00)[ 4] = b04.i[ 0];
+    ((int * ALIGNED(64))a00)[ 5] = b05.i[ 0];
+    ((int * ALIGNED(64))a00)[ 6] = b06.i[ 0];
+    ((int * ALIGNED(64))a00)[ 7] = b07.i[ 0];
+    ((int * ALIGNED(64))a00)[ 8] = b00.i[ 1];
+    ((int * ALIGNED(64))a00)[ 9] = b01.i[ 1];
+    ((int * ALIGNED(64))a00)[10] = b02.i[ 1];
+    ((int * ALIGNED(64))a00)[11] = b03.i[ 1];
+    ((int * ALIGNED(64))a00)[12] = b04.i[ 1];
+    ((int * ALIGNED(64))a00)[13] = b05.i[ 1];
+    ((int * ALIGNED(64))a00)[14] = b06.i[ 1];
+    ((int * ALIGNED(64))a00)[15] = b07.i[ 1];
+
+    ((int * ALIGNED(64))a01)[ 0] = b00.i[ 2];
+    ((int * ALIGNED(64))a01)[ 1] = b01.i[ 2];
+    ((int * ALIGNED(64))a01)[ 2] = b02.i[ 2];
+    ((int * ALIGNED(64))a01)[ 3] = b03.i[ 2];
+    ((int * ALIGNED(64))a01)[ 4] = b04.i[ 2];
+    ((int * ALIGNED(64))a01)[ 5] = b05.i[ 2];
+    ((int * ALIGNED(64))a01)[ 6] = b06.i[ 2];
+    ((int * ALIGNED(64))a01)[ 7] = b07.i[ 2];
+    ((int * ALIGNED(64))a01)[ 8] = b00.i[ 3];
+    ((int * ALIGNED(64))a01)[ 9] = b01.i[ 3];
+    ((int * ALIGNED(64))a01)[10] = b02.i[ 3];
+    ((int * ALIGNED(64))a01)[11] = b03.i[ 3];
+    ((int * ALIGNED(64))a01)[12] = b04.i[ 3];
+    ((int * ALIGNED(64))a01)[13] = b05.i[ 3];
+    ((int * ALIGNED(64))a01)[14] = b06.i[ 3];
+    ((int * ALIGNED(64))a01)[15] = b07.i[ 3];
+
+    ((int * ALIGNED(64))a02)[ 0] = b00.i[ 4];
+    ((int * ALIGNED(64))a02)[ 1] = b01.i[ 4];
+    ((int * ALIGNED(64))a02)[ 2] = b02.i[ 4];
+    ((int * ALIGNED(64))a02)[ 3] = b03.i[ 4];
+    ((int * ALIGNED(64))a02)[ 4] = b04.i[ 4];
+    ((int * ALIGNED(64))a02)[ 5] = b05.i[ 4];
+    ((int * ALIGNED(64))a02)[ 6] = b06.i[ 4];
+    ((int * ALIGNED(64))a02)[ 7] = b07.i[ 4];
+    ((int * ALIGNED(64))a02)[ 8] = b00.i[ 5];
+    ((int * ALIGNED(64))a02)[ 9] = b01.i[ 5];
+    ((int * ALIGNED(64))a02)[10] = b02.i[ 5];
+    ((int * ALIGNED(64))a02)[11] = b03.i[ 5];
+    ((int * ALIGNED(64))a02)[12] = b04.i[ 5];
+    ((int * ALIGNED(64))a02)[13] = b05.i[ 5];
+    ((int * ALIGNED(64))a02)[14] = b06.i[ 5];
+    ((int * ALIGNED(64))a02)[15] = b07.i[ 5];
+
+    ((int * ALIGNED(64))a03)[ 0] = b00.i[ 6];
+    ((int * ALIGNED(64))a03)[ 1] = b01.i[ 6];
+    ((int * ALIGNED(64))a03)[ 2] = b02.i[ 6];
+    ((int * ALIGNED(64))a03)[ 3] = b03.i[ 6];
+    ((int * ALIGNED(64))a03)[ 4] = b04.i[ 6];
+    ((int * ALIGNED(64))a03)[ 5] = b05.i[ 6];
+    ((int * ALIGNED(64))a03)[ 6] = b06.i[ 6];
+    ((int * ALIGNED(64))a03)[ 7] = b07.i[ 6];
+    ((int * ALIGNED(64))a03)[ 8] = b00.i[ 7];
+    ((int * ALIGNED(64))a03)[ 9] = b01.i[ 7];
+    ((int * ALIGNED(64))a03)[10] = b02.i[ 7];
+    ((int * ALIGNED(64))a03)[11] = b03.i[ 7];
+    ((int * ALIGNED(64))a03)[12] = b04.i[ 7];
+    ((int * ALIGNED(64))a03)[13] = b05.i[ 7];
+    ((int * ALIGNED(64))a03)[14] = b06.i[ 7];
+    ((int * ALIGNED(64))a03)[15] = b07.i[ 7];
+
+    ((int * ALIGNED(64))a04)[ 0] = b00.i[ 8];
+    ((int * ALIGNED(64))a04)[ 1] = b01.i[ 8];
+    ((int * ALIGNED(64))a04)[ 2] = b02.i[ 8];
+    ((int * ALIGNED(64))a04)[ 3] = b03.i[ 8];
+    ((int * ALIGNED(64))a04)[ 4] = b04.i[ 8];
+    ((int * ALIGNED(64))a04)[ 5] = b05.i[ 8];
+    ((int * ALIGNED(64))a04)[ 6] = b06.i[ 8];
+    ((int * ALIGNED(64))a04)[ 7] = b07.i[ 8];
+    ((int * ALIGNED(64))a04)[ 8] = b00.i[ 9];
+    ((int * ALIGNED(64))a04)[ 9] = b01.i[ 9];
+    ((int * ALIGNED(64))a04)[10] = b02.i[ 9];
+    ((int * ALIGNED(64))a04)[11] = b03.i[ 9];
+    ((int * ALIGNED(64))a04)[12] = b04.i[ 9];
+    ((int * ALIGNED(64))a04)[13] = b05.i[ 9];
+    ((int * ALIGNED(64))a04)[14] = b06.i[ 9];
+    ((int * ALIGNED(64))a04)[15] = b07.i[ 9];
+
+    ((int * ALIGNED(64))a05)[ 0] = b00.i[10];
+    ((int * ALIGNED(64))a05)[ 1] = b01.i[10];
+    ((int * ALIGNED(64))a05)[ 2] = b02.i[10];
+    ((int * ALIGNED(64))a05)[ 3] = b03.i[10];
+    ((int * ALIGNED(64))a05)[ 4] = b04.i[10];
+    ((int * ALIGNED(64))a05)[ 5] = b05.i[10];
+    ((int * ALIGNED(64))a05)[ 6] = b06.i[10];
+    ((int * ALIGNED(64))a05)[ 7] = b07.i[10];
+    ((int * ALIGNED(64))a05)[ 8] = b00.i[11];
+    ((int * ALIGNED(64))a05)[ 9] = b01.i[11];
+    ((int * ALIGNED(64))a05)[10] = b02.i[11];
+    ((int * ALIGNED(64))a05)[11] = b03.i[11];
+    ((int * ALIGNED(64))a05)[12] = b04.i[11];
+    ((int * ALIGNED(64))a05)[13] = b05.i[11];
+    ((int * ALIGNED(64))a05)[14] = b06.i[11];
+    ((int * ALIGNED(64))a05)[15] = b07.i[11];
+
+    ((int * ALIGNED(64))a06)[ 0] = b00.i[12];
+    ((int * ALIGNED(64))a06)[ 1] = b01.i[12];
+    ((int * ALIGNED(64))a06)[ 2] = b02.i[12];
+    ((int * ALIGNED(64))a06)[ 3] = b03.i[12];
+    ((int * ALIGNED(64))a06)[ 4] = b04.i[12];
+    ((int * ALIGNED(64))a06)[ 5] = b05.i[12];
+    ((int * ALIGNED(64))a06)[ 6] = b06.i[12];
+    ((int * ALIGNED(64))a06)[ 7] = b07.i[12];
+    ((int * ALIGNED(64))a06)[ 8] = b00.i[13];
+    ((int * ALIGNED(64))a06)[ 9] = b01.i[13];
+    ((int * ALIGNED(64))a06)[10] = b02.i[13];
+    ((int * ALIGNED(64))a06)[11] = b03.i[13];
+    ((int * ALIGNED(64))a06)[12] = b04.i[13];
+    ((int * ALIGNED(64))a06)[13] = b05.i[13];
+    ((int * ALIGNED(64))a06)[14] = b06.i[13];
+    ((int * ALIGNED(64))a06)[15] = b07.i[13];
+
+    ((int * ALIGNED(64))a07)[ 0] = b00.i[14];
+    ((int * ALIGNED(64))a07)[ 1] = b01.i[14];
+    ((int * ALIGNED(64))a07)[ 2] = b02.i[14];
+    ((int * ALIGNED(64))a07)[ 3] = b03.i[14];
+    ((int * ALIGNED(64))a07)[ 4] = b04.i[14];
+    ((int * ALIGNED(64))a07)[ 5] = b05.i[14];
+    ((int * ALIGNED(64))a07)[ 6] = b06.i[14];
+    ((int * ALIGNED(64))a07)[ 7] = b07.i[14];
+    ((int * ALIGNED(64))a07)[ 8] = b00.i[15];
+    ((int * ALIGNED(64))a07)[ 9] = b01.i[15];
+    ((int * ALIGNED(64))a07)[10] = b02.i[15];
+    ((int * ALIGNED(64))a07)[11] = b03.i[15];
+    ((int * ALIGNED(64))a07)[12] = b04.i[15];
+    ((int * ALIGNED(64))a07)[13] = b05.i[15];
+    ((int * ALIGNED(64))a07)[14] = b06.i[15];
+    ((int * ALIGNED(64))a07)[15] = b07.i[15];
+  }
 
   inline void store_16x16_tr_p( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
                                 const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,

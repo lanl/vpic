@@ -162,6 +162,16 @@ namespace v16
 				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
 				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+    friend inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
+				       const void * ALIGNED(64) a01,
+				       const void * ALIGNED(64) a02,
+				       const void * ALIGNED(64) a03,
+				       const void * ALIGNED(64) a04,
+				       const void * ALIGNED(64) a05,
+				       const void * ALIGNED(64) a06,
+				       const void * ALIGNED(64) a07,
+				       v16 &a, v16 &b, v16 &c, v16 &d,
+				       v16 &e, v16 &f, v16 &g, v16 &h );
     friend inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 					const void * ALIGNED(64) a01,
 					const void * ALIGNED(64) a02,
@@ -1358,6 +1368,154 @@ namespace v16
     b13.i[15] = ((const int * ALIGNED(64))a15)[13];
     b14.i[15] = ((const int * ALIGNED(64))a15)[14];
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
+  }
+
+  inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
+			      const void * ALIGNED(64) a01,
+			      const void * ALIGNED(64) a02,
+			      const void * ALIGNED(64) a03,
+			      const void * ALIGNED(64) a04,
+			      const void * ALIGNED(64) a05,
+			      const void * ALIGNED(64) a06,
+			      const void * ALIGNED(64) a07,
+			      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			      v16 &b04, v16 &b05, v16 &b06, v16 &b07 )
+  {
+    b00.i[ 0] = ((const int * ALIGNED(64))a00)[ 0];
+    b01.i[ 0] = ((const int * ALIGNED(64))a00)[ 1];
+    b02.i[ 0] = ((const int * ALIGNED(64))a00)[ 2];
+    b03.i[ 0] = ((const int * ALIGNED(64))a00)[ 3];
+    b04.i[ 0] = ((const int * ALIGNED(64))a00)[ 4];
+    b05.i[ 0] = ((const int * ALIGNED(64))a00)[ 5];
+    b06.i[ 0] = ((const int * ALIGNED(64))a00)[ 6];
+    b07.i[ 0] = ((const int * ALIGNED(64))a00)[ 7];
+    b00.i[ 1] = ((const int * ALIGNED(64))a00)[ 8];
+    b01.i[ 1] = ((const int * ALIGNED(64))a00)[ 9];
+    b02.i[ 1] = ((const int * ALIGNED(64))a00)[10];
+    b03.i[ 1] = ((const int * ALIGNED(64))a00)[11];
+    b04.i[ 1] = ((const int * ALIGNED(64))a00)[12];
+    b05.i[ 1] = ((const int * ALIGNED(64))a00)[13];
+    b06.i[ 1] = ((const int * ALIGNED(64))a00)[14];
+    b07.i[ 1] = ((const int * ALIGNED(64))a00)[15];
+
+    b00.i[ 2] = ((const int * ALIGNED(64))a01)[ 0];
+    b01.i[ 2] = ((const int * ALIGNED(64))a01)[ 1];
+    b02.i[ 2] = ((const int * ALIGNED(64))a01)[ 2];
+    b03.i[ 2] = ((const int * ALIGNED(64))a01)[ 3];
+    b04.i[ 2] = ((const int * ALIGNED(64))a01)[ 4];
+    b05.i[ 2] = ((const int * ALIGNED(64))a01)[ 5];
+    b06.i[ 2] = ((const int * ALIGNED(64))a01)[ 6];
+    b07.i[ 2] = ((const int * ALIGNED(64))a01)[ 7];
+    b00.i[ 3] = ((const int * ALIGNED(64))a01)[ 8];
+    b01.i[ 3] = ((const int * ALIGNED(64))a01)[ 9];
+    b02.i[ 3] = ((const int * ALIGNED(64))a01)[10];
+    b03.i[ 3] = ((const int * ALIGNED(64))a01)[11];
+    b04.i[ 3] = ((const int * ALIGNED(64))a01)[12];
+    b05.i[ 3] = ((const int * ALIGNED(64))a01)[13];
+    b06.i[ 3] = ((const int * ALIGNED(64))a01)[14];
+    b07.i[ 3] = ((const int * ALIGNED(64))a01)[15];
+
+    b00.i[ 4] = ((const int * ALIGNED(64))a02)[ 0];
+    b01.i[ 4] = ((const int * ALIGNED(64))a02)[ 1];
+    b02.i[ 4] = ((const int * ALIGNED(64))a02)[ 2];
+    b03.i[ 4] = ((const int * ALIGNED(64))a02)[ 3];
+    b04.i[ 4] = ((const int * ALIGNED(64))a02)[ 4];
+    b05.i[ 4] = ((const int * ALIGNED(64))a02)[ 5];
+    b06.i[ 4] = ((const int * ALIGNED(64))a02)[ 6];
+    b07.i[ 4] = ((const int * ALIGNED(64))a02)[ 7];
+    b00.i[ 5] = ((const int * ALIGNED(64))a02)[ 8];
+    b01.i[ 5] = ((const int * ALIGNED(64))a02)[ 9];
+    b02.i[ 5] = ((const int * ALIGNED(64))a02)[10];
+    b03.i[ 5] = ((const int * ALIGNED(64))a02)[11];
+    b04.i[ 5] = ((const int * ALIGNED(64))a02)[12];
+    b05.i[ 5] = ((const int * ALIGNED(64))a02)[13];
+    b06.i[ 5] = ((const int * ALIGNED(64))a02)[14];
+    b07.i[ 5] = ((const int * ALIGNED(64))a02)[15];
+
+    b00.i[ 6] = ((const int * ALIGNED(64))a03)[ 0];
+    b01.i[ 6] = ((const int * ALIGNED(64))a03)[ 1];
+    b02.i[ 6] = ((const int * ALIGNED(64))a03)[ 2];
+    b03.i[ 6] = ((const int * ALIGNED(64))a03)[ 3];
+    b04.i[ 6] = ((const int * ALIGNED(64))a03)[ 4];
+    b05.i[ 6] = ((const int * ALIGNED(64))a03)[ 5];
+    b06.i[ 6] = ((const int * ALIGNED(64))a03)[ 6];
+    b07.i[ 6] = ((const int * ALIGNED(64))a03)[ 7];
+    b00.i[ 7] = ((const int * ALIGNED(64))a03)[ 8];
+    b01.i[ 7] = ((const int * ALIGNED(64))a03)[ 9];
+    b02.i[ 7] = ((const int * ALIGNED(64))a03)[10];
+    b03.i[ 7] = ((const int * ALIGNED(64))a03)[11];
+    b04.i[ 7] = ((const int * ALIGNED(64))a03)[12];
+    b05.i[ 7] = ((const int * ALIGNED(64))a03)[13];
+    b06.i[ 7] = ((const int * ALIGNED(64))a03)[14];
+    b07.i[ 7] = ((const int * ALIGNED(64))a03)[15];
+
+    b00.i[ 8] = ((const int * ALIGNED(64))a04)[ 0];
+    b01.i[ 8] = ((const int * ALIGNED(64))a04)[ 1];
+    b02.i[ 8] = ((const int * ALIGNED(64))a04)[ 2];
+    b03.i[ 8] = ((const int * ALIGNED(64))a04)[ 3];
+    b04.i[ 8] = ((const int * ALIGNED(64))a04)[ 4];
+    b05.i[ 8] = ((const int * ALIGNED(64))a04)[ 5];
+    b06.i[ 8] = ((const int * ALIGNED(64))a04)[ 6];
+    b07.i[ 8] = ((const int * ALIGNED(64))a04)[ 7];
+    b00.i[ 9] = ((const int * ALIGNED(64))a04)[ 8];
+    b01.i[ 9] = ((const int * ALIGNED(64))a04)[ 9];
+    b02.i[ 9] = ((const int * ALIGNED(64))a04)[10];
+    b03.i[ 9] = ((const int * ALIGNED(64))a04)[11];
+    b04.i[ 9] = ((const int * ALIGNED(64))a04)[12];
+    b05.i[ 9] = ((const int * ALIGNED(64))a04)[13];
+    b06.i[ 9] = ((const int * ALIGNED(64))a04)[14];
+    b07.i[ 9] = ((const int * ALIGNED(64))a04)[15];
+
+    b00.i[10] = ((const int * ALIGNED(64))a05)[ 0];
+    b01.i[10] = ((const int * ALIGNED(64))a05)[ 1];
+    b02.i[10] = ((const int * ALIGNED(64))a05)[ 2];
+    b03.i[10] = ((const int * ALIGNED(64))a05)[ 3];
+    b04.i[10] = ((const int * ALIGNED(64))a05)[ 4];
+    b05.i[10] = ((const int * ALIGNED(64))a05)[ 5];
+    b06.i[10] = ((const int * ALIGNED(64))a05)[ 6];
+    b07.i[10] = ((const int * ALIGNED(64))a05)[ 7];
+    b00.i[11] = ((const int * ALIGNED(64))a05)[ 8];
+    b01.i[11] = ((const int * ALIGNED(64))a05)[ 9];
+    b02.i[11] = ((const int * ALIGNED(64))a05)[10];
+    b03.i[11] = ((const int * ALIGNED(64))a05)[11];
+    b04.i[11] = ((const int * ALIGNED(64))a05)[12];
+    b05.i[11] = ((const int * ALIGNED(64))a05)[13];
+    b06.i[11] = ((const int * ALIGNED(64))a05)[14];
+    b07.i[11] = ((const int * ALIGNED(64))a05)[15];
+
+    b00.i[12] = ((const int * ALIGNED(64))a06)[ 0];
+    b01.i[12] = ((const int * ALIGNED(64))a06)[ 1];
+    b02.i[12] = ((const int * ALIGNED(64))a06)[ 2];
+    b03.i[12] = ((const int * ALIGNED(64))a06)[ 3];
+    b04.i[12] = ((const int * ALIGNED(64))a06)[ 4];
+    b05.i[12] = ((const int * ALIGNED(64))a06)[ 5];
+    b06.i[12] = ((const int * ALIGNED(64))a06)[ 6];
+    b07.i[12] = ((const int * ALIGNED(64))a06)[ 7];
+    b00.i[13] = ((const int * ALIGNED(64))a06)[ 8];
+    b01.i[13] = ((const int * ALIGNED(64))a06)[ 9];
+    b02.i[13] = ((const int * ALIGNED(64))a06)[10];
+    b03.i[13] = ((const int * ALIGNED(64))a06)[11];
+    b04.i[13] = ((const int * ALIGNED(64))a06)[12];
+    b05.i[13] = ((const int * ALIGNED(64))a06)[13];
+    b06.i[13] = ((const int * ALIGNED(64))a06)[14];
+    b07.i[13] = ((const int * ALIGNED(64))a06)[15];
+
+    b00.i[14] = ((const int * ALIGNED(64))a07)[ 0];
+    b01.i[14] = ((const int * ALIGNED(64))a07)[ 1];
+    b02.i[14] = ((const int * ALIGNED(64))a07)[ 2];
+    b03.i[14] = ((const int * ALIGNED(64))a07)[ 3];
+    b04.i[14] = ((const int * ALIGNED(64))a07)[ 4];
+    b05.i[14] = ((const int * ALIGNED(64))a07)[ 5];
+    b06.i[14] = ((const int * ALIGNED(64))a07)[ 6];
+    b07.i[14] = ((const int * ALIGNED(64))a07)[ 7];
+    b00.i[15] = ((const int * ALIGNED(64))a07)[ 8];
+    b01.i[15] = ((const int * ALIGNED(64))a07)[ 9];
+    b02.i[15] = ((const int * ALIGNED(64))a07)[10];
+    b03.i[15] = ((const int * ALIGNED(64))a07)[11];
+    b04.i[15] = ((const int * ALIGNED(64))a07)[12];
+    b05.i[15] = ((const int * ALIGNED(64))a07)[13];
+    b06.i[15] = ((const int * ALIGNED(64))a07)[14];
+    b07.i[15] = ((const int * ALIGNED(64))a07)[15];
   }
 
   inline void load_16x16_tr_p( const void * ALIGNED(64) a00,

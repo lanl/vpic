@@ -108,40 +108,49 @@ namespace v4
 
   public:
 
+    #pragma forceinline recursive
     v4() {}                    // Default constructor
 
+    #pragma forceinline recursive
     v4( const v4 &a )          // Copy constructor
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	i[j] = a.i[j];
     }
 
+    #pragma forceinline recursive
     ~v4() {}                   // Default destructor
   };
 
   // v4 miscellaneous functions
 
+  #pragma forceinline recursive
   inline int any( const v4 &a )
   {
     return a.i[0] || a.i[1] || a.i[2] || a.i[3];
   }
 
+  #pragma forceinline recursive
   inline int all( const v4 &a )
   {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
 
+  #pragma forceinline recursive
   template<int n>
   inline v4 splat( const v4 & a )
   {
     v4 b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = a.i[n];
 
     return b;
   }
 
+  #pragma forceinline recursive
   template<int i0, int i1, int i2, int i3>
   inline v4 shuffle( const v4 & a )
   {
@@ -157,12 +166,15 @@ namespace v4
 
 # define sw(x,y) x^=y, y^=x, x^=y
 
+  #pragma forceinline recursive
   inline void swap( v4 &a, v4 &b )
   { 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       sw( a.i[j], b.i[j] );
   }
 
+  #pragma forceinline recursive
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
     sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
@@ -174,42 +186,54 @@ namespace v4
 
   // v4 memory manipulation functions
   
+  #pragma forceinline recursive
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       a.i[j] = ((const int * ALIGNED(16))p)[j];
   }
 
+  #pragma forceinline recursive
   inline void store_4x1( const v4 &a, void * ALIGNED(16) p )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       ((int * ALIGNED(16))p)[j] = a.i[j];
   }
 
+  #pragma forceinline recursive
   inline void stream_4x1( const v4 &a, void * ALIGNED(16) p )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       ((int * ALIGNED(16))p)[j] = a.i[j];
   }
 
+  #pragma forceinline recursive
   inline void clear_4x1( void * ALIGNED(16) p )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       ((int * ALIGNED(16))p)[j] = 0;
   }
 
   // FIXME: Ordering semantics
+  #pragma forceinline recursive
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       ((int * ALIGNED(16))dst)[j] = ((const int * ALIGNED(16))src)[j];
   }
 
+  #pragma forceinline recursive
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
   {
     int t;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
     {
       t = ((int * ALIGNED(16))a)[j];
@@ -220,6 +244,7 @@ namespace v4
 
   // v4 transposed memory manipulation functions
 
+  #pragma forceinline recursive
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3,
 			   v4 &a )
@@ -230,6 +255,7 @@ namespace v4
     a.i[3] = ((const int *)a3)[0];
   }
 
+  #pragma forceinline recursive
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
@@ -249,6 +275,7 @@ namespace v4
     b.i[3] = ((const int * ALIGNED(8))a3)[1];
   }
 
+  #pragma forceinline recursive
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -272,6 +299,7 @@ namespace v4
     c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
   }
 
+  #pragma forceinline recursive
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -299,6 +327,7 @@ namespace v4
     d.i[3] = ((const int * ALIGNED(16))a3)[3];
   }
 
+  #pragma forceinline recursive
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1, void *a2, void *a3 )
   {
@@ -308,6 +337,7 @@ namespace v4
     ((int *)a3)[0] = a.i[3];
   }
 
+  #pragma forceinline recursive
   inline void store_4x2_tr( const v4 &a, const v4 &b,
                             void * ALIGNED(8) a0, void * ALIGNED(8) a1,
                             void * ALIGNED(8) a2, void * ALIGNED(8) a3 )
@@ -325,6 +355,7 @@ namespace v4
     ((int * ALIGNED(8))a3)[1] = b.i[3];
   }
 
+  #pragma forceinline recursive
   inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
@@ -346,6 +377,7 @@ namespace v4
     ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
 
+  #pragma forceinline recursive
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
@@ -451,38 +483,49 @@ namespace v4
 
     // v4int constructors / destructors
 
+    #pragma forceinline recursive
     v4int() {}                                // Default constructor
 
+    #pragma forceinline recursive
     v4int( const v4int &a )                   // Copy constructor
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	i[j] = a.i[j];
     }
 
+    #pragma forceinline recursive
     v4int( const v4 &a )                      // Init from mixed
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	i[j] = a.i[j];
     }
 
+    #pragma forceinline recursive
     v4int( int a )                            // Init from scalar
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	i[j] = a;
     }
 
+    #pragma forceinline recursive
     v4int( int i0, int i1, int i2, int i3 )   // Init from scalars
     {
       i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
     }
 
+    #pragma forceinline recursive
     ~v4int() {}                               // Destructor
 
     // v4int assignment operators
   
 #   define ASSIGN(op)			          \
+    _Pragma( "forceinline recursive" )		  \
     inline v4int &operator op( const v4int &b )   \
     {						  \
+      _Pragma( "omp simd" )                       \
       for( int j = 0; j < 4; j++ )                \
         i[j] op b.i[j];                           \
       return *this;                               \
@@ -504,11 +547,13 @@ namespace v4
 
     // v4int member access operator
 
+    #pragma forceinline recursive
     inline int &operator []( int n )
     {
       return i[n];
     }
 
+    #pragma forceinline recursive
     inline int  operator ()( int n )
     {
       return i[n];
@@ -518,9 +563,11 @@ namespace v4
   // v4int prefix unary operators
 
 # define PREFIX_UNARY(op)                       \
+  _Pragma( "forceinline recursive" )		\
   inline v4int operator op( const v4int & a )   \
   {						\
     v4int b;                                    \
+    _Pragma( "omp simd" )                       \
     for( int j = 0; j < 4; j++ )                \
       b.i[j] = (op a.i[j]);                     \
     return b;                                   \
@@ -529,9 +576,11 @@ namespace v4
   PREFIX_UNARY(+)
   PREFIX_UNARY(-)
 
+  #pragma forceinline recursive
   inline v4int operator !( const v4int & a )
   {
     v4int b;
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = -(!a.i[j]);
     return b;
@@ -544,9 +593,11 @@ namespace v4
   // v4int prefix increment / decrement
 
 # define PREFIX_INCDEC(op)                      \
+  _Pragma( "forceinline recursive" )		\
   inline v4int operator op( v4int & a )         \
   {						\
     v4int b;                                    \
+    _Pragma( "omp simd" )                       \
     for( int j = 0; j < 4; j++ )                \
       b.i[j] = (op a.i[j]);                     \
     return b;                                   \
@@ -560,9 +611,11 @@ namespace v4
   // v4int postfix increment / decrement
 
 # define POSTFIX_INCDEC(op)                    \
+  _Pragma( "forceinline recursive" )	       \
   inline v4int operator op( v4int & a, int )   \
   {					       \
     v4int b;                                   \
+    _Pragma( "omp simd" )                      \
     for( int j = 0; j < 4; j++ )               \
       b.i[j] = (a.i[j] op);                    \
     return b;                                  \
@@ -576,9 +629,11 @@ namespace v4
   // v4int binary operators
   
 # define BINARY(op)                                             \
+  _Pragma( "forceinline recursive" )	                        \
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {								\
     v4int c;                                                    \
+    _Pragma( "omp simd" )                                       \
     for( int j = 0; j < 4; j++ )                                \
       c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
@@ -600,9 +655,11 @@ namespace v4
   // v4int logical operators
 
 # define LOGICAL(op)                                           \
+  _Pragma( "forceinline recursive" )	                       \
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {							       \
     v4int c;                                                   \
+    _Pragma( "omp simd" )                                      \
     for( int j = 0; j < 4; j++ )                               \
       c.i[j] = -(a.i[j] op b.i[j]);                            \
     return c;                                                  \
@@ -621,40 +678,48 @@ namespace v4
 
   // v4int miscellaneous functions
 
+  #pragma forceinline recursive
   inline v4int abs( const v4int &a )
   {
     v4int b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4 czero( const v4int &c, const v4 &a )
   {
     v4 b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = a.i[j] & ~c.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4 notczero( const v4int &c, const v4 &a )
   {
     v4 b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = a.i[j] & c.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f )
   {
     v4 m;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
@@ -741,26 +806,34 @@ namespace v4
 
     // v4float constructors / destructors
 
+    #pragma forceinline recursive
     v4float() {}                                        // Default constructor
 
+    #pragma forceinline recursive
     v4float( const v4float &a )                         // Copy constructor
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	f[j] = a.f[j];
     }
 
+    #pragma forceinline recursive
     v4float( const v4 &a )                              // Init from mixed
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	f[j] = a.f[j];
     }
 
+    #pragma forceinline recursive
     v4float( float a )                                  // Init from scalar
     {
+      #pragma omp simd
       for( int j = 0; j < 4; j++ )
 	f[j] = a;
     }
 
+    #pragma forceinline recursive
     v4float( float f0, float f1, float f2, float f3 )   // Init from scalars
     {
       f[0] = f0;
@@ -769,13 +842,16 @@ namespace v4
       f[3] = f3;
     }
 
+    #pragma forceinline recursive
     ~v4float() {}                                       // Destructor
 
     // v4float assignment operators
 
 #   define ASSIGN(op)                                   \
+    _Pragma( "forceinline recursive" )	                \
     inline v4float &operator op( const v4float &b )     \
     {							\
+      _Pragma( "omp simd" )                             \
       for( int j = 0; j < 4; j++ )                      \
         f[j] op b.f[j];		             		\
       return *this;                                     \
@@ -791,11 +867,13 @@ namespace v4
 
     // v4float member access operator
 
+    #pragma forceinline recursive
     inline float &operator []( int n )
     {
       return f[n];
     }
 
+    #pragma forceinline recursive
     inline float  operator ()( int n )
     {
       return f[n];
@@ -804,30 +882,36 @@ namespace v4
 
   // v4float prefix unary operators
 
+  #pragma forceinline recursive
   inline v4float operator +( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = +a.f[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float operator -( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = -a.f[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4int operator !( const v4float &a )
   {
     v4int b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = a.i[j] ? 0 : -1;
 
@@ -836,20 +920,24 @@ namespace v4
 
   // v4float prefix increment / decrement operators
 
+  #pragma forceinline recursive
   inline v4float operator ++( v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = ++a.f[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float operator --( v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = --a.f[j];
 
@@ -858,20 +946,24 @@ namespace v4
 
   // v4float postfix increment / decrement operators
 
+  #pragma forceinline recursive
   inline v4float operator ++( v4float &a, int )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = a.f[j]++;
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float operator --( v4float &a, int )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = a.f[j]--;
 
@@ -881,9 +973,11 @@ namespace v4
   // v4float binary operators
     
 # define BINARY(op)                                                  \
+  _Pragma( "forceinline recursive" )	                             \
   inline v4float operator op( const v4float &a, const v4float &b )   \
   {								     \
     v4float c;                                                       \
+    _Pragma( "omp simd" )                                            \
     for( int j = 0; j < 4; j++ )                                     \
       c.f[j] = a.f[j] op b.f[j];                                     \
     return c;                                                        \
@@ -899,9 +993,11 @@ namespace v4
   // v4float logical operators
 
 # define LOGICAL(op)                                               \
+  _Pragma( "forceinline recursive" )	                           \
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {								   \
     v4int c;                                                       \
+    _Pragma( "omp simd" )                                          \
     for( int j = 0; j < 4; j++ )                                   \
       c.i[j] = - ( a.f[j] op b.f[j] );                             \
     return c;                                                      \
@@ -921,18 +1017,22 @@ namespace v4
   // v4float math library functions
 
 # define CMATH_FR1(fn)                          \
+  _Pragma( "forceinline recursive" )	        \
   inline v4float fn( const v4float &a )         \
   {						\
     v4float b;                                  \
+    _Pragma( "omp simd" )                       \
     for( int j = 0; j < 4; j++ )                \
       b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
   }
 
 # define CMATH_FR2(fn)                                          \
+  _Pragma( "forceinline recursive" )	                        \
   inline v4float fn( const v4float &a, const v4float &b )       \
   {								\
     v4float c;                                                  \
+    _Pragma( "omp simd" )                                       \
     for( int j = 0; j < 4; j++ )                                \
       c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \
@@ -944,10 +1044,12 @@ namespace v4
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
   CMATH_FR1(sqrt)     CMATH_FR1(tan)   CMATH_FR1(tanh)
 
+  #pragma forceinline recursive
   inline v4float copysign( const v4float &a, const v4float &b )
   {
     v4float c;
     float t;
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
     {
       t = ::fabs( a.f[j] );
@@ -962,124 +1064,151 @@ namespace v4
 
   // v4float miscelleanous functions
 
+  #pragma forceinline recursive
   inline v4float rsqrt_approx( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float rsqrt( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float rcp_approx( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float rcp( const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       d.f[j] = a.f[j] * b.f[j] + c.f[j];
 
     return d;
   }
 
+  #pragma forceinline recursive
   inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       d.f[j] = a.f[j] * b.f[j] - c.f[j];
 
     return d;
   }
 
+  #pragma forceinline recursive
   inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       d.f[j] = c.f[j] - a.f[j] * b.f[j];
 
     return d;
   }
 
+  #pragma forceinline recursive
   inline v4float clear_bits( const v4int &m, const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = ( ~m.i[j] ) & a.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float set_bits( const v4int &m, const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = m.i[j] | a.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline v4float toggle_bits( const v4int &m, const v4float &a )
   {
     v4float b;
 
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       b.i[j] = m.i[j] ^ a.i[j];
 
     return b;
   }
 
+  #pragma forceinline recursive
   inline void increment_4x1( float * ALIGNED(16) p, const v4float &a )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       p[j] += a.f[j];
   }
 
+  #pragma forceinline recursive
   inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       p[j] -= a.f[j];
   }
 
+  #pragma forceinline recursive
   inline void scale_4x1( float * ALIGNED(16) p, const v4float &a )
   {
+    #pragma omp simd
     for( int j = 0; j < 4; j++ )
       p[j] *= a.f[j];
   }
 
+  #pragma forceinline recursive
   inline void trilinear( v4float & wl, v4float & wh )
   {
     float x = wl.f[0], y = wl.f[1], z = wl.f[2];

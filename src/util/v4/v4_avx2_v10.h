@@ -361,7 +361,8 @@ namespace v4
     ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
 
-  inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
+  inline void store_4x4_tr( const v4 &a, const v4 &b,
+			    const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
   {
@@ -552,9 +553,11 @@ namespace v4
   inline v4int operator !( const v4int & a )
   {
     v4int b;
+
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       b.i[j] = -(!a.i[j]);
+
     return b;
   }
 

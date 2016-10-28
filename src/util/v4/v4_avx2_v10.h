@@ -15,7 +15,9 @@
 #define ALIGNED(n)
 #endif
 
-#define ALWAYS_VECTORIZE #pragma omp simd
+// #define ALWAYS_VECTORIZE #pragma omp simd
+
+#define ALWAYS_VECTORIZE _Pragma( "omp simd" )
 
 #define ALWAYS_VECTORIZE_CPP _Pragma( "omp simd" )
 

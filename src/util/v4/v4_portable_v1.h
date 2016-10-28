@@ -14,9 +14,7 @@
 #define ALIGNED(n)
 #endif
 
-#define ALWAYS_VECTORIZE #pragma omp simd
-
-#define ALWAYS_VECTORIZE_CPP _Pragma( "omp simd" )
+#define ALWAYS_VECTORIZE _Pragma( "omp simd" )
 
 namespace v4
 {
@@ -501,7 +499,7 @@ namespace v4
 #   define ASSIGN(op)			          \
     inline v4int &operator op( const v4int &b )   \
     {						  \
-      ALWAYS_VECTORIZE_CPP                        \
+      ALWAYS_VECTORIZE                            \
       for( int j = 0; j < 4; j++ )                \
         i[j] op b.i[j];                           \
       return *this;                               \
@@ -540,7 +538,7 @@ namespace v4
   inline v4int operator op( const v4int & a )   \
   {						\
     v4int b;                                    \
-    ALWAYS_VECTORIZE_CPP                        \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
       b.i[j] = (op a.i[j]);                     \
     return b;                                   \
@@ -568,7 +566,7 @@ namespace v4
   inline v4int operator op( v4int & a )         \
   {						\
     v4int b;                                    \
-    ALWAYS_VECTORIZE_CPP                        \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
       b.i[j] = (op a.i[j]);                     \
     return b;                                   \
@@ -585,7 +583,7 @@ namespace v4
   inline v4int operator op( v4int & a, int )   \
   {					       \
     v4int b;                                   \
-    ALWAYS_VECTORIZE_CPP                       \
+    ALWAYS_VECTORIZE                           \
     for( int j = 0; j < 4; j++ )               \
       b.i[j] = (a.i[j] op);                    \
     return b;                                  \
@@ -602,7 +600,7 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {								\
     v4int c;                                                    \
-    ALWAYS_VECTORIZE_CPP                                        \
+    ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 4; j++ )                                \
       c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
@@ -627,7 +625,7 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {							       \
     v4int c;                                                   \
-    ALWAYS_VECTORIZE_CPP                                       \
+    ALWAYS_VECTORIZE                                           \
     for( int j = 0; j < 4; j++ )                               \
       c.i[j] = -(a.i[j] op b.i[j]);                            \
     return c;                                                  \
@@ -808,7 +806,7 @@ namespace v4
 #   define ASSIGN(op)                                   \
     inline v4float &operator op( const v4float &b )     \
     {							\
-      ALWAYS_VECTORIZE_CPP                              \
+      ALWAYS_VECTORIZE                                  \
       for( int j = 0; j < 4; j++ )                      \
         f[j] op b.f[j];		             		\
       return *this;                                     \
@@ -924,7 +922,7 @@ namespace v4
   inline v4float operator op( const v4float &a, const v4float &b )   \
   {								     \
     v4float c;                                                       \
-    ALWAYS_VECTORIZE_CPP                                             \
+    ALWAYS_VECTORIZE                                                 \
     for( int j = 0; j < 4; j++ )                                     \
       c.f[j] = a.f[j] op b.f[j];                                     \
     return c;                                                        \
@@ -943,7 +941,7 @@ namespace v4
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {								   \
     v4int c;                                                       \
-    ALWAYS_VECTORIZE_CPP                                           \
+    ALWAYS_VECTORIZE                                               \
     for( int j = 0; j < 4; j++ )                                   \
       c.i[j] = - ( a.f[j] op b.f[j] );                             \
     return c;                                                      \
@@ -966,7 +964,7 @@ namespace v4
   inline v4float fn( const v4float &a )         \
   {						\
     v4float b;                                  \
-    ALWAYS_VECTORIZE_CPP                        \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
       b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
@@ -976,7 +974,7 @@ namespace v4
   inline v4float fn( const v4float &a, const v4float &b )       \
   {								\
     v4float c;                                                  \
-    ALWAYS_VECTORIZE_CPP                                        \
+    ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 4; j++ )                                \
       c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \

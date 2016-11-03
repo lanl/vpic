@@ -14,6 +14,8 @@
 #define ALIGNED(n)
 #endif
 
+#define ALWAYS_VECTORIZE _Pragma( "omp simd" )
+
 namespace v8
 {
   class v8;
@@ -163,6 +165,7 @@ namespace v8
 
     v8( const v8 &a )          // Copy constructor
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	i[j] = a.i[j];
     }
@@ -189,6 +192,7 @@ namespace v8
   {
     v8 b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = a.i[n];
 
@@ -216,6 +220,7 @@ namespace v8
 
   inline void swap( v8 &a, v8 &b )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       sw( a.i[j], b.i[j] );
   }
@@ -239,6 +244,7 @@ namespace v8
   inline void load_8x1( const void * ALIGNED(16) p,
 			v8 &a )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       a.i[j] = ((const int * ALIGNED(16))p)[j];
   }
@@ -246,6 +252,7 @@ namespace v8
   inline void store_8x1( const v8 &a,
 			 void * ALIGNED(16) p )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       ((int * ALIGNED(16))p)[j] = a.i[j];
   }
@@ -253,12 +260,14 @@ namespace v8
   inline void stream_8x1( const v8 &a,
 			  void * ALIGNED(16) p )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       ((int * ALIGNED(16))p)[j] = a.i[j];
   }
 
   inline void clear_8x1( void * ALIGNED(16) p )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       ((int * ALIGNED(16))p)[j] = 0;
   }
@@ -267,6 +276,7 @@ namespace v8
   inline void copy_8x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       ((int * ALIGNED(16))dst)[j] = ((const int * ALIGNED(16))src)[j];
   }
@@ -276,6 +286,7 @@ namespace v8
   {
     int t;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
     {
       t = ((int * ALIGNED(16))a)[j];
@@ -810,18 +821,21 @@ namespace v8
 
     v8int( const v8int &a )                   // Copy constructor
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	i[j] = a.i[j];
     }
 
     v8int( const v8 &a )                      // Init from mixed
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	i[j] = a.i[j];
     }
 
     v8int( int a )                            // Init from scalar
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	i[j] = a;
     }
@@ -840,6 +854,7 @@ namespace v8
 #   define ASSIGN(op)			          \
     inline v8int &operator op( const v8int &b )   \
     {						  \
+      ALWAYS_VECTORIZE                            \
       for( int j = 0; j < 8; j++ )                \
         i[j] op b.i[j];                           \
       return *this;                               \
@@ -878,6 +893,7 @@ namespace v8
   inline v8int operator op( const v8int & a )   \
   {						\
     v8int b;                                    \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 8; j++ )                \
       b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
@@ -890,6 +906,7 @@ namespace v8
   {
     v8int b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = - ( !a.i[j] );
 
@@ -906,6 +923,7 @@ namespace v8
   inline v8int operator op( v8int & a )         \
   {						\
     v8int b;                                    \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 8; j++ )                \
       b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
@@ -922,6 +940,7 @@ namespace v8
   inline v8int operator op( v8int & a, int )   \
   {					       \
     v8int b;                                   \
+    ALWAYS_VECTORIZE                           \
     for( int j = 0; j < 8; j++ )               \
       b.i[j] = ( a.i[j] op );                  \
     return b;                                  \
@@ -938,6 +957,7 @@ namespace v8
   inline v8int operator op( const v8int &a, const v8int &b )    \
   {								\
     v8int c;                                                    \
+    ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 8; j++ )                                \
       c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
@@ -962,6 +982,7 @@ namespace v8
   inline v8int operator op( const v8int &a, const v8int &b )   \
   {							       \
     v8int c;                                                   \
+    ALWAYS_VECTORIZE                                           \
     for( int j = 0; j < 8; j++ )                               \
       c.i[j] = - ( a.i[j] op b.i[j] );                         \
     return c;                                                  \
@@ -984,6 +1005,7 @@ namespace v8
   {
     v8int b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
 
@@ -994,6 +1016,7 @@ namespace v8
   {
     v8 b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = a.i[j] & ~c.i[j];
 
@@ -1004,6 +1027,7 @@ namespace v8
   {
     v8 b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = a.i[j] & c.i[j];
 
@@ -1014,6 +1038,7 @@ namespace v8
   {
     v8 m;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
@@ -1102,18 +1127,21 @@ namespace v8
 
     v8float( const v8float &a )                         // Copy constructor
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	f[j] = a.f[j];
     }
 
     v8float( const v8 &a )                              // Init from mixed
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	f[j] = a.f[j];
     }
 
     v8float( float a )                                  // Init from scalar
     {
+      ALWAYS_VECTORIZE
       for( int j = 0; j < 8; j++ )
 	f[j] = a;
     }
@@ -1132,6 +1160,7 @@ namespace v8
 #   define ASSIGN(op)                                   \
     inline v8float &operator op( const v8float &b )     \
     {							\
+      ALWAYS_VECTORIZE                                  \
       for( int j = 0; j < 8; j++ )                      \
         f[j] op b.f[j];		             		\
       return *this;                                     \
@@ -1164,6 +1193,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = +a.f[j];
 
@@ -1174,6 +1204,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = -a.f[j];
 
@@ -1184,6 +1215,7 @@ namespace v8
   {
     v8int b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = a.i[j] ? 0 : -1;
 
@@ -1196,6 +1228,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = ++a.f[j];
 
@@ -1206,6 +1239,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = --a.f[j];
 
@@ -1218,6 +1252,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = a.f[j]++;
 
@@ -1228,6 +1263,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = a.f[j]--;
 
@@ -1240,6 +1276,7 @@ namespace v8
   inline v8float operator op( const v8float &a, const v8float &b )   \
   {								     \
     v8float c;                                                       \
+    ALWAYS_VECTORIZE                                                 \
     for( int j = 0; j < 8; j++ )                                     \
       c.f[j] = a.f[j] op b.f[j];                                     \
     return c;                                                        \
@@ -1258,6 +1295,7 @@ namespace v8
   inline v8int operator op( const v8float &a, const v8float &b )   \
   {								   \
     v8int c;                                                       \
+    ALWAYS_VECTORIZE                                               \
     for( int j = 0; j < 8; j++ )                                   \
       c.i[j] = - ( a.f[j] op b.f[j] );                             \
     return c;                                                      \
@@ -1280,6 +1318,7 @@ namespace v8
   inline v8float fn( const v8float &a )         \
   {						\
     v8float b;                                  \
+    ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 8; j++ )                \
       b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
@@ -1289,6 +1328,7 @@ namespace v8
   inline v8float fn( const v8float &a, const v8float &b )       \
   {								\
     v8float c;                                                  \
+    ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 8; j++ )                                \
       c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \
@@ -1305,6 +1345,7 @@ namespace v8
     v8float c;
     float t;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
     {
       t = ::fabs( a.f[j] );
@@ -1324,6 +1365,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
@@ -1334,6 +1376,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
@@ -1344,6 +1387,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = 1.0f / a.f[j];
 
@@ -1354,6 +1398,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.f[j] = 1.0f / a.f[j];
 
@@ -1364,6 +1409,7 @@ namespace v8
   {
     v8float d;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       d.f[j] = a.f[j] * b.f[j] + c.f[j];
 
@@ -1374,6 +1420,7 @@ namespace v8
   {
     v8float d;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       d.f[j] = a.f[j] * b.f[j] - c.f[j];
 
@@ -1384,6 +1431,7 @@ namespace v8
   {
     v8float d;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       d.f[j] = c.f[j] - a.f[j] * b.f[j];
 
@@ -1394,6 +1442,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = ( ~m.i[j] ) & a.i[j];
 
@@ -1404,6 +1453,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = m.i[j] | a.i[j];
 
@@ -1414,6 +1464,7 @@ namespace v8
   {
     v8float b;
 
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       b.i[j] = m.i[j] ^ a.i[j];
 
@@ -1422,18 +1473,21 @@ namespace v8
 
   inline void increment_8x1( float * ALIGNED(16) p, const v8float &a )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       p[j] += a.f[j];
   }
 
   inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       p[j] -= a.f[j];
   }
 
   inline void scale_8x1( float * ALIGNED(16) p, const v8float &a )
   {
+    ALWAYS_VECTORIZE
     for( int j = 0; j < 8; j++ )
       p[j] *= a.f[j];
   }

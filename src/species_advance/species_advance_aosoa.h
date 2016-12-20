@@ -1,7 +1,7 @@
 #ifndef _species_advance_aosoa_h_
 #define _species_advance_aosoa_h_
 
-enum { PARTICLE_BLOCK_SIZE = 64 };
+enum { PARTICLE_BLOCK_SIZE = 16 };
 
 typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 

@@ -774,7 +774,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
 
-  if ( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
+  if ( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
 
   pm   = args->pm + itmp;
   nm   = 0;
@@ -1542,7 +1542,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
 
-  if ( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
+  if ( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
 
   pm   = args->pm + itmp;
   nm   = 0;
@@ -2185,7 +2185,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
 
-  if ( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
+  if ( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
 
   pm   = args->pm + itmp;
   nm   = 0;

@@ -66,7 +66,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   max_nm = args->max_nm - (args->np&15);
   if( max_nm<0 ) max_nm = 0;
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
-  if( pipeline_rank==n_pipeline ) max_nm = args->max_nm - itmp;
+  if( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
   pm   = args->pm + itmp;
   nm   = 0;
   itmp = 0;

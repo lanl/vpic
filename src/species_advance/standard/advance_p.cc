@@ -15,8 +15,8 @@
 #endif
 
 //----------------------------------------------------------------------------//
-// Reference implementation for an advance_p pipeline function  which does
-// not make use of explicit calls to vector intrinsic functions.
+// Reference implementation for an advance_p pipeline function which does not
+// make use of explicit calls to vector intrinsic functions.
 //----------------------------------------------------------------------------//
 
 void

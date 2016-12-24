@@ -9,8 +9,8 @@
 
 #include "spa_private.h"
 
-#if defined(VPIC_USE_VTUNE)
 // Use this for Intel and VTune.
+#if defined(VPIC_USE_VTUNE)
 #include "ittnotify.h"
 #endif
 

@@ -2236,7 +2236,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 		   haz, v06, v07, v08, cbx, v09, cby, v10 );
 
     //--------------------------------------------------------------------------
-    // Process particle block a.
+    // Process particles for block a.
     //--------------------------------------------------------------------------
     hax = qdt_2mc*
           fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );

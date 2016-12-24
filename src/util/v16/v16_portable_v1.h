@@ -385,7 +385,7 @@ namespace v16
     return b;
   }
 
-  template<int i00, int i01, int i02, int i03, int i04, int i05, int i06, int i07, int i08, int i09, int i10, int i11, int i12, int i13, int i14, int i16>
+  template<int i00, int i01, int i02, int i03, int i04, int i05, int i06, int i07, int i08, int i09, int i10, int i11, int i12, int i13, int i14, int i15>
   inline v16 shuffle( const v16 & a )
   {
     v16 b;

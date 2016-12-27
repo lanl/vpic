@@ -147,6 +147,10 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 	       haz, v06, v07, v08, cbx, v09, cby, v10 );
     transpose( hax, v00, v01, v02, hay, v03, v04, v05,
 	       haz, v06, v07, v08, cbx, v09, cby, v10 );
+    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
+	       haz, v06, v07, v08, cbx, v09, cby, v10 );
+    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
+	       haz, v06, v07, v08, cbx, v09, cby, v10 );
     // #endif
 
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );

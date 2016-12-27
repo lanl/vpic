@@ -108,9 +108,9 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     transpose( hax, v00, v01, v02 );
     transpose( hax, v00, v01, v02 );
     transpose( hax, v00, v01, v02 );
+    transpose( hax, v00, v01, v02 );
+    transpose( hax, v00, v01, v02 );
     #if 0
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
     #endif
 
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );

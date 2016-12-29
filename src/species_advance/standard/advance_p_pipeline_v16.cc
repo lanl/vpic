@@ -178,11 +178,18 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Load interpolation data for particles, final.
     //--------------------------------------------------------------------------
-    load_16x2_tr( vp00+16, vp01+16, vp02+16, vp03+16,
-		  vp04+16, vp05+16, vp06+16, vp07+16,
-		  vp08+16, vp09+16, vp10+16, vp11+16,
-		  vp12+16, vp13+16, vp14+16, vp15+16,
-		  cbz, v05 );
+    // load_16x2_tr( vp00+16, vp01+16, vp02+16, vp03+16,
+    //               vp04+16, vp05+16, vp06+16, vp07+16,
+    //               vp08+16, vp09+16, vp10+16, vp11+16,
+    //               vp12+16, vp13+16, vp14+16, vp15+16,
+    //               cbz, v05 );
+
+    load_16x16_tr( vp00, vp01, vp02, vp03,
+		   vp04, vp05, vp06, vp07,
+		   vp08, vp09, vp10, vp11,
+		   vp12, vp13, vp14, vp15,
+		   cbz, v05, v00, v01, v02, v03, v04, v06,
+		   v07, v08, v09, v10, v11, v12, v13, v14 );
 
     cbz = fma( v05, dz, cbz );
 

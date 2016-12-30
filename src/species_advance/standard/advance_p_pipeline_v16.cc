@@ -134,21 +134,22 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
-    // load_16x16_tr( vp00, vp01, vp02, vp03,
-    //                vp04, vp05, vp06, vp07,
-    //                vp08, vp09, vp10, vp11,
-    //                vp12, vp13, vp14, vp15,
-    //                hax, v00, v01, v02, hay, v03, v04, v05,
-    //                haz, v06, v07, v08, cbx, v09, cby, v10 );
+    load_16x16_tr( vp00, vp01, vp02, vp03,
+                   vp04, vp05, vp06, vp07,
+                   vp08, vp09, vp10, vp11,
+                   vp12, vp13, vp14, vp15,
+                   hax, v00, v01, v02, hay, v03, v04, v05,
+                   haz, v06, v07, v08, cbx, v09, cby, v10 );
 
-    // std::cout << "world_rank: " << world_rank
-    // 	      << " pipeline_rank: " << pipeline_rank
-    // 	      << " n_pipeline: " << n_pipeline
-    // 	      << std::endl;
-
+    //--------------------------------------------------------------------------
+    // Experiment to explore broadcast of data elements to vectors when all 16
+    // particles are in the same cell.
+    //--------------------------------------------------------------------------
     // Perhaps a better way would be to broadcast ii(0) into all the elements
     // of an ii_tmp simd vector, do a simd compare and then a simd reduction
     // to a single int value.  But for now, use the brute force approach.
+    //--------------------------------------------------------------------------
+    #if 0
     if ( ii( 1) == ii(0) && ii( 2) == ii(0) && ii( 3) == ii(0) &&
 	 ii( 4) == ii(0) && ii( 5) == ii(0) && ii( 6) == ii(0) &&
 	 ii( 7) == ii(0) && ii( 8) == ii(0) && ii( 9) == ii(0) &&
@@ -170,6 +171,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
                      hax, v00, v01, v02, hay, v03, v04, v05,
                      haz, v06, v07, v08, cbx, v09, cby, v10 );
     }
+    #endif
 
     //--------------------------------------------------------------------------
     // Experiment to understand cost of transposing data.
@@ -216,13 +218,22 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //               vp12+16, vp13+16, vp14+16, vp15+16,
     //               cbz, v05 );
 
-    // load_16x16_tr( vp00+16, vp01+16, vp02+16, vp03+16,
-    //                vp04+16, vp05+16, vp06+16, vp07+16,
-    //                vp08+16, vp09+16, vp10+16, vp11+16,
-    //                vp12+16, vp13+16, vp14+16, vp15+16,
-    //                cbz, v05, v00, v01, v02, v03, v04, v06,
-    //                v07, v08, v09, v10, v11, v12, v13, v14 );
+    load_16x16_tr( vp00+16, vp01+16, vp02+16, vp03+16,
+                   vp04+16, vp05+16, vp06+16, vp07+16,
+                   vp08+16, vp09+16, vp10+16, vp11+16,
+                   vp12+16, vp13+16, vp14+16, vp15+16,
+                   cbz, v05, v00, v01, v02, v03, v04, v06,
+                   v07, v08, v09, v10, v11, v12, v13, v14 );
 
+    //--------------------------------------------------------------------------
+    // Experiment to explore broadcast of data elements to vectors when all 16
+    // particles are in the same cell.
+    //--------------------------------------------------------------------------
+    // Perhaps a better way would be to broadcast ii(0) into all the elements
+    // of an ii_tmp simd vector, do a simd compare and then a simd reduction
+    // to a single int value.  But for now, use the brute force approach.
+    //--------------------------------------------------------------------------
+    #if 0
     if ( ii( 1) == ii(0) && ii( 2) == ii(0) && ii( 3) == ii(0) &&
 	 ii( 4) == ii(0) && ii( 5) == ii(0) && ii( 6) == ii(0) &&
 	 ii( 7) == ii(0) && ii( 8) == ii(0) && ii( 9) == ii(0) &&
@@ -241,6 +252,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
                      cbz, v05, v00, v01, v02, v03, v04, v06,
                      v07, v08, v09, v10, v11, v12, v13, v14 );
     }
+    #endif
 
     cbz = fma( v05, dz, cbz );
 

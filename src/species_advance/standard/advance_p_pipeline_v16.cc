@@ -139,6 +139,11 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //                hax, v00, v01, v02, hay, v03, v04, v05,
     //                haz, v06, v07, v08, cbx, v09, cby, v10 );
 
+    std::cout << "world_rank: " << world_rank
+	      << " pipeline_rank: " << pileline_rank
+	      << " n_pipeline: " << n_pileline
+	      << std::endl;
+
     // Perhaps a better way would be to broadcast ii(0) into all the elements
     // of an ii_tmp simd vector, do a simd compare and then a simd reduction
     // to a single int value.  But for now, use the brute force approach.

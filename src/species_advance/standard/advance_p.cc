@@ -14,6 +14,8 @@
 #include "ittnotify.h"
 #endif
 
+#include <iostream>
+
 //----------------------------------------------------------------------------//
 // Reference implementation for an advance_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.

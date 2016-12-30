@@ -100,6 +100,8 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   // Process the particle blocks for this pipeline.
 
+  int num_load_16x16_tr = 0;
+  int num_load_16x16_bc = 0;
   for( ; nq; nq--, p+=16 )
   {
     //--------------------------------------------------------------------------
@@ -139,10 +141,10 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //                hax, v00, v01, v02, hay, v03, v04, v05,
     //                haz, v06, v07, v08, cbx, v09, cby, v10 );
 
-    std::cout << "world_rank: " << world_rank
-	      << " pipeline_rank: " << pipeline_rank
-	      << " n_pipeline: " << n_pipeline
-	      << std::endl;
+    // std::cout << "world_rank: " << world_rank
+    // 	      << " pipeline_rank: " << pipeline_rank
+    // 	      << " n_pipeline: " << n_pipeline
+    // 	      << std::endl;
 
     // Perhaps a better way would be to broadcast ii(0) into all the elements
     // of an ii_tmp simd vector, do a simd compare and then a simd reduction
@@ -153,12 +155,14 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 	 ii(10) == ii(0) && ii(11) == ii(0) && ii(12) == ii(0) &&
 	 ii(13) == ii(0) && ii(14) == ii(0) && ii(15) == ii(0) )
     {
+      num_load_16x16_bc++;
       load_16x16_bc( vp00,
                      hax, v00, v01, v02, hay, v03, v04, v05,
                      haz, v06, v07, v08, cbx, v09, cby, v10 );
     }
     else
     {
+      num_load_16x16_tr++;
       load_16x16_tr( vp00, vp01, vp02, vp03,
                      vp04, vp05, vp06, vp07,
                      vp08, vp09, vp10, vp11,
@@ -471,6 +475,15 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     MOVE_OUTBND(15);
 
 #   undef MOVE_OUTBND
+  }
+
+  if ( world_rank == 17 && pipeline_rank == 0 )
+  {
+    std::cout << "world_rank: " << world_rank
+	      << "   pipeline_rank: " << pipeline_rank
+	      << "   num_load_16x16_tr: " << num_load_16x16_tr
+	      << "   num_load_16x16_bc: " << num_load_16x16_bc
+	      << std::flush << std::endl;
   }
 
   args->seg[pipeline_rank].pm        = pm;

@@ -100,6 +100,23 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   // Process the particle blocks for this pipeline.
 
+  int num_ii_ne_00 = 0;
+  int num_ii_ne_01 = 0;
+  int num_ii_ne_02 = 0;
+  int num_ii_ne_03 = 0;
+  int num_ii_ne_04 = 0;
+  int num_ii_ne_05 = 0;
+  int num_ii_ne_06 = 0;
+  int num_ii_ne_07 = 0;
+  int num_ii_ne_08 = 0;
+  int num_ii_ne_09 = 0;
+  int num_ii_ne_10 = 0;
+  int num_ii_ne_11 = 0;
+  int num_ii_ne_12 = 0;
+  int num_ii_ne_13 = 0;
+  int num_ii_ne_14 = 0;
+  int num_ii_ne_15 = 0;
+
   int num_load_16x16_tr = 0;
   int num_load_16x16_bc = 0;
   for( ; nq; nq--, p+=16 )
@@ -110,6 +127,54 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     load_16x8_tr_p( &p[ 0].dx, &p[ 2].dx, &p[ 4].dx, &p[ 6].dx,
                     &p[ 8].dx, &p[10].dx, &p[12].dx, &p[14].dx,
 		    dx, dy, dz, ii, ux, uy, uz, q );
+
+    //--------------------------------------------------------------------------
+    // Experiment to understand how many particles are in the same cell.
+    //--------------------------------------------------------------------------
+    v16int ii_tmp( ii[0] ), ii_eq, ii_ne;
+    ii_eq = ii == ii_tmp;
+    ii_ne = ii != ii_tmp;
+
+    int ii_ne_sum = 0;
+    for( int j=0; j < 16; j++ )
+    {
+      ii_ne_sum += ii_ne[j];
+    }
+
+    if ( ii_ne_sum == 0 )
+      num_ii_ne_00++;
+    else if ( ii_ne_sum == 1 )
+      num_ii_ne_01++;
+    else if ( ii_ne_sum == 2 )
+      num_ii_ne_02++;
+    else if ( ii_ne_sum == 3 )
+      num_ii_ne_03++;
+    else if ( ii_ne_sum == 4 )
+      num_ii_ne_04++;
+    else if ( ii_ne_sum == 5 )
+      num_ii_ne_05++;
+    else if ( ii_ne_sum == 6 )
+      num_ii_ne_06++;
+    else if ( ii_ne_sum == 7 )
+      num_ii_ne_07++;
+    else if ( ii_ne_sum == 8 )
+      num_ii_ne_08++;
+    else if ( ii_ne_sum == 9 )
+      num_ii_ne_09++;
+    else if ( ii_ne_sum == 10 )
+      num_ii_ne_10++;
+    else if ( ii_ne_sum == 11 )
+      num_ii_ne_11++;
+    else if ( ii_ne_sum == 12 )
+      num_ii_ne_12++;
+    else if ( ii_ne_sum == 13 )
+      num_ii_ne_13++;
+    else if ( ii_ne_sum == 14 )
+      num_ii_ne_14++;
+    else if ( ii_ne_sum == 15 )
+      num_ii_ne_15++;
+    else
+      throw( "ii_ne_sum not adding up properly." );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -493,9 +558,29 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   {
     std::cout << "world_rank: " << world_rank
 	      << "   pipeline_rank: " << pipeline_rank
-	      << "   num_load_16x16_tr: " << num_load_16x16_tr
-	      << "   num_load_16x16_bc: " << num_load_16x16_bc
+	      << "   num_ii_ne_00: " << num_ii_ne_00
+	      << "   num_ii_ne_01: " << num_ii_ne_01
+	      << "   num_ii_ne_02: " << num_ii_ne_02
+	      << "   num_ii_ne_03: " << num_ii_ne_03
+	      << "   num_ii_ne_04: " << num_ii_ne_04
+	      << "   num_ii_ne_05: " << num_ii_ne_05
+	      << "   num_ii_ne_06: " << num_ii_ne_06
+	      << "   num_ii_ne_07: " << num_ii_ne_07
+	      << "   num_ii_ne_08: " << num_ii_ne_08
+	      << "   num_ii_ne_09: " << num_ii_ne_09
+	      << "   num_ii_ne_10: " << num_ii_ne_10
+	      << "   num_ii_ne_11: " << num_ii_ne_11
+	      << "   num_ii_ne_12: " << num_ii_ne_12
+	      << "   num_ii_ne_13: " << num_ii_ne_13
+	      << "   num_ii_ne_14: " << num_ii_ne_14
+	      << "   num_ii_ne_15: " << num_ii_ne_15
 	      << std::flush << std::endl;
+
+    // std::cout << "world_rank: " << world_rank
+    // 	      << "   pipeline_rank: " << pipeline_rank
+    // 	      << "   num_load_16x16_tr: " << num_load_16x16_tr
+    // 	      << "   num_load_16x16_bc: " << num_load_16x16_bc
+    // 	      << std::flush << std::endl;
   }
 
   args->seg[pipeline_rank].pm        = pm;

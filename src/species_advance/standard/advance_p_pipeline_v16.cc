@@ -140,8 +140,8 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //                haz, v06, v07, v08, cbx, v09, cby, v10 );
 
     std::cout << "world_rank: " << world_rank
-	      << " pipeline_rank: " << pileline_rank
-	      << " n_pipeline: " << n_pileline
+	      << " pipeline_rank: " << pipeline_rank
+	      << " n_pipeline: " << n_pipeline
 	      << std::endl;
 
     // Perhaps a better way would be to broadcast ii(0) into all the elements

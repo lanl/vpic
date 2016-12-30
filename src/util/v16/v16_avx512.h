@@ -91,6 +91,8 @@ namespace v16
 				     const void * ALIGNED(8) a14,
 				     const void * ALIGNED(8) a15,
 				     v16 &a, v16 &b );
+    friend inline void load_16x2_bc( const void * ALIGNED(8) a00,
+				     v16 &a, v16 &b );
     friend inline void load_16x3_tr( const void * ALIGNED(64) a00,
 				     const void * ALIGNED(64) a01,
 				     const void * ALIGNED(64) a02,
@@ -159,6 +161,11 @@ namespace v16
 				      const void * ALIGNED(64) a13,
 				      const void * ALIGNED(64) a14,
 				      const void * ALIGNED(64) a15,
+				      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
+				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
+				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+    friend inline void load_16x16_bc( const void * ALIGNED(64) a00,
 				      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
 				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
@@ -681,6 +688,17 @@ namespace v16
 
     a.i[15] = ((const int * ALIGNED(8))a15)[0];
     b.i[15] = ((const int * ALIGNED(8))a15)[1];
+  }
+
+  inline void load_16x2_bc( const void * ALIGNED(64) a00,
+                            v16 &b00, v16 &b01 )
+  {
+    __m512 t00;
+
+    t00 = _mm512_load_ps( (const float *)a00 );
+
+    b00.v = _mm512_set1_ps( t00[0] );
+    b01.v = _mm512_set1_ps( t00[1] );
   }
 
   inline void load_16x3_tr( const void * ALIGNED(64) a00,
@@ -1729,6 +1747,34 @@ namespace v16
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
 #endif
+
+  inline void load_16x16_bc( const void * ALIGNED(64) a00,
+			     v16 &b00, v16 &b01, v16 &b02, v16 &b03,
+			     v16 &b04, v16 &b05, v16 &b06, v16 &b07,
+			     v16 &b08, v16 &b09, v16 &b10, v16 &b11,
+			     v16 &b12, v16 &b13, v16 &b14, v16 &b15 )
+  {
+    __m512 t00;
+
+    t00 = _mm512_load_ps( (const float *)a00 );
+
+    b00.v = _mm512_set1_ps( t00[ 0] );
+    b01.v = _mm512_set1_ps( t00[ 1] );
+    b02.v = _mm512_set1_ps( t00[ 2] );
+    b03.v = _mm512_set1_ps( t00[ 3] );
+    b04.v = _mm512_set1_ps( t00[ 4] );
+    b05.v = _mm512_set1_ps( t00[ 5] );
+    b06.v = _mm512_set1_ps( t00[ 6] );
+    b07.v = _mm512_set1_ps( t00[ 7] );
+    b08.v = _mm512_set1_ps( t00[ 8] );
+    b09.v = _mm512_set1_ps( t00[ 9] );
+    b10.v = _mm512_set1_ps( t00[10] );
+    b11.v = _mm512_set1_ps( t00[11] );
+    b12.v = _mm512_set1_ps( t00[12] );
+    b13.v = _mm512_set1_ps( t00[13] );
+    b14.v = _mm512_set1_ps( t00[14] );
+    b15.v = _mm512_set1_ps( t00[15] );
+  }
 
   // Try to minimize use of temporaries to minimize use of vector registers.
   // This seems like a wonderful example of obfuscation.  I wonder if the

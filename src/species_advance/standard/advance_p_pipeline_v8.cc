@@ -79,6 +79,17 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Process the particle blocks for this pipeline.
 
+  int num_ii_ne_00 = 0;
+  int num_ii_ne_01 = 0;
+  int num_ii_ne_02 = 0;
+  int num_ii_ne_03 = 0;
+  int num_ii_ne_04 = 0;
+  int num_ii_ne_05 = 0;
+  int num_ii_ne_06 = 0;
+  int num_ii_ne_07 = 0;
+
+  int num_load_8x8_tr = 0;
+  int num_load_8x8_bc = 0;
   for( ; nq; nq--, p+=8 )
   {
     //--------------------------------------------------------------------------
@@ -87,6 +98,42 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		 dx, dy, dz, ii, ux, uy, uz, q );
+
+    //--------------------------------------------------------------------------
+    // Experiment to understand how many particles are in the same cell.
+    //--------------------------------------------------------------------------
+    #if 0
+    v8int ii_tmp( ii[0] ), ii_eq, ii_ne;
+    ii_eq = ii == ii_tmp;
+    ii_ne = ii != ii_tmp;
+
+    int ii_ne_sum = 0;
+    for( int j=0; j < 8; j++ )
+    {
+      ii_ne_sum -= ii_ne[j];
+    }
+
+    if ( ii_ne_sum == 0 )
+      num_ii_ne_00++;
+    else if ( ii_ne_sum == 1 )
+      num_ii_ne_01++;
+    else if ( ii_ne_sum == 2 )
+      num_ii_ne_02++;
+    else if ( ii_ne_sum == 3 )
+      num_ii_ne_03++;
+    else if ( ii_ne_sum == 4 )
+      num_ii_ne_04++;
+    else if ( ii_ne_sum == 5 )
+      num_ii_ne_05++;
+    else if ( ii_ne_sum == 6 )
+      num_ii_ne_06++;
+    else if ( ii_ne_sum == 7 )
+      num_ii_ne_07++;
+    else
+    {
+      throw( "ii_ne_sum not adding up properly." );
+    }
+    #endif
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -383,6 +430,27 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     MOVE_OUTBND( 7);
 
 #   undef MOVE_OUTBND
+  }
+
+  if ( world_rank == 3 && pipeline_rank == 0 )
+  {
+    std::cout << "world_rank: " << world_rank
+	      << "   pipeline_rank: " << pipeline_rank
+	      << "   num_ii_ne_00: " << num_ii_ne_00
+	      << "   num_ii_ne_01: " << num_ii_ne_01
+	      << "   num_ii_ne_02: " << num_ii_ne_02
+	      << "   num_ii_ne_03: " << num_ii_ne_03
+	      << "   num_ii_ne_04: " << num_ii_ne_04
+	      << "   num_ii_ne_05: " << num_ii_ne_05
+	      << "   num_ii_ne_06: " << num_ii_ne_06
+	      << "   num_ii_ne_07: " << num_ii_ne_07
+	      << std::flush << std::endl;
+
+    // std::cout << "world_rank: " << world_rank
+    // 	      << "   pipeline_rank: " << pipeline_rank
+    // 	      << "   num_load_8x8_tr: " << num_load_8x8_tr
+    // 	      << "   num_load_8x8_bc: " << num_load_8x8_bc
+    // 	      << std::flush << std::endl;
   }
 
   args->seg[pipeline_rank].pm        = pm;

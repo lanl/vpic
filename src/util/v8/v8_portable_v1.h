@@ -5,16 +5,28 @@
 #error "Do not include v8_portable.h directly; use v8.h"
 #endif
 
+#include <math.h>
+
 #define V8_ACCELERATION
 #define V8_PORTABLE_ACCELERATION
-
-#include <math.h>
 
 #ifndef ALIGNED
 #define ALIGNED(n)
 #endif
 
-#define ALWAYS_VECTORIZE _Pragma( "omp simd" )
+// This does not work with gcc 5.3.1 and the -fopenmp-simd
+// flag.  Does not seem to work with -fopenmp either.  Not
+// sure why.  It does work with the Intel compiler.  Need
+// to try later versions of gcc.
+// #define ALWAYS_VECTORIZE _Pragma( "omp simd" )
+
+// #define ALWAYS_VECTORIZE _Pragma( "simd" )
+
+#define ALWAYS_VECTORIZE \
+  _Pragma( "simd" ) \
+  _Pragma( "vector aligned" )
+
+#define ALWAYS_INLINE __attribute__((always_inline))
 
 namespace v8
 {
@@ -32,34 +44,34 @@ namespace v8
 
     // v8 miscellaneous friends
 
-    friend inline int any( const v8 &a );
-    friend inline int all( const v8 &a );
+    friend inline int any( const v8 &a ) ALWAYS_INLINE;
+    friend inline int all( const v8 &a ) ALWAYS_INLINE;
 
     template<int n>
-    friend inline v8 splat( const v8 &a );
+    friend inline v8 splat( const v8 &a ) ALWAYS_INLINE;
 
     template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7>
-    friend inline v8 shuffle( const v8 &a );
+    friend inline v8 shuffle( const v8 &a ) ALWAYS_INLINE;
 
-    friend inline void swap( v8 &a, v8 &b );
+    friend inline void swap( v8 &a, v8 &b ) ALWAYS_INLINE;
     friend inline void transpose( v8 &a0, v8 &a1, v8 &a2, v8 &a3,
-				  v8 &a4, v8 &a5, v8 &a6, v8 &a7 );
+				  v8 &a4, v8 &a5, v8 &a6, v8 &a7 ) ALWAYS_INLINE;
 
     // v8int miscellaneous friends
 
-    friend inline v8 czero(    const v8int &c, const v8 &a );
-    friend inline v8 notczero( const v8int &c, const v8 &a );
-    friend inline v8 merge(    const v8int &c, const v8 &a, const v8 &b );
+    friend inline v8    czero( const v8int &c, const v8 &a ) ALWAYS_INLINE;
+    friend inline v8 notczero( const v8int &c, const v8 &a ) ALWAYS_INLINE;
+    friend inline v8 merge( const v8int &c, const v8 &a, const v8 &b ) ALWAYS_INLINE;
 
     // v8 memory manipulation friends
 
-    friend inline void   load_8x1( const void * ALIGNED(16) p, v8 &a );
-    friend inline void  store_8x1( const v8 &a, void * ALIGNED(16) p );
-    friend inline void stream_8x1( const v8 &a, void * ALIGNED(16) p );
-    friend inline void  clear_8x1( void * ALIGNED(16) dst );
+    friend inline void   load_8x1( const void * ALIGNED(16) p, v8 &a ) ALWAYS_INLINE;
+    friend inline void  store_8x1( const v8 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void stream_8x1( const v8 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void  clear_8x1( void * ALIGNED(16) dst ) ALWAYS_INLINE;
     friend inline void   copy_8x1( void * ALIGNED(16) dst,
-                                   const void * ALIGNED(16) src );
-    friend inline void   swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
+                                   const void * ALIGNED(16) src ) ALWAYS_INLINE;
+    friend inline void   swap_8x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) ALWAYS_INLINE;
 
     // v8 transposed memory manipulation friends
     // Note: Half aligned values are permissible in the 8x2_tr variants.
@@ -68,7 +80,8 @@ namespace v8
                                     const void *a2, const void *a3,
 				    const void *a4, const void *a5,
                                     const void *a6, const void *a7,
-                                    v8 &a );
+                                    v8 &a ) ALWAYS_INLINE;
+
     friend inline void load_8x2_tr( const void * ALIGNED(8) a0,
                                     const void * ALIGNED(8) a1,
                                     const void * ALIGNED(8) a2,
@@ -77,7 +90,8 @@ namespace v8
                                     const void * ALIGNED(8) a5,
                                     const void * ALIGNED(8) a6,
                                     const void * ALIGNED(8) a7,
-                                    v8 &a, v8 &b );
+                                    v8 &a, v8 &b ) ALWAYS_INLINE;
+
     friend inline void load_8x3_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -86,7 +100,8 @@ namespace v8
                                     const void * ALIGNED(16) a5,
                                     const void * ALIGNED(16) a6,
                                     const void * ALIGNED(16) a7,
-                                    v8 &a, v8 &b, v8 &c );
+                                    v8 &a, v8 &b, v8 &c ) ALWAYS_INLINE;
+
     friend inline void load_8x4_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -95,7 +110,8 @@ namespace v8
                                     const void * ALIGNED(16) a5,
                                     const void * ALIGNED(16) a6,
                                     const void * ALIGNED(16) a7,
-                                    v8 &a, v8 &b, v8 &c, v8 &d );
+                                    v8 &a, v8 &b, v8 &c, v8 &d ) ALWAYS_INLINE;
+
     friend inline void load_8x8_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
@@ -105,11 +121,12 @@ namespace v8
                                     const void * ALIGNED(16) a6,
                                     const void * ALIGNED(16) a7,
                                     v8 &a, v8 &b, v8 &c, v8 &d,
-                                    v8 &e, v8 &f, v8 &g, v8 &h );
+                                    v8 &e, v8 &f, v8 &g, v8 &h ) ALWAYS_INLINE;
 
     friend inline void store_8x1_tr( const v8 &a,
                                      void *a0, void *a1, void *a2, void *a3,
-                                     void *a4, void *a5, void *a6, void *a7 );
+                                     void *a4, void *a5, void *a6, void *a7 ) ALWAYS_INLINE;
+
     friend inline void store_8x2_tr( const v8 &a, const v8 &b,
                                      void * ALIGNED(8) a0,
                                      void * ALIGNED(8) a1,
@@ -118,7 +135,8 @@ namespace v8
                                      void * ALIGNED(8) a4,
                                      void * ALIGNED(8) a5,
                                      void * ALIGNED(8) a6,
-                                     void * ALIGNED(8) a7 );
+                                     void * ALIGNED(8) a7 ) ALWAYS_INLINE;
+
     friend inline void store_8x3_tr( const v8 &a, const v8 &b, const v8 &c,
                                      void * ALIGNED(16) a0,
                                      void * ALIGNED(16) a1,
@@ -127,7 +145,8 @@ namespace v8
                                      void * ALIGNED(16) a4,
                                      void * ALIGNED(16) a5,
                                      void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
+                                     void * ALIGNED(16) a7 ) ALWAYS_INLINE;
+
     friend inline void store_8x4_tr( const v8 &a, const v8 &b,
                                      const v8 &c, const v8 &d,
                                      void * ALIGNED(16) a0,
@@ -137,7 +156,8 @@ namespace v8
                                      void * ALIGNED(16) a4,
                                      void * ALIGNED(16) a5,
                                      void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
+                                     void * ALIGNED(16) a7 ) ALWAYS_INLINE;
+
     friend inline void store_8x8_tr( const v8 &a, const v8 &b,
                                      const v8 &c, const v8 &d,
                                      const v8 &e, const v8 &f,
@@ -149,7 +169,7 @@ namespace v8
                                      void * ALIGNED(16) a4,
                                      void * ALIGNED(16) a5,
                                      void * ALIGNED(16) a6,
-                                     void * ALIGNED(16) a7 );
+                                     void * ALIGNED(16) a7 ) ALWAYS_INLINE;
 
   protected:
 
@@ -744,74 +764,74 @@ namespace v8
   {
     // v8int prefix unary operator friends
 
-    friend inline v8int operator  +( const v8int & a );
-    friend inline v8int operator  -( const v8int & a );
-    friend inline v8int operator  ~( const v8int & a );
-    friend inline v8int operator  !( const v8int & a );
+    friend inline v8int operator  +( const v8int & a ) ALWAYS_INLINE;
+    friend inline v8int operator  -( const v8int & a ) ALWAYS_INLINE;
+    friend inline v8int operator  ~( const v8int & a ) ALWAYS_INLINE;
+    friend inline v8int operator  !( const v8int & a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v8int prefix increment / decrement operator friends
 
-    friend inline v8int operator ++( v8int & a );
-    friend inline v8int operator --( v8int & a );
+    friend inline v8int operator ++( v8int & a ) ALWAYS_INLINE;
+    friend inline v8int operator --( v8int & a ) ALWAYS_INLINE;
 
     // v8int postfix increment / decrement operator friends
 
-    friend inline v8int operator ++( v8int & a, int );
-    friend inline v8int operator --( v8int & a, int );
+    friend inline v8int operator ++( v8int & a, int ) ALWAYS_INLINE;
+    friend inline v8int operator --( v8int & a, int ) ALWAYS_INLINE;
 
     // v8int binary operator friends
 
-    friend inline v8int operator  +( const v8int &a, const v8int &b );
-    friend inline v8int operator  -( const v8int &a, const v8int &b );
-    friend inline v8int operator  *( const v8int &a, const v8int &b );
-    friend inline v8int operator  /( const v8int &a, const v8int &b );
-    friend inline v8int operator  %( const v8int &a, const v8int &b );
-    friend inline v8int operator  ^( const v8int &a, const v8int &b );
-    friend inline v8int operator  &( const v8int &a, const v8int &b );
-    friend inline v8int operator  |( const v8int &a, const v8int &b );
-    friend inline v8int operator <<( const v8int &a, const v8int &b );
-    friend inline v8int operator >>( const v8int &a, const v8int &b );
+    friend inline v8int operator  +( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  -( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  *( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  /( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  %( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  ^( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  &( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  |( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator <<( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator >>( const v8int &a, const v8int &b ) ALWAYS_INLINE;
 
     // v8int logical operator friends
 
-    friend inline v8int operator  <( const v8int &a, const v8int &b );
-    friend inline v8int operator  >( const v8int &a, const v8int &b );
-    friend inline v8int operator ==( const v8int &a, const v8int &b );
-    friend inline v8int operator !=( const v8int &a, const v8int &b );
-    friend inline v8int operator <=( const v8int &a, const v8int &b );
-    friend inline v8int operator >=( const v8int &a, const v8int &b );
-    friend inline v8int operator &&( const v8int &a, const v8int &b );
-    friend inline v8int operator ||( const v8int &a, const v8int &b );
+    friend inline v8int operator  <( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator  >( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator ==( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator !=( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator <=( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator >=( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator &&( const v8int &a, const v8int &b ) ALWAYS_INLINE;
+    friend inline v8int operator ||( const v8int &a, const v8int &b ) ALWAYS_INLINE;
 
     // v8int miscellaneous friends
 
-    friend inline v8int abs( const v8int &a );
-    friend inline v8    czero( const v8int &c, const v8 &a );
-    friend inline v8 notczero( const v8int &c, const v8 &a );
+    friend inline v8int abs( const v8int &a ) ALWAYS_INLINE;
+    friend inline v8    czero( const v8int &c, const v8 &a ) ALWAYS_INLINE;
+    friend inline v8 notczero( const v8int &c, const v8 &a ) ALWAYS_INLINE;
     // FIXME: cswap, notcswap!
-    friend inline v8 merge( const v8int &c, const v8 &t, const v8 &f );
+    friend inline v8 merge( const v8int &c, const v8 &t, const v8 &f ) ALWAYS_INLINE;
 
     // v8float unary operator friends
 
-    friend inline v8int operator  !( const v8float & a );
+    friend inline v8int operator  !( const v8float & a ) ALWAYS_INLINE;
 
     // v8float logical operator friends
 
-    friend inline v8int operator  <( const v8float &a, const v8float &b );
-    friend inline v8int operator  >( const v8float &a, const v8float &b );
-    friend inline v8int operator ==( const v8float &a, const v8float &b );
-    friend inline v8int operator !=( const v8float &a, const v8float &b );
-    friend inline v8int operator <=( const v8float &a, const v8float &b );
-    friend inline v8int operator >=( const v8float &a, const v8float &b );
-    friend inline v8int operator &&( const v8float &a, const v8float &b );
-    friend inline v8int operator ||( const v8float &a, const v8float &b );
+    friend inline v8int operator  <( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator  >( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator ==( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator !=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator <=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator >=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator &&( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator ||( const v8float &a, const v8float &b ) ALWAYS_INLINE;
 
     // v8float miscellaneous friends
 
-    friend inline v8float clear_bits(  const v8int &m, const v8float &a );
-    friend inline v8float set_bits(    const v8int &m, const v8float &a );
-    friend inline v8float toggle_bits( const v8int &m, const v8float &a );
+    friend inline v8float  clear_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float    set_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float toggle_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
 
   public:
 
@@ -840,11 +860,17 @@ namespace v8
 	i[j] = a;
     }
 
-    v8int( int i0, int i1, int i2, int i3,
-	   int i4, int i5, int i6, int i7 )   // Init from scalars
+    v8int( int i0, int i1, int i2, int i3,    // Init from scalars
+	   int i4, int i5, int i6, int i7 )
     {
-      i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
-      i[4] = i4; i[5] = i5; i[6] = i6; i[7] = i7;
+      i[0] = i0;
+      i[1] = i1;
+      i[2] = i2;
+      i[3] = i3;
+      i[4] = i4;
+      i[5] = i5;
+      i[6] = i6;
+      i[7] = i7;
     }
 
     ~v8int() {}                               // Destructor
@@ -1052,45 +1078,45 @@ namespace v8
   {
     // v8float prefix unary operator friends
 
-    friend inline v8float operator  +( const v8float &a );
-    friend inline v8float operator  -( const v8float &a );
-    friend inline v8float operator  ~( const v8float &a );
-    friend inline v8int   operator  !( const v8float &a );
+    friend inline v8float operator  +( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float operator  -( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float operator  ~( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8int   operator  !( const v8float &a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v8float prefix increment / decrement operator friends
 
-    friend inline v8float operator ++( v8float &a );
-    friend inline v8float operator --( v8float &a );
+    friend inline v8float operator ++( v8float &a ) ALWAYS_INLINE;
+    friend inline v8float operator --( v8float &a ) ALWAYS_INLINE;
 
     // v8float postfix increment / decrement operator friends
 
-    friend inline v8float operator ++( v8float &a, int );
-    friend inline v8float operator --( v8float &a, int );
+    friend inline v8float operator ++( v8float &a, int ) ALWAYS_INLINE;
+    friend inline v8float operator --( v8float &a, int ) ALWAYS_INLINE;
 
     // v8float binary operator friends
 
-    friend inline v8float operator  +( const v8float &a, const v8float &b );
-    friend inline v8float operator  -( const v8float &a, const v8float &b );
-    friend inline v8float operator  *( const v8float &a, const v8float &b );
-    friend inline v8float operator  /( const v8float &a, const v8float &b );
+    friend inline v8float operator  +( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8float operator  -( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8float operator  *( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8float operator  /( const v8float &a, const v8float &b ) ALWAYS_INLINE;
 
     // v8float logical operator friends
 
-    friend inline v8int operator  <( const v8float &a, const v8float &b );
-    friend inline v8int operator  >( const v8float &a, const v8float &b );
-    friend inline v8int operator ==( const v8float &a, const v8float &b );
-    friend inline v8int operator !=( const v8float &a, const v8float &b );
-    friend inline v8int operator <=( const v8float &a, const v8float &b );
-    friend inline v8int operator >=( const v8float &a, const v8float &b );
-    friend inline v8int operator &&( const v8float &a, const v8float &b );
-    friend inline v8int operator ||( const v8float &a, const v8float &b );
+    friend inline v8int operator  <( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator  >( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator ==( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator !=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator <=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator >=( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator &&( const v8float &a, const v8float &b ) ALWAYS_INLINE;
+    friend inline v8int operator ||( const v8float &a, const v8float &b ) ALWAYS_INLINE;
 
     // v8float math library friends
 
-#   define CMATH_FR1(fn) friend inline v8float fn( const v8float &a )
+#   define CMATH_FR1(fn) friend inline v8float fn( const v8float &a ) ALWAYS_INLINE
 #   define CMATH_FR2(fn) friend inline v8float fn( const v8float &a,  \
-                                                   const v8float &b )
+                                                   const v8float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -1105,19 +1131,19 @@ namespace v8
 
     // v8float miscellaneous friends
 
-    friend inline v8float rsqrt_approx( const v8float &a );
-    friend inline v8float rsqrt       ( const v8float &a );
-    friend inline v8float rcp_approx( const v8float &a );
-    friend inline v8float rcp       ( const v8float &a );
-    friend inline v8float fma ( const v8float &a, const v8float &b, const v8float &c );
-    friend inline v8float fms ( const v8float &a, const v8float &b, const v8float &c );
-    friend inline v8float fnms( const v8float &a, const v8float &b, const v8float &c );
-    friend inline v8float  clear_bits( const v8int &m, const v8float &a );
-    friend inline v8float    set_bits( const v8int &m, const v8float &a );
-    friend inline v8float toggle_bits( const v8int &m, const v8float &a );
-    friend inline void increment_8x1( float * ALIGNED(16) p, const v8float &a );
-    friend inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a );
-    friend inline void     scale_8x1( float * ALIGNED(16) p, const v8float &a );
+    friend inline v8float rsqrt_approx( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float rsqrt       ( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float rcp_approx( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float rcp       ( const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float fma ( const v8float &a, const v8float &b, const v8float &c ) ALWAYS_INLINE;
+    friend inline v8float fms ( const v8float &a, const v8float &b, const v8float &c ) ALWAYS_INLINE;
+    friend inline v8float fnms( const v8float &a, const v8float &b, const v8float &c ) ALWAYS_INLINE;
+    friend inline v8float  clear_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float    set_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
+    friend inline v8float toggle_bits( const v8int &m, const v8float &a ) ALWAYS_INLINE;
+    friend inline void increment_8x1( float * ALIGNED(16) p, const v8float &a ) ALWAYS_INLINE;
+    friend inline void decrement_8x1( float * ALIGNED(16) p, const v8float &a ) ALWAYS_INLINE;
+    friend inline void     scale_8x1( float * ALIGNED(16) p, const v8float &a ) ALWAYS_INLINE;
 
   public:
 

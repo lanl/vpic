@@ -7,14 +7,15 @@
 #include "spa_private.h"
 
 //----------------------------------------------------------------------------//
-// Reference implementation for an center_p pipeline function  which does not
+// Reference implementation for a center_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.
 //----------------------------------------------------------------------------//
 
 void
 center_p_pipeline( center_p_pipeline_args_t * args,
                    int pipeline_rank,
-                   int n_pipeline ) {
+                   int n_pipeline )
+{
   const interpolator_t * ALIGNED(128) f0 = args->f0;
 
   particle_t           * ALIGNED(32)  p;
@@ -29,17 +30,19 @@ center_p_pipeline( center_p_pipeline_args_t * args,
   float dx, dy, dz, ux, uy, uz;
   float hax, hay, haz, cbx, cby, cbz;
   float v0, v1, v2, v3, v4;
+  int   ii;
 
-  int first, ii, n;
+  int first, n;
 
-  // Determine which particle quads this pipeline processes
+  // Determine which particles this pipeline processes
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, first, n );
   p = args->p0 + first;
 
   // Process particles for this pipeline
 
-  for(;n;n--,p++) {
+  for(;n;n--,p++)
+  {
     dx   = p->dx;                            // Load position
     dy   = p->dy;
     dz   = p->dz;
@@ -116,7 +119,8 @@ center_p_pipeline( center_p_pipeline_args_t * args,
 
 void
 center_p( /**/  species_t            * RESTRICT sp,
-          const interpolator_array_t * RESTRICT ia ) {
+          const interpolator_array_t * RESTRICT ia )
+{
   DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
   if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));

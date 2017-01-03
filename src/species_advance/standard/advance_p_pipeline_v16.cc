@@ -138,7 +138,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     int ii_ne_sum = 0;
     for( int j=0; j < 16; j++ )
     {
-      ii_ne_sum += ii_ne[j];
+      ii_ne_sum -= ii_ne[j];
     }
 
     if ( ii_ne_sum == 0 )
@@ -554,7 +554,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 #   undef MOVE_OUTBND
   }
 
-  if ( world_rank == 17 && pipeline_rank == 0 )
+  if ( world_rank == 3 && pipeline_rank == 0 )
   {
     std::cout << "world_rank: " << world_rank
 	      << "   pipeline_rank: " << pipeline_rank

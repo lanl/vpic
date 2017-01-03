@@ -5,23 +5,17 @@
 #error "Do not include v4_avx2.h directly; use v4.h"
 #endif
 
-#define V4_ACCELERATION
-#define V4_AVX2_ACCELERATION
-
 #include <immintrin.h>
 #include <math.h>
+
+#define V4_ACCELERATION
+#define V4_AVX2_ACCELERATION
 
 #ifndef ALIGNED
 #define ALIGNED(n)
 #endif
 
-// FIXME: IN PORTABLE, ALTIVEC, SPU
-// - UPDATE V4INT, V4FLOAT
-
-// This requires gcc-3.3 and up
-// Also, Bug 12902 has not been resolved on gcc-3.x.x. See README.patches for
-// details.  gcc-4.x.x does not seem to have this bug but may suffer from
-// other problems (use "-fno-strict-aliasing" on these platforms)
+#define ALWAYS_INLINE __attribute__((always_inline))
 
 namespace v4
 {
@@ -45,77 +39,83 @@ namespace v4
     friend class v4int;
     friend class v4float;
 
-    // v4 miscellenous friends
+    // v4 miscellaneous friends
 
-    friend inline int any( const v4 &a );
-    friend inline int all( const v4 &a );
+    friend inline int any( const v4 &a ) ALWAYS_INLINE;
+    friend inline int all( const v4 &a ) ALWAYS_INLINE;
 
     template<int n>
-    friend inline v4 splat( const v4 &a );
+    friend inline v4 splat( const v4 &a ) ALWAYS_INLINE;
 
     template<int i0, int i1, int i2, int i3>
-    friend inline v4 shuffle( const v4 &a );
+    friend inline v4 shuffle( const v4 &a ) ALWAYS_INLINE;
 
-    friend inline void swap( v4 &a, v4 &b );
-    friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
+    friend inline void swap( v4 &a, v4 &b ) ALWAYS_INLINE;
+    friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 ) ALWAYS_INLINE;
 
     // v4int miscellaneous friends
 
-    friend inline v4    czero( const v4int &c, const v4 &a );
-    friend inline v4 notczero( const v4int &c, const v4 &a );
-    friend inline v4 merge( const v4int &c, const v4 &a, const v4 &b );
+    friend inline v4    czero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
+    friend inline v4 notczero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
+    friend inline v4 merge( const v4int &c, const v4 &a, const v4 &b ) ALWAYS_INLINE;
 
     // v4 memory manipulation friends
 
-    friend inline void   load_4x1( const void * ALIGNED(16) p, v4 &a );
-    friend inline void  store_4x1( const v4 &a, void * ALIGNED(16) p );
-    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
-    friend inline void  clear_4x1( void * ALIGNED(16) dst );
+    friend inline void   load_4x1( const void * ALIGNED(16) p, v4 &a ) ALWAYS_INLINE;
+    friend inline void  store_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void  clear_4x1( void * ALIGNED(16) dst ) ALWAYS_INLINE;
     friend inline void   copy_4x1( void * ALIGNED(16) dst,
-                                   const void * ALIGNED(16) src );
-    friend inline void   swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b );
+                                   const void * ALIGNED(16) src ) ALWAYS_INLINE;
+    friend inline void   swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) ALWAYS_INLINE;
 
     // v4 transposed memory manipulation friends
 
     friend inline void load_4x1_tr( const void *a0, const void *a1,
                                     const void *a2, const void *a3,
-                                    v4 &a );
+                                    v4 &a ) ALWAYS_INLINE;
+
     friend inline void load_4x2_tr( const void * ALIGNED(8) a0,
                                     const void * ALIGNED(8) a1,
                                     const void * ALIGNED(8) a2,
                                     const void * ALIGNED(8) a3,
-                                    v4 &a, v4 &b );
+                                    v4 &a, v4 &b ) ALWAYS_INLINE;
+
     friend inline void load_4x3_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
-                                    v4 &a, v4 &b, v4 &c );
+                                    v4 &a, v4 &b, v4 &c ) ALWAYS_INLINE;
+
     friend inline void load_4x4_tr( const void * ALIGNED(16) a0,
                                     const void * ALIGNED(16) a1,
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
-                                    v4 &a, v4 &b, v4 &c, v4 &d );
+                                    v4 &a, v4 &b, v4 &c, v4 &d ) ALWAYS_INLINE;
+
     friend inline void store_4x1_tr( const v4 &a,
-                                     void *a0, void *a1, void *a2, void *a3 );
+                                     void *a0, void *a1, void *a2, void *a3 ) ALWAYS_INLINE;
+
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
                                      void * ALIGNED(8) a0,
                                      void * ALIGNED(8) a1,
                                      void * ALIGNED(8) a2,
-                                     void * ALIGNED(8) a3 );
+                                     void * ALIGNED(8) a3 ) ALWAYS_INLINE;
+
     friend inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
                                      void * ALIGNED(16) a0,
                                      void * ALIGNED(16) a1,
                                      void * ALIGNED(16) a2,
-                                     void * ALIGNED(16) a3 );
+                                     void * ALIGNED(16) a3 ) ALWAYS_INLINE;
+
     friend inline void store_4x4_tr( const v4 &a, const v4 &b,
                                      const v4 &c, const v4 &d,
                                      void * ALIGNED(16) a0,
                                      void * ALIGNED(16) a1,
                                      void * ALIGNED(16) a2,
-                                     void * ALIGNED(16) a3 );
+                                     void * ALIGNED(16) a3 ) ALWAYS_INLINE;
 
   protected:
-  public:
 
     union
     {
@@ -148,7 +148,6 @@ namespace v4
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
 
-  // Note: n MUST BE AN IMMEDIATE.
   template<int n>
   inline v4 splat( const v4 & a )
   {
@@ -160,7 +159,6 @@ namespace v4
     return b;
   }
 
-  // Note: i0:3 MUST BE IMMEDIATES.
   template<int i0, int i1, int i2, int i3>
   inline v4 shuffle( const v4 & a )
   {
@@ -477,74 +475,74 @@ namespace v4
   {
     // v4int prefix unary operator friends
 
-    friend inline v4int operator  +( const v4int & a );
-    friend inline v4int operator  -( const v4int & a );
-    friend inline v4int operator  ~( const v4int & a );
-    friend inline v4int operator  !( const v4int & a );
+    friend inline v4int operator  +( const v4int & a ) ALWAYS_INLINE;
+    friend inline v4int operator  -( const v4int & a ) ALWAYS_INLINE;
+    friend inline v4int operator  ~( const v4int & a ) ALWAYS_INLINE;
+    friend inline v4int operator  !( const v4int & a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v4int prefix increment / decrement operator friends
 
-    friend inline v4int operator ++( v4int & a );
-    friend inline v4int operator --( v4int & a );
+    friend inline v4int operator ++( v4int & a ) ALWAYS_INLINE;
+    friend inline v4int operator --( v4int & a ) ALWAYS_INLINE;
 
     // v4int postfix increment / decrement operator friends
 
-    friend inline v4int operator ++( v4int & a, int );
-    friend inline v4int operator --( v4int & a, int );
+    friend inline v4int operator ++( v4int & a, int ) ALWAYS_INLINE;
+    friend inline v4int operator --( v4int & a, int ) ALWAYS_INLINE;
 
     // v4int binary operator friends
 
-    friend inline v4int operator  +( const v4int &a, const v4int &b );
-    friend inline v4int operator  -( const v4int &a, const v4int &b );
-    friend inline v4int operator  *( const v4int &a, const v4int &b );
-    friend inline v4int operator  /( const v4int &a, const v4int &b );
-    friend inline v4int operator  %( const v4int &a, const v4int &b );
-    friend inline v4int operator  ^( const v4int &a, const v4int &b );
-    friend inline v4int operator  &( const v4int &a, const v4int &b );
-    friend inline v4int operator  |( const v4int &a, const v4int &b );
-    friend inline v4int operator <<( const v4int &a, const v4int &b );
-    friend inline v4int operator >>( const v4int &a, const v4int &b );
+    friend inline v4int operator  +( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  -( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  *( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  /( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  %( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  ^( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  &( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  |( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator <<( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator >>( const v4int &a, const v4int &b ) ALWAYS_INLINE;
 
     // v4int logical operator friends
 
-    friend inline v4int operator  <( const v4int &a, const v4int &b );
-    friend inline v4int operator  >( const v4int &a, const v4int &b );
-    friend inline v4int operator ==( const v4int &a, const v4int &b );
-    friend inline v4int operator !=( const v4int &a, const v4int &b );
-    friend inline v4int operator <=( const v4int &a, const v4int &b );
-    friend inline v4int operator >=( const v4int &a, const v4int &b );
-    friend inline v4int operator &&( const v4int &a, const v4int &b );
-    friend inline v4int operator ||( const v4int &a, const v4int &b );
+    friend inline v4int operator  <( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator  >( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator ==( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator !=( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator <=( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator >=( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator &&( const v4int &a, const v4int &b ) ALWAYS_INLINE;
+    friend inline v4int operator ||( const v4int &a, const v4int &b ) ALWAYS_INLINE;
 
     // v4int miscellaneous friends
 
-    friend inline v4int abs( const v4int &a );
-    friend inline v4    czero( const v4int &c, const v4 &a );
-    friend inline v4 notczero( const v4int &c, const v4 &a );
+    friend inline v4int abs( const v4int &a ) ALWAYS_INLINE;
+    friend inline v4    czero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
+    friend inline v4 notczero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
     // FIXME: cswap, notcswap!
-    friend inline v4 merge( const v4int &c, const v4 &t, const v4 &f );
+    friend inline v4 merge( const v4int &c, const v4 &t, const v4 &f ) ALWAYS_INLINE;
 
     // v4float unary operator friends
 
-    friend inline v4int operator  !( const v4float & a ); 
+    friend inline v4int operator  !( const v4float & a ) ALWAYS_INLINE;
 
     // v4float logical operator friends
 
-    friend inline v4int operator  <( const v4float &a, const v4float &b );
-    friend inline v4int operator  >( const v4float &a, const v4float &b );
-    friend inline v4int operator ==( const v4float &a, const v4float &b );
-    friend inline v4int operator !=( const v4float &a, const v4float &b );
-    friend inline v4int operator <=( const v4float &a, const v4float &b );
-    friend inline v4int operator >=( const v4float &a, const v4float &b );
-    friend inline v4int operator &&( const v4float &a, const v4float &b );
-    friend inline v4int operator ||( const v4float &a, const v4float &b );
+    friend inline v4int operator  <( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator  >( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator ==( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator !=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator <=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator >=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator &&( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator ||( const v4float &a, const v4float &b ) ALWAYS_INLINE;
 
     // v4float miscellaneous friends
 
-    friend inline v4float  clear_bits( const v4int &m, const v4float &a );
-    friend inline v4float    set_bits( const v4int &m, const v4float &a );
-    friend inline v4float toggle_bits( const v4int &m, const v4float &a );
+    friend inline v4float  clear_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float    set_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float toggle_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
 
   public:
 
@@ -590,7 +588,7 @@ namespace v4
       v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
     }
 
-    ~v4int() {};                              // Destructor
+    ~v4int() {}                               // Destructor
 
     // v4int assignment operators
 
@@ -871,45 +869,45 @@ namespace v4
   {
     // v4float prefix unary operator friends
 
-    friend inline v4float operator  +( const v4float &a );
-    friend inline v4float operator  -( const v4float &a );
-    friend inline v4float operator  ~( const v4float &a );
-    friend inline v4int   operator  !( const v4float &a );
+    friend inline v4float operator  +( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float operator  -( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float operator  ~( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4int   operator  !( const v4float &a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v4float prefix increment / decrement operator friends
 
-    friend inline v4float operator ++( v4float &a );
-    friend inline v4float operator --( v4float &a );
+    friend inline v4float operator ++( v4float &a ) ALWAYS_INLINE;
+    friend inline v4float operator --( v4float &a ) ALWAYS_INLINE;
 
     // v4float postfix increment / decrement operator friends
 
-    friend inline v4float operator ++( v4float &a, int );
-    friend inline v4float operator --( v4float &a, int );
+    friend inline v4float operator ++( v4float &a, int ) ALWAYS_INLINE;
+    friend inline v4float operator --( v4float &a, int ) ALWAYS_INLINE;
 
     // v4float binary operator friends
 
-    friend inline v4float operator  +( const v4float &a, const v4float &b );
-    friend inline v4float operator  -( const v4float &a, const v4float &b );
-    friend inline v4float operator  *( const v4float &a, const v4float &b );
-    friend inline v4float operator  /( const v4float &a, const v4float &b );
+    friend inline v4float operator  +( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4float operator  -( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4float operator  *( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4float operator  /( const v4float &a, const v4float &b ) ALWAYS_INLINE;
 
     // v4float logical operator friends
 
-    friend inline v4int operator  <( const v4float &a, const v4float &b );
-    friend inline v4int operator  >( const v4float &a, const v4float &b );
-    friend inline v4int operator ==( const v4float &a, const v4float &b );
-    friend inline v4int operator !=( const v4float &a, const v4float &b );
-    friend inline v4int operator <=( const v4float &a, const v4float &b );
-    friend inline v4int operator >=( const v4float &a, const v4float &b );
-    friend inline v4int operator &&( const v4float &a, const v4float &b );
-    friend inline v4int operator ||( const v4float &a, const v4float &b );
+    friend inline v4int operator  <( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator  >( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator ==( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator !=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator <=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator >=( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator &&( const v4float &a, const v4float &b ) ALWAYS_INLINE;
+    friend inline v4int operator ||( const v4float &a, const v4float &b ) ALWAYS_INLINE;
 
     // v4float math library friends
 
-#   define CMATH_FR1(fn) friend inline v4float fn( const v4float &a )
+#   define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
 #   define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
-                                                   const v4float &b )
+                                                   const v4float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -924,21 +922,20 @@ namespace v4
 
     // v4float miscellaneous friends
 
-    friend inline v4float rsqrt_approx( const v4float &a );
-    friend inline v4float rsqrt       ( const v4float &a );
-    friend inline v4float rcp_approx( const v4float &a );
-    friend inline v4float rcp       ( const v4float &a );
-    friend inline v4float fma ( const v4float &a, const v4float &b, const v4float &c );
-    friend inline v4float fms ( const v4float &a, const v4float &b, const v4float &c );
-    friend inline v4float fnms( const v4float &a, const v4float &b, const v4float &c );
-    friend inline v4float  clear_bits( const v4int &m, const v4float &a );
-    friend inline v4float    set_bits( const v4int &m, const v4float &a );
-    friend inline v4float toggle_bits( const v4int &m, const v4float &a );
-    friend inline void increment_4x1( float * ALIGNED(16) p, const v4float &a );
-    friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a );
-    friend inline void     scale_4x1( float * ALIGNED(16) p, const v4float &a );
-    // FIXME: crack
-    friend inline void trilinear( v4float &wl, v4float &wh );
+    friend inline v4float rsqrt_approx( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float rsqrt       ( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float rcp_approx( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float rcp       ( const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float fma ( const v4float &a, const v4float &b, const v4float &c ) ALWAYS_INLINE;
+    friend inline v4float fms ( const v4float &a, const v4float &b, const v4float &c ) ALWAYS_INLINE;
+    friend inline v4float fnms( const v4float &a, const v4float &b, const v4float &c ) ALWAYS_INLINE;
+    friend inline v4float  clear_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float    set_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
+    friend inline v4float toggle_bits( const v4int &m, const v4float &a ) ALWAYS_INLINE;
+    friend inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) ALWAYS_INLINE;
+    friend inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a ) ALWAYS_INLINE;
+    friend inline void     scale_4x1( float * ALIGNED(16) p, const v4float &a ) ALWAYS_INLINE;
+    friend inline void trilinear( v4float &wl, v4float &wh ) ALWAYS_INLINE;
 
   public:
 

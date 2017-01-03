@@ -14,6 +14,8 @@
 #define ALIGNED(n)
 #endif
 
+#define ALWAYS_INLINE __attribute__((always_inline))
+
 namespace v16
 {
   class v16;
@@ -30,36 +32,36 @@ namespace v16
 
     // v16 miscellaneous friends
 
-    friend inline int any( const v16 &a );
-    friend inline int all( const v16 &a );
+    friend inline int any( const v16 &a ) ALWAYS_INLINE;
+    friend inline int all( const v16 &a ) ALWAYS_INLINE;
 
     template<int n>
-    friend inline v16 splat( const v16 &a );
+    friend inline v16 splat( const v16 &a ) ALWAYS_INLINE;
 
     template<int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13, int i14, int i15>
-    friend inline v16 shuffle( const v16 &a );
+    friend inline v16 shuffle( const v16 &a ) ALWAYS_INLINE;
 
-    friend inline void swap( v16 &a, v16 &b );
+    friend inline void swap( v16 &a, v16 &b ) ALWAYS_INLINE;
     friend inline void transpose( v16 &a00, v16 &a01, v16 &a02, v16 &a03,
 				  v16 &a04, v16 &a05, v16 &a06, v16 &a07,
 				  v16 &a08, v16 &a09, v16 &a10, v16 &a11,
-				  v16 &a12, v16 &a13, v16 &a14, v16 &a15 );
+				  v16 &a12, v16 &a13, v16 &a14, v16 &a15 ) ALWAYS_INLINE;
 
     // v16int miscellaneous friends
 
-    friend inline v16    czero( const v16int &c, const v16 &a );
-    friend inline v16 notczero( const v16int &c, const v16 &a );
-    friend inline v16    merge( const v16int &c, const v16 &a, const v16 &b );
+    friend inline v16    czero( const v16int &c, const v16 &a ) ALWAYS_INLINE;
+    friend inline v16 notczero( const v16int &c, const v16 &a ) ALWAYS_INLINE;
+    friend inline v16    merge( const v16int &c, const v16 &a, const v16 &b ) ALWAYS_INLINE;
 
     // v16 memory manipulation friends
 
-    friend inline void   load_16x1( const void * ALIGNED(64) p, v16 &a );
-    friend inline void  store_16x1( const v16 &a, void * ALIGNED(64) p );
-    friend inline void stream_16x1( const v16 &a, void * ALIGNED(64) p );
-    friend inline void  clear_16x1( void * ALIGNED(64) dst );
+    friend inline void   load_16x1( const void * ALIGNED(64) p, v16 &a ) ALWAYS_INLINE;
+    friend inline void  store_16x1( const v16 &a, void * ALIGNED(64) p ) ALWAYS_INLINE;
+    friend inline void stream_16x1( const v16 &a, void * ALIGNED(64) p ) ALWAYS_INLINE;
+    friend inline void  clear_16x1( void * ALIGNED(64) dst ) ALWAYS_INLINE;
     friend inline void   copy_16x1( void * ALIGNED(64) dst,
-				    const void * ALIGNED(64) src );
-    friend inline void   swap_16x1( void * ALIGNED(64) a, void * ALIGNED(64) b );
+				    const void * ALIGNED(64) src ) ALWAYS_INLINE;
+    friend inline void   swap_16x1( void * ALIGNED(64) a, void * ALIGNED(64) b ) ALWAYS_INLINE;
 
     // v16 transposed memory manipulation friends
     // Note: Half aligned values are permissible in the 16x2_tr variants.
@@ -72,7 +74,7 @@ namespace v16
 				     const void *a10, const void *a11,
 				     const void *a12, const void *a13,
 				     const void *a14, const void *a15,
-				     v16 &a );
+				     v16 &a ) ALWAYS_INLINE;
     friend inline void load_16x2_tr( const void * ALIGNED(8) a00,
 				     const void * ALIGNED(8) a01,
 				     const void * ALIGNED(8) a02,
@@ -89,7 +91,7 @@ namespace v16
 				     const void * ALIGNED(8) a13,
 				     const void * ALIGNED(8) a14,
 				     const void * ALIGNED(8) a15,
-				     v16 &a, v16 &b );
+				     v16 &a, v16 &b ) ALWAYS_INLINE;
     friend inline void load_16x3_tr( const void * ALIGNED(64) a00,
 				     const void * ALIGNED(64) a01,
 				     const void * ALIGNED(64) a02,
@@ -106,7 +108,7 @@ namespace v16
 				     const void * ALIGNED(64) a13,
 				     const void * ALIGNED(64) a14,
 				     const void * ALIGNED(64) a15,
-				     v16 &a, v16 &b, v16 &c );
+				     v16 &a, v16 &b, v16 &c ) ALWAYS_INLINE;
     friend inline void load_16x4_tr( const void * ALIGNED(64) a00,
 				     const void * ALIGNED(64) a01,
 				     const void * ALIGNED(64) a02,
@@ -123,7 +125,7 @@ namespace v16
 				     const void * ALIGNED(64) a13,
 				     const void * ALIGNED(64) a14,
 				     const void * ALIGNED(64) a15,
-				     v16 &a, v16 &b, v16 &c, v16 &d );
+				     v16 &a, v16 &b, v16 &c, v16 &d ) ALWAYS_INLINE;
     friend inline void load_16x8_tr( const void * ALIGNED(64) a00,
 				     const void * ALIGNED(64) a01,
 				     const void * ALIGNED(64) a02,
@@ -141,7 +143,7 @@ namespace v16
 				     const void * ALIGNED(64) a14,
 				     const void * ALIGNED(64) a15,
 				     v16 &a, v16 &b, v16 &c, v16 &d,
-				     v16 &e, v16 &f, v16 &g, v16 &h );
+				     v16 &e, v16 &f, v16 &g, v16 &h ) ALWAYS_INLINE;
     friend inline void load_16x16_tr( const void * ALIGNED(64) a00,
 				      const void * ALIGNED(64) a01,
 				      const void * ALIGNED(64) a02,
@@ -161,7 +163,7 @@ namespace v16
 				      v16 &b00, v16 &b01, v16 &b02, v16 &b03,
 				      v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 				      v16 &b08, v16 &b09, v16 &b10, v16 &b11,
-				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+				      v16 &b12, v16 &b13, v16 &b14, v16 &b15 ) ALWAYS_INLINE;
     friend inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
 				       const void * ALIGNED(64) a01,
 				       const void * ALIGNED(64) a02,
@@ -171,7 +173,7 @@ namespace v16
 				       const void * ALIGNED(64) a06,
 				       const void * ALIGNED(64) a07,
 				       v16 &a, v16 &b, v16 &c, v16 &d,
-				       v16 &e, v16 &f, v16 &g, v16 &h );
+				       v16 &e, v16 &f, v16 &g, v16 &h ) ALWAYS_INLINE;
     friend inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 					const void * ALIGNED(64) a01,
 					const void * ALIGNED(64) a02,
@@ -191,13 +193,13 @@ namespace v16
 					v16 &b00, v16 &b01, v16 &b02, v16 &b03,
 					v16 &b04, v16 &b05, v16 &b06, v16 &b07,
 					v16 &b08, v16 &b09, v16 &b10, v16 &b11,
-					v16 &b12, v16 &b13, v16 &b14, v16 &b15 );
+					v16 &b12, v16 &b13, v16 &b14, v16 &b15 ) ALWAYS_INLINE;
 
     friend inline void store_16x1_tr( const v16 &a,
 				      void *a00, void *a01, void *a02, void *a03,
 				      void *a04, void *a05, void *a06, void *a07,
 				      void *a08, void *a09, void *a10, void *a11,
-				      void *a12, void *a13, void *a14, void *a15 );
+				      void *a12, void *a13, void *a14, void *a15 ) ALWAYS_INLINE;
     friend inline void store_16x2_tr( const v16 &a, const v16 &b,
 				      void * ALIGNED(8) a00,
 				      void * ALIGNED(8) a01,
@@ -214,7 +216,7 @@ namespace v16
 				      void * ALIGNED(8) a12,
 				      void * ALIGNED(8) a13,
 				      void * ALIGNED(8) a14,
-				      void * ALIGNED(8) a15 );
+				      void * ALIGNED(8) a15 ) ALWAYS_INLINE;
     friend inline void store_16x3_tr( const v16 &a, const v16 &b, const v16 &c,
 				      void * ALIGNED(64) a00,
 				      void * ALIGNED(64) a01,
@@ -231,7 +233,7 @@ namespace v16
 				      void * ALIGNED(64) a12,
 				      void * ALIGNED(64) a13,
 				      void * ALIGNED(64) a14,
-				      void * ALIGNED(64) a15 );
+				      void * ALIGNED(64) a15 ) ALWAYS_INLINE;
     friend inline void store_16x4_tr( const v16 &a, const v16 &b,
 				      const v16 &c, const v16 &d,
 				      void * ALIGNED(64) a00,
@@ -249,7 +251,7 @@ namespace v16
 				      void * ALIGNED(64) a12,
 				      void * ALIGNED(64) a13,
 				      void * ALIGNED(64) a14,
-				      void * ALIGNED(64) a15 );
+				      void * ALIGNED(64) a15 ) ALWAYS_INLINE;
     friend inline void store_16x8_tr( const v16 &a, const v16 &b,
 				      const v16 &c, const v16 &d,
 				      const v16 &e, const v16 &f,
@@ -269,7 +271,7 @@ namespace v16
 				      void * ALIGNED(64) a12,
 				      void * ALIGNED(64) a13,
 				      void * ALIGNED(64) a14,
-				      void * ALIGNED(64) a15 );
+				      void * ALIGNED(64) a15 ) ALWAYS_INLINE;
     friend inline void store_16x16_tr( const v16 &b00, const v16 &b01,
 				       const v16 &b02, const v16 &b03,
 				       const v16 &b04, const v16 &b05,
@@ -293,7 +295,7 @@ namespace v16
 				       void * ALIGNED(64) a12,
 				       void * ALIGNED(64) a13,
 				       void * ALIGNED(64) a14,
-				       void * ALIGNED(64) a15 );
+				       void * ALIGNED(64) a15 ) ALWAYS_INLINE;
     friend inline void store_16x8_tr_p( const v16 &a, const v16 &b,
 					const v16 &c, const v16 &d,
 					const v16 &e, const v16 &f,
@@ -305,7 +307,7 @@ namespace v16
 					void * ALIGNED(64) a04,
 					void * ALIGNED(64) a05,
 					void * ALIGNED(64) a06,
-					void * ALIGNED(64) a07 );
+					void * ALIGNED(64) a07 ) ALWAYS_INLINE;
     friend inline void store_16x16_tr_p( const v16 &b00, const v16 &b01,
 					 const v16 &b02, const v16 &b03,
 					 const v16 &b04, const v16 &b05,
@@ -329,7 +331,7 @@ namespace v16
 					 void * ALIGNED(64) a12,
 					 void * ALIGNED(64) a13,
 					 void * ALIGNED(64) a14,
-					 void * ALIGNED(64) a15 );
+					 void * ALIGNED(64) a15 ) ALWAYS_INLINE;
 
   protected:
 
@@ -2962,74 +2964,74 @@ namespace v16
   {
     // v16int prefix unary operator friends
 
-    friend inline v16int operator  +( const v16int & a );
-    friend inline v16int operator  -( const v16int & a );
-    friend inline v16int operator  ~( const v16int & a );
-    friend inline v16int operator  !( const v16int & a );
+    friend inline v16int operator  +( const v16int & a ) ALWAYS_INLINE;
+    friend inline v16int operator  -( const v16int & a ) ALWAYS_INLINE;
+    friend inline v16int operator  ~( const v16int & a ) ALWAYS_INLINE;
+    friend inline v16int operator  !( const v16int & a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v16int prefix increment / decrement operator friends
 
-    friend inline v16int operator ++( v16int & a );
-    friend inline v16int operator --( v16int & a );
+    friend inline v16int operator ++( v16int & a ) ALWAYS_INLINE;
+    friend inline v16int operator --( v16int & a ) ALWAYS_INLINE;
 
     // v16int postfix increment / decrement operator friends
 
-    friend inline v16int operator ++( v16int & a, int );
-    friend inline v16int operator --( v16int & a, int );
+    friend inline v16int operator ++( v16int & a, int ) ALWAYS_INLINE;
+    friend inline v16int operator --( v16int & a, int ) ALWAYS_INLINE;
 
     // v16int binary operator friends
 
-    friend inline v16int operator  +( const v16int &a, const v16int &b );
-    friend inline v16int operator  -( const v16int &a, const v16int &b );
-    friend inline v16int operator  *( const v16int &a, const v16int &b );
-    friend inline v16int operator  /( const v16int &a, const v16int &b );
-    friend inline v16int operator  %( const v16int &a, const v16int &b );
-    friend inline v16int operator  ^( const v16int &a, const v16int &b );
-    friend inline v16int operator  &( const v16int &a, const v16int &b );
-    friend inline v16int operator  |( const v16int &a, const v16int &b );
-    friend inline v16int operator <<( const v16int &a, const v16int &b );
-    friend inline v16int operator >>( const v16int &a, const v16int &b );
+    friend inline v16int operator  +( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  -( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  *( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  /( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  %( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  ^( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  &( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  |( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator <<( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator >>( const v16int &a, const v16int &b ) ALWAYS_INLINE;
 
     // v16int logical operator friends
 
-    friend inline v16int operator  <( const v16int &a, const v16int &b );
-    friend inline v16int operator  >( const v16int &a, const v16int &b );
-    friend inline v16int operator ==( const v16int &a, const v16int &b );
-    friend inline v16int operator !=( const v16int &a, const v16int &b );
-    friend inline v16int operator <=( const v16int &a, const v16int &b );
-    friend inline v16int operator >=( const v16int &a, const v16int &b );
-    friend inline v16int operator &&( const v16int &a, const v16int &b );
-    friend inline v16int operator ||( const v16int &a, const v16int &b );
+    friend inline v16int operator  <( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator  >( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator ==( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator !=( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator <=( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator >=( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator &&( const v16int &a, const v16int &b ) ALWAYS_INLINE;
+    friend inline v16int operator ||( const v16int &a, const v16int &b ) ALWAYS_INLINE;
 
     // v16int miscellaneous friends
 
-    friend inline v16int abs( const v16int &a );
-    friend inline v16    czero( const v16int &c, const v16 &a );
-    friend inline v16 notczero( const v16int &c, const v16 &a );
+    friend inline v16int abs( const v16int &a ) ALWAYS_INLINE;
+    friend inline v16    czero( const v16int &c, const v16 &a ) ALWAYS_INLINE;
+    friend inline v16 notczero( const v16int &c, const v16 &a ) ALWAYS_INLINE;
     // FIXME: cswap, notcswap!
-    friend inline v16 merge( const v16int &c, const v16 &t, const v16 &f );
+    friend inline v16 merge( const v16int &c, const v16 &t, const v16 &f ) ALWAYS_INLINE;
 
     // v16float unary operator friends
 
-    friend inline v16int operator  !( const v16float & a );
+    friend inline v16int operator  !( const v16float & a ) ALWAYS_INLINE;
 
     // v16float logical operator friends
 
-    friend inline v16int operator  <( const v16float &a, const v16float &b );
-    friend inline v16int operator  >( const v16float &a, const v16float &b );
-    friend inline v16int operator ==( const v16float &a, const v16float &b );
-    friend inline v16int operator !=( const v16float &a, const v16float &b );
-    friend inline v16int operator <=( const v16float &a, const v16float &b );
-    friend inline v16int operator >=( const v16float &a, const v16float &b );
-    friend inline v16int operator &&( const v16float &a, const v16float &b );
-    friend inline v16int operator ||( const v16float &a, const v16float &b );
+    friend inline v16int operator  <( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator  >( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator ==( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator !=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator <=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator >=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator &&( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator ||( const v16float &a, const v16float &b ) ALWAYS_INLINE;
 
     // v16float miscellaneous friends
 
-    friend inline v16float clear_bits(  const v16int &m, const v16float &a );
-    friend inline v16float set_bits(    const v16int &m, const v16float &a );
-    friend inline v16float toggle_bits( const v16int &m, const v16float &a );
+    friend inline v16float  clear_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float    set_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float toggle_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
 
   public:
 
@@ -3418,45 +3420,45 @@ namespace v16
   {
     // v16float prefix unary operator friends
 
-    friend inline v16float operator  +( const v16float &a );
-    friend inline v16float operator  -( const v16float &a );
-    friend inline v16float operator  ~( const v16float &a );
-    friend inline v16int   operator  !( const v16float &a );
+    friend inline v16float operator  +( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float operator  -( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float operator  ~( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16int   operator  !( const v16float &a ) ALWAYS_INLINE;
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v16float prefix increment / decrement operator friends
 
-    friend inline v16float operator ++( v16float &a );
-    friend inline v16float operator --( v16float &a );
+    friend inline v16float operator ++( v16float &a ) ALWAYS_INLINE;
+    friend inline v16float operator --( v16float &a ) ALWAYS_INLINE;
 
     // v16float postfix increment / decrement operator friends
 
-    friend inline v16float operator ++( v16float &a, int );
-    friend inline v16float operator --( v16float &a, int );
+    friend inline v16float operator ++( v16float &a, int ) ALWAYS_INLINE;
+    friend inline v16float operator --( v16float &a, int ) ALWAYS_INLINE;
 
     // v16float binary operator friends
 
-    friend inline v16float operator  +( const v16float &a, const v16float &b );
-    friend inline v16float operator  -( const v16float &a, const v16float &b );
-    friend inline v16float operator  *( const v16float &a, const v16float &b );
-    friend inline v16float operator  /( const v16float &a, const v16float &b );
+    friend inline v16float operator  +( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16float operator  -( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16float operator  *( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16float operator  /( const v16float &a, const v16float &b ) ALWAYS_INLINE;
 
     // v16float logical operator friends
 
-    friend inline v16int operator  <( const v16float &a, const v16float &b );
-    friend inline v16int operator  >( const v16float &a, const v16float &b );
-    friend inline v16int operator ==( const v16float &a, const v16float &b );
-    friend inline v16int operator !=( const v16float &a, const v16float &b );
-    friend inline v16int operator <=( const v16float &a, const v16float &b );
-    friend inline v16int operator >=( const v16float &a, const v16float &b );
-    friend inline v16int operator &&( const v16float &a, const v16float &b );
-    friend inline v16int operator ||( const v16float &a, const v16float &b );
+    friend inline v16int operator  <( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator  >( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator ==( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator !=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator <=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator >=( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator &&( const v16float &a, const v16float &b ) ALWAYS_INLINE;
+    friend inline v16int operator ||( const v16float &a, const v16float &b ) ALWAYS_INLINE;
 
     // v16float math library friends
 
-#   define CMATH_FR1(fn) friend inline v16float fn( const v16float &a )
+#   define CMATH_FR1(fn) friend inline v16float fn( const v16float &a ) ALWAYS_INLINE
 #   define CMATH_FR2(fn) friend inline v16float fn( const v16float &a,  \
-                                                    const v16float &b )
+                                                    const v16float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -3471,19 +3473,19 @@ namespace v16
 
     // v16float miscellaneous friends
 
-    friend inline v16float rsqrt_approx( const v16float &a );
-    friend inline v16float rsqrt       ( const v16float &a );
-    friend inline v16float rcp_approx( const v16float &a );
-    friend inline v16float rcp       ( const v16float &a );
-    friend inline v16float fma ( const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float fms ( const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float fnms( const v16float &a, const v16float &b, const v16float &c );
-    friend inline v16float  clear_bits( const v16int &m, const v16float &a );
-    friend inline v16float    set_bits( const v16int &m, const v16float &a );
-    friend inline v16float toggle_bits( const v16int &m, const v16float &a );
-    friend inline void increment_16x1( float * ALIGNED(64) p, const v16float &a );
-    friend inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a );
-    friend inline void     scale_16x1( float * ALIGNED(64) p, const v16float &a );
+    friend inline v16float rsqrt_approx( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float rsqrt       ( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float rcp_approx( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float rcp       ( const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float fma ( const v16float &a, const v16float &b, const v16float &c ) ALWAYS_INLINE;
+    friend inline v16float fms ( const v16float &a, const v16float &b, const v16float &c ) ALWAYS_INLINE;
+    friend inline v16float fnms( const v16float &a, const v16float &b, const v16float &c ) ALWAYS_INLINE;
+    friend inline v16float  clear_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float    set_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
+    friend inline v16float toggle_bits( const v16int &m, const v16float &a ) ALWAYS_INLINE;
+    friend inline void increment_16x1( float * ALIGNED(64) p, const v16float &a ) ALWAYS_INLINE;
+    friend inline void decrement_16x1( float * ALIGNED(64) p, const v16float &a ) ALWAYS_INLINE;
+    friend inline void     scale_16x1( float * ALIGNED(64) p, const v16float &a ) ALWAYS_INLINE;
 
   public:
 

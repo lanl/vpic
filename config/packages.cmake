@@ -84,7 +84,7 @@ endif(ENABLE_OPENSSL)
 # Add VPIC unit test policy
 #------------------------------------------------------------------------------#
 
-cinch_add_unit_execution_policy(VPIC
+cinch_add_test_execution_policy(VPIC
   ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
   FLAGS ${MPI_${MPI_LANGUAGE}_COMPILE_FLAGS}
   INCLUDES ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH}

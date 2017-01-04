@@ -2,6 +2,6 @@
 
 deck=`echo $1 | sed 's,\.cxx,,g;s,\.cc,,g;s,\.cpp,,g;s,.*\/,,g'`
 
-echo "${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_INSTALL_PREFIX}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_INSTALL_PREFIX}/share/vpic/main.cc ${CMAKE_INSTALL_PREFIX}/share/vpic/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_INSTALL_PREFIX} -L${CMAKE_INSTALL_PREFIX}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl"
+echo "${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_INSTALL_PREFIX}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_INSTALL_PREFIX}/share/vpic/main.cc ${CMAKE_INSTALL_PREFIX}/share/vpic/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_INSTALL_PREFIX}/lib -L${CMAKE_INSTALL_PREFIX}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl"
 
-${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_INSTALL_PREFIX}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_INSTALL_PREFIX}/share/vpic/main.cc ${CMAKE_INSTALL_PREFIX}/share/vpic/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_INSTALL_PREFIX} -L${CMAKE_INSTALL_PREFIX}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl
+${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_INSTALL_PREFIX}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_INSTALL_PREFIX}/share/vpic/main.cc ${CMAKE_INSTALL_PREFIX}/share/vpic/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_INSTALL_PREFIX}/lib -L${CMAKE_INSTALL_PREFIX}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl

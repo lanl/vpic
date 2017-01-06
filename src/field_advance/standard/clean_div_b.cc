@@ -1,23 +1,32 @@
 #define IN_sfa
+
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
+
 #include "sfa_private.h"
 
-#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
+#define f(x,y,z) f[ VOXEL( x, y, z, nx, ny, nz ) ]
 
 #define MARDER_CBX() f0->cbx += px*( f0->div_b_err - fx->div_b_err )
 #define MARDER_CBY() f0->cby += py*( f0->div_b_err - fy->div_b_err )
 #define MARDER_CBZ() f0->cbz += pz*( f0->div_b_err - fz->div_b_err )
 
-typedef struct pipeline_args {
+typedef struct pipeline_args
+{
   field_t      * ALIGNED(128) f;
   const grid_t *              g;
 } pipeline_args_t;
 
+//----------------------------------------------------------------------------//
+// Reference implementation for a clean_div_b pipeline function which does not
+// make use of explicit calls to vector intrinsic functions.
+//----------------------------------------------------------------------------//
+
 void
 clean_div_b_pipeline( pipeline_args_t * args,
                       int pipeline_rank,
-                      int n_pipeline ) {
+                      int n_pipeline )
+{
   field_t      * ALIGNED(128) f = args->f;
   const grid_t *              g = args->g;
   
@@ -31,10 +40,12 @@ clean_div_b_pipeline( pipeline_args_t * args,
 
   float px, py, pz, alphadt;
 
-  px = (nx>1) ? g->rdx : 0;
-  py = (ny>1) ? g->rdy : 0;
-  pz = (nz>1) ? g->rdz : 0;
+  px = ( nx > 1 ) ? g->rdx : 0;
+  py = ( ny > 1 ) ? g->rdy : 0;
+  pz = ( nz > 1 ) ? g->rdz : 0;
+
   alphadt = 0.3888889/( px*px + py*py + pz*pz );
+
   px *= alphadt;
   py *= alphadt;
   pz *= alphadt;
@@ -45,259 +56,85 @@ clean_div_b_pipeline( pipeline_args_t * args,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
 
-# define LOAD_STENCIL() \
-  f0 = &f(x,  y,  z  ); \
-  fx = &f(x-1,y,  z  ); \
-  fy = &f(x,  y-1,z  ); \
-  fz = &f(x,  y,  z-1)
+# define LOAD_STENCIL()     \
+  f0 = &f( x,   y,   z   ); \
+  fx = &f( x-1, y,   z   ); \
+  fy = &f( x,   y-1, z   ); \
+  fz = &f( x,   y,   z-1 )
 
   LOAD_STENCIL();
   
-  for( ; n_voxel; n_voxel-- ) {
+  for( ; n_voxel; n_voxel-- )
+  {
     MARDER_CBX();
     MARDER_CBY();
     MARDER_CBZ();
+
     f0++; fx++; fy++; fz++;
-    
+
     x++;
-    if( x>nx ) {
-      x=2, y++;
-      if( y>ny ) y=2, z++;
+    if ( x > nx )
+    {
+                    x = 2, y++;
+      if ( y > ny ) y = 2, z++;
+
       LOAD_STENCIL();
     }      
   }
 
 # undef LOAD_STENCIL
-
 }
+
+//----------------------------------------------------------------------------//
+// If using v4, include an implementation for clean_div_b_pipeline_v4.
+//----------------------------------------------------------------------------//
 
 #if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
 
-using namespace v4;
-
-void
-clean_div_b_pipeline_v4( pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline ) {
-  field_t      * ALIGNED(128) f = args->f;
-  const grid_t *              g = args->g;
-
-  field_t * ALIGNED(16) f0;
-  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
-  int x, y, z, n_voxel;
-  
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
-
-  float px, py, pz, alphadt;
-
-  px = (nx>1) ? g->rdx : 0;
-  py = (ny>1) ? g->rdy : 0;
-  pz = (nz>1) ? g->rdz : 0;
-  alphadt = 0.3888889/( px*px + py*py + pz*pz );
-  px *= alphadt;
-  py *= alphadt;
-  pz *= alphadt;
-
-  const v4float vpx(px);
-  const v4float vpy(py);
-  const v4float vpz(pz);
-
-  v4float f0_cbx, f0_cby, f0_cbz; // Voxel quad magnetic fields
-  v4float f0_div_b_err;           // Voxel quad div b errs
-  v4float fx_div_b_err;           // Voxel quad -x neighbor div b err
-  v4float fy_div_b_err;           // Voxel quad -y neighbor div b err
-  v4float fz_div_b_err;           // Voxel quad -z neighbor div b err
-
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +x neighbors
-
-  // Process voxels assigned to this pipeline 
-  
-  DISTRIBUTE_VOXELS( 2,nx, 2,ny, 2,nz, 16,
-                     pipeline_rank, n_pipeline,
-                     x, y, z, n_voxel );
-
-  // Process bulk of voxels 4 at a time
-
-# define LOAD_STENCIL() \
-  f0 = &f(x,  y,  z  ); \
-  fx = &f(x-1,y,  z  ); \
-  fy = &f(x,  y-1,z  ); \
-  fz = &f(x,  y,  z-1)
-
-# define NEXT_STENCIL(n) \
-  f0##n = f0++;          \
-  fx##n = fx++;          \
-  fy##n = fy++;          \
-  fz##n = fz++;          \
-  x++;                   \
-  if( x>nx ) {           \
-    x=2, y++;            \
-    if( y>ny ) y=2, z++; \
-    LOAD_STENCIL();      \
-  }
-
-  LOAD_STENCIL();
-
-  for( ; n_voxel>3; n_voxel-=4 ) {
-    NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
-
-    load_4x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx, f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
-
-    fx_div_b_err = v4float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err );
-    fy_div_b_err = v4float( fy0->div_b_err, fy1->div_b_err, fy2->div_b_err, fy3->div_b_err );
-    fz_div_b_err = v4float( fz0->div_b_err, fz1->div_b_err, fz2->div_b_err, fz3->div_b_err );
-
-    f0_cbx = fma( f0_div_b_err-fx_div_b_err, px, f0_cbx );
-    f0_cby = fma( f0_div_b_err-fy_div_b_err, py, f0_cby );
-    f0_cbz = fma( f0_div_b_err-fz_div_b_err, pz, f0_cbz );
-
-    store_4x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err, &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
-  }
-
-# undef NEXT_STENCIL
-# undef LOAD_STENCIL
-
-}
+#include "clean_div_b_pipeline_v4.cc"
 
 #endif
+
+//----------------------------------------------------------------------------//
+// If using v8, include an implementation for clean_div_b_pipeline_v8.
+//----------------------------------------------------------------------------//
 
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
-using namespace v8;
-
-void
-clean_div_b_pipeline_v8( pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline ) {
-  field_t      * ALIGNED(128) f = args->f;
-  const grid_t *              g = args->g;
-
-  field_t * ALIGNED(16) f0;
-  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;
-  int x, y, z, n_voxel;
-  
-  const int nx = g->nx;
-  const int ny = g->ny;
-  const int nz = g->nz;
-
-  float px, py, pz, alphadt;
-
-  px = (nx>1) ? g->rdx : 0;
-  py = (ny>1) ? g->rdy : 0;
-  pz = (nz>1) ? g->rdz : 0;
-  alphadt = 0.3888889/( px*px + py*py + pz*pz );
-  px *= alphadt;
-  py *= alphadt;
-  pz *= alphadt;
-
-  const v8float vpx(px);
-  const v8float vpy(py);
-  const v8float vpz(pz);
-
-  v8float f0_cbx, f0_cby, f0_cbz; // Voxel quad magnetic fields
-  v8float f0_div_b_err;           // Voxel quad div b errs
-  v8float fx_div_b_err;           // Voxel quad -x neighbor div b err
-  v8float fy_div_b_err;           // Voxel quad -y neighbor div b err
-  v8float fz_div_b_err;           // Voxel quad -z neighbor div b err
-
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
-  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel quad
-
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel quad +x neighbors
-
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
-  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel quad +y neighbors
-
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
-  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel quad +z neighbors
-
-  // Process voxels assigned to this pipeline 
-  
-  DISTRIBUTE_VOXELS( 2,nx, 2,ny, 2,nz, 16,
-                     pipeline_rank, n_pipeline,
-                     x, y, z, n_voxel );
-
-  // Process bulk of voxels 8 at a time
-
-# define LOAD_STENCIL() \
-  f0 = &f(x,  y,  z  ); \
-  fx = &f(x-1,y,  z  ); \
-  fy = &f(x,  y-1,z  ); \
-  fz = &f(x,  y,  z-1)
-
-# define NEXT_STENCIL(n) \
-  f0##n = f0++;          \
-  fx##n = fx++;          \
-  fy##n = fy++;          \
-  fz##n = fz++;          \
-  x++;                   \
-  if( x>nx ) {           \
-    x=2, y++;            \
-    if( y>ny ) y=2, z++; \
-    LOAD_STENCIL();      \
-  }
-
-  LOAD_STENCIL();
-
-  for( ; n_voxel>7; n_voxel-=8 ) {
-    NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
-    NEXT_STENCIL(4); NEXT_STENCIL(5); NEXT_STENCIL(6); NEXT_STENCIL(7);
-
-    load_8x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
-		 &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx,
-		 f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
-
-    fx_div_b_err = v8float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err,
-			    fx4->div_b_err, fx5->div_b_err, fx6->div_b_err, fx7->div_b_err );
-
-    fy_div_b_err = v8float( fy0->div_b_err, fy1->div_b_err, fy2->div_b_err, fy3->div_b_err,
-			    fy4->div_b_err, fy5->div_b_err, fy6->div_b_err, fy7->div_b_err );
-
-    fz_div_b_err = v8float( fz0->div_b_err, fz1->div_b_err, fz2->div_b_err, fz3->div_b_err,
-			    fz4->div_b_err, fz5->div_b_err, fz6->div_b_err, fz7->div_b_err );
-
-    f0_cbx = fma( f0_div_b_err-fx_div_b_err, px, f0_cbx );
-    f0_cby = fma( f0_div_b_err-fy_div_b_err, py, f0_cby );
-    f0_cbz = fma( f0_div_b_err-fz_div_b_err, pz, f0_cbz );
-
-    store_8x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err,
-		  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
-		  &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx );
-  }
-
-# undef NEXT_STENCIL
-# undef LOAD_STENCIL
-
-}
+#include "clean_div_b_pipeline_v8.cc"
 
 #endif
 
+//----------------------------------------------------------------------------//
+// Top level function to select and call the proper clean_div_b pipeline
+// function.
+//----------------------------------------------------------------------------//
+
 void
-clean_div_b( field_array_t * fa ) {
+clean_div_b( field_array_t * fa )
+{
   pipeline_args_t args[1];
   
-  field_t * f, * f0, * fx, * fy, * fz;
-  const grid_t * g;
-  float alphadt, px, py, pz;
-  int x, y, z, nx, ny, nz;
+  field_t      *f, *f0, *fx, *fy, *fz;
+  const grid_t *g;
+  float        alphadt, px, py, pz;
+  int          x, y, z, nx, ny, nz;
 
-  if( !fa ) ERROR(( "Bad args" ));
+  if ( !fa ) ERROR( ( "Bad args" ) );
+
   f = fa->f;
   g = fa->g;
 
   nx = g->nx;
   ny = g->ny;
   nz = g->nz;
-  px = (nx>1) ? g->rdx : 0;
-  py = (ny>1) ? g->rdy : 0;
-  pz = (nz>1) ? g->rdz : 0;
+
+  px = ( nx > 1 ) ? g->rdx : 0;
+  py = ( ny > 1 ) ? g->rdy : 0;
+  pz = ( nz > 1 ) ? g->rdz : 0;
+
   alphadt = 0.3888889/( px*px + py*py + pz*pz );
+
   px *= alphadt;
   py *= alphadt;
   pz *= alphadt;
@@ -306,16 +143,21 @@ clean_div_b( field_array_t * fa ) {
   // stragglers.
 
 # if 0 // Original non-pipelined version
-  for( z=2; z<=nz; z++ ) {
-    for( y=2; y<=ny; y++ ) {
-      f0 = &f(2,y,  z);
-      fx = &f(1,y,  z);
-      fy = &f(2,y-1,z);
-      fz = &f(2,y,  z-1);
-      for( x=2; x<=nx; x++ ) {
+  for( z = 2; z <= nz; z++ )
+  {
+    for( y = 2; y <= ny; y++ )
+    {
+      f0 = &f( 2, y,   z   );
+      fx = &f( 1, y,   z   );
+      fy = &f( 2, y-1, z   );
+      fz = &f( 2, y,   z-1 );
+
+      for( x = 2; x <= nx; x++ )
+      {
 	MARDER_CBX();
 	MARDER_CBY();
 	MARDER_CBZ();
+
 	f0++; fx++; fy++; fz++;
       }
     }
@@ -324,126 +166,178 @@ clean_div_b( field_array_t * fa ) {
 
   // Begin setting derr ghosts
   begin_remote_ghost_div_b( f, g );
+
   local_ghost_div_b( f, g);
 
   // Have pipelines do interior of the local domain
   args->f = f;
   args->g = g;
+
   EXEC_PIPELINES( clean_div_b, args, 0 );
-  
+
   // Do left over interior bx
-  for( y=1; y<=ny; y++ ) {
-    f0 = &f(2,y,1);
-    fx = &f(1,y,1);
-    for( x=2; x<=nx; x++ ) {
+  for( y = 1; y <= ny; y++ )
+  {
+    f0 = &f( 2, y, 1 );
+    fx = &f( 1, y, 1 );
+
+    for( x = 2; x <= nx; x++ )
+    {
       MARDER_CBX();
+
       f0++;
       fx++;
     }
   }
-  for( z=2; z<=nz; z++ ) {
-    f0 = &f(2,1,z);
-    fx = &f(1,1,z);
-    for( x=2; x<=nx; x++ ) {
+
+  for( z = 2; z <= nz; z++ )
+  {
+    f0 = &f( 2, 1, z );
+    fx = &f( 1, 1, z );
+
+    for( x = 2; x <= nx; x++ )
+    {
       MARDER_CBX();
+
       f0++;
       fx++;
     }
   }
 
   // Left over interior by
-  for( z=1; z<=nz; z++ ) {
-    for( y=2; y<=ny; y++ ) {
-      f0 = &f(1,y,  z);
-      fy = &f(1,y-1,z);
+  for( z = 1; z <= nz; z++ )
+  {
+    for( y = 2; y <= ny; y++ )
+    {
+      f0 = &f( 1, y,   z );
+      fy = &f( 1, y-1, z );
+
       MARDER_CBY();
     }
   }
-  for( y=2; y<=ny; y++ ) {
-    f0 = &f(2,y,  1);
-    fy = &f(2,y-1,1);
-    for( x=2; x<=nx; x++ ) {
+
+  for( y = 2; y <= ny; y++ )
+  {
+    f0 = &f( 2, y,   1 );
+    fy = &f( 2, y-1, 1 );
+
+    for( x = 2; x <= nx; x++ )
+    {
       MARDER_CBY();
+
       f0++;
       fy++;
     }
   }
 
   // Left over interior bz
-  for( z=2; z<=nz; z++ ) {
-    f0 = &f(1,1,z);
-    fz = &f(1,1,z-1);
-    for( x=1; x<=nx; x++ ) {
+  for( z = 2; z <= nz; z++ )
+  {
+    f0 = &f( 1, 1, z   );
+    fz = &f( 1, 1, z-1 );
+
+    for( x = 1; x <= nx; x++ )
+    {
       MARDER_CBZ();
+
       f0++;
       fz++;
     }
   }
-  for( z=2; z<=nz; z++ ) {
-    for( y=2; y<=ny; y++ ) {
-      f0 = &f(1,y,z);
-      fz = &f(1,y,z-1);
+
+  for( z = 2; z <= nz; z++ )
+  {
+    for( y = 2; y <= ny; y++ )
+    {
+      f0 = &f( 1, y, z   );
+      fz = &f( 1, y, z-1 );
+
       MARDER_CBZ();
     }
   }
 
   // Finish setting derr ghosts
-  
+
   end_remote_ghost_div_b( f, g );
 
   // Do Marder pass in exterior
 
   // Exterior bx
-  for( z=1; z<=nz; z++ ) {
-    for( y=1; y<=ny; y++ ) {
-      f0 = &f(1,y,z);
-      fx = &f(0,y,z);
+  for( z = 1; z <= nz; z++ )
+  {
+    for( y = 1; y <= ny; y++ )
+    {
+      f0 = &f( 1, y, z );
+      fx = &f( 0, y, z );
+
       MARDER_CBX();
     }
   }
-  for( z=1; z<=nz; z++ ) {
-    for( y=1; y<=ny; y++ ) {
-      f0 = &f(nx+1,y,z);
-      fx = &f(nx,  y,z);
+
+  for( z = 1; z <= nz; z++ )
+  {
+    for( y = 1; y <= ny; y++ )
+    {
+      f0 = &f( nx+1, y, z );
+      fx = &f( nx,   y, z );
+
       MARDER_CBX();
     }
   }
 
   // Exterior by
-  for( z=1; z<=nz; z++ ) {
-    f0 = &f(1,1,z);
-    fy = &f(1,0,z);
-    for( x=1; x<=nx; x++ ) {
+  for( z = 1; z <= nz; z++ )
+  {
+    f0 = &f( 1, 1, z );
+    fy = &f( 1, 0, z );
+
+    for( x = 1; x <= nx; x++ )
+    {
       MARDER_CBY();
+
       f0++;
       fy++;
     }
   }
-  for( z=1; z<=nz; z++ ) {
-    f0 = &f(1,ny+1,z);
-    fy = &f(1,ny,  z);
-    for( x=1; x<=nx; x++ ) {
+
+  for( z = 1; z <= nz; z++ )
+  {
+    f0 = &f( 1, ny+1, z );
+    fy = &f( 1, ny,   z );
+
+    for( x = 1; x <= nx; x++ )
+    {
       MARDER_CBY();
+
       f0++;
       fy++;
     }
   }
 
   // Exterior bz
-  for( y=1; y<=ny; y++ ) {
-    f0 = &f(1,y,1);
-    fz = &f(1,y,0);
-    for( x=1; x<=nx; x++ ) {
+  for( y = 1; y <= ny; y++ )
+  {
+    f0 = &f( 1, y, 1 );
+    fz = &f( 1, y, 0 );
+
+    for( x = 1; x <= nx; x++ )
+    {
       MARDER_CBZ();
+
       f0++;
       fz++;
     }
   }
-  for( y=1; y<=ny; y++ ) {
-    f0 = &f(1,y,nz+1);
-    fz = &f(1,y,nz);
-    for( x=1; x<=nx; x++ ) {
+
+  for( y = 1; y <= ny; y++ )
+  {
+    f0 = &f( 1, y, nz+1 );
+    fz = &f( 1, y, nz   );
+
+    for( x = 1; x <= nx; x++ )
+    {
       MARDER_CBZ();
+
       f0++;
       fz++;
     }

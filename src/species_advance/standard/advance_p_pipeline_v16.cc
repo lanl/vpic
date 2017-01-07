@@ -554,6 +554,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 #   undef MOVE_OUTBND
   }
 
+  #if 0
   if ( world_rank == 3 && pipeline_rank == 0 )
   {
     std::cout << "world_rank: " << world_rank
@@ -582,6 +583,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     // 	      << "   num_load_16x16_bc: " << num_load_16x16_bc
     // 	      << std::flush << std::endl;
   }
+  #endif
 
   args->seg[pipeline_rank].pm        = pm;
   args->seg[pipeline_rank].max_nm    = max_nm;

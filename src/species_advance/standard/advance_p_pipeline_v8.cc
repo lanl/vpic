@@ -181,6 +181,22 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		 vp04+8, vp05+8, vp06+8, vp07+8,
 		 haz, v00, v01, v02, cbx, v03, cby, v04 );
 
+    //--------------------------------------------------------------------------
+    // Experiment to understand cost of transposing data.
+    //--------------------------------------------------------------------------
+    #if 0
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
+    #endif
+
     haz = qdt_2mc*fma( fma( v02, dx, v01 ), dy, fma( v00, dx, haz ) );
 
     cbx = fma( v03, dx, cbx );
@@ -432,6 +448,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 #   undef MOVE_OUTBND
   }
 
+  #if 0
   if ( world_rank == 3 && pipeline_rank == 0 )
   {
     std::cout << "world_rank: " << world_rank
@@ -452,6 +469,7 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // 	      << "   num_load_8x8_bc: " << num_load_8x8_bc
     // 	      << std::flush << std::endl;
   }
+  #endif
 
   args->seg[pipeline_rank].pm        = pm;
   args->seg[pipeline_rank].max_nm    = max_nm;

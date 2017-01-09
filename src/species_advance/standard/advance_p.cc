@@ -142,7 +142,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     p->uy = uy;
     p->uz = uz;
 
-    v0   = one/sqrtf(one + (ux*ux+ (uy*uy + uz*uz)));
+    v0   = one / sqrtf( one + ( ux*ux+ ( uy*uy + uz*uz ) ) );
                                               // Get norm displacement
 
     ux  *= cdt_dx;

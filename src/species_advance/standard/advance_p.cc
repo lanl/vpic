@@ -22,7 +22,8 @@
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
-                    int n_pipeline ) {
+                    int n_pipeline )
+{
   particle_t           * ALIGNED(128) p0 = args->p0;
   accumulator_t        * ALIGNED(128) a0 = args->a0;
   const interpolator_t * ALIGNED(128) f0 = args->f0;
@@ -38,9 +39,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float cdt_dy         = args->cdt_dy;
   const float cdt_dz         = args->cdt_dz;
   const float qsp            = args->qsp;
-  const float one            = 1.;
-  const float one_third      = 1./3.;
-  const float two_fifteenths = 2./15.;
+  const float one            = 1.0f;
+  const float one_third      = 1.0f/3.0f;
+  const float two_fifteenths = 2.0f/15.0f;
 
   float dx, dy, dz, ux, uy, uz, q;
   float hax, hay, haz, cbx, cby, cbz;
@@ -51,107 +52,135 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
-  // Determine which quads of particles quads this pipeline processes
+  // Determine which quads of particles quads this pipeline processes.
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, n );
+
   p = args->p0 + itmp;
 
-  // Determine which movers are reserved for this pipeline
+  // Determine which movers are reserved for this pipeline.
   // Movers (16 bytes) should be reserved for pipelines in at least
   // multiples of 8 such that the set of particle movers reserved for
   // a pipeline is 128-byte aligned and a multiple of 128-byte in
   // size.  The host is guaranteed to get enough movers to process its
   // particles with this allocation.
 
-  max_nm = args->max_nm - (args->np&15);
-  if( max_nm<0 ) max_nm = 0;
+  max_nm = args->max_nm - ( args->np&15 );
+
+  if ( max_nm < 0 ) max_nm = 0;
+
   DISTRIBUTE( max_nm, 8, pipeline_rank, n_pipeline, itmp, max_nm );
-  if( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
+
+  if ( pipeline_rank == n_pipeline ) max_nm = args->max_nm - itmp;
+
   pm   = args->pm + itmp;
   nm   = 0;
   itmp = 0;
 
   // Determine which accumulator array to use
-  // The host gets the first accumulator array
+  // The host gets the first accumulator array.
 
-  if( pipeline_rank!=n_pipeline )
-    a0 += (1+pipeline_rank)*
-          POW2_CEIL((args->nx+2)*(args->ny+2)*(args->nz+2),2);
+  if ( pipeline_rank != n_pipeline )
+    a0 += ( 1 + pipeline_rank ) *
+          POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
 
-  // Process particles for this pipeline
+  // Process particles for this pipeline.
 
-  for(;n;n--,p++) {
+  for( ; n; n--, p++ )
+  {
     dx   = p->dx;                             // Load position
     dy   = p->dy;
     dz   = p->dz;
     ii   = p->i;
+
     f    = f0 + ii;                           // Interpolate E
+
     hax  = qdt_2mc*(    ( f->ex    + dy*f->dexdy    ) +
                      dz*( f->dexdz + dy*f->d2exdydz ) );
+
     hay  = qdt_2mc*(    ( f->ey    + dz*f->deydz    ) +
                      dx*( f->deydx + dz*f->d2eydzdx ) );
+
     haz  = qdt_2mc*(    ( f->ez    + dx*f->dezdx    ) +
                      dy*( f->dezdy + dx*f->d2ezdxdy ) );
+
     cbx  = f->cbx + dx*f->dcbxdx;             // Interpolate B
     cby  = f->cby + dy*f->dcbydy;
     cbz  = f->cbz + dz*f->dcbzdz;
+
     ux   = p->ux;                             // Load momentum
     uy   = p->uy;
     uz   = p->uz;
     q    = p->w;
+
     ux  += hax;                               // Half advance E
     uy  += hay;
     uz  += haz;
-    v0   = qdt_2mc/sqrtf(one + (ux*ux + (uy*uy + uz*uz)));
-    /**/                                      // Boris - scalars
-    v1   = cbx*cbx + (cby*cby + cbz*cbz);
-    v2   = (v0*v0)*v1;
-    v3   = v0*(one+v2*(one_third+v2*two_fifteenths));
-    v4   = v3/(one+v1*(v3*v3));
+
+    v0   = qdt_2mc / sqrtf( one + ( ux*ux + ( uy*uy + uz*uz ) ) );
+
+                                              // Boris - scalars
+    v1   = cbx*cbx + ( cby*cby + cbz*cbz );
+    v2   = ( v0*v0 ) * v1;
+    v3   = v0 * ( one + v2 * ( one_third + v2 * two_fifteenths ) );
+    v4   = v3 / ( one + v1 * ( v3 * v3 ) );
     v4  += v4;
+
     v0   = ux + v3*( uy*cbz - uz*cby );       // Boris - uprime
     v1   = uy + v3*( uz*cbx - ux*cbz );
     v2   = uz + v3*( ux*cby - uy*cbx );
+
     ux  += v4*( v1*cbz - v2*cby );            // Boris - rotation
     uy  += v4*( v2*cbx - v0*cbz );
     uz  += v4*( v0*cby - v1*cbx );
+
     ux  += hax;                               // Half advance E
     uy  += hay;
     uz  += haz;
+
     p->ux = ux;                               // Store momentum
     p->uy = uy;
     p->uz = uz;
+
     v0   = one/sqrtf(one + (ux*ux+ (uy*uy + uz*uz)));
-    /**/                                      // Get norm displacement
+                                              // Get norm displacement
+
     ux  *= cdt_dx;
     uy  *= cdt_dy;
     uz  *= cdt_dz;
+
     ux  *= v0;
     uy  *= v0;
     uz  *= v0;
+
     v0   = dx + ux;                           // Streak midpoint (inbnds)
     v1   = dy + uy;
     v2   = dz + uz;
+
     v3   = v0 + ux;                           // New position
     v4   = v1 + uy;
     v5   = v2 + uz;
 
     // FIXME-KJB: COULD SHORT CIRCUIT ACCUMULATION IN THE CASE WHERE QSP==0!
-    if(  v3<=one &&  v4<=one &&  v5<=one &&   // Check if inbnds
-        -v3<=one && -v4<=one && -v5<=one ) {
-
+    if (  v3 <= one &&  v4 <= one &&  v5 <= one &&   // Check if inbnds
+         -v3 <= one && -v4 <= one && -v5 <= one )
+    {
       // Common case (inbnds).  Note: accumulator values are 4 times
       // the total physical charge that passed through the appropriate
-      // current quadrant in a time-step
+      // current quadrant in a time-step.
 
       q *= qsp;
+
       p->dx = v3;                             // Store new position
       p->dy = v4;
       p->dz = v5;
+
       dx = v0;                                // Streak midpoint
       dy = v1;
       dz = v2;
+
       v5 = q*ux*uy*uz*one_third;              // Compute correction
+
       a  = (float *)( a0 + ii );              // Get accumulator
 
 #     define ACCUMULATE_J(X,Y,Z,offset)                                 \
@@ -174,28 +203,34 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
       a[offset+2] += v2;                                                \
       a[offset+3] += v3
 
-      ACCUMULATE_J( x,y,z, 0 );
-      ACCUMULATE_J( y,z,x, 4 );
-      ACCUMULATE_J( z,x,y, 8 );
+      ACCUMULATE_J( x, y, z, 0 );
+      ACCUMULATE_J( y, z, x, 4 );
+      ACCUMULATE_J( z, x, y, 8 );
 
 #     undef ACCUMULATE_J
+    }
 
-    } else {                                    // Unlikely
+    else                                        // Unlikely
+    {
       local_pm->dispx = ux;
       local_pm->dispy = uy;
       local_pm->dispz = uz;
+
       local_pm->i     = p - p0;
 
-      if( move_p( p0, local_pm, a0, g, qsp ) ) { // Unlikely
-        if( nm<max_nm ) {
+      if ( move_p( p0, local_pm, a0, g, qsp ) ) // Unlikely
+      {
+        if ( nm < max_nm )
+	{
 	  pm[nm++] = local_pm[0];
         }
-        else {
-	  itmp++;                 // Unlikely
-	} // if
-      } // if
-    }
 
+        else
+	{
+	  itmp++;                               // Unlikely
+	}
+      }
+    }
   }
 
   args->seg[pipeline_rank].pm        = pm;
@@ -240,37 +275,37 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 //----------------------------------------------------------------------------//
 
 void
-advance_p( /**/  species_t            * RESTRICT sp,
-           /**/  accumulator_array_t  * RESTRICT aa,
+advance_p(       species_t            * RESTRICT sp,
+                 accumulator_array_t  * RESTRICT aa,
            const interpolator_array_t * RESTRICT ia )
 {
   DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
 
-  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE+1 );
+  DECLARE_ALIGNED_ARRAY( particle_mover_seg_t, 128, seg, MAX_PIPELINE + 1 );
 
   int rank;
 
   if ( !sp || !aa || !ia || sp->g!=aa->g || sp->g!=ia->g )
     ERROR(( "Bad args" ));
 
-  args->p0       = sp->p;
-  args->pm       = sp->pm;
-  args->a0       = aa->a;
-  args->f0       = ia->i;
-  args->seg      = seg;
-  args->g        = sp->g;
+  args->p0      = sp->p;
+  args->pm      = sp->pm;
+  args->a0      = aa->a;
+  args->f0      = ia->i;
+  args->seg     = seg;
+  args->g       = sp->g;
 
-  args->qdt_2mc  = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
-  args->cdt_dx   = sp->g->cvac*sp->g->dt*sp->g->rdx;
-  args->cdt_dy   = sp->g->cvac*sp->g->dt*sp->g->rdy;
-  args->cdt_dz   = sp->g->cvac*sp->g->dt*sp->g->rdz;
-  args->qsp      = sp->q;
+  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->cdt_dx  = sp->g->cvac*sp->g->dt*sp->g->rdx;
+  args->cdt_dy  = sp->g->cvac*sp->g->dt*sp->g->rdy;
+  args->cdt_dz  = sp->g->cvac*sp->g->dt*sp->g->rdz;
+  args->qsp     = sp->q;
 
-  args->np       = sp->np;
-  args->max_nm   = sp->max_nm;
-  args->nx       = sp->g->nx;
-  args->ny       = sp->g->ny;
-  args->nz       = sp->g->nz;
+  args->np      = sp->np;
+  args->max_nm  = sp->max_nm;
+  args->nx      = sp->g->nx;
+  args->ny      = sp->g->ny;
+  args->nz      = sp->g->nz;
 
   // Have the host processor do the last incomplete bundle if necessary.
   // Note: This is overlapped with the pipelined processing.  As such,
@@ -288,6 +323,7 @@ advance_p( /**/  species_t            * RESTRICT sp,
 #endif
 
   EXEC_PIPELINES( advance_p, args, 0 );
+
   WAIT_PIPELINES();
 
 #if defined(VPIC_USE_VTUNE)
@@ -299,14 +335,14 @@ advance_p( /**/  species_t            * RESTRICT sp,
   // MOVERS TO ELIMINATE HOLES FROM THE PIPELINING.
 
   sp->nm = 0;
-  for( rank=0; rank<=N_PIPELINE; rank++ )
+  for( rank = 0; rank <= N_PIPELINE; rank++ )
   {
-    if( args->seg[rank].n_ignored )
-      WARNING(( "Pipeline %i ran out of storage for %i movers",
-                rank, args->seg[rank].n_ignored ));
+    if ( args->seg[rank].n_ignored )
+      WARNING( ( "Pipeline %i ran out of storage for %i movers",
+                 rank, args->seg[rank].n_ignored ) );
 
-    if( sp->pm+sp->nm != args->seg[rank].pm )
-      MOVE( sp->pm+sp->nm, args->seg[rank].pm, args->seg[rank].nm );
+    if ( sp->pm + sp->nm != args->seg[rank].pm )
+      MOVE( sp->pm + sp->nm, args->seg[rank].pm, args->seg[rank].nm );
 
     sp->nm += args->seg[rank].nm;
   }

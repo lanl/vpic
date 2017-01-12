@@ -270,6 +270,17 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 #endif
 
 //----------------------------------------------------------------------------//
+// If explicitly using auto-vec, include an implementation for 
+// advance_p_pipeline_auto_vec.
+//----------------------------------------------------------------------------//
+
+#if defined(ADVANCE_P_AUTOVEC) 
+
+#include "advance_p_pipeline_autovec.cc"
+
+#endif
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper advance_p pipeline
 // function.
 //----------------------------------------------------------------------------//

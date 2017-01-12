@@ -204,6 +204,16 @@ if(USE_V16_AVX512)
 endif(USE_V16_AVX512)
 
 #------------------------------------------------------------------------------#
+# Add options for building with explicit autovec support.
+#------------------------------------------------------------------------------#
+
+if(USE_ADVANCE_P_AUTOVEC)
+  add_definitions(-DADVANCE_P_AUTOVEC)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DADVANCE_P_AUTOVEC")
+  set(ADVANCE_P_AUTOVEC True)
+endif(USE_ADVANCE_P_AUTOVEC)
+
+#------------------------------------------------------------------------------#
 # Miscellaneous options.
 #------------------------------------------------------------------------------#
 

@@ -43,6 +43,8 @@ option(USE_V16_AVX "Enable V16 AVX" OFF)
 
 option(USE_V16_AVX2 "Enable V16 AVX2" OFF)
 
+option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
+
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)

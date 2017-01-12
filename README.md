@@ -83,6 +83,14 @@ Then call the curses version of CMake:
 
     % cmake -DENABLE_MPI ..
 
+The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
+
+They can be invoked using something like:
+
+    % ../arch/generic-Release
+
+GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`)
+
 After configuration, simply type 'make'.
 
 # Building an example input deck

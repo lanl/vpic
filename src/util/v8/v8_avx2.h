@@ -18,7 +18,8 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 // Why does GNU not define this function?
-#ifdef __GNUC__
+// #ifdef __GNUC__
+#ifndef __INTEL_COMPILER
 #define _mm256_set_m128(va, vb)					\
         _mm256_insertf128_ps(_mm256_castps128_ps256(vb), va, 1)
 #endif

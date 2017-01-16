@@ -55,11 +55,11 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone --recursive git@github.com:losalamos/vpic.git
+    % git clone --recursive git@github.com:lanl/vpic.git
 
 This command will check out the VPIC source code, including the Cinch
 build system.  Cinch is documented
-[here](https://github.com/losalamos/cinch).
+[here](https://github.com/laristra/cinch).
 
 # Requirements
 

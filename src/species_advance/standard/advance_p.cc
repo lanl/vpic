@@ -15,6 +15,16 @@
 #endif
 
 //----------------------------------------------------------------------------//
+// If explicitly using auto-vec, include an implementation for 
+// advance_p_pipeline_auto_vec.
+//----------------------------------------------------------------------------//
+
+#if defined(ADVANCE_P_AUTOVEC) 
+
+#include "advance_p_pipeline_autovec.cc"
+
+#else 
+//----------------------------------------------------------------------------//
 // Reference implementation for an advance_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.
 //----------------------------------------------------------------------------//
@@ -239,6 +249,8 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].n_ignored = itmp;
 }
 
+#endif
+
 //----------------------------------------------------------------------------//
 // If using v4, include an implementation for advance_p_pipeline_v4.
 //----------------------------------------------------------------------------//
@@ -269,16 +281,6 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
 #endif
 
-//----------------------------------------------------------------------------//
-// If explicitly using auto-vec, include an implementation for 
-// advance_p_pipeline_auto_vec.
-//----------------------------------------------------------------------------//
-
-#if defined(ADVANCE_P_AUTOVEC) 
-
-#include "advance_p_pipeline_autovec.cc"
-
-#endif
 
 //----------------------------------------------------------------------------//
 // Top level function to select and call the proper advance_p pipeline

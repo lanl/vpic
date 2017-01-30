@@ -30,10 +30,10 @@ cmake \
   -DUSE_ADVANCE_P_AUTOVEC=YES \
   -DCMAKE_C_FLAGS="-g -O3 -inline-forceinline -vec-threshold0 \
   -qopt-report=5 -qopt-report-phase=all -Winline \
-  -qoverride-limits -no-ansi-alias -xMIC-AVX512 -qopenmp" \
+  -qoverride-limits -no-ansi-alias -xMIC-AVX512 -qopenmp -restrict" \
   -DCMAKE_CXX_FLAGS="-g -O3 -inline-forceinline -vec-threshold0 \
   -qopt-report=5 -qopt-report-phase=all -Winline \
-  -qoverride-limits -no-ansi-alias -xMIC-AVX512 -qopenmp" \
+  -qoverride-limits -no-ansi-alias -xMIC-AVX512 -qopenmp -restrict" \
   $cinch_dir
 
 #------------------------------------------------------------------------------#

@@ -14,7 +14,7 @@ function sv = smooth_field( g, v, lambda_stop, lambda_pass, order )
 %   Kevin J. Bowers, Ph.D.
 %   Plasma Physics Group (X-1)
 %   Los Alamos National Lab
-%   March 2004 -  Adapted from V4PIC version 1 smooth3d.m 
+%   March 2004 -  Adapted from V4PIC version 1 smooth3d.m
 
 if nargin<5, order = [ 2 1 3 ]; end
 
@@ -33,7 +33,7 @@ sv = sv(1:nx,1:ny,1:nz);
 k_pass = 2*pi/lambda_pass;
 k_stop = 2*pi/lambda_stop;
 
-% Make the spatial frequency grid 
+% Make the spatial frequency grid
 % Note: k > pi/L is equivalent to negative k
 kx = 2*pi*(0:nx-1)/nx; kx = kx - 2*pi*(kx>pi); kx = kx/dx;
 ky = 2*pi*(0:ny-1)/ny; ky = ky - 2*pi*(ky>pi); ky = ky/dy;
@@ -57,4 +57,3 @@ if sz(3)==nz+1, sv(:,:,nz+1) = sv(:,:,1); end;
 
 % Permute into order
 sv = permute( sv, order );
-

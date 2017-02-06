@@ -62,16 +62,16 @@ begin_initialization {
 
   // Pulse parameters
   global->V_peak = 1e6 * voltage_rescale;
-  global->t_rise = 1e-9; 
+  global->t_rise = 1e-9;
   global->t_hold = 8e-9;
-  global->t_fall = 1e-9; 
+  global->t_fall = 1e-9;
   global->r_a    = r_a;   // Anode radius
   global->r_o    = r_o;   // Outer conductor radius
 
   // Define resolution
   double nx = 140; // 2 cell resolution for anode
   double ny = 140; // (Roughly 0.5 mm cells)
-  double nz = 140; 
+  double nz = 140;
 
   // Create the grid
 
@@ -94,7 +94,7 @@ begin_initialization {
   if( grid->bc[BOUNDARY( 0, 0,+1)]==metal_fields )
     set_domain_field_bc( BOUNDARY( 0, 0,+1), absorb_fields );
 
-  // Setup the simulation 
+  // Setup the simulation
   num_step             = int(10e-9/grid->dt);
   status_interval      = 25;
   clean_div_e_interval = 25;
@@ -136,7 +136,7 @@ begin_current_injection {
 begin_field_injection {
 
   if( grid->bc[BOUNDARY(0,0,-1)]==absorb_fields ) { /* TEM_0 injection boundary */
-  
+
     double t      = grid->dt * step();
     double tr     = global->t_rise;
     double tf     = global->t_hold + tr;
@@ -146,7 +146,7 @@ begin_field_injection {
     double V_peak = global->V_peak;
 
     double V, er0;
-  
+
     if( t<0 )       V = 0;
     else if( t<tr ) V = V_peak*t/tr;
     else if( t<tf ) V = V_peak;
@@ -187,5 +187,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

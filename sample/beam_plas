@@ -83,7 +83,7 @@ begin_initialization {
   double ninj = round(nipf_beam*0.25*M_PI*r_beam*r_beam/(dx*dy));
   if( nx==1 ) ninj *= 2;
   if( ny==1 ) ninj *= 2;
-  
+
   // Setup high level parameters
   num_step             = int(tau/dt);
   status_interval      = 10;
@@ -130,7 +130,7 @@ begin_initialization {
     set_domain_field_bc(    BOUNDARY(0, 1,0), anti_symmetric_fields  );
     set_domain_particle_bc( BOUNDARY(0, 1,0), absorb_particles );
   }
-  
+
   if( rank()==0 ) { // Put in beam launcher
     set_domain_field_bc(    BOUNDARY(0,0,-1), absorb_fields );
     set_domain_particle_bc( BOUNDARY(0,0,-1), absorb_particles );
@@ -174,7 +174,7 @@ begin_initialization {
                      normal( rng(0), 0, uti ),
                      normal( rng(0), 0, uti ), qp, 0, 0 );
   }
-  
+
   // Output diagnostics
   sim_log( "" );
   sim_log( "Numerical parameters" );
@@ -232,7 +232,7 @@ begin_diagnostics {
   if( should_dump(bparticle) ) dump_particles("beam","bparticle");
   if( should_dump(eparticle) ) dump_particles("e-",  "eparticle");
   if( should_dump(iparticle) ) dump_particles("H+",  "iparticle");
-  if( should_dump(restart)   ) checkpt("restart",step()); 
+  if( should_dump(restart)   ) checkpt("restart",step());
 # undef should_dump
 
 }
@@ -280,7 +280,6 @@ begin_field_injection {
 }
 
 
-begin_particle_collisions { 
-  // No collisions for this simulation 
+begin_particle_collisions {
+  // No collisions for this simulation
 }
-

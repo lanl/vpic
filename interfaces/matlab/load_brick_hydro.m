@@ -48,7 +48,7 @@ function [ G, ...
 %   fields used to advance the simulation in time. Further, they
 %   will not exactly satisfy local discretized continuity of
 %   charge (global continuity of charge is satified). The Jx, Jy
-%   and Jz used internally by the simulation do satisfy local 
+%   and Jz used internally by the simulation do satisfy local
 %   continuity of charge exactly but are staggered in time.
 % - All fields are in the appropriate units for the problem.
 %   To understand the problem units, with f = f(x,p,t) as the
@@ -154,7 +154,7 @@ for kk=0:topo(3)-1,
       IIs = 1 + ii*nx; IIe = 1 + (ii+1)*nx;
       JJs = 1 + jj*ny; JJe = 1 + (jj+1)*ny;
       KKs = 1 + kk*nz; KKe = 1 + (kk+1)*nz;
-      
+
       RHO(IIs:IIe,JJs:JJe,KKs:KKe) = rho;
       JX( IIs:IIe,JJs:JJe,KKs:KKe) = jx;
       JY( IIs:IIe,JJs:JJe,KKs:KKe) = jy;

@@ -126,7 +126,7 @@ unary_collision_model( const char       * RESTRICT name,
 
   MALLOC( cm, 1 );
   MALLOC( cm->name, len+1 );
-  strcpy( cm->name, name ); 
+  strcpy( cm->name, name );
   cm->rate_constant = rate_constant;
   cm->collision     = collision;
   cm->params        = params;

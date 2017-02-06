@@ -5,7 +5,7 @@
 #include "../src/vpic/vpic.h"
 
 int main(int argc, char ** argv) {
-	
+
 	// Initialize the vpic runtime
 	boot_services(&argc, &argv);
 

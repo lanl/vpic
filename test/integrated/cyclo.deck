@@ -54,7 +54,7 @@ begin_initialization {
     double ux = cos(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
                 cos(2*M_PI*(0.125*nstep)      /(double)nstep);
     double uy = sin(2*M_PI*(0.125*nstep-(n+1))/(double)nstep) /
-                sin(2*M_PI*(0.125*nstep)      /(double)nstep); 
+                sin(2*M_PI*(0.125*nstep)      /(double)nstep);
     for( int m=0; m<npart; m++ ) {
       if( fabs(sp->p[m].ux-ux)>0.6e-6 ||
           fabs(sp->p[m].uy-uy)>0.6e-6 ||
@@ -70,7 +70,7 @@ begin_initialization {
                  sp->p[m].uz << " " <<
                  sp->p[m].w  << " " <<
                  ux << " " <<
-                 uy << " " << 
+                 uy << " " <<
                  sp->p[m].ux-ux << " " <<
                  sp->p[m].uy-uy );
       }

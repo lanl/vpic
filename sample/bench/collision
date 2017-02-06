@@ -20,7 +20,7 @@ begin_initialization {
   double debye    = 1;
   double wp       = wpdt / dt;
   double vt       = debye*wp;
-  double N        = 32; 
+  double N        = 32;
   double L        = debye*32;
   double dx       = L/N;
 

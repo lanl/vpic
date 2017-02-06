@@ -17,19 +17,19 @@ typedef struct mp mp_t;
    critical sections and do other tricks liking limiting the number
    of simultaneous I/O operatorions on large jobs.  These macros use
    blocking send/receives to serialize writes.
-  
+
    For example, to set up a turnstile that allows at most N
    simultaneous writes:
-  
+
    BEGIN_TURNSTILE( N ) {
      ... do write ...
    } END_TURNSTILE
-  
+
    BEGIN_TURNSTILE(1) (i.e., one turnstile) effectively serializes the
    code.  This construct is robust.  Turnstiles should not be nested.
    Code in turnstiles should not attempt to communicate with other
    processes.
-  
+
    If everything were perfectly synchronous, then, when
    using a 10 turnstiles, processes 0:9 would enter the turnstile,
    followed by 10:19, followed by 20:29, ... */

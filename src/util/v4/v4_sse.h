@@ -34,15 +34,15 @@ namespace v4 {
   }; // permute
 
 # define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
-  
+
   ////////////////
   // v4 base class
-  
+
   class v4 {
-    
+
     friend class v4int;
     friend class v4float;
-      
+
     // v4 miscellenous friends
 
     friend inline int any( const v4 &a );
@@ -64,7 +64,7 @@ namespace v4 {
     friend inline v4 merge(    const v4int &c, const v4 &a, const v4 &b );
 
     // v4 memory manipulation friends
-        
+
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
@@ -93,7 +93,7 @@ namespace v4 {
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
-    
+
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -120,7 +120,7 @@ namespace v4 {
       float f[4];
       __m128 v;
     };
-    
+
   public:
 
     v4() {}                    // Default constructor
@@ -128,13 +128,13 @@ namespace v4 {
     ~v4() {}                   // Default destructor
 
   };
-  
+
   // v4 miscellaneous functions
 
   inline int any( const v4 &a ) {
     return a.i[0] || a.i[1] || a.i[2] || a.i[3];
   }
-  
+
   inline int all( const v4 &a ) {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
@@ -157,7 +157,7 @@ namespace v4 {
     return b;
   }
 
-  inline void swap( v4 &a, v4 &b ) { 
+  inline void swap( v4 &a, v4 &b ) {
     __m128 a_v = a.v; a.v = b.v; b.v = a_v;
   }
 
@@ -175,7 +175,7 @@ namespace v4 {
   }
 
   // v4 memory manipulation functions
-  
+
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
     a.v = _mm_load_ps((float *)p);
   }
@@ -381,7 +381,7 @@ namespace v4 {
 
     // v4float unary operator friends
 
-    friend inline v4int operator  !( const v4float & a ); 
+    friend inline v4int operator  !( const v4float & a );
 
     // v4float logical operator friends
 
@@ -403,7 +403,7 @@ namespace v4 {
   public:
 
     // v4int constructors / destructors
-    
+
     v4int() {}                                // Default constructor
     v4int( const v4int &a ) { v = a.v; }      // Copy constructor
     v4int( const v4 &a ) { v = a.v; }         // Init from mixed
@@ -418,9 +418,9 @@ namespace v4 {
       v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
     }
     ~v4int() {};                              // Destructor
-    
+
     // v4int assignment operators
-  
+
 #   define ASSIGN(op)			          \
     inline v4int &operator op( const v4int &b ) { \
       i[0] op b.i[0];                             \
@@ -462,7 +462,7 @@ namespace v4 {
 #   undef ASSIGN
 
     // v4int member access operator
-    
+
     inline int &operator []( int n ) { return i[n]; }
     inline int  operator ()( int n ) { return i[n]; }
 
@@ -504,7 +504,7 @@ namespace v4 {
     b.v = _mm_xor_ps( a.v, _mm_set1_ps( u.f ) );
     return b;
   }
-  
+
 # undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
@@ -542,7 +542,7 @@ namespace v4 {
 # undef POSTFIX_INCDEC
 
   // v4int binary operators
-  
+
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b ) {	\
     v4int c;                                                    \
@@ -602,7 +602,7 @@ namespace v4 {
   LOGICAL(>=)
   LOGICAL(&&)
   LOGICAL(||)
-  
+
 # undef LOGICAL
 
   // v4int miscellaneous functions
@@ -627,7 +627,7 @@ namespace v4 {
     b.v = _mm_and_ps(c.v,a.v);
     return b;
   }
-  
+
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f ) {
     __m128 c_v = c.v;
     v4 tf;
@@ -710,11 +710,11 @@ namespace v4 {
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
     friend inline void trilinear( v4float &wl, v4float &wh );
-    
+
   public:
 
     // v4float constructors / destructors
-    
+
     v4float() {}                                        // Default constructor
     v4float( const v4float &a ) { v = a.v; }            // Copy constructor
     v4float( const v4 &a ) { v = a.v; }                 // Init from mixed
@@ -810,7 +810,7 @@ namespace v4 {
   }
 
   // v4float binary operators
-    
+
 # define BINARY(op,intrin)                                           \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
@@ -908,13 +908,13 @@ namespace v4 {
 # undef CMATH_FR2
 
   // v4float miscelleanous functions
-  
+
   inline v4float rsqrt_approx( const v4float &a ) {
     v4float b;
     b.v = _mm_rsqrt_ps(a.v);
     return b;
   }
-  
+
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -933,7 +933,7 @@ namespace v4 {
     b.v = _mm_rcp_ps(a.v);
     return b;
   }
-  
+
   inline v4float rcp( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;

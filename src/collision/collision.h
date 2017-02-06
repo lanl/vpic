@@ -37,7 +37,7 @@ append_collision_op( collision_op_t * cop,
 /* The most basic collision model (but implemented with numerical
    sophistication).  nu is the collision frequency of the particles
    with some unresolved stationary large thermal bath.  kT is the
-   thermal bath temperature.  This method is stable (e.g. if you set 
+   thermal bath temperature.  This method is stable (e.g. if you set
    nu very large, it is equivalent to resampling your particle
    normal momenta from a normal distribution with
    uth = sqrt(kT/mc)) every time this operator is applied (in MD,
@@ -115,7 +115,7 @@ typedef void
                            /**/  particle_t * RESTRICT ALIGNED(32) p,
                            /**/  rng_t      * RESTRICT rng );
 
-/* Declare a unary collision model with the given microscopic physics. 
+/* Declare a unary collision model with the given microscopic physics.
    params must be a registered object or NULL.  Every particle is
    tested for collision on every "interval" timesteps.  */
 
@@ -178,7 +178,7 @@ unary_collision_model( const char       * RESTRICT name,
    boost factor and has the manifestly covariant expression s =
    Ui.Uj - 1 where Ui = (gamma_i,ui) and Uj = (gamma_j,uj) are the
    normalized 4-momenta of particle i and particle j respectively
-   and the Minkowski 4-dot product has a +--- signature. 
+   and the Minkowski 4-dot product has a +--- signature.
 
    The basic control flow for a unary_collision_func_t should be:
 
@@ -229,7 +229,7 @@ typedef void
                             /**/  rng_t      * RESTRICT rng,
                             int type );
 
-/* Declare a binary collision model with the given microscopic physics. 
+/* Declare a binary collision model with the given microscopic physics.
    params must be a registered object or NULL.  A particle in a species
    will be tested for collision on average at least "sample" times every
    "interval" timesteps.  */

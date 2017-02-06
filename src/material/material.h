@@ -18,7 +18,7 @@ typedef struct material {
   material_id id;               // Unique identifier for material
   struct material *next;        // Next material in list
 } material_t;
-  
+
 BEGIN_C_DECLS
 
 // In material.c

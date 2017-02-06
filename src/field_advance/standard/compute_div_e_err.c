@@ -83,7 +83,7 @@ compute_div_e_err( field_array_t * RESTRICT fa ) {
 
   // Have pipelines compute interior of local domain
 
-  pipeline_args_t args[1];  
+  pipeline_args_t args[1];
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;

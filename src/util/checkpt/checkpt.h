@@ -111,7 +111,7 @@ reanimate_objects( void );
 
 /*****************************************************************************/
 /* Simple checkpt / restore / reanimate primitives */
-                 
+
 /* Checkpt(restore) n bytes from(to) data. */
 
 void
@@ -246,7 +246,7 @@ restore_ptr( void );
    a verbose warnings to the log to help diagnosing (and repairing)
    any issues caused by checkpointing and restoring various
    edge cases above.
-   
+
    It is okay to checkpoint a NULL symbol (it will be restored as a
    NULL). */
 

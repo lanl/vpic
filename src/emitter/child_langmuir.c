@@ -113,7 +113,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         nm += move_p( p, pm, a, g, qsp );                               \
       }                                                                 \
     }
-    
+
     switch( EXTRACT_COMPONENT_TYPE( cc ) ) {
     case BOUNDARY(-1, 0, 0): EMIT_PARTICLES(x,y,z,+) break;
     case BOUNDARY( 0,-1, 0): EMIT_PARTICLES(y,z,x,+) break;
@@ -125,9 +125,9 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     }
 
 #   undef EMIT_PARTICLES
-     
+
   }
-  
+
   sp->np = np;
   sp->nm = nm;
 

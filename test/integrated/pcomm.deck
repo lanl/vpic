@@ -46,7 +46,7 @@ begin_diagnostics {
   if( step()==0 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) ||
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -57,7 +57,7 @@ begin_diagnostics {
   if( step()==10 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(5,5,5) || 
+          sp->p[0].i!=voxel(5,5,5) ||
           sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -68,7 +68,7 @@ begin_diagnostics {
   if( step()==11 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(1,1,1) || 
+          sp->p[0].i!=voxel(1,1,1) ||
           sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -79,11 +79,11 @@ begin_diagnostics {
   if( step()==20 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) ||
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
-      if( sp->np!=0 ) global->fail++; 
+      if( sp->np!=0 ) global->fail++;
 
     }
   }
@@ -91,18 +91,18 @@ begin_diagnostics {
   if( step()==30 ) {
     if( rank()==7 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(5,5,5) || 
+          sp->p[0].i!=voxel(5,5,5) ||
           sp->p[0].dx!=1 || sp->p[0].dy!=1 || sp->p[0].dz!=1 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
-      if( sp->np!=0 ) global->fail++; 
+      if( sp->np!=0 ) global->fail++;
     }
   }
 
   if( step()==31 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(1,1,1) || 
+          sp->p[0].i!=voxel(1,1,1) ||
           sp->p[0].dx!=-0.5 || sp->p[0].dy!=-0.5 || sp->p[0].dz!=-0.5 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {
@@ -113,7 +113,7 @@ begin_diagnostics {
   if( step()==40 ) {
     if( rank()==0 ) {
       if( sp->np!=1 ||
-          sp->p[0].i!=voxel(3,3,3) || 
+          sp->p[0].i!=voxel(3,3,3) ||
           sp->p[0].dx!=0 || sp->p[0].dy!=0 || sp->p[0].dz!=0 ||
           sp->p[0].ux!=1 || sp->p[0].uy!=1 || sp->p[0].uz!=1 ) global->fail++;
     } else {

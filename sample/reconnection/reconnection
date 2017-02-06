@@ -9,15 +9,15 @@
 
 // structure to hold the data for energy diagnostics
 struct edata {
-  species_id sp_id;       /* species id */ 
-  double       vth;       /* thermal energy */ 
-  char  fname[256];       /* file to save data */ 
+  species_id sp_id;       /* species id */
+  double       vth;       /* thermal energy */
+  char  fname[256];       /* file to save data */
 };
 
 // naming convention for the hydro dump files
-#define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"     
+#define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"
 
-// Vadim's in-line average 
+// Vadim's in-line average
 #define ALLOCATE(A,LEN,TYPE)                                    \
   if ( !((A)=(TYPE *)malloc((size_t)(LEN)*sizeof(TYPE))) )      \
     ERROR(("Cannot allocate."));
@@ -37,10 +37,10 @@ begin_globals {
   double quota_sec;          // Run quota in seconds
   double b0;                 // B0
   double bg;                 // Guide field
-  double topology_x;         // domain topology 
+  double topology_x;         // domain topology
   double topology_y;
   double topology_z;
-  
+
   //  Variables for new output format
 
   DumpParameters fdParams;
@@ -63,7 +63,7 @@ begin_globals {
   //Vadim: E*j variables
 
   int nsp;               // number of species
-  int dis_nav;           // number of steps to average over 
+  int dis_nav;           // number of steps to average over
   int dis_interval;      // number of steps between outputs
   int dis_iter;          // iteration count. 0 means we are not averaging at
                          // the moment  : initialized in dissipation.cxx
@@ -95,7 +95,7 @@ begin_initialization {
   double bg = 0.0;        // electron plasma freq / electron cyclotron freq
   double theta   = 0.0;   // B0 = Bx
   double taui    = 20000; // simulation wci's to run
-  
+
   double quota   = 14.4;  // run quota in hours
   double quota_sec = quota*3600;  // Run quota in seconds
 
@@ -118,7 +118,7 @@ begin_initialization {
                                       // at this internal
   double electron_sort_interval = 25; // Injector moments are also updated
                                       // at this internal
-  
+
   // Numerical parameters
 
   double nppc  =  200; // Average number of macro particle per cell per species
@@ -157,7 +157,7 @@ begin_initialization {
   //    L3 cache:              40960K
   //    NUMA node0 CPU(s):     0-15,32-47
   //    NUMA node1 CPU(s):     16-31,48-63
-  
+
   // for 4 nodes
   // msub -I -l nodes=4
 
@@ -170,7 +170,7 @@ begin_initialization {
   //            Specifies how many CPUs to use per compute unit for an ALPS
   //            job. See Compute Unit Affinity for an explanation of compute
   //            unit affinity in ALPS. An aprun specifying -j 0 will use all
-  //            CPUs 
+  //            CPUs
   //            from Compute Unit Affinity:
   //            For example, on Intel SandyBridge processors, a compute unit
   //            consists of two CPUs, however these CPUs rely on Intel
@@ -340,7 +340,7 @@ begin_initialization {
   Ne = trunc_granular(Ne,nproc()); // Make it divisible by number of processors
   double weight = Np/Ne;
   double qe = -ec*Np/Ne; // Charge per macro electron
-  double qi =  ec*Np/Ne; // Charge per macro ion       
+  double qi =  ec*Np/Ne; // Charge per macro ion
   double Lpert = Lx;     // wavelength of perturbation
   double dbz = 0.02*b0;  // Perturbation in Bz rel. to Bo (Only change here)
   double dbx = -dbz*Lpert/(2.0*Lz); // Set Bx perturbation so that div(B) = 0
@@ -351,12 +351,12 @@ begin_initialization {
   double dt = cfl_req*dg/c;                      // courant limited time step
   if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;        // override timestep if
                                                  // plasma frequency limited
-   
+
   //int restart_interval = int(10000.0/(wci*dt));
   //int restart_interval = 8000;
   int restart_interval = 100;
   int energies_interval = 100;
-  int interval = int(5.0/(wci*dt)); 
+  int interval = int(5.0/(wci*dt));
   int fields_interval = interval;
   int ehydro_interval = interval;
   int Hhydro_interval = interval;
@@ -377,10 +377,10 @@ begin_initialization {
     (ix) = _ix;                                                         \
     (iy) = _iy;                                                         \
     (iz) = _iz;                                                         \
-  } END_PRIMITIVE 
+  } END_PRIMITIVE
 
-  int ix, iy, iz ; 
-  RANK_TO_INDEX( int(rank()), ix, iy, iz ); 
+  int ix, iy, iz ;
+  RANK_TO_INDEX( int(rank()), ix, iy, iz );
 
 
   ///////////////////////////////////////////////
@@ -393,22 +393,22 @@ begin_initialization {
   clean_div_b_interval = status_interval/2;
 
   global->restart_interval     = restart_interval;
-  global->energies_interval    = energies_interval; 
-  global->fields_interval      = fields_interval;  
-  global->ehydro_interval      = ehydro_interval;  
-  global->Hhydro_interval      = Hhydro_interval;  
-  global->eparticle_interval   = eparticle_interval;  
-  global->Hparticle_interval   = Hparticle_interval;  
+  global->energies_interval    = energies_interval;
+  global->fields_interval      = fields_interval;
+  global->ehydro_interval      = ehydro_interval;
+  global->Hhydro_interval      = Hhydro_interval;
+  global->eparticle_interval   = eparticle_interval;
+  global->Hparticle_interval   = Hparticle_interval;
   global->quota_check_interval = quota_check_interval;
-  global->quota_sec            = quota_sec;  
-  global->rtoggle              = 0;  
+  global->quota_sec            = quota_sec;
+  global->rtoggle              = 0;
 
-  global->b0 = b0;              
-  global->bg = bg;              
+  global->b0 = b0;
+  global->bg = bg;
 
-  global->topology_x = topology_x;  
-  global->topology_y = topology_y;  
-  global->topology_z = topology_z;  
+  global->topology_x = topology_x;
+  global->topology_y = topology_y;
+  global->topology_z = topology_z;
 
 
   /////////////////////////////////////////////////////////////////////////////
@@ -431,7 +431,7 @@ begin_initialization {
 
   // ***** Set Field Boundary Conditions *****
 
-  // sim_log("Conducting fields on X & Z-boundaries"); 
+  // sim_log("Conducting fields on X & Z-boundaries");
   if ( iz==0 )            set_domain_field_bc( BOUNDARY(0,0,-1), pec_fields );
   if ( iz==topology_z-1 ) set_domain_field_bc( BOUNDARY( 0,0,1), pec_fields );
 
@@ -443,7 +443,7 @@ begin_initialization {
   /////////////////////////////////////////////////////////////////////////////
   // Setup materials
 
-  sim_log("Setting up materials. "); 
+  sim_log("Setting up materials. ");
 
   define_material( "vacuum", 1 );
 
@@ -455,13 +455,13 @@ begin_initialization {
   /////////////////////////////////////////////////////////////////////////////
   // Finalize Field Advance
 
-  sim_log("Finalizing Field Advance"); 
+  sim_log("Finalizing Field Advance");
 
   define_field_array(NULL);
 
   /////////////////////////////////////////////////////////////////////////////
   // Setup the species
- 
+
   sim_log("Setting up species. ");
   double nmax = 2.0*Ne/nproc();
   double nmovers = 0.1*nmax;
@@ -476,8 +476,8 @@ begin_initialization {
 
   sim_log( "***********************************************" );
   sim_log("* Topology:                       " << topology_x
-    << " " << topology_y << " " << topology_z); 
-  sim_log ( "L_di   = " << L_di ); 
+    << " " << topology_y << " " << topology_z);
+  sim_log ( "L_di   = " << L_di );
   sim_log ( "Ti/Te = " << Ti_Te ) ;
   sim_log ( "wpe/wce = " << wpe_wce );
   sim_log ( "mi/me = " << mi_me );
@@ -492,7 +492,7 @@ begin_initialization {
   sim_log ( "Lz/de = " << Lz/de );
   sim_log ( "nx = " << nx );
   sim_log ( "ny = " << ny );
-  sim_log ( "nz = " << nz ); 
+  sim_log ( "nz = " << nz );
   sim_log ( "courant = " << c*dt/dg );
   sim_log ( "nproc = " << nproc ()  );
   sim_log ( "nppc = " << nppc );
@@ -502,7 +502,7 @@ begin_initialization {
   sim_log ( "total # of particles = " << 2*Ne );
   sim_log ( "qi = " << qi );
   sim_log ( "qe = " << qe );
-  sim_log ( "dt*wpe = " << wpe*dt ); 
+  sim_log ( "dt*wpe = " << wpe*dt );
   sim_log ( "dt*wce = " << wce*dt );
   sim_log ( "dt*wci = " << wci*dt );
   sim_log ( "energies_interval: " << energies_interval );
@@ -568,29 +568,29 @@ begin_initialization {
 
     // for the parallized translate.f90 written by Vadim
     // write binary info file
-                
+
     if ( ! (fp_info.open("info.bin", io_write)==ok) )
       ERROR(("Cannot open file."));
-        
+
     fp_info.write(&topology_x, 1 );
     fp_info.write(&topology_y, 1 );
     fp_info.write(&topology_z, 1 );
-                
+
     fp_info.write(&Lx, 1 );
-    fp_info.write(&Ly, 1 ); 
+    fp_info.write(&Ly, 1 );
     fp_info.write(&Lz, 1 );
-    
+
     fp_info.write(&nx, 1 );
     fp_info.write(&ny, 1 );
-    fp_info.write(&nz, 1 ); 
-                     
+    fp_info.write(&nz, 1 );
+
     fp_info.write(&dt, 1 );
-                    
+
     fp_info.write(&mi_me, 1 );
     fp_info.write(&wpe_wce, 1 );
     fp_info.write(&vthe, 1 );
     fp_info.write(&vthi, 1 );
-            
+
     fp_info.close();
   }
 
@@ -600,9 +600,9 @@ begin_initialization {
 
   // Define some function to load profiles
 
-# define BX b0*tanh(z/L) 
+# define BX b0*tanh(z/L)
 # define BY sqrt(b0*b0 + bg*bg*b0*b0 - BX*BX)
-# define VDY -0.5*(b0/L)/(cosh(z/L)*cosh(z/L)) 
+# define VDY -0.5*(b0/L)/(cosh(z/L)*cosh(z/L))
 # define VDX VDY*BX/BY
 # define VD sqrt(VDX*VDX+VDY*VDY)
 # define GVD 1./sqrt(1.-VD*VD/(c*c))
@@ -632,7 +632,7 @@ begin_initialization {
   double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
   double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
   double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
-  
+
   // Load Harris population
 
   sim_log( "-> Force Free Sheet" );
@@ -707,11 +707,11 @@ begin_initialization {
   sim_log ( "Fields output format = band" );
 
   global->hedParams.format = band;
-  
+
   sim_log ( "Electron species output format = band" );
-  
+
   global->hHdParams.format = band;
-  
+
   sim_log ( "Ion species output format = band" );
 
   /*--------------------------------------------------------------------------
@@ -747,58 +747,58 @@ begin_initialization {
    *
    *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
    *------------------------------------------------------------------------*/
-  
+
   // relative path to fields data from global header
   sprintf(global->fdParams.baseDir, "fields");
-  
+
   // base file name for fields output
   sprintf(global->fdParams.baseFileName, "fields");
-  
+
   global->fdParams.stride_x = 1;
   global->fdParams.stride_y = 1;
   global->fdParams.stride_z = 1;
-  
+
   // add field parameters to list
   global->outputParams.push_back(&global->fdParams);
-  
+
   sim_log ( "Fields x-stride " << global->fdParams.stride_x );
   sim_log ( "Fields y-stride " << global->fdParams.stride_y );
   sim_log ( "Fields z-stride " << global->fdParams.stride_z );
-  
+
   // relative path to electron species data from global header
   sprintf(global->hedParams.baseDir, "hydro");
-  
+
   // base file name for fields output
   sprintf(global->hedParams.baseFileName, "ehydro");
-  
+
   global->hedParams.stride_x = 1;
   global->hedParams.stride_y = 1;
   global->hedParams.stride_z = 1;
-  
+
   // add electron species parameters to list
   global->outputParams.push_back(&global->hedParams);
-  
+
   sim_log ( "Electron species x-stride " << global->hedParams.stride_x );
   sim_log ( "Electron species y-stride " << global->hedParams.stride_y );
   sim_log ( "Electron species z-stride " << global->hedParams.stride_z );
-  
+
   // relative path to electron species data from global header
   sprintf(global->hHdParams.baseDir, "hydro");
-  
+
   // base file name for fields output
   sprintf(global->hHdParams.baseFileName, "Hhydro");
-  
+
   global->hHdParams.stride_x = 1;
   global->hHdParams.stride_y = 1;
   global->hHdParams.stride_z = 1;
-  
+
   sim_log ( "Ion species x-stride " << global->hHdParams.stride_x );
   sim_log ( "Ion species y-stride " << global->hHdParams.stride_y );
   sim_log ( "Ion species z-stride " << global->hHdParams.stride_z );
-  
+
   // add electron species parameters to list
   global->outputParams.push_back(&global->hHdParams);
-  
+
   /*--------------------------------------------------------------------------
    * Set output fields
    *
@@ -823,65 +823,65 @@ begin_initialization {
    *------------------------------------------------------------------------*/
   /* CUT AND PASTE AS A STARTING POINT
    * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
-   
+
    output_variables( all );
-   
+
    output_variables( electric | div_e_err | magnetic | div_b_err |
    tca      | rhob      | current  | rhof |
    emat     | nmat      | fmat     | cmat );
-   
+
    output_variables( current_density  | charge_density |
    momentum_density | ke_density     | stress_tensor );
   */
-  
+
   global->fdParams.output_variables( electric | magnetic );
   global->hedParams.output_variables( current_density | charge_density
 				      | stress_tensor );
   global->hHdParams.output_variables( current_density | charge_density
 				      | stress_tensor );
-  
+
   //global->fdParams.output_variables( all );
   //global->hedParams.output_variables( all );
   //global->hHdParams.output_variables( all );
-  
+
   /*--------------------------------------------------------------------------
    * Convenience functions for simlog output
    *------------------------------------------------------------------------*/
-  
+
   char varlist[512];
   create_field_list(varlist, global->fdParams);
-  
+
   sim_log ( "Fields variable list: " << varlist );
-  
+
   create_hydro_list(varlist, global->hedParams);
-  
+
   sim_log ( "Electron species variable list: " << varlist );
-  
+
   create_hydro_list(varlist, global->hHdParams);
-  
+
   sim_log ( "Ion species variable list: " << varlist );
-  
-  
+
+
   /* ---------------------------------------------
-     
+
      now add parameters for the energy diagnostics
-     
+
      --------------------------------------------- */
-  
+
   global->ede.sp_id = electron->id;
   global->ede.vth = sqrt(2.0)*vthe;
   sprintf(global->ede.fname,global->hedParams.baseFileName);
-  
+
   global->edi.sp_id = ion->id;
   global->edi.vth = sqrt(2.0)*vthi;
   sprintf(global->edi.fname, global->hHdParams.baseFileName);
-  
+
   global->nex  = 6;
   global->emax = 120;
-  
+
   sim_log("*** Finished with user-specified initialization ***");
-  
-  
+
+
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains
   //   and tang E / norm B are synchronized by averaging where discrepancies
@@ -908,15 +908,15 @@ begin_initialization {
   // - Increment the time step
   // - Call user diagnostics
   // - (periodically) Print a status message
-  
+
 } //begin_initialization
 
 #define should_dump(x)							\
   (global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
 
 begin_diagnostics {
-  
-  
+
+
   /*--------------------------------------------------------------------------
    * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
    *
@@ -948,7 +948,7 @@ begin_diagnostics {
    *   // close file
    *   fileIO.close();
    *------------------------------------------------------------------------*/
-  
+
   /*--------------------------------------------------------------------------
    * Data output directories
    * WARNING: The directory list passed to "global_header" must be
@@ -958,8 +958,8 @@ begin_diagnostics {
    * DIRECTORY PATHES SHOULD BE RELATIVE TO
    * THE LOCATION OF THE GLOBAL HEADER!!!
    *------------------------------------------------------------------------*/
-  
-  
+
+
   /*--------------------------------------------------------------------------
    * Normal rundata dump
    *------------------------------------------------------------------------*/
@@ -970,48 +970,48 @@ begin_diagnostics {
     dump_mkdir("restart1");  // 1st backup
     dump_mkdir("restart2");  // 2nd backup
     dump_mkdir("particle");
-    
+
     dump_grid("rundata/grid");
     dump_materials("rundata/materials");
     dump_species("rundata/species");
     global_header("global", global->outputParams);
   } // if
-  
+
   /*--------------------------------------------------------------------------
    * Normal rundata energies dump
    *------------------------------------------------------------------------*/
   if(should_dump(energies)) {
     dump_energies("rundata/energies", step() == 0 ? 0 : 1);
   } // if
-  
+
   /*--------------------------------------------------------------------------
    * Field data output
    *------------------------------------------------------------------------*/
-  
+
   if(step() == 1 || should_dump(fields)) field_dump(global->fdParams);
-  
+
   /*--------------------------------------------------------------------------
    * Electron species output
    *------------------------------------------------------------------------*/
-  
+
   if(should_dump(ehydro)) hydro_dump("electron", global->hedParams);
-  
+
   /*--------------------------------------------------------------------------
    * Ion species output
    *------------------------------------------------------------------------*/
-  
+
   if(should_dump(Hhydro)) hydro_dump("ion", global->hHdParams);
-  
+
   /*--------------------------------------------------------------------------
    * Energy Spectrum Output
    *------------------------------------------------------------------------*/
-  
+
   //#include "energy.cxx"   // Subroutine to compute energy spectrum diagnostic
-  
-  //Vadim: 
+
+  //Vadim:
   //#include "dissipation.cxx"
   //#include "Ohms_exp_all_v2.cxx"
-  
+
   /*--------------------------------------------------------------------------
    * Restart dump
    *------------------------------------------------------------------------*/
@@ -1024,11 +1024,11 @@ begin_diagnostics {
                                // are written during the next step
   else
     if (global->write_restart) {
-      
+
       global->write_restart = 0; // reset restart flag
-      
+
       double dumpstart = uptime();
-      
+
       if(!global->rtoggle) {
 	global->rtoggle = 1;
 	checkpt("restart1/restart", 0);
@@ -1037,15 +1037,15 @@ begin_diagnostics {
 	global->rtoggle = 0;
 	checkpt("restart2/restart", 0);
       } // if
-      
+
       mp_barrier(  ); // Just to be safe
-      
+
       double dumpelapsed = uptime() - dumpstart;
       sim_log("Restart duration "<<dumpelapsed);
-      
+
       //Vadim
       if (rank()==0) {
-	
+
         FileIO fp_restart_info;
         if ( ! (fp_restart_info.open("latest_restart", io_write)==ok) )
 	  ERROR(("Cannot open file."));
@@ -1053,48 +1053,48 @@ begin_diagnostics {
           fp_restart_info.print("restart restart2/restart\n");
         } else
           fp_restart_info.print("restart restart1/restart\n");
-	
+
         fp_restart_info.close();
       }
-      
+
     } // if
-  
-  
+
+
   // Dump particle data
   char subdir[36];
   if ( should_dump(eparticle) && step() !=0 &&
        step() > 0*(global->fields_interval)  ) {
-    sprintf(subdir,"particle/T.%d",step()); 
+    sprintf(subdir,"particle/T.%d",step());
     dump_mkdir(subdir);
-    sprintf(subdir,"particle/T.%d/eparticle",step()); 
+    sprintf(subdir,"particle/T.%d/eparticle",step());
     dump_particles("electron",subdir);
   }
-  
-  // Shut down simulation when wall clock time exceeds global->quota_sec. 
+
+  // Shut down simulation when wall clock time exceeds global->quota_sec.
   // Note that the mp_elapsed() is guaranteed to return the same value for all
-  // processors (i.e., elapsed time on proc #0), and therefore the abort will 
+  // processors (i.e., elapsed time on proc #0), and therefore the abort will
   // be synchronized across processors. Note that this is only checked every
   // few timesteps to eliminate the expensive mp_elapsed call from every
   // timestep. mp_elapsed has an ALL_REDUCE in it!
-  
+
   //Vadim:
   if  (( step()>0 && global->quota_check_interval>0
 	 && (step()&global->quota_check_interval)==0)
        || (global->write_end_restart) ) {
     if ( (global->write_end_restart) ) {
-		   
+
       global->write_end_restart = 0; // reset restart flag
-      
+
       sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
       double dumpstart = uptime();
-      
+
       checkpt("restart0/restart",0);
-      
+
       mp_barrier(  ); // Just to be safe
       sim_log( "Restart dump restart completed." );
       double dumpelapsed = uptime() - dumpstart;
       sim_log("Restart duration "<<dumpelapsed);
-      
+
       //Vadim:
       if (rank()==0) {
 	FileIO fp_restart_info;
@@ -1103,12 +1103,12 @@ begin_diagnostics {
 	fp_restart_info.print("restart restart0/restart");
 	fp_restart_info.close();
       }
-      
+
       exit(0); // Exit or abort?
     }
     if( uptime( ) > global->quota_sec )   global->write_end_restart = 1;
   }
-  
+
 } // end diagnostics
 
 begin_particle_injection {

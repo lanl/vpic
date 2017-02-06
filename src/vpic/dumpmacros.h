@@ -39,15 +39,15 @@
     WRITE( int,       sp_id,                  fileIO );  \
     WRITE( float,     q_m,                    fileIO );  \
   } while(0)
- 
+
 // Note dim _MUST_ be a pointer to an int
- 
+
 #define WRITE_ARRAY_HEADER(p,ndim,dim,fileIO) do { \
     WRITE( int, sizeof(p[0]), fileIO );            \
     WRITE( int, ndim,         fileIO );            \
     fileIO.write( dim, ndim );                     \
   } while(0)
- 
+
 // The WRITE macro copies the output "value" into a temporary variable
 // of the requested output "type" so that the write to the "file"
 // occurs from a known binary data type. For example, if grid.dx were
@@ -60,12 +60,12 @@
 // single precision write copies. However, specialty types could be
 // created so that the type cast __WRITE_tmp = (type)(value)
 // automatically does the underlying conversion in C++
- 
+
 #define WRITE(type,value,fileIO) do { \
     type __WRITE_tmp = (type)(value); \
     fileIO.write( &__WRITE_tmp, 1 );  \
   } while(0)
- 
+
 // Note: strlen does not include the terminating \0
 #define WRITE_STRING(string,fileIO) do {                    \
     int __WRITE_STRING_len = 0;                             \
@@ -74,7 +74,7 @@
     if( __WRITE_STRING_len>0 )                              \
       fileIO.write( string, __WRITE_STRING_len );           \
   } while(0)
- 
+
 #define READ(type,value,fileIO) do { \
     type __READ_tmp;                 \
     fileIO.read(&__READ_tmp, 1 );    \
@@ -116,7 +116,7 @@
     F_WRITE( int,       sp_id,                  fileIO );  \
     F_WRITE( float,     q_m,                    fileIO );  \
   } while(0)
- 
+
 #define F_WRITE_HEADER_PAR(dump_type,sp_id,q_m,fileIO) do { \
     /* Binary compatibility information */                  \
     F_WRITE( char,      CHAR_BIT,               fileIO );   \
@@ -152,20 +152,20 @@
     F_WRITE( int,       sp_id,                  fileIO );   \
     F_WRITE( float,     q_m,                    fileIO );   \
   } while(0)
- 
+
 // Note dim _MUST_ be a pointer to an int
- 
+
 #define F_WRITE_ARRAY_HEADER(psiz,ndim,dim,fileIO) do { \
     F_WRITE( int, psiz, fileIO );                       \
     F_WRITE( int, ndim, fileIO );                       \
     fileIO.write( dim, ndim );                          \
   } while(0)
- 
+
 #define F_WRITE(type,value,fileIO) do { \
     type __F_WRITE_tmp = (type)(value); \
     fileIO.write( &__F_WRITE_tmp, 1 );  \
   } while(0)
- 
+
 #define F_READ(type,value,fileIO) do { \
     type __F_READ_tmp;                 \
     fileIO.read( &__F_READ_tmp, 1 );   \

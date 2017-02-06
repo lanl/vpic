@@ -24,7 +24,7 @@ typedef struct pipeline_args {
   field_t * ALIGNED(16) f0;                                              \
   field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;          \
   int x, y, z
-                     
+
 #define f(x,y,z) f[ VOXEL(x,y,z,nx,ny,nz) ]
 
 #define INIT_STENCIL()  \
@@ -53,7 +53,7 @@ clean_div_e_pipeline( pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline ) {
   DECLARE_STENCIL();
-  
+
   int n_voxel;
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16,
                      pipeline_rank, n_pipeline,
@@ -89,7 +89,7 @@ clean_div_e( field_array_t * fa ) {
 
   do {
     DECLARE_STENCIL();
-    
+
     // Do left over ex
     for( y=1; y<=ny+1; y++ ) {
       f0 = &f(1,y,nz+1);
@@ -107,7 +107,7 @@ clean_div_e( field_array_t * fa ) {
         f0++; fx++;
       }
     }
-  
+
     // Do left over ey
     for( z=1; z<=nz+1; z++ ) {
       for( y=1; y<=ny; y++ ) {
@@ -124,7 +124,7 @@ clean_div_e( field_array_t * fa ) {
         f0++; fy++;
       }
     }
-  
+
     // Do left over ez
     for( z=1; z<=nz; z++ ) {
       f0 = &f(1,ny+1,z);

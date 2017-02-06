@@ -17,7 +17,7 @@ begin_initialization {
     abort(0);
   }
 
-  double L = 1e10; // Make cell so large particles will not leave 
+  double L = 1e10; // Make cell so large particles will not leave
   double local_np = atof(cmdline_argument[1]);
   double n_step   = atof(cmdline_argument[2]);
 
@@ -67,5 +67,3 @@ begin_field_injection {
 
 begin_particle_collisions {
 }
-
-

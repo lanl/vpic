@@ -4,7 +4,7 @@
 class BitField
 	{
 	public:
-		
+
 		BitField(uint32_t setbits = 0xffffffff) : bits_(setbits) {}
 		BitField(const BitField & bf) : bits_(bf.bits_) {}
 		~BitField() {}

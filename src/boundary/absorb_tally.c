@@ -67,7 +67,7 @@ absorb_tally( /**/  species_t      * RESTRICT sp_list,
   at->sp_list = sp_list;
   at->fa      = fa;
   MALLOC( at->tally, num_species( sp_list ) );
-  CLEAR( at->tally, num_species( sp_list ) );  
+  CLEAR( at->tally, num_species( sp_list ) );
   return new_particle_bc_internal( at,
                                    (particle_bc_func_t)interact_absorb_tally,
                                    delete_absorb_tally,

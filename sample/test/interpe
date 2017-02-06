@@ -1,5 +1,5 @@
 // Test electric field interpolation
-// 
+//
 // Written by:
 //   Kevin J. Bowers, Ph.D.
 //   Plasma Physics Group (X-1)
@@ -40,11 +40,11 @@ begin_initialization {
 
   species_t * sp = define_species( "test_species", 0.5, 0.5, npart, npart, 0, 0 );
 
-  // Hack into vpic internals 
+  // Hack into vpic internals
 
   int failed = 0;
-  load_interpolator_array( interpolator_array, field_array ); 
-  sp->np = npart; 
+  load_interpolator_array( interpolator_array, field_array );
+  sp->np = npart;
 
 # define test_e(X,DX,DY,DZ,VAL)                         \
   for( int n=0; n<npart; n++ ) {                        \
@@ -92,7 +92,7 @@ begin_initialization {
   test_e(z, 1,-1,0,9);
   test_e(z,-1, 1,0,10);
   test_e(z, 1, 1,0,11);
-  
+
   if( failed ) { sim_log( "FAIL" ); abort(1); }
   /**/           sim_log( "pass" ); exit(0);
 }

@@ -19,15 +19,15 @@ namespace v4 {
   class v4;
   class v4int;
   class v4float;
-  
+
   ////////////////
   // v4 base class
-  
+
   class v4 {
-    
+
     friend class v4int;
     friend class v4float;
-      
+
     // v4 miscellenous friends
 
     friend inline int any( const v4 &a );
@@ -49,7 +49,7 @@ namespace v4 {
     friend inline v4 merge(    const v4int &c, const v4 &a, const v4 &b );
 
     // v4 memory manipulation friends
-        
+
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
@@ -78,7 +78,7 @@ namespace v4 {
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
-    
+
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -104,7 +104,7 @@ namespace v4 {
       int i[4];
       float f[4];
     };
-    
+
   public:
 
     v4() {}                    // Default constructor
@@ -114,17 +114,17 @@ namespace v4 {
     ~v4() {}                   // Default destructor
 
   };
-  
+
   // v4 miscellaneous functions
 
   inline int any( const v4 &a ) {
     return a.i[0] || a.i[1] || a.i[2] || a.i[3];
   }
-  
+
   inline int all( const v4 &a ) {
     return a.i[0] && a.i[1] && a.i[2] && a.i[3];
   }
-  
+
   template<int n>
   inline v4 splat( const v4 & a ) {
     v4 b;
@@ -147,7 +147,7 @@ namespace v4 {
 
 # define sw(x,y) x^=y, y^=x, x^=y
 
-  inline void swap( v4 &a, v4 &b ) { 
+  inline void swap( v4 &a, v4 &b ) {
     sw( a.i[0], b.i[0] );
     sw( a.i[1], b.i[1] );
     sw( a.i[2], b.i[2] );
@@ -163,7 +163,7 @@ namespace v4 {
 # undef sw
 
   // v4 memory manipulation functions
-  
+
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
     a.i[0] = ((const int * ALIGNED(16))p)[0];
     a.i[1] = ((const int * ALIGNED(16))p)[1];
@@ -229,7 +229,7 @@ namespace v4 {
     a.i[2] = ((const int * ALIGNED(8))a2)[0]; b.i[2] = ((const int * ALIGNED(8))a2)[1];
     a.i[3] = ((const int * ALIGNED(8))a3)[0]; b.i[3] = ((const int * ALIGNED(8))a3)[1];
   }
-  
+
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -237,15 +237,15 @@ namespace v4 {
                            v4 &a, v4 &b, v4 &c ) {
     a.i[0] = ((const int * ALIGNED(16))a0)[0]; b.i[0] = ((const int* ALIGNED(16))a0)[1];
     c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    
+
     a.i[1] = ((const int * ALIGNED(16))a1)[0]; b.i[1] = ((const int* ALIGNED(16))a1)[1];
     c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    
+
     a.i[2] = ((const int * ALIGNED(16))a2)[0]; b.i[2] = ((const int* ALIGNED(16))a2)[1];
     c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    
+
     a.i[3] = ((const int * ALIGNED(16))a3)[0]; b.i[3] = ((const int* ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
+    c.i[3] = ((const int * ALIGNED(16))a3)[2];
   }
 
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
@@ -255,13 +255,13 @@ namespace v4 {
                            v4 &a, v4 &b, v4 &c, v4 &d ) {
     a.i[0] = ((const int * ALIGNED(16))a0)[0]; b.i[0] = ((const int* ALIGNED(16))a0)[1];
     c.i[0] = ((const int * ALIGNED(16))a0)[2]; d.i[0] = ((const int* ALIGNED(16))a0)[3];
-    
+
     a.i[1] = ((const int * ALIGNED(16))a1)[0]; b.i[1] = ((const int* ALIGNED(16))a1)[1];
     c.i[1] = ((const int * ALIGNED(16))a1)[2]; d.i[1] = ((const int* ALIGNED(16))a1)[3];
-    
+
     a.i[2] = ((const int * ALIGNED(16))a2)[0]; b.i[2] = ((const int* ALIGNED(16))a2)[1];
     c.i[2] = ((const int * ALIGNED(16))a2)[2]; d.i[2] = ((const int* ALIGNED(16))a2)[3];
-    
+
     a.i[3] = ((const int * ALIGNED(16))a3)[0]; b.i[3] = ((const int* ALIGNED(16))a3)[1];
     c.i[3] = ((const int * ALIGNED(16))a3)[2]; d.i[3] = ((const int* ALIGNED(16))a3)[3];
   }
@@ -288,29 +288,29 @@ namespace v4 {
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
     ((int * ALIGNED(16))a0)[0] = a.i[0]; ((int * ALIGNED(16))a0)[1] = b.i[0];
     ((int * ALIGNED(16))a0)[2] = c.i[0];
-    
+
     ((int * ALIGNED(16))a1)[0] = a.i[1]; ((int * ALIGNED(16))a1)[1] = b.i[1];
     ((int * ALIGNED(16))a1)[2] = c.i[1];
-    
+
     ((int * ALIGNED(16))a2)[0] = a.i[2]; ((int * ALIGNED(16))a2)[1] = b.i[2];
     ((int * ALIGNED(16))a2)[2] = c.i[2];
-    
+
     ((int * ALIGNED(16))a3)[0] = a.i[3]; ((int * ALIGNED(16))a3)[1] = b.i[3];
     ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
-  
+
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 ) {
     ((int * ALIGNED(16))a0)[0] = a.i[0]; ((int * ALIGNED(16))a0)[1] = b.i[0];
     ((int * ALIGNED(16))a0)[2] = c.i[0]; ((int * ALIGNED(16))a0)[3] = d.i[0];
-    
+
     ((int * ALIGNED(16))a1)[0] = a.i[1]; ((int * ALIGNED(16))a1)[1] = b.i[1];
     ((int * ALIGNED(16))a1)[2] = c.i[1]; ((int * ALIGNED(16))a1)[3] = d.i[1];
-    
+
     ((int * ALIGNED(16))a2)[0] = a.i[2]; ((int * ALIGNED(16))a2)[1] = b.i[2];
     ((int * ALIGNED(16))a2)[2] = c.i[2]; ((int * ALIGNED(16))a2)[3] = d.i[2];
-    
+
     ((int * ALIGNED(16))a3)[0] = a.i[3]; ((int * ALIGNED(16))a3)[1] = b.i[3];
     ((int * ALIGNED(16))a3)[2] = c.i[3]; ((int * ALIGNED(16))a3)[3] = d.i[3];
   }
@@ -372,7 +372,7 @@ namespace v4 {
 
     // v4float unary operator friends
 
-    friend inline v4int operator  !( const v4float & a ); 
+    friend inline v4int operator  !( const v4float & a );
 
     // v4float logical operator friends
 
@@ -394,7 +394,7 @@ namespace v4 {
   public:
 
     // v4int constructors / destructors
-    
+
     v4int() {}                                // Default constructor
     v4int( const v4int &a ) {                 // Copy constructor
       i[0] = a.i[0]; i[1] = a.i[1]; i[2] = a.i[2]; i[3] = a.i[3];
@@ -409,9 +409,9 @@ namespace v4 {
       i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
     }
     ~v4int() {}                               // Destructor
-    
+
     // v4int assignment operators
-  
+
 #   define ASSIGN(op)			          \
     inline v4int &operator op( const v4int &b ) { \
       i[0] op b.i[0];                             \
@@ -436,7 +436,7 @@ namespace v4 {
 #   undef ASSIGN
 
     // v4int member access operator
-    
+
     inline int &operator []( int n ) { return i[n]; }
     inline int  operator ()( int n ) { return i[n]; }
 
@@ -467,7 +467,7 @@ namespace v4 {
   }
 
   PREFIX_UNARY(~)
-  
+
 # undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
@@ -505,7 +505,7 @@ namespace v4 {
 # undef POSTFIX_INCDEC
 
   // v4int binary operators
-  
+
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b ) {	\
     v4int c;                                                    \
@@ -549,7 +549,7 @@ namespace v4 {
   LOGICAL(>=)
   LOGICAL(&&)
   LOGICAL(||)
-  
+
 # undef LOGICAL
 
   // v4int miscellaneous functions
@@ -580,7 +580,7 @@ namespace v4 {
     b.i[3] = a.i[3] & c.i[3];
     return b;
   }
-  
+
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f ) {
     v4 m;
     m.i[0] = (f.i[0] & ~c.i[0]) | (t.i[0] & c.i[0] );
@@ -665,11 +665,11 @@ namespace v4 {
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
     friend inline void trilinear( v4float & wl, v4float & wh );
-    
+
   public:
 
     // v4float constructors / destructors
-    
+
     v4float() {}                                        // Default constructor
     v4float( const v4float &a ) {                       // Copy constructor
       f[0] = a.f[0]; f[1] = a.f[1]; f[2] = a.f[2]; f[3] = a.f[3];
@@ -763,7 +763,7 @@ namespace v4 {
   }
 
   // v4float binary operators
-    
+
 # define BINARY(op)                                                  \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
@@ -846,7 +846,7 @@ namespace v4 {
 # undef CMATH_FR2
 
   // v4float miscelleanous functions
-  
+
   inline v4float rsqrt_approx( const v4float &a ) {
     v4float b;
     b.f[0] = ::sqrt( 1/a.f[0] );
@@ -855,7 +855,7 @@ namespace v4 {
     b.f[3] = ::sqrt( 1/a.f[3] );
     return b;
   }
-  
+
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
     b.f[0] = ::sqrt( 1/a.f[0] );
@@ -873,7 +873,7 @@ namespace v4 {
     b.f[3] = 1/a.f[3];
     return b;
   }
-  
+
   inline v4float rcp( const v4float &a ) {
     v4float b;
     b.f[0] = 1/a.f[0];
@@ -936,7 +936,7 @@ namespace v4 {
     b.i[3] = m.i[3] ^ a.i[3];
     return b;
   }
-  
+
   inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) {
     p[0] += a.f[0];
     p[1] += a.f[1];

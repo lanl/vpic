@@ -15,7 +15,7 @@ compute_rms_div_b_err_pipeline( pipeline_args_t * args,
                                 int n_pipeline ) {
   const field_t * ALIGNED(128) f = args->f;
   const grid_t  *              g = args->g;
-                             
+
   const field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
@@ -30,14 +30,14 @@ compute_rms_div_b_err_pipeline( pipeline_args_t * args,
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
-  
+
   f0 = &f(x,y,z);
 
   err = 0;
   for( ; n_voxel; n_voxel-- ) {
     err += f0->div_b_err*f0->div_b_err;
     f0++;
-    
+
     x++;
     if( x>nx ) {
       x=1, y++;
@@ -45,7 +45,7 @@ compute_rms_div_b_err_pipeline( pipeline_args_t * args,
       f0 = &f(x,y,z);
     }
   }
-    
+
   args->err[pipeline_rank] = err;
 }
 
@@ -53,7 +53,7 @@ double
 compute_rms_div_b_err( const field_array_t * fa ) {
   pipeline_args_t args[1];
   int p;
-  
+
   double err = 0, local[2], global[2];
 
   if( !fa ) ERROR(( "Bad args"));

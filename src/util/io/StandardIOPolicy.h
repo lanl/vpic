@@ -35,7 +35,7 @@ class StandardIOPolicy
 		// open/close methods
 		FileIOStatus open(const char * filename, FileIOMode mode);
 		int32_t close();
-		
+
 		bool isOpen() { return is_open_; }
 
 		// return file size in bytes
@@ -66,7 +66,7 @@ StandardIOPolicy::open(const char * filename, FileIOMode mode)
 		handle_ = nullptr;
 
 		switch(mode) {
-			
+
 			case io_read:
 				handle_ = fopen(filename, "r");
 				break;

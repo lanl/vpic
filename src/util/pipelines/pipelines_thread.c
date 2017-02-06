@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
  *
@@ -33,7 +33,7 @@
 
 // Modified extensively for VPIC-3P by K. Bowers 4/10/2007
 
-// TO DO: 
+// TO DO:
 // (?) Signal blocking in pipelines
 // (?) Timeouts in thread_halt, thread_boot (spin wait)
 
@@ -138,7 +138,7 @@ restore_thread( void ) {
  *
  * Arguments: n_pipeline (int) - The desired number of pipelines.
  *            dispatch_to_host (int) - Should the dispatch function
- *              dispatch tasks to the host thread 
+ *              dispatch tasks to the host thread
  *
  * Returns: (void)
  *
@@ -182,7 +182,7 @@ thread_boot( int * pargc,
   if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested (%i)", n_pipeline ));
 
-  // Initialize some global variables. Note: thread.n_pipeline = 0 here 
+  // Initialize some global variables. Note: thread.n_pipeline = 0 here
 
   Id   = 0;
   Busy = 0;
@@ -240,7 +240,7 @@ thread_boot( int * pargc,
  * Arguments: None
  *
  * Returns: None
- * 
+ *
  * Throws: An error if:
  *         - The caller is not the host thread
  *         - Errors occurred terminating pipeline threads
@@ -390,21 +390,21 @@ parallel_execute( pipeline_func_t func,
     id = Id; if( (++Id) >= thread.n_pipeline-Dispatch_To_Host ) Id = 0;
 
     if( !pthread_mutex_trylock( &Pipeline[id].mutex ) ) {
-      
+
       // If the thread isn't executing, see if the job can be
       // dispatched to this pipeline.  Note: host now has control over
       // the thread's state.
-      
+
       switch( Pipeline[id].state ) {
-        
+
         // Note: all cases relinquish control over the pipeline's
         // state
-        
+
       case PIPELINE_SLEEP:
-        
+
         // The pipeline is available - assign the task, wake the
         // pipeline and return
-        
+
         Pipeline[id].state = PIPELINE_EXECUTE;
         Pipeline[id].func  = func;
         Pipeline[id].args  = args;
@@ -414,22 +414,22 @@ parallel_execute( pipeline_func_t func,
         pthread_cond_signal( &Pipeline[id].wake );
         pthread_mutex_unlock( &Pipeline[id].mutex );
         return;
-        
+
       case PIPELINE_TERMINATE:
-        
+
         // The query pipeline was terminated.  Something is amiss!
-        
+
         pthread_mutex_unlock( &Pipeline[id].mutex );
         ERROR(( "parallel_execute called while thread_halt is running - "
                 "Should never happen in this restricted implementation." ));
-        
+
       default:
-        
+
         // Pipeline isn't ready to accept new tasks (pipeline is about
         // to wake-up to execute an already assigned task)
-        
+
         pthread_mutex_unlock( &Pipeline[id].mutex );
-        
+
       } // switch
     } // if pipeline might be ready
   } // for
@@ -465,7 +465,7 @@ pipeline_mgr( void *_pipeline ) {
   // when entering.  Since pthread_cond_wait unlockes the pipeline
   // mutex when the pipeline goes to sleep and the PIPELINE_ACK case
   // writes the pipeline state, the mutex needs to be locked first.
-     
+
   pthread_mutex_lock( &pipeline->mutex );
 
   // Loop while the pipeline is still executing
@@ -544,7 +544,7 @@ thread_dispatch( pipeline_func_t func,
     Done[id] = 1;
   }
 }
-                 
+
 static void
 thread_wait( void ) {
   int id;

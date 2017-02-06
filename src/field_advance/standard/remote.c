@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -19,7 +19,7 @@
   for( z=zl; z<=zh; z++ )	    \
     for( y=yl; y<=yh; y++ )	    \
       for( x=xl; x<=xh; x++ )
-	      
+
 // yz_EDGE_LOOP => Loop over all non-ghost y-oriented edges at plane x
 #define yz_EDGE_LOOP(x) XYZ_LOOP(x,x,1,ny,1,nz+1)
 #define zx_EDGE_LOOP(y) XYZ_LOOP(1,nx+1,y,y,1,nz)
@@ -287,7 +287,7 @@ end_remote_ghost_div_b( field_t      * ALIGNED(128) field,
  * overlappable so that a half advance_b can occur while communications are
  * occuring. The other synchronizations are less important to overlap as they
  * only occur in conjunction with infrequent operations.
- * 
+ *
  * FIXME: THIS COMMUNICATION PATTERN PROHIBITS CONCAVE LOCAL MESH
  * CONNECTIVITIES.
  *

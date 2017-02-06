@@ -27,7 +27,7 @@ function [ phi, ax, ay, az, rho ] = ...
 %
 % The microscopic rho calculation is based on:
 %   rho = eps0 div E
-%   
+%
 % The Laplacian equation discretized with the usual 7-point stencil. This
 % stencil is consistent with usual Yee mesh curl and divergence relations.
 % The Laplacian is inverted via Fourier methods.
@@ -128,4 +128,3 @@ if any(order~=[1 2 3]),
   az  = permute( az,  order );
   rho = permute( rho, order );
 end
-

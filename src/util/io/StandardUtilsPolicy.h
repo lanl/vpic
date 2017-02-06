@@ -12,7 +12,7 @@ class StandardUtilsPolicy
 		~StandardUtilsPolicy() {}
 
 		static int makeDirectory(const char * dirname) {
-			return mkdir(dirname, S_IRWXU);	
+			return mkdir(dirname, S_IRWXU);
 		} // makeDirectory
 
 		static int getCurrentWorkingDirectory(char * dirname, size_t size) {

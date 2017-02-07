@@ -11,6 +11,7 @@
 #include "util_base.h" // Declarations
 #include <stdio.h>     // For vfprintf
 #include <stdarg.h>    // For va_list, va_start, va_end
+#include <string.h>    // for strstr
 
 /****************************************************************************/
 
@@ -47,6 +48,76 @@ STRIP_CMDLINE( string, const char *,      )
 #undef STRIP_CMDLINE
 
 /****************************************************************************/
+
+int string_starts_with(const char *str, const char *pre)
+{
+    size_t lenpre = strlen(pre),
+           lenstr = strlen(str);
+    return lenstr < lenpre ? 0 : strncmp(pre, str, lenpre) == 0;
+}
+
+int string_contains(const char *str, const char *substr)
+{
+    char *output = NULL;
+    output = strstr (str,substr);
+
+    char* pos = strstr(str, substr);
+    if(pos) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+void detect_old_style_arguments(int* pargc, char *** pargv)
+{
+  // FIXME: This could also warn for unknown options being passed (such as typos)
+  int i; 
+
+  for (i=0; i<(*pargc); i++)
+  {
+      const int num_keys = 4;
+      char* keys[num_keys];
+     
+      keys[0] = "=";
+      keys[1] = "-tpp";
+      keys[2] = "restart";
+      keys[3] = "-restore";
+
+      char* arg = (*pargv)[i];
+
+
+      // Search for tpp
+      if (string_starts_with(arg,keys[1]))
+      {
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting.
+                      (Single dashed flag '-tpp'), needs '--tpp'" ));
+      }
+
+      // Search for restart 
+      if (string_starts_with(arg,keys[2]))
+      {
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting.
+                      (Old Restart Syntax 'restart')" ));
+      }
+
+      // Search for restore, single dash
+      if (string_starts_with(arg,keys[3]))
+      {
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting.
+                      (Single dashed flag '-restore', needs '--restore')" ));
+      }
+
+      // Search for equals
+          // Doing this last as it's the most vague 
+      if (string_contains(arg, keys[0]))
+      {
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting.
+                      (Contains '=', needs a space)" )); 
+      }
+  }
+
+}
 
 void
 util_malloc( const char * err,

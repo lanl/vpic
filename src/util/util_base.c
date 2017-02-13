@@ -90,30 +90,31 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
       // Search for tpp
       if (string_starts_with(arg,keys[1]))
       {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting. \
-                      (Single dashed flag '-tpp'), needs '--tpp'" ));
+          // TODO: Avoid repeating the same error message multiple times.
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
+          ERROR(( "Single dashed flag '-tpp', needs '--tpp'"));
       }
 
       // Search for restart 
       if (string_starts_with(arg,keys[2]))
       {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting. \
-                      (Old Restart Syntax 'restart')" ));
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
+          ERROR(("Old Restart Syntax 'restart')" ));
       }
 
       // Search for restore, single dash
       if (string_starts_with(arg,keys[3]))
       {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting. \
-                      (Single dashed flag '-restore', needs '--restore')" ));
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
+          ERROR(("Single dashed flag '-restore', needs '--restore')" ));
       }
 
       // Search for equals
           // Doing this last as it's the most vague 
       if (string_contains(arg, keys[0]))
       {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting. \
-                      (Contains '=', needs a space)" )); 
+          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
+          ERROR(( "Contains '=', needs a space)" )); 
       }
   }
 

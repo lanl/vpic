@@ -677,10 +677,7 @@ begin_initialization {
 	global->emax = 120;
 
         std::vector<std::string> pythonNames;
-        //pythonNames.push_back("gridwriter.py");
-        //pythonNames.push_back("extractsurface.py");
-        //pythonNames.push_back("contour.py");
-        pythonNames.push_back("contourbenchmark.py");
+        pythonNames.push_back("gridwriter.py");
 
         coprocessorinitialize(pythonNames);
 

@@ -87,9 +87,13 @@ main( int argc,
   while( simulation->advance() ); 
   elapsed = wallclock() - elapsed;
   if( world_rank==0 ) {
-    int  s = (int)elapsed, m  = s/60, h  = m/60, d  = h/24, w = d/ 7;
-    /**/ s -= m*60,        m -= h*60, h -= d*24, d -= w*7;
-    log_printf( "*** Done (%gs / %iw:%id:%ih:%im:%is elapsed)\n",
+    // Assume positive elapsed time
+    double s = fmod(elapsed, 60);
+    int m = (int) (elapsed / 60) % 60;
+    int h = (int) (elapsed / (3600)) % 24;
+    int d = (int) (elapsed / (24*3600)) % 7;
+    int w = elapsed / (7*24*3600);
+    log_printf( "*** Done (%gs / %iw:%id:%ih:%im:%gs elapsed)\n",
                 elapsed, w, d, h, m, s );
   }
 

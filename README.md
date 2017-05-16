@@ -1,17 +1,65 @@
 # Vector Particle-In-Cell (VPIC) Project
 
-VPIC is a fully relativistic plasma simulation code...
+VPIC is a general purpose particle-in-cell simulation code for modeling
+kinetic plasmas in one, two, or three spatial dimensions. It employs a
+second-order, explicit, leapfrog algorithm to update charged particle
+positions and velocities in order to solve the relativistic kinetic
+equation for each species in the plasma, along with a full Maxwell
+description for the electric and magnetic fields evolved via a second-
+order finite-difference-time-domain (FDTD) solve. The VPIC code has been
+optimized for modern computing architectures and uses Message Passing
+Interface (MPI) calls for multi-node application as well as data
+parallelism using pthreads. VPIC employs a variety of short-vector,
+single-instruction-multiple-data (SIMD) intrinsics for high performance
+and has been designed so that the data structures align with cache
+boundaries. The current feature set for VPIC includes a flexible input
+deck format capable of treating a wide variety of problems. These
+include: the ability to treat electromagnetic materials (scalar and
+tensor dielectric, conductivity, and diamagnetic material properties);
+multiple emission models, including user-configurable models; arbitrary,
+user-configurable boundary conditions for particles and fields; user-
+definable simulation units; a suite of "standard" diagnostics, as well
+as user-configurable diagnostics; a Monte-Carlo treatment of collisional
+processes capable of treating binary and unary collisions and secondary
+particle generation; and, flexible checkpoint-restart semantics enabling
+VPIC checkpoint files to be read as input for subsequent simulations.
+VPIC has a native I/O format that interfaces with the high-performance
+visualization software Ensight and Paraview. While the common use cases
+for VPIC employ low-order particles on rectilinear meshes, a framework
+exists to treat higher-order particles and curvilinear meshes, as well
+as more advanced field solvers.
+
+# Attribution
+
+Researchers who use the VPIC code for scientific research are asked to cite
+the papers by Kevin Bowers listed below.
+
+1. Bowers, K. J., B. J. Albright, B. Bergen, L. Yin, K. J. Barker and
+D. J. Kerbyson, "0.374 Pflop/s Trillion-Particle Kinetic Modeling of
+Laser Plasma Interaction on Road-runner," Proc. 2008 ACM/IEEE Conf.
+Supercomputing (Gordon Bell Prize Finalist Paper).
+http://dl.acm.org/citation.cfm?id=1413435
+
+2. K.J. Bowers, B.J. Albright, B. Bergen and T.J.T. Kwan, Ultrahigh
+performance three-dimensional electromagnetic relativistic kinetic
+plasma simulation, Phys. Plasmas 15, 055703 (2008);
+http://dx.doi.org/10.1063/1.2840133
+
+3. K.J. Bowers, B.J. Albright, L. Yin, W. Daughton, V. Roytershteyn,
+B. Bergen and T.J.T Kwan, Advances in petascale kinetic simulations
+with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
+012055, 2009
 
 # Getting the Code
 
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone --recursive git@github.com:vpic/vpic.git
+    % git clone --recursive git@github.com:lanl/vpic.git
 
 This command will check out the VPIC source code, including the Cinch
 build system.  Cinch is documented
-[here](https://github.com/losalamos/cinch).
+[here](https://github.com/laristra/cinch).
 
 # Requirements
 
@@ -34,6 +82,14 @@ Then call the curses version of CMake:
 **or, optionally:**
 
     % cmake -DENABLE_MPI ..
+
+The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
+
+They can be invoked using something like:
+
+    % ../arch/generic-Release
+
+GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`)
 
 After configuration, simply type 'make'.
 

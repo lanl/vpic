@@ -472,7 +472,7 @@ vpic_simulation::global_header( const char * base,
   
   fileIO.print("\n");
   
-  delete varlist;
+  delete[] varlist;
   varlist = NULL;
   
   // Create a variable list for each species to output

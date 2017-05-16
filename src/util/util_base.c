@@ -154,35 +154,49 @@ void
 util_malloc_aligned( const char * err,
                      void * mem_ref, 
                      size_t n,
-                     size_t a ) {
+                     size_t a )
+{
   char *mem_u, *mem_a, **mem_p;
 
-  // If no err given, use a default error 
-  if( !err ) err = "malloc aligned failed (n=%lu, a=%lu)";
+  // If no err given, use a default error.
+  if ( !err )
+    err = "malloc aligned failed (n=%lu, a=%lu)";
 
-  // Check that mem_ref is valid and a is a power of two 
-  if( !mem_ref || a==0 || (a&(a-1))!=0 )
-    ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  // Check that mem_ref is valid and a is a power of two.
+  if ( !mem_ref || a==0 || ( a & ( a - 1 ) ) != 0 )
+    ERROR( ( err, (unsigned long) n, (unsigned long) a ) );
 
-  // A do nothing request 
-  if( n==0 ) { *(char **)mem_ref = NULL; return; }
+  // A do nothing request.
+  if ( n == 0 )
+  {
+    *(char **) mem_ref = NULL;
+    return;
+  }
 
   // Adjust small alignments to a minimal valid alignment 
-  // and convert a into a mask of the address LSB
-  if( a<16 ) a = 16;
+  // and convert a into a mask of the address LSB.
+  if ( a < 16 )
+    a = 16;
+
   a--;
 
-  // Allocate the raw unaligned memory ... abort if the allocation fails 
-  mem_u = (char *)malloc( n + a + sizeof(char *) );
-  if( !mem_u ) ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  // Allocate the raw unaligned memory.  Abort if the allocation fails.
+  mem_u = (char *) malloc( n + a + sizeof(char *) );
+
+  if ( !mem_u )
+    ERROR( ( err, (unsigned long) n, (unsigned long) a ) );
 
   // Compute the pointer to the aligned memory and save a pointer to the
-  // raw unaligned memory for use on free_aligned 
-  mem_a = (char *)(((unsigned long int)(mem_u + a + sizeof(char *)))&(~a));
-  mem_p = (char **)(mem_a - sizeof(char *));
+  // raw unaligned memory for use on free_aligned.
+  mem_a = (char *) ( ( (unsigned long int) ( mem_u +
+					     a +
+					     sizeof( char * ) ) ) & ( ~a ) );
+
+  mem_p = (char **) ( mem_a - sizeof( char * ) );
+
   mem_p[0] = mem_u;
 
-  *(char **)mem_ref = mem_a;
+  *(char **) mem_ref = mem_a;
 }
 
 void

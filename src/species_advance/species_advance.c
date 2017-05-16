@@ -103,8 +103,8 @@ species_t *
 species( const char * name,
          float q,
          float m,
-         int max_local_np,
-         int max_local_nm,
+         size_t max_local_np,
+         size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
          grid_t * g ) {
@@ -113,6 +113,7 @@ species( const char * name,
 
   if( !len ) ERROR(( "Cannot create a nameless species" ));
   if( !g ) ERROR(( "NULL grid" ));
+  if( g->nv == 0) ERROR(( "Allocate grid before defining species." ));
   if( max_local_np<1 ) max_local_np = 1;
   if( max_local_nm<1 ) max_local_nm = 1;
 
@@ -143,4 +144,3 @@ species( const char * name,
   REGISTER_OBJECT( sp, checkpt_species, restore_species, NULL );
   return sp;
 }
-

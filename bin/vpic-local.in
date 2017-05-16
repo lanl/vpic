@@ -2,6 +2,6 @@
 
 deck=`echo $1 | sed 's,\.cxx,,g;s,\.cc,,g;s,\.cpp,,g;s,.*\/,,g'`
 
-echo "${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_BINARY_DIR}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_BINARY_DIR}/lib -L${CMAKE_BINARY_DIR}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl"
+echo "${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_BINARY_DIR}/include/vpic -I${CMAKE_BINARY_DIR}/include/vpic/util/catalyst ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_BINARY_DIR}/lib -L${CMAKE_BINARY_DIR}/lib -lvpic ${VPIC_CXX_LIBRARIES} ${CATALYST_CONFIG} -lpthread -ldl ${CATALYST_RPATH}"
 
-${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_BINARY_DIR}/include/vpic ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_BINARY_DIR}/lib -L${CMAKE_BINARY_DIR}/lib -lvpic ${VPIC_CXX_LIBRARIES} -lpthread -ldl
+${CMAKE_CXX_COMPILER} ${VPIC_CPPFLAGS} ${CMAKE_CXX_FLAGS} -I. -I${CMAKE_BINARY_DIR}/include/vpic -I${CMAKE_BINARY_DIR}/include/vpic/util/catalyst ${VPIC_CXX_FLAGS} -DINPUT_DECK=$1 ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc -o $deck.${CMAKE_SYSTEM_NAME} -Wl,-rpath,${CMAKE_BINARY_DIR}/lib -L${CMAKE_BINARY_DIR}/lib -lvpic ${VPIC_CXX_LIBRARIES} ${CATALYST_CONFIG} -lpthread -ldl ${CATALYST_RPATH}

@@ -133,6 +133,41 @@ if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
 
+if(USE_CATALYST)
+  #--------------------------------------------------
+  # Find and Use ParaView
+  #--------------------------------------------------
+  FIND_PACKAGE(ParaView 4.3 REQUIRED COMPONENTS vtkPVPythonCatalyst)
+  INCLUDE(${PARAVIEW_USE_FILE})
+
+  # Add compile definition that we'll be using Catalyst
+  add_definitions(-DUSE_CATALYST)
+
+  # this CMake code is to get the dependent ParaView Catalyst libraries
+  # and their locations for creating the vpic and vpic-local scripts
+  execute_process(COMMAND "${ParaView_DIR}/bin/paraview-config"
+    --libs vtkPVPythonCatalyst
+    OUTPUT_VARIABLE CATALYST_INFO
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  #message("ACB output_var is ${CATALYST_INFO}")
+
+  string(FIND ${CATALYST_INFO} "-l" STRING_START)
+  string(SUBSTRING ${CATALYST_INFO} ${STRING_START} -1 CATALYST_CONFIG)
+  set(CATALYST_CONFIG "-L${ParaView_DIR}/lib ${CATALYST_CONFIG}")
+
+  # if ParaView was built with shared libraries we have to tell
+  # VPIC where those are.
+  set(CATALYST_RPATH "-Wl,-rpath,${ParaView_DIR}/lib")
+
+  # Add in the extra VPICAdaptor library to list of libraries to be linked in
+  # through vpic.on or vpic-local.in. It will be in the same location as
+  # the vpic library.
+  set(VPIC_CXX_LIBRARIES "-lVPICAdaptor ${VPIC_CXX_LIBRARIES}")
+
+endif(USE_CATALYST)
+
 #------------------------------------------------------------------------------#
 # include cmake hacks
 #------------------------------------------------------------------------------#

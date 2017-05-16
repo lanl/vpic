@@ -10,6 +10,10 @@
 
 #include "vpic/vpic.h"
 
+#ifdef USE_CATALYST
+#include "VPICAdaptor.h"
+#endif
+
 /* The simulation variable is set up this way so both the checkpt
    service and main can see it.  This allows main to find where
    the restored objects are after a restore. */
@@ -94,7 +98,10 @@ main( int argc,
   }
 
   // Cleaning up
- 
+#ifdef USE_CATALYST
+  coprocessorfinalize();
+#endif
+
   if( world_rank==0 ) log_printf( "*** Cleaning up\n" );
   UNREGISTER_OBJECT( &simulation );
   simulation->finalize();

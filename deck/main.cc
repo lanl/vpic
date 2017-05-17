@@ -70,16 +70,16 @@ main( int argc,
     REGISTER_OBJECT( &simulation, checkpt_main, restore_main, NULL );
 
   }
- 
+
   // Do any post init/restore simulation modifications
   // FIXME-KJB: STRIP_CMDLINE COULD MAKE THIS CLEANER AND MORE POWERFUL.
- 
+
   fbase = strip_cmdline_string( &argc, &argv, "--modify", NULL );
   if( fbase ) {
     if( world_rank==0 ) log_printf( "*** Modifying from \"%s\"\n", fbase );
     simulation->modify( fbase );  
   }
- 
+
   // Advance the simulation
 
   if( world_rank==0 ) log_printf( "*** Advancing\n" );
@@ -94,7 +94,7 @@ main( int argc,
   }
 
   // Cleaning up
- 
+
   if( world_rank==0 ) log_printf( "*** Cleaning up\n" );
   UNREGISTER_OBJECT( &simulation );
   simulation->finalize();
@@ -104,4 +104,3 @@ main( int argc,
   halt_services();
   return 0;
 }
-

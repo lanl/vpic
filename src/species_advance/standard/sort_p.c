@@ -22,13 +22,13 @@ coarse_count_pipeline( sort_p_pipeline_args_t * args,
   if( n_subsort>256 ) ERROR(( "n_subsort too large." ));
 
   DISTRIBUTE( args->n, 1, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
-  
+
   // Clear the local coarse count
   CLEAR( count, n_subsort );
-  
+
   // Local coarse count the input particles
   for( ; i<i1; i++ ) count[ V2P( p_src[i].i, n_subsort, vl, vh ) ]++;
-  
+
   // Copy local coarse count to output
   COPY( args->coarse_partition + cp_stride*pipeline_rank, count, n_subsort );
 }
@@ -51,7 +51,7 @@ coarse_sort_pipeline( sort_p_pipeline_args_t * args,
   if( n_subsort>256 ) ERROR(( "n_subsort too large." ));
 
   DISTRIBUTE( args->n, 1, pipeline_rank, n_pipeline, i, i1 ); i1 += i;
-  
+
   // Load the local coarse partitioning into next
   COPY( next, args->coarse_partition + cp_stride*pipeline_rank, n_subsort );
 
@@ -89,10 +89,10 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
     i1 = args->coarse_partition[subsort+1];
     v0 = P2V( subsort,   n_subsort, args->vl, args->vh );
     v1 = P2V( subsort+1, n_subsort, args->vl, args->vh );
-  
+
     // Clear fine grained count
     CLEAR( &next[v0], v1-v0 );
-  
+
     // Fine grained count
     for( i=i0; i<i1; i++ ) next[ p_src[i].i ]++;
 
@@ -105,7 +105,7 @@ subsort_pipeline( sort_p_pipeline_args_t * args,
       sum += count;
     }
     partition[v1] = sum; // All subsorts who write this agree
-  
+
     // Local fine grained sort
     for( i=i0; i<i1; i++ ) {
       v = p_src[i].i;
@@ -237,7 +237,7 @@ sort_p( species_t * sp ) {
 
   particle_t * ALIGNED(128) p = sp->p;
   //const int32_t * RESTRICT ALIGNED(128) sfc = g->sfc;
-  const int np                = sp->np; 
+  const int np                = sp->np;
   const int nc                = sp->g->nv;
   const int nc1               = nc+1;
   int * RESTRICT ALIGNED(128) partition = sp->partition;
@@ -251,7 +251,7 @@ sort_p( species_t * sp ) {
 
   // Allocate the sorting intermediate
   // Making this into a static is done to avoid heap shredding
- 
+
   if( max_nc1<nc1 ) {
     int * tmp = next; // Hack around RESTRICT issues
     FREE_ALIGNED(   tmp );

@@ -1565,7 +1565,7 @@ begin_particle_injection {
           char buffer[20];
           sprintf(buffer, "injectors/left%i.dat", n);
           FileIO fileIO;
-          if ( ! (fileIO.open(buffer, io_append)==ok) ) 
+          if ( ! (fileIO.open(buffer, io_append)==ok) )
             ERROR(("Cannot open file."));
           for ( int k=1;k<=nz; k++ ) {
             zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);
@@ -1588,7 +1588,7 @@ begin_particle_injection {
           char buffer[20];
           sprintf(buffer, "injectors/right%i.dat", n);
           FileIO fileIO;
-          if ( ! (fileIO.open(buffer, io_append)==ok) ) 
+          if ( ! (fileIO.open(buffer, io_append)==ok) )
             ERROR(("Cannot open file."));
           for ( int k=1;k<=nz; k++ ) {
             zcell = (grid->z0 + k*hz-hz/2)/(global->L_de);

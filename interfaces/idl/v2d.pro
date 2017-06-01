@@ -1,6 +1,6 @@
    ;==========================================================================
    ; Particle postprocessor.  Works off of particle data file prepared using
-   ; pppp.c particle pre-postprocessor.  
+   ; pppp.c particle pre-postprocessor.
    ;
    pro v2d, vdata
      fname = dialog_pickfile(/read, filter = 'particle*')

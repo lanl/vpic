@@ -29,7 +29,7 @@ static field_advance_kernels_t sfa_kernels = {
   // Shared face cleaning interface
 
   synchronize_tang_e_norm_b,
-  
+
   // Electric field divergence cleaning interface
 
   compute_div_e_err,
@@ -45,7 +45,7 @@ static field_advance_kernels_t sfa_kernels = {
 };
 
 static float
-minf( float a, 
+minf( float a,
       float b ) {
   return a<b ? a : b;
 }
@@ -157,7 +157,7 @@ destroy_sfa_params( sfa_params_t * p ) {
 
 void
 checkpt_standard_field_array( const field_array_t * fa ) {
-  sfa_params_t * p = (sfa_params_t *)fa->params; 
+  sfa_params_t * p = (sfa_params_t *)fa->params;
   CHECKPT( fa, 1 );
   CHECKPT_ALIGNED( fa->f, fa->g->nv, 128 );
   CHECKPT_PTR( fa->g );
@@ -172,7 +172,7 @@ checkpt_standard_field_array( const field_array_t * fa ) {
 
 field_array_t *
 restore_standard_field_array( void ) {
-  field_array_t * fa; 
+  field_array_t * fa;
   sfa_params_t * p;
   RESTORE( fa );
   RESTORE_ALIGNED( fa->f );
@@ -235,7 +235,7 @@ clear_jf( field_array_t * RESTRICT fa ) {
 
 void
 clear_rhof( field_array_t * RESTRICT fa ) {
-  if( !fa ) ERROR(( "Bad args" )); 
+  if( !fa ) ERROR(( "Bad args" ));
   field_t * RESTRICT ALIGNED(128) f = fa->f;
   const int nv = fa->g->nv;
   for( int v=0; v<nv; v++ ) f[v].rhof = 0;

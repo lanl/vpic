@@ -42,14 +42,14 @@ struct SystemRAM
 
 		//! Report the available RAM on the system in kilobytes.
 		static inline uint64_t available() {
-			
+
 			#if !__linux__
 				ERROR(("SystemRAM: Unsupported Operating System!!!"));
 			#endif
 
 			char buffer[81];
 			std::ifstream meminfo("/proc/meminfo", std::ifstream::in);
-			
+
 			// Make sure that we were able to open the file
 			if(meminfo.fail()) {
 				ERROR(("Failed opening /proc/meminfo file!!!"));

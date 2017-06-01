@@ -45,7 +45,7 @@ begin_initialization {
 
   for( n_iter=10000; n_iter; n_iter-- ) {
 
-    // Load the particles 
+    // Load the particles
 
     CLEAR( rho0, nv );
     CLEAR( rho1, nv );
@@ -124,17 +124,17 @@ begin_initialization {
       rho1(ix0,iy1,iz1) += q*(1-dx)*(1+dy)*(1+dz);
       rho1(ix1,iy1,iz1) += q*(1+dx)*(1+dy)*(1+dz);
     }
- 
+
     // Compute the initial rho
     field_array->kernel->clear_rhof( field_array );
     accumulate_rho_p( field_array, sp );
     field_array->kernel->synchronize_rho( field_array );
-    for( int z=1; z<=nz+1; z++ ) 
-    for( int y=1; y<=ny+1; y++ ) 
+    for( int z=1; z<=nz+1; z++ )
+    for( int y=1; y<=ny+1; y++ )
     for( int x=1; x<=nx+1; x++ ) {
           if( x<=nx && y<=ny && z<=nz &&
               fabs(rho0(x,y,z)-(double)field(x,y,z).rhof) > 1e-6*sqrt(np) ) {
-            sim_log( "accumulate_rho_p (initial) FAIL " << 
+            sim_log( "accumulate_rho_p (initial) FAIL " <<
                      x << " " << y << " " << z << " " <<
                      rho0(x,y,z) << " " << field(x,y,z).rhof << " " <<
                      fabs(rho0(x,y,z)-(double)field(x,y,z).rhof) ) ;
@@ -151,15 +151,15 @@ begin_initialization {
     reduce_accumulator_array( accumulator_array );
     unload_accumulator_array( field_array, accumulator_array );
     field_array->kernel->synchronize_jf( field_array );
-    
+
     // Compute the final rho
     field_array->kernel->clear_rhof( field_array );
     accumulate_rho_p( field_array, sp );
     field_array->kernel->synchronize_rho( field_array );
-  
+
     // Compute divj
-    for( int z=1; z<=nz+1; z++ ) 
-    for( int y=1; y<=ny+1; y++ ) 
+    for( int z=1; z<=nz+1; z++ )
+    for( int y=1; y<=ny+1; y++ )
     for( int x=1; x<=nx+1; x++ ) {
 	  if( x==nx+1 ) divj(x,y,z)  = field(1,y,z).jfx;
 	  else          divj(x,y,z)  = field(x,y,z).jfx;
@@ -176,12 +176,12 @@ begin_initialization {
     }
 
     // Compute drho
-    for( int z=1; z<=nz+1; z++ ) 
-    for( int y=1; y<=ny+1; y++ ) 
+    for( int z=1; z<=nz+1; z++ )
+    for( int y=1; y<=ny+1; y++ )
     for( int x=1; x<=nx+1; x++ ) {
           if( x<=nx && y<=ny && z<=nz &&
               fabs(rho1(x,y,z)-(double)field(x,y,z).rhof) > 1e-6*sqrt(np) ) {
-            sim_log( "accumulate_rho_p (final) FAIL " << 
+            sim_log( "accumulate_rho_p (final) FAIL " <<
                      x << " " << y << " " << z << " " <<
                      rho1(x,y,z) << " " << field(x,y,z).rhof << " " <<
                      fabs(rho1(x,y,z)-(double)field(x,y,z).rhof) ) ;
@@ -189,11 +189,11 @@ begin_initialization {
           }
           drho(x,y,z) = field(x,y,z).rhof - drho(x,y,z);
     }
- 
+
     // Compute maximum divergence error
     double max_div_err = 0;
-    for( int z=1; z<=nz+1; z++ ) 
-    for( int y=1; y<=ny+1; y++ ) 
+    for( int z=1; z<=nz+1; z++ )
+    for( int y=1; y<=ny+1; y++ )
     for( int x=1; x<=nx+1; x++ ) {
           double div_err = drho(x,y,z) + divj(x,y,z);
           if( div_err<0 ) div_err = -div_err;

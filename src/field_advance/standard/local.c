@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -205,7 +205,7 @@ local_ghost_div_b( field_t      * ALIGNED(128) f,
       }									    \
     }									    \
   } while(0)
-  
+
   APPLY_LOCAL_DIV_B(-1, 0, 0,x,y,z);
   APPLY_LOCAL_DIV_B( 0,-1, 0,y,z,x);
   APPLY_LOCAL_DIV_B( 0, 0,-1,z,x,y);
@@ -328,7 +328,7 @@ local_adjust_div_e( field_t      * ALIGNED(128) f,
 }
 
 // anti_symmetric => Opposite sign image charges (zero jf_tang)
-// symmetric      => Same sign image charges (double jf_tang) 
+// symmetric      => Same sign image charges (double jf_tang)
 // absorbing      => No image charges, half cell accumulation (double jf_tang)
 // (rhob/jf_norm account for particles that hit boundary and reflect/stick)
 
@@ -358,7 +358,7 @@ local_adjust_jf( field_t      * ALIGNED(128) f,
       }                                                                 \
     }                                                                   \
   } while(0)
-  
+
   ADJUST_JF(-1, 0, 0,x,y,z);
   ADJUST_JF( 0,-1, 0,y,z,x);
   ADJUST_JF( 0, 0,-1,z,x,y);
@@ -397,7 +397,7 @@ local_adjust_rhof( field_t      * ALIGNED(128) f,
       }                                                                 \
     }                                                                   \
   } while(0)
-  
+
   ADJUST_RHOF(-1, 0, 0,x,y,z);
   ADJUST_RHOF( 0,-1, 0,y,z,x);
   ADJUST_RHOF( 0, 0,-1,z,x,y);
@@ -434,7 +434,7 @@ local_adjust_rhob( field_t      * ALIGNED(128) f,
       }                                                                 \
     }                                                                   \
   } while(0)
-  
+
   ADJUST_RHOB(-1, 0, 0,x,y,z);
   ADJUST_RHOB( 0,-1, 0,y,z,x);
   ADJUST_RHOB( 0, 0,-1,z,x,y);

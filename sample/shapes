@@ -49,8 +49,8 @@ begin_initialization {
 
   // Space is by default filled with first material defined
   define_material("vacuum", 1 ); // mu=1 and sigma=0 by default
-  material_t * calcite = define_material("calcite",  2.2, 2.2, 2.7,  
-                                                     1.0, 1.0, 1.0,  
+  material_t * calcite = define_material("calcite",  2.2, 2.2, 2.7,
+                                                     1.0, 1.0, 1.0,
                                                      0.0, 0.0, 0.0);
   material_t * copper  = define_material("copper", 1, 1, 5.8e7 );
 
@@ -74,15 +74,15 @@ begin_initialization {
   //                           eqn_bx, eqn_by, eqn_bz );
 
   // A metal coated calcite clipped sphere
-  set_region_material( clip_sphere, calcite, copper ); 
-  set_region_bc( clip_sphere, absorb_particles, absorb_particles, reflect_particles ); 
+  set_region_material( clip_sphere, calcite, copper );
+  set_region_bc( clip_sphere, absorb_particles, absorb_particles, reflect_particles );
   set_region_field( clip_sphere,
-                    2*sin(x/lx), 0, 0, 
-                    0, 0, 0  ); 
+                    2*sin(x/lx), 0, 0,
+                    0, 0, 0  );
 
   // An empty thin foil cube
   set_region_material( cube, leave_unchanged, copper );
-  set_region_bc( cube, leave_unchanged, absorb_particles, reflect_particles ); 
+  set_region_bc( cube, leave_unchanged, absorb_particles, reflect_particles );
 
   // A point_region inclusion test is simplier ... if the point is inside
   // the region, that point is part of the point_region. Because the mesh
@@ -119,5 +119,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

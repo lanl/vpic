@@ -60,18 +60,18 @@ typedef struct pipeline_args {
                   m[ fy->fmaty].rmuy* fy->cby* fy->cby ); \
   en_bz += 0.5 *( m[ f0->fmatz].rmuz* f0->cbz* f0->cbz +  \
                   m[ fz->fmatz].rmuz* fz->cbz* fz->cbz )
- 
+
 void
 energy_f_pipeline( pipeline_args_t * args,
                    int pipeline_rank,
                    int n_pipeline ) {
   DECLARE_STENCIL();
-  
+
   int n_voxel;
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
-  
+
   INIT_STENCIL();
   for( ; n_voxel; n_voxel-- ) {
     REDUCE_EN();
@@ -99,7 +99,7 @@ energy_f( double              *          global,
 
   // Have each pipeline and the host handle a portion of the
   // local voxels
-  
+
   pipeline_args_t args[1];
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
@@ -108,16 +108,16 @@ energy_f( double              *          global,
   WAIT_PIPELINES();
 
   // Reduce results from each pipelines
-  
+
   int p;
   for( p=1; p<=N_PIPELINE; p++ ) {
     args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
     args->en[0][2] += args->en[p][2]; args->en[0][3] += args->en[p][3];
     args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];
   }
-    
+
   // Convert to physical units and reduce results between nodes
-  
+
   double v0 = 0.5*fa->g->eps0*fa->g->dV;
   args->en[0][0] *= v0; args->en[0][1] *= v0;
   args->en[0][2] *= v0; args->en[0][3] *= v0;

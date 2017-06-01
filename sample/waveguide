@@ -66,13 +66,13 @@ begin_field_injection {
   int n = global->N, m = global->M;
 
   if( rank()==0 && step()<192 ) {
-    for( int y=1; y<=grid->ny+1; y++ ) 
-      for( int x=1; x<=grid->nx; x++ ) 
+    for( int y=1; y<=grid->ny+1; y++ )
+      for( int x=1; x<=grid->nx; x++ )
         field(x,y,1).ex += n*sin(2.0*M_PI*step()/32.0)
                             *cos((m*M_PI/grid->nx)*(x-0.5))
                             *sin((n*M_PI/grid->ny)*(y-1));
-    for( int y=1; y<=grid->ny; y++ ) 
-      for( int x=1; x<=grid->nx+1; x++ ) 
+    for( int y=1; y<=grid->ny; y++ )
+      for( int x=1; x<=grid->nx+1; x++ )
         field(x,y,1).ey -= m*sin(2.0*M_PI*step()/32.0)
                             *sin((m*M_PI/grid->nx)*(x-1))
                             *cos((n*M_PI/grid->ny)*(y-0.5));
@@ -83,5 +83,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

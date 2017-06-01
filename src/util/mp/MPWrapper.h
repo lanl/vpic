@@ -4,7 +4,7 @@
 template<class MPPolicy>
 class MPWrapper_T : public MPPolicy {
 public:
-  static MPWrapper_T & instance() { static MPWrapper_T mpw; return mpw; } 
+  static MPWrapper_T & instance() { static MPWrapper_T mpw; return mpw; }
   // inherited public interface
 private:
   // hide these to keep things safe

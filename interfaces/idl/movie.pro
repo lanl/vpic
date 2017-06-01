@@ -29,7 +29,7 @@ device,true_color=24,decomposed=0,retain=2
 
 ;  Create array with some other color tables
 
-; First open file 
+; First open file
 
 ;????????????????????????????????????????????????
  openr,unit3,'movie_phase.bin',/get_lun, /swap_if_big_endian
@@ -139,7 +139,7 @@ mpegID = MPEG_OPEN([nxpix,nypix],QUALITY=70)
     eps=1.0e-6
     facmax=1.19
     facmin=-0.04
-    tmp = alog(f1v_ele/foo+eps)   
+    tmp = alog(f1v_ele/foo+eps)
     f1 = min(tmp)
     tmp = tmp - f1
     tmax=max(tmp)*facmax

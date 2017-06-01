@@ -21,7 +21,7 @@ update_profile( int dump ) {
   }
 
   if( dump ) {
-    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx
                 "                           |      Since Last Update       |     Since Last Restore\n"
                 "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
                 "---------------------------+------------------------------+------------------------------\n" );
@@ -37,7 +37,7 @@ update_profile( int dump ) {
                   (double)p->n_total,
                   p->t_total/(DBL_EPSILON+(double)p->n_total) );
     }
-    
+
     log_printf( "\n" );
   }
 

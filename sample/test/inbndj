@@ -114,7 +114,7 @@ begin_initialization {
   divj[5] = 0.25*( -(double)a->jx[2] + (double)a->jy[3] - (double)a->jz[1] ); //  1,-1, 1
   divj[6] = 0.25*(  (double)a->jx[3] - (double)a->jy[1] - (double)a->jz[2] ); // -1, 1, 1
   divj[7] = 0.25*( -(double)a->jx[3] - (double)a->jy[3] - (double)a->jz[3] ); //  1, 1, 1
-  
+
   // Test the results
 
   int failed = 0;

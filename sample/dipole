@@ -24,7 +24,7 @@ begin_initialization {
                           32,  32,  32, // High corner
                           64, 64, 64,   // Resolution
                           1, 1, 1,      // Topology
-                          absorb_particles ); 
+                          absorb_particles );
 
   // Space is by default filled with first material defined
   define_material("vacuum",1.0,1.0,0.0);
@@ -51,5 +51,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

@@ -70,7 +70,7 @@ index 5d73a50..aa71d86 100644
  ################################################################################
 -CXXFLAGS="-Wall -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O0 -fno-inline -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -DUSE_V4_SSE"
 +CXXFLAGS="-Wall -std=c++98 -D_XOPEN_SOURCE=600 -Wno-long-long -g -O0 -fno-inline -ffast-math -fno-unsafe-math-optimizations -fno-strict-aliasing -fomit-frame-pointer -march=opteron -mfpmath=sse -DUSE_V4_PORTABLE"
- 
+
  ################################################################################
  # EXTENSION - executable extension
 
@@ -238,7 +238,7 @@ d8974a7ea2f9228454fd01c836891fb2d6046be3  (5) 11 September 2009 Does not build
 fd56b91c76062b2c14fe26977d78f3b9bd601bc2 12 September 2009
 Warning at ../../src/boundary/boundary_p.cxx(243)[0]:
         Unknown boundary interaction ... dropping particle (species=electron)
-059a65e94537f86801e7e1c45971eb36e1937cfc 13 September 2009 
+059a65e94537f86801e7e1c45971eb36e1937cfc 13 September 2009
 Warning at ../../src/boundary/boundary_p.cxx(243)[0]:
         Unknown boundary interaction ... dropping particle (species=electron)
 855421d37f7e5850024c5e72a9c970d9f956d02b 13 September 2009 Does not build
@@ -250,7 +250,7 @@ Warning at ../../src/boundary/boundary_p.cxx(244)[0]:
 Warning at ../../src/boundary/boundary_p.cxx(244)[0]:
         Unknown boundary interaction ... dropping particle (species=electron)
 NB: in src/boundary/boundary.c num_particle_bc change -3 to -2 to change
-"Unknown boundary interaction" to 
+"Unknown boundary interaction" to
 /home/wohlbier/VPIC/run/generic/20090912/generic(239)[0]: step: 201
 Warning at ../../src/species_advance/standard/advance_p.cxx(461)[0]:
         Pipeline 0 ran out of storage for 32989 movers

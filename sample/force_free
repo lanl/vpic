@@ -22,7 +22,7 @@ begin_globals {
 
 begin_initialization {
   sim_log("Computing parameters");
-  
+
   // System of units
   double c    = 1;         // Speed of light
   double eps0 = 0.25/M_PI; // Permittivity of space
@@ -39,7 +39,7 @@ begin_initialization {
   double ntwist    = 1;
   double heli      = 1;
   double taui      = 20;
- 
+
   // Numerical parameters
   double nx        = 224;     // x resolution
   double ny        = 96;      // y resolution
@@ -116,7 +116,7 @@ begin_initialization {
   // By default, space is filled with first material defined
   define_material("vacuum",1);
   define_field_array( NULL, damp );
-  
+
   sim_log("Loading fields");
 
   set_region_field( everywhere, 0, 0, 0,                        // E
@@ -138,7 +138,7 @@ begin_initialization {
     tmp = alpha*( grid->z0 + grid->dz*( int((z-grid->z0)/grid->dz) + 0.5 ) );
     cs  =      cos(tmp);
     sn  = heli*sin(tmp);
-     
+
     // For below, note: perp1, perp2, para are right handed
     // perp1 = -heli sin(alpha z) x_hat +      cos(alpha z) y_hat
     // perp2 = z_hat
@@ -199,7 +199,7 @@ begin_diagnostics {
   if( should_dump(ihydro)    ) dump_hydro("ion","ihydro");
   if( should_dump(eparticle) ) dump_particles("electron","eparticle");
   if( should_dump(iparticle) ) dump_particles("ion","iparticle");
-  if( should_dump(restart)   ) checkpt( "restart", 0 ); 
+  if( should_dump(restart)   ) checkpt( "restart", 0 );
 # undef should_dump
 
 }
@@ -219,5 +219,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

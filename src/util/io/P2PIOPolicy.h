@@ -249,7 +249,7 @@ void P2PIOPolicy<swapped>::print(const char * format, va_list & args)
 		std::cerr << "PPE rank: " << p2p.global_id() <<
 			" printing " << io_line_.data() << std::endl;
 		*/
-		
+
 		// use write function to do actual work
 		P2PIOPolicy::write(io_line_.data(), strlen(io_line_.data()));
 	} // P2PIOPolicy<>::print

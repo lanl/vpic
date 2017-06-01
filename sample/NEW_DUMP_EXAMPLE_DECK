@@ -56,7 +56,7 @@ begin_initialization {
 
 	double theta   = M_PI/2.0;       // B0 = By
 	double taui    = 71;             // simulation wci's to run
-  
+
 	//double quota   = 1000.0;         // run quota in hours
 	//double quota_sec = quota*3600;   // Run quota in seconds
 	double quota_sec = 120;   // Run quota in seconds
@@ -139,9 +139,9 @@ begin_initialization {
 	// Charge per macro electron
 	double qi_s = ec*Npe_sheet/Ne_sheet;
 
-	// Charge per macro electron       
+	// Charge per macro electron
 	double qi_b = ec*Npe_back/Ne_back;
-  
+
 	// gamma of ion drift frame
 	double gdri = 1/sqrt(1-vdri*vdri/(c*c));
 
@@ -180,11 +180,11 @@ begin_initialization {
 
 	// override timestep if plasma frequency limited
 	if( wpe*dt>wpedt_max) dt=wpedt_max/wpe;
-   
+
 	//int restart_interval = 8000;
 	int restart_interval = 50;
 	int energies_interval = 500;
-	int interval = int(0.5/(wci*dt)); 
+	int interval = int(0.5/(wci*dt));
 	int dump_start = int(1.0/(wci*dt));
 	int dump_end = int(70.0/(wci*dt));
 	int fields_interval = interval;
@@ -192,7 +192,7 @@ begin_initialization {
 	int Hhydro_interval = interval;
 	int eparticle_interval = interval;
 	int Hparticle_interval = interval;
-	int ez_save_interval = int(0.1/(wci*dt)); 
+	int ez_save_interval = int(0.1/(wci*dt));
 	int checksum_interval = interval;
 
 	/*--------------------------------------------------------------------------
@@ -207,17 +207,17 @@ begin_initialization {
 	global->dump_start         = dump_start;
 	global->dump_end           = dump_end;
 	global->restart_interval   = restart_interval;
-	global->energies_interval  = energies_interval; 
-	global->fields_interval    = fields_interval;  
-	global->ehydro_interval    = ehydro_interval;  
-	global->Hhydro_interval    = Hhydro_interval;  
-	global->eparticle_interval = eparticle_interval;  
-	global->Hparticle_interval = Hparticle_interval;  
-	global->quota_sec          = quota_sec;  
-	global->rtoggle            = 0;  
+	global->energies_interval  = energies_interval;
+	global->fields_interval    = fields_interval;
+	global->ehydro_interval    = ehydro_interval;
+	global->Hhydro_interval    = Hhydro_interval;
+	global->eparticle_interval = eparticle_interval;
+	global->Hparticle_interval = Hparticle_interval;
+	global->quota_sec          = quota_sec;
+	global->rtoggle            = 0;
 	global->ez_save_interval   = ez_save_interval;
 	global->checksum_interval  = checksum_interval;
-	global->b0                 = b0;              
+	global->b0                 = b0;
 	global->v_A                = v_A;
 
 
@@ -270,13 +270,13 @@ begin_initialization {
 	 * though. See "shapes" for how to define them and assign them to regions.
 	 * Also, space is initially filled with the first material defined.
 	--------------------------------------------------------------------------*/
-  
+
 	/*--------------------------------------------------------------------------
      * Log diagnostic information about this simulation
 	--------------------------------------------------------------------------*/
 	sim_log( "***********************************************" );
 	sim_log ( "tanhf = " << tanhf );
-	sim_log ( "rhoi/L   = " << rhoi_L ); 
+	sim_log ( "rhoi/L   = " << rhoi_L );
 	sim_log ( "Ti/Te = " << Ti_Te ) ;
 	sim_log ( "nb/n0 = " << nb_n0 ) ;
 	sim_log ( "wpe/wce = " << wpe_wce );
@@ -289,7 +289,7 @@ begin_initialization {
 	sim_log ( "Lz/L = " << Lz/L );
 	sim_log ( "nx = " << nx );
 	sim_log ( "ny = " << ny );
-	sim_log ( "nz = " << nz ); 
+	sim_log ( "nz = " << nz );
 	sim_log ( "damp = " << damp );
 	sim_log ( "courant = " << c*dt/dg );
 	sim_log ( "nproc = " << nproc ()  );
@@ -301,7 +301,7 @@ begin_initialization {
 	sim_log ( " Ne_sheet = " << Ne_sheet );
 	sim_log ( " Ne_back = " << Ne_back );
 	sim_log ( "total # of particles = " << 2*Ne );
-	sim_log ( "dt*wpe = " << wpe*dt ); 
+	sim_log ( "dt*wpe = " << wpe*dt );
 	sim_log ( "dt*wce = " << wce*dt );
 	sim_log ( "dt*wci = " << wci*dt );
 	sim_log ( " ez save interval: " << ez_save_interval );
@@ -320,7 +320,7 @@ begin_initialization {
 	sim_log ( "vthe/c = " << vthe/c );
 	sim_log ( "vdri/c = " << vdri/c );
 	sim_log ( "vdre/c = " << vdre/c );
-  
+
 #if 0
 	// Dump simulation information to file "info"
 	if (rank() == 0 ) {
@@ -402,7 +402,7 @@ begin_initialization {
 		} while( x<= -0.5*Lx || x>=0.5*Lx );
 		y = uniform( sync_rng(0), 0, Ly );
 		z = uniform( sync_rng(0), 0, Lz );
-	 
+
 		// inject_particles() will return an error for particles not
                 // on this node and will not inject particle locally
 
@@ -506,7 +506,7 @@ begin_initialization {
 	 *
 	 *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
      *------------------------------------------------------------------------*/
-	
+
 	// relative path to fields data from global header
 	sprintf(global->fdParams.baseDir, "fields");
 
@@ -597,7 +597,7 @@ begin_initialization {
      *------------------------------------------------------------------------*/
 	/* CUT AND PASTE AS A STARTING POINT
 	 * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
-	
+
     output_variables( all );
 
     output_variables( electric | div_e_err | magnetic | div_b_err |

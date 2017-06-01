@@ -46,12 +46,12 @@ namespace v4 {
 
   ////////////////
   // v4 base class
-  
+
   class v4 {
-    
+
     friend class v4int;
     friend class v4float;
-      
+
     // v4 miscellenous friends
 
     friend inline int any( const v4 &a );
@@ -69,7 +69,7 @@ namespace v4 {
     friend inline v4 merge(    const v4int &c, const v4 &a, const v4 &b );
 
     // v4 memory manipulation friends
-        
+
     friend inline void load_4x1( const void * ALIGNED(16) p, v4 &a );
     friend inline void store_4x1( const v4 &a, void * ALIGNED(16) p );
     friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p );
@@ -99,7 +99,7 @@ namespace v4 {
                                     const void * ALIGNED(16) a2,
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d );
-    
+
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 );
     friend inline void store_4x2_tr( const v4 &a, const v4 &b,
@@ -122,7 +122,7 @@ namespace v4 {
   protected:
 
     _v4_float v;
-    
+
   public:
 
     v4() {}                    // Default constructor
@@ -132,17 +132,17 @@ namespace v4 {
     ~v4() {}                   // Default destructor
 
   };
-  
+
   // v4 miscellaneous functions
 
   inline int any( const v4 &a ) {
     return vec_any_ne( (_v4_int)a.v, _false );
   }
-  
+
   inline int all( const v4 &a ) {
     return vec_all_ne( (_v4_int)a.v, _false );
   }
-  
+
   inline v4 splat( const v4 & a, int n ) {
     v4 b;
     b.v = vec_splat( a.v, n );
@@ -157,7 +157,7 @@ namespace v4 {
     return b;
   }
 
-  inline void swap( v4 &a, v4 &b ) { 
+  inline void swap( v4 &a, v4 &b ) {
     _v4_float t;
     t   = a.v;
     a.v = b.v;
@@ -186,7 +186,7 @@ namespace v4 {
   }
 
   // v4 memory manipulation functions
-  
+
   inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
     a.v = vec_ld( 0, (const float *)p );
   }
@@ -243,7 +243,7 @@ namespace v4 {
                        ((const float *)pc)[1],
                        ((const float *)pd)[1] };
   }
-  
+
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
                            const void * ALIGNED(16) pb,
                            const void * ALIGNED(16) pc,
@@ -309,7 +309,7 @@ namespace v4 {
                             void * ALIGNED(8) pa,
                             void * ALIGNED(8) pb,
                             void * ALIGNED(8) pc,
-                            void * ALIGNED(8) pd ) { 
+                            void * ALIGNED(8) pd ) {
     _v4_float t, a_v = a.v, b_v = b.v;
     t = vec_perm( a_v, b_v, _PERM(0,4,0,4) ); vec_ste( t, 0, (float *)pa );
                                               vec_ste( t, 4, (float *)pa );
@@ -325,7 +325,7 @@ namespace v4 {
                             void * ALIGNED(16) pa,
                             void * ALIGNED(16) pb,
                             void * ALIGNED(16) pc,
-                            void * ALIGNED(16) pd ) { 
+                            void * ALIGNED(16) pd ) {
     _v4_float a_v = a.v;        // a =  0  1  2  3
     _v4_float b_v = b.v;        // b =  4  5  6  7
     _v4_float c_v = c.v;        // c =  8  9 10 11
@@ -347,7 +347,7 @@ namespace v4 {
                             vec_ste( v, 4, (float *)pd );
                             vec_ste( v, 8, (float *)pd );
   }
-  
+
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) pa,
                             void * ALIGNED(16) pb,
@@ -430,7 +430,7 @@ namespace v4 {
 
     // v4float unary operator friends
 
-    friend inline v4int operator  !( const v4float & a ); 
+    friend inline v4int operator  !( const v4float & a );
 
     // v4float logical operator friends
 
@@ -452,7 +452,7 @@ namespace v4 {
   public:
 
     // v4int constructors / destructors
-    
+
     v4int() {}                                // Default constructor
     v4int( const v4int &a ) {                 // Copy constructor
       v = a.v;
@@ -467,9 +467,9 @@ namespace v4 {
       v = (_v4_float)((_v4_int){ i0, i1, i2, i3 });
     }
     ~v4int() {}                               // Destructor
-    
+
     // v4int assignment operators
-  
+
 #   define ASSIGN(op,instr)			  \
     inline v4int &operator op( const v4int &b ) { \
       instr;                                      \
@@ -509,7 +509,7 @@ namespace v4 {
 #   undef ASSIGN
 
     // v4int member access operator
-    
+
     // FIXME: [] operation probably breaks the compiler if used to modify
     // a vector!
 
@@ -533,7 +533,7 @@ namespace v4 {
   PREFIX_UNARY(-, b.v = (_v4_float)vec_sub(   _false, (_v4_int)a.v ) )
   PREFIX_UNARY(!, b.v = (_v4_float)vec_cmpeq( _false, (_v4_int)a.v ) )
   PREFIX_UNARY(~, b.v = (_v4_float)vec_xor(   _true,  (_v4_int)a.v ) )
-  
+
 # undef PREFIX_UNARY
 
   // v4int prefix increment / decrement operators
@@ -573,7 +573,7 @@ namespace v4 {
   }
 
   // v4int binary operators
-  
+
 # define BINARY(op,instr)                                       \
   inline v4int operator op( const v4int &a, const v4int &b ) {	\
     v4int c;                                                    \
@@ -624,9 +624,9 @@ namespace v4 {
   LOGICAL(<,  c.v = (_v4_float)vec_cmplt( (_v4_int)a.v, (_v4_int)b.v ) )
   LOGICAL(>,  c.v = (_v4_float)vec_cmpgt( (_v4_int)a.v, (_v4_int)b.v ) )
   LOGICAL(==, c.v = (_v4_float)vec_cmpeq( (_v4_int)a.v, (_v4_int)b.v ) )
-  LOGICAL(!=, c.v = (_v4_float)vec_xor( _true, vec_cmpeq( (_v4_int)a.v, 
+  LOGICAL(!=, c.v = (_v4_float)vec_xor( _true, vec_cmpeq( (_v4_int)a.v,
                                                           (_v4_int)b.v ) ) )
-  LOGICAL(<=, c.v = (_v4_float)vec_xor( _true, vec_cmpgt( (_v4_int)a.v, 
+  LOGICAL(<=, c.v = (_v4_float)vec_xor( _true, vec_cmpgt( (_v4_int)a.v,
                                                           (_v4_int)b.v ) ) )
   LOGICAL(>=, c.v = (_v4_float)vec_xor( _true, vec_cmplt( (_v4_int)a.v,
                                                           (_v4_int)b.v ) ) )
@@ -640,7 +640,7 @@ namespace v4 {
                                                             _false ),
                                                  vec_cmpeq( (_v4_int)b.v,
                                                             _false ) ) ) )
-  
+
 # undef LOGICAL
 
   // v4int miscellaneous functions
@@ -662,7 +662,7 @@ namespace v4 {
     b.v = vec_and( a.v, c.v );
     return b;
   }
-  
+
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f ) {
     v4 m;
     m.v = vec_sel( f.v, t.v, (_v4_uint)c.v );
@@ -744,11 +744,11 @@ namespace v4 {
     friend inline void scale_4x1(     float * ALIGNED(16) p, const v4float &a );
     // FIXME: crack
     friend inline void trilinear( v4float & wl, v4float & wh );
-    
+
   public:
 
     // v4float constructors / destructors
-    
+
     v4float() {}                                        // Default constructor
     v4float( const v4float &a ) {                       // Copy constructor
       v = a.v;
@@ -873,7 +873,7 @@ namespace v4 {
   }
 
   // v4float binary operators
-    
+
 # define BINARY(op,instr)                                            \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
@@ -905,7 +905,7 @@ namespace v4 {
     b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
 
     // Compute n * refined( (1/a)_estimate ) to get result n/a
-    
+
     c.v = vec_madd( n.v, b_v, _zero );
 
     return c;
@@ -950,7 +950,7 @@ namespace v4 {
                        ::fn( t.f[3] ) };  \
     return b;                             \
   }
-  
+
 # define CMATH_FR2(fn)                                      \
   inline v4float fn( const v4float &a, const v4float &b ) { \
     union { float f[4]; _v4_float v; } t;                   \
@@ -1012,13 +1012,13 @@ namespace v4 {
 # undef CMATH_FR2
 
   // v4float miscelleanous functions
-  
+
   inline v4float rsqrt_approx( const v4float &a ) {
     v4float b;
     b.v = vec_rsqrte( a.v );
     return b;
   }
-  
+
   inline v4float rsqrt( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1045,7 +1045,7 @@ namespace v4 {
     b.v = vec_re( a.v );
     return b;
   }
-  
+
   inline v4float rcp( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1103,7 +1103,7 @@ namespace v4 {
     b.v = vec_xor( a.v, m.v );
     return b;
   }
-  
+
   inline void increment_4x1( float * ALIGNED(16) p, const v4float &a ) {
     vec_st( vec_add( vec_ld( 0, p ), a.v ), 0, p );
   }

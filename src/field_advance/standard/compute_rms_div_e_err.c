@@ -15,7 +15,7 @@ compute_rms_div_e_err_pipeline( pipeline_args_t * args,
                                 int n_pipeline ) {
   const field_t * ALIGNED(128) f = args->f;
   const grid_t  *              g = args->g;
-  
+
   const field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
 
@@ -59,7 +59,7 @@ compute_rms_div_e_err( const field_array_t * RESTRICT fa ) {
 
   if( !fa ) ERROR(( "Bad args" ));
   f = fa->f;
-  g = fa->g; 
+  g = fa->g;
 
 #if 0 // Original non-pipelined version
   for( z=2; z<=nz; z++ ) {
@@ -71,7 +71,7 @@ compute_rms_div_e_err( const field_array_t * RESTRICT fa ) {
     }
   }
 # endif
-  
+
   // Have the pipelines accumulate the interior of the local domain
   // (the host handled stragglers in the interior).
 
@@ -141,7 +141,7 @@ compute_rms_div_e_err( const field_array_t * RESTRICT fa ) {
   f0 = &f(nx+1,   1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   f0 = &f(   1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
   f0 = &f(nx+1,ny+1,nz+1); err += 0.125*(double)f0->div_e_err*(double)f0->div_e_err;
-  
+
   // Reduce the results from the host and pipelines
 
   WAIT_PIPELINES();

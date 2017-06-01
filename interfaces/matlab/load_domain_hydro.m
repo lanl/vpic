@@ -46,7 +46,7 @@ function [ g, ...
 %   fields used to advance the simulation in time. Further, they
 %   will not exactly satisfy local discretized continuity of
 %   charge (global continuity of charge is satified). The Jx, Jy
-%   and Jz used internally by the simulation do satisfy local 
+%   and Jz used internally by the simulation do satisfy local
 %   continuity of charge exactly but are staggered in time.
 % - All fields are in the appropriate units for the problem.
 %   To understand the problem units, with f = f(x,p,t) as the
@@ -200,4 +200,3 @@ tzz = permute( tzz(2:nx+2,2:ny+2,2:nz+2), order );
 tyz = permute( tyz(2:nx+2,2:ny+2,2:nz+2), order );
 tzx = permute( tzx(2:nx+2,2:ny+2,2:nz+2), order );
 txy = permute( txy(2:nx+2,2:ny+2,2:nz+2), order );
-

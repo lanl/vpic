@@ -121,7 +121,7 @@ reduce_accumulator_array( accumulator_array_t * RESTRICT a );
 // accumulators have been reduced into the host accumulator.
 
 void
-unload_accumulator_array( /**/  field_array_t       * RESTRICT fa, 
+unload_accumulator_array( /**/  field_array_t       * RESTRICT fa,
                           const accumulator_array_t * RESTRICT aa );
 
 END_C_DECLS

@@ -35,7 +35,7 @@ void checkSumBuffer(T * buffer, size_t elements, CheckSum & sum,
 
 	// update digest with buffer
 	EVP_DigestUpdate(&ctx, reinterpret_cast<void *>(buffer), bytes);
-	
+
 	// finalize
 	EVP_DigestFinal_ex(&ctx, sum.value, &sum.length);
 

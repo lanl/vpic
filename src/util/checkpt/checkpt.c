@@ -185,7 +185,7 @@ register_object( void * obj,
   for( prev=NULL, node=registry; node; prev=node, node=node->next )
     if( node->obj==obj ) break;
   if( node ) ERROR(( "object already registered" ));
-  
+
   /* Create the registry entry for this object */
 
   MALLOC( node, 1 );
@@ -260,7 +260,7 @@ checkpt_objects( const char * name ) {
   /* Mark that there are no more objects in the stream, close the
      serialization stream and indicate that we are no longer writing a
      checkpt */
-  
+
   CHECKPT_VAL( size_t, 0xBADF00D );
   checkpt_close( checkpt );
   checkpt = NULL;
@@ -426,7 +426,7 @@ restore_data( void ) {
 
 void
 checkpt_str( const char * str ) {
-  
+
   /* If str is NULL, write a NULL string header to the stream.
      Otherwise, write a non-NULL string header and the string itself
      (not including the terminating '\0'). */
@@ -539,12 +539,12 @@ checkpt_sym( const void * saddr ) {
   /* If symbol address is NULL, checkpoint a NULL symbol header.
      Otherwise, write a address symbol header and the symbol
      address. */
-  
+
   if( !saddr ) CHECKPT_VAL( size_t, 0x2C11513B );
   else {
     static int first_time = 1;
     if( first_time ) {
-      if( !world_rank ) 
+      if( !world_rank )
         WARNING(( "Checkpointing was compiled without reverse symbol table "
                   "lookup support and has been asked to checkpoint at least "
                   "one symbol.  Checkpointing will likely only work correctly "
@@ -555,7 +555,7 @@ checkpt_sym( const void * saddr ) {
     }
 
     CHECKPT_VAL( size_t, 0xADD7513B  );
-    CHECKPT_VAL( const void *, saddr );    
+    CHECKPT_VAL( const void *, saddr );
   }
 }
 
@@ -569,13 +569,13 @@ restore_sym( void ) {
 
   RESTORE_VAL( size_t, type );
   if( type==0x2C11513B ) return NULL; /* NULL symbol header */
-  if( type!=0xADD7513B ) 
+  if( type!=0xADD7513B )
     ERROR(( "Malformed checkpt (expected symbol header)" ));
 
   /* Read the symbol address */
 
   if( first_time ) {
-    if( !world_rank ) 
+    if( !world_rank )
       WARNING(( "Checkpointing was compiled without reverse symbol table "
                 "lookup support and has been asked to restore at least one "
                 "symbol.  Checkpointing will likely only work correctly if "
@@ -602,7 +602,7 @@ find_saddr( const char * sname,
   /* If we aren't given a symbol name, return not found */
 
   if( !sname ) return NULL;
-  
+
   /* Note that the default library search path (RTLD_DEFAULT) includes
      the application itself.  The application should be linked with
      with the global symbol table exported (e.g. "-rdynamic" under
@@ -644,7 +644,7 @@ checkpt_sym( const void * saddr ) {
   const char * err;
 
   /* If the symbol is NULL, checkpoint a NULL symbol header */
-  
+
   if( !saddr ) {
     CHECKPT_VAL( size_t, 0x2C11513B );
     return;
@@ -690,7 +690,7 @@ checkpt_sym( const void * saddr ) {
 
     CHECKPT_VAL( size_t, 0xADD7513B  );
     CHECKPT_VAL( const void *, saddr );
-    
+
   }
 }
 
@@ -726,7 +726,7 @@ restore_sym( void ) {
 
     /* Find the symbol's address */
 
-    saddr = find_saddr( sname, fname );   
+    saddr = find_saddr( sname, fname );
     if( !saddr )
       ERROR(( "Unable to resolve the symbol \"%s\" (from \"%s\") in the "
               "current symbol table.  When this symbol was written, it was "
@@ -750,7 +750,7 @@ restore_sym( void ) {
     RESTORE_VAL( void *, saddr );
 
     /* Check to see if the symbol address makes any sense currently. */
-    
+
     dlerror();
     dladdr( saddr, dli );
     err = dlerror();

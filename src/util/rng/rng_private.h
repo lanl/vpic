@@ -171,7 +171,7 @@ enum sfmt_parameters {
   /* Some useful derived quantities */
 
   SFMT_N   = SFMT_E/128 + 1, /* Number of 128-bit vectors in state */
-  SFMT_NM  = SFMT_N-SFMT_M, 
+  SFMT_NM  = SFMT_N-SFMT_M,
   SFMT_L2A = 8*SFMT_L2,
   SFMT_R2A = 8*SFMT_R2,
   SFMT_L2B = 32-SFMT_L2A,
@@ -284,7 +284,7 @@ sfmt_next( sfmt_128_t * RESTRICT sfmt ) {
    representable number less than 1 is 1-eps/2 and for this midpoint
    of the lattice, the lattice spacing over the whole interval must be
    2*(eps/2), rather than eps/2.
-    
+
    Similar issues apply for the frand. */
 
 #define conv_frand(u32)    ((((u32)>>9 )+0.5f     )*(2.f/16777216.f       ))

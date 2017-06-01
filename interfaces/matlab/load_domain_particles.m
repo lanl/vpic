@@ -31,7 +31,7 @@ function [ g, px, py, pz, pux, puy, puz, pq ] = ...
 %   Kevin J. Bowers, Ph.D.
 %   Plasma Physics Group (X-1)
 %   Los Alamos National Lab
-%   March 2004 -  Adapted from V4PIC version 1 load_species.m 
+%   March 2004 -  Adapted from V4PIC version 1 load_species.m
 
 if nargin<2, order = [2 1 3]; end;
 
@@ -149,5 +149,3 @@ piy = piy - piz*(ny+2);
 px = x0 + (pix+0.5*pox-0.5)*dx;
 py = y0 + (piy+0.5*poy-0.5)*dy;
 pz = z0 + (piz+0.5*poz-0.5)*dz;
-
-

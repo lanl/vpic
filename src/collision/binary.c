@@ -51,7 +51,7 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
   v  = VOXEL( 0,0,0,             g->nx,g->ny,g->nz ) + pipeline_rank;
   v1 = VOXEL( g->nx,g->ny,g->nz, g->nx,g->ny,g->nz ) + 1;
   for( ; v<v1; v+=n_pipeline ) {
- 
+
     /* Find the species i computational particles, k, and the species j
        computational particles, l, in this voxel, determine the number
        of computational particle pairs, np and the number of candidate
@@ -115,13 +115,13 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
       /* Pick a pair of computational particles uniformly at random
          from all pairs of particles in the voxel.  Note that the
          while test virtually always fails (this manner of
-         splitting up the nk, nl guarantees a uniform prob 
+         splitting up the nk, nl guarantees a uniform prob
          of getting k on 0:nk-1 and l on 0:nl-1 and uses the
          preferred high order randgen bits). */
-  
+
       do { k = (int)(uirand(rng)/rk); } while( k==nk ); k += k0;
       do { l = (int)(uirand(rng)/rl); } while( l==nl ); l += l0;
-     
+
       /* Compute the probability that a physical particle in the
          species whose candidate computational particle has the least
          weight (and comoving with this computational particle) will
@@ -147,13 +147,13 @@ binary_pipeline( binary_collision_model_t * RESTRICT cm,
          The other particle should be updated with probability of
          w_min / w_max, such that, on average, detailed balance is
          preserved. */
-    
+
       w_min = (wk>wl) ? wl : wk;
       type = 1; if( wl==w_min ) type++;
       if( w_max==w_min || w_max*frand_c0(rng)<w_min ) type = 3;
       collision( params, spi, spj, &spi_p[k], &spj_p[l], rng, type );
 
-    } 
+    }
   }
 
   cm->n_large_pr[pipeline_rank] = n_large_pr;
@@ -238,7 +238,7 @@ binary_collision_model( const char       * RESTRICT name,
 
   MALLOC( cm, 1 );
   MALLOC( cm->name, len+1 );
-  strcpy( cm->name, name ); 
+  strcpy( cm->name, name );
   cm->rate_constant = rate_constant;
   cm->collision     = collision;
   cm->params        = params;

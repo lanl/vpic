@@ -60,9 +60,9 @@ begin_initialization {
 
   // Pulse parameters
   global->V_peak = 1e6;   // Pulse peak
-  global->t_rise = 1e-9; 
+  global->t_rise = 1e-9;
   global->t_hold = 8e-9;
-  global->t_fall = 1e-9; 
+  global->t_fall = 1e-9;
   global->r_i    = r_i;   // Inner conductor
   global->r_o    = r_o;   // Outer conductor
 
@@ -71,7 +71,7 @@ begin_initialization {
   double ny = 1;    // Use 2D simulation for now
   double nz = 144/2;  // ~1.5 mm resolution along z
 
-  // Setup the simulation 
+  // Setup the simulation
   num_step             = int(10e-9/grid->dt);
   status_interval      = 25;
   clean_div_e_interval = 25;
@@ -89,7 +89,7 @@ begin_initialization {
   grid->y0 = (ny==1) ? -0.5e-6 : 0; // Cell centers at y=0 in 2D simulation
   grid->z0 = z_l;
   grid->dx = r_o/nx;
-  grid->dy = (ny==1) ? 1e-6 : r_o/ny; 
+  grid->dy = (ny==1) ? 1e-6 : r_o/ny;
   grid->dz = (z_h-z_l)/nz;
   set_domain_field_bc( BOUNDARY(-1,0,0), symmetric_fields );
   if( ny==1 ) { // If 2D simulation, make periodic along y
@@ -140,7 +140,7 @@ begin_current_injection {
 begin_field_injection {
   double t, tr, tf, te, r_i, r_o, V_peak;
   double V;
-  
+
   t = grid->dt * step();
   tr = global->t_rise;
   tf = tr + global->t_hold;
@@ -148,7 +148,7 @@ begin_field_injection {
   r_o = global->r_o;
   r_i = global->r_i;
   V_peak = global->V_peak;
-  
+
   if( t<0 )       V = 0;
   else if( t<tr ) V = global->V_peak*t/tr;
   else if( t<tf ) V = global->V_peak;
@@ -173,5 +173,3 @@ begin_field_injection {
 begin_particle_collisions {
   // No collisions for this simulation
 }
-
-

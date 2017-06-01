@@ -59,7 +59,7 @@ if(ENABLE_UNIT_TESTS)
     cinch_add_unit(v4
       SOURCES v4/test/v4.cc)
   endif(USE_V4)
-  
+
   cinch_add_unit(rng
     SOURCES rng/test/rng.cc
     LIBRARIES vpic dl

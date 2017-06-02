@@ -61,9 +61,10 @@ if(ENABLE_UNIT_TESTS)
   endif(USE_V4)
   
   cinch_add_unit(rng
-    SOURCES rng/test/rng.cc
+    SOURCES rng/test/rng.cc 
+    DRIVER ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
     LIBRARIES vpic dl
-    POLICY VPIC
+    POLICY MPI
     THREADS 1)
 
 #  cinch_add_unit(casename

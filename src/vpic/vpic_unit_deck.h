@@ -1,7 +1,7 @@
 #ifndef vpic_unit_deck_h
 #define vpic_unit_deck_h
 
-#include "vpic/vpic/vpic.h"
+#include "src/vpic/vpic.h"
 
 void vpic_simulation::user_initialization(int num_cmdline_arguments,
 	char ** cmdline_arguments) {}

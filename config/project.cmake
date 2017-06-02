@@ -197,6 +197,9 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 # the vpic scripts needed the space separated ones
 separate_arguments( VPIC_CXX_LIBRARIES )
 
+# include mpi
+include_directories( ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH} )
+  
 cinch_add_library_target(vpic src)
 
 #------------------------------------------------------------------------------#

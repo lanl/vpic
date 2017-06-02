@@ -63,7 +63,7 @@ if(ENABLE_UNIT_TESTS)
   cinch_add_unit(rng
     SOURCES rng/test/rng.cc 
     DRIVER ${CMAKE_SOURCE_DIR}/utilities/gtest-vpic.cc
-    LIBRARIES vpic ${VPIC_CXX_LIBRARIES} dl
+    LIBRARIES vpic dl
     POLICY MPI
     THREADS 1)
 

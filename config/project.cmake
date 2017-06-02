@@ -78,6 +78,14 @@ if ( USE_OPENMP )
 endif()
 
 #------------------------------------------------------------------------------#
+# Add MPI includes
+#------------------------------------------------------------------------------#
+
+# FIXME: this should be target-specific, but this will require a change
+# to Cinch's add_library_target function.
+include_directories(${MPI_C_INCLUDE_PATH})
+
+#------------------------------------------------------------------------------#
 # Create include and link aggregates
 #
 # NOTE: These must be set before creating the compile scripts below.
@@ -193,13 +201,6 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 # Add library target
 #------------------------------------------------------------------------------#
 
-# turn space-separated lists into normal cmake, semi-colon-separated lists
-# the vpic scripts needed the space separated ones
-separate_arguments( VPIC_CXX_LIBRARIES )
-
-# include mpi
-include_directories( ${MPI_${MPI_LANGUAGE}_INCLUDE_PATH} )
-  
 cinch_add_library_target(vpic src)
 
 #------------------------------------------------------------------------------#

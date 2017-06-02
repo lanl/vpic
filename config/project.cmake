@@ -202,6 +202,7 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 #------------------------------------------------------------------------------#
 
 cinch_add_library_target(vpic src)
+target_compile_options( vpic PRIVATE ${MPI_C_COMPILE_FLAGS} )
 
 #------------------------------------------------------------------------------#
 # Add VPIC integrated test mechanism

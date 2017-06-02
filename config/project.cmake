@@ -193,6 +193,10 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 # Add library target
 #------------------------------------------------------------------------------#
 
+# turn space-separated lists into normal cmake, semi-colon-separated lists
+# the vpic scripts needed the space separated ones
+separate_arguments( VPIC_CXX_LIBRARIES )
+
 cinch_add_library_target(vpic src)
 
 #------------------------------------------------------------------------------#

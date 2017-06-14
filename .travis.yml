@@ -16,6 +16,7 @@ addons:
 
 before_install:
  - git -C cinch submodule init && git -C cinch submodule update
+ - git fetch --unshallow && git fetch --tags #for versioning
  - mkdir -p "$HOME/bin"
  - if [[ ${CMAKE_VERSION} ]]; then wget --no-check-certificate -qO- http://www.cmake.org/files/v${CMAKE_VERSION:0:3}/cmake-${CMAKE_VERSION}.tar.gz | tar -xz && ln -s $PWD/cmake-${CMAKE_VERSION}/bin/cmake "$HOME/bin/cmake"; fi
  - if [[ ${COVERAGE}  ]]; then pip install --user codecov; fi 
@@ -34,7 +35,7 @@ env: #maybe add mpich later
 script:
   - mkdir build && cd build && 
     PATH="$HOME/bin:/usr/lib/ccache:$PATH" CC=gcc-${GVER} CXX=g++-${GVER} cmake -DENABLE_MPI=$MPI -DENABLE_INTEGRATED_TESTS=ON -DENABLE_UNIT_TESTS=ON ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} .. && 
-    make -j4 && make test ARGS="-V" && make install DESTDIR="${HOME}"
+    (make -j4 || make VERBOSE=1) && make test ARGS="-V" && make install DESTDIR="${HOME}"
 
 after_success:
   - if [[ ${COVERAGE} ]]; then cd .. && codecov --gcov-exec gcov-${GVER}; fi

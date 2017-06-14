@@ -8,8 +8,12 @@ project(vpic)
 # Set project defaults
 #------------------------------------------------------------------------------#
 
+# As this is an MPI code, we need MPI on.
 set(ENABLE_MPI True CACHE BOOL "Enable MPI" FORCE)
 set(ENABLE_MPI_CXX_BINDINGS False CACHE BOOL "Enable MPI C++ Bindings" FORCE)
+
+# Hide the ENABLE_MPI option from users, so they don't try and disable it
+mark_as_advanced(ENABLE_MPI)
 
 #------------------------------------------------------------------------------#
 # Add build options

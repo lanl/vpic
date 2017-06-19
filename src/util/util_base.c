@@ -88,48 +88,68 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
 
   for (i=0; i<(*pargc); i++)
   {
-      const int num_keys = 4;
-      char* keys[num_keys];
+      const int num_prefix_keys = 2;
+      char* prefix_keys[num_prefix_keys];
 
-      keys[0] = "=";
-      keys[1] = "-tpp";
-      keys[2] = "-restore";
-      keys[3] = "restart";
+      const int num_match_keys = 1;
+      char* match_keys[num_match_keys];
+
+      prefix_keys[0] = "-tpp";
+      prefix_keys[1] = "-restore";
+
+      match_keys[0] = "restart";
 
       char* arg = (*pargv)[i];
 
+      // Set loop bound to 0
+      int j = 0;
 
-      // Search for tpp
-      if (string_starts_with(arg,keys[1]))
+      // Check for invalid prefixes
+      for (j = 0; j < num_prefix_keys; j++)
       {
-          // TODO: Avoid repeating the same error message multiple times.
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Single dashed flag '-tpp', needs '--tpp'"));
-      }
+          // Search for tpp
+          if (string_starts_with(arg,prefix_keys[j]))
+          {
+              char output_message[64];
 
-      // Search for restart
-      if (string_starts_with(arg,keys[2]))
-      {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Old Restart Syntax 'restart')" ));
+              sprintf(output_message,
+                  "Aborting. Single dashed flag %s is invalid (needs '-%1$s').",
+                  prefix_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
       }
 
       // Search for restore, single dash
-      if (string_matches(arg,keys[3]))
+      for (j = 0; j < num_match_keys; j++)
       {
-          // TODO: This could be tightened up more, as it disallows the use of
-              // a file called 'restart'
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Single dashed flag '-restore', needs '--restore')" ));
+          if (string_matches(arg,match_keys[j]))
+          {
+              // TODO: This could be tightened up more, as it disallows the use
+                  // of a file called 'restart'
+              char output_message[64];
+              sprintf(output_message,
+                  "Old Argument Syntax Detected: %s",
+                  match_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
       }
 
-      // Search for equals
-          // Doing this last as it's the most vague
-      if (string_contains(arg, keys[0]))
-      {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Contains '=', needs a space)" ));
-      }
+		  // Check for "=" (equals)
+      // TODO: Add an option to make this an error or a warning
+			if (string_contains(arg, "="))
+			{
+         for (j = 0; j < 5; j++)
+         {
+            WARNING(( "Arguments contains '=', is this intentional? (use a space)" ));
+         }
+			}
+
   }
 
 }

@@ -24,7 +24,6 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
   -DENABLE_UNIT_TESTS=ON \
   -DCMAKE_C_FLAGS="-rdynamic -fno-strict-aliasing" \

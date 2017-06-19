@@ -186,8 +186,6 @@ thread_boot( int * pargc,
   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
   Dispatch_To_Host = strip_cmdline_int( pargc, pargv, "--dispatch_to_host", 1 );
 
-  MESSAGE(( "Number of threads detected as: %d", n_pipeline ));
-
   if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
     ERROR(( "Invalid number of pipelines requested (%i)", n_pipeline ));
 

@@ -89,8 +89,12 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
         bool outbnd[VLEN] __attribute__((aligned(ALIGNMENT)));
         float mya[12][VLEN] __attribute__((aligned(ALIGNMENT)));
 
+//#define KNL 0
+
+#if KNL
         // /*
-        {//Intrinsic Gathers {{{
+        {
+            //Intrinsic Gathers {{{
             // Each interpolator_t is made up of 20 floats.
             // Gather across the different interpolators into the arrays.
             // Need to do a masked gather, to prevent the last bit from gathering where there aren't particles.
@@ -188,8 +192,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             } // }}}
         } //  }}}
         // */
-
-        /*
+#else 
         { // Loops for gathers {{{
         //#pragma omp simd
 #pragma novector
@@ -226,7 +229,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             dcbzdz[v] = f0[ii].dcbzdz;
         }
         } // }}}
-        // */
+#endif
 
         #pragma omp simd
         for (int v = 0; v < VLEN; ++v)

@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -59,74 +59,108 @@ int string_starts_with(const char *str, const char *pre)
 int string_contains(const char *str, const char *substr)
 {
     char *output = NULL;
-    output = strstr (str,substr);
+    output = strstr(str,substr);
 
     char* pos = strstr(str, substr);
-    if(pos) {
+
+    if (pos) {
         return 1;
-    } else {
+    }
+    else {
         return 0;
+    }
+}
+
+int string_matches(const char* str, const char* match)
+{
+    if (strcmp(str, match) != 0) {
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
 void detect_old_style_arguments(int* pargc, char *** pargv)
 {
   // FIXME: This could also warn for unknown options being passed (such as typos)
-  int i; 
+  int i;
 
   for (i=0; i<(*pargc); i++)
   {
-      const int num_keys = 4;
-      char* keys[num_keys];
-     
-      keys[0] = "=";
-      keys[1] = "-tpp";
-      keys[2] = "restart";
-      keys[3] = "-restore";
+      const int num_prefix_keys = 2;
+      char* prefix_keys[num_prefix_keys];
+
+      const int num_match_keys = 1;
+      char* match_keys[num_match_keys];
+
+      prefix_keys[0] = "-tpp";
+      prefix_keys[1] = "-restore";
+
+      match_keys[0] = "restart";
 
       char* arg = (*pargv)[i];
 
+      // Set loop bound to 0
+      int j = 0;
 
-      // Search for tpp
-      if (string_starts_with(arg,keys[1]))
+      // Check for invalid prefixes
+      for (j = 0; j < num_prefix_keys; j++)
       {
-          // TODO: Avoid repeating the same error message multiple times.
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Single dashed flag '-tpp', needs '--tpp'"));
-      }
+          // Search for tpp
+          if (string_starts_with(arg,prefix_keys[j]))
+          {
+              char output_message[64];
 
-      // Search for restart 
-      if (string_starts_with(arg,keys[2]))
-      {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(("Old Restart Syntax 'restart')" ));
+              sprintf(output_message,
+                  "Aborting. Single dashed flag %s is invalid (needs '-%1$s').",
+                  prefix_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
       }
 
       // Search for restore, single dash
-      if (string_starts_with(arg,keys[3]))
+      for (j = 0; j < num_match_keys; j++)
       {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(("Single dashed flag '-restore', needs '--restore')" ));
+          if (string_matches(arg,match_keys[j]))
+          {
+              // TODO: This could be tightened up more, as it disallows the use
+                  // of a file called 'restart'
+              char output_message[64];
+              sprintf(output_message,
+                  "Old Argument Syntax Detected: %s",
+                  match_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
       }
 
-      // Search for equals
-          // Doing this last as it's the most vague 
-      if (string_contains(arg, keys[0]))
-      {
-          ERROR(( "Input Flags Look Like They Are Using Legacy Style. Aborting."));
-          ERROR(( "Contains '=', needs a space)" )); 
-      }
+		  // Check for "=" (equals)
+      // TODO: Add an option to make this an error or a warning
+			if (string_contains(arg, "="))
+			{
+         for (j = 0; j < 5; j++)
+         {
+            WARNING(( "Arguments contains '=', is this intentional? (use a space)" ));
+         }
+			}
+
   }
 
 }
 
 void
 util_malloc( const char * err,
-             void * mem_ref, 
+             void * mem_ref,
              size_t n ) {
   char * mem;
 
-  // If no err given, use a default error 
+  // If no err given, use a default error
   if( !err ) err = "malloc failed (n=%lu)";
 
   // Check that mem_ref is valid
@@ -152,7 +186,7 @@ util_free( void * mem_ref ) {
 
 void
 util_malloc_aligned( const char * err,
-                     void * mem_ref, 
+                     void * mem_ref,
                      size_t n,
                      size_t a )
 {
@@ -173,7 +207,7 @@ util_malloc_aligned( const char * err,
     return;
   }
 
-  // Adjust small alignments to a minimal valid alignment 
+  // Adjust small alignments to a minimal valid alignment
   // and convert a into a mask of the address LSB.
   if ( a < 16 )
     a = 16;
@@ -226,7 +260,7 @@ log_printf( const char *fmt, ... ) {
 uint32_t
 _nanodelay( uint32_t i ) {
   uint32_t a = 0;
-  for( ; i; i-- ) a^=0xdeadbeef, a>>=1; 
+  for( ; i; i-- ) a^=0xdeadbeef, a>>=1;
   return a;
 }
 

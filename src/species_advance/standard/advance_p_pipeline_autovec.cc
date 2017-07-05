@@ -5,7 +5,8 @@
 void
 advance_p_pipeline( advance_p_pipeline_args_t * args,
                     int pipeline_rank,
-                    int n_pipeline ) {/*{{{*/
+                    int n_pipeline ) {
+    /*{{{*/
     particle_t           * ALIGNED(128) p0 = args->p0;
     accumulator_t        * ALIGNED(128) a0 = args->a0;
     const interpolator_t * ALIGNED(128) f0 = args->f0;
@@ -35,9 +36,10 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     float move_holders_z[VLEN];
     int move_holders_i[VLEN];
 
-    const __m512i linear = _mm512_set_epi32( 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
-    const __m512 zeroes = _mm512_set1_ps( 0.0f );
-    const int ind_stride = sizeof(interpolator_t) / sizeof(float);
+    //const __m512i linear = _mm512_set_epi32( 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+    //const __m512 zeroes = _mm512_set1_ps( 0.0f );
+    const int field_stride = sizeof(interpolator_t) / sizeof(float);
+    const int acc_stride = sizeof(accumulator_t) / sizeof(float);
 
     DECLARE_ALIGNED_ARRAY( particle_mover_t, 1, local_pm, 1 );
 
@@ -78,6 +80,27 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     for ( int i = 0; i < n; i+=VLEN )
     {
         particle_t * p = first_p + i;
+
+        float p_dx[VLEN], p_dy[VLEN], p_dz[VLEN] __attribute__((aligned(ALIGNMENT)));
+        float p_ux[VLEN], p_uy[VLEN], p_uz[VLEN] __attribute__((aligned(ALIGNMENT)));
+        float p_w[VLEN] __attribute__((aligned(ALIGNMENT)));
+        int p_i[VLEN] __attribute__((aligned(ALIGNMENT)));
+
+        //int field_gather_indices[VLEN], accumulator_gather_indices[VLEN] __attribute__((aligned(ALIGNMENT)));
+
+        for ( int v = 0; v < VLEN; v++ ) {
+            if ( i + v >= n ) continue;
+
+            p_dx[v] = (p+v)->dx;
+            p_dy[v] = (p+v)->dy;
+            p_dz[v] = (p+v)->dz;
+            p_ux[v] = (p+v)->ux;
+            p_uy[v] = (p+v)->uy;
+            p_uz[v] = (p+v)->uz;
+            p_w[v] = (p+v)->w;
+            p_i[v] = (p+v)->i;
+        }
+
         // Gather the field data.
         float ex[VLEN], dexdy[VLEN], dexdz[VLEN], d2exdydz[VLEN] __attribute__((aligned(ALIGNMENT)));
         float ey[VLEN], deydz[VLEN], deydx[VLEN], d2eydzdx[VLEN] __attribute__((aligned(ALIGNMENT)));
@@ -89,24 +112,32 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
         bool outbnd[VLEN] __attribute__((aligned(ALIGNMENT)));
         float mya[12][VLEN] __attribute__((aligned(ALIGNMENT)));
 
-        // /*
+        /*
         {//Intrinsic Gathers {{{
             // Each interpolator_t is made up of 20 floats.
             // Gather across the different interpolators into the arrays.
-            // Need to do a masked gather, to prevent the last bit from gathering where there aren't particles.
 
             const int to_process = ( (i + VLEN) > n ) ? ( n - i ) : VLEN;
+
             int gather_indices_arr[VLEN] __attribute__((aligned(ALIGNMENT)));
+            int a_gather_indices_arr[VLEN] __attribute__((aligned(ALIGNMENT)));
             for ( int v = 0; v < VLEN; v++ ){
-                if ( i + v >= n ) continue;
-                gather_indices_arr[v] = (p+v)->i * ind_stride;
+                int ind = (i + v >= n ) ? p->i : (p+v)->i;
+                gather_indices_arr[v] = ind * field_stride;
+                a_gather_indices_arr[v] = ind * acc_stride;
             }
+
             const __m512i gather_indices = _mm512_load_epi32( gather_indices_arr );
+            const __m512i a_gather_indices = _mm512_load_epi32( a_gather_indices_arr );
 
             // Build mask:
             const __mmask16 gather_mask = _mm512_cmplt_epi32_mask(linear, _mm512_set1_epi32(to_process));
 
+            _mm512_mask_prefetch_i32gather_ps( a_gather_indices, gather_mask, &a0[0], 4, _MM_HINT_T1);           // Need to do a masked gather, to prevent the last bit from gathering where there aren't particles.
+
             { // gathers, instead of load / transpose / store {{{
+
+
                 // Perform gathers:
                 { // ex {{{
                     const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].ex, 4);
@@ -163,68 +194,54 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
                     const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].cbx, 4);
                     _mm512_mask_store_ps(&_cbx[0], gather_mask, gathered_values);
                 } // }}}
-                { // dcbxdx {{{
-                    const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].dcbxdx, 4);
-                    _mm512_mask_store_ps(&dcbxdx[0], gather_mask, gathered_values);
-                } // }}}
                 { // cby {{{
                     const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].cby, 4);
                     _mm512_mask_store_ps(&_cby[0], gather_mask, gathered_values);
                 } // }}}
-                { // dcbydy {{{
-                    const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].dcbydy, 4);
-                    _mm512_mask_store_ps(&dcbydy[0], gather_mask, gathered_values);
+                { // cbz {{{
+                    const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].cbz, 4);
+                    _mm512_mask_store_ps(&_cbz[0], gather_mask, gathered_values);
                 } // }}}
-            } // }}}
-
-            // These two need to be gathers.
-            { // cbz {{{
-                const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].cbz, 4);
-                _mm512_mask_store_ps(&_cbz[0], gather_mask, gathered_values);
-            } // }}}
-            { // dcbzdz {{{
-                const __m512 gathered_values = _mm512_mask_i32gather_ps(zeroes, gather_mask, gather_indices, &f0[0].dcbzdz, 4);
-                _mm512_mask_store_ps(&dcbzdz[0], gather_mask, gathered_values);
             } // }}}
         } //  }}}
         // */
 
-        /*
+        // /*
         { // Loops for gathers {{{
-        //#pragma omp simd
-#pragma novector
-        for (int v = 0; v < VLEN; ++v)
-        {
-            //if ( p + v  >= first_p + n ) continue;
-            if ( i + v >= n ) continue;
-            int ii = (p+v)->i;
-            ex[v] = f0[ii].ex;
-            dexdy[v] = f0[ii].dexdy;
-            dexdz[v] = f0[ii].dexdz;
-            d2exdydz[v] = f0[ii].d2exdydz;
-            ey[v] = f0[ii].ey;
-            deydz[v] = f0[ii].deydz;
-            deydx[v] = f0[ii].deydx;
-            d2eydzdx[v] = f0[ii].d2eydzdx;
-            ez[v] = f0[ii].ez;
-            dezdx[v] = f0[ii].dezdx;
-            dezdy[v] = f0[ii].dezdy;
-            d2ezdxdy[v] = f0[ii].d2ezdxdy;
-            _cbx[v] = f0[ii].cbx;
-            dcbxdx[v] = f0[ii].dcbxdx;
-            _cby[v] = f0[ii].cby;
-            dcbydy[v] = f0[ii].dcbydy;
-        }
 
-        #pragma omp simd
-        for (int v = 0; v < VLEN; ++v)
-        {
-            //if ( p + v  >= first_p + n ) continue;
-            if ( i + v >= n ) continue;
-            int ii = (p+v)->i;
-            _cbz[v] = f0[ii].cbz;
-            dcbzdz[v] = f0[ii].dcbzdz;
-        }
+            int a_gather_indices_arr[VLEN] __attribute__((aligned(ALIGNMENT)));
+#pragma omp simd
+            for ( int v = 0; v < VLEN; v++ ){
+
+                int ind = (i + v >= n ) ? p_i[0] : p_i[v];
+                a_gather_indices_arr[v] = ind * 16;
+            }
+
+            //const __m512i a_gather_indices = _mm512_load_epi32( a_gather_indices_arr );
+            //_mm512_prefetch_i32gather_ps( a_gather_indices, &a0[0], 4, _MM_HINT_T1);
+
+#pragma omp simd
+            for (int v = 0; v < VLEN; ++v)
+            {
+                //if ( p + v  >= first_p + n ) continue;
+                if ( i + v >= n ) continue;
+                int ii = p_i[v];
+                ex[v] = f0[ii].ex;
+                dexdy[v] = f0[ii].dexdy;
+                dexdz[v] = f0[ii].dexdz;
+                d2exdydz[v] = f0[ii].d2exdydz;
+                ey[v] = f0[ii].ey;
+                deydz[v] = f0[ii].deydz;
+                deydx[v] = f0[ii].deydx;
+                d2eydzdx[v] = f0[ii].d2eydzdx;
+                ez[v] = f0[ii].ez;
+                dezdx[v] = f0[ii].dezdx;
+                dezdy[v] = f0[ii].dezdy;
+                d2ezdxdy[v] = f0[ii].d2ezdxdy;
+                _cbx[v] = f0[ii].cbx;
+                _cby[v] = f0[ii].cby;
+                _cbz[v] = f0[ii].cbz;
+            }
         } // }}}
         // */
 
@@ -234,12 +251,11 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             outbnd[v] = false;
 
             if ( i + v >= n ) continue;
-            int ii = (p+v)->i;
+            int ii = p_i[v];
 
-            float dx = (p+v)->dx;
-            float dy = (p+v)->dy;
-            float dz = (p+v)->dz;
-
+            float dx = p_dx[v];
+            float dy = p_dy[v];
+            float dz = p_dz[v];
 
             // TODO: this is a horrible way of writing f0[ii]
             const float hax  = qdt_2mc*(    ( ex[v]    + dy*dexdy[v]    ) +
@@ -252,10 +268,11 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             float cbx = _cbx[v];
             float cby = _cby[v];
             float cbz = _cbz[v];
-            float ux = (p+v)->ux;                                     // Load momentum
-            float uy = (p+v)->uy;
-            float uz = (p+v)->uz;
-            float q = (p+v)->w;
+
+            float ux = p_ux[v];                                     // Load momentum
+            float uy = p_uy[v];
+            float uz = p_uz[v];
+            float q = p_w[v];
 
             ux  += hax;                                           // Half advance E
             uy  += hay;
@@ -282,9 +299,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             uy  += hay;
             uz  += haz;
 
-            (p+v)->ux = ux;                               // Store momentum
-            (p+v)->uy = uy;
-            (p+v)->uz = uz;
+            p_ux[v] = ux;                               // Store momentum
+            p_uy[v] = uy;
+            p_uz[v] = uz;
 
             v0   = one/sqrtf(one + (ux*ux+ (uy*uy + uz*uz)));
             /**/                                      // Get norm displacement
@@ -309,9 +326,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
             // Accumulate current of inbnd particles
             q = mask_val * q * qsp;
-            (p+v)->dx = mask_val * v3 + (1.0f - mask_val) * dx;
-            (p+v)->dy = mask_val * v4 + (1.0f - mask_val) * dy;
-            (p+v)->dz = mask_val * v5 + (1.0f - mask_val) * dz;
+            p_dx[v] = mask_val * v3 + (1.0f - mask_val) * dx;
+            p_dy[v] = mask_val * v4 + (1.0f - mask_val) * dy;
+            p_dz[v] = mask_val * v5 + (1.0f - mask_val) * dz;
 
             dx = v0;                                // Streak midpoint
             dy = v1;
@@ -363,6 +380,22 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             }
         }
 
+        // Scatter particle data back to particle data structures
+#pragma omp simd
+        for ( int v = 0; v < VLEN; ++v)
+        {
+            if ( i + v >= n ) continue;
+            (p+v)->ux = p_ux[v];
+            (p+v)->uy = p_uy[v];
+            (p+v)->uz = p_uz[v];
+
+            if ( !outbnd[v] ) {
+                (p+v)->dx = p_dx[v];
+                (p+v)->dy = p_dy[v];
+                (p+v)->dz = p_dz[v];
+            }
+        }
+
         // /* // New move_p loop
         if ( move_queue.size() >= VLEN ) {
             int to_move = move_queue.dequeue(move_holders_x, move_holders_y, move_holders_z, move_holders_i);
@@ -372,24 +405,27 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             move_p_array(p0, &move_holders_x[0], &move_holders_y[0], &move_holders_z[0], &move_holders_i[0],
                          a0, g, qsp, &mover_returns[0]);
 
+#ifdef COPY_QUEUE
             copy_queue.enqueue(move_holders_x, move_holders_y, move_holders_z, move_holders_i, mover_returns);
-
-//#pragma vector always
-//            for ( int v = 0; v < VLEN; v++ ) {
-//                if ( mover_returns[v] ) {
-//                    if ( nm < max_nm ) {
-//                        pm[nm].dispx = move_holders_x[v];
-//                        pm[nm].dispy = move_holders_y[v];
-//                        pm[nm].dispz = move_holders_z[v];
-//                        pm[nm].i = move_holders_i[v];
-//                        nm++;
-//                    } else {
-//                        n_ignored++;
-//                    }
-//                }
-//            }
+#else
+#pragma vector always
+            for ( int v = 0; v < VLEN; v++ ) {
+                if ( mover_returns[v] ) {
+                    if ( nm < max_nm ) {
+                        pm[nm].dispx = move_holders_x[v];
+                        pm[nm].dispy = move_holders_y[v];
+                        pm[nm].dispz = move_holders_z[v];
+                        pm[nm].i = move_holders_i[v];
+                        nm++;
+                    } else {
+                        n_ignored++;
+                    }
+                }
+            }
+#endif
         } // */
 
+#ifdef COPY_QUEUE
         if ( copy_queue.size() >= VLEN ) {
             int to_copy = copy_queue.dequeue(move_holders_x, move_holders_y, move_holders_z, move_holders_i);
             int ignored = 0;
@@ -409,6 +445,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
             nm += (to_copy - ignored);
             n_ignored += ignored;
         }
+#endif
     }
 
     // /* // New move_p loop
@@ -420,25 +457,28 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
         move_p_array(p0, &move_holders_x[0], &move_holders_y[0], &move_holders_z[0], &move_holders_i[0],
                 a0, g, qsp, &mover_returns[0]);
 
-
+#ifdef COPY_QUEUE
         copy_queue.enqueue(move_holders_x, move_holders_y, move_holders_z, move_holders_i, mover_returns);
+#else
 
-//#pragma vector always
-//        for ( int v = 0; v < VLEN; v++ ) {
-//            if ( mover_returns[v] ) {
-//                if ( nm < max_nm ) {
-//                    pm[nm].dispx = move_holders_x[v];
-//                    pm[nm].dispy = move_holders_y[v];
-//                    pm[nm].dispz = move_holders_z[v];
-//                    pm[nm].i = move_holders_i[v];
-//                    nm++;
-//                } else {
-//                    n_ignored++;
-//                }
-//            }
-//        }
+#pragma vector always
+        for ( int v = 0; v < VLEN; v++ ) {
+            if ( mover_returns[v] ) {
+                if ( nm < max_nm ) {
+                    pm[nm].dispx = move_holders_x[v];
+                    pm[nm].dispy = move_holders_y[v];
+                    pm[nm].dispz = move_holders_z[v];
+                    pm[nm].i = move_holders_i[v];
+                    nm++;
+                } else {
+                    n_ignored++;
+                }
+            }
+        }
+#endif
     } // */
 
+#ifdef COPY_QUEUE
     while ( copy_queue.size() > 0 ) {
         int to_copy = copy_queue.dequeue(move_holders_x, move_holders_y, move_holders_z, move_holders_i);
         int ignored = 0;
@@ -460,6 +500,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
         nm += (to_copy - ignored);
         n_ignored += ignored;
     }
+#endif
 
     args->seg[pipeline_rank].pm        = pm;
     args->seg[pipeline_rank].max_nm    = max_nm;

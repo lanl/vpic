@@ -10,7 +10,7 @@
 #include "spa_private.h"
 
 // Use this for Intel and VTune.
-#if defined(VPIC_USE_VTUNE)
+#if defined(VPIC_USE_VTUNE_ADVANCE_P)
 #include "ittnotify.h"
 #endif
 
@@ -331,7 +331,7 @@ advance_p(       species_t            * RESTRICT sp,
   // However, it is worth reconsidering this at some point in the
   // future.
 
-#if defined(VPIC_USE_VTUNE)
+#if defined(VPIC_USE_VTUNE_ADVANCE_P)
   __itt_resume();
 #endif
 
@@ -339,7 +339,7 @@ advance_p(       species_t            * RESTRICT sp,
 
   WAIT_PIPELINES();
 
-#if defined(VPIC_USE_VTUNE)
+#if defined(VPIC_USE_VTUNE_ADVANCE_P)
   __itt_pause();
 #endif
 

@@ -10,6 +10,11 @@
 
 #include "vpic/vpic.h"
 
+// Use this for Intel and VTune.
+#if defined(VPIC_USE_VTUNE_ADVANCE)
+#include "ittnotify.h"
+#endif
+
 /* The simulation variable is set up this way so both the checkpt
    service and main can see it.  This allows main to find where
    the restored objects are after a restore. */
@@ -70,31 +75,39 @@ main( int argc,
     REGISTER_OBJECT( &simulation, checkpt_main, restore_main, NULL );
 
   }
- 
+
   // Do any post init/restore simulation modifications
   // FIXME-KJB: STRIP_CMDLINE COULD MAKE THIS CLEANER AND MORE POWERFUL.
- 
+
   fbase = strip_cmdline_string( &argc, &argv, "--modify", NULL );
   if( fbase ) {
     if( world_rank==0 ) log_printf( "*** Modifying from \"%s\"\n", fbase );
     simulation->modify( fbase );  
   }
- 
+
   // Advance the simulation
+
+#if defined(VPIC_USE_VTUNE_ADVANCE)
+  __itt_resume();
+#endif
 
   if( world_rank==0 ) log_printf( "*** Advancing\n" );
   double elapsed = wallclock();
   while( simulation->advance() ); 
   elapsed = wallclock() - elapsed;
   if( world_rank==0 ) {
-    int  s = (int)elapsed, m  = s/60, h  = m/60, d  = m/24, w = d/ 7;
+    int  s = (int)elapsed, m  = s/60, h  = m/60, d  = h/24, w = d/ 7;
     /**/ s -= m*60,        m -= h*60, h -= d*24, d -= w*7;
     log_printf( "*** Done (%gs / %iw:%id:%ih:%im:%is elapsed)\n",
                 elapsed, w, d, h, m, s );
   }
 
+#if defined(VPIC_USE_VTUNE_ADVANCE)
+  __itt_pause();
+#endif
+
   // Cleaning up
- 
+
   if( world_rank==0 ) log_printf( "*** Cleaning up\n" );
   UNREGISTER_OBJECT( &simulation );
   simulation->finalize();
@@ -104,4 +117,3 @@ main( int argc,
   halt_services();
   return 0;
 }
-

@@ -12,21 +12,25 @@ class simd_mover_queue_t {/*{{{*/
     public:
         simd_mover_queue_t(){/*{{{*/
             _size = 0;
-            _data_ps = (float *) _mm_malloc(2 * VLEN_INT * ps_fields * sizeof(float), ALIGNMENT_INT);
-            _data_i = (int *) _mm_malloc(2 * VLEN_INT * i_fields * sizeof(int), ALIGNMENT_INT);
+            _data_x = (float *) _mm_malloc(2 * VLEN_INT * sizeof(float), ALIGNMENT_INT);
+            _data_y = (float *) _mm_malloc(2 * VLEN_INT * sizeof(float), ALIGNMENT_INT);
+            _data_z = (float *) _mm_malloc(2 * VLEN_INT * sizeof(float), ALIGNMENT_INT);
+            _data_i = (int *) _mm_malloc(2 * VLEN_INT * sizeof(int), ALIGNMENT_INT);
         }/*}}}*/
 
         ~simd_mover_queue_t(){/*{{{*/
             _size = 0;
-            if ( _data_ps ) _mm_free(_data_ps);
+            if ( _data_x ) _mm_free(_data_x);
+            if ( _data_y ) _mm_free(_data_y);
+            if ( _data_z ) _mm_free(_data_z);
             if ( _data_i ) _mm_free(_data_i);
         }/*}}}*/
 
         void enqueue(float v_x[VLEN_INT], float v_y[VLEN_INT], float v_z[VLEN_INT], int v_i[VLEN_INT]){/*{{{*/
-            float* restrict d_x = &_data_ps[field_stride * x_id];
-            float* restrict d_y = &_data_ps[field_stride * y_id];
-            float* restrict d_z = &_data_ps[field_stride * z_id];
-            int* restrict d_i = &_data_i[field_stride * i_id];
+            float* restrict d_x = _data_x;
+            float* restrict d_y = _data_y;
+            float* restrict d_z = _data_z;
+            int* restrict d_i = _data_i;
             int j = _size;
 
 #pragma vector always
@@ -43,38 +47,54 @@ class simd_mover_queue_t {/*{{{*/
         }/*}}}*/
 
         void enqueue(float v_x[VLEN_INT], float v_y[VLEN_INT], float v_z[VLEN_INT], int v_i[VLEN_INT], bool m[VLEN_INT]){/*{{{*/
-            float* restrict d_x = &_data_ps[field_stride * x_id];
-            float* restrict d_y = &_data_ps[field_stride * y_id];
-            float* restrict d_z = &_data_ps[field_stride * z_id];
-            int* restrict d_i = &_data_i[field_stride * i_id];
+            float* restrict d_x = _data_x;
+            float* restrict d_y = _data_y;
+            float* restrict d_z = _data_z;
+            int* restrict d_i = _data_i;
 
-            unsigned short mask_int = 0;
+//            unsigned short mask_int = 0;
+//
+//#pragma omp simd simdlen(VLEN_INT)
+//            for ( int v = 0; v < VLEN_INT; v++ )
+//            {
+//                mask_int ^= m[v] << v;
+//            }
+//
+//            const __mmask16 mask = _mm512_int2mask( mask_int );
+//
+//            const int count = _popcnt32(mask);
+//
+//            _mm512_mask_compressstoreu_ps( &d_x[_size], mask, _mm512_load_ps( &v_x[0] ) );
+//            _mm512_mask_compressstoreu_ps( &d_y[_size], mask, _mm512_load_ps( &v_y[0] ) );
+//            _mm512_mask_compressstoreu_ps( &d_z[_size], mask, _mm512_load_ps( &v_z[0] ) );
+//            _mm512_mask_compressstoreu_epi32( &d_i[_size], mask, _mm512_load_epi32( &v_i[0] ) );
+//
+//            _size += count;
 
-#pragma omp simd simdlen(VLEN_INT)
+            int j = _size;
+
+#pragma vector always
             for ( int v = 0; v < VLEN_INT; v++ )
             {
-                mask_int ^= m[v] << v;
+                if ( m[v] ) {
+                    d_x[j] = v_x[v];
+                    d_y[j] = v_y[v];
+                    d_z[j] = v_z[v];
+                    d_i[j] = v_i[v];
+                    j++;
+                }
             }
 
-            const __mmask16 mask = _mm512_int2mask( mask_int );
-
-            const int count = _popcnt32(mask);
-
-            _mm512_mask_compressstoreu_ps( &d_x[_size], mask, _mm512_load_ps( &v_x[0] ) );
-            _mm512_mask_compressstoreu_ps( &d_y[_size], mask, _mm512_load_ps( &v_y[0] ) );
-            _mm512_mask_compressstoreu_ps( &d_z[_size], mask, _mm512_load_ps( &v_z[0] ) );
-            _mm512_mask_compressstoreu_epi32( &d_i[_size], mask, _mm512_load_epi32( &v_i[0] ) );
-
-            _size += count;
+            _size = j;
 
             //assert(_size <= VLEN_INT);
         }/*}}}*/
 
         int dequeue(float v_x[VLEN_INT], float v_y[VLEN_INT], float v_z[VLEN_INT], int v_i[VLEN_INT]){/*{{{*/
-            float* restrict d_x = &_data_ps[field_stride * x_id];
-            float* restrict d_y = &_data_ps[field_stride * y_id];
-            float* restrict d_z = &_data_ps[field_stride * z_id];
-            int* restrict d_i = &_data_i[field_stride * i_id];
+            float* restrict d_x = _data_x;
+            float* restrict d_y = _data_y;
+            float* restrict d_z = _data_z;
+            int* restrict d_i = _data_i;
             int ndequeue = ( _size <= VLEN_INT ) ? _size : VLEN_INT;
 
 #pragma vector always
@@ -122,22 +142,18 @@ class simd_mover_queue_t {/*{{{*/
 
     protected:
         int _size;
-        const int field_stride = 2 * VLEN_INT;
-        const int ps_fields = 3;
-        const int i_fields = 1;
-        enum ps_ids  {x_id, y_id, z_id};
-        enum i_ids {i_id};
-
-        float * _data_ps = NULL;
-        int* _data_i;
+        float * _data_x = NULL;
+        float * _data_y = NULL;
+        float * _data_z = NULL;
+        int* _data_i = NULL;
 };/*}}}*/
 
 void move_p_array(
     particle_t* p0,
-    float * restrict mover_x, float * restrict mover_y, float * restrict mover_z, int * restrict mover_i,
+    float * mover_x, float * mover_y, float * mover_z, int * mover_i,
     accumulator_t* a0,
     const grid_t* g,
-    const float qsp, bool* restrict ret_vals)
+    const float qsp, bool * ret_vals)
 {
     // Determine which particles need to be moved by looking for i == -1.
     // Assume that the movers won't be marked "inuse".

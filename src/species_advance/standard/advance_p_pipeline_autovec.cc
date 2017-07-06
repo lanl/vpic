@@ -36,8 +36,6 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     float move_holders_z[VLEN];
     int move_holders_i[VLEN];
 
-    //const __m512i linear = _mm512_set_epi32( 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
-    //const __m512 zeroes = _mm512_set1_ps( 0.0f );
     const int field_stride = sizeof(interpolator_t) / sizeof(float);
     const int acc_stride = sizeof(accumulator_t) / sizeof(float);
 
@@ -122,9 +120,6 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
                 a_gather_indices_arr[v] = ind * 16;
             }
 
-            //const __m512i a_gather_indices = _mm512_load_epi32( a_gather_indices_arr );
-            //_mm512_prefetch_i32gather_ps( a_gather_indices, &a0[0], 4, _MM_HINT_T1);
-
 #pragma omp simd
             for (int v = 0; v < VLEN; ++v)
             {
@@ -148,6 +143,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
                 _cbz[v] = f0[ii].cbz;
             }
         } // }}}
+        // */
 
         #pragma omp simd
         for (int v = 0; v < VLEN; ++v)

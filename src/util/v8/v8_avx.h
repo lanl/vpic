@@ -1952,7 +1952,9 @@ namespace v8
   {
     v8float d;
 
-    d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
+    d.v = _mm256_add_ps( _mm256_mul_ps( a.v, b.v ), c.v );
+
+    // d.v = _mm256_fmadd_ps( a.v, b.v, c.v );
 
     return d;
   }
@@ -1961,7 +1963,9 @@ namespace v8
   {
     v8float d;
 
-    d.v = _mm256_fmsub_ps( a.v, b.v, c.v );
+    d.v = _mm256_sub_ps( _mm256_mul_ps( a.v, b.v ), c.v );
+
+    // d.v = _mm256_fmsub_ps( a.v, b.v, c.v );
 
     return d;
   }
@@ -1970,7 +1974,9 @@ namespace v8
   {
     v8float d;
 
-    d.v = _mm256_fnmadd_ps( a.v, b.v, c.v );
+    d.v = _mm256_sub_ps( c.v, _mm256_mul_ps( a.v, b.v ) );
+
+    // d.v = _mm256_fnmadd_ps( a.v, b.v, c.v );
 
     return d;
   }

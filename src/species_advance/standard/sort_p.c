@@ -464,7 +464,6 @@ sort_p( species_t * sp )
     }
 
     WAIT_PIPELINES();
-
   }
 
   else

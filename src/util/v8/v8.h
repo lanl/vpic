@@ -1,8 +1,8 @@
 #ifndef _v8_h_
 #define _v8_h_
-/* FIXME: STYLE */
+// FIXME: STYLE
 #define IN_v8_h
-/* FIXME: SHOULDN'T THIS INCLUDE UTIL_BASE.H? */
+// FIXME: SHOULDN'T THIS INCLUDE UTIL_BASE.H?
 #ifdef __cplusplus
 # if defined USE_V8_PORTABLE
 #   include "v8_portable.h"

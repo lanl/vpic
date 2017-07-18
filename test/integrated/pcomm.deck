@@ -129,9 +129,9 @@ begin_diagnostics {
       }
       barrier();
     }
+    halt_mp();
+    exit(0);
   }
-  halt_mp();
-  exit(0);
 }
 
 begin_particle_injection {

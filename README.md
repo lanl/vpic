@@ -108,6 +108,44 @@ source directory)*:
 
     % bin/vpic ../sample/harris
 
+# Command Line Arguments
+
+Note: Historic VPIC users should note that the format of command line arguments was changed in the first open source release. The equals symbol is no longer accepted, and two dashes are mandatory. 
+
+In general, command line arguments take the form `--command value`, in which two dashes are followed by a keyword, with a space delimiting the command and the value.
+
+The following specific syntax is available to the users:
+
+## Threading
+
+Threading (per MPI rank) can be enabled using the following syntax: 
+
+`./binary.Linux --tpp n`
+
+Where n specifies the number of threads
+
+### Example:
+
+`./binary.Linux --tpp 2`
+
+To run with VPIC with two threads per MPI rank.
+
+## Checkpoint Restart
+
+VPIC can restart from a checkpoint dump file, using the following syntax:
+
+`./binary.Linux --restore <path to file>`
+
+### Example:
+
+`./binary.Linux --restore ./restart/restart0`
+
+To restart VPIC using the restart file `./restart/restart0`
+
+# Feedback
+
+Feedback, comments, or issues can be raised through [GitHub issues](./issues)
+
 # Release
 
 This software has been approved for open source release and has been assigned **LA-CC-15-109**.

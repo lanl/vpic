@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -11,6 +11,7 @@
 #include "util_base.h" // Declarations
 #include <stdio.h>     // For vfprintf
 #include <stdarg.h>    // For va_list, va_start, va_end
+#include <string.h>    // for strstr
 
 /****************************************************************************/
 
@@ -48,13 +49,119 @@ STRIP_CMDLINE( string, const char *,      )
 
 /****************************************************************************/
 
+int string_starts_with(const char *str, const char *pre)
+{
+    size_t lenpre = strlen(pre),
+           lenstr = strlen(str);
+    return lenstr < lenpre ? 0 : strncmp(pre, str, lenpre) == 0;
+}
+
+int string_contains(const char *str, const char *substr)
+{
+    char *output = NULL;
+    output = strstr(str,substr);
+
+    char* pos = strstr(str, substr);
+
+    if (pos) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+int string_matches(const char* str, const char* match)
+{
+    if (strcmp(str, match) != 0) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+void detect_old_style_arguments(int* pargc, char *** pargv)
+{
+  // FIXME: This could also warn for unknown options being passed (such as typos)
+  int i;
+
+  for (i=0; i<(*pargc); i++)
+  {
+      const int num_prefix_keys = 2;
+      char* prefix_keys[num_prefix_keys];
+
+      const int num_match_keys = 1;
+      char* match_keys[num_match_keys];
+
+      prefix_keys[0] = "-tpp";
+      prefix_keys[1] = "-restore";
+
+      match_keys[0] = "restart";
+
+      char* arg = (*pargv)[i];
+
+      // Set loop bound to 0
+      int j = 0;
+
+      // Check for invalid prefixes
+      for (j = 0; j < num_prefix_keys; j++)
+      {
+          // Search for tpp
+          if (string_starts_with(arg,prefix_keys[j]))
+          {
+              char output_message[64];
+
+              sprintf(output_message,
+                  "Aborting. Single dashed flag %s is invalid (needs '-%1$s').",
+                  prefix_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
+      }
+
+      // Search for restore, single dash
+      for (j = 0; j < num_match_keys; j++)
+      {
+          if (string_matches(arg,match_keys[j]))
+          {
+              // TODO: This could be tightened up more, as it disallows the use
+                  // of a file called 'restart'
+              char output_message[64];
+              sprintf(output_message,
+                  "Old Argument Syntax Detected: %s",
+                  match_keys[j]
+              );
+
+              WARNING(( "Input Flags Look Like They Are Using Legacy Style."));
+              ERROR((output_message));
+          }
+      }
+
+		  // Check for "=" (equals)
+      // TODO: Add an option to make this an error or a warning
+			if (string_contains(arg, "="))
+			{
+         const int NUM_WARN_REPEAT = 5;
+         for (j = 0; j < NUM_WARN_REPEAT; j++)
+         {
+            WARNING(( "Arguments contains '=', is this intentional? (use a space)" ));
+         }
+			}
+
+  }
+
+}
+
 void
 util_malloc( const char * err,
-             void * mem_ref, 
+             void * mem_ref,
              size_t n ) {
   char * mem;
 
-  // If no err given, use a default error 
+  // If no err given, use a default error
   if( !err ) err = "malloc failed (n=%lu)";
 
   // Check that mem_ref is valid
@@ -80,37 +187,51 @@ util_free( void * mem_ref ) {
 
 void
 util_malloc_aligned( const char * err,
-                     void * mem_ref, 
+                     void * mem_ref,
                      size_t n,
-                     size_t a ) {
+                     size_t a )
+{
   char *mem_u, *mem_a, **mem_p;
 
-  // If no err given, use a default error 
-  if( !err ) err = "malloc aligned failed (n=%lu, a=%lu)";
+  // If no err given, use a default error.
+  if ( !err )
+    err = "malloc aligned failed (n=%lu, a=%lu)";
 
-  // Check that mem_ref is valid and a is a power of two 
-  if( !mem_ref || a==0 || (a&(a-1))!=0 )
-    ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  // Check that mem_ref is valid and a is a power of two.
+  if ( !mem_ref || a==0 || ( a & ( a - 1 ) ) != 0 )
+    ERROR( ( err, (unsigned long) n, (unsigned long) a ) );
 
-  // A do nothing request 
-  if( n==0 ) { *(char **)mem_ref = NULL; return; }
+  // A do nothing request.
+  if ( n == 0 )
+  {
+    *(char **) mem_ref = NULL;
+    return;
+  }
 
-  // Adjust small alignments to a minimal valid alignment 
-  // and convert a into a mask of the address LSB
-  if( a<16 ) a = 16;
+  // Adjust small alignments to a minimal valid alignment
+  // and convert a into a mask of the address LSB.
+  if ( a < 16 )
+    a = 16;
+
   a--;
 
-  // Allocate the raw unaligned memory ... abort if the allocation fails 
-  mem_u = (char *)malloc( n + a + sizeof(char *) );
-  if( !mem_u ) ERROR(( err, (unsigned long)n, (unsigned long)a ));
+  // Allocate the raw unaligned memory.  Abort if the allocation fails.
+  mem_u = (char *) malloc( n + a + sizeof(char *) );
+
+  if ( !mem_u )
+    ERROR( ( err, (unsigned long) n, (unsigned long) a ) );
 
   // Compute the pointer to the aligned memory and save a pointer to the
-  // raw unaligned memory for use on free_aligned 
-  mem_a = (char *)(((unsigned long int)(mem_u + a + sizeof(char *)))&(~a));
-  mem_p = (char **)(mem_a - sizeof(char *));
+  // raw unaligned memory for use on free_aligned.
+  mem_a = (char *) ( ( (unsigned long int) ( mem_u +
+					     a +
+					     sizeof( char * ) ) ) & ( ~a ) );
+
+  mem_p = (char **) ( mem_a - sizeof( char * ) );
+
   mem_p[0] = mem_u;
 
-  *(char **)mem_ref = mem_a;
+  *(char **) mem_ref = mem_a;
 }
 
 void
@@ -140,7 +261,7 @@ log_printf( const char *fmt, ... ) {
 uint32_t
 _nanodelay( uint32_t i ) {
   uint32_t a = 0;
-  for( ; i; i-- ) a^=0xdeadbeef, a>>=1; 
+  for( ; i; i-- ) a^=0xdeadbeef, a>>=1;
   return a;
 }
 

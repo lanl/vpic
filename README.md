@@ -79,10 +79,6 @@ Then call the curses version of CMake:
 
     % ccmake ..
 
-**or, optionally:**
-
-    % cmake -DENABLE_MPI ..
-
 The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
 
 They can be invoked using something like:
@@ -126,7 +122,7 @@ Where n specifies the number of threads
 
 ### Example:
 
-`./binary.Linux --tpp 2`
+`mpirun -n 2 ./binary.Linux --tpp 2`
 
 To run with VPIC with two threads per MPI rank.
 

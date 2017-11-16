@@ -84,6 +84,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
+string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
+set(VPIC_CXX_LIBRARIES "${string_libraries}")
+
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#
@@ -92,8 +95,8 @@ if(ENABLE_OPENSSL)
   find_package(OpenSSL REQUIRED)
 
   include_directories(${OPENSSL_INCLUDE_DIR})
-else()
-  set(OPENSSL_LIBRARIES)
+  string(REPLACE ";" " " string_libraries "${OPENSSL_LIBRARIES}")
+  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
 endif(ENABLE_OPENSSL)
 
 find_package(Threads REQUIRED)

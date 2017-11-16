@@ -84,9 +84,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
-string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
-set(VPIC_CXX_LIBRARIES "${string_libraries}")
-
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#
@@ -95,9 +92,11 @@ if(ENABLE_OPENSSL)
   find_package(OpenSSL REQUIRED)
 
   include_directories(${OPENSSL_INCLUDE_DIR})
-  string(REPLACE ";" " " string_libraries "${OPENSSL_LIBRARIES}")
-  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+else()
+  set(OPENSSL_LIBRARIES)
 endif(ENABLE_OPENSSL)
+
+find_package(Threads REQUIRED)
 
 #------------------------------------------------------------------------------#
 # Act on build options set in project.cmake
@@ -177,11 +176,24 @@ file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
 file(GLOB_RECURSE VPIC_NOT_SRC src/*/*/test/*.c src/*/*/test/*.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
-if(NOT NO_LIBVPIC)
+if(NO_LIBVPIC)
+  set(VPIC_EXPOSE "INTERFACE")
+  add_library(vpic INTERFACE)
+else()
+  set(VPIC_EXPOSE "PRIVATE")
   add_library(vpic ${VPIC_SRC})
-  target_compile_options(vpic PRIVATE ${MPI_C_COMPILE_FLAGS})
-  target_link_libraries(vpic ${VPIC_CXX_LIBRARIES})
+  set(VPIC_SRC)
 endif()
+target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})
+target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
+
+macro(build_a_vpic name deck)
+  add_executable(${name} ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc ${VPIC_SRC})
+  target_link_libraries(${name} vpic)
+  target_compile_definitions(${name} PRIVATE INPUT_DECK=${deck}.deck)
+  target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+endmacro(build_a_vpic)
 
 #------------------------------------------------------------------------------#
 # Add VPIC integrated test mechanism

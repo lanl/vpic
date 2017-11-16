@@ -189,11 +189,24 @@ target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LI
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
 
 macro(build_a_vpic name deck)
+  if(NOT EXISTS ${deck})
+    message(FATAL_ERROR "Could not find deck '${deck}'")
+  endif()
   add_executable(${name} ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc ${VPIC_SRC})
   target_link_libraries(${name} vpic)
-  target_compile_definitions(${name} PRIVATE INPUT_DECK=${deck}.deck)
-  target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_compile_definitions(${name} PRIVATE INPUT_DECK=${deck})
 endmacro(build_a_vpic)
+
+if(USER_DECKS)
+  foreach(DECK ${USER_DECK})
+    get_filename_component(NAME "${DECK}" NAME_WE)
+    get_filename_component(DECKDIR "${DECK}" DIRECTORY)
+    if(NOT DECKDIR)
+      set(DECK "${CMAKE_CURRENT_BINARY_DIR}/${DECK}")
+    endif()
+    build_a_vpic(${NAME} ${DECK})
+  endforeach()
+endif()
 
 #------------------------------------------------------------------------------#
 # Add VPIC integrated test mechanism

@@ -173,7 +173,7 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 #------------------------------------------------------------------------------#
 
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
-file(GLOB_RECURSE VPIC_NOT_SRC src/*/*/test/*.c src/*/*/test/*.cc)
+file(GLOB_RECURSE VPIC_NOT_SRC src/util/v4/test/v4.cc src/util/rng/test/rng.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
 if(NO_LIBVPIC)

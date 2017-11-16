@@ -176,8 +176,12 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
 file(GLOB_RECURSE VPIC_NOT_SRC src/*/*/test/*.c src/*/*/test/*.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
-add_library(vpic ${VPIC_SRC})
-target_compile_options(vpic PRIVATE ${MPI_C_COMPILE_FLAGS})
+option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
+if(NOT NO_LIBVPIC)
+  add_library(vpic ${VPIC_SRC})
+  target_compile_options(vpic PRIVATE ${MPI_C_COMPILE_FLAGS})
+  target_link_libraries(vpic ${VPIC_CXX_LIBRARIES})
+endif()
 
 #------------------------------------------------------------------------------#
 # Add VPIC integrated test mechanism

@@ -82,7 +82,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
-string(REPLACE ";" " " string_libraries "${MPI_C_LIBRARIES}")
+string(REPLACE ";" " " string_libraries "${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 
 #------------------------------------------------------------------------------#
@@ -184,6 +184,7 @@ else()
   set(VPIC_EXPOSE "PRIVATE")
   add_library(vpic ${VPIC_SRC})
   set(VPIC_SRC)
+  install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})

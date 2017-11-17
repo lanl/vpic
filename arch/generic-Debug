@@ -7,7 +7,7 @@
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
+src_dir="${0%*/}/.."
 
 #------------------------------------------------------------------------------#
 # Check required environment variables
@@ -29,7 +29,7 @@ cmake \
   -DENABLE_UNIT_TESTS=ON \
   -DCMAKE_C_FLAGS="-rdynamic" \
   -DCMAKE_CXX_FLAGS="-rdynamic" \
-  $cinch_dir
+  $src_dir
 
 #------------------------------------------------------------------------------#
 # vim: syntax=sh

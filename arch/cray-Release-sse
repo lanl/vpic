@@ -18,7 +18,7 @@
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
+src_dir="${0%*/}/.."
 
 #------------------------------------------------------------------------------#
 # Check required environment variables
@@ -51,7 +51,7 @@ cmake \
   -DMPI_CXX_INCLUDE_PATH="" \
   -DMPI_C_COMPILER="" \
   -DMPI_CXX_COMPILER="" \
-  $cinch_dir
+  $src_dir
 
 # To turn on unit/integrated tests add the following. Note that `which aprun`
 # will ONLY WORK ON THE BACK END.

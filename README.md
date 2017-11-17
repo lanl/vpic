@@ -66,8 +66,7 @@ an up-to-date version of MPI.
 
 # Build Instructions
 
-VPIC uses the Cinch build system.  From a user-perspective, this is
-equivalent to CMake.  To configure a build, do the following from
+VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
   
     % mkdir build

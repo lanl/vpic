@@ -26,10 +26,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 #------------------------------------------------------------------------------#
-# Set project defaults
-#
-# These have to occur before cinch_load_extras() because they
-# override some of cinch's default options 
+# MPI detection
 #------------------------------------------------------------------------------#
 
 find_package(MPI REQUIRED)

@@ -36,9 +36,7 @@ src_dir="${0%/*}/.."
 
 cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DENABLE_COLOR_UNIT_TESTS=OFF \
   -DENABLE_INTEGRATED_TESTS=OFF \
-  -DENABLE_UNIT_TESTS=OFF \
   -DUSE_V4_SSE=ON \
   -DCMAKE_C_COMPILER=cc \
   -DCMAKE_CXX_COMPILER=CC \
@@ -55,9 +53,7 @@ cmake \
 
 # To turn on unit/integrated tests add the following. Note that `which aprun`
 # will ONLY WORK ON THE BACK END.
-#  -DENABLE_COLOR_UNIT_TESTS=OFF \
 #  -DENABLE_INTEGRATED_TESTS=OFF \
-#  -DENABLE_UNIT_TESTS=OFF \
 #  -DMPIEXEC=`which aprun` \
 #  -DMPIEXEC_NUMPROC_FLAG="-n" \
 

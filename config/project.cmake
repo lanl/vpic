@@ -58,7 +58,7 @@ set(CINCH_HEADER_SUFFIXES "\\.h")
 # Load extra functionality in cinch
 #------------------------------------------------------------------------------#
 
-cinch_load_extras()
+cinch_load_extras(MPI)
 
 #------------------------------------------------------------------------------#
 # Add build options

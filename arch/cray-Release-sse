@@ -18,7 +18,7 @@
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-src_dir="${0%*/}/.."
+src_dir="${0%/*}/.."
 
 #------------------------------------------------------------------------------#
 # Check required environment variables

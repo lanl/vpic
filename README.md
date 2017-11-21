@@ -55,11 +55,9 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone --recursive git@github.com:lanl/vpic.git
+    % git clone git@github.com:lanl/vpic.git
 
-This command will check out the VPIC source code, including the Cinch
-build system.  Cinch is documented
-[here](https://github.com/laristra/cinch).
+This command will check out the VPIC source code.
 
 # Requirements
 
@@ -68,8 +66,7 @@ an up-to-date version of MPI.
 
 # Build Instructions
 
-VPIC uses the Cinch build system.  From a user-perspective, this is
-equivalent to CMake.  To configure a build, do the following from
+VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
   
     % mkdir build

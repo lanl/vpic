@@ -7,7 +7,7 @@
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
+src_dir="${0%/*}/.."
 
 #------------------------------------------------------------------------------#
 # Check required environment variables
@@ -24,15 +24,13 @@ cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
 
 cmake \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DENABLE_COLOR_UNIT_TESTS=ON \
   -DENABLE_INTEGRATED_TESTS=ON \
-  -DENABLE_UNIT_TESTS=ON \
   -DUSE_V4_SSE=ON \
   -DCMAKE_C_COMPILER=mpiicc \
   -DCMAKE_CXX_COMPILER=mpiicpc \
   -DCMAKE_C_FLAGS="-xmic-avx512 -rdynamic" \
   -DCMAKE_CXX_FLAGS="-xmic-avx512 -rdynamic" \
-  $cinch_dir
+  $src_dir
 
 #------------------------------------------------------------------------------#
 # vim: syntax=sh

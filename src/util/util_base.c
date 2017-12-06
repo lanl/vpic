@@ -113,7 +113,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
               char output_message[64];
 
               sprintf(output_message,
-                  "Aborting. Single dashed flag %s is invalid (needs '-%1$s').",
+                  "Aborting. Single dashed flag %1$s is invalid (needs '-%1$s').",
                   prefix_keys[j]
               );
 

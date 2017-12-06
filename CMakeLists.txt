@@ -47,13 +47,6 @@ option(USE_V4_SSE "Enable V4 SSE" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
-if ( USE_OPENMP ) 
-  message( FATAL_ERROR "\
-    This option has moved to ENABLE_OPENMP \
-    to avoid duplication \
-  " )
-endif()
-
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #

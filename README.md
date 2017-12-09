@@ -55,11 +55,9 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone --recursive git@github.com:lanl/vpic.git
+    % git clone git@github.com:lanl/vpic.git
 
-This command will check out the VPIC source code, including the Cinch
-build system.  Cinch is documented
-[here](https://github.com/laristra/cinch).
+This command will check out the VPIC source code.
 
 # Requirements
 
@@ -68,8 +66,7 @@ an up-to-date version of MPI.
 
 # Build Instructions
 
-VPIC uses the Cinch build system.  From a user-perspective, this is
-equivalent to CMake.  To configure a build, do the following from
+VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
   
     % mkdir build
@@ -78,10 +75,6 @@ the top-level source directory:
 Then call the curses version of CMake:
 
     % ccmake ..
-
-**or, optionally:**
-
-    % cmake -DENABLE_MPI ..
 
 The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
 
@@ -107,6 +100,44 @@ the *harris* input deck in the *sample* subdirectory
 source directory)*:
 
     % bin/vpic ../sample/harris
+
+# Command Line Arguments
+
+Note: Historic VPIC users should note that the format of command line arguments was changed in the first open source release. The equals symbol is no longer accepted, and two dashes are mandatory. 
+
+In general, command line arguments take the form `--command value`, in which two dashes are followed by a keyword, with a space delimiting the command and the value.
+
+The following specific syntax is available to the users:
+
+## Threading
+
+Threading (per MPI rank) can be enabled using the following syntax: 
+
+`./binary.Linux --tpp n`
+
+Where n specifies the number of threads
+
+### Example:
+
+`mpirun -n 2 ./binary.Linux --tpp 2`
+
+To run with VPIC with two threads per MPI rank.
+
+## Checkpoint Restart
+
+VPIC can restart from a checkpoint dump file, using the following syntax:
+
+`./binary.Linux --restore <path to file>`
+
+### Example:
+
+`./binary.Linux --restore ./restart/restart0`
+
+To restart VPIC using the restart file `./restart/restart0`
+
+# Feedback
+
+Feedback, comments, or issues can be raised through [GitHub issues](https://github.com/lanl/vpic/issues)
 
 # Release
 

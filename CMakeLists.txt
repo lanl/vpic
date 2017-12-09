@@ -297,7 +297,34 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 #------------------------------------------------------------------------------#
 
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
-file(GLOB_RECURSE VPIC_NOT_SRC src/util/v4/test/v4.cc src/util/v8/test/v8.cc src/util/v16/test/v16.cc src/util/rng/test/rng.cc)
+file(GLOB_RECURSE VPIC_NOT_SRC
+  src/util/v4/test/v4.cc
+  src/util/v8/test/v8.cc
+  src/util/v16/test/v16.cc
+  src/util/rng/test/rng.cc
+  src/field_advance/standard/advance_b_pipeline_v4.cc
+  src/field_advance/standard/advance_e_pipeline_v4.cc
+  src/field_advance/standard/clean_div_b_pipeline_v4.cc
+  src/field_advance/standard/compute_curl_b_pipeline_v4.cc
+  src/field_advance/standard/vacuum_advance_e_pipeline_v4.cc
+  src/field_advance/standard/vacuum_compute_curl_b_pipeline_v4.cc
+  src/field_advance/standard/advance_b_pipeline_v8.cc
+  src/field_advance/standard/advance_e_pipeline_v8.cc
+  src/field_advance/standard/clean_div_b_pipeline_v8.cc
+  src/field_advance/standard/compute_curl_b_pipeline_v8.cc
+  src/field_advance/standard/vacuum_advance_e_pipeline_v8.cc
+  src/field_advance/standard/vacuum_compute_curl_b_pipeline_v8.cc
+  src/species_advance/standard/advance_p_pipeline_v4.cc
+  src/species_advance/standard/center_p_pipeline_v4.cc
+  src/species_advance/standard/energy_p_pipeline_v4.cc
+  src/species_advance/standard/uncenter_p_pipeline_v4.cc
+  src/species_advance/standard/advance_p_pipeline_v8.cc
+  src/species_advance/standard/center_p_pipeline_v8.cc
+  src/species_advance/standard/energy_p_pipeline_v8.cc
+  src/species_advance/standard/uncenter_p_pipeline_v8.cc
+  src/species_advance/standard/advance_p_pipeline_v16.cc
+  src/species_advance/standard/center_p_pipeline_v16.cc
+  src/species_advance/standard/advance_p_pipeline_autovec.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
 if(NO_LIBVPIC)

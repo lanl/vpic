@@ -221,8 +221,10 @@ if(ENABLE_UNIT_TESTS)
   include_directories(${TEST_DIR})
 
   # Add tests individually
-  add_executable(v4 src/util/v4/test/v4.cc)
-  add_test(NAME v4 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./v4)
+  if (USE_V4)
+    add_executable(v4 src/util/v4/test/v4.cc)
+    add_test(NAME v4 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./v4)
+  endif(USE_V4)
 
 endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#

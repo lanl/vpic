@@ -210,8 +210,21 @@ endif()
 if(ENABLE_INTEGRATED_TESTS)
   enable_testing()
   add_subdirectory(test/integrated)
+
 endif(ENABLE_INTEGRATED_TESTS)
 
+if(ENABLE_UNIT_TESTS)
+
+  # NOTE: This can also be done by a subdirectory (useful when we have multiple tests)
+  # Add includes for Catch2
+  set(TEST_DIR "./test/include")
+  include_directories(${TEST_DIR})
+
+  # Add tests individually
+  add_executable(v4 src/util/v4/test/v4.cc)
+  add_test(NAME v4 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./v4)
+
+endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

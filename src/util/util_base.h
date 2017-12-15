@@ -331,6 +331,7 @@ strip_cmdline_string( int * pargc,
                       const char * default_val );
 
 // In util.c
+void detect_old_style_arguments(int* pargc, char *** pargv);
 
 void detect_old_style_arguments(int* pargc, char *** pargv);
 

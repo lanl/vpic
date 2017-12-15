@@ -174,12 +174,6 @@ thread_boot( int * pargc,
 
   if( thread.n_pipeline != 0 ) ERROR(( "Halt the thread dispatcher first!" ));
 
-  // # if defined(CELL_PPU_BUILD)
-  //   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              2 );
-  // # else
-  //   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
-  // # endif
-
   // Attempt to detect if any old-style arguments exist, and if so warn the user.
   detect_old_style_arguments(pargc, pargv);
 

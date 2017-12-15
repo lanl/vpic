@@ -523,7 +523,7 @@ begin_initialization {
 
     if ( ! (fp_info.open("info", io_write)==ok) ) ERROR(("Cannot open file."));
 
-    fp_info.print( "           ***** Simulation parameters ***** \n");
+    fp_info.print( " ***** Simulation parameters *****\n");
     fp_info.print( " L/di=%e\n", L_di);
     fp_info.print( " L/de=%e\n", L/de);
     fp_info.print( " Ti/Te=%e\n", Ti_Te );

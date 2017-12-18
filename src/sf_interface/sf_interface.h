@@ -13,6 +13,33 @@
 #include "../field_advance/field_advance.h"
 // FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
+//----------------------------------------------------------------------------//
+// We want to conditionally define pad sizes for various structs so they will
+// be properly aligned for performance and also for various intrinsics calls
+// because many intrinsics will fail if not operating on properly aligned
+// data. Check for the most restrictive alignment need first and make sure it
+// has priority in being satisfied.
+//----------------------------------------------------------------------------//
+
+#if defined(V16_ACCELERATION)               // 64-byte align
+
+#define PAD_SIZE_INTERPOLATOR 14
+#define PAD_SIZE_ACCUMULATOR   4
+#define PAD_SIZE_HYDRO         2
+
+#elif defined(V8_ACCELERATION)              // 32-byte align
+
+#define PAD_SIZE_INTERPOLATOR 6
+#define PAD_SIZE_ACCUMULATOR  4
+#define PAD_SIZE_HYDRO        2
+
+#else                                       // 16-byte align
+
+#define PAD_SIZE_INTERPOLATOR 2
+#define PAD_SIZE_HYDRO        2
+
+#endif
+
 /*****************************************************************************/
 
 // Interpolator arrays shall be a (nx+2) x (ny+2) x (nz+2) allocation
@@ -27,9 +54,10 @@ typedef struct interpolator {
   float cbx, dcbxdx;
   float cby, dcbydy;
   float cbz, dcbzdz;
-  float _pad1[2];  // 16-byte align
-  float _pad2[4];  // More padding to get 32-byte align, make conditional
-  float _pad3[8];  // More padding to get 64-byte align, make conditional
+  float _pad1[PAD_SIZE_INTERPOLATOR];
+  // float _pad1[2];  // 16-byte align
+  // float _pad2[4];  // More padding to get 32-byte align, make conditional
+  // float _pad3[8];  // More padding to get 64-byte align, make conditional
 } interpolator_t;
 
 typedef struct interpolator_array {
@@ -74,7 +102,9 @@ typedef struct accumulator {
   float jx[4];   // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
   float jy[4];   // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
   float jz[4];   // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
-  float pad2[4]; // Padding to get 32-byte align
+  #if defined PAD_SIZE_ACCUMULATOR
+  float pad2[PAD_SIZE_ACCUMULATOR]; // Padding for 32 and 64-byte align
+  #endif
 } accumulator_t;
 
 typedef struct accumulator_array {
@@ -141,7 +171,7 @@ typedef struct hydro {
   float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
   float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
   float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
-  float _pad[2];         // 16-byte align
+  float _pad[PAD_SIZE_HYDRO]; // 16, 32 and 64-byte align
 } hydro_t;
 
 typedef struct hydro_array {

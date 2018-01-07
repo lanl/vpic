@@ -97,22 +97,6 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     load_4x4_tr( vp00, vp01, vp02, vp03,
 		 hax, v00, v01, v02 );
 
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    transpose( hax, v00, v01, v02 );
-    #endif
-
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );
 
     //--------------------------------------------------------------------------
@@ -120,22 +104,6 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+4, vp01+4, vp02+4, vp03+4,
 		 hay, v03, v04, v05 );
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    transpose( hay, v03, v04, v05 );
-    #endif
 
     hay = qdt_2mc*fma( fma( v05, dz, v04 ), dx, fma( v03, dz, hay ) );
 
@@ -145,22 +113,6 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     load_4x4_tr( vp00+8, vp01+8, vp02+8, vp03+8,
 		 haz, v00, v01, v02 );
 
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    transpose( haz, v00, v01, v02 );
-    #endif
-
     haz = qdt_2mc*fma( fma( v02, dx, v01 ), dy, fma( v00, dx, haz ) );
 
     //--------------------------------------------------------------------------
@@ -168,22 +120,6 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+12, vp01+12, vp02+12, vp03+12,
 		 cbx, v03, cby, v04 );
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    transpose( cbx, v03, cby, v04 );
-    #endif
 
     cbx = fma( v03, dx, cbx );
 

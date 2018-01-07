@@ -71,12 +71,6 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
 
 #endif
 
-// #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-// #error "V8 version not hooked up yet!"
-
-// #endif
-
 void
 unload_accumulator_array( /**/  field_array_t       * RESTRICT fa,
                           const accumulator_array_t * RESTRICT aa ) {

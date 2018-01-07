@@ -79,17 +79,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
   // Process the particle blocks for this pipeline.
 
-  int num_ii_ne_00 = 0;
-  int num_ii_ne_01 = 0;
-  int num_ii_ne_02 = 0;
-  int num_ii_ne_03 = 0;
-  int num_ii_ne_04 = 0;
-  int num_ii_ne_05 = 0;
-  int num_ii_ne_06 = 0;
-  int num_ii_ne_07 = 0;
-
-  int num_load_8x8_tr = 0;
-  int num_load_8x8_bc = 0;
   for( ; nq; nq--, p+=8 )
   {
     //--------------------------------------------------------------------------
@@ -98,42 +87,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
 		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
 		 dx, dy, dz, ii, ux, uy, uz, q );
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand how many particles are in the same cell.
-    //--------------------------------------------------------------------------
-    #if 0
-    v8int ii_tmp( ii[0] ), ii_eq, ii_ne;
-    ii_eq = ii == ii_tmp;
-    ii_ne = ii != ii_tmp;
-
-    int ii_ne_sum = 0;
-    for( int j=0; j < 8; j++ )
-    {
-      ii_ne_sum -= ii_ne[j];
-    }
-
-    if ( ii_ne_sum == 0 )
-      num_ii_ne_00++;
-    else if ( ii_ne_sum == 1 )
-      num_ii_ne_01++;
-    else if ( ii_ne_sum == 2 )
-      num_ii_ne_02++;
-    else if ( ii_ne_sum == 3 )
-      num_ii_ne_03++;
-    else if ( ii_ne_sum == 4 )
-      num_ii_ne_04++;
-    else if ( ii_ne_sum == 5 )
-      num_ii_ne_05++;
-    else if ( ii_ne_sum == 6 )
-      num_ii_ne_06++;
-    else if ( ii_ne_sum == 7 )
-      num_ii_ne_07++;
-    else
-    {
-      throw( "ii_ne_sum not adding up properly." );
-    }
-    #endif
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -154,22 +107,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 		 vp04, vp05, vp06, vp07,
 		 hax, v00, v01, v02, hay, v03, v04, v05 );
 
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05 );
-    #endif
-
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );
 
     hay = qdt_2mc*fma( fma( v05, dz, v04 ), dx, fma( v03, dz, hay ) );
@@ -180,22 +117,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     load_8x8_tr( vp00+8, vp01+8, vp02+8, vp03+8,
 		 vp04+8, vp05+8, vp06+8, vp07+8,
 		 haz, v00, v01, v02, cbx, v03, cby, v04 );
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    transpose( haz, v00, v01, v02, cbx, v03, cby, v04 );
-    #endif
 
     haz = qdt_2mc*fma( fma( v02, dx, v01 ), dy, fma( v00, dx, haz ) );
 
@@ -447,29 +368,6 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
 
 #   undef MOVE_OUTBND
   }
-
-  #if 0
-  if ( world_rank == 3 && pipeline_rank == 0 )
-  {
-    std::cout << "world_rank: " << world_rank
-	      << "   pipeline_rank: " << pipeline_rank
-	      << "   num_ii_ne_00: " << num_ii_ne_00
-	      << "   num_ii_ne_01: " << num_ii_ne_01
-	      << "   num_ii_ne_02: " << num_ii_ne_02
-	      << "   num_ii_ne_03: " << num_ii_ne_03
-	      << "   num_ii_ne_04: " << num_ii_ne_04
-	      << "   num_ii_ne_05: " << num_ii_ne_05
-	      << "   num_ii_ne_06: " << num_ii_ne_06
-	      << "   num_ii_ne_07: " << num_ii_ne_07
-	      << std::flush << std::endl;
-
-    // std::cout << "world_rank: " << world_rank
-    // 	      << "   pipeline_rank: " << pipeline_rank
-    // 	      << "   num_load_8x8_tr: " << num_load_8x8_tr
-    // 	      << "   num_load_8x8_bc: " << num_load_8x8_bc
-    // 	      << std::flush << std::endl;
-  }
-  #endif
 
   args->seg[pipeline_rank].pm        = pm;
   args->seg[pipeline_rank].max_nm    = max_nm;

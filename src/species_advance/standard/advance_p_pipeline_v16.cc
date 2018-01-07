@@ -100,25 +100,6 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   // Process the particle blocks for this pipeline.
 
-  int num_ii_ne_00 = 0;
-  int num_ii_ne_01 = 0;
-  int num_ii_ne_02 = 0;
-  int num_ii_ne_03 = 0;
-  int num_ii_ne_04 = 0;
-  int num_ii_ne_05 = 0;
-  int num_ii_ne_06 = 0;
-  int num_ii_ne_07 = 0;
-  int num_ii_ne_08 = 0;
-  int num_ii_ne_09 = 0;
-  int num_ii_ne_10 = 0;
-  int num_ii_ne_11 = 0;
-  int num_ii_ne_12 = 0;
-  int num_ii_ne_13 = 0;
-  int num_ii_ne_14 = 0;
-  int num_ii_ne_15 = 0;
-
-  int num_load_16x16_tr = 0;
-  int num_load_16x16_bc = 0;
   for( ; nq; nq--, p+=16 )
   {
     //--------------------------------------------------------------------------
@@ -127,54 +108,6 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     load_16x8_tr_p( &p[ 0].dx, &p[ 2].dx, &p[ 4].dx, &p[ 6].dx,
                     &p[ 8].dx, &p[10].dx, &p[12].dx, &p[14].dx,
 		    dx, dy, dz, ii, ux, uy, uz, q );
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand how many particles are in the same cell.
-    //--------------------------------------------------------------------------
-    v16int ii_tmp( ii[0] ), ii_eq, ii_ne;
-    ii_eq = ii == ii_tmp;
-    ii_ne = ii != ii_tmp;
-
-    int ii_ne_sum = 0;
-    for( int j=0; j < 16; j++ )
-    {
-      ii_ne_sum -= ii_ne[j];
-    }
-
-    if ( ii_ne_sum == 0 )
-      num_ii_ne_00++;
-    else if ( ii_ne_sum == 1 )
-      num_ii_ne_01++;
-    else if ( ii_ne_sum == 2 )
-      num_ii_ne_02++;
-    else if ( ii_ne_sum == 3 )
-      num_ii_ne_03++;
-    else if ( ii_ne_sum == 4 )
-      num_ii_ne_04++;
-    else if ( ii_ne_sum == 5 )
-      num_ii_ne_05++;
-    else if ( ii_ne_sum == 6 )
-      num_ii_ne_06++;
-    else if ( ii_ne_sum == 7 )
-      num_ii_ne_07++;
-    else if ( ii_ne_sum == 8 )
-      num_ii_ne_08++;
-    else if ( ii_ne_sum == 9 )
-      num_ii_ne_09++;
-    else if ( ii_ne_sum == 10 )
-      num_ii_ne_10++;
-    else if ( ii_ne_sum == 11 )
-      num_ii_ne_11++;
-    else if ( ii_ne_sum == 12 )
-      num_ii_ne_12++;
-    else if ( ii_ne_sum == 13 )
-      num_ii_ne_13++;
-    else if ( ii_ne_sum == 14 )
-      num_ii_ne_14++;
-    else if ( ii_ne_sum == 15 )
-      num_ii_ne_15++;
-    else
-      throw( "ii_ne_sum not adding up properly." );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -206,64 +139,6 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
                    hax, v00, v01, v02, hay, v03, v04, v05,
                    haz, v06, v07, v08, cbx, v09, cby, v10 );
 
-    //--------------------------------------------------------------------------
-    // Experiment to explore broadcast of data elements to vectors when all 16
-    // particles are in the same cell.
-    //--------------------------------------------------------------------------
-    // Perhaps a better way would be to broadcast ii(0) into all the elements
-    // of an ii_tmp simd vector, do a simd compare and then a simd reduction
-    // to a single int value.  But for now, use the brute force approach.
-    //--------------------------------------------------------------------------
-    #if 0
-    if ( ii( 1) == ii(0) && ii( 2) == ii(0) && ii( 3) == ii(0) &&
-	 ii( 4) == ii(0) && ii( 5) == ii(0) && ii( 6) == ii(0) &&
-	 ii( 7) == ii(0) && ii( 8) == ii(0) && ii( 9) == ii(0) &&
-	 ii(10) == ii(0) && ii(11) == ii(0) && ii(12) == ii(0) &&
-	 ii(13) == ii(0) && ii(14) == ii(0) && ii(15) == ii(0) )
-    {
-      num_load_16x16_bc++;
-      load_16x16_bc( vp00,
-                     hax, v00, v01, v02, hay, v03, v04, v05,
-                     haz, v06, v07, v08, cbx, v09, cby, v10 );
-    }
-    else
-    {
-      num_load_16x16_tr++;
-      load_16x16_tr( vp00, vp01, vp02, vp03,
-                     vp04, vp05, vp06, vp07,
-                     vp08, vp09, vp10, vp11,
-                     vp12, vp13, vp14, vp15,
-                     hax, v00, v01, v02, hay, v03, v04, v05,
-                     haz, v06, v07, v08, cbx, v09, cby, v10 );
-    }
-    #endif
-
-    //--------------------------------------------------------------------------
-    // Experiment to understand cost of transposing data.
-    //--------------------------------------------------------------------------
-    #if 0
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    transpose( hax, v00, v01, v02, hay, v03, v04, v05,
-	       haz, v06, v07, v08, cbx, v09, cby, v10 );
-    #endif
-
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );
 
     hay = qdt_2mc*fma( fma( v05, dz, v04 ), dx, fma( v03, dz, hay ) );
@@ -282,42 +157,6 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
                   vp08+16, vp09+16, vp10+16, vp11+16,
                   vp12+16, vp13+16, vp14+16, vp15+16,
                   cbz, v05 );
-
-    // load_16x16_tr( vp00+16, vp01+16, vp02+16, vp03+16,
-    //                vp04+16, vp05+16, vp06+16, vp07+16,
-    //                vp08+16, vp09+16, vp10+16, vp11+16,
-    //                vp12+16, vp13+16, vp14+16, vp15+16,
-    //                cbz, v05, v00, v01, v02, v03, v04, v06,
-    //                v07, v08, v09, v10, v11, v12, v13, v14 );
-
-    //--------------------------------------------------------------------------
-    // Experiment to explore broadcast of data elements to vectors when all 16
-    // particles are in the same cell.
-    //--------------------------------------------------------------------------
-    // Perhaps a better way would be to broadcast ii(0) into all the elements
-    // of an ii_tmp simd vector, do a simd compare and then a simd reduction
-    // to a single int value.  But for now, use the brute force approach.
-    //--------------------------------------------------------------------------
-    #if 0
-    if ( ii( 1) == ii(0) && ii( 2) == ii(0) && ii( 3) == ii(0) &&
-	 ii( 4) == ii(0) && ii( 5) == ii(0) && ii( 6) == ii(0) &&
-	 ii( 7) == ii(0) && ii( 8) == ii(0) && ii( 9) == ii(0) &&
-	 ii(10) == ii(0) && ii(11) == ii(0) && ii(12) == ii(0) &&
-	 ii(13) == ii(0) && ii(14) == ii(0) && ii(15) == ii(0) )
-    {
-      load_16x2_bc( vp00+16,
-                    cbz, v05 );
-    }
-    else
-    {
-      load_16x16_tr( vp00+16, vp01+16, vp02+16, vp03+16,
-                     vp04+16, vp05+16, vp06+16, vp07+16,
-                     vp08+16, vp09+16, vp10+16, vp11+16,
-                     vp12+16, vp13+16, vp14+16, vp15+16,
-                     cbz, v05, v00, v01, v02, v03, v04, v06,
-                     v07, v08, v09, v10, v11, v12, v13, v14 );
-    }
-    #endif
 
     cbz = fma( v05, dz, cbz );
 
@@ -553,37 +392,6 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
 #   undef MOVE_OUTBND
   }
-
-  #if 0
-  if ( world_rank == 3 && pipeline_rank == 0 )
-  {
-    std::cout << "world_rank: " << world_rank
-	      << "   pipeline_rank: " << pipeline_rank
-	      << "   num_ii_ne_00: " << num_ii_ne_00
-	      << "   num_ii_ne_01: " << num_ii_ne_01
-	      << "   num_ii_ne_02: " << num_ii_ne_02
-	      << "   num_ii_ne_03: " << num_ii_ne_03
-	      << "   num_ii_ne_04: " << num_ii_ne_04
-	      << "   num_ii_ne_05: " << num_ii_ne_05
-	      << "   num_ii_ne_06: " << num_ii_ne_06
-	      << "   num_ii_ne_07: " << num_ii_ne_07
-	      << "   num_ii_ne_08: " << num_ii_ne_08
-	      << "   num_ii_ne_09: " << num_ii_ne_09
-	      << "   num_ii_ne_10: " << num_ii_ne_10
-	      << "   num_ii_ne_11: " << num_ii_ne_11
-	      << "   num_ii_ne_12: " << num_ii_ne_12
-	      << "   num_ii_ne_13: " << num_ii_ne_13
-	      << "   num_ii_ne_14: " << num_ii_ne_14
-	      << "   num_ii_ne_15: " << num_ii_ne_15
-	      << std::flush << std::endl;
-
-    // std::cout << "world_rank: " << world_rank
-    // 	      << "   pipeline_rank: " << pipeline_rank
-    // 	      << "   num_load_16x16_tr: " << num_load_16x16_tr
-    // 	      << "   num_load_16x16_bc: " << num_load_16x16_bc
-    // 	      << std::flush << std::endl;
-  }
-  #endif
 
   args->seg[pipeline_rank].pm        = pm;
   args->seg[pipeline_rank].max_nm    = max_nm;

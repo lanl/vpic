@@ -55,7 +55,7 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone git@github.com:lanl/vpic.git
+    % git clone https://github.com/lanl/vpic.git
 
 This command will check out the VPIC source code.
 

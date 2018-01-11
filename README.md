@@ -66,6 +66,8 @@ an up-to-date version of MPI.
 
 # Build Instructions
 
+    % cd vpic 
+
 VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
   

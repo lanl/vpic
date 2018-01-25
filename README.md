@@ -103,6 +103,8 @@ source directory)*:
 
     % bin/vpic ../sample/harris
 
+Beginners are advised to read the harris deck thoroughly, as it provides many examples of common uses cases.
+
 # Command Line Arguments
 
 Note: Historic VPIC users should note that the format of command line arguments was changed in the first open source release. The equals symbol is no longer accepted, and two dashes are mandatory. 

@@ -29,7 +29,8 @@
 
 #elif defined(V8_ACCELERATION)              // 32-byte align
 
-#define PAD_SIZE_INTERPOLATOR 6
+#define PAD_SIZE_INTERPOLATOR 14
+// #define PAD_SIZE_INTERPOLATOR 6
 #define PAD_SIZE_ACCUMULATOR  4
 #define PAD_SIZE_HYDRO        2
 

@@ -120,6 +120,9 @@ endif(ENABLE_OPENSSL)
 # Handle vpic compile script last
 #------------------------------------------------------------------------------#
 
+# Allow files to be references from the root, (eg #include "src/vpic/vpic.h")
+include_directories(${PROJECT_SOURCE_DIR})
+
 if(BUILD_SHARED_LIBS)
     set(VPIC_CXX_FLAGS "-rdynamic ${VPIC_CXX_FLAGS}")
 endif(BUILD_SHARED_LIBS)
@@ -225,6 +228,11 @@ if(ENABLE_UNIT_TESTS)
     add_executable(v4 src/util/v4/test/v4.cc)
     add_test(NAME v4 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./v4)
   endif(USE_V4)
+
+  # RNG tests
+  add_executable(rng src/util/rng/test/rng.cc)
+  target_link_libraries(rng vpic)
+  add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
 
 endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#

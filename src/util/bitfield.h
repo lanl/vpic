@@ -19,10 +19,10 @@ class BitField
 		/*!---------------------------------------------------------------------
 		 * Set individual bit.
 		----------------------------------------------------------------------*/
-		uint32_t setbit(size_t bit) {
+		uint32_t setibit(size_t bit) {
 			uint32_t tmp = 1<<bit;
 			return bits_ |= tmp;
-		} // setbit
+		} // setibit
 
 		/*!---------------------------------------------------------------------
 		 * Clear bits in mask.
@@ -37,7 +37,7 @@ class BitField
 		uint32_t clearbit(size_t bit) {
 			uint32_t tmp = 1<<bit;
 			return bits_ &= ~tmp;
-		} // setbit
+		} // clearbit
 
 		/*!---------------------------------------------------------------------
 		 * Check whether bit at index is set.
@@ -45,7 +45,7 @@ class BitField
 		bool bitset(size_t bit) const {
 			uint32_t tmp = 1<<bit;
 			return tmp & bits_;
-		} // setbit
+		} // bitset
 
 		/*!---------------------------------------------------------------------
 		 * Check whether bits in mask are set.
@@ -53,7 +53,7 @@ class BitField
 		bool bitsset(uint32_t mask) const {
 			uint32_t tmp = 1<<mask;
 			return tmp & bits_;
-		} // setbit
+		} // bitset
 
 		/*!---------------------------------------------------------------------
 		 * Check whether bit at index is clear.

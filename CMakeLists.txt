@@ -47,6 +47,9 @@ option(USE_V4_SSE "Enable V4 SSE" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
+# This sets gamma to unity
+option(ENABLE_NON_RELATIVISTIC "Enable Non Relativastic Push and Initialization" OFF)
+
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #
@@ -205,6 +208,10 @@ if(USER_DECKS)
     build_a_vpic(${NAME} ${DECK})
   endforeach()
 endif()
+
+if(ENABLE_NON_RELATIVISTIC)
+  add_definitions(-DENABLE_NON_RELATIVISTIC)
+endif(ENABLE_NON_RELATIVISTIC)
 
 #------------------------------------------------------------------------------#
 # Add VPIC integrated test mechanism

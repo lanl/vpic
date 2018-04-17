@@ -282,7 +282,7 @@ begin_initialization {
     d0 = gdre*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udre;
     uy = d0*cs - uz*sn;
     uz = d0*sn + uz*cs;
-    inject_particle( electron, x, y, z, ux, uy, uz, wi, 0, 0 );
+    inject_particle( electron, x, y, z, ux, uy, uz, we, 0, 0 );
   }
 
   // Upon completion of the initialization, the following occurs:

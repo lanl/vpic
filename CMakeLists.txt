@@ -234,6 +234,8 @@ if(ENABLE_UNIT_TESTS)
   target_link_libraries(rng vpic)
   add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
 
+  add_subdirectory(test/unit)
+
 endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :

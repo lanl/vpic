@@ -1,12 +1,47 @@
-#include "advance_p.h"
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#include "catch.hpp"
 
-// Test the "normal" pusher, vs one that uses traditional ([]) array syntax and
-// loop structure
+#include "src/species_advance/species_advance.h"
+#include "src/vpic/vpic.h"
+#include "test/integrated/particle_push/advance_p.h"
 
-begin_globals {
-};
+particle_t * particle_arr(int size, int v) {
+    particle_t * p_arr;
+    MALLOC(p_arr, size);
+    for(int i=0; i<size; i++) {
+        particle_t p;
+        p.ux = v;
+        p.uy = v;
+        p.uz = v;
+        p.w = 1;
+        p_arr[i] = p;
+    }
+    return p_arr;
+}
+species_t *make_species(particle_t *p_arr, float mass, int num_p) {
+    species_t *sp;
+    MALLOC(sp, 1);
+    grid_t *gr;
+    MALLOC(gr, 1);
+    gr->dt = 1;
+    gr->cvac = 1;
+    gr->eps0 = 1;
+    gr->step = 2;
+    sp->g = gr;
+    sp->p = p_arr;
+    sp->m = mass;
+    sp->q = 1;
+    sp->np = num_p;
+    return sp;
+}
 
-begin_initialization {
+
+void vpic_simulation::user_diagnostics() {}
+
+void
+vpic_simulation::user_initialization( int num_cmdline_arguments,
+                                      char ** cmdline_argument )
+{
   double L  = 1e2;
   int npart = 127;
   int nstep = 100;
@@ -41,7 +76,7 @@ begin_initialization {
   species_t* sp2 =
     define_species( "test_species2", 1., 1., npart, npart, 0, 0 );
 
-  repeat(npart)
+  for (int i = 0; i < npart; i++)
   {
       float x = uniform( rng(0), 0, L);
       float y = uniform( rng(0), 0, L);
@@ -88,49 +123,56 @@ begin_initialization {
                     (a[i].jz[3] != a2[i].jz[3])
             )
             {
-                sim_log(" Failed at " << i );
+                std::cout << " Failed at " << i << std::endl;
                 failed++;
             }
         }
-      if( failed ) { sim_log( "FAIL" ); abort(1); }
+      if( failed )
+      {  std::cout << "FAIL" << std::endl; 
+      }
+      REQUIRE_FALSE(failed);
     }
 
-    for ( int m=0; m<npart; m++ ) {
-      if( sp->p[m].ux != 1*(n+1) ||
-          sp->p[m].uy != 2*(n+1) ||
-          sp->p[m].uz != 3*(n+1) ) {
-        failed++;
-        sim_log( n << " " <<
-                 m << " " <<
-                 sp->p[m].i  << " " <<
-                 sp->p[m].dx << " " <<
-                 sp->p[m].dy << " " <<
-                 sp->p[m].dz << " " <<
-                 sp->p[m].ux << " " <<
-                 sp->p[m].uy << " " <<
-                 sp->p[m].uz << " " <<
-                 sp->p[m].w );
-      }
-    }
   }
 
-  if( failed ) { sim_log( "FAIL" ); abort(1); }
-  sim_log( "pass" );
-  halt_mp();
-  exit(0);
+  std::cout << "pass" << std::endl;
 }
 
-begin_diagnostics {
-}
+TEST_CASE( "vectors can be sized and resized", "[vector]" ) {
 
-begin_particle_injection {
-}
+    std::vector<int> v( 5 );
 
-begin_current_injection {
-}
+    REQUIRE( v.size() == 5 );
+    REQUIRE( v.capacity() >= 5 );
 
-begin_field_injection {
-}
+    //boot_checkpt(NULL, NULL);
+    int pargc = 0;
+    char str[] = "bin/vpic";
+    char **pargv = (char **) malloc(sizeof(char **));
+    pargv[0] = str;
+    //serial.boot(&pargc, &pargv);
+    //thread.boot(&pargc, &pargv);
+    boot_services( &pargc, &pargv );
 
-begin_particle_collisions {
+    SECTION( "resizing bigger changes size and capacity" )
+    {
+        int num_particles = 64;
+        v.resize( 10 );
+
+        REQUIRE( v.size() == 10 );
+        REQUIRE( v.capacity() >= 10 );
+
+        // initialize all the variables
+        //particle_t *p_arr = particle_arr(num_particles, 1);
+        //species_t *sp = make_species(p_arr, 1, 1);
+
+        vpic_simulation* simulation = new vpic_simulation;
+        simulation->initialize( pargc, pargv );
+
+        simulation->finalize();
+        delete simulation;
+        if( world_rank==0 ) log_printf( "normal exit\n" ); 
+
+        halt_mp();
+    }
 }

@@ -2,6 +2,7 @@
 #define HAS_V4_PIPELINE
 #include "spa_private.h"
 
+// This function calculates kinetic energy, normalized by c^2.
 void
 energy_p_pipeline( energy_p_pipeline_args_t * RESTRICT args,
                    int pipeline_rank,

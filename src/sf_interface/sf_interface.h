@@ -21,20 +21,31 @@
 // has priority in being satisfied.
 //----------------------------------------------------------------------------//
 
-#if defined(V16_ACCELERATION)               // 64-byte align
+//----------------------------------------------------------------------------//
+// 64-byte align
+
+#if defined(USE_V16_PORTABLE) || \
+    defined(USE_V16_AVX512)
 
 #define PAD_SIZE_INTERPOLATOR 14
 #define PAD_SIZE_ACCUMULATOR   4
 #define PAD_SIZE_HYDRO         2
 
-#elif defined(V8_ACCELERATION)              // 32-byte align
+//----------------------------------------------------------------------------//
+// 32-byte align
 
-#define PAD_SIZE_INTERPOLATOR 14
-// #define PAD_SIZE_INTERPOLATOR 6
+#elif defined(USE_V8_PORTABLE) || \
+      defined(USE_V8_AVX)      || \
+      defined(USE_V8_AVX2)
+
+#define PAD_SIZE_INTERPOLATOR 6
 #define PAD_SIZE_ACCUMULATOR  4
 #define PAD_SIZE_HYDRO        2
 
-#else                                       // 16-byte align
+//----------------------------------------------------------------------------//
+// 16-byte align
+
+#else
 
 #define PAD_SIZE_INTERPOLATOR 2
 #define PAD_SIZE_HYDRO        2

@@ -58,10 +58,10 @@ int string_starts_with(const char *str, const char *pre)
 
 int string_contains(const char *str, const char *substr)
 {
-    char *output = NULL;
+    const char *output = NULL;
     output = strstr(str,substr);
 
-    char* pos = strstr(str, substr);
+    const char* pos = strstr(str, substr);
 
     if (pos) {
         return 1;

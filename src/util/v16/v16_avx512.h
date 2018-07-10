@@ -1049,6 +1049,7 @@ namespace v16
     h.i[15] = ((const int * ALIGNED(64))a15)[7];
   }
 
+  #if 0
   // Try to minimize use of temporaries to minimize use of vector registers.
   // This seems like a wonderful example of obfuscation.  I wonder if the
   // compiler is smart enough to do this on its own.
@@ -1092,7 +1093,7 @@ namespace v16
     b14.v = _mm512_load_ps( (const float *)a14 );                      // 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
     b15.v = _mm512_load_ps( (const float *)a15 );                      // 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255
 
-#if 0
+    #if 0
     t00   = _mm512_unpacklo_ps( b00.v, b01.v );                        //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
     t01   = _mm512_unpackhi_ps( b00.v, b01.v );                        //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
     t02   = _mm512_unpacklo_ps( b02.v, b03.v );                        //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
@@ -1109,7 +1110,7 @@ namespace v16
     t13   = _mm512_unpackhi_ps( b12.v, b13.v );                        // 194 210 195 211 198 214 199 215 202 218 203 219 206 222 207 223
     t14   = _mm512_unpacklo_ps( b14.v, b15.v );                        // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
     t15   = _mm512_unpackhi_ps( b14.v, b15.v );                        // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
-#endif
+    #endif
 
     t00   = _mm512_unpacklo_ps( b00.v, b01.v );                        //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
     t01   = _mm512_unpackhi_ps( b00.v, b01.v );                        //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
@@ -1128,7 +1129,7 @@ namespace v16
     b12.v = _mm512_unpacklo_ps( b14.v, b15.v );                        // 224 240 225 241 228 244 229 245 232 248 233 249 236 252 237 253
     b13.v = _mm512_unpackhi_ps( b14.v, b15.v );                        // 226 242 227 243 230 246 231 247 234 250 235 251 238 254 239 255
 
-#if 0
+    #if 0
     b00.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
     b01.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
     b02.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   2  18  34  50   6  22  38  54  10  26  42  58  14  30  46  62
@@ -1145,7 +1146,7 @@ namespace v16
     b13.v = _mm512_shuffle_ps( t12, t14, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 193 209 225 241 197 213 229 245 201 217 233 249 205 221 237 253
     b14.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 194 210 226 242 198 214 230 246 202 218 234 250 206 222 238 254
     b15.v = _mm512_shuffle_ps( t13, t15, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 195 211 227 243 199 215 231 247 203 219 235 251 207 223 239 255
-#endif
+    #endif
 
     b14.v = _mm512_shuffle_ps( t00,   b00.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
     b15.v = _mm512_shuffle_ps( t00,   b00.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
@@ -1164,7 +1165,7 @@ namespace v16
     b10.v = _mm512_shuffle_ps( b11.v, b13.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );  // 194 210 226 242 198 214 230 246 202 218 234 250 206 222 238 254
     b12.v = _mm512_shuffle_ps( b11.v, b13.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );  // 195 211 227 243 199 215 231 247 203 219 235 251 207 223 239 255
 
-#if 0
+    #if 0
     t00   = _mm512_shuffle_f32x4( b00.v, b04.v, 0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     t01   = _mm512_shuffle_f32x4( b01.v, b05.v, 0x88 );                //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
     t02   = _mm512_shuffle_f32x4( b02.v, b06.v, 0x88 );                //   2  18  34  50  10  26  42  58  66  82  98 114  74  90 106 122
@@ -1181,9 +1182,9 @@ namespace v16
     t13   = _mm512_shuffle_f32x4( b09.v, b13.v, 0xdd );                // 133 149 165 181 141 157 173 189 197 213 229 245 205 221 237 253
     t14   = _mm512_shuffle_f32x4( b10.v, b14.v, 0xdd );                // 134 150 166 182 142 158 174 190 198 214 230 246 206 222 238 254
     t15   = _mm512_shuffle_f32x4( b11.v, b15.v, 0xdd );                // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
-#endif
+    #endif
 
-#if 0
+    #if 0
     t00   = _mm512_shuffle_f32x4( b00.v, b04.v, 0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     t04   = _mm512_shuffle_f32x4( b00.v, b04.v, 0xdd );                //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
     t01   = _mm512_shuffle_f32x4( b01.v, b05.v, 0x88 );                //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
@@ -1200,7 +1201,7 @@ namespace v16
     t14   = _mm512_shuffle_f32x4( b10.v, b14.v, 0xdd );                // 134 150 166 182 142 158 174 190 198 214 230 246 206 222 238 254
     t11   = _mm512_shuffle_f32x4( b11.v, b15.v, 0x88 );                // 131 147 163 179 139 155 171 187 195 211 227 243 203 219 235 251
     t15   = _mm512_shuffle_f32x4( b11.v, b15.v, 0xdd );                // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
-#endif
+    #endif
 
     b11.v = _mm512_shuffle_f32x4( b14.v, t01,   0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     b13.v = _mm512_shuffle_f32x4( b14.v, t01,   0xdd );                //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
@@ -1219,7 +1220,7 @@ namespace v16
     b06.v = _mm512_shuffle_f32x4( b08.v, b12.v, 0x88 );                // 131 147 163 179 139 155 171 187 195 211 227 243 203 219 235 251
     b10.v = _mm512_shuffle_f32x4( b08.v, b12.v, 0xdd );                // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
 
-#if 0
+    #if 0
     t00 = b11.v = _mm512_shuffle_f32x4( b14.v, t01,   0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     t04 = b13.v = _mm512_shuffle_f32x4( b14.v, t01,   0xdd );                //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
     t01 = t01   = _mm512_shuffle_f32x4( b15.v, b01.v, 0x88 );                //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
@@ -1236,7 +1237,7 @@ namespace v16
     t14 = b09.v = _mm512_shuffle_f32x4( b06.v, b10.v, 0xdd );                // 134 150 166 182 142 158 174 190 198 214 230 246 206 222 238 254
     t11 = b06.v = _mm512_shuffle_f32x4( b08.v, b12.v, 0x88 );                // 131 147 163 179 139 155 171 187 195 211 227 243 203 219 235 251
     t15 = b10.v = _mm512_shuffle_f32x4( b08.v, b12.v, 0xdd );                // 135 151 167 183 143 159 175 191 199 215 231 247 207 223 239 255
-#endif
+    #endif
 
     b12.v = _mm512_shuffle_f32x4( b11.v, b00.v, 0x88 );                    //   0  16  32  48  64  80  96 112 128 144 160 176 192 208 224 240
     b08.v = _mm512_shuffle_f32x4( b11.v, b00.v, 0xdd );                    //   8  24  40  56  73  88 104 120 136 152 168 184 200 216 232 248
@@ -1270,7 +1271,7 @@ namespace v16
     b05.v = b04.v;
     b04.v = t00;
 
-#if 0
+    #if 0
     // b00.v = b12.v = _mm512_shuffle_f32x4( b11.v, b00.v, 0x88 );                    //   0  16  32  48  64  80  96 112 128 144 160 176 192 208 224 240
     b08.v = b08.v = _mm512_shuffle_f32x4( b11.v, b00.v, 0xdd );                    //   8  24  40  56  73  88 104 120 136 152 168 184 200 216 232 248
 
@@ -1294,9 +1295,9 @@ namespace v16
 
     // b07.v = b01.v = _mm512_shuffle_f32x4( b02.v, b10.v, 0x88 );                    //   7  23  39  55  72  87 103 119 135 151 167 183 199 215 231 247
     // b15.v = b09.v = _mm512_shuffle_f32x4( b02.v, b10.v, 0xdd );                    //  15  31  47  63  79  95 111 127 143 159 175 191 207 223 239 255
-#endif
+    #endif
 
-#if 0
+    #if 0
     b00.v = _mm512_shuffle_f32x4( t00, t08, 0x88 );                    //   0  16  32  48  64  80  96 112 128 144 160 176 192 208 224 240
     b08.v = _mm512_shuffle_f32x4( t00, t08, 0xdd );                    //   8  24  40  56  73  88 104 120 136 152 168 184 200 216 232 248
 
@@ -1320,9 +1321,9 @@ namespace v16
 
     b07.v = _mm512_shuffle_f32x4( t07, t15, 0x88 );                    //   7  23  39  55  72  87 103 119 135 151 167 183 199 215 231 247
     b15.v = _mm512_shuffle_f32x4( t07, t15, 0xdd );                    //  15  31  47  63  79  95 111 127 143 159 175 191 207 223 239 255
-#endif
+    #endif
 
-#if 0
+    #if 0
     b00.v = _mm512_shuffle_f32x4( t00, t08, 0x88 );                    //   0  16  32  48  64  80  96 112 128 144 160 176 192 208 224 240
     b01.v = _mm512_shuffle_f32x4( t01, t09, 0x88 );                    //   1  17  33  49  66  81  97 113 129 145 161 177 193 209 225 241
     b02.v = _mm512_shuffle_f32x4( t02, t10, 0x88 );                    //   2  18  34  50  67  82  98 114 130 146 162 178 194 210 226 242
@@ -1339,10 +1340,10 @@ namespace v16
     b13.v = _mm512_shuffle_f32x4( t05, t13, 0xdd );                    //  13  29  45  61  78  93 109 125 141 157 173 189 205 221 237 253
     b14.v = _mm512_shuffle_f32x4( t06, t14, 0xdd );                    //  14  30  46  62  79  94 110 126 142 158 174 190 206 222 238 254
     b15.v = _mm512_shuffle_f32x4( t07, t15, 0xdd );                    //  15  31  47  63  79  95 111 127 143 159 175 191 207 223 239 255
-#endif
+    #endif
   }
+  #endif
 
-#if 0
   // This is the reference AVX-512 implementation.
   inline void load_16x16_tr( const void * ALIGNED(64) a00,
 			     const void * ALIGNED(64) a01,
@@ -1452,9 +1453,9 @@ namespace v16
     b14.v = _mm512_shuffle_f32x4( t06, t14, 0xdd );                    //  14  30  46  62  79  94 110 126 142 158 174 190 206 222 238 254
     b15.v = _mm512_shuffle_f32x4( t07, t15, 0xdd );                    //  15  31  47  63  79  95 111 127 143 159 175 191 207 223 239 255
   }
-#endif
 
-#if 0
+  #if 0
+  // This is the portable implementation.
   inline void load_16x16_tr( const void * ALIGNED(64) a00,
 			     const void * ALIGNED(64) a01,
 			     const void * ALIGNED(64) a02,
@@ -1748,7 +1749,7 @@ namespace v16
     b14.i[15] = ((const int * ALIGNED(64))a15)[14];
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
-#endif
+  #endif
 
   inline void load_16x16_bc( const void * ALIGNED(64) a00,
 			     v16 &b00, v16 &b01, v16 &b02, v16 &b03,
@@ -1778,6 +1779,7 @@ namespace v16
     b15.v = _mm512_set1_ps( t00[15] );
   }
 
+  #if 0
   // Try to minimize use of temporaries to minimize use of vector registers.
   // This seems like a wonderful example of obfuscation.  I wonder if the
   // compiler is smart enough to do this on its own.
@@ -1805,7 +1807,7 @@ namespace v16
     b06.v = _mm512_load_ps( (const float *)a06 );                          //  96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
     b07.v = _mm512_load_ps( (const float *)a07 );                          // 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
 
-#if 0
+    #if 0
     t00   = _mm512_unpacklo_ps( b00.v, b01.v );                            //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
     t01   = _mm512_unpackhi_ps( b00.v, b01.v );                        //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
     t02   = _mm512_unpacklo_ps( b02.v, b03.v );                        //  32  48  33  49  36  52  37  53  40  56  41  57  44  60  45  61
@@ -1814,7 +1816,7 @@ namespace v16
     t05   = _mm512_unpackhi_ps( b04.v, b05.v );                        //  66  82  67  83  70  86  71  87  74  90  75  91  78  94  79  95
     t06   = _mm512_unpacklo_ps( b06.v, b07.v );                        //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
     t07   = _mm512_unpackhi_ps( b06.v, b07.v );                        //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
-#endif
+    #endif
 
     t00   = _mm512_unpacklo_ps( b00.v, b01.v );                            //   0  16   1  17   4  20   5  21   8  24   9  25  12  28  13  29 
     t01   = _mm512_unpackhi_ps( b00.v, b01.v );                            //   2  18   3  19   6  22   7  23  10  26  11  27  14  30  15  31
@@ -1825,7 +1827,7 @@ namespace v16
     b04.v = _mm512_unpacklo_ps( b06.v, b07.v );                            //  96 112  97 113 100 116 101 117 104 120 105 121 108 124 109 125
     b05.v = _mm512_unpackhi_ps( b06.v, b07.v );                            //  98 114  99 115 102 118 103 119 106 122 107 123 110 126 111 127
 
-#if 0
+    #if 0
     b00.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
     b01.v = _mm512_shuffle_ps( t00, t02, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
     b02.v = _mm512_shuffle_ps( t01, t03, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   2  18  34  50   6  22  38  54  10  26  42  58  14  30  46  62
@@ -1834,7 +1836,7 @@ namespace v16
     b05.v = _mm512_shuffle_ps( t04, t06, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  65  81  97 113  69  85 101 117  73  89 105 121  77  93 109 125
     b06.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  66  82  98 114  70  86 102 118  74  90 106 122  78  94 110 126
     b07.v = _mm512_shuffle_ps( t05, t07, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  67  83  99 115  71  87 103 119  75  91 107 123  79  95 111 127
-#endif
+    #endif
 
     b06.v = _mm512_shuffle_ps( t00,   b00.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //   0  16  32  48   4  20  36  52   8  24  40  56  12  28  44  60
     b07.v = _mm512_shuffle_ps( t00,   b00.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //   1  17  33  49   5  21  37  53   9  25  41  57  13  29  45  61
@@ -1845,7 +1847,7 @@ namespace v16
     b02.v = _mm512_shuffle_ps( b03.v, b05.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );  //  66  82  98 114  70  86 102 118  74  90 106 122  78  94 110 126
     b04.v = _mm512_shuffle_ps( b03.v, b05.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );  //  67  83  99 115  71  87 103 119  75  91 107 123  79  95 111 127
 
-#if 0
+    #if 0
     t00   = _mm512_shuffle_f32x4( b00.v, b04.v, 0x88 );                //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     t01   = _mm512_shuffle_f32x4( b01.v, b05.v, 0x88 );                //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
     t02   = _mm512_shuffle_f32x4( b02.v, b06.v, 0x88 );                //   2  18  34  50  10  26  42  58  66  82  98 114  74  90 106 122
@@ -1854,9 +1856,9 @@ namespace v16
     t05   = _mm512_shuffle_f32x4( b01.v, b05.v, 0xdd );                //   5  21  37  53  13  29  45  61  69  85 101 117  77  93 109 125
     t06   = _mm512_shuffle_f32x4( b02.v, b06.v, 0xdd );                //   6  22  38  54  14  30  46  62  70  86 102 118  78  94 110 126
     t07   = _mm512_shuffle_f32x4( b03.v, b07.v, 0xdd );                //   7  23  39  55  15  31  47  63  71  87 103 119  79  95 111 127
-#endif
+    #endif
 
-#if 0
+    #if 0
     t00   = _mm512_shuffle_f32x4( b06.v, t01,   0x88 );                    //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     t04   = _mm512_shuffle_f32x4( b06.v, t01,   0xdd );                    //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
     t01   = _mm512_shuffle_f32x4( b07.v, b01.v, 0x88 );                    //   1  17  33  49   9  25  41  57  65  81  97 113  73  89 105 121
@@ -1865,7 +1867,7 @@ namespace v16
     t06   = _mm512_shuffle_f32x4( b00.v, b02.v, 0xdd );                    //   6  22  38  54  14  30  46  62  70  86 102 118  78  94 110 126
     t03   = _mm512_shuffle_f32x4( t00,   b04.v, 0x88 );                    //   3  19  35  51  11  27  43  59  67  83  99 115  75  91 107 123
     t07   = _mm512_shuffle_f32x4( t00,   b04.v, 0xdd );                    //   7  23  39  55  15  31  47  63  71  87 103 119  79  95 111 127
-#endif
+    #endif
 
     b03.v = _mm512_shuffle_f32x4( b06.v, t01,   0x88 );                    //   0  16  32  48   8  24  40  56  64  80  96 112  72  88 104 120
     b05.v = _mm512_shuffle_f32x4( b06.v, t01,   0xdd );                    //   4  20  36  52  12  28  44  60  68  84 100 116  76  92 108 124
@@ -1876,7 +1878,7 @@ namespace v16
     b00.v = _mm512_shuffle_f32x4( t00,   b04.v, 0x88 );                    //   3  19  35  51  11  27  43  59  67  83  99 115  75  91 107 123
     b02.v = _mm512_shuffle_f32x4( t00,   b04.v, 0xdd );                    //   7  23  39  55  15  31  47  63  71  87 103 119  79  95 111 127
 
-#if 0
+    #if 0
     // Have t00 and b04.v for shuffling.
     t00   = b03.v;
     t01   = t01;
@@ -1886,9 +1888,9 @@ namespace v16
     t05   = b06.v; 
     t06   = b07.v;
     t07   = b02.v;
-#endif
+    #endif
 
-#if 0
+    #if 0
     b00.v = _mm512_permutexvar_ps( idx, t00 );                           //   0   8  16  24  32  40  48  56  64  72  80  88  96 104 112 120
     b01.v = _mm512_permutexvar_ps( idx, t01 );                           //   1   9  17  25  33  41  49  57  65  73  81  89  97 105 113 121
     b02.v = _mm512_permutexvar_ps( idx, t02 );                           //   2  10  18  26  34  42  50  58  66  74  82  90  98 106 114 122
@@ -1897,7 +1899,7 @@ namespace v16
     b05.v = _mm512_permutexvar_ps( idx, t05 );                           //   5  13  21  29  37  45  53  61  69  77  85  93 101 109 117 125
     b06.v = _mm512_permutexvar_ps( idx, t06 );                           //   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
     b07.v = _mm512_permutexvar_ps( idx, t07 );                           //   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
-#endif
+    #endif
 
     // Option 2
     t00   = b02.v;
@@ -1914,7 +1916,7 @@ namespace v16
     b06.v = _mm512_permutexvar_ps( idx, b07.v );                           //   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
     b07.v = _mm512_permutexvar_ps( idx, t00   );                           //   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
 
-#if 0
+    #if 0
     // Option 1
     b04.v = b00.v;
     t00   = b01.v;
@@ -1927,10 +1929,10 @@ namespace v16
     b05.v = _mm512_permutexvar_ps( idx, b06.v );                           //   5  13  21  29  37  45  53  61  69  77  85  93 101 109 117 125
     b06.v = _mm512_permutexvar_ps( idx, b07.v );                           //   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
     b07.v = _mm512_permutexvar_ps( idx, t01   );                           //   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
-#endif
+    #endif
   }
+  #endif
 
-#if 0
   // This is the reference AVX-512 implementation.
   inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
 			      const void * ALIGNED(64) a01,
@@ -1992,9 +1994,8 @@ namespace v16
     b06.v = _mm512_permutexvar_ps( idx, t06 );                         //   6  14  22  30  38  46  54  62  70  78  86  94 102 110 118 126
     b07.v = _mm512_permutexvar_ps( idx, t07 );                         //   7  15  23  31  39  47  55  63  71  79  87  95 103 111 119 127
   }
-#endif
 
-#if 0
+  #if 0
   inline void load_16x8_tr_p( const void * ALIGNED(64) a00,
 			      const void * ALIGNED(64) a01,
 			      const void * ALIGNED(64) a02,
@@ -2142,7 +2143,7 @@ namespace v16
     b06.i[15] = ((const int * ALIGNED(64))a07)[14];
     b07.i[15] = ((const int * ALIGNED(64))a07)[15];
   }
-#endif
+  #endif
 
   // This is the reference AVX-512 implementation.
   inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
@@ -2256,7 +2257,7 @@ namespace v16
     b15.v = _mm512_permutexvar_ps( idx, t15 );                         // 135 143 151 159 167 175 183 191 199 207 215 223 231 239 247 255
   }
 
-#if 0
+  #if 0
   inline void load_16x16_tr_p( const void * ALIGNED(64) a00,
 			       const void * ALIGNED(64) a01,
 			       const void * ALIGNED(64) a02,
@@ -2550,7 +2551,7 @@ namespace v16
     b14.i[15] = ((const int * ALIGNED(64))a15)[14];
     b15.i[15] = ((const int * ALIGNED(64))a15)[15];
   }
-#endif
+  #endif
 
   inline void store_16x1_tr( const v16 &a,
 			     void *a00, void *a01, void *a02, void *a03,
@@ -3076,7 +3077,7 @@ namespace v16
     _mm512_store_ps( (float *)a15, u15 );
   }
 
-#if 0
+  #if 0
   inline void store_16x16_tr( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
 			      const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,
 			      const v16 &b08, const v16 &b09, const v16 &b10, const v16 &b11,
@@ -3362,7 +3363,7 @@ namespace v16
     ((int * ALIGNED(64))a15)[14] = b14.i[15];
     ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
-#endif
+  #endif
 
   // This is the reference AVX-512 implementation.
   inline void store_16x8_tr_p( const v16 &b00,
@@ -3447,7 +3448,7 @@ namespace v16
     _mm512_store_ps( (float *)a07, u07 );
   }
 
-#if 0
+  #if 0
   inline void store_16x8_tr_p( const v16 &b00,
 			       const v16 &b01,
 			       const v16 &b02,
@@ -3601,7 +3602,7 @@ namespace v16
     ((int * ALIGNED(64))a07)[14] = b06.i[15];
     ((int * ALIGNED(64))a07)[15] = b07.i[15];
   }
-#endif
+  #endif
 
   // This is the reference AVX-512 implementation.
   inline void store_16x16_tr_p( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
@@ -3730,7 +3731,7 @@ namespace v16
     _mm512_store_ps( (float *)a15, u15 );
   }
 
-#if 0
+  #if 0
   inline void store_16x16_tr_p( const v16 &b00, const v16 &b01, const v16 &b02, const v16 &b03,
 				const v16 &b04, const v16 &b05, const v16 &b06, const v16 &b07,
 				const v16 &b08, const v16 &b09, const v16 &b10, const v16 &b11,
@@ -4016,7 +4017,7 @@ namespace v16
     ((int * ALIGNED(64))a15)[14] = b14.i[15];
     ((int * ALIGNED(64))a15)[15] = b15.i[15];
   }
-#endif
+  #endif
 
   //////////////
   // v16int class
@@ -4318,7 +4319,7 @@ namespace v16
     return c;
   }
 
-#if 0
+  #if 0
   inline v16int operator |( const v16int &a, const v16int &b )
   {
     v16int c;
@@ -4327,13 +4328,13 @@ namespace v16
 
     return c;
   }
-#endif
+  #endif
 
   BINARY(|)
   BINARY(<<)
   BINARY(>>)
 
-# undef BINARY
+  #undef BINARY
 
   // v16int logical operators
 
@@ -4379,7 +4380,7 @@ namespace v16
     return b;
   }
 
-#if 0
+  #if 0
   inline v16 czero( const v16int &c, const v16 &a )
   {
     v16 b;
@@ -4388,7 +4389,7 @@ namespace v16
 
     return b;
   }
-#endif
+  #endif
 
   inline v16 notczero( const v16int &c, const v16 &a )
   {
@@ -4409,7 +4410,7 @@ namespace v16
     return m;
   }
 
-#if 0
+  #if 0
   inline v16 merge( const v16int &c, const v16 &t, const v16 &f )
   {
     __m512 c_v = c.v;
@@ -4421,7 +4422,7 @@ namespace v16
 
     return tf;
   }
-#endif
+  #endif
 
   ////////////////
   // v16float class
@@ -4594,7 +4595,7 @@ namespace v16
     return b;
   }
 
-#if 0
+  #if 0
   inline v16int operator !( const v16float &a )
   {
     v16int b;
@@ -4603,7 +4604,7 @@ namespace v16
 
     return b;
   }
-#endif
+  #endif
 
   // v16float prefix increment / decrement operators
 

@@ -324,6 +324,7 @@ file(GLOB_RECURSE VPIC_NOT_SRC
   src/species_advance/standard/uncenter_p_pipeline_v8.cc
   src/species_advance/standard/advance_p_pipeline_v16.cc
   src/species_advance/standard/center_p_pipeline_v16.cc
+  src/species_advance/standard/uncenter_p_pipeline_v16.cc
   src/species_advance/standard/advance_p_pipeline_autovec.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)

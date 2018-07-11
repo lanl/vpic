@@ -678,7 +678,6 @@ namespace v8
   }
   #endif
 
-  #if 0
   // This is the reference AVX-2 implementation.
   inline void load_8x8_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -731,7 +730,6 @@ namespace v8
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
-  #endif
 
   #if 0
   // Replace _mm256_load_ps with _mm256_insertf128_ps.
@@ -777,6 +775,7 @@ namespace v8
   }
   #endif
 
+  #if 0
   // Replace _mm256_load_ps with _mm256_insertf128_ps. Replace two calls to
   // _mm256_shuffle_ps with one call to _mm256_shuffle_ps and two calls to
   // _mm256_blend_ps.
@@ -833,6 +832,7 @@ namespace v8
     g.v = _mm256_blend_ps( t5, v0, 0xCC );
     h.v = _mm256_blend_ps( t7, v0, 0x33 );
   }
+  #endif
 
   inline void store_8x1_tr( const v8 &a,
                             void *a0, void *a1, void *a2, void *a3,

@@ -2,6 +2,7 @@
 
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
 
 #include "spa_private.h"
 
@@ -102,6 +103,16 @@ uncenter_p_pipeline( center_p_pipeline_args_t * args,
 #endif
 
 //----------------------------------------------------------------------------//
+// If using v16, include an implementation for uncenter_p_pipeline_v16.
+//----------------------------------------------------------------------------//
+
+#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
+
+#include "uncenter_p_pipeline_v16.cc"
+
+#endif
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper uncenter_p pipeline
 // function.
 //----------------------------------------------------------------------------//
@@ -114,8 +125,8 @@ uncenter_p( /**/  species_t            * RESTRICT sp,
 
   if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));
 
-  // Have the pipelines do the bulk of particles in quads and have the
-  // host do the final incomplete quad.
+  // Have the pipelines do the bulk of particles in blocks and have the
+  // host do the final incomplete block.
 
   args->p0      = sp->p;
   args->f0      = ia->i;

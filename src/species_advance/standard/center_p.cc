@@ -125,8 +125,8 @@ center_p( /**/  species_t            * RESTRICT sp,
 
   if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));
 
-  // Have the pipelines do the bulk of particles in quads and have the
-  // host do the final incomplete quad.
+  // Have the pipelines do the bulk of particles in blocks and have the
+  // host do the final incomplete block.
 
   args->p0      = sp->p;
   args->f0      = ia->i;

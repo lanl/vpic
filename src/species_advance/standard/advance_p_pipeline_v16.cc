@@ -65,7 +65,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
 
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
-  // Determine which quads of particle quads this pipeline processes.
+  // Determine which blocks of particle quads this pipeline processes.
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, itmp, nq );
 

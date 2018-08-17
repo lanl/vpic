@@ -1764,7 +1764,7 @@ namespace v8
   inline v8float operator ++( v8float &a )
   {
     v8float b;
-    __m256 t = _mm256_add_ps( a.v, _mm256_set1_ps( 1 ) );
+    __m256 t = _mm256_add_ps( a.v, _mm256_set1_ps( 1.0f ) );
 
     a.v = t;
     b.v = t;
@@ -1775,7 +1775,7 @@ namespace v8
   inline v8float operator --( v8float &a )
   {
     v8float b;
-    __m256 t = _mm256_sub_ps( a.v, _mm256_set1_ps( 1 ) );
+    __m256 t = _mm256_sub_ps( a.v, _mm256_set1_ps( 1.0f ) );
 
     a.v = t;
     b.v = t;
@@ -1790,7 +1790,7 @@ namespace v8
     v8float b;
     __m256 a_v = a.v;
 
-    a.v = _mm256_add_ps( a_v, _mm256_set1_ps( 1 ) );
+    a.v = _mm256_add_ps( a_v, _mm256_set1_ps( 1.0f ) );
     b.v = a_v;
 
     return b;
@@ -1801,7 +1801,7 @@ namespace v8
     v8float b;
     __m256 a_v = a.v;
 
-    a.v = _mm256_sub_ps(a_v, _mm256_set1_ps( 1 ) );
+    a.v = _mm256_sub_ps(a_v, _mm256_set1_ps( 1.0f ) );
     b.v = a_v;
 
     return b;
@@ -1907,7 +1907,7 @@ namespace v8
   {
     v8float b;
 
-    b.v = _mm256_andnot_ps( _mm256_set1_ps( -0.f ), a.v );
+    b.v = _mm256_andnot_ps( _mm256_set1_ps( -0.0f ), a.v );
 
     return b;
   }
@@ -1924,7 +1924,7 @@ namespace v8
   inline v8float copysign( const v8float &a, const v8float &b )
   {
     v8float c;
-    __m256 t = _mm256_set1_ps( -0.f );
+    __m256 t = _mm256_set1_ps( -0.0f );
 
     c.v = _mm256_or_ps( _mm256_and_ps( t, b.v ),
 			_mm256_andnot_ps( t, a.v ) );

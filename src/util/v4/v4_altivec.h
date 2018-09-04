@@ -15,6 +15,12 @@
 #include <math.h>
 #include <altivec.h>
 
+// See if this fixes a problem when compiling with GNU compilers.
+#ifdef __GNUC__
+#undef bool
+#undef vector
+#endif
+
 namespace v4 {
 
   class v4;
@@ -1022,10 +1028,10 @@ namespace v4 {
     union { float f[4]; _v4_float v; } t; \
     v4float b;                            \
     t.v = a.v;                            \
-    b.v = (_v4_float){ ::fn( t.f[0] ),    \
-                       ::fn( t.f[1] ),    \
-                       ::fn( t.f[2] ),    \
-                       ::fn( t.f[3] ) };  \
+    b.v = (_v4_float){ (float) ::fn( t.f[0] ),  \
+                       (float) ::fn( t.f[1] ),    \
+                       (float) ::fn( t.f[2] ),    \
+                       (float) ::fn( t.f[3] ) };  \
     return b;                             \
   }
   
@@ -1036,10 +1042,10 @@ namespace v4 {
     v4float c;                                              \
     t.v = a.v;                                              \
     u.v = b.v;                                              \
-    c.v = (_v4_float){ ::fn( t.f[0], u.f[0] ),              \
-                       ::fn( t.f[1], u.f[1] ),              \
-                       ::fn( t.f[2], u.f[2] ),              \
-                       ::fn( t.f[3], u.f[3] ) };            \
+    c.v = (_v4_float){ (float) ::fn( t.f[0], u.f[0] ),              \
+                       (float) ::fn( t.f[1], u.f[1] ),              \
+                       (float) ::fn( t.f[2], u.f[2] ),              \
+                       (float) ::fn( t.f[3], u.f[3] ) };            \
     return c;                                               \
   }
 

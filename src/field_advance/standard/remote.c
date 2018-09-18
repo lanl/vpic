@@ -67,9 +67,9 @@ begin_remote_ghost_tang_b( field_t      * ALIGNED(128) field,
 
 # define BEGIN_RECV(i,j,k,X,Y,Z) \
   begin_recv_port(i,j,k,(1+n##Y*(n##Z+1)+n##Z*(n##Y+1))*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 1, 0, 0,x,y,z);
   BEGIN_RECV( 0, 1, 0,y,z,x);
   BEGIN_RECV( 0, 0, 1,z,x,y);
@@ -86,9 +86,9 @@ begin_remote_ghost_tang_b( field_t      * ALIGNED(128) field,
       begin_send_port( i, j, k, size, g );                  \
     }                                                       \
   } END_PRIMITIVE
-  BEGIN_SEND(-1, 0, 0,x,y,z);
-  BEGIN_SEND( 0,-1, 0,y,z,x);
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 1, 0, 0,x,y,z);
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
@@ -115,18 +115,18 @@ end_remote_ghost_tang_b( field_t      * ALIGNED(128) field,
         field(x,y,z).cb##Z = rw*(*(p++)) + lw*field(x+i,y+j,z+k).cb##Z; \
     }                                                                   \
   } END_PRIMITIVE
-  END_RECV(-1, 0, 0,x,y,z);
-  END_RECV( 0,-1, 0,y,z,x);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV((-1), 0, 0,x,y,z);
+  END_RECV( 0,(-1), 0,y,z,x);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 1, 0, 0,x,y,z);
   END_RECV( 0, 1, 0,y,z,x);
   END_RECV( 0, 0, 1,z,x,y);
 # undef END_RECV
 
 # define END_SEND(i,j,k,X,Y,Z) end_send_port(i,j,k,g)
-  END_SEND(-1, 0, 0,x,y,z);
-  END_SEND( 0,-1, 0,y,z,x);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND((-1), 0, 0,x,y,z);
+  END_SEND( 0,(-1), 0,y,z,x);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 1, 0, 0,x,y,z);
   END_SEND( 0, 1, 0,y,z,x);
   END_SEND( 0, 0, 1,z,x,y);
@@ -142,9 +142,9 @@ begin_remote_ghost_norm_e( field_t      * ALIGNED(128) field,
 
 # define BEGIN_RECV(i,j,k,X,Y,Z) \
   begin_recv_port(i,j,k,( 1 + (n##Y+1)*(n##Z+1) )*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 1, 0, 0,x,y,z);
   BEGIN_RECV( 0, 1, 0,y,z,x);
   BEGIN_RECV( 0, 0, 1,z,x,y);
@@ -160,9 +160,9 @@ begin_remote_ghost_norm_e( field_t      * ALIGNED(128) field,
       begin_send_port( i, j, k, size, g );                  \
     }                                                       \
   } END_PRIMITIVE
-  BEGIN_SEND(-1, 0, 0,x,y,z);
-  BEGIN_SEND( 0,-1, 0,y,z,x);
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 1, 0, 0,x,y,z);
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
@@ -187,18 +187,18 @@ end_remote_ghost_norm_e( field_t      * ALIGNED(128) field,
         field(x,y,z).e##X = rw*(*(p++)) + lw*field(x+i,y+j,z+k).e##X; \
     }                                                                 \
   } END_PRIMITIVE
-  END_RECV(-1, 0, 0,x,y,z);
-  END_RECV( 0,-1, 0,y,z,x);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV((-1), 0, 0,x,y,z);
+  END_RECV( 0,(-1), 0,y,z,x);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 1, 0, 0,x,y,z);
   END_RECV( 0, 1, 0,y,z,x);
   END_RECV( 0, 0, 1,z,x,y);
 # undef END_RECV
 
 # define END_SEND(i,j,k,X,Y,Z) end_send_port(i,j,k,g)
-  END_SEND(-1, 0, 0,x,y,z);
-  END_SEND( 0,-1, 0,y,z,x);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND((-1), 0, 0,x,y,z);
+  END_SEND( 0,(-1), 0,y,z,x);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 1, 0, 0,x,y,z);
   END_SEND( 0, 1, 0,y,z,x);
   END_SEND( 0, 0, 1,z,x,y);
@@ -214,9 +214,9 @@ begin_remote_ghost_div_b( field_t      * ALIGNED(128) field,
 
 # define BEGIN_RECV(i,j,k,X,Y,Z) \
   begin_recv_port(i,j,k,(1+n##Y*n##Z)*sizeof(float),g)
-  BEGIN_RECV(-1, 0, 0,x,y,z);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 1, 0, 0,x,y,z);
   BEGIN_RECV( 0, 1, 0,y,z,x);
   BEGIN_RECV( 0, 0, 1,z,x,y);
@@ -232,9 +232,9 @@ begin_remote_ghost_div_b( field_t      * ALIGNED(128) field,
       begin_send_port( i, j, k, size, g );                   \
     }                                                        \
   } END_PRIMITIVE
-  BEGIN_SEND(-1, 0, 0,x,y,z);
-  BEGIN_SEND( 0,-1, 0,y,z,x);
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 1, 0, 0,x,y,z);
   BEGIN_SEND( 0, 1, 0,y,z,x);
   BEGIN_SEND( 0, 0, 1,z,x,y);
@@ -260,18 +260,18 @@ end_remote_ghost_div_b( field_t      * ALIGNED(128) field,
                                  lw*field(x+i,y+j,z+k).div_b_err;       \
     }                                                                   \
   } END_PRIMITIVE
-  END_RECV(-1, 0, 0,x,y,z);
-  END_RECV( 0,-1, 0,y,z,x);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV((-1), 0, 0,x,y,z);
+  END_RECV( 0,(-1), 0,y,z,x);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 1, 0, 0,x,y,z);
   END_RECV( 0, 1, 0,y,z,x);
   END_RECV( 0, 0, 1,z,x,y);
 # undef END_RECV
 
 # define END_SEND(i,j,k,X,Y,Z) end_send_port(i,j,k,g)
-  END_SEND(-1, 0, 0,x,y,z);
-  END_SEND( 0,-1, 0,y,z,x);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND((-1), 0, 0,x,y,z);
+  END_SEND( 0,(-1), 0,y,z,x);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 1, 0, 0,x,y,z);
   END_SEND( 0, 1, 0,y,z,x);
   END_SEND( 0, 0, 1,z,x,y);
@@ -376,33 +376,33 @@ synchronize_tang_e_norm_b( field_array_t * RESTRICT fa ) {
 # define END_SEND(i,j,k,X,Y,Z) end_send_port( i, j, k, g )
 
   // Exchange x-faces
-  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
   BEGIN_RECV( 1, 0, 0,x,y,z);
-  BEGIN_SEND(-1, 0, 0,x,y,z);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
   BEGIN_SEND( 1, 0, 0,x,y,z);
-  END_SEND(-1, 0, 0,x,y,z);
+  END_SEND((-1), 0, 0,x,y,z);
   END_SEND( 1, 0, 0,x,y,z);
-  END_RECV(-1, 0, 0,x,y,z);
+  END_RECV((-1), 0, 0,x,y,z);
   END_RECV( 1, 0, 0,x,y,z);
 
   // Exchange y-faces
-  BEGIN_SEND( 0,-1, 0,y,z,x);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
   BEGIN_SEND( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
   BEGIN_RECV( 0, 1, 0,y,z,x);
-  END_RECV( 0,-1, 0,y,z,x);
+  END_RECV( 0,(-1), 0,y,z,x);
   END_RECV( 0, 1, 0,y,z,x);
-  END_SEND( 0,-1, 0,y,z,x);
+  END_SEND( 0,(-1), 0,y,z,x);
   END_SEND( 0, 1, 0,y,z,x);
 
   // Exchange z-faces
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 0, 0, 1,z,x,y);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 0, 0, 1,z,x,y);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 0, 0, 1,z,x,y);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 0, 0, 1,z,x,y);
 
 # undef BEGIN_RECV
@@ -472,33 +472,33 @@ synchronize_jf( field_array_t * RESTRICT fa ) {
 # define END_SEND(i,j,k,X,Y,Z) end_send_port( i, j, k, g )
 
   // Exchange x-faces
-  BEGIN_SEND(-1, 0, 0,x,y,z);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
   BEGIN_SEND( 1, 0, 0,x,y,z);
-  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
   BEGIN_RECV( 1, 0, 0,x,y,z);
-  END_RECV(-1, 0, 0,x,y,z);
+  END_RECV((-1), 0, 0,x,y,z);
   END_RECV( 1, 0, 0,x,y,z);
-  END_SEND(-1, 0, 0,x,y,z);
+  END_SEND((-1), 0, 0,x,y,z);
   END_SEND( 1, 0, 0,x,y,z);
 
   // Exchange y-faces
-  BEGIN_SEND( 0,-1, 0,y,z,x);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
   BEGIN_SEND( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
   BEGIN_RECV( 0, 1, 0,y,z,x);
-  END_RECV( 0,-1, 0,y,z,x);
+  END_RECV( 0,(-1), 0,y,z,x);
   END_RECV( 0, 1, 0,y,z,x);
-  END_SEND( 0,-1, 0,y,z,x);
+  END_SEND( 0,(-1), 0,y,z,x);
   END_SEND( 0, 1, 0,y,z,x);
 
   // Exchange z-faces
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 0, 0, 1,z,x,y);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 0, 0, 1,z,x,y);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 0, 0, 1,z,x,y);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 0, 0, 1,z,x,y);
 
 # undef BEGIN_RECV
@@ -588,33 +588,33 @@ synchronize_rho( field_array_t * RESTRICT fa ) {
 # define END_SEND(i,j,k,X,Y,Z) end_send_port( i, j, k, g )
 
   // Exchange x-faces
-  BEGIN_SEND(-1, 0, 0,x,y,z);
+  BEGIN_SEND((-1), 0, 0,x,y,z);
   BEGIN_SEND( 1, 0, 0,x,y,z);
-  BEGIN_RECV(-1, 0, 0,x,y,z);
+  BEGIN_RECV((-1), 0, 0,x,y,z);
   BEGIN_RECV( 1, 0, 0,x,y,z);
-  END_RECV(-1, 0, 0,x,y,z);
+  END_RECV((-1), 0, 0,x,y,z);
   END_RECV( 1, 0, 0,x,y,z);
-  END_SEND(-1, 0, 0,x,y,z);
+  END_SEND((-1), 0, 0,x,y,z);
   END_SEND( 1, 0, 0,x,y,z);
 
   // Exchange y-faces
-  BEGIN_SEND( 0,-1, 0,y,z,x);
+  BEGIN_SEND( 0,(-1), 0,y,z,x);
   BEGIN_SEND( 0, 1, 0,y,z,x);
-  BEGIN_RECV( 0,-1, 0,y,z,x);
+  BEGIN_RECV( 0,(-1), 0,y,z,x);
   BEGIN_RECV( 0, 1, 0,y,z,x);
-  END_RECV( 0,-1, 0,y,z,x);
+  END_RECV( 0,(-1), 0,y,z,x);
   END_RECV( 0, 1, 0,y,z,x);
-  END_SEND( 0,-1, 0,y,z,x);
+  END_SEND( 0,(-1), 0,y,z,x);
   END_SEND( 0, 1, 0,y,z,x);
 
   // Exchange z-faces
-  BEGIN_SEND( 0, 0,-1,z,x,y);
+  BEGIN_SEND( 0, 0,(-1),z,x,y);
   BEGIN_SEND( 0, 0, 1,z,x,y);
-  BEGIN_RECV( 0, 0,-1,z,x,y);
+  BEGIN_RECV( 0, 0,(-1),z,x,y);
   BEGIN_RECV( 0, 0, 1,z,x,y);
-  END_RECV( 0, 0,-1,z,x,y);
+  END_RECV( 0, 0,(-1),z,x,y);
   END_RECV( 0, 0, 1,z,x,y);
-  END_SEND( 0, 0,-1,z,x,y);
+  END_SEND( 0, 0,(-1),z,x,y);
   END_SEND( 0, 0, 1,z,x,y);
 
 # undef BEGIN_RECV

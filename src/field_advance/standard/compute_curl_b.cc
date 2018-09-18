@@ -2,6 +2,7 @@
 
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
 
 #include "sfa_private.h"
 
@@ -68,8 +69,8 @@ typedef struct pipeline_args
 
 void
 compute_curl_b_pipeline( pipeline_args_t * args,
-                    int pipeline_rank,
-                    int n_pipeline )
+                         int pipeline_rank,
+                         int n_pipeline )
 {
   DECLARE_STENCIL();
 
@@ -108,6 +109,16 @@ compute_curl_b_pipeline( pipeline_args_t * args,
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
 #include "compute_curl_b_pipeline_v8.cc"
+
+#endif
+
+//----------------------------------------------------------------------------//
+// If using v16, include an implementation for compute_curl_b_pipeline_v16.
+//----------------------------------------------------------------------------//
+
+#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
+
+#include "compute_curl_b_pipeline_v16.cc"
 
 #endif
 

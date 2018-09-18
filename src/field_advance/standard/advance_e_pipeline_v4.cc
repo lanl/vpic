@@ -68,7 +68,7 @@ advance_e_pipeline_v4( pipeline_args_t * args,
                  f0_cbx, f0_cby, f0_cbz );
 
     load_4x4_tr( &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax,
-		 f0_tcax, f0_tcay, f0_tcaz, save1 );
+                 f0_tcax, f0_tcay, f0_tcaz, save1 );
 
     load_4x3_tr( &f00->jfx, &f01->jfx, &f02->jfx, &f03->jfx,
                  f0_jfx, f0_jfy, f0_jfz );
@@ -80,7 +80,7 @@ advance_e_pipeline_v4( pipeline_args_t * args,
                  fy_cbx, dummy, fy_cbz );
 
     load_4x2_tr( &fz0->cbx, &fz1->cbx, &fz2->cbx, &fz3->cbx,
-		 fz_cbx, fz_cby );
+                 fz_cbx, fz_cby );
 
 #   define LOAD_RMU(V,D) m_f##V##_rmu##D=v4float( m[f##V##0->fmat##D].rmu##D, \
                                                   m[f##V##1->fmat##D].rmu##D, \
@@ -111,21 +111,21 @@ advance_e_pipeline_v4( pipeline_args_t * args,
     f0_cbz_rmuz = f0_cbz * m_f0_rmuz;
 
     f0_tcax = fnms( vdamp,
-		    f0_tcax,
+                    f0_tcax,
                     fms( vpy,
-			 fnms( fy_cbz, m_fy_rmuz, f0_cbz_rmuz ),
+                         fnms( fy_cbz, m_fy_rmuz, f0_cbz_rmuz ),
                          vpz * fnms( fz_cby, m_fz_rmuy, f0_cby_rmuy ) ) );
 
     f0_tcay = fnms( vdamp,
-		    f0_tcay,
+                    f0_tcay,
                     fms( vpz,
-			 fnms( fz_cbx, m_fz_rmux, f0_cbx_rmux ),
+                         fnms( fz_cbx, m_fz_rmux, f0_cbx_rmux ),
                          vpx * fnms( fx_cbz, m_fx_rmuz, f0_cbz_rmuz ) ) );
 
     f0_tcaz = fnms( vdamp,
-		    f0_tcaz,
+                    f0_tcaz,
                     fms( vpx,
-			 fnms( fx_cby, m_fx_rmuy, f0_cby_rmuy ),
+                         fnms( fx_cby, m_fx_rmuy, f0_cby_rmuy ),
                          vpy * fnms( fy_cbx, m_fy_rmux, f0_cbx_rmux ) ) );
 
     f0_ex = fma( m_f0_decayx, f0_ex, m_f0_drivex * fnms( vcj, f0_jfx, f0_tcax ) );
@@ -140,9 +140,9 @@ advance_e_pipeline_v4( pipeline_args_t * args,
     //------------------------------------------------------------------------//
 
     store_4x4_tr( f0_ex, f0_ey, f0_ez, save0,
-		  &f00->ex, &f01->ex, &f02->ex, &f03->ex );
+                  &f00->ex, &f01->ex, &f02->ex, &f03->ex );
 
     store_4x4_tr( f0_tcax, f0_tcay, f0_tcaz, save1,
-		  &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax );
+                  &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax );
   }
 }

@@ -8,63 +8,106 @@ energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
   const interpolator_t * RESTRICT ALIGNED(128) f = args->f;
   const particle_t     * RESTRICT ALIGNED(128) p = args->p;
 
-  const float          * RESTRICT ALIGNED(16)  vp0;
-  const float          * RESTRICT ALIGNED(16)  vp1;
-  const float          * RESTRICT ALIGNED(16)  vp2;
-  const float          * RESTRICT ALIGNED(16)  vp3;
+  const float          * RESTRICT ALIGNED(16)  vp00;
+  const float          * RESTRICT ALIGNED(16)  vp01;
+  const float          * RESTRICT ALIGNED(16)  vp02;
+  const float          * RESTRICT ALIGNED(16)  vp03;
 
   const v4float qdt_2mc(args->qdt_2mc);
   const v4float msp(args->msp);
-  const v4float one(1.);
+  const v4float one(1.0);
 
   v4float dx, dy, dz;
   v4float ex, ey, ez;
-  v4float v0, v1, v2, w;
+  v4float v00, v01, v02, w;
   v4int i;
 
-  double en0 = 0, en1 = 0, en2 = 0, en3 = 0;
+  double en00 = 0.0, en01 = 0.0, en02 = 0.0, en03 = 0.0;
 
   int n0, nq;
 
-  // Determine which particle quads this pipeline processes
+  // Determine which particle blocks this pipeline processes.
 
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, n0, nq );
+
   p += n0;
+
   nq >>= 2;
 
-  // Process the particle quads for this pipeline
+  // Process the particle blocks for this pipeline.
 
   for( ; nq; nq--, p+=4 )
   {
-    load_4x4_tr(&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx,dx,dy,dz,i);
+    //--------------------------------------------------------------------------
+    // Load particle position data.
+    //--------------------------------------------------------------------------
+    load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
+                 dx, dy, dz, i );
 
-    // Interpolate fields
+    //--------------------------------------------------------------------------
+    // Set field interpolation pointers.
+    //--------------------------------------------------------------------------
+    vp00 = ( float * ) ( f + i(0) );
+    vp01 = ( float * ) ( f + i(1) );
+    vp02 = ( float * ) ( f + i(2) );
+    vp03 = ( float * ) ( f + i(3) );
 
-    vp0 = (float *)(f + i(0));
-    vp1 = (float *)(f + i(1));
-    vp2 = (float *)(f + i(2));
-    vp3 = (float *)(f + i(3));
-    load_4x4_tr(vp0,  vp1,  vp2,  vp3,  ex,v0,v1,v2); ex = fma( fma( dy, v2, v1 ), dz, fma( dy, v0, ex ) );
-    load_4x4_tr(vp0+4,vp1+4,vp2+4,vp3+4,ey,v0,v1,v2); ey = fma( fma( dz, v2, v1 ), dx, fma( dz, v0, ey ) );
-    load_4x4_tr(vp0+8,vp1+8,vp2+8,vp3+8,ez,v0,v1,v2); ez = fma( fma( dx, v2, v1 ), dy, fma( dx, v0, ez ) );
+    //--------------------------------------------------------------------------
+    // Load interpolation data for particles.
+    //--------------------------------------------------------------------------
+    load_4x4_tr( vp00, vp01, vp02, vp03,
+                 ex, v00, v01, v02 );
 
-    // Update momentum to half step
-    // (note Boris rotation does not change energy so it is unnecessary)
+    ex = fma( fma( dy, v02, v01 ), dz, fma( dy, v00, ex ) );
 
-    load_4x4_tr(&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux,v0,v1,v2,w);
-    v0  = fma( ex, qdt_2mc, v0 );
-    v1  = fma( ey, qdt_2mc, v1 );
-    v2  = fma( ez, qdt_2mc, v2 );
+    //--------------------------------------------------------------------------
+    // Load interpolation data for particles.
+    //--------------------------------------------------------------------------
+    load_4x4_tr( vp00+4, vp01+4, vp02+4, vp03+4,
+                 ey, v00, v01, v02);
 
-    // Accumulate energy
+    ey = fma( fma( dz, v02, v01 ), dx, fma( dz, v00, ey ) );
 
-    v0 = fma( v0,v0, fma( v1,v1, v2*v2 ) );
-    v0 = (msp * w) * (v0 / (one + sqrt(one + v0))); 
-    en0 += (double)v0(0);
-    en1 += (double)v0(1);
-    en2 += (double)v0(2);
-    en3 += (double)v0(3);
+    //--------------------------------------------------------------------------
+    // Load interpolation data for particles.
+    //--------------------------------------------------------------------------
+    load_4x4_tr( vp00+8, vp01+8, vp02+8, vp03+8,
+                 ez, v00, v01, v02);
+
+    ez = fma( fma( dx, v02, v01 ), dy, fma( dx, v00, ez ) );
+
+    //--------------------------------------------------------------------------
+    // Load particle momentum data.
+    //--------------------------------------------------------------------------
+    load_4x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
+                 v00, v01, v02, w );
+
+    //--------------------------------------------------------------------------
+    // Update momentum to half step. Note that Boris rotation does not change
+    // energy and thus is not necessary.
+    //--------------------------------------------------------------------------
+    v00 = fma( ex, qdt_2mc, v00 );
+    v01 = fma( ey, qdt_2mc, v01 );
+    v02 = fma( ez, qdt_2mc, v02 );
+
+    //--------------------------------------------------------------------------
+    // Calculate kinetic energy of particles.
+    //--------------------------------------------------------------------------
+    v00 = fma( v00, v00, fma( v01, v01, v02 * v02 ) );
+
+    v00 = ( msp * w ) * ( v00 / ( one + sqrt( one + v00 ) ) ); 
+
+    //--------------------------------------------------------------------------
+    // Accumulate energy for each vector element.
+    //--------------------------------------------------------------------------
+    en00 += ( double ) v00(0);
+    en01 += ( double ) v00(1);
+    en02 += ( double ) v00(2);
+    en03 += ( double ) v00(3);
   }
 
-  args->en[pipeline_rank] = en0 + en1 + en2 + en3;
+  //--------------------------------------------------------------------------
+  // Accumulate energy for each rank or thread.
+  //--------------------------------------------------------------------------
+  args->en[pipeline_rank] = en00 + en01 + en02 + en03;
 }

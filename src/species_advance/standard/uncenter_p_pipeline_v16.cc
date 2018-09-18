@@ -112,34 +112,31 @@ uncenter_p_pipeline_v16( center_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Update momentum.
     //--------------------------------------------------------------------------
-    v00  = qdt_4mc*rsqrt( one + fma( ux, ux, fma( uy, uy, uz*uz ) ) );
-    v01  = fma( cbx, cbx, fma( cby, cby, cbz*cbz ) );
-    v02  = (v00*v00)*v01;
-    v03  = v00*fma( v02, fma( v02, two_fifteenths, one_third ), one );
-    v04  = v03*rcp( fma( v03*v03, v01, one ) );
+    v00  = qdt_4mc * rsqrt( one + fma( ux, ux, fma( uy, uy, uz * uz ) ) );
+    v01  = fma( cbx, cbx, fma( cby, cby, cbz * cbz ) );
+    v02  = ( v00 * v00 ) * v01;
+    v03  = v00 * fma( v02, fma( v02, two_fifteenths, one_third ), one );
+    v04  = v03 * rcp( fma( v03 * v03, v01, one ) );
     v04 += v04;
 
-    v00  = fma( fms( uy, cbz, uz*cby ), v03, ux );
-    v01  = fma( fms( uz, cbx, ux*cbz ), v03, uy );
-    v02  = fma( fms( ux, cby, uy*cbx ), v03, uz );
+    v00  = fma( fms( uy, cbz, uz * cby ), v03, ux );
+    v01  = fma( fms( uz, cbx, ux * cbz ), v03, uy );
+    v02  = fma( fms( ux, cby, uy * cbx ), v03, uz );
 
-    ux  = fma( fms( v01, cbz, v02*cby ), v04, ux );
-    uy  = fma( fms( v02, cbx, v00*cbz ), v04, uy );
-    uz  = fma( fms( v00, cby, v01*cbx ), v04, uz );
+    ux   = fma( fms( v01, cbz, v02 * cby ), v04, ux );
+    uy   = fma( fms( v02, cbx, v00 * cbz ), v04, uy );
+    uz   = fma( fms( v00, cby, v01 * cbx ), v04, uz );
 
-    ux += hax;
-    uy += hay;
-    uz += haz;
+    ux  += hax;
+    uy  += hay;
+    uz  += haz;
 
     //--------------------------------------------------------------------------
-    // Store particle data.  Could use store_16x4_tr_p or store_16x3_tr_p.
+    // Store particle momentum data.  Could use store_16x4_tr_p or
+    // store_16x3_tr_p.
     //--------------------------------------------------------------------------
     store_16x8_tr_p( dx, dy, dz, ii, ux, uy, uz, q,
                      &p[ 0].dx, &p[ 2].dx, &p[ 4].dx, &p[ 6].dx,
                      &p[ 8].dx, &p[10].dx, &p[12].dx, &p[14].dx );
-
-    // store_8x4_tr( ux, uy, uz, q,
-    //               &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
-    //               &p[4].ux, &p[5].ux, &p[6].ux, &p[7].ux );
   }
 }

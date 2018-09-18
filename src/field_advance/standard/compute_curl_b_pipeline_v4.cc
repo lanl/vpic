@@ -2,8 +2,8 @@ using namespace v4;
 
 void
 compute_curl_b_pipeline_v4( pipeline_args_t * args,
-                       int pipeline_rank,
-                       int n_pipeline )
+                            int pipeline_rank,
+                            int n_pipeline )
 {
   DECLARE_STENCIL();
 
@@ -31,13 +31,13 @@ compute_curl_b_pipeline_v4( pipeline_args_t * args,
 
   v4float f0_cbx_rmux, f0_cby_rmuy, f0_cbz_rmuz;
 
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel block
 
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel block +x neighbors
 
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel block +y neighbors
 
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel block +z neighbors
 
   // Process the bulk of the voxels 4 at a time
 
@@ -49,6 +49,10 @@ compute_curl_b_pipeline_v4( pipeline_args_t * args,
     f01 = f0; fx1 = fx; fy1 = fy; fz1 = fz; NEXT_STENCIL();
     f02 = f0; fx2 = fx; fy2 = fy; fz2 = fz; NEXT_STENCIL();
     f03 = f0; fx3 = fx; fy3 = fy; fz3 = fz; NEXT_STENCIL();
+
+    //------------------------------------------------------------------------//
+    // Load field data.
+    //------------------------------------------------------------------------//
 
     load_4x3_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
 		 f0_cbx, f0_cby, f0_cbz );
@@ -93,7 +97,13 @@ compute_curl_b_pipeline_v4( pipeline_args_t * args,
 		   fnms( fx_cby, m_fx_rmuy, f0_cby_rmuy ),
                    vpy * fnms( fy_cbx, m_fy_rmux, f0_cbx_rmux ) );
 
-    // Note: Unlike load_4x3 versus load_4x4, store_4x4 is much more efficient than store_4x3.
+    //------------------------------------------------------------------------//
+    // Note:
+    //------------------------------------------------------------------------//
+    // Unlike load_4x3 versus load_4x4, store_4x4 is much more efficient
+    // than store_4x3.
+    //------------------------------------------------------------------------//
+
     store_4x4_tr( f0_tcax, f0_tcay, f0_tcaz, save1,
 		  &f00->tcax, &f01->tcax, &f02->tcax, &f03->tcax );
   }

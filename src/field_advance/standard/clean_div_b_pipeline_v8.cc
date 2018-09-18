@@ -32,23 +32,23 @@ clean_div_b_pipeline_v8( pipeline_args_t * args,
   const v8float vpy(py);
   const v8float vpz(pz);
 
-  v8float f0_cbx, f0_cby, f0_cbz; // Voxel quad magnetic fields
-  v8float f0_div_b_err;           // Voxel quad div b errs
-  v8float fx_div_b_err;           // Voxel quad -x neighbor div b err
-  v8float fy_div_b_err;           // Voxel quad -y neighbor div b err
-  v8float fz_div_b_err;           // Voxel quad -z neighbor div b err
+  v8float f0_cbx, f0_cby, f0_cbz; // Voxel block magnetic fields
+  v8float f0_div_b_err;           // Voxel block div b errs
+  v8float fx_div_b_err;           // Voxel block -x neighbor div b err
+  v8float fy_div_b_err;           // Voxel block -y neighbor div b err
+  v8float fz_div_b_err;           // Voxel block -z neighbor div b err
 
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
-  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel quad
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel block
+  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel block
 
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel block +x neighbors
+  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel block +x neighbors
 
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
-  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel block +y neighbors
+  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel block +y neighbors
 
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
-  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel block +z neighbors
+  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel block +z neighbors
 
   // Process voxels assigned to this pipeline 
   
@@ -91,25 +91,25 @@ clean_div_b_pipeline_v8( pipeline_args_t * args,
     NEXT_STENCIL(7);
 
     load_8x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
-		 &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx,
-		 f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
+                 &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx,
+                 f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
 
     fx_div_b_err = v8float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err,
-			    fx4->div_b_err, fx5->div_b_err, fx6->div_b_err, fx7->div_b_err );
+                            fx4->div_b_err, fx5->div_b_err, fx6->div_b_err, fx7->div_b_err );
 
     fy_div_b_err = v8float( fy0->div_b_err, fy1->div_b_err, fy2->div_b_err, fy3->div_b_err,
-			    fy4->div_b_err, fy5->div_b_err, fy6->div_b_err, fy7->div_b_err );
+                            fy4->div_b_err, fy5->div_b_err, fy6->div_b_err, fy7->div_b_err );
 
     fz_div_b_err = v8float( fz0->div_b_err, fz1->div_b_err, fz2->div_b_err, fz3->div_b_err,
-			    fz4->div_b_err, fz5->div_b_err, fz6->div_b_err, fz7->div_b_err );
+                            fz4->div_b_err, fz5->div_b_err, fz6->div_b_err, fz7->div_b_err );
 
     f0_cbx = fma( f0_div_b_err - fx_div_b_err, px, f0_cbx );
     f0_cby = fma( f0_div_b_err - fy_div_b_err, py, f0_cby );
     f0_cbz = fma( f0_div_b_err - fz_div_b_err, pz, f0_cbz );
 
     store_8x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err,
-		  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
-		  &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx );
+                  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
+                  &f04->cbx, &f05->cbx, &f06->cbx, &f07->cbx );
   }
 
 # undef NEXT_STENCIL

@@ -2,6 +2,7 @@
 
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
 
 #include "sfa_private.h"
 
@@ -113,6 +114,16 @@ vacuum_advance_e_pipeline( pipeline_args_t * args,
 #if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
 
 #include "vacuum_advance_e_pipeline_v8.cc"
+
+#endif
+
+//----------------------------------------------------------------------------//
+// If using v16, include an implementation for vacuum_advance_e_pipeline_v16.
+//----------------------------------------------------------------------------//
+
+#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
+
+#include "vacuum_advance_e_pipeline_v16.cc"
 
 #endif
 

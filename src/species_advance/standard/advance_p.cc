@@ -49,9 +49,9 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   const float cdt_dy         = args->cdt_dy;
   const float cdt_dz         = args->cdt_dz;
   const float qsp            = args->qsp;
-  const float one            = 1.0f;
-  const float one_third      = 1.0f/3.0f;
-  const float two_fifteenths = 2.0f/15.0f;
+  const float one            = 1.0;
+  const float one_third      = 1.0/3.0;
+  const float two_fifteenths = 2.0/15.0;
 
   float dx, dy, dz, ux, uy, uz, q;
   float hax, hay, haz, cbx, cby, cbz;

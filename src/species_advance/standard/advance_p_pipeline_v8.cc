@@ -28,10 +28,10 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
   const v8float cdt_dy(args->cdt_dy);
   const v8float cdt_dz(args->cdt_dz);
   const v8float qsp(args->qsp);
-  const v8float one(1.0f);
-  const v8float one_third(1.0f/3.0f);
-  const v8float two_fifteenths(2.0f/15.0f);
-  const v8float neg_one(-1.0f);
+  const v8float one(1.0);
+  const v8float one_third(1.0/3.0);
+  const v8float two_fifteenths(2.0/15.0);
+  const v8float neg_one(-1.0);
 
   const float _qsp = args->qsp;
 

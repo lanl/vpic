@@ -1,9 +1,12 @@
 #define IN_sf_interface
+
 #define HAS_V4_PIPELINE
+
 // It appears that the use of SIMD vectors in this file is not for vectors over
 // particles or fields that can be easily extended to longer SIMD vector lengths.
 // Thus, it appears that this file is not a candidate for V8_ACCELERATION.
 // #define HAS_V8_PIPELINE
+
 #include "sf_interface_private.h"
 
 void

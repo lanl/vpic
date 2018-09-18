@@ -32,19 +32,19 @@ clean_div_b_pipeline_v4( pipeline_args_t * args,
   const v4float vpy(py);
   const v4float vpz(pz);
 
-  v4float f0_cbx, f0_cby, f0_cbz; // Voxel quad magnetic fields
-  v4float f0_div_b_err;           // Voxel quad div b errs
-  v4float fx_div_b_err;           // Voxel quad -x neighbor div b err
-  v4float fy_div_b_err;           // Voxel quad -y neighbor div b err
-  v4float fz_div_b_err;           // Voxel quad -z neighbor div b err
+  v4float f0_cbx, f0_cby, f0_cbz; // Voxel block magnetic fields
+  v4float f0_div_b_err;           // Voxel block div b errs
+  v4float fx_div_b_err;           // Voxel block -x neighbor div b err
+  v4float fy_div_b_err;           // Voxel block -y neighbor div b err
+  v4float fz_div_b_err;           // Voxel block -z neighbor div b err
 
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel block
 
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel block +x neighbors
 
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel block +y neighbors
 
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel block +z neighbors
 
   // Process voxels assigned to this pipeline 
   
@@ -83,7 +83,7 @@ clean_div_b_pipeline_v4( pipeline_args_t * args,
     NEXT_STENCIL(3);
 
     load_4x4_tr( &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx,
-		 f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
+                 f0_cbx, f0_cby, f0_cbz, f0_div_b_err );
 
     fx_div_b_err = v4float( fx0->div_b_err, fx1->div_b_err, fx2->div_b_err, fx3->div_b_err );
 
@@ -96,7 +96,7 @@ clean_div_b_pipeline_v4( pipeline_args_t * args,
     f0_cbz = fma( f0_div_b_err - fz_div_b_err, pz, f0_cbz );
 
     store_4x4_tr( f0_cbx, f0_cby, f0_cbz, f0_div_b_err,
-		  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
+                  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 
 # undef NEXT_STENCIL

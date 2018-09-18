@@ -17,24 +17,24 @@ advance_b_pipeline_v8( pipeline_args_t * args,
   const v8float vpy( py );
   const v8float vpz( pz );
 
-  v8float f0_ex,  f0_ey,  f0_ez;  // Voxel quad electric fields
-  v8float f0_cbx, f0_cby, f0_cbz; // Voxel quad magnetic fields
-  v8float fx_ey, fx_ez;           // Voxel quad +x neighbor fields
-  v8float fy_ez, fy_ex;           // Voxel quad +y neighbor fields
-  v8float fz_ex, fz_ey;           // Voxel quad +z neighbor fields
+  v8float f0_ex,  f0_ey,  f0_ez;  // Voxel block electric fields
+  v8float f0_cbx, f0_cby, f0_cbz; // Voxel block magnetic fields
+  v8float fx_ey, fx_ez;           // Voxel block +x neighbor fields
+  v8float fy_ez, fy_ex;           // Voxel block +y neighbor fields
+  v8float fz_ex, fz_ey;           // Voxel block +z neighbor fields
   v8float dummy;
 
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel quad
-  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel quad
+  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel block
+  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel block
 
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel quad +x neighbors
-  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel quad +x neighbors
+  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel block +x neighbors
+  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel block +x neighbors
 
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel quad +y neighbors
-  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel quad +y neighbors
+  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel block +y neighbors
+  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel block +y neighbors
 
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel quad +z neighbors
-  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel quad +z neighbors
+  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel block +z neighbors
+  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel block +z neighbors
 
   // Process the bulk of the voxels 8 at a time
 

@@ -48,10 +48,10 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   const v16float cdt_dy(args->cdt_dy);
   const v16float cdt_dz(args->cdt_dz);
   const v16float qsp(args->qsp);
-  const v16float one(1.0f);
-  const v16float one_third(1.0f/3.0f);
-  const v16float two_fifteenths(2.0f/15.0f);
-  const v16float neg_one(-1.0f);
+  const v16float one(1.0);
+  const v16float one_third(1.0/3.0);
+  const v16float two_fifteenths(2.0/15.0);
+  const v16float neg_one(-1.0);
 
   const float _qsp = args->qsp;
 

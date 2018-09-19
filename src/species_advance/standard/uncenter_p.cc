@@ -43,6 +43,11 @@ uncenter_p_pipeline( center_p_pipeline_args_t * args,
 
   // Process particles for this pipeline.
 
+  // These are Intel specific pragmas.
+  //  #pragma simd
+  //  #pragma vector aligned
+  // Try the OpenMP variants first.
+  #pragma omp simd
   for( ; n; n--, p++ )
   {
     dx   = p->dx;                            // Load position

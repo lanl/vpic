@@ -25,14 +25,14 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
   const float          * RESTRICT ALIGNED(16)  vp14;
   const float          * RESTRICT ALIGNED(16)  vp15;
 
-  const v8float qdt_2mc(args->qdt_2mc);
-  const v8float msp(args->msp);
-  const v8float one(1.0);
+  const v16float qdt_2mc(args->qdt_2mc);
+  const v16float msp(args->msp);
+  const v16float one(1.0);
 
-  v8float dx, dy, dz;
-  v8float ex, ey, ez;
-  v8float v00, v01, v02, w;
-  v8int i;
+  v16float dx, dy, dz;
+  v16float ex, ey, ez;
+  v16float v00, v01, v02, w;
+  v16int i;
 
   double en00 = 0.0, en01 = 0.0, en02 = 0.0, en03 = 0.0;
   double en04 = 0.0, en05 = 0.0, en06 = 0.0, en07 = 0.0;

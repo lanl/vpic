@@ -9,9 +9,11 @@
 // REFERS TO THE GLOBAL NUMBER OF CELLS IN THE X-DIRECTION (NOT THE
 // _LOCAL_ NUMBER OF CELLS).  THIS LATENT BUG IS NOT EXPECTED TO
 // AFFECT ANY PRACTICAL SIMULATIONS.
+// This is a problem when a simulation gets decomposed to have nx/y/z = 1 in a
+// given direction, as it can lead to unwanted division by zero. This isn't a
+// problem in real simulations, but causes problems in small/toy/test problems
 
 #include "../field_advance/field_advance.h"
-// FIXME: SHOULD INCLUDE SPECIES_ADVANCE TOO ONCE READY
 
 /*****************************************************************************/
 

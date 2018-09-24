@@ -8,6 +8,8 @@
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */
 
+// TODO: this type (and possibly more in this file) are repeated elsewhere.
+// (specifically in DMPPOLICY.h)
 struct collective {
   collective_t * parent;
   int color;
@@ -227,39 +229,39 @@ struct RelayPolicy {
     MALLOC( mp, 1 );
     mp->n_port = n_port;
     MALLOC( mp->rbuf,    n_port ); MALLOC( mp->sbuf,    n_port );
-    MALLOC( mp->rbuf_sz, n_port ); MALLOC( mp->sbuf_sz, n_port ); 
-    MALLOC( mp->rreq_sz, n_port ); MALLOC( mp->sreq_sz, n_port ); 
-    MALLOC( mp->rreq,    n_port ); MALLOC( mp->sreq,    n_port ); 
+    MALLOC( mp->rbuf_sz, n_port ); MALLOC( mp->sbuf_sz, n_port );
+    MALLOC( mp->rreq_sz, n_port ); MALLOC( mp->sreq_sz, n_port );
+    MALLOC( mp->rreq,    n_port ); MALLOC( mp->sreq,    n_port );
     CLEAR(  mp->rbuf,    n_port ); CLEAR(  mp->sbuf,    n_port );
-    CLEAR(  mp->rbuf_sz, n_port ); CLEAR(  mp->sbuf_sz, n_port ); 
-    CLEAR(  mp->rreq_sz, n_port ); CLEAR(  mp->sreq_sz, n_port ); 
-    CLEAR(  mp->rreq,    n_port ); CLEAR(  mp->sreq,    n_port ); 
+    CLEAR(  mp->rbuf_sz, n_port ); CLEAR(  mp->sbuf_sz, n_port );
+    CLEAR(  mp->rreq_sz, n_port ); CLEAR(  mp->sreq_sz, n_port );
+    CLEAR(  mp->rreq,    n_port ); CLEAR(  mp->sreq,    n_port );
     REGISTER_OBJECT( mp, checkpt_mp, restore_mp, NULL );
     return mp;
   }
-  
+
   inline void
   delete_mp( mp_t * mp ) {
     int port;
     if( !mp ) return;
     UNREGISTER_OBJECT( mp );
     for( port=0; port<mp->n_port; port++ ) {
-      FREE_ALIGNED( mp->rbuf[port] ); FREE_ALIGNED( mp->sbuf[port] ); 
+      FREE_ALIGNED( mp->rbuf[port] ); FREE_ALIGNED( mp->sbuf[port] );
     }
-    FREE( mp->rreq    ); FREE( mp->sreq    ); 
-    FREE( mp->rreq_sz ); FREE( mp->sreq_sz ); 
-    FREE( mp->rbuf_sz ); FREE( mp->sbuf_sz ); 
+    FREE( mp->rreq    ); FREE( mp->sreq    );
+    FREE( mp->rreq_sz ); FREE( mp->sreq_sz );
+    FREE( mp->rbuf_sz ); FREE( mp->sbuf_sz );
     FREE( mp->rbuf    ); FREE( mp->sbuf    );
     FREE( mp );
   }
-  
+
   inline void * ALIGNED(128)
   mp_recv_buffer( mp_t * mp,
                   int port ) {
     if( !mp || port<0 || port>=mp->n_port ) ERROR(( "Bad args" ));
     return mp->rbuf[port];
   }
-  
+
   inline void * ALIGNED(128)
   mp_send_buffer( mp_t * mp,
                   int port ) {
@@ -272,9 +274,9 @@ struct RelayPolicy {
                        int port,
                        int sz ) {
     char * ALIGNED(128) buf;
-  
+
     if( !mp || port<0 || port>mp->n_port || sz<1 ) ERROR(( "Bad args" ));
-  
+
     // If there already a large enough buffer, we are done
     if( mp->rbuf_sz[port]>=sz ) return;
 
@@ -296,13 +298,13 @@ struct RelayPolicy {
     mp->rbuf[port]    = buf;
     mp->rbuf_sz[port] = sz;
   }
-  
+
   inline void
   mp_size_send_buffer( mp_t * mp,
                        int port,
                        int sz ) {
     char * ALIGNED(128) buf;
-  
+
     // Check input arguments
     if( !mp || port<0 || port>mp->n_port || sz<1 ) ERROR(( "Bad args" ));
 
@@ -311,14 +313,14 @@ struct RelayPolicy {
 
     // Try to reduce the number of reallocs
     sz = (int)( sz*(double)RESIZE_FACTOR );
-  
+
     // If no buffer allocated for this port, malloc it and return
     if( !mp->sbuf[port] ) {
       MALLOC_ALIGNED( mp->sbuf[port], sz, 128 );
       mp->sbuf_sz[port] = sz;
       return;
     }
-  
+
     // Resize the existing buffer (preserving any data in it)
     // (FIXME: THIS IS PROBABLY SILLY!)
     MALLOC_ALIGNED( buf, sz, 128 );
@@ -329,7 +331,7 @@ struct RelayPolicy {
   }
 
   /* ---- END CUT-AND-PASTE JOB FROM DMPPOLICY ---- */
-  
+
   inline void
   mp_begin_recv( mp_t * mp,
                  int port,

@@ -149,6 +149,7 @@
 // FIXME: SHOULD HAVE DIFFERENT FIELD_T FOR CELL BUILDS AND USE NEW
 // INFRASTRUCTURE
 
+// TODO: Do we need to worry about padding here
 typedef struct field {
   float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
   float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error

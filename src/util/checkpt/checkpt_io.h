@@ -48,7 +48,6 @@ struct CheckPtIO {
 
 		FileIO * fileIO = reinterpret_cast<FileIO *>(checkpt);
 
-		// FIXME: add return values
 		fileIO->read(reinterpret_cast<char *>(data), sz);
 	} // checkpt_read
 
@@ -59,7 +58,6 @@ struct CheckPtIO {
 
 		FileIO * fileIO = reinterpret_cast<FileIO *>(checkpt);
 
-		// FIXME: add return values
 		fileIO->write(reinterpret_cast<const char *>(data), sz);
 	} // checkpt_write
 

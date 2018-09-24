@@ -1,7 +1,6 @@
-// FIXME: This function assumes that the accumlator ghost values are
+// WARNING: This function assumes that the accumlator ghost values are
 // zero.  Further, assumes that the ghost values of jfx, jfy, jfz are
-// meaningless.  This might be changed to a more robust but slightly
-// slower implementation in the near future.
+// meaningless.
 
 #define IN_sf_interface
 #include "sf_interface_private.h"
@@ -15,13 +14,13 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
                              int n_pipeline ) {
   field_t             * ALIGNED(128) f = args->f;
   const accumulator_t * ALIGNED(128) a = args->a;
-  
+
   const accumulator_t * ALIGNED(16) a0;
   const accumulator_t * ALIGNED(16) ax,  * ALIGNED(16) ay,  * ALIGNED(16) az;
   const accumulator_t * ALIGNED(16) ayz, * ALIGNED(16) azx, * ALIGNED(16) axy;
   field_t * ALIGNED(16) f0;
   int x, y, z, n_voxel;
-  
+
   const int nx = args->nx;
   const int ny = args->ny;
   const int nz = args->nz;
@@ -31,7 +30,7 @@ unload_accumulator_pipeline( unload_accumulator_pipeline_args_t * args,
   const float cz = args->cz;
 
   // Process the voxels assigned to this pipeline
-  
+
   if( pipeline_rank==n_pipeline ) return; // No need for straggler cleanup
   DISTRIBUTE_VOXELS( 1,nx+1, 1,ny+1, 1,nz+1, 1,
                      pipeline_rank, n_pipeline, x, y, z, n_voxel );

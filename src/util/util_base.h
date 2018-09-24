@@ -85,11 +85,12 @@ typedef struct collective collective_t;
 
 // This pointer modifier indicates that a pointer can be assumed to
 // have at least the given power-of-two alignment.
-// FIXME: May want to use compiler intrinsics to provide compiler
+//
+// May want to use compiler intrinsics to provide compiler
 // the aligment information as well.
+//
 // NOTE: This is *currently* intentionally empty, but can be specialized on a
 // per-platform basis
-
 #ifndef ALIGNED
 #define ALIGNED(a)
 #endif
@@ -249,7 +250,7 @@ typedef struct collective collective_t;
 
 #define CHECKPOINT() log_printf( _LOG_HDR"[%i]: Checkpoint\n", world_rank )
 
-// FIXME: USE ONLY ONE LOG_PRINTF PER MESSAGE TO TRY AND MAKE THIS
+// WARNING: USE ONLY ONE LOG_PRINTF PER MESSAGE TO TRY AND MAKE THIS
 // ATOMIC WHEN MULTIPLE RANKS USE SIMULTANEOUSLY
 
 #define MESSAGE(args) do {                      \

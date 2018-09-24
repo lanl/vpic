@@ -53,12 +53,6 @@ option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 # NOTE: These must be set before creating the compile scripts below.
 #------------------------------------------------------------------------------#
 
-set(VPIC_CPPFLAGS)
-if(MPI_CPPFLAGS)
-  string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
-  set(VPIC_CPPFLAGS "${string_cppflags}")
-endif(MPI_CPPFLAGS)
-
 string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
 if(NOT ${string_includes} STREQUAL "")
   set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
@@ -168,6 +162,8 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 #------------------------------------------------------------------------------#
 # Add library target
 #------------------------------------------------------------------------------#
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VPIC_CXX_FLAGS}")
 
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
 file(GLOB_RECURSE VPIC_NOT_SRC src/util/v4/test/v4.cc src/util/rng/test/rng.cc)

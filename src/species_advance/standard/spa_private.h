@@ -110,8 +110,6 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
   ((vl)+((((int64_t)(p))*((int64_t)((vh)-(vl)+1)) + ((int64_t)((P)-1))) / \
           ((int64_t)(P))))
 
-// FIXME: safe to remove? enum { max_subsort_voxel = 26624 };
-
 typedef struct sort_p_pipeline_args {
 
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)

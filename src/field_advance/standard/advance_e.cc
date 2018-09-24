@@ -197,7 +197,7 @@ void
 advance_e( field_array_t * RESTRICT fa,
            float frac ) {
   if( !fa     ) ERROR(( "Bad args" ));
-  if( frac!=1 ) ERROR(( "standard advance_e does not support frac!=1 yet" ));
+  if( frac!=1 ) ERROR(( "standard advance_e does not support frac!=1" ));
 
   /***************************************************************************
    * Begin tangential B ghost setup

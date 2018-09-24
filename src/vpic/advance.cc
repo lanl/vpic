@@ -38,7 +38,8 @@ int vpic_simulation::advance(void) {
 
   // Note: Particles should not have moved since the last performance sort
   // when calling collision operators.
-  // FIXME: Technically, this placement of the collision operators only
+
+  // NOTE: Technically, this placement of the collision operators only
   // yields a first order accurate Trotter factorization (not a second
   // order accurate factorization).
 

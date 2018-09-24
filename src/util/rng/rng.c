@@ -298,30 +298,30 @@ frandn( rng_t * RESTRICT r ) {
 
   for(;;) {
 
-    // Extract components of a 32-bit rand 
+    // Extract components of a 32-bit rand
 
 #   if FRANDN_N!=64
 #   error "frandn_table.h does not match frandn()"
 #   endif
 
     RNG_NEXT( a, uint32_t, r, u32, 0 );
-    s = ( a &   (uint32_t)0x01  );      //        1-bit uniform   rand 
+    s = ( a &   (uint32_t)0x01  );      //        1-bit uniform   rand
     i = ( a &   (uint32_t)0x7e  ) >> 1; //        6-bit uniform   rand
     j = ( a &   (uint32_t)0x80  ) << 1; // 2^8 (  1-bit uniform   rand )
     j = ( a & (~(uint32_t)0xff) ) + j;  // 2^8 ( 24-bit trapezoid rand )
 
-    // Construct |x| and see if we can accept this point 
+    // Construct |x| and see if we can accept this point
 
     x = j*(scale*frandn_zig_x[i+1]);
     if( LIKELY( x<frandn_zig_x[i] ) ) break; // Vast majority of the time
- 
-    // Construct a y for rejection testing 
- 
+
+    // Construct a y for rejection testing
+
     RNG_NEXT( a, uint32_t, r, u32, 0 );
     y = conv_frand_c(a);
     if( LIKELY( i!=FRANDN_N-1 ) )
       y = frandn_zig_y[i]+(frandn_zig_y[i+1]-frandn_zig_y[i])*y;
-    else { // In tail 
+    else { // In tail
       RNG_NEXT( a, uint32_t, r, u32, 0 );
       x  = FRANDN_R - (1.f/FRANDN_R)*logf( conv_frand_c1(a) );
       y *= expf( -FRANDN_R*( x - 0.5f*FRANDN_R ) );
@@ -330,7 +330,9 @@ frandn( rng_t * RESTRICT r ) {
     if( y < expf(-0.5f*x*x) ) break;
  }
 
- return sgn[s]*x; // FIXME: Use copysign, trinary or branch? 
+ // FIXME: Use copysign, trinary or branch ? (to deal more gracefully with this
+ // negation?)
+ return sgn[s]*x;
 }
 
 float *
@@ -354,33 +356,33 @@ drandn( rng_t * RESTRICT r ) {
 
   static const double scale = 1./1.8446744073709551616e+19;
   static const double sgn[2] = { 1., -1. };
-  
+
   for(;;) {
-    
-    // Extract components of a 64-bit rand 
-    
+
+    // Extract components of a 64-bit rand
+
 #   if DRANDN_N!=256
 #   error "drandn_table.h does not match drandn"
 #   endif
 
     RNG_NEXT( a, uint64_t, r, u64, 0 );
-    s =   a &   (uint64_t)0x001;        //         1-bit uniform   rand 
+    s =   a &   (uint64_t)0x001;        //         1-bit uniform   rand
     i = ( a &   (uint64_t)0x1fe ) >> 1; //         8-bit uniform   rand
     j = ( a &   (uint64_t)0x400 ) << 1; // 2^11 (  1-bit uniform   rand )
     j = ( a & (~(uint64_t)0x3ff)) + j;  // 2^11 ( 53-bit trapezoid rand )
 
-    // Construct |x| and see if we can accept this point 
+    // Construct |x| and see if we can accept this point
 
     x = j*(scale*drandn_zig_x[i+1]);
     if( LIKELY( x<drandn_zig_x[i] ) ) break; // Vast majority of the time
- 
-    // Construct a y for rejection testing 
- 
+
+    // Construct a y for rejection testing
+
     RNG_NEXT( a, uint64_t, r, u64, 0 );
     y = conv_drand_c(a);
     if( LIKELY( i!=DRANDN_N-1 ) )
       y = drandn_zig_y[i]+(drandn_zig_y[i+1]-drandn_zig_y[i])*y;
-    else { // In tail 
+    else { // In tail
       RNG_NEXT( a, uint64_t, r, u64, 0 );
       x  = DRANDN_R - (1./DRANDN_R)*log( conv_drand_c1(a) );
       y *= exp( -DRANDN_R*( x - 0.5*DRANDN_R ) );
@@ -389,7 +391,7 @@ drandn( rng_t * RESTRICT r ) {
     if( y < exp(-0.5*x*x) ) break;
  }
 
- return sgn[s]*x; // FIXME: Use copysign, trinary or branch? 
+ return sgn[s]*x; // FIXME: Use copysign, trinary or branch?
 }
 
 double *
@@ -514,7 +516,7 @@ shuffle( rng_t * RESTRICT r,
   if( (str_ele % sz_ele)==0 ) {
 
 #   define SWAP_IJ                                                      \
-    t = x[i*str_ele], x[i*str_ele] = x[j*str_ele], x[j*str_ele] = t   
+    t = x[i*str_ele], x[i*str_ele] = x[j*str_ele], x[j*str_ele] = t
 
     switch( sz_ele ) {
     case 1:  str_ele /= sz_ele; SHUFFLE( uint8_t  );

@@ -8,7 +8,7 @@
 /* Define this comm and mp opaque handles */
 /* FIXME: PARENT, COLOR AND KEY ARE FOR FUTURE EXPANSION */
 
-// TODO: this type (and possibly more in this file) are repeated elsewhere.
+// FIXME: this type (and possibly more in this file) are repeated elsewhere.
 // (specifically in DMPPOLICY.h)
 struct collective {
   collective_t * parent;

@@ -30,7 +30,7 @@
  * Inputs:
  *   e0 Peak instantaneous E field in "natural units"
  *----------------------------------------------------------------------------*/
-// TODO: Re-visit this implementation and replace with something more modern
+// FIXME: Re-visit this implementation and replace with something more modern
 // and concise.  People currently have versions in their input decks..
 double vpic_simulation::poynting_flux(double e0) {
 	double psum, gpsum;

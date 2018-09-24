@@ -127,7 +127,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
       {
           if (string_matches(arg,match_keys[j]))
           {
-              // TODO: This could be tightened up more, as it disallows the use
+              // FIXME: This could be tightened up more, as it disallows the use
                   // of a file called 'restart'
               char output_message[64];
               sprintf(output_message,
@@ -141,7 +141,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
       }
 
 		  // Check for "=" (equals)
-      // TODO: Add an option to make this an error or a warning
+      // FIXME: Add an option to make this an error or a warning
 			if (string_contains(arg, "="))
 			{
          const int NUM_WARN_REPEAT = 5;

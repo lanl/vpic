@@ -3,7 +3,6 @@
 
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN
 
-// FIXME: ALTIVEC ACCELERATE!
 #if defined(__SSE__)
 #include "xmmintrin.h"
 #endif

@@ -61,7 +61,6 @@ link_boundary( link_boundary_t     * lb,
   z = g->z0 + ((iz-1)+(r->dz+1)*0.5)*g->dz;
 
   // ASCII write of particle data as per Tom's request
-  // FIXME: perform I/O without calls to fprintf and need for stdio.h
   // Fields: species id, x, y, z, ux, uy, uz, q
 
   fprintf( fp, "%d %e %e %e %e %e %e %e\n",

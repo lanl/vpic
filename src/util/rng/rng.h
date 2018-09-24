@@ -51,8 +51,6 @@ new_rng( int seed ); /* Random number generator seed */
 void
 delete_rng( rng_t * RESTRICT r ); /* Generator to delete */
 
-/* FIXME: WE NEED TO BIGGER SEEDS.  SEE ABOVE. */
-
 rng_t *                            /* Returns r */
 seed_rng( rng_t * RESTRICT r,      /* Generator to seed */
           int              seed ); /* Seed */

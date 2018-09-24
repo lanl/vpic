@@ -583,27 +583,30 @@ namespace v4 {
 
   BINARY(+,  c.v = (_v4_float)vec_add( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(-,  c.v = (_v4_float)vec_sub( (_v4_int)a.v, (_v4_int) b.v ) )
+
+  // FIXME: These Operator overloads are possibly more complex than they could be
   BINARY(*,  union { int i[4]; _v4_float v; } t;
              union { int i[4]; _v4_float v; } u;
              t.v = a.v; u.v = b.v;
              c.v = (_v4_float)((_v4_int){ t.i[0]*u.i[0],
                                           t.i[1]*u.i[1],
                                           t.i[2]*u.i[2],
-                                          t.i[3]*u.i[3] }) ) // FIXME: Sigh ...
+                                          t.i[3]*u.i[3] }) )
   BINARY(/,  union { int i[4]; _v4_float v; } t;
              union { int i[4]; _v4_float v; } u;
              t.v = a.v; u.v = b.v;
              c.v = (_v4_float)((_v4_int){ t.i[0]/u.i[0],
                                           t.i[1]/u.i[1],
                                           t.i[2]/u.i[2],
-                                          t.i[3]/u.i[3] }) ) // FIXME: Sigh ...
+                                          t.i[3]/u.i[3] }) )
   BINARY(%,  union { int i[4]; _v4_float v; } t;
              union { int i[4]; _v4_float v; } u;
              t.v = a.v; u.v = b.v;
              c.v = (_v4_float)((_v4_int){ t.i[0]%u.i[0],
                                           t.i[1]%u.i[1],
                                           t.i[2]%u.i[2],
-                                          t.i[3]%u.i[3] }) ) // FIXME: Sigh ...
+                                          t.i[3]%u.i[3] }) )
+
   BINARY(^,  c.v = (_v4_float)vec_xor( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(&,  c.v = (_v4_float)vec_and( (_v4_int)a.v, (_v4_int) b.v ) )
   BINARY(|,  c.v = (_v4_float)vec_or(  (_v4_int)a.v, (_v4_int) b.v ) )

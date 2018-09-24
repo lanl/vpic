@@ -53,7 +53,7 @@ typedef struct maxwellian_reflux {
 #define M_SQRT2 (1.4142135623730950488016887242096981)
 #endif
 
-/* FIXME: DON'T IGNORE MAX_PI */
+/* FIXME: DON'T IGNORE MAX_PI, currently used */
 int
 interact_maxwellian_reflux( maxwellian_reflux_t * RESTRICT mr,
                             species_t           * RESTRICT sp,

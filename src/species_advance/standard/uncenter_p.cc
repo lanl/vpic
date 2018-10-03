@@ -48,7 +48,8 @@ uncenter_p_pipeline( center_p_pipeline_args_t * args,
   //  #pragma vector aligned
   // Try the OpenMP variants first.
   #pragma omp simd
-  for( ; n; n--, p++ )
+  // for( ; n; n--, p++ )
+  for( ; n != 0; n--, p++ )
   {
     dx   = p->dx;                            // Load position
     dy   = p->dy;

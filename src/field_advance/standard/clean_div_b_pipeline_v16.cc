@@ -89,16 +89,16 @@ clean_div_b_pipeline_v16( pipeline_args_t * args,
 
   for( ; n_voxel > 15; n_voxel -= 16 )
   {
-    NEXT_STENCIL(0);
-    NEXT_STENCIL(1);
-    NEXT_STENCIL(2);
-    NEXT_STENCIL(3);
-    NEXT_STENCIL(4);
-    NEXT_STENCIL(5);
-    NEXT_STENCIL(6);
-    NEXT_STENCIL(7);
-    NEXT_STENCIL(8);
-    NEXT_STENCIL(9);
+    NEXT_STENCIL(00);
+    NEXT_STENCIL(01);
+    NEXT_STENCIL(02);
+    NEXT_STENCIL(03);
+    NEXT_STENCIL(04);
+    NEXT_STENCIL(05);
+    NEXT_STENCIL(06);
+    NEXT_STENCIL(07);
+    NEXT_STENCIL(08);
+    NEXT_STENCIL(09);
     NEXT_STENCIL(10);
     NEXT_STENCIL(11);
     NEXT_STENCIL(12);

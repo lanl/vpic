@@ -85,8 +85,10 @@ typedef struct collective collective_t;
 
 // This pointer modifier indicates that a pointer can be assumed to
 // have at least the given power-of-two alignment.
-// FIXME: May want to use compiler instrincs for to provide compiler
+// FIXME: May want to use compiler intrinsics to provide compiler
 // the aligment information as well.
+// NOTE: This is *currently* intentionally empty, but can be specialized on a
+// per-platform basis
 
 #ifndef ALIGNED
 #define ALIGNED(a)

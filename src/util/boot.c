@@ -44,7 +44,7 @@ boot_services( int * pargc,
 #endif
 
   // Set the boot_timestamp
-  
+
   mp_barrier();
   _boot_timestamp = 0;
   _boot_timestamp = uptime();

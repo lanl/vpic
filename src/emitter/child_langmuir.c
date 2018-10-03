@@ -106,14 +106,17 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         if( nm>=max_nm ) { nm_skipped++; continue; }                    \
         w = ( frand_c0(rng)*cdt ) /                                     \
           sqrtf( ( u##X*u##X + u##Y*u##Y ) + ( u##Z*u##Z + 1 ) );       \
-        pm[nm].disp##X = w*u##X*rd##X;                                  \
-        pm[nm].disp##Y = w*u##Y*rd##Y;                                  \
-        pm[nm].disp##Z = w*u##Z*rd##Z;                                  \
-        pm[nm].i       = np-1;                                          \
-        nm += move_p( p, pm, a, g, qsp );                               \
+        DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );     \
+        local_pm->disp##X = w*u##X*rd##X;                               \
+        local_pm->disp##Y = w*u##Y*rd##Y;                               \
+        local_pm->disp##Z = w*u##Z*rd##Z;                               \
+        local_pm->i       = np-1;                                       \
+        if (move_p( p, local_pm, a, g, qsp )) {                         \
+            pm[nm++] = local_pm[0];                                     \
+        }                                                               \
       }                                                                 \
     }
-    
+
     switch( EXTRACT_COMPONENT_TYPE( cc ) ) {
     case BOUNDARY(-1, 0, 0): EMIT_PARTICLES(x,y,z,+) break;
     case BOUNDARY( 0,-1, 0): EMIT_PARTICLES(y,z,x,+) break;
@@ -125,9 +128,9 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     }
 
 #   undef EMIT_PARTICLES
-     
+
   }
-  
+
   sp->np = np;
   sp->nm = nm;
 

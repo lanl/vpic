@@ -1,7 +1,8 @@
 /*~--------------------------------------------------------------------------~*
  *~--------------------------------------------------------------------------~*/
 
-#include <gtest/gtest.h>
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#include "catch.hpp"
 
 #include "../../util.h"
 #include "src/vpic/vpic_unit_deck.h"
@@ -212,15 +213,13 @@ static const unsigned int seq[] = {
    509881964, 3807607878, 3055319970,  671840881, 3477325874 };
 
 /* FIXME: IMPROVE COVERAGE */
+TEST_CASE("uirand", "[rng]") {
 
-TEST(rng, uirand) {
+  boot_checkpt(NULL, NULL);
+
   int i;
   rng_t * rng = new_rng( 1234 );
   for( i=0; i<N; i++ ) if( uirand( rng )!=seq[i] ) break;
-  ASSERT_FALSE( i!=N );
+  REQUIRE_FALSE( i!=N );
   delete_rng(rng);
 } // TEST
-
-/*~-------------------------------------------------------------------------~-*
- * vim: set tabstop=2 shiftwidth=2 expandtab :
- *~-------------------------------------------------------------------------~-*/

@@ -8,7 +8,8 @@
 
 //----------------------------------------------------------------------------//
 // Reference implementation for an energy_p pipeline function which does not
-// make use of explicit calls to vector intrinsic functions.
+// make use of explicit calls to vector intrinsic functions.  This function
+// calculates kinetic energy, normalized by c^2.
 //----------------------------------------------------------------------------//
 
 void

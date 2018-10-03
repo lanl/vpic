@@ -55,7 +55,7 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
-    % git clone git@github.com:lanl/vpic.git
+    % git clone https://github.com/lanl/vpic.git
 
 This command will check out the VPIC source code.
 
@@ -65,6 +65,8 @@ The primary requirement to build VPIC is a C++11 capable compiler and
 an up-to-date version of MPI.
 
 # Build Instructions
+
+    % cd vpic 
 
 VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
@@ -100,6 +102,8 @@ the *harris* input deck in the *sample* subdirectory
 source directory)*:
 
     % bin/vpic ../sample/harris
+
+Beginners are advised to read the harris deck thoroughly, as it provides many examples of common uses cases.
 
 # Command Line Arguments
 

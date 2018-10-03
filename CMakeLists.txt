@@ -82,12 +82,6 @@ option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 # NOTE: These must be set before creating the compile scripts below.
 #------------------------------------------------------------------------------#
 
-set(VPIC_CPPFLAGS)
-if(MPI_CPPFLAGS)
-  string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
-  set(VPIC_CPPFLAGS "${string_cppflags}")
-endif(MPI_CPPFLAGS)
-
 string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
 if(NOT ${string_includes} STREQUAL "")
   set(VPIC_CXX_FLAGS "-I${string_includes} ${MPI_C_LINK_FLAGS}")
@@ -250,6 +244,9 @@ endif(VPIC_PRINT_MORE_DIGITS)
 # Handle vpic compile script last.
 #------------------------------------------------------------------------------#
 
+# Allow files to be references from the root, (eg #include "src/vpic/vpic.h")
+include_directories(${PROJECT_SOURCE_DIR})
+
 if(BUILD_SHARED_LIBS)
     set(VPIC_CXX_FLAGS "-rdynamic ${VPIC_CXX_FLAGS}")
 endif(BUILD_SHARED_LIBS)
@@ -295,6 +292,8 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 #------------------------------------------------------------------------------#
 # Add library target
 #------------------------------------------------------------------------------#
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VPIC_CXX_FLAGS}")
 
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
 file(GLOB_RECURSE VPIC_NOT_SRC
@@ -367,8 +366,28 @@ endif()
 if(ENABLE_INTEGRATED_TESTS)
   enable_testing()
   add_subdirectory(test/integrated)
+
 endif(ENABLE_INTEGRATED_TESTS)
 
+if(ENABLE_UNIT_TESTS)
+
+  # NOTE: This can also be done by a subdirectory (useful when we have multiple tests)
+  # Add includes for Catch2
+  set(TEST_DIR "./test/include")
+  include_directories(${TEST_DIR})
+
+  # Add tests individually
+  if (USE_V4)
+    add_executable(v4 src/util/v4/test/v4.cc)
+    add_test(NAME v4 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./v4)
+  endif(USE_V4)
+
+  # RNG tests
+  add_executable(rng src/util/rng/test/rng.cc)
+  target_link_libraries(rng vpic)
+  add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
+
+endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

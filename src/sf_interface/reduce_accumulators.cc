@@ -3,6 +3,14 @@
 #include "sf_interface_private.h"
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "reduce_accumulators_pipeline.cc"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper reduce_accumulator_array
 // function.
 //----------------------------------------------------------------------------//

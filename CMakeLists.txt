@@ -304,23 +304,27 @@ file(GLOB_RECURSE VPIC_NOT_SRC
   src/collision/binary_pipeline.c
   src/collision/langevin_pipeline.c
   src/collision/unary_pipeline.c
-  src/field_advance/standard/advance_b.cc
-  src/field_advance/standard/advance_e.cc
-  src/field_advance/standard/clean_div_b.cc
-  src/field_advance/standard/clean_div_e.c
-  src/field_advance/standard/compute_curl_b.cc
-  src/field_advance/standard/compute_div_b_err.cc
-  src/field_advance/standard/compute_div_e_err.c
-  src/field_advance/standard/compute_rhob.c
-  src/field_advance/standard/compute_rms_div_b_err.c
-  src/field_advance/standard/compute_rms_div_e_err.c
-  src/field_advance/standard/energy_f.c
-  src/field_advance/standard/vacuum_advance_e.cc
-  src/field_advance/standard/vacuum_clean_div_e.c
-  src/field_advance/standard/vacuum_compute_curl_b.cc
-  src/field_advance/standard/vacuum_compute_div_e_err.c
-  src/field_advance/standard/vacuum_compute_rhob.c
-  src/field_advance/standard/vacuum_energy_f.c
+  src/field_advance/standard/advance_b_pipeline.cc
+  src/field_advance/standard/advance_e_pipeline.cc
+  src/field_advance/standard/clean_div_b_pipeline.cc
+  src/field_advance/standard/clean_div_e_pipeline.c
+  src/field_advance/standard/compute_curl_b_pipeline.cc
+  src/field_advance/standard/compute_div_b_err_pipeline.cc
+  src/field_advance/standard/compute_div_e_err_pipeline.c
+  src/field_advance/standard/compute_rhob_pipeline.c
+  src/field_advance/standard/compute_rms_div_b_err_pipeline.c
+  src/field_advance/standard/compute_rms_div_e_err_pipeline.c
+  src/field_advance/standard/energy_f_pipeline.c
+  src/field_advance/standard/vacuum_advance_e_pipeline.cc
+  src/field_advance/standard/vacuum_clean_div_e_pipeline.c
+  src/field_advance/standard/vacuum_compute_curl_b_pipeline.cc
+  src/field_advance/standard/vacuum_compute_div_e_err_pipeline.c
+  src/field_advance/standard/vacuum_compute_rhob_pipeline.c
+  src/field_advance/standard/vacuum_energy_f_pipeline.c
+  src/sf_interface/clear_accumulators_pipeline.c
+  src/sf_interface/interpolator_array_pipeline.cc
+  src/sf_interface/reduce_accumulators_pipeline.cc
+  src/sf_interface/unload_accumulator_pipeline.cc
   src/field_advance/standard/advance_b_pipeline_v4.cc
   src/field_advance/standard/advance_e_pipeline_v4.cc
   src/field_advance/standard/clean_div_b_pipeline_v4.cc

@@ -110,7 +110,7 @@ typedef void
 #else
 
 # define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline,             \
+  thread.dispatch( (pipeline_func_t)name##_pipeline_scalar,      \
                    args, sizeof(*args), str );                   \
   name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
 

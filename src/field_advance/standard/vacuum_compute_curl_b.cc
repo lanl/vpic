@@ -8,7 +8,7 @@
 // to be conditionally included.
 //----------------------------------------------------------------------------//
 
-#include "vacuum_compute_curl_b_pipeline.c"
+#include "vacuum_compute_curl_b_pipeline.cc"
 
 //----------------------------------------------------------------------------//
 // Top level function to select and call the proper vacuum_compute_curl_b

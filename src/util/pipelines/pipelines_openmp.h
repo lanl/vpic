@@ -62,23 +62,18 @@ enum { MAX_PIPELINE = 272 };
       name##_pipeline_v16( args+id*sizeof(*args)*str, id, N_PIPELINE );    \
     }                                                                      \
   }                                                                        \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
+  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
 
-// # define EXEC_PIPELINES(name,args,str)			 \
-//   thread.dispatch( (pipeline_func_t)name##_pipeline_v16,	 \
-//                    args, sizeof(*args), str );		 \
-//   name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v16( args_t *args,        \
-                       int pipeline_rank,   \
-                       int n_pipeline );    \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
+# define PROTOTYPE_PIPELINE( name, args_t )  \
+  void                                       \
+  name##_pipeline_v16( args_t *args,         \
+                       int pipeline_rank,    \
+                       int n_pipeline );     \
+                                             \
+  void                                       \
+  name##_pipeline_scalar( args_t *args,      \
+                          int pipeline_rank, \
+                          int n_pipeline )
 
 //----------------------------------------------------------------------------//
 // Macro defines to support v8 simd vector acceleration.  Uses thread
@@ -97,23 +92,18 @@ enum { MAX_PIPELINE = 272 };
       name##_pipeline_v8( args+id*sizeof(*args)*str, id, N_PIPELINE );     \
     }                                                                      \
   }                                                                        \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
+  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
 
-// # define EXEC_PIPELINES(name,args,str)			 \
-//   thread.dispatch( (pipeline_func_t)name##_pipeline_v8,	 \
-//                    args, sizeof(*args), str );		 \
-//   name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v8( args_t *args,         \
-                      int pipeline_rank,    \
-                      int n_pipeline );     \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
+# define PROTOTYPE_PIPELINE( name, args_t )  \
+  void                                       \
+  name##_pipeline_v8( args_t *args,          \
+                      int pipeline_rank,     \
+                      int n_pipeline );      \
+                                             \
+  void                                       \
+  name##_pipeline_scalar( args_t *args,      \
+                          int pipeline_rank, \
+                          int n_pipeline )
 
 //----------------------------------------------------------------------------//
 // Macro defines to support v4 simd vector acceleration.  Uses thread
@@ -132,23 +122,18 @@ enum { MAX_PIPELINE = 272 };
       name##_pipeline_v4( args+id*sizeof(*args)*str, id, N_PIPELINE );     \
     }                                                                      \
   }                                                                        \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
+  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
 
-// # define EXEC_PIPELINES(name,args,str)			 \
-//   thread.dispatch( (pipeline_func_t)name##_pipeline_v4,	 \
-//                    args, sizeof(*args), str );		 \
-//   name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline_v4( args_t *args,         \
-                      int pipeline_rank,    \
-                      int n_pipeline );     \
-                                            \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
+# define PROTOTYPE_PIPELINE( name, args_t )  \
+  void                                       \
+  name##_pipeline_v4( args_t *args,          \
+                      int pipeline_rank,     \
+                      int n_pipeline );      \
+                                             \
+  void                                       \
+  name##_pipeline_scalar( args_t *args,      \
+                          int pipeline_rank, \
+                          int n_pipeline )
 
 //----------------------------------------------------------------------------//
 // Macro defines to support the standard implementation which does not use
@@ -164,21 +149,16 @@ enum { MAX_PIPELINE = 272 };
     _Pragma( TOSTRING( omp for ) )                                         \
     for( int id = 0; id < N_PIPELINE; id++ )                               \
     {                                                                      \
-      name##_pipeline( args+id*sizeof(*args)*str, id, N_PIPELINE );        \
+      name##_pipeline_scalar( args+id*sizeof(*args)*str, id, N_PIPELINE ); \
     }                                                                      \
   }                                                                        \
-  name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
+  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE );
 
-// # define EXEC_PIPELINES(name,args,str)			 \
-//   thread.dispatch( (pipeline_func_t)name##_pipeline,		 \
-//                    args, sizeof(*args), str );		 \
-//   name##_pipeline( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t ) \
-  void                                      \
-  name##_pipeline( args_t *args,            \
-                   int pipeline_rank,       \
-                   int n_pipeline )
+# define PROTOTYPE_PIPELINE( name, args_t )  \
+  void                                       \
+  name##_pipeline_scalar( args_t *args,      \
+                          int pipeline_rank, \
+                          int n_pipeline )
 
 #endif
 

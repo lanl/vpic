@@ -26,7 +26,7 @@ apply_langevin( langevin_t * l )
   }
 
   // Conditionally execute this when more abstractions are available.
-  apply_langevin_pipeline( l )
+  apply_langevin_pipeline( l );
 }
 
 void

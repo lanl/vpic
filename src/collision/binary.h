@@ -1,6 +1,8 @@
 #ifndef _binary_h_
 #define _binary_h_
 
+#include "collision_private.h"
+
 typedef struct binary_collision_model
 {
   char * name;

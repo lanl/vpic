@@ -1,7 +1,7 @@
 #define IN_collision
 
-#include "langevin.h"
-#include "collision_private.h"
+// #include "langevin.h"
+// #include "collision_private.h"
 
 /* Private interface *********************************************************/
 

@@ -1,6 +1,8 @@
 #ifndef _langevin_h_
 #define _langevin_h_
 
+#include "collision_private.h"
+
 typedef struct langevin
 {
   species_t  * sp;

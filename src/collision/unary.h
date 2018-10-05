@@ -1,6 +1,8 @@
 #ifndef _unary_h_
 #define _unary_h_
 
+#include "collision_private.h"
+
 typedef struct unary_collision_model
 {
   char * name;

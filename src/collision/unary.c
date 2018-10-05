@@ -1,7 +1,6 @@
 #define IN_collision
 
 #include "unary.h"
-#include "collision_private.h"
 
 /* Private interface *********************************************************/
 

@@ -1,7 +1,6 @@
 #define IN_collision
 
 #include "binary.h"
-#include "collision_private.h"
 
 /* FIXME: ADD SAMPLE TO UNARY */
 

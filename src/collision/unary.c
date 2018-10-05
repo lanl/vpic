@@ -6,6 +6,14 @@
 /* Private interface *********************************************************/
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "unary_pipeline.c"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call proper apply_unary_collision_model
 // function.
 //----------------------------------------------------------------------------//

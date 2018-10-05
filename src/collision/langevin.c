@@ -6,6 +6,14 @@
 /* Private interface *********************************************************/
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "langevin_pipeline.c"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper apply_langevin function.
 //----------------------------------------------------------------------------//
 

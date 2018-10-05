@@ -301,6 +301,9 @@ file(GLOB_RECURSE VPIC_NOT_SRC
   src/util/v8/test/v8.cc
   src/util/v16/test/v16.cc
   src/util/rng/test/rng.cc
+  src/collision/binary_pipeline.c
+  src/collision/langevin_pipeline.c
+  src/collision/unary_pipeline.c
   src/field_advance/standard/advance_b_pipeline_v4.cc
   src/field_advance/standard/advance_e_pipeline_v4.cc
   src/field_advance/standard/clean_div_b_pipeline_v4.cc

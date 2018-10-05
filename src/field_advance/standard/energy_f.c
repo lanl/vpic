@@ -5,6 +5,14 @@
 #include "sfa_private.h"
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "energy_f_pipeline.c"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper energy_f function.
 //----------------------------------------------------------------------------//
 

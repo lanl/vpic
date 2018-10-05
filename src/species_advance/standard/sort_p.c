@@ -145,6 +145,14 @@ sort_p( species_t * sp )
 #else
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "sort_p_pipeline.c"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call the proper sort_p function.
 //----------------------------------------------------------------------------//
 

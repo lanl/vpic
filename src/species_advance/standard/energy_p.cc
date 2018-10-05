@@ -3,6 +3,14 @@
 #include "spa_private.h"
 
 //----------------------------------------------------------------------------//
+// Include various programming model implementation files. For now, this is
+// just the pipeline model. When there are more models, probably want these
+// to be conditionally included.
+//----------------------------------------------------------------------------//
+
+#include "energy_p_pipeline.cc"
+
+//----------------------------------------------------------------------------//
 // Top level function to select and call particle energy function using the
 // desired particle energy abstraction.  Currently, the only abstraction
 // available is the pipeline abstraction.

@@ -10,7 +10,7 @@
 // to be conditionally included.
 //----------------------------------------------------------------------------//
 
-#include "compute_rhob_pipeline.cc"
+#include "compute_rhob_pipeline.c"
 
 //----------------------------------------------------------------------------//
 // Top level function to select and call the proper compute_rhob function.

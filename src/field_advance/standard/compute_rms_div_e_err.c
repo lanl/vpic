@@ -26,7 +26,7 @@ compute_rms_div_e_err( const field_array_t * RESTRICT fa )
   }
 
   // Conditionally execute this when more abstractions are available.
-  rms_div_e_err = compute_rms_div_e_err( fa );
+  rms_div_e_err = compute_rms_div_e_err_pipeline( fa );
 
   return rms_div_e_err;
 }

@@ -23,5 +23,5 @@ compute_div_b_err( field_array_t * RESTRICT fa )
   }
 
   // Conditionally execute this when more abstractions are available.
-  compute_div_b_err( fa );
+  compute_div_b_err_pipeline( fa );
 }

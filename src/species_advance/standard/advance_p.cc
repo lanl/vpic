@@ -281,7 +281,6 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
 
 #endif
 
-
 //----------------------------------------------------------------------------//
 // Top level function to select and call the proper advance_p pipeline
 // function.

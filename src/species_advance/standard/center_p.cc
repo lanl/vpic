@@ -51,7 +51,14 @@ center_p_pipeline( center_p_pipeline_args_t * args,
     ux  += hax;                              // Half advance E
     uy  += hay;
     uz  += haz;
+
+    // TODO: This is 4mc not 2mc, does this change the unity value?
+#ifdef ENABLE_NON_RELATIVSTIC
+    v0 = 1.0f;
+#else
     v0   = qdt_4mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz)));
+#endif
+
     /**/                                     // Boris - scalars
     v1   = cbx*cbx + (cby*cby + cbz*cbz);
     v2   = (v0*v0)*v1;

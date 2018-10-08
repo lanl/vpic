@@ -86,7 +86,13 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
     ke_mc = ux*ux + uy*uy + uz*uz; // ke_mc = |u|^2 (invariant)
     vz = sqrt(1+ke_mc);            // vz = gamma    (invariant)
     ke_mc *= c/(vz+1);             // ke_mc = c|u|^2/(gamma+1) = c*(gamma-1)
+
+#ifdef ENABLE_NON_RELATIVSTIC
+    vz = 1.0f;
+#else
     vz = c/vz;                     // vz = c/gamma
+#endif
+
     w0 = qdt_4mc2*vz;
     w1 = w5*w5 + w6*w6 + w7*w7;    // |cB|^2
     w2 = w0*w0*w1;

@@ -87,7 +87,13 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     ux  += hax;                               // Half advance E
     uy  += hay;
     uz  += haz;
+
+#ifdef ENABLE_NON_RELATIVSTIC
+    v0 = 1.0f;
+#else
     v0   = qdt_2mc/sqrtf(one + (ux*ux + (uy*uy + uz*uz)));
+#endif
+
     /**/                                      // Boris - scalars
     v1   = cbx*cbx + (cby*cby + cbz*cbz);
     v2   = (v0*v0)*v1;
@@ -284,7 +290,13 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     ux += hax;
     uy += hay;
     uz += haz;
+
+#ifdef ENABLE_NON_RELATIVSTIC
+    v0 = 1.0f;
+#else
     v0  = qdt_2mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
+#endif
+
     v1  = fma( cbx,cbx, fma( cby,cby, cbz*cbz ) );
     v2  = (v0*v0)*v1;
     v3  = v0*fma( fma( two_fifteenths, v2, one_third ), v2, one );

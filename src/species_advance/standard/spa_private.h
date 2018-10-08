@@ -46,7 +46,7 @@ typedef struct advance_p_pipeline_args {
 
 } advance_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 // center_p_pipeline and uncenter_p_pipeline interface
@@ -62,8 +62,8 @@ typedef struct center_p_pipeline_args {
 
 } center_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 // energy_p_pipeline interface
@@ -81,7 +81,7 @@ typedef struct energy_p_pipeline_args {
 
 } energy_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
@@ -129,8 +129,8 @@ typedef struct sort_p_pipeline_args {
 
 } sort_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
 
 #endif // _spa_private_h_

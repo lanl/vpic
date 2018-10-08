@@ -11,6 +11,8 @@
 
 #include "spa_private.h"
 
+#include "../../util/pipelines/pipelines_exec.h"
+
 //----------------------------------------------------------------------------//
 // This is the new thread parallel version of the particle sort.
 //----------------------------------------------------------------------------//

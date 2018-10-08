@@ -1,7 +1,6 @@
 #define IN_collision
 
-// #include "langevin.h"
-// #include "collision_private.h"
+#include "../util/pipelines/pipelines_exec.h"
 
 /* Private interface *********************************************************/
 

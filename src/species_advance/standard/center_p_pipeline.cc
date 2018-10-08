@@ -6,6 +6,8 @@
 
 #include "spa_private.h"
 
+#include "../../util/pipelines/pipelines_exec.h"
+
 //----------------------------------------------------------------------------//
 // Reference implementation for a center_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.

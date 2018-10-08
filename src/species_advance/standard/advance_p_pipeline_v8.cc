@@ -85,8 +85,8 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // Load particle data.
     //--------------------------------------------------------------------------
     load_8x8_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
-		 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
-		 dx, dy, dz, ii, ux, uy, uz, q );
+                 &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx,
+                 dx, dy, dz, ii, ux, uy, uz, q );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -104,8 +104,8 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_8x8_tr( vp00, vp01, vp02, vp03,
-		 vp04, vp05, vp06, vp07,
-		 hax, v00, v01, v02, hay, v03, v04, v05 );
+                 vp04, vp05, vp06, vp07,
+                 hax, v00, v01, v02, hay, v03, v04, v05 );
 
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );
 
@@ -115,8 +115,8 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_8x8_tr( vp00+8, vp01+8, vp02+8, vp03+8,
-		 vp04+8, vp05+8, vp06+8, vp07+8,
-		 haz, v00, v01, v02, cbx, v03, cby, v04 );
+                 vp04+8, vp05+8, vp06+8, vp07+8,
+                 haz, v00, v01, v02, cbx, v03, cby, v04 );
 
     haz = qdt_2mc*fma( fma( v02, dx, v01 ), dy, fma( v00, dx, haz ) );
 
@@ -206,8 +206,8 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
     // Store particle data, final.
     //--------------------------------------------------------------------------
     store_8x8_tr( v03, v04, v05, ii, v06, v07, v08, q,
-		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
-		  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
+                  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
+                  &p[4].dx, &p[5].dx, &p[6].dx, &p[7].dx );
 
     // Accumulate current of inbnd particles.
     // Note: accumulator values are 4 times the total physical charge that
@@ -348,12 +348,12 @@ advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
       {                                                                 \
         if ( nm < max_nm )                                              \
         {                                                               \
-	  v4::copy_4x1( &pm[nm++], local_pm ); 	                        \
-	}                                                               \
+          v4::copy_4x1( &pm[nm++], local_pm );                          \
+        }                                                               \
         else                                        /* Unlikely */      \
-	{                                                               \
-	  itmp++;                                                       \
-	}                                                               \
+        {                                                               \
+          itmp++;                                                       \
+        }                                                               \
       }                                                                 \
     }
 

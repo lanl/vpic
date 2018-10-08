@@ -2,6 +2,8 @@
 
 #include "sf_interface_private.h"
 
+#include "../util/pipelines/pipelines_exec.h"
+
 void
 clear_accumulators_pipeline_scalar( accumulators_pipeline_args_t * args,
                                     int pipeline_rank,

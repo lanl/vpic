@@ -2,6 +2,8 @@
 
 #include "sfa_private.h"
 
+#include "../../util/pipelines/pipelines_exec.h"
+
 #define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 typedef struct pipeline_args

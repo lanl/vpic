@@ -4,7 +4,7 @@
 // Expose all public functionality in util.  The below includes bring
 // in util_base.h and other low level includes automatically.
 
-#include "v4/v4.h" // Must be first (FIXME: REALLY?)
+#include "v4/v4.h"
 #include "v8/v8.h"
 #include "v16/v16.h"
 #include "checkpt/checkpt.h"

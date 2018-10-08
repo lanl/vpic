@@ -6,6 +6,8 @@
 
 #include "sfa_private.h"
 
+#include "../../util/pipelines/pipelines_exec.h"
+
 typedef struct pipeline_args
 {
   field_t      * ALIGNED(128) f;

@@ -9,6 +9,8 @@
 
 #include "sf_interface_private.h"
 
+#include "../util/pipelines/pipelines_exec.h"
+
 #define fi(x,y,z) fi[   VOXEL( x, y, z, nx, ny, nz ) ]
 #define f(x,y,z)  f [   VOXEL( x, y, z, nx, ny, nz ) ]
 #define nb(x,y,z) nb[ 6*VOXEL( x, y, z, nx, ny, nz ) ]

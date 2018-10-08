@@ -1,39 +1,38 @@
-#ifndef _pipelines_h_
-#define _pipelines_h_
+#ifndef _pipelines_exec_h_
+#define _pipelines_exec_h_
 
 //----------------------------------------------------------------------------//
 // Include some stuff that is common to both Pthreads and OpenMP.
 //----------------------------------------------------------------------------//
 
-#include "../util_base.h"
+#include "pipelines.h"
 
-enum { MAX_PIPELINE = 272 };
-
-// Is this even related to pipelines.  Maybe this should be in util_base.h.
-# define PAD_STRUCT( sz )
+#include "../v4/v4.h"
+#include "../v8/v8.h"
+#include "../v16/v16.h"
 
 //----------------------------------------------------------------------------//
-// Make sure that pipelines_pthreads.h and pipelines_openmp.h can only be
+// Make sure that pipelines_exec_pth.h and pipelines_exec_omp.h can only be
 // included via this header file.
 //----------------------------------------------------------------------------//
 
 #define THREAD_REROUTE
 
 //----------------------------------------------------------------------------//
-// If using Pthreads, include pipelines_pthreads.h.
+// If using Pthreads, include pipelines_exec_pth.h.
 //----------------------------------------------------------------------------//
 
 #if defined(VPIC_USE_PTHREADS)
 
-#include "pipelines_pthreads.h"
+#include "pipelines_exec_pth.h"
 
 //----------------------------------------------------------------------------//
-// If using OpenMP, include pipelines_openmp.h.
+// If using OpenMP, include pipelines_exec_omp.h.
 //----------------------------------------------------------------------------//
 
 #elif defined(VPIC_USE_OPENMP)
 
-#include "pipelines_openmp.h"
+#include "pipelines_exec_omp.h"
 
 //----------------------------------------------------------------------------//
 // I wonder if VPIC will actually run without a threading model.
@@ -48,10 +47,9 @@ enum { MAX_PIPELINE = 272 };
 #endif
 
 //----------------------------------------------------------------------------//
-// Make sure that pipelines_pthreads.h and pipelines_openmp.h can only be
-// included via this header file.
+// Undefine local macros.
 //----------------------------------------------------------------------------//
 
 #undef THREAD_REROUTE
 
-#endif // _pipelines_h_ 
+#endif // _pipelines_exec_h_ 

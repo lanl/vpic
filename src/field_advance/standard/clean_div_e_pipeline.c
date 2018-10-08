@@ -1,7 +1,11 @@
 #define IN_sfa
+
 #include "sfa_private.h"
 
-typedef struct pipeline_args {
+#include "../../util/pipelines/pipelines_exec.h"
+
+typedef struct pipeline_args
+{
   field_t            * ALIGNED(128) f;
   const sfa_params_t *              p;
   const grid_t       *              g;

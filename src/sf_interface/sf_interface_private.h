@@ -23,7 +23,7 @@ typedef struct load_interpolator_pipeline_args {
 
 } load_interpolator_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( load_interpolator, load_interpolator_pipeline_args_t );
+// PROTOTYPE_PIPELINE( load_interpolator, load_interpolator_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 // clear_accumulators_pipeline interface
@@ -45,8 +45,8 @@ typedef struct accumulators_pipeline_args {
 
 } accumulators_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( clear_accumulators,  accumulators_pipeline_args_t );
-PROTOTYPE_PIPELINE( reduce_accumulators, accumulators_pipeline_args_t );
+// PROTOTYPE_PIPELINE( clear_accumulators,  accumulators_pipeline_args_t );
+// PROTOTYPE_PIPELINE( reduce_accumulators, accumulators_pipeline_args_t );
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -65,8 +65,6 @@ typedef struct unload_accumulator_pipeline_args {
 
 } unload_accumulator_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( unload_accumulator, unload_accumulator_pipeline_args_t );
-
-#undef FOR_SPU
+// PROTOTYPE_PIPELINE( unload_accumulator, unload_accumulator_pipeline_args_t );
 
 #endif // _sf_interface_private_h_

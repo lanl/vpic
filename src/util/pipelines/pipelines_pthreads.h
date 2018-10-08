@@ -5,13 +5,11 @@
 #error "Do not include pipelines_pthreads.h directly; use pipelines.h."
 #endif
 
-#include "../util_base.h"
-
-enum { MAX_PIPELINE = 272 };
-
-// A pipeline function takes a pointer to arguments for the pipeline
-// and a integer which gives the rank of the pipeline and the total
-// number of pipelines dispatched.
+//----------------------------------------------------------------------------//
+// A pipeline function takes a pointer to arguments for the pipeline and an
+// integer which gives the rank of the pipeline and the total number of
+// pipelines dispatched.
+//----------------------------------------------------------------------------//
 
 typedef void
 (*pipeline_func_t)( void * args,
@@ -24,103 +22,6 @@ typedef void
 //----------------------------------------------------------------------------//
 
 # define N_PIPELINE thread.n_pipeline
-
-# define WAIT_PIPELINES() thread.wait()
-
-# define PAD_STRUCT( sz )
-
-//----------------------------------------------------------------------------//
-// Macro defines to support v16 simd vector acceleration.  Uses thread
-// dispatcher on the v16 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v16,         \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t )  \
-  void                                       \
-  name##_pipeline_v16( args_t *args,         \
-                       int pipeline_rank,    \
-                       int n_pipeline );     \
-                                             \
-  void                                       \
-  name##_pipeline_scalar( args_t *args,      \
-                          int pipeline_rank, \
-                          int n_pipeline )
-
-//----------------------------------------------------------------------------//
-// Macro defines to support v8 simd vector acceleration.  Uses thread
-// dispatcher on the v8 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
-//----------------------------------------------------------------------------//
-
-#elif defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v8,          \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t )  \
-  void                                       \
-  name##_pipeline_v8( args_t *args,          \
-                      int pipeline_rank,     \
-                      int n_pipeline );      \
-                                             \
-  void                                       \
-  name##_pipeline_scalar( args_t *args,      \
-                          int pipeline_rank, \
-                          int n_pipeline )
-
-//----------------------------------------------------------------------------//
-// Macro defines to support v4 simd vector acceleration.  Uses thread
-// dispatcher on the v4 pipeline and the caller does straggler cleanup with
-// the scalar pipeline.
-//----------------------------------------------------------------------------//
-
-#elif defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_v4,          \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t )  \
-  void                                       \
-  name##_pipeline_v4( args_t *args,          \
-                      int pipeline_rank,     \
-                      int n_pipeline );      \
-                                             \
-  void                                       \
-  name##_pipeline_scalar( args_t *args,      \
-                          int pipeline_rank, \
-                          int n_pipeline )
-
-//----------------------------------------------------------------------------//
-// Macro defines to support the standard implementation which does not use
-// explicit simd vectorization.  Uses thread dispatcher on the scalar pipeline
-// and the caller does straggler cleanup with the scalar pipeline.
-//----------------------------------------------------------------------------//
-
-#else
-
-# define EXEC_PIPELINES(name,args,str)                           \
-  thread.dispatch( (pipeline_func_t)name##_pipeline_scalar,      \
-                   args, sizeof(*args), str );                   \
-  name##_pipeline_scalar( args+str*N_PIPELINE, N_PIPELINE, N_PIPELINE )
-
-# define PROTOTYPE_PIPELINE( name, args_t )  \
-  void                                       \
-  name##_pipeline_scalar( args_t *args,      \
-                          int pipeline_rank, \
-                          int n_pipeline )
-
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 

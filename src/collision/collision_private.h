@@ -53,6 +53,6 @@ typedef struct langevin_pipeline_args {
   PAD_STRUCT( (1+MAX_PIPELINE)*SIZEOF_MEM_PTR+2*sizeof(float)+sizeof(int) )
 } langevin_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( langevin, langevin_pipeline_args_t );
+// PROTOTYPE_PIPELINE( langevin, langevin_pipeline_args_t );
 
 #endif /* _collision_h_ */

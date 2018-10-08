@@ -81,7 +81,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load particle data.
     //--------------------------------------------------------------------------
     load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
-		 dx, dy, dz, ii );
+                 dx, dy, dz, ii );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -95,7 +95,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00, vp01, vp02, vp03,
-		 hax, v00, v01, v02 );
+                 hax, v00, v01, v02 );
 
     hax = qdt_2mc*fma( fma( v02, dy, v01 ), dz, fma( v00, dy, hax ) );
 
@@ -103,7 +103,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+4, vp01+4, vp02+4, vp03+4,
-		 hay, v03, v04, v05 );
+                 hay, v03, v04, v05 );
 
     hay = qdt_2mc*fma( fma( v05, dz, v04 ), dx, fma( v03, dz, hay ) );
 
@@ -111,7 +111,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+8, vp01+8, vp02+8, vp03+8,
-		 haz, v00, v01, v02 );
+                 haz, v00, v01, v02 );
 
     haz = qdt_2mc*fma( fma( v02, dx, v01 ), dy, fma( v00, dx, haz ) );
 
@@ -119,7 +119,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+12, vp01+12, vp02+12, vp03+12,
-		 cbx, v03, cby, v04 );
+                 cbx, v03, cby, v04 );
 
     cbx = fma( v03, dx, cbx );
 
@@ -129,7 +129,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load interpolation data for particles, final.
     //--------------------------------------------------------------------------
     load_4x2_tr( vp00+16, vp01+16, vp02+16, vp03+16,
-		 cbz, v05 );
+                 cbz, v05 );
 
     cbz = fma( v05, dz, cbz );
 
@@ -137,7 +137,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Load particle data.
     //--------------------------------------------------------------------------
     load_4x4_tr( &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux,
-		 ux, uy, uz, q );
+                 ux, uy, uz, q );
 
     //--------------------------------------------------------------------------
     // Update momentum.
@@ -174,7 +174,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Store particle data.
     //--------------------------------------------------------------------------
     store_4x4_tr( ux, uy, uz, q,
-		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux );
+                  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux );
 
     //--------------------------------------------------------------------------
     // Update the position of in bound particles.
@@ -212,7 +212,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     // Store particle data, final.
     //--------------------------------------------------------------------------
     store_4x4_tr( v03, v04, v05, ii,
-		  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx );
+                  &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx );
 
     // Accumulate current of inbnd particles.
     // Note: accumulator values are 4 times the total physical charge that
@@ -279,12 +279,12 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
       {                                                                 \
         if ( nm < max_nm )                                              \
         {                                                               \
-	  copy_4x1( &pm[nm++], local_pm );                              \
-	}                                                               \
+          copy_4x1( &pm[nm++], local_pm );                              \
+        }                                                               \
         else                                        /* Unlikely */      \
-	{                                                               \
-	  itmp++;                                                       \
-	}                                                               \
+        {                                                               \
+          itmp++;                                                       \
+        }                                                               \
       }                                                                 \
     }
 

@@ -324,24 +324,11 @@ namespace v4 {
 
     _v4_float a1 = vec_mergeh( a0, c1 );           // a1 =  0  8  1  9
     _v4_float b1 = vec_mergeh( b0, d1 );           // b1 =  4 12  5 13
-    //    c1           = vec_mergel( a0, c1 );           // c1 =  2 10  3 11
-    //    d1           = vec_mergel( b0, d1 );           // d1 =  6 14  7 15
 
     // Step 2: Interleave even and odd rows
 
     a.v          = vec_mergeh( a1, b1 );           // a  =  0  4  8 12
     b.v          = vec_mergel( a1, b1 );           // b  =  1  5  9 13
-    //    c.v          = vec_mergeh( c1, d1 );           // c  =  2  6 10 14
-    //    d.v          = vec_mergel( c1, d1 );           // d  =  3  7 11 15
-
-    //    a.v = (_v4_float){ ((const float *)pa)[0],
-    //                       ((const float *)pb)[0],
-    //                       ((const float *)pc)[0],
-    //                       ((const float *)pd)[0] };
-    //    b.v = (_v4_float){ ((const float *)pa)[1],
-    //                       ((const float *)pb)[1],
-    //                       ((const float *)pc)[1],
-    //                       ((const float *)pd)[1] };
   }
   
   inline void load_4x3_tr( const void * ALIGNED(16) pa,

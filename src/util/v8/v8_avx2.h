@@ -462,6 +462,45 @@ namespace v8
     b.v = _mm256_shuffle_ps( u0, u1, _MM_SHUFFLE( 3, 1, 3, 1 ) );
   }
 
+  #if 0
+  // This is an alternate AVX-2 implementation.
+  inline void load_8x2_tr( const void * ALIGNED(8) a0,
+                           const void * ALIGNED(8) a1,
+                           const void * ALIGNED(8) a2,
+                           const void * ALIGNED(8) a3,
+			   const void * ALIGNED(8) a4,
+                           const void * ALIGNED(8) a5,
+                           const void * ALIGNED(8) a6,
+                           const void * ALIGNED(8) a7,
+                           v8 &b0, v8 &b1 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+    __m256 u0,     u2,     u4,     u6;
+
+    t0   = _mm256_load_ps( (const float *)a0 );
+    t1   = _mm256_load_ps( (const float *)a1 );
+    t2   = _mm256_load_ps( (const float *)a2 );
+    t3   = _mm256_load_ps( (const float *)a3 );
+    t4   = _mm256_load_ps( (const float *)a4 );
+    t5   = _mm256_load_ps( (const float *)a5 );
+    t6   = _mm256_load_ps( (const float *)a6 );
+    t7   = _mm256_load_ps( (const float *)a7 );
+
+    u0   = _mm256_unpacklo_ps( t0, t1 );
+    u2   = _mm256_unpacklo_ps( t2, t3 );
+    u4   = _mm256_unpacklo_ps( t4, t5 );
+    u6   = _mm256_unpacklo_ps( t6, t7 );
+
+    t0   = _mm256_shuffle_ps( u0, u2, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t1   = _mm256_shuffle_ps( u0, u2, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    t4   = _mm256_shuffle_ps( u4, u6, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t5   = _mm256_shuffle_ps( u4, u6, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    b0.v = _mm256_permute2f128_ps( t0, t4, 0x20 );
+    b1.v = _mm256_permute2f128_ps( t1, t5, 0x20 );
+  }
+  #endif
+
   inline void load_8x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -678,6 +717,58 @@ namespace v8
   }
   #endif
 
+  // This is a cleaner reference AVX-2 implementation.
+  inline void load_8x8_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+			   const void * ALIGNED(16) a4,
+                           const void * ALIGNED(16) a5,
+                           const void * ALIGNED(16) a6,
+                           const void * ALIGNED(16) a7,
+                           v8 &b0, v8 &b1, v8 &b2, v8 &b3,
+                           v8 &b4, v8 &b5, v8 &b6, v8 &b7 )
+  {
+    __m256 t0, t1, t2, t3, t4, t5, t6, t7;
+
+    t0   = _mm256_load_ps( (const float *)a0 );
+    t1   = _mm256_load_ps( (const float *)a1 );
+    t2   = _mm256_load_ps( (const float *)a2 );
+    t3   = _mm256_load_ps( (const float *)a3 );
+    t4   = _mm256_load_ps( (const float *)a4 );
+    t5   = _mm256_load_ps( (const float *)a5 );
+    t6   = _mm256_load_ps( (const float *)a6 );
+    t7   = _mm256_load_ps( (const float *)a7 );
+
+    b0.v = _mm256_unpacklo_ps( t0, t1 );
+    b1.v = _mm256_unpackhi_ps( t0, t1 );
+    b2.v = _mm256_unpacklo_ps( t2, t3 );
+    b3.v = _mm256_unpackhi_ps( t2, t3 );
+    b4.v = _mm256_unpacklo_ps( t4, t5 );
+    b5.v = _mm256_unpackhi_ps( t4, t5 );
+    b6.v = _mm256_unpacklo_ps( t6, t7 );
+    b7.v = _mm256_unpackhi_ps( t6, t7 );
+
+    t0   = _mm256_shuffle_ps( b0.v, b2.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t1   = _mm256_shuffle_ps( b0.v, b2.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    t2   = _mm256_shuffle_ps( b1.v, b3.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t3   = _mm256_shuffle_ps( b1.v, b3.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    t4   = _mm256_shuffle_ps( b4.v, b6.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t5   = _mm256_shuffle_ps( b4.v, b6.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+    t6   = _mm256_shuffle_ps( b5.v, b7.v, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+    t7   = _mm256_shuffle_ps( b5.v, b7.v, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+    b0.v = _mm256_permute2f128_ps( t0, t4, 0x20 );
+    b1.v = _mm256_permute2f128_ps( t1, t5, 0x20 );
+    b2.v = _mm256_permute2f128_ps( t2, t6, 0x20 );
+    b3.v = _mm256_permute2f128_ps( t3, t7, 0x20 );
+    b4.v = _mm256_permute2f128_ps( t0, t4, 0x31 );
+    b5.v = _mm256_permute2f128_ps( t1, t5, 0x31 );
+    b6.v = _mm256_permute2f128_ps( t2, t6, 0x31 );
+    b7.v = _mm256_permute2f128_ps( t3, t7, 0x31 );
+  }
+
+  #if 0
   // This is the reference AVX-2 implementation.
   inline void load_8x8_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -730,6 +821,7 @@ namespace v8
     g.v = _mm256_permute2f128_ps( u2, u6, 0x31 );
     h.v = _mm256_permute2f128_ps( u3, u7, 0x31 );
   }
+  #endif
 
   #if 0
   // Replace _mm256_load_ps with _mm256_insertf128_ps.

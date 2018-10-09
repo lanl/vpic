@@ -292,6 +292,7 @@ namespace v4 {
                        ((const float *)pd)[0] };
   }
 
+  #if 0
   inline void load_4x2_tr( const void * ALIGNED(8) pa,
                            const void * ALIGNED(8) pb,
                            const void * ALIGNED(8) pc,
@@ -305,6 +306,29 @@ namespace v4 {
                        ((const float *)pb)[1],
                        ((const float *)pc)[1],
                        ((const float *)pd)[1] };
+  }
+  #endif
+
+  inline void load_4x2_tr( const void * ALIGNED(8) pa,
+                           const void * ALIGNED(8) pb,
+                           const void * ALIGNED(8) pc,
+                           const void * ALIGNED(8) pd,
+                           v4 &a, v4 &b )
+  {
+    _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
+    _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
+    _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
+    _v4_float d1 = vec_ld( 0, (const float *)pd ); // d1 = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    _v4_float a1 = vec_mergeh( a0, c1 );           // a1 =  0  8  1  9
+    _v4_float b1 = vec_mergeh( b0, d1 );           // b1 =  4 12  5 13
+
+    // Step 2: Interleave even and odd rows
+
+    a.v          = vec_mergeh( a1, b1 );           // a  =  0  4  8 12
+    b.v          = vec_mergel( a1, b1 );           // b  =  1  5  9 13
   }
   
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
@@ -335,7 +359,8 @@ namespace v4 {
                            const void * ALIGNED(16) pb,
                            const void * ALIGNED(16) pc,
                            const void * ALIGNED(16) pd,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+                           v4 &a, v4 &b, v4 &c, v4 &d )
+  {
     _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
     _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
     _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
@@ -846,6 +871,33 @@ namespace v4 {
     ASSIGN(-=, v = vec_sub(v,b.v) );
     ASSIGN(*=, v = vec_madd(v,b.v,_zero) );
 
+    // This does one NR iteration and is supposed to be accurate enough.
+    inline v4float &operator /=( const v4float &a ) {
+      _v4_float a_v = a.v, b_v;
+
+      // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+      b_v = vec_re( a_v );
+
+      // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+      // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+      // IMPLEMENTATION FOR THE REFINEMENT.
+
+      // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+      // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+      // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+      b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+      // Compute n * refined( (1/a)_estimate ) to get result n/a
+
+      v = vec_madd( v, b_v, _zero );
+
+      return *this;
+    }
+
+    #if 0
+    // This is a more accurate version that does two NR iterations.
     inline v4float &operator /=( const v4float &a ) {
       _v4_float a_v = a.v, b_v;
 
@@ -870,6 +922,7 @@ namespace v4 {
 
       return *this;
     }
+    #endif
 
 #   undef ASSIGN
 
@@ -971,6 +1024,33 @@ namespace v4 {
     // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
 
     b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+    // Compute n * refined( (1/a)_estimate ) to get result n/a
+    
+    c.v = vec_madd( n.v, b_v, _zero );
+
+    return c;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
+  inline v4float operator /( const v4float &n, const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float c;
+
+    // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+    b_v = vec_re( a_v );
+
+    // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+    // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+    // IMPLEMENTATION FOR THE REFINEMENT.
+
+    // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+    // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+    // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
     b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
 
     // Compute n * refined( (1/a)_estimate ) to get result n/a
@@ -979,6 +1059,7 @@ namespace v4 {
 
     return c;
   }
+  #endif
 
 # undef BINARY
 
@@ -1061,6 +1142,31 @@ namespace v4 {
     return b;
   }
 
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float sqrt( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the rsqrt (??-bit accurate)
+
+    b_v = vec_rsqrte( a_v );
+
+    // FIXME: CHECK NUMERICS.  HOW MANY N-R STEPS NECESSARY?
+    // APPLE'S ALTIVEC PAGE SUGGESTS TWO.
+
+    b_v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+                    vec_madd( b_v, _half, _zero ),
+                    b_v );
+
+    // Compute the sqrt(a) via a*refined_rsqrt_estimate(a) ~ sqrt(a)
+
+    b.v = vec_madd( a_v, b_v, _zero );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float sqrt( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1085,6 +1191,7 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float copysign( const v4float &a, const v4float &b ) {
     v4float c;
@@ -1102,7 +1209,31 @@ namespace v4 {
     b.v = vec_rsqrte( a.v );
     return b;
   }
-  
+
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float rsqrt( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the rsqrt (??-bit accurate)
+
+    b_v = vec_rsqrte( a_v );
+
+    // FIXME: CHECK NUMERICS.  HOW MANY N-R STEPS NECESSARY?
+    // APPLE'S ALTIVEC PAGE SUGGESTS TWO.
+
+    //    b_v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+    //                    vec_madd( b_v, _half, _zero ),
+    //                    b_v );
+    b.v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+                    vec_madd( b_v, _half, _zero ),
+                    b_v );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float rsqrt( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1123,13 +1254,39 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float rcp_approx( const v4float &a ) {
     v4float b;
     b.v = vec_re( a.v );
     return b;
   }
-  
+
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float rcp( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+    b_v = vec_re( a_v );
+
+    // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+    // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+    // IMPLEMENTATION FOR THE REFINEMENT.
+
+    // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+    // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+    // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+    //    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+    b.v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float rcp( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1151,6 +1308,7 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float fma(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
@@ -1160,7 +1318,8 @@ namespace v4 {
 
   inline v4float fms(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
-    d.v = vec_sub( _zero, vec_nmsub( a.v, b.v, c.v ) ); // FIXME: Sigh ...
+    //    d.v = vec_sub( _zero, vec_nmsub( a.v, b.v, c.v ) ); // FIXME: Sigh ...
+    d.v = vec_msub( a.v, b.v, c.v ) ; 
     return d;
   }
 

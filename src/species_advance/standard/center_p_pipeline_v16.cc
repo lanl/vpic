@@ -9,22 +9,22 @@ center_p_pipeline_v16( center_p_pipeline_args_t * args,
 
   particle_t           * ALIGNED(128) p;
 
-  const float          * ALIGNED(16)  vp00;
-  const float          * ALIGNED(16)  vp01;
-  const float          * ALIGNED(16)  vp02;
-  const float          * ALIGNED(16)  vp03;
-  const float          * ALIGNED(16)  vp04;
-  const float          * ALIGNED(16)  vp05;
-  const float          * ALIGNED(16)  vp06;
-  const float          * ALIGNED(16)  vp07;
-  const float          * ALIGNED(16)  vp08;
-  const float          * ALIGNED(16)  vp09;
-  const float          * ALIGNED(16)  vp10;
-  const float          * ALIGNED(16)  vp11;
-  const float          * ALIGNED(16)  vp12;
-  const float          * ALIGNED(16)  vp13;
-  const float          * ALIGNED(16)  vp14;
-  const float          * ALIGNED(16)  vp15;
+  const float          * ALIGNED(64)  vp00;
+  const float          * ALIGNED(64)  vp01;
+  const float          * ALIGNED(64)  vp02;
+  const float          * ALIGNED(64)  vp03;
+  const float          * ALIGNED(64)  vp04;
+  const float          * ALIGNED(64)  vp05;
+  const float          * ALIGNED(64)  vp06;
+  const float          * ALIGNED(64)  vp07;
+  const float          * ALIGNED(64)  vp08;
+  const float          * ALIGNED(64)  vp09;
+  const float          * ALIGNED(64)  vp10;
+  const float          * ALIGNED(64)  vp11;
+  const float          * ALIGNED(64)  vp12;
+  const float          * ALIGNED(64)  vp13;
+  const float          * ALIGNED(64)  vp14;
+  const float          * ALIGNED(64)  vp15;
 
   const v16float qdt_2mc(    args->qdt_2mc);
   const v16float qdt_4mc(0.5*args->qdt_2mc); // For half Boris rotate
@@ -61,22 +61,22 @@ center_p_pipeline_v16( center_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
     //--------------------------------------------------------------------------
-    vp00 = ( float * ALIGNED(16) ) ( f0 + ii( 0) );
-    vp01 = ( float * ALIGNED(16) ) ( f0 + ii( 1) );
-    vp02 = ( float * ALIGNED(16) ) ( f0 + ii( 2) );
-    vp03 = ( float * ALIGNED(16) ) ( f0 + ii( 3) );
-    vp04 = ( float * ALIGNED(16) ) ( f0 + ii( 4) );
-    vp05 = ( float * ALIGNED(16) ) ( f0 + ii( 5) );
-    vp06 = ( float * ALIGNED(16) ) ( f0 + ii( 6) );
-    vp07 = ( float * ALIGNED(16) ) ( f0 + ii( 7) );
-    vp08 = ( float * ALIGNED(16) ) ( f0 + ii( 8) );
-    vp09 = ( float * ALIGNED(16) ) ( f0 + ii( 9) );
-    vp10 = ( float * ALIGNED(16) ) ( f0 + ii(10) );
-    vp11 = ( float * ALIGNED(16) ) ( f0 + ii(11) );
-    vp12 = ( float * ALIGNED(16) ) ( f0 + ii(12) );
-    vp13 = ( float * ALIGNED(16) ) ( f0 + ii(13) );
-    vp14 = ( float * ALIGNED(16) ) ( f0 + ii(14) );
-    vp15 = ( float * ALIGNED(16) ) ( f0 + ii(15) );
+    vp00 = ( float * ALIGNED(64) ) ( f0 + ii( 0) );
+    vp01 = ( float * ALIGNED(64) ) ( f0 + ii( 1) );
+    vp02 = ( float * ALIGNED(64) ) ( f0 + ii( 2) );
+    vp03 = ( float * ALIGNED(64) ) ( f0 + ii( 3) );
+    vp04 = ( float * ALIGNED(64) ) ( f0 + ii( 4) );
+    vp05 = ( float * ALIGNED(64) ) ( f0 + ii( 5) );
+    vp06 = ( float * ALIGNED(64) ) ( f0 + ii( 6) );
+    vp07 = ( float * ALIGNED(64) ) ( f0 + ii( 7) );
+    vp08 = ( float * ALIGNED(64) ) ( f0 + ii( 8) );
+    vp09 = ( float * ALIGNED(64) ) ( f0 + ii( 9) );
+    vp10 = ( float * ALIGNED(64) ) ( f0 + ii(10) );
+    vp11 = ( float * ALIGNED(64) ) ( f0 + ii(11) );
+    vp12 = ( float * ALIGNED(64) ) ( f0 + ii(12) );
+    vp13 = ( float * ALIGNED(64) ) ( f0 + ii(13) );
+    vp14 = ( float * ALIGNED(64) ) ( f0 + ii(14) );
+    vp15 = ( float * ALIGNED(64) ) ( f0 + ii(15) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.

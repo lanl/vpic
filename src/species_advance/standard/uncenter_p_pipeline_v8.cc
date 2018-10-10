@@ -9,14 +9,14 @@ uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
 
   particle_t           * ALIGNED(128) p;
 
-  const float          * ALIGNED(16)  vp00;
-  const float          * ALIGNED(16)  vp01;
-  const float          * ALIGNED(16)  vp02;
-  const float          * ALIGNED(16)  vp03;
-  const float          * ALIGNED(16)  vp04;
-  const float          * ALIGNED(16)  vp05;
-  const float          * ALIGNED(16)  vp06;
-  const float          * ALIGNED(16)  vp07;
+  const float          * ALIGNED(32)  vp00;
+  const float          * ALIGNED(32)  vp01;
+  const float          * ALIGNED(32)  vp02;
+  const float          * ALIGNED(32)  vp03;
+  const float          * ALIGNED(32)  vp04;
+  const float          * ALIGNED(32)  vp05;
+  const float          * ALIGNED(32)  vp06;
+  const float          * ALIGNED(32)  vp07;
 
   const v8float qdt_2mc(    -args->qdt_2mc); // For backward half advance.
   const v8float qdt_4mc(-0.5*args->qdt_2mc); // For backward half Boris rotate.
@@ -53,14 +53,14 @@ uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
     //--------------------------------------------------------------------------
-    vp00 = ( const float * ALIGNED(16) ) ( f0 + ii(0) );
-    vp01 = ( const float * ALIGNED(16) ) ( f0 + ii(1) );
-    vp02 = ( const float * ALIGNED(16) ) ( f0 + ii(2) );
-    vp03 = ( const float * ALIGNED(16) ) ( f0 + ii(3) );
-    vp04 = ( const float * ALIGNED(16) ) ( f0 + ii(4) );
-    vp05 = ( const float * ALIGNED(16) ) ( f0 + ii(5) );
-    vp06 = ( const float * ALIGNED(16) ) ( f0 + ii(6) );
-    vp07 = ( const float * ALIGNED(16) ) ( f0 + ii(7) );
+    vp00 = ( const float * ALIGNED(32) ) ( f0 + ii(0) );
+    vp01 = ( const float * ALIGNED(32) ) ( f0 + ii(1) );
+    vp02 = ( const float * ALIGNED(32) ) ( f0 + ii(2) );
+    vp03 = ( const float * ALIGNED(32) ) ( f0 + ii(3) );
+    vp04 = ( const float * ALIGNED(32) ) ( f0 + ii(4) );
+    vp05 = ( const float * ALIGNED(32) ) ( f0 + ii(5) );
+    vp06 = ( const float * ALIGNED(32) ) ( f0 + ii(6) );
+    vp07 = ( const float * ALIGNED(32) ) ( f0 + ii(7) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
@@ -153,14 +153,14 @@ uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
 
   particle_t           * ALIGNED(128) p;
 
-  const float          * ALIGNED(16)  vp00;
-  const float          * ALIGNED(16)  vp01;
-  const float          * ALIGNED(16)  vp02;
-  const float          * ALIGNED(16)  vp03;
-  const float          * ALIGNED(16)  vp04;
-  const float          * ALIGNED(16)  vp05;
-  const float          * ALIGNED(16)  vp06;
-  const float          * ALIGNED(16)  vp07;
+  const float          * ALIGNED(32)  vp00;
+  const float          * ALIGNED(32)  vp01;
+  const float          * ALIGNED(32)  vp02;
+  const float          * ALIGNED(32)  vp03;
+  const float          * ALIGNED(32)  vp04;
+  const float          * ALIGNED(32)  vp05;
+  const float          * ALIGNED(32)  vp06;
+  const float          * ALIGNED(32)  vp07;
 
   // Basic constants.
   const v8float qdt_2mc(    -args->qdt_2mc); // For backward half advance.
@@ -198,14 +198,14 @@ uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
     //--------------------------------------------------------------------------
-    vp00 = ( const float * ALIGNED(16) ) ( f0 + ii(0) );
-    vp01 = ( const float * ALIGNED(16) ) ( f0 + ii(1) );
-    vp02 = ( const float * ALIGNED(16) ) ( f0 + ii(2) );
-    vp03 = ( const float * ALIGNED(16) ) ( f0 + ii(3) );
-    vp04 = ( const float * ALIGNED(16) ) ( f0 + ii(4) );
-    vp05 = ( const float * ALIGNED(16) ) ( f0 + ii(5) );
-    vp06 = ( const float * ALIGNED(16) ) ( f0 + ii(6) );
-    vp07 = ( const float * ALIGNED(16) ) ( f0 + ii(7) );
+    vp00 = ( const float * ALIGNED(32) ) ( f0 + ii(0) );
+    vp01 = ( const float * ALIGNED(32) ) ( f0 + ii(1) );
+    vp02 = ( const float * ALIGNED(32) ) ( f0 + ii(2) );
+    vp03 = ( const float * ALIGNED(32) ) ( f0 + ii(3) );
+    vp04 = ( const float * ALIGNED(32) ) ( f0 + ii(4) );
+    vp05 = ( const float * ALIGNED(32) ) ( f0 + ii(5) );
+    vp06 = ( const float * ALIGNED(32) ) ( f0 + ii(6) );
+    vp07 = ( const float * ALIGNED(32) ) ( f0 + ii(7) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.

@@ -24,17 +24,17 @@ advance_b_pipeline_v8( pipeline_args_t * args,
   v8float fz_ex, fz_ey;           // Voxel block +z neighbor fields
   v8float dummy;
 
-  field_t * ALIGNED(16) f00, * ALIGNED(16) f01, * ALIGNED(16) f02, * ALIGNED(16) f03; // Voxel block
-  field_t * ALIGNED(16) f04, * ALIGNED(16) f05, * ALIGNED(16) f06, * ALIGNED(16) f07; // Voxel block
+  field_t * ALIGNED(32) f00, * ALIGNED(32) f01, * ALIGNED(32) f02, * ALIGNED(32) f03; // Voxel block
+  field_t * ALIGNED(32) f04, * ALIGNED(32) f05, * ALIGNED(32) f06, * ALIGNED(32) f07; // Voxel block
 
-  field_t * ALIGNED(16) fx0, * ALIGNED(16) fx1, * ALIGNED(16) fx2, * ALIGNED(16) fx3; // Voxel block +x neighbors
-  field_t * ALIGNED(16) fx4, * ALIGNED(16) fx5, * ALIGNED(16) fx6, * ALIGNED(16) fx7; // Voxel block +x neighbors
+  field_t * ALIGNED(32) fx0, * ALIGNED(32) fx1, * ALIGNED(32) fx2, * ALIGNED(32) fx3; // Voxel block +x neighbors
+  field_t * ALIGNED(32) fx4, * ALIGNED(32) fx5, * ALIGNED(32) fx6, * ALIGNED(32) fx7; // Voxel block +x neighbors
 
-  field_t * ALIGNED(16) fy0, * ALIGNED(16) fy1, * ALIGNED(16) fy2, * ALIGNED(16) fy3; // Voxel block +y neighbors
-  field_t * ALIGNED(16) fy4, * ALIGNED(16) fy5, * ALIGNED(16) fy6, * ALIGNED(16) fy7; // Voxel block +y neighbors
+  field_t * ALIGNED(32) fy0, * ALIGNED(32) fy1, * ALIGNED(32) fy2, * ALIGNED(32) fy3; // Voxel block +y neighbors
+  field_t * ALIGNED(32) fy4, * ALIGNED(32) fy5, * ALIGNED(32) fy6, * ALIGNED(32) fy7; // Voxel block +y neighbors
 
-  field_t * ALIGNED(16) fz0, * ALIGNED(16) fz1, * ALIGNED(16) fz2, * ALIGNED(16) fz3; // Voxel block +z neighbors
-  field_t * ALIGNED(16) fz4, * ALIGNED(16) fz5, * ALIGNED(16) fz6, * ALIGNED(16) fz7; // Voxel block +z neighbors
+  field_t * ALIGNED(32) fz0, * ALIGNED(32) fz1, * ALIGNED(32) fz2, * ALIGNED(32) fz3; // Voxel block +z neighbors
+  field_t * ALIGNED(32) fz4, * ALIGNED(32) fz5, * ALIGNED(32) fz6, * ALIGNED(32) fz7; // Voxel block +z neighbors
 
   // Process the bulk of the voxels 8 at a time
 

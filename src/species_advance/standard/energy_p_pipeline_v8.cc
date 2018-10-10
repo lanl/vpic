@@ -8,14 +8,14 @@ energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
   const interpolator_t * RESTRICT ALIGNED(128) f = args->f;
   const particle_t     * RESTRICT ALIGNED(128) p = args->p;
 
-  const float          * RESTRICT ALIGNED(16)  vp00;
-  const float          * RESTRICT ALIGNED(16)  vp01;
-  const float          * RESTRICT ALIGNED(16)  vp02;
-  const float          * RESTRICT ALIGNED(16)  vp03;
-  const float          * RESTRICT ALIGNED(16)  vp04;
-  const float          * RESTRICT ALIGNED(16)  vp05;
-  const float          * RESTRICT ALIGNED(16)  vp06;
-  const float          * RESTRICT ALIGNED(16)  vp07;
+  const float          * RESTRICT ALIGNED(32)  vp00;
+  const float          * RESTRICT ALIGNED(32)  vp01;
+  const float          * RESTRICT ALIGNED(32)  vp02;
+  const float          * RESTRICT ALIGNED(32)  vp03;
+  const float          * RESTRICT ALIGNED(32)  vp04;
+  const float          * RESTRICT ALIGNED(32)  vp05;
+  const float          * RESTRICT ALIGNED(32)  vp06;
+  const float          * RESTRICT ALIGNED(32)  vp07;
 
   const v8float qdt_2mc(args->qdt_2mc);
   const v8float msp(args->msp);

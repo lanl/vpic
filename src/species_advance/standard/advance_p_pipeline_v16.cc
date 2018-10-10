@@ -25,22 +25,22 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
   particle_t           * ALIGNED(128) p;
   particle_mover_t     * ALIGNED(16)  pm;
 
-  float                * ALIGNED(16)  vp00;
-  float                * ALIGNED(16)  vp01;
-  float                * ALIGNED(16)  vp02;
-  float                * ALIGNED(16)  vp03;
-  float                * ALIGNED(16)  vp04;
-  float                * ALIGNED(16)  vp05;
-  float                * ALIGNED(16)  vp06;
-  float                * ALIGNED(16)  vp07;
-  float                * ALIGNED(16)  vp08;
-  float                * ALIGNED(16)  vp09;
-  float                * ALIGNED(16)  vp10;
-  float                * ALIGNED(16)  vp11;
-  float                * ALIGNED(16)  vp12;
-  float                * ALIGNED(16)  vp13;
-  float                * ALIGNED(16)  vp14;
-  float                * ALIGNED(16)  vp15;
+  float                * ALIGNED(64)  vp00;
+  float                * ALIGNED(64)  vp01;
+  float                * ALIGNED(64)  vp02;
+  float                * ALIGNED(64)  vp03;
+  float                * ALIGNED(64)  vp04;
+  float                * ALIGNED(64)  vp05;
+  float                * ALIGNED(64)  vp06;
+  float                * ALIGNED(64)  vp07;
+  float                * ALIGNED(64)  vp08;
+  float                * ALIGNED(64)  vp09;
+  float                * ALIGNED(64)  vp10;
+  float                * ALIGNED(64)  vp11;
+  float                * ALIGNED(64)  vp12;
+  float                * ALIGNED(64)  vp13;
+  float                * ALIGNED(64)  vp14;
+  float                * ALIGNED(64)  vp15;
 
   // Basic constants.
   const v16float qdt_2mc(args->qdt_2mc);
@@ -112,22 +112,22 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
     //--------------------------------------------------------------------------
-    vp00 = ( float * ALIGNED(16) ) ( f0 + ii( 0) );
-    vp01 = ( float * ALIGNED(16) ) ( f0 + ii( 1) );
-    vp02 = ( float * ALIGNED(16) ) ( f0 + ii( 2) );
-    vp03 = ( float * ALIGNED(16) ) ( f0 + ii( 3) );
-    vp04 = ( float * ALIGNED(16) ) ( f0 + ii( 4) );
-    vp05 = ( float * ALIGNED(16) ) ( f0 + ii( 5) );
-    vp06 = ( float * ALIGNED(16) ) ( f0 + ii( 6) );
-    vp07 = ( float * ALIGNED(16) ) ( f0 + ii( 7) );
-    vp08 = ( float * ALIGNED(16) ) ( f0 + ii( 8) );
-    vp09 = ( float * ALIGNED(16) ) ( f0 + ii( 9) );
-    vp10 = ( float * ALIGNED(16) ) ( f0 + ii(10) );
-    vp11 = ( float * ALIGNED(16) ) ( f0 + ii(11) );
-    vp12 = ( float * ALIGNED(16) ) ( f0 + ii(12) );
-    vp13 = ( float * ALIGNED(16) ) ( f0 + ii(13) );
-    vp14 = ( float * ALIGNED(16) ) ( f0 + ii(14) );
-    vp15 = ( float * ALIGNED(16) ) ( f0 + ii(15) );
+    vp00 = ( float * ALIGNED(64) ) ( f0 + ii( 0) );
+    vp01 = ( float * ALIGNED(64) ) ( f0 + ii( 1) );
+    vp02 = ( float * ALIGNED(64) ) ( f0 + ii( 2) );
+    vp03 = ( float * ALIGNED(64) ) ( f0 + ii( 3) );
+    vp04 = ( float * ALIGNED(64) ) ( f0 + ii( 4) );
+    vp05 = ( float * ALIGNED(64) ) ( f0 + ii( 5) );
+    vp06 = ( float * ALIGNED(64) ) ( f0 + ii( 6) );
+    vp07 = ( float * ALIGNED(64) ) ( f0 + ii( 7) );
+    vp08 = ( float * ALIGNED(64) ) ( f0 + ii( 8) );
+    vp09 = ( float * ALIGNED(64) ) ( f0 + ii( 9) );
+    vp10 = ( float * ALIGNED(64) ) ( f0 + ii(10) );
+    vp11 = ( float * ALIGNED(64) ) ( f0 + ii(11) );
+    vp12 = ( float * ALIGNED(64) ) ( f0 + ii(12) );
+    vp13 = ( float * ALIGNED(64) ) ( f0 + ii(13) );
+    vp14 = ( float * ALIGNED(64) ) ( f0 + ii(14) );
+    vp15 = ( float * ALIGNED(64) ) ( f0 + ii(15) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
@@ -250,22 +250,22 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Set current density accumulation pointers.
     //--------------------------------------------------------------------------
-    vp00 = ( float * ALIGNED(16) ) ( a0 + ii( 0) );
-    vp01 = ( float * ALIGNED(16) ) ( a0 + ii( 1) );
-    vp02 = ( float * ALIGNED(16) ) ( a0 + ii( 2) );
-    vp03 = ( float * ALIGNED(16) ) ( a0 + ii( 3) );
-    vp04 = ( float * ALIGNED(16) ) ( a0 + ii( 4) );
-    vp05 = ( float * ALIGNED(16) ) ( a0 + ii( 5) );
-    vp06 = ( float * ALIGNED(16) ) ( a0 + ii( 6) );
-    vp07 = ( float * ALIGNED(16) ) ( a0 + ii( 7) );
-    vp08 = ( float * ALIGNED(16) ) ( a0 + ii( 8) );
-    vp09 = ( float * ALIGNED(16) ) ( a0 + ii( 9) );
-    vp10 = ( float * ALIGNED(16) ) ( a0 + ii(10) );
-    vp11 = ( float * ALIGNED(16) ) ( a0 + ii(11) );
-    vp12 = ( float * ALIGNED(16) ) ( a0 + ii(12) );
-    vp13 = ( float * ALIGNED(16) ) ( a0 + ii(13) );
-    vp14 = ( float * ALIGNED(16) ) ( a0 + ii(14) );
-    vp15 = ( float * ALIGNED(16) ) ( a0 + ii(15) );
+    vp00 = ( float * ALIGNED(64) ) ( a0 + ii( 0) );
+    vp01 = ( float * ALIGNED(64) ) ( a0 + ii( 1) );
+    vp02 = ( float * ALIGNED(64) ) ( a0 + ii( 2) );
+    vp03 = ( float * ALIGNED(64) ) ( a0 + ii( 3) );
+    vp04 = ( float * ALIGNED(64) ) ( a0 + ii( 4) );
+    vp05 = ( float * ALIGNED(64) ) ( a0 + ii( 5) );
+    vp06 = ( float * ALIGNED(64) ) ( a0 + ii( 6) );
+    vp07 = ( float * ALIGNED(64) ) ( a0 + ii( 7) );
+    vp08 = ( float * ALIGNED(64) ) ( a0 + ii( 8) );
+    vp09 = ( float * ALIGNED(64) ) ( a0 + ii( 9) );
+    vp10 = ( float * ALIGNED(64) ) ( a0 + ii(10) );
+    vp11 = ( float * ALIGNED(64) ) ( a0 + ii(11) );
+    vp12 = ( float * ALIGNED(64) ) ( a0 + ii(12) );
+    vp13 = ( float * ALIGNED(64) ) ( a0 + ii(13) );
+    vp14 = ( float * ALIGNED(64) ) ( a0 + ii(14) );
+    vp15 = ( float * ALIGNED(64) ) ( a0 + ii(15) );
 
     //--------------------------------------------------------------------------
     // Accumulate current density.

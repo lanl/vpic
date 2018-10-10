@@ -8,22 +8,22 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
   const interpolator_t * RESTRICT ALIGNED(128) f = args->f;
   const particle_t     * RESTRICT ALIGNED(128) p = args->p;
 
-  const float          * RESTRICT ALIGNED(16)  vp00;
-  const float          * RESTRICT ALIGNED(16)  vp01;
-  const float          * RESTRICT ALIGNED(16)  vp02;
-  const float          * RESTRICT ALIGNED(16)  vp03;
-  const float          * RESTRICT ALIGNED(16)  vp04;
-  const float          * RESTRICT ALIGNED(16)  vp05;
-  const float          * RESTRICT ALIGNED(16)  vp06;
-  const float          * RESTRICT ALIGNED(16)  vp07;
-  const float          * RESTRICT ALIGNED(16)  vp08;
-  const float          * RESTRICT ALIGNED(16)  vp09;
-  const float          * RESTRICT ALIGNED(16)  vp10;
-  const float          * RESTRICT ALIGNED(16)  vp11;
-  const float          * RESTRICT ALIGNED(16)  vp12;
-  const float          * RESTRICT ALIGNED(16)  vp13;
-  const float          * RESTRICT ALIGNED(16)  vp14;
-  const float          * RESTRICT ALIGNED(16)  vp15;
+  const float          * RESTRICT ALIGNED(64)  vp00;
+  const float          * RESTRICT ALIGNED(64)  vp01;
+  const float          * RESTRICT ALIGNED(64)  vp02;
+  const float          * RESTRICT ALIGNED(64)  vp03;
+  const float          * RESTRICT ALIGNED(64)  vp04;
+  const float          * RESTRICT ALIGNED(64)  vp05;
+  const float          * RESTRICT ALIGNED(64)  vp06;
+  const float          * RESTRICT ALIGNED(64)  vp07;
+  const float          * RESTRICT ALIGNED(64)  vp08;
+  const float          * RESTRICT ALIGNED(64)  vp09;
+  const float          * RESTRICT ALIGNED(64)  vp10;
+  const float          * RESTRICT ALIGNED(64)  vp11;
+  const float          * RESTRICT ALIGNED(64)  vp12;
+  const float          * RESTRICT ALIGNED(64)  vp13;
+  const float          * RESTRICT ALIGNED(64)  vp14;
+  const float          * RESTRICT ALIGNED(64)  vp15;
 
   const v16float qdt_2mc(args->qdt_2mc);
   const v16float msp(args->msp);

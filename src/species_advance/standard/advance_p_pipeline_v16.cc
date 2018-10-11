@@ -107,7 +107,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     load_16x8_tr_p( &p[ 0].dx, &p[ 2].dx, &p[ 4].dx, &p[ 6].dx,
                     &p[ 8].dx, &p[10].dx, &p[12].dx, &p[14].dx,
-		    dx, dy, dz, ii, ux, uy, uz, q );
+                    dx, dy, dz, ii, ux, uy, uz, q );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -327,7 +327,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     // Transpose the data in vectors v0-v15 so it can be added into the
     // accumulator arrays using vector operations.
     transpose( v00, v01, v02, v03, v04, v05, v06, v07,
-	       v08, v09, v10, v11, v12, v13, v14, v15 );
+               v08, v09, v10, v11, v12, v13, v14, v15 );
 
     // Add the contributions to Jx, Jy and Jz from 16 particles into the
     // accumulator arrays for Jx, Jy and Jz.
@@ -364,12 +364,12 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
       {                                                                 \
         if ( nm < max_nm )                                              \
         {                                                               \
-	  v4::copy_4x1( &pm[nm++], local_pm ); 	                        \
-	}                                                               \
+          v4::copy_4x1( &pm[nm++], local_pm );                          \
+        }                                                               \
         else                                        /* Unlikely */      \
-	{                                                               \
-	  itmp++;                                                       \
-	}                                                               \
+        {                                                               \
+          itmp++;                                                       \
+        }                                                               \
       }                                                                 \
     }
 

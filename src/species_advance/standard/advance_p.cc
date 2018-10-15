@@ -231,14 +231,14 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
       if ( move_p( p0, local_pm, a0, g, qsp ) ) // Unlikely
       {
         if ( nm < max_nm )
-	{
-	  pm[nm++] = local_pm[0];
+        {
+          pm[nm++] = local_pm[0];
         }
 
         else
-	{
-	  itmp++;                               // Unlikely
-	}
+        {
+          itmp++;                               // Unlikely
+        }
       }
     }
   }
@@ -297,8 +297,10 @@ advance_p(       species_t            * RESTRICT sp,
 
   int rank;
 
-  if ( !sp || !aa || !ia || sp->g!=aa->g || sp->g!=ia->g )
-    ERROR(( "Bad args" ));
+  if ( !sp || !aa || !ia || sp->g != aa->g || sp->g != ia->g )
+  {
+    ERROR( ( "Bad args" ) );
+  }
 
   args->p0      = sp->p;
   args->pm      = sp->pm;
@@ -350,11 +352,15 @@ advance_p(       species_t            * RESTRICT sp,
   for( rank = 0; rank <= N_PIPELINE; rank++ )
   {
     if ( args->seg[rank].n_ignored )
+    {
       WARNING( ( "Pipeline %i ran out of storage for %i movers",
                  rank, args->seg[rank].n_ignored ) );
+    }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )
+    {
       MOVE( sp->pm + sp->nm, args->seg[rank].pm, args->seg[rank].nm );
+    }
 
     sp->nm += args->seg[rank].nm;
   }

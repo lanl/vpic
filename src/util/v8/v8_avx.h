@@ -396,43 +396,6 @@ namespace v8
     a.i[7] = ((const int *)a7)[0];
   }
 
-#if 0
-  inline void load_8x2_tr( const void * ALIGNED(8) a0,
-                           const void * ALIGNED(8) a1,
-                           const void * ALIGNED(8) a2,
-                           const void * ALIGNED(8) a3,
-			   const void * ALIGNED(8) a4,
-                           const void * ALIGNED(8) a5,
-                           const void * ALIGNED(8) a6,
-                           const void * ALIGNED(8) a7,
-                           v8 &a, v8 &b )
-  {
-    a.i[0] = ((const int * ALIGNED(8))a0)[0];
-    b.i[0] = ((const int * ALIGNED(8))a0)[1];
-
-    a.i[1] = ((const int * ALIGNED(8))a1)[0];
-    b.i[1] = ((const int * ALIGNED(8))a1)[1];
-
-    a.i[2] = ((const int * ALIGNED(8))a2)[0];
-    b.i[2] = ((const int * ALIGNED(8))a2)[1];
-
-    a.i[3] = ((const int * ALIGNED(8))a3)[0];
-    b.i[3] = ((const int * ALIGNED(8))a3)[1];
-
-    a.i[4] = ((const int * ALIGNED(8))a4)[0];
-    b.i[4] = ((const int * ALIGNED(8))a4)[1];
-
-    a.i[5] = ((const int * ALIGNED(8))a5)[0];
-    b.i[5] = ((const int * ALIGNED(8))a5)[1];
-
-    a.i[6] = ((const int * ALIGNED(8))a6)[0];
-    b.i[6] = ((const int * ALIGNED(8))a6)[1];
-
-    a.i[7] = ((const int * ALIGNED(8))a7)[0];
-    b.i[7] = ((const int * ALIGNED(8))a7)[1];
-  }
-#endif
-
   inline void load_8x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
@@ -504,59 +467,6 @@ namespace v8
     c.i[7] = ((const int * ALIGNED(16))a7)[2]; 
    }
 
-#if 0
-  inline void load_8x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d )
-  {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
-
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
-
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
-
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
-
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    d.i[4] = ((const int * ALIGNED(16))a4)[3];
-
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    d.i[5] = ((const int * ALIGNED(16))a5)[3];
-
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    d.i[6] = ((const int * ALIGNED(16))a6)[3];
-
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2];
-    d.i[7] = ((const int * ALIGNED(16))a7)[3];
-  }
-#endif
-
   inline void load_8x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -588,92 +498,6 @@ namespace v8
     c.v = _mm256_shuffle_ps( tmp2, tmp3, 0x88 );
     d.v = _mm256_shuffle_ps( tmp2, tmp3, 0xDD );
   }
-
-#if 0
-  inline void load_8x8_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-			   const void * ALIGNED(16) a4,
-                           const void * ALIGNED(16) a5,
-                           const void * ALIGNED(16) a6,
-                           const void * ALIGNED(16) a7,
-                           v8 &a, v8 &b, v8 &c, v8 &d,
-                           v8 &e, v8 &f, v8 &g, v8 &h )
-  {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
-    e.i[0] = ((const int * ALIGNED(16))a0)[4];
-    f.i[0] = ((const int * ALIGNED(16))a0)[5];
-    g.i[0] = ((const int * ALIGNED(16))a0)[6];
-    h.i[0] = ((const int * ALIGNED(16))a0)[7];
-
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
-    e.i[1] = ((const int * ALIGNED(16))a1)[4];
-    f.i[1] = ((const int * ALIGNED(16))a1)[5];
-    g.i[1] = ((const int * ALIGNED(16))a1)[6];
-    h.i[1] = ((const int * ALIGNED(16))a1)[7];
-
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
-    e.i[2] = ((const int * ALIGNED(16))a2)[4];
-    f.i[2] = ((const int * ALIGNED(16))a2)[5];
-    g.i[2] = ((const int * ALIGNED(16))a2)[6];
-    h.i[2] = ((const int * ALIGNED(16))a2)[7];
-
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
-    e.i[3] = ((const int * ALIGNED(16))a3)[4];
-    f.i[3] = ((const int * ALIGNED(16))a3)[5];
-    g.i[3] = ((const int * ALIGNED(16))a3)[6];
-    h.i[3] = ((const int * ALIGNED(16))a3)[7];
-
-    a.i[4] = ((const int * ALIGNED(16))a4)[0];
-    b.i[4] = ((const int * ALIGNED(16))a4)[1];
-    c.i[4] = ((const int * ALIGNED(16))a4)[2];
-    d.i[4] = ((const int * ALIGNED(16))a4)[3];
-    e.i[4] = ((const int * ALIGNED(16))a4)[4];
-    f.i[4] = ((const int * ALIGNED(16))a4)[5];
-    g.i[4] = ((const int * ALIGNED(16))a4)[6];
-    h.i[4] = ((const int * ALIGNED(16))a4)[7];
-
-    a.i[5] = ((const int * ALIGNED(16))a5)[0];
-    b.i[5] = ((const int * ALIGNED(16))a5)[1];
-    c.i[5] = ((const int * ALIGNED(16))a5)[2];
-    d.i[5] = ((const int * ALIGNED(16))a5)[3];
-    e.i[5] = ((const int * ALIGNED(16))a5)[4];
-    f.i[5] = ((const int * ALIGNED(16))a5)[5];
-    g.i[5] = ((const int * ALIGNED(16))a5)[6];
-    h.i[5] = ((const int * ALIGNED(16))a5)[7];
-
-    a.i[6] = ((const int * ALIGNED(16))a6)[0];
-    b.i[6] = ((const int * ALIGNED(16))a6)[1];
-    c.i[6] = ((const int * ALIGNED(16))a6)[2];
-    d.i[6] = ((const int * ALIGNED(16))a6)[3];
-    e.i[6] = ((const int * ALIGNED(16))a6)[4];
-    f.i[6] = ((const int * ALIGNED(16))a6)[5];
-    g.i[6] = ((const int * ALIGNED(16))a6)[6];
-    h.i[6] = ((const int * ALIGNED(16))a6)[7];
-
-    a.i[7] = ((const int * ALIGNED(16))a7)[0];
-    b.i[7] = ((const int * ALIGNED(16))a7)[1];
-    c.i[7] = ((const int * ALIGNED(16))a7)[2];
-    d.i[7] = ((const int * ALIGNED(16))a7)[3];
-    e.i[7] = ((const int * ALIGNED(16))a7)[4];
-    f.i[7] = ((const int * ALIGNED(16))a7)[5];
-    g.i[7] = ((const int * ALIGNED(16))a7)[6];
-    h.i[7] = ((const int * ALIGNED(16))a7)[7];
-  }
-#endif
 
   inline void load_8x8_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -740,39 +564,6 @@ namespace v8
     ((int *)a6)[0] = a.i[6];
     ((int *)a7)[0] = a.i[7];
   }
-
-#if 0
-  inline void store_8x2_tr( const v8 &a, const v8 &b,
-                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
-                            void * ALIGNED(8) a2, void * ALIGNED(8) a3,
-                            void * ALIGNED(8) a4, void * ALIGNED(8) a5,
-                            void * ALIGNED(8) a6, void * ALIGNED(8) a7 )
-  {
-    ((int * ALIGNED(8))a0)[0] = a.i[0];
-    ((int * ALIGNED(8))a0)[1] = b.i[0];
-
-    ((int * ALIGNED(8))a1)[0] = a.i[1];
-    ((int * ALIGNED(8))a1)[1] = b.i[1];
-
-    ((int * ALIGNED(8))a2)[0] = a.i[2];
-    ((int * ALIGNED(8))a2)[1] = b.i[2];
-
-    ((int * ALIGNED(8))a3)[0] = a.i[3];
-    ((int * ALIGNED(8))a3)[1] = b.i[3];
-
-    ((int * ALIGNED(8))a4)[0] = a.i[4];
-    ((int * ALIGNED(8))a4)[1] = b.i[4];
-
-    ((int * ALIGNED(8))a5)[0] = a.i[5];
-    ((int * ALIGNED(8))a5)[1] = b.i[5];
-
-    ((int * ALIGNED(8))a6)[0] = a.i[6];
-    ((int * ALIGNED(8))a6)[1] = b.i[6];
-
-    ((int * ALIGNED(8))a7)[0] = a.i[7];
-    ((int * ALIGNED(8))a7)[1] = b.i[7];
-  }
-#endif
 
   inline void store_8x2_tr( const v8 &a, const v8 &b,
                             void * ALIGNED(8) a0, void * ALIGNED(8) a1,
@@ -843,55 +634,6 @@ namespace v8
     ((int * ALIGNED(16))a7)[2] = c.i[7];
   }
 
-#if 0
-  inline void store_8x4_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
-  {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
-    ((int * ALIGNED(16))a0)[3] = d.i[0];
-
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
-    ((int * ALIGNED(16))a1)[3] = d.i[1];
-
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
-    ((int * ALIGNED(16))a2)[3] = d.i[2];
-
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
-    ((int * ALIGNED(16))a3)[3] = d.i[3];
-
-    ((int * ALIGNED(16))a4)[0] = a.i[4];
-    ((int * ALIGNED(16))a4)[1] = b.i[4];
-    ((int * ALIGNED(16))a4)[2] = c.i[4];
-    ((int * ALIGNED(16))a4)[3] = d.i[4];
-
-    ((int * ALIGNED(16))a5)[0] = a.i[5];
-    ((int * ALIGNED(16))a5)[1] = b.i[5];
-    ((int * ALIGNED(16))a5)[2] = c.i[5];
-    ((int * ALIGNED(16))a5)[3] = d.i[5];
-
-    ((int * ALIGNED(16))a6)[0] = a.i[6];
-    ((int * ALIGNED(16))a6)[1] = b.i[6];
-    ((int * ALIGNED(16))a6)[2] = c.i[6];
-    ((int * ALIGNED(16))a6)[3] = d.i[6];
-
-    ((int * ALIGNED(16))a7)[0] = a.i[7];
-    ((int * ALIGNED(16))a7)[1] = b.i[7];
-    ((int * ALIGNED(16))a7)[2] = c.i[7];
-    ((int * ALIGNED(16))a7)[3] = d.i[7];
-  }
-#endif
-
   inline void store_8x4_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3,
@@ -931,88 +673,6 @@ namespace v8
     _mm_store_ps( (float *) a6, s6 );
     _mm_store_ps( (float *) a7, s7 );
   }
-
-#if 0
-  inline void store_8x8_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
-			    const v8 &e, const v8 &f, const v8 &g, const v8 &h,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3,
-                            void * ALIGNED(16) a4, void * ALIGNED(16) a5,
-                            void * ALIGNED(16) a6, void * ALIGNED(16) a7 )
-  {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
-    ((int * ALIGNED(16))a0)[3] = d.i[0];
-    ((int * ALIGNED(16))a0)[4] = e.i[0];
-    ((int * ALIGNED(16))a0)[5] = f.i[0];
-    ((int * ALIGNED(16))a0)[6] = g.i[0];
-    ((int * ALIGNED(16))a0)[7] = h.i[0];
-
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
-    ((int * ALIGNED(16))a1)[3] = d.i[1];
-    ((int * ALIGNED(16))a1)[4] = e.i[1];
-    ((int * ALIGNED(16))a1)[5] = f.i[1];
-    ((int * ALIGNED(16))a1)[6] = g.i[1];
-    ((int * ALIGNED(16))a1)[7] = h.i[1];
-
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
-    ((int * ALIGNED(16))a2)[3] = d.i[2];
-    ((int * ALIGNED(16))a2)[4] = e.i[2];
-    ((int * ALIGNED(16))a2)[5] = f.i[2];
-    ((int * ALIGNED(16))a2)[6] = g.i[2];
-    ((int * ALIGNED(16))a2)[7] = h.i[2];
-
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
-    ((int * ALIGNED(16))a3)[3] = d.i[3];
-    ((int * ALIGNED(16))a3)[4] = e.i[3];
-    ((int * ALIGNED(16))a3)[5] = f.i[3];
-    ((int * ALIGNED(16))a3)[6] = g.i[3];
-    ((int * ALIGNED(16))a3)[7] = h.i[3];
-
-    ((int * ALIGNED(16))a4)[0] = a.i[4];
-    ((int * ALIGNED(16))a4)[1] = b.i[4];
-    ((int * ALIGNED(16))a4)[2] = c.i[4];
-    ((int * ALIGNED(16))a4)[3] = d.i[4];
-    ((int * ALIGNED(16))a4)[4] = e.i[4];
-    ((int * ALIGNED(16))a4)[5] = f.i[4];
-    ((int * ALIGNED(16))a4)[6] = g.i[4];
-    ((int * ALIGNED(16))a4)[7] = h.i[4];
-
-    ((int * ALIGNED(16))a5)[0] = a.i[5];
-    ((int * ALIGNED(16))a5)[1] = b.i[5];
-    ((int * ALIGNED(16))a5)[2] = c.i[5];
-    ((int * ALIGNED(16))a5)[3] = d.i[5];
-    ((int * ALIGNED(16))a5)[4] = e.i[5];
-    ((int * ALIGNED(16))a5)[5] = f.i[5];
-    ((int * ALIGNED(16))a5)[6] = g.i[5];
-    ((int * ALIGNED(16))a5)[7] = h.i[5];
-
-    ((int * ALIGNED(16))a6)[0] = a.i[6];
-    ((int * ALIGNED(16))a6)[1] = b.i[6];
-    ((int * ALIGNED(16))a6)[2] = c.i[6];
-    ((int * ALIGNED(16))a6)[3] = d.i[6];
-    ((int * ALIGNED(16))a6)[4] = e.i[6];
-    ((int * ALIGNED(16))a6)[5] = f.i[6];
-    ((int * ALIGNED(16))a6)[6] = g.i[6];
-    ((int * ALIGNED(16))a6)[7] = h.i[6];
-
-    ((int * ALIGNED(16))a7)[0] = a.i[7];
-    ((int * ALIGNED(16))a7)[1] = b.i[7];
-    ((int * ALIGNED(16))a7)[2] = c.i[7];
-    ((int * ALIGNED(16))a7)[3] = d.i[7];
-    ((int * ALIGNED(16))a7)[4] = e.i[7];
-    ((int * ALIGNED(16))a7)[5] = f.i[7];
-    ((int * ALIGNED(16))a7)[6] = g.i[7];
-    ((int * ALIGNED(16))a7)[7] = h.i[7];
-  }
-#endif
 
   inline void store_8x8_tr( const v8 &a, const v8 &b, const v8 &c, const v8 &d,
 			    const v8 &e, const v8 &f, const v8 &g, const v8 &h,
@@ -1839,7 +1499,7 @@ namespace v8
     return b;
   }
 
-#if 0
+  #if 0
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
@@ -1855,7 +1515,7 @@ namespace v8
 
     return b;
   }
-#endif
+  #endif
 
   inline v8float rsqrt( const v8float &a )
   {
@@ -1875,7 +1535,7 @@ namespace v8
     return b;
   }
 
-#if 0
+  #if 0
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
@@ -1884,9 +1544,9 @@ namespace v8
 
     return b;
   }
-#endif
+  #endif
 
-#if 0
+  #if 0
   inline v8float rsqrt( const v8float &a )
   {
     v8float b;
@@ -1896,7 +1556,7 @@ namespace v8
 
     return b;
   }
-#endif
+  #endif
 
   inline v8float rcp_approx( const v8float &a )
   {
@@ -1907,7 +1567,7 @@ namespace v8
     return b;
   }
 
-#if 0
+  #if 0
   inline v8float rcp( const v8float &a )
   {
     v8float b;
@@ -1923,7 +1583,7 @@ namespace v8
 
     return b;
   }
-#endif
+  #endif
 
   inline v8float rcp( const v8float &a )
   {
@@ -1937,7 +1597,7 @@ namespace v8
     return b;
   }
 
-#if 0
+  #if 0
   inline v8float rcp( const v8float &a )
   {
     v8float b;
@@ -1946,7 +1606,7 @@ namespace v8
 
     return b;
   }
-#endif
+  #endif
 
   inline v8float fma( const v8float &a, const v8float &b, const v8float &c )
   {

@@ -1216,7 +1216,7 @@ namespace v4
     return b;
   }
 
-#if 0
+  #if 0
   inline v4float rsqrt( const v4float &a )
   {
     v4float b;
@@ -1240,9 +1240,9 @@ namespace v4
 
     return b;
   }
-#endif
+  #endif
 
-#if 0
+  #if 0
   inline v4float rsqrt( const v4float &a )
   {
     v4float b;
@@ -1263,7 +1263,7 @@ namespace v4
 
     return b;
   }
-#endif
+  #endif
 
   inline v4float rsqrt( const v4float &a )
   {
@@ -1295,7 +1295,7 @@ namespace v4
     return b;
   }
 
-#if 0
+  #if 0
   inline v4float rcp( const v4float &a )
   {
     v4float b;
@@ -1312,9 +1312,9 @@ namespace v4
 
     return b;
   }
-#endif
+  #endif
 
-#if 0
+  #if 0
   inline v4float rcp( const v4float &a )
   {
     v4float b;
@@ -1329,7 +1329,7 @@ namespace v4
 
     return b;
   }
-#endif
+  #endif
 
   inline v4float rcp( const v4float &a )
   {
@@ -1346,17 +1346,6 @@ namespace v4
     return b;
   }
 
-#if 0
-  inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_add_ps( _mm_mul_ps( a.v, b.v ), c.v );
-
-    return d;
-  }
-#endif
-
   inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
@@ -1366,17 +1355,6 @@ namespace v4
     return d;
   }
 
-#if 0
-  inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_sub_ps( _mm_mul_ps( a.v, b.v ), c.v );
-
-    return d;
-  }
-#endif
-
   inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
@@ -1385,17 +1363,6 @@ namespace v4
 
     return d;
   }
-
-#if 0
-  inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
-  {
-    v4float d;
-
-    d.v = _mm_sub_ps( c.v, _mm_mul_ps( a.v, b.v ) );
-
-    return d;
-  }
-#endif
 
   inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
   {

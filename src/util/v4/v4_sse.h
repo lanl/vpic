@@ -917,7 +917,7 @@ namespace v4 {
     return b;
   }
 
-#if 0
+  #if 0
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -930,7 +930,7 @@ namespace v4 {
                                                    _mm_mul_ps(b_v,b_v))))));
     return b;
   }
-#endif
+  #endif
 
   inline v4float rsqrt( const v4float &a ) {
     v4float b;
@@ -947,7 +947,7 @@ namespace v4 {
     return b;
   }
 
-#if 0
+  #if 0
   inline v4float rcp( const v4float &a ) {
     v4float b;
     __m128 a_v = a.v, b_v;
@@ -955,7 +955,7 @@ namespace v4 {
     b.v = _mm_sub_ps(_mm_add_ps(b_v,b_v),_mm_mul_ps(a_v,_mm_mul_ps(b_v,b_v)));
     return b;
   }
-#endif
+  #endif
 
   inline v4float rcp( const v4float &a ) {
     v4float b;

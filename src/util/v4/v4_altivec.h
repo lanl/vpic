@@ -194,14 +194,6 @@ namespace v4 {
     return b;
   }
 
-#if 0
-  inline v4 splat( const v4 & a, int n ) {
-    v4 b;
-    b.v = vec_splat( a.v, n );
-    return b;
-  }
-#endif
-
   template<int i0, int i1, int i2, int i3>
   inline v4 shuffle( const v4 & a ) {
     _v4_float a_v = a.v;
@@ -209,16 +201,6 @@ namespace v4 {
     b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
     return b;
   }
-
-#if 0
-  inline v4 shuffle( const v4 & a,
-                     int i0, int i1, int i2, int i3 ) {
-    _v4_float a_v = a.v;
-    v4 b;
-    b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
-    return b;
-  }
-#endif
 
   inline void swap( v4 &a, v4 &b ) { 
     _v4_float t;

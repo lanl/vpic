@@ -1,3 +1,9 @@
+#define IN_spa
+
+#include "spa_private.h"
+
+#if defined(V4_ACCELERATION)
+
 using namespace v4;
 
 void
@@ -301,3 +307,15 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   args->seg[pipeline_rank].nm        = nm;
   args->seg[pipeline_rank].n_ignored = itmp;
 }
+
+#else
+
+void
+advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline )
+{
+  // No v4 implementation.
+}
+
+#endif

@@ -10,11 +10,6 @@
 
 #include "vpic/vpic.h"
 
-// Use this for Intel and VTune.
-#if defined(VPIC_USE_VTUNE_ADVANCE)
-#include "ittnotify.h"
-#endif
-
 /* The simulation variable is set up this way so both the checkpt
    service and main can see it.  This allows main to find where
    the restored objects are after a restore. */
@@ -87,10 +82,6 @@ main( int argc,
 
   // Advance the simulation
 
-#if defined(VPIC_USE_VTUNE_ADVANCE)
-  __itt_resume();
-#endif
-
   if( world_rank==0 ) log_printf( "*** Advancing\n" );
   double elapsed = wallclock();
   while( simulation->advance() ); 
@@ -101,10 +92,6 @@ main( int argc,
     log_printf( "*** Done (%gs / %iw:%id:%ih:%im:%is elapsed)\n",
                 elapsed, w, d, h, m, s );
   }
-
-#if defined(VPIC_USE_VTUNE_ADVANCE)
-  __itt_pause();
-#endif
 
   // Cleaning up
 

@@ -48,6 +48,31 @@ typedef struct advance_p_pipeline_args {
 
 // PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
 
+void
+advance_p_pipeline( species_t * RESTRICT sp,
+                    accumulator_array_t * RESTRICT aa,
+                    const interpolator_array_t * RESTRICT ia );
+
+void
+advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
+                           int pipeline_rank,
+                           int n_pipeline );
+
+void
+advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
+void
+advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
+void
+advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
+
 ///////////////////////////////////////////////////////////////////////////////
 // center_p_pipeline and uncenter_p_pipeline interface
 

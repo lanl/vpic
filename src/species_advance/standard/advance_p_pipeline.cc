@@ -11,11 +11,6 @@
 
 #include "../../util/pipelines/pipelines_exec.h"
 
-// Use this for Intel and VTune.
-#if defined(VPIC_USE_VTUNE_ADVANCE_P)
-#include "ittnotify.h"
-#endif
-
 //----------------------------------------------------------------------------//
 // Reference implementation for an advance_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.
@@ -242,43 +237,13 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for advance_p_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "advance_p_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for advance_p_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "advance_p_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for advance_p_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "advance_p_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper advance_p pipeline
 // function.
 //----------------------------------------------------------------------------//
 
 void
-advance_p_pipeline(       species_t            * RESTRICT sp,
-                          accumulator_array_t  * RESTRICT aa,
+advance_p_pipeline( species_t * RESTRICT sp,
+                    accumulator_array_t * RESTRICT aa,
                     const interpolator_array_t * RESTRICT ia )
 {
   DECLARE_ALIGNED_ARRAY( advance_p_pipeline_args_t, 128, args, 1 );
@@ -320,17 +285,9 @@ advance_p_pipeline(       species_t            * RESTRICT sp,
   // However, it is worth reconsidering this at some point in the
   // future.
 
-#if defined(VPIC_USE_VTUNE_ADVANCE_P)
-  __itt_resume();
-#endif
-
   EXEC_PIPELINES( advance_p, args, 0 );
 
   WAIT_PIPELINES();
-
-#if defined(VPIC_USE_VTUNE_ADVANCE_P)
-  __itt_pause();
-#endif
 
   // FIXME: HIDEOUS HACK UNTIL BETTER PARTICLE MOVER SEMANTICS
   // INSTALLED FOR DEALING WITH PIPELINES.  COMPACT THE PARTICLE

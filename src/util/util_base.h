@@ -335,8 +335,6 @@ strip_cmdline_string( int * pargc,
 // In util.c
 void detect_old_style_arguments(int* pargc, char *** pargv);
 
-void detect_old_style_arguments(int* pargc, char *** pargv);
-
 // MALLOC is guaranteed to succeed from the caller's point of view
 // (thus, _no_ NULL checking the pointer is necessary).  n is the
 // number of elements of the type of x to allocate (_not_ the number

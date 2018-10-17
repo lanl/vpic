@@ -18,15 +18,7 @@
 // Choose between using AoSoA or AoS data layout for the particles.
 //----------------------------------------------------------------------------//
 
-#if defined(VPIC_USE_AOSOA_P)
-
-#include "species_advance_aosoa.h"
-
-#else
-
 #include "species_advance_aos.h"
-
-#endif
 
 //----------------------------------------------------------------------------//
 // Declare methods.

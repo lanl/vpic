@@ -69,13 +69,6 @@ option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
-#if ( USE_OPENMP ) 
-#  message( FATAL_ERROR "\
-#    This option has moved to ENABLE_OPENMP \
-#    to avoid duplication \
-#  " )
-#endif()
-
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #

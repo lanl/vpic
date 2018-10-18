@@ -353,7 +353,7 @@ sort_p_pipeline( species_t * sp )
     args->p     = aux_p;
     args->aux_p = p;
 
-    subsort_pipeline( args, 0, 1 );
+    subsort_pipeline_scalar( args, 0, 1 );
 
     CLEAR( partition, vl );
 

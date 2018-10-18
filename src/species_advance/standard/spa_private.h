@@ -88,7 +88,55 @@ typedef struct center_p_pipeline_args {
 } center_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
+
+void
+center_p_pipeline( species_t * RESTRICT sp,
+                   const interpolator_array_t * RESTRICT ia );
+
+void
+center_p_pipeline_scalar( center_p_pipeline_args_t * args,
+                          int pipeline_rank,
+                          int n_pipeline );
+
+void
+center_p_pipeline_v4( center_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+center_p_pipeline_v8( center_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+void
+center_p_pipeline_v16( center_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
 // PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
+
+void
+uncenter_p_pipeline( species_t * RESTRICT sp,
+                     const interpolator_array_t * RESTRICT ia );
+
+void
+uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
+                            int pipeline_rank,
+                            int n_pipeline );
+
+void
+uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
+
+void
+uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
+
+void
+uncenter_p_pipeline_v16( center_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // energy_p_pipeline interface
@@ -107,6 +155,30 @@ typedef struct energy_p_pipeline_args {
 } energy_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
+
+double
+energy_p_pipeline( const species_t * RESTRICT sp,
+                   const interpolator_array_t * RESTRICT ia );
+
+void
+energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
+                          int pipeline_rank,
+                          int n_pipeline );
+
+void
+energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
@@ -157,5 +229,23 @@ typedef struct sort_p_pipeline_args {
 // PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
 // PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
 // PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
+
+void
+sort_p_pipeline( species_t * sp );
+
+void
+coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,
+                              int pipeline_rank,
+                              int n_pipeline );
+
+void
+coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
+                             int pipeline_rank,
+                             int n_pipeline );
+
+void
+subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline );
 
 #endif // _spa_private_h_

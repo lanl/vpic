@@ -98,42 +98,12 @@ uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for uncenter_p_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "uncenter_p_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for uncenter_p_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "uncenter_p_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for uncenter_p_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "uncenter_p_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper uncenter_p pipeline
 // function.
 //----------------------------------------------------------------------------//
 
 void
-uncenter_p_pipeline( /**/  species_t            * RESTRICT sp,
+uncenter_p_pipeline( species_t * RESTRICT sp,
                      const interpolator_array_t * RESTRICT ia )
 {
   DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
@@ -154,5 +124,6 @@ uncenter_p_pipeline( /**/  species_t            * RESTRICT sp,
   args->np      = sp->np;
 
   EXEC_PIPELINES( uncenter_p, args, 0 );
+
   WAIT_PIPELINES();
 }

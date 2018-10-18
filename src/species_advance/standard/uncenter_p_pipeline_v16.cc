@@ -1,3 +1,9 @@
+#define IN_spa
+
+#include "spa_private.h"
+
+#if defined(V16_ACCELERATION)
+
 using namespace v16;
 
 void
@@ -140,3 +146,16 @@ uncenter_p_pipeline_v16( center_p_pipeline_args_t * args,
                      &p[ 8].dx, &p[10].dx, &p[12].dx, &p[14].dx );
   }
 }
+
+#else
+
+void
+uncenter_p_pipeline_v16( center_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline )
+{
+  // No v16 implementation.
+  ERROR( ( "No uncenter_p_pipeline_v16 implementation." ) );
+}
+
+#endif

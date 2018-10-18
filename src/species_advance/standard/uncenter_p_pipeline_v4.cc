@@ -1,3 +1,9 @@
+#define IN_spa
+
+#include "spa_private.h"
+
+#if defined(V4_ACCELERATION)
+
 using namespace v4;
 
 void
@@ -129,3 +135,16 @@ uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
 		  &p[0].ux, &p[1].ux, &p[2].ux, &p[3].ux );
   }
 }
+
+#else
+
+void
+uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline )
+{
+  // No v4 implementation.
+  ERROR( ( "No uncenter_p_pipeline_v4 implementation." ) );
+}
+
+#endif

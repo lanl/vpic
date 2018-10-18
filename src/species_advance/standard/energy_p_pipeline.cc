@@ -68,42 +68,12 @@ energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for energy_p_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "energy_p_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for energy_p_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "energy_p_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for energy_p_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "energy_p_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper energy_p pipeline
 // function.
 //----------------------------------------------------------------------------//
 
 double
-energy_p_pipeline( const species_t            * RESTRICT sp,
+energy_p_pipeline( const species_t * RESTRICT sp,
                    const interpolator_array_t * RESTRICT ia )
 {
   DECLARE_ALIGNED_ARRAY( energy_p_pipeline_args_t, 128, args, 1 );
@@ -113,7 +83,10 @@ energy_p_pipeline( const species_t            * RESTRICT sp,
   double local, global;
   int rank;
 
-  if( !sp || !ia || sp->g!=ia->g ) ERROR(( "Bad args" ));
+  if ( !sp || !ia || sp->g != ia->g )
+  {
+    ERROR( ( "Bad args" ) );
+  }
 
   // Have the pipelines do the bulk of particles in blocks and have the
   // host do the final incomplete block.
@@ -126,6 +99,7 @@ energy_p_pipeline( const species_t            * RESTRICT sp,
   args->np      = sp->np;
 
   EXEC_PIPELINES( energy_p, args, 0 );
+
   WAIT_PIPELINES();
 
   local = 0.0;

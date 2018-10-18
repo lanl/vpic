@@ -413,6 +413,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
                         int n_pipeline )
 {
   // No v16 implementation.
+  ERROR( ( "No advance_p_pipeline_v16 implementation." ) );
 }
 
 #endif

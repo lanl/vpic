@@ -1,3 +1,9 @@
+#define IN_spa
+
+#include "spa_private.h"
+
+#if defined(V16_ACCELERATION)
+
 using namespace v16;
 
 void
@@ -168,3 +174,16 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
                             en08 + en09 + en10 + en11 +
                             en12 + en13 + en14 + en15;
 }
+
+#else
+
+void
+energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline )
+{
+  // No v16 implementation.
+  ERROR( ( "No energy_p_pipeline_v16 implementation." ) );
+}
+
+#endif

@@ -71,20 +71,23 @@ compute_rms_div_b_err_pipeline( const field_array_t * fa )
 
 # if 0 // Original non-pipelined version
   field_t * ALIGNED(16) f0;
+
   int z, y, x;
+
   int nx = g->nx;
   int ny = g->ny;
   int nz = g->nz;
 
   err = 0;
-  for( z=1; z<=nz; z++ )
+  for( z = 1; z <= nz; z++ )
   {
-    for( y=1; y<=ny; y++ )
+    for( y = 1; y <= ny; y++ )
     {
-      f0 = &f(1,y,z);
-      for( x=1; x<=nx; x++ )
+      f0 = &f( 1, y, z );
+      for( x = 1; x <= nx; x++ )
       {
-        err += f0->div_b_err*f0->div_b_err;
+        err += f0->div_b_err * f0->div_b_err;
+
         f0++;
       }
     }
@@ -95,13 +98,20 @@ compute_rms_div_b_err_pipeline( const field_array_t * fa )
   args->g = fa->g;
 
   EXEC_PIPELINES( compute_rms_div_b_err, args, 0 );
+
   WAIT_PIPELINES();
 
   err = 0;
-  for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
+  for( p = 0; p <= N_PIPELINE; p++ )
+  {
+    err += args->err[p];
+  }
 
-  local[0] = err*fa->g->dV;
-  local[1] = (fa->g->nx*fa->g->ny*fa->g->nz)*fa->g->dV;
+  local[0] = err * fa->g->dV;
+
+  local[1] = ( fa->g->nx * fa->g->ny * fa->g->nz ) * fa->g->dV;
+
   mp_allsum_d( local, global, 2 );
-  return fa->g->eps0*sqrt(global[0]/global[1]);
+
+  return fa->g->eps0 * sqrt( global[0] / global[1] );
 }

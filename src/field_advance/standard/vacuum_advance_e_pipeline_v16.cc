@@ -1,3 +1,9 @@
+#define IN_sfa
+
+#include "sfa_private.h"
+
+#if defined(V16_ACCELERATION)
+
 using namespace v16;
 
 void
@@ -165,3 +171,16 @@ vacuum_advance_e_pipeline_v16( pipeline_args_t * args,
                    &f012->tcax, &f013->tcax, &f014->tcax, &f015->tcax );
   }
 }
+
+#else
+
+void
+vacuum_advance_e_pipeline_v16( pipeline_args_t * args,
+                               int pipeline_rank,
+                               int n_pipeline )
+{
+  // No v16 implementation.
+  ERROR( ( "No vacuum_advance_e_pipeline_v16 implementation." ) );
+}
+
+#endif

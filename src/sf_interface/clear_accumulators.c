@@ -3,14 +3,6 @@
 #include "sf_interface_private.h"
 
 //----------------------------------------------------------------------------//
-// Include various programming model implementation files. For now, this is
-// just the pipeline model. When there are more models, probably want these
-// to be conditionally included.
-//----------------------------------------------------------------------------//
-
-#include "clear_accumulators_pipeline.c"
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper clear_accumulator_array
 // function.
 //----------------------------------------------------------------------------//

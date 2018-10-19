@@ -10,8 +10,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // load_interpolator_pipeline interface
 
-typedef struct load_interpolator_pipeline_args {
-
+typedef struct load_interpolator_pipeline_args
+{
   MEM_PTR( interpolator_t, 128 ) fi;
   MEM_PTR( const field_t,  128 ) f;
   MEM_PTR( const int64_t,  128 ) nb;
@@ -25,6 +25,20 @@ typedef struct load_interpolator_pipeline_args {
 
 // PROTOTYPE_PIPELINE( load_interpolator, load_interpolator_pipeline_args_t );
 
+void
+load_interpolator_array_pipeline( interpolator_array_t * RESTRICT ia,
+                                  const field_array_t * RESTRICT fa );
+
+void
+load_interpolator_pipeline_scalar( load_interpolator_pipeline_args_t * args,
+				   int pipeline_rank,
+				   int n_pipeline );
+
+void
+load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
+                               int pipeline_rank,
+                               int n_pipeline );
+
 ///////////////////////////////////////////////////////////////////////////////
 // clear_accumulators_pipeline interface
 
@@ -34,8 +48,8 @@ typedef struct load_interpolator_pipeline_args {
 
 enum { accumulators_n_block = 256 };
 
-typedef struct accumulators_pipeline_args {
-
+typedef struct accumulators_pipeline_args
+{
   MEM_PTR( accumulator_t, 128) a; // First accumulator to reduce
   int n;                          // Number of accumulators to reduce
   int n_array;                    // Number of accumulator arrays
@@ -46,7 +60,24 @@ typedef struct accumulators_pipeline_args {
 } accumulators_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( clear_accumulators,  accumulators_pipeline_args_t );
+
+void
+clear_accumulator_array_pipeline( accumulator_array_t * RESTRICT aa );
+
+void
+clear_accumulators_pipeline_scalar( accumulators_pipeline_args_t * args,
+                                    int pipeline_rank,
+                                    int n_pipeline );
+
 // PROTOTYPE_PIPELINE( reduce_accumulators, accumulators_pipeline_args_t );
+
+void
+reduce_accumulator_array_pipeline( accumulator_array_t * RESTRICT aa );
+
+void
+reduce_accumulators_pipeline_scalar( accumulators_pipeline_args_t * args,
+                                     int pipeline_rank,
+                                     int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -66,5 +97,14 @@ typedef struct unload_accumulator_pipeline_args {
 } unload_accumulator_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( unload_accumulator, unload_accumulator_pipeline_args_t );
+
+void
+unload_accumulator_array_pipeline( field_array_t * RESTRICT fa,
+                                   const accumulator_array_t * RESTRICT aa );
+
+void
+unload_accumulator_pipeline_scalar( unload_accumulator_pipeline_args_t * args,
+                                    int pipeline_rank,
+                                    int n_pipeline );
 
 #endif // _sf_interface_private_h_

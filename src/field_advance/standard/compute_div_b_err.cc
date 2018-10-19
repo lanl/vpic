@@ -3,14 +3,6 @@
 #include "sfa_private.h"
 
 //----------------------------------------------------------------------------//
-// Include various programming model implementation files. For now, this is
-// just the pipeline model. When there are more models, probably want these
-// to be conditionally included.
-//----------------------------------------------------------------------------//
-
-#include "compute_div_b_err_pipeline.cc"
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper compute_div_b_err function.
 //----------------------------------------------------------------------------//
 

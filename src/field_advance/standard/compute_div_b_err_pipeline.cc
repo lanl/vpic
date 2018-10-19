@@ -71,7 +71,8 @@ using namespace v4;
 static void
 compute_div_b_err_pipeline_v4( pipeline_args_t * args,
                                int pipeline_rank,
-                               int n_pipeline ) {
+                               int n_pipeline )
+{
   field_t      * ALIGNED(128) f = args->f;
   const grid_t *              g = args->g;
 
@@ -158,7 +159,8 @@ using namespace v8;
 static void
 compute_div_b_err_pipeline_v8( pipeline_args_t * args,
                                int pipeline_rank,
-                               int n_pipeline ) {
+                               int n_pipeline )
+{
   field_t      * ALIGNED(128) f = args->f;
   const grid_t *              g = args->g;
 
@@ -266,17 +268,25 @@ compute_div_b_err_pipeline( field_array_t * RESTRICT fa )
   }
   
 # if 0 // Original non-pipelined version
-  for( z=1; z<=nz; z++ ) {
-    for( y=1; y<=ny; y++ ) {
-      f0 = &f(1,y,z);
-      fx = &f(2,y,z);
-      fy = &f(1,y+1,z);
-      fz = &f(1,y,z+1);
-      for( x=1; x<=nx; x++ ) {
+  for( z = 1; z <= nz; z++ )
+  {
+    for( y = 1; y <= ny; y++ )
+    {
+      f0 = &f( 1, y,   z   );
+      fx = &f( 2, y,   z   );
+      fy = &f( 1, y+1, z   );
+      fz = &f( 1, y,   z+1 );
+
+      for( x = 1; x <= nx; x++ )
+      {
 	f0->div_b_err = px*( fx->cbx - f0->cbx ) +
 	                py*( fy->cby - f0->cby ) +
                         pz*( fz->cbz - f0->cbz );
-	f0++; fx++; fy++; fz++;
+
+	f0++;
+	fx++;
+	fy++;
+	fz++;
       }
     }
   }
@@ -284,6 +294,8 @@ compute_div_b_err_pipeline( field_array_t * RESTRICT fa )
 
   args->f = fa->f;
   args->g = fa->g;
+
   EXEC_PIPELINES( compute_div_b_err, args, 0 );
+
   WAIT_PIPELINES();
 }

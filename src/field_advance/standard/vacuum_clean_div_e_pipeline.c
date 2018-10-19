@@ -93,7 +93,7 @@ vacuum_clean_div_e_pipeline( field_array_t * fa )
   pipeline_args_t args[1];
 
   args->f = fa->f;
-  args->p = (sfa_params_t *)fa->params;
+  args->p = (sfa_params_t *) fa->params;
   args->g = fa->g;
 
   EXEC_PIPELINES( vacuum_clean_div_e, args, 0 );

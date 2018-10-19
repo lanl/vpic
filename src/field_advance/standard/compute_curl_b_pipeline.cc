@@ -95,36 +95,6 @@ compute_curl_b_pipeline_scalar( pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for compute_curl_b_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "compute_curl_b_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for compute_curl_b_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "compute_curl_b_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for compute_curl_b_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "compute_curl_b_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper compute_curl_b pipeline
 // function.
 //----------------------------------------------------------------------------//

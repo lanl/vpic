@@ -1,3 +1,9 @@
+#define IN_sfa
+
+#include "sfa_private.h"
+
+#if defined(V4_ACCELERATION)
+
 using namespace v4;
 
 void
@@ -66,3 +72,16 @@ advance_b_pipeline_v4( pipeline_args_t * args,
 		  &f00->cbx, &f01->cbx, &f02->cbx, &f03->cbx );
   }
 }
+
+#else
+
+void
+advance_b_pipeline_v4( pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline )
+{
+  // No v4 implementation.
+  ERROR( ( "No advance_b_pipeline_v4 implementation." ) );
+}
+
+#endif

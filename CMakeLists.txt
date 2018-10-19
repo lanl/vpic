@@ -293,49 +293,7 @@ file(GLOB_RECURSE VPIC_NOT_SRC
   src/util/v4/test/v4.cc
   src/util/v8/test/v8.cc
   src/util/v16/test/v16.cc
-  src/util/rng/test/rng.cc
-  src/collision/binary_pipeline.c
-  src/collision/langevin_pipeline.c
-  src/collision/unary_pipeline.c
-  src/field_advance/standard/advance_b_pipeline.cc
-  src/field_advance/standard/advance_e_pipeline.cc
-  src/field_advance/standard/clean_div_b_pipeline.cc
-  src/field_advance/standard/clean_div_e_pipeline.c
-  src/field_advance/standard/compute_curl_b_pipeline.cc
-  src/field_advance/standard/compute_div_b_err_pipeline.cc
-  src/field_advance/standard/compute_div_e_err_pipeline.c
-  src/field_advance/standard/compute_rhob_pipeline.c
-  src/field_advance/standard/compute_rms_div_b_err_pipeline.c
-  src/field_advance/standard/compute_rms_div_e_err_pipeline.c
-  src/field_advance/standard/energy_f_pipeline.c
-  src/field_advance/standard/vacuum_advance_e_pipeline.cc
-  src/field_advance/standard/vacuum_clean_div_e_pipeline.c
-  src/field_advance/standard/vacuum_compute_curl_b_pipeline.cc
-  src/field_advance/standard/vacuum_compute_div_e_err_pipeline.c
-  src/field_advance/standard/vacuum_compute_rhob_pipeline.c
-  src/field_advance/standard/vacuum_energy_f_pipeline.c
-  src/sf_interface/clear_accumulators_pipeline.c
-  src/sf_interface/interpolator_array_pipeline.cc
-  src/sf_interface/reduce_accumulators_pipeline.cc
-  src/sf_interface/unload_accumulator_pipeline.cc
-  src/field_advance/standard/advance_b_pipeline_v4.cc
-  src/field_advance/standard/advance_e_pipeline_v4.cc
-  src/field_advance/standard/clean_div_b_pipeline_v4.cc
-  src/field_advance/standard/compute_curl_b_pipeline_v4.cc
-  src/field_advance/standard/vacuum_advance_e_pipeline_v4.cc
-  src/field_advance/standard/vacuum_compute_curl_b_pipeline_v4.cc
-  src/field_advance/standard/advance_b_pipeline_v8.cc
-  src/field_advance/standard/advance_e_pipeline_v8.cc
-  src/field_advance/standard/clean_div_b_pipeline_v8.cc
-  src/field_advance/standard/compute_curl_b_pipeline_v8.cc
-  src/field_advance/standard/vacuum_advance_e_pipeline_v8.cc
-  src/field_advance/standard/vacuum_compute_curl_b_pipeline_v8.cc
-  src/field_advance/standard/advance_b_pipeline_v16.cc
-  src/field_advance/standard/advance_e_pipeline_v16.cc
-  src/field_advance/standard/clean_div_b_pipeline_v16.cc
-  src/field_advance/standard/compute_curl_b_pipeline_v16.cc
-  src/field_advance/standard/vacuum_advance_e_pipeline_v16.cc
-  src/field_advance/standard/vacuum_compute_curl_b_pipeline_v16.cc)
+  src/util/rng/test/rng.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
 if(NO_LIBVPIC)

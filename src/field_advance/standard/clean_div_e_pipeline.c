@@ -55,7 +55,8 @@ typedef struct pipeline_args
 static void
 clean_div_e_pipeline_scalar( pipeline_args_t * args,
                              int pipeline_rank,
-                             int n_pipeline ) {
+                             int n_pipeline )
+{
   DECLARE_STENCIL();
   
   int n_voxel;

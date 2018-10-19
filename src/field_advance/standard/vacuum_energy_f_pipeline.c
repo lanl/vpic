@@ -122,7 +122,7 @@ vacuum_energy_f_pipeline( double * global,
   pipeline_args_t args[1];
 
   args->f = fa->f;
-  args->p = (sfa_params_t *)fa->params;
+  args->p = (sfa_params_t *) fa->params;
   args->g = fa->g;
 
   EXEC_PIPELINES( vacuum_energy_f, args, 0 );
@@ -135,18 +135,24 @@ vacuum_energy_f_pipeline( double * global,
 
   for( p=1; p<=N_PIPELINE; p++ )
   {
-    args->en[0][0] += args->en[p][0]; args->en[0][1] += args->en[p][1];
-    args->en[0][2] += args->en[p][2]; args->en[0][3] += args->en[p][3];
-    args->en[0][4] += args->en[p][4]; args->en[0][5] += args->en[p][5];
+    args->en[0][0] += args->en[p][0];
+    args->en[0][1] += args->en[p][1];
+    args->en[0][2] += args->en[p][2];
+    args->en[0][3] += args->en[p][3];
+    args->en[0][4] += args->en[p][4];
+    args->en[0][5] += args->en[p][5];
   }
     
   // Convert to physical units and reduce results between nodes
   
   double v0 = 0.5*fa->g->eps0*fa->g->dV;
 
-  args->en[0][0] *= v0; args->en[0][1] *= v0;
-  args->en[0][2] *= v0; args->en[0][3] *= v0;
-  args->en[0][4] *= v0; args->en[0][5] *= v0;
+  args->en[0][0] *= v0;
+  args->en[0][1] *= v0;
+  args->en[0][2] *= v0;
+  args->en[0][3] *= v0;
+  args->en[0][4] *= v0;
+  args->en[0][5] *= v0;
 
   // Reduce results between nodes
 

@@ -92,43 +92,13 @@ advance_b_pipeline_scalar( pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for advance_b_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "advance_b_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for advance_b_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "advance_b_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for advance_b_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "advance_b_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper advance_b pipeline
 // function.
 //----------------------------------------------------------------------------//
 
 void
 advance_b_pipeline( field_array_t * RESTRICT fa,
-                    float                    _frac )
+                    float _frac )
 {
   if ( !fa )
   {
@@ -139,32 +109,41 @@ advance_b_pipeline( field_array_t * RESTRICT fa,
   // handles stragglers.
 
   pipeline_args_t args[1];
+
   args->f    = fa->f;
   args->g    = fa->g;
   args->frac = _frac;
+
   EXEC_PIPELINES( advance_b, args, 0 );
-  
+
   // While the pipelines are busy, do surface fields
 
   DECLARE_STENCIL();
-  
+
   // Do left over bx
-  for( z=1; z<=nz; z++ ) {
-    for( y=1; y<=ny; y++ ) {
-      f0 = &f(nx+1,y,  z);
-      fy = &f(nx+1,y+1,z);
-      fz = &f(nx+1,y,  z+1);
+  for( z = 1; z <= nz; z++ )
+  {
+    for( y = 1; y <= ny; y++ )
+    {
+      f0 = &f( nx+1, y,   z   );
+      fy = &f( nx+1, y+1, z   );
+      fz = &f( nx+1, y,   z+1 );
+
       UPDATE_CBX();
     }
   }
 
   // Do left over by
-  for( z=1; z<=nz; z++ ) {
-    f0 = &f(1,ny+1,z);
-    fx = &f(2,ny+1,z);
-    fz = &f(1,ny+1,z+1);
-    for( x=1; x<=nx; x++ ) {
+  for( z = 1; z <= nz; z++ )
+  {
+    f0 = &f( 1, ny+1, z   );
+    fx = &f( 2, ny+1, z   );
+    fz = &f( 1, ny+1, z+1 );
+
+    for( x = 1; x <= nx; x++ )
+    {
       UPDATE_CBY();
+
       f0++;
       fx++;
       fz++;
@@ -172,12 +151,16 @@ advance_b_pipeline( field_array_t * RESTRICT fa,
   }
 
   // Do left over bz
-  for( y=1; y<=ny; y++ ) {
-    f0 = &f(1,y,  nz+1);
-    fx = &f(2,y,  nz+1);
-    fy = &f(1,y+1,nz+1);
-    for( x=1; x<=nx; x++ ) {
+  for( y = 1; y <= ny; y++ )
+  {
+    f0 = &f( 1, y,   nz+1 );
+    fx = &f( 2, y,   nz+1 );
+    fy = &f( 1, y+1, nz+1 );
+
+    for( x = 1; x <= nx; x++ )
+    {
       UPDATE_CBZ();
+
       f0++;
       fx++;
       fy++;

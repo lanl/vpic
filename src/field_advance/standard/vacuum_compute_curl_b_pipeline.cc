@@ -89,37 +89,6 @@ vacuum_compute_curl_b_pipeline_scalar( pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// If using v4, include an implementation for vacuum_compute_curl_b_pipeline_v4.
-//----------------------------------------------------------------------------//
-
-#if defined(V4_ACCELERATION) && defined(HAS_V4_PIPELINE)
-
-#include "vacuum_compute_curl_b_pipeline_v4.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v8, include an implementation for vacuum_compute_curl_b_pipeline_v8.
-//----------------------------------------------------------------------------//
-
-#if defined(V8_ACCELERATION) && defined(HAS_V8_PIPELINE)
-
-#include "vacuum_compute_curl_b_pipeline_v8.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
-// If using v16, include an implementation for
-// vacuum_compute_curl_b_pipeline_v16.
-//----------------------------------------------------------------------------//
-
-#if defined(V16_ACCELERATION) && defined(HAS_V16_PIPELINE)
-
-#include "vacuum_compute_curl_b_pipeline_v16.cc"
-
-#endif
-
-//----------------------------------------------------------------------------//
 // Top level function to select and call the proper vacuum_compute_curl_b
 // pipeline function.
 //----------------------------------------------------------------------------//
@@ -153,7 +122,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa )
   pipeline_args_t args[1];
 
   args->f = fa->f;
-  args->p = (sfa_params_t *)fa->params;
+  args->p = (sfa_params_t *) fa->params;
   args->g = fa->g;
 
   EXEC_PIPELINES( vacuum_compute_curl_b, args, 0 );

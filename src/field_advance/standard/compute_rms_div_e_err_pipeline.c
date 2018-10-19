@@ -42,7 +42,8 @@ compute_rms_div_e_err_pipeline_scalar( pipeline_args_t * args,
   err = 0;
   for( ; n_voxel; n_voxel-- )
   {
-    err += f0->div_e_err*f0->div_e_err;
+    err += f0->div_e_err * f0->div_e_err;
+
     f0++;
 
     x++;
@@ -172,12 +173,18 @@ compute_rms_div_e_err_pipeline( const field_array_t * RESTRICT fa )
 
   WAIT_PIPELINES();
 
-  for( p=0; p<=N_PIPELINE; p++ ) err += args->err[p];
+  for( p = 0; p <= N_PIPELINE; p++ )
+  {
+    err += args->err[p];
+  }
 
   // Reduce the results from all nodes
 
-  local[0] = err*g->dV;
-  local[1] = (g->nx*g->ny*g->nz)*g->dV;
+  local[0] = err * g->dV;
+
+  local[1] = ( g->nx * g->ny * g->nz ) * g->dV;
+
   mp_allsum_d( local, global, 2 );
-  return g->eps0*sqrt(global[0]/global[1]);
+
+  return g->eps0 * sqrt( global[0] / global[1] );
 }

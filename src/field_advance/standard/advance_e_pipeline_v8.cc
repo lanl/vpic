@@ -1,3 +1,9 @@
+#define IN_sfa
+
+#include "sfa_private.h"
+
+#if defined(V8_ACCELERATION)
+
 using namespace v8;
 
 void
@@ -173,3 +179,16 @@ advance_e_pipeline_v8( pipeline_args_t * args,
                   &f04->tcax, &f05->tcax, &f06->tcax, &f07->tcax );
   }
 }
+
+#else
+
+void
+advance_e_pipeline_v8( pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline )
+{
+  // No v8 implementation.
+  ERROR( ( "No advance_e_pipeline_v8 implementation." ) );
+}
+
+#endif

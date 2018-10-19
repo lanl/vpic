@@ -1,3 +1,9 @@
+#define IN_sfa
+
+#include "sfa_private.h"
+
+#if defined(V16_ACCELERATION)
+
 using namespace v16;
 
 void
@@ -108,3 +114,16 @@ advance_b_pipeline_v16( pipeline_args_t * args,
                    &f012->cbx, &f013->cbx, &f014->cbx, &f015->cbx );
   }
 }
+
+#else
+
+void
+advance_b_pipeline_v16( pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline )
+{
+  // No v16 implementation.
+  ERROR( ( "No advance_b_pipeline_v16 implementation." ) );
+}
+
+#endif

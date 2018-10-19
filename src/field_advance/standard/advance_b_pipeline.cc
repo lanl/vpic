@@ -4,16 +4,10 @@
 #define HAS_V8_PIPELINE
 #define HAS_V16_PIPELINE
 
+#include "advance_b_pipeline.h"
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
-
-typedef struct pipeline_args
-{
-  field_t      * ALIGNED(128) f;
-  const grid_t *              g;
-  float frac;
-} pipeline_args_t;
 
 #define DECLARE_STENCIL()                                       \
         field_t * ALIGNED(128) f = args->f;                     \

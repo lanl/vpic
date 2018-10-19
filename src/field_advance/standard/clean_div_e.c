@@ -17,4 +17,3 @@ clean_div_e( field_array_t * fa )
   // Conditionally execute this when more abstractions are available.
   clean_div_e_pipeline( fa );
 }
-

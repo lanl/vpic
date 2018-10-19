@@ -1,5 +1,6 @@
 #define IN_sfa
 
+#include "clean_div_b_pipeline.h"
 #include "sfa_private.h"
 
 #if defined(V16_ACCELERATION)

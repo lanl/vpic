@@ -17,4 +17,12 @@ typedef struct binary_collision_model
   int n_large_pr[ MAX_PIPELINE ];
 } binary_collision_model_t;
 
+void
+apply_binary_collision_model_pipeline( binary_collision_model_t * cm );
+
+void
+binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
+                        int pipeline_rank,
+                        int n_pipeline );
+
 #endif /* _binary_h_ */

@@ -1,5 +1,6 @@
 #define IN_sfa
 
+#include "advance_b_pipeline.h"
 #include "sfa_private.h"
 
 #if defined(V8_ACCELERATION)

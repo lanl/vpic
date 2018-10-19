@@ -17,7 +17,7 @@ typedef struct material_coefficient
   float decayz, drivez;         // Decay of ez and drive of (curl H)z and Jz
   float rmux, rmuy, rmuz;       // Reciprocle of relative permeability
   float nonconductive;          // Divergence cleaning related coefficients
-  float epsx, epsy, epsz; 
+  float epsx, epsy, epsz;
   float pad[3];                 // For 64-byte alignment and future expansion
 } material_coefficient_t;
 
@@ -54,26 +54,6 @@ void
 advance_b_pipeline( field_array_t * RESTRICT fa,
                     float _frac );
 
-void
-advance_b_pipeline_scalar( pipeline_args_t * args,
-                           int pipeline_rank,
-                           int n_pipeline );
-
-void
-advance_b_pipeline_v4( pipeline_args_t * args,
-                       int pipeline_rank,
-                       int n_pipeline );
-
-void
-advance_b_pipeline_v8( pipeline_args_t * args,
-                       int pipeline_rank,
-                       int n_pipeline );
-
-void
-advance_b_pipeline_v16( pipeline_args_t * args,
-                        int pipeline_rank,
-                        int n_pipeline );
-
 // In advance_e.c
 
 // advance_e applies the following difference equations to the fields
@@ -102,52 +82,12 @@ advance_e_pipeline( field_array_t * RESTRICT fa,
                     float frac );
 
 void
-advance_e_pipeline_scalar( pipeline_args_t * args,
-                           int pipeline_rank,
-                           int n_pipeline );
-
-void
-advance_e_pipeline_v4( pipeline_args_t * args,
-                       int pipeline_rank,
-                       int n_pipeline );
-
-void
-advance_e_pipeline_v8( pipeline_args_t * args,
-                       int pipeline_rank,
-                       int n_pipeline );
-
-void
-advance_e_pipeline_v16( pipeline_args_t * args,
-                        int pipeline_rank,
-                        int n_pipeline );
-
-void
 vacuum_advance_e( field_array_t * RESTRICT fa,
                   float frac );
 
 void
 vacuum_advance_e_pipeline( field_array_t * RESTRICT fa,
                            float frac );
-
-void
-vacuum_advance_e_pipeline_scalar( pipeline_args_t * args,
-                                  int pipeline_rank,
-                                  int n_pipeline );
-
-void
-vacuum_advance_e_pipeline_v4( pipeline_args_t * args,
-                              int pipeline_rank,
-                              int n_pipeline );
-
-void
-vacuum_advance_e_pipeline_v8( pipeline_args_t * args,
-                              int pipeline_rank,
-                              int n_pipeline );
-
-void
-vacuum_advance_e_pipeline_v16( pipeline_args_t * args,
-                               int pipeline_rank,
-                               int n_pipeline );
 
 // In energy_f.c
 
@@ -173,22 +113,12 @@ energy_f_pipeline( double * global,
                    const field_array_t * RESTRICT fa );
 
 void
-energy_f_pipeline_scalar( pipeline_args_t * args,
-                          int pipeline_rank,
-                          int n_pipeline );
-
-void
 vacuum_energy_f( double * RESTRICT en, // 6 elem array
                  const field_array_t * RESTRICT fa );
 
 void
 vacuum_energy_f_pipeline( double * global,
                           const field_array_t * RESTRICT fa );
-
-void
-vacuum_energy_f_pipeline_scalar( pipeline_args_t * args,
-                                 int pipeline_rank,
-                                 int n_pipeline );
 
 // In compute_curl_b.c
 
@@ -207,50 +137,10 @@ void
 compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 
 void
-compute_curl_b_pipeline_scalar( pipeline_args_t * args,
-                                int pipeline_rank,
-                                int n_pipeline );
-
-void
-compute_curl_b_pipeline_v4( pipeline_args_t * args,
-                            int pipeline_rank,
-                            int n_pipeline );
-
-void
-compute_curl_b_pipeline_v8( pipeline_args_t * args,
-                            int pipeline_rank,
-                            int n_pipeline );
-
-void
-compute_curl_b_pipeline_v16( pipeline_args_t * args,
-                             int pipeline_rank,
-                             int n_pipeline );
-
-void
 vacuum_compute_curl_b( field_array_t * RESTRICT fa );
 
 void
 vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
-
-void
-vacuum_compute_curl_b_pipeline_scalar( pipeline_args_t * args,
-                                       int pipeline_rank,
-                                       int n_pipeline );
-
-void
-vacuum_compute_curl_b_pipeline_v4( pipeline_args_t * args,
-                                   int pipeline_rank,
-                                   int n_pipeline );
-
-void
-vacuum_compute_curl_b_pipeline_v8( pipeline_args_t * args,
-                                   int pipeline_rank,
-                                   int n_pipeline );
-
-void
-vacuum_compute_curl_b_pipeline_v16( pipeline_args_t * args,
-                                    int pipeline_rank,
-                                    int n_pipeline );
 
 // The theory behind the Marder correction is that the Ampere and
 // Faraday equations can be modified as follows:
@@ -381,20 +271,10 @@ void
 compute_rhob_pipeline( field_array_t * RESTRICT fa );
 
 void
-compute_rhob_pipeline_scalar( pipeline_args_t * args,
-                              int pipeline_rank,
-                              int n_pipeline );
-
-void
 vacuum_compute_rhob( field_array_t * RESTRICT fa );
 
 void
 vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa );
-
-void
-vacuum_compute_rhob_pipeline_scalar( pipeline_args_t * args,
-                                     int pipeline_rank,
-                                     int n_pipeline );
 
 // In compute_div_e_err.c
 
@@ -412,20 +292,10 @@ void
 compute_div_e_err_pipeline( field_array_t * RESTRICT fa );
 
 void
-compute_div_e_err_pipeline_scalar( pipeline_args_t * args,
-                                   int pipeline_rank,
-                                   int n_pipeline );
-
-void
 vacuum_compute_div_e_err( field_array_t * RESTRICT fa );
 
 void
 vacuum_compute_div_e_err_pipeline( field_array_t * RESTRICT fa );
-
-void
-vacuum_compute_div_e_err_pipeline_scalar( pipeline_args_t * args,
-                                          int pipeline_rank,
-                                          int n_pipeline );
 
 // In compute_rms_div_e_err.c
 
@@ -442,11 +312,6 @@ compute_rms_div_e_err( const field_array_t * RESTRICT fa );
 double
 compute_rms_div_e_err_pipeline( const field_array_t * RESTRICT fa );
 
-static void
-compute_rms_div_e_err_pipeline_scalar( pipeline_args_t * args,
-                                       int pipeline_rank,
-                                       int n_pipeline );
-
 // In clean_div_e.c
 
 // clean_div_e applies the following difference equation:
@@ -461,21 +326,11 @@ clean_div_e( field_array_t * RESTRICT fa );
 void
 clean_div_e_pipeline( field_array_t * fa );
 
-static void
-clean_div_e_pipeline_scalar( pipeline_args_t * args,
-                             int pipeline_rank,
-                             int n_pipeline );
-
 void
 vacuum_clean_div_e( field_array_t * RESTRICT fa );
 
 void
 vacuum_clean_div_e_pipeline( field_array_t * fa );
-
-static void
-vacuum_clean_div_e_pipeline_scalar( pipeline_args_t * args,
-                                    int pipeline_rank,
-                                    int n_pipeline );
 
 // In compute_div_b_err.c
 
@@ -487,11 +342,6 @@ compute_div_b_err( field_array_t * RESTRICT fa );
 
 void
 compute_div_b_err_pipeline( field_array_t * RESTRICT fa );
-
-void
-compute_div_b_err_pipeline_scalar( pipeline_args_t * args,
-                                   int pipeline_rank,
-                                   int n_pipeline );
 
 // In compute_rms_div_b_err.c
 
@@ -509,11 +359,6 @@ compute_rms_div_b_err( const field_array_t * RESTRICT fa );
 double
 compute_rms_div_b_err_pipeline( const field_array_t * fa );
 
-static void
-compute_rms_div_b_err_pipeline_scalar( pipeline_args_t * args,
-                                       int pipeline_rank,
-                                       int n_pipeline );
-
 // In clean_div_b.c
 
 // clean_div_b applies the following difference equation:
@@ -525,26 +370,6 @@ clean_div_b( field_array_t * RESTRICT fa );
 
 void
 clean_div_b_pipeline( field_array_t * fa );
-
-void
-clean_div_b_pipeline_scalar( pipeline_args_t * args,
-                             int pipeline_rank,
-                             int n_pipeline );
-
-void
-clean_div_b_pipeline_v4( pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline );
-
-void
-clean_div_b_pipeline_v8( pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline );
-
-void
-clean_div_b_pipeline_v16( pipeline_args_t * args,
-                          int pipeline_rank,
-                          int n_pipeline );
 
 // Internode functions
 

@@ -4,6 +4,7 @@
 #define HAS_V8_PIPELINE
 #define HAS_V16_PIPELINE
 
+#include "clean_div_b_pipeline.h"
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
@@ -13,12 +14,6 @@
 #define MARDER_CBX() f0->cbx += px*( f0->div_b_err - fx->div_b_err )
 #define MARDER_CBY() f0->cby += py*( f0->div_b_err - fy->div_b_err )
 #define MARDER_CBZ() f0->cbz += pz*( f0->div_b_err - fz->div_b_err )
-
-typedef struct pipeline_args
-{
-  field_t      * ALIGNED(128) f;
-  const grid_t *              g;
-} pipeline_args_t;
 
 //----------------------------------------------------------------------------//
 // Reference implementation for a clean_div_b pipeline function which does not

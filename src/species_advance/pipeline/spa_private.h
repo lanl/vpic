@@ -49,11 +49,6 @@ typedef struct advance_p_pipeline_args {
 // PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
 
 void
-advance_p_pipeline( species_t * RESTRICT sp,
-                    accumulator_array_t * RESTRICT aa,
-                    const interpolator_array_t * RESTRICT ia );
-
-void
 advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
                            int pipeline_rank,
                            int n_pipeline );
@@ -90,10 +85,6 @@ typedef struct center_p_pipeline_args {
 // PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
 
 void
-center_p_pipeline( species_t * RESTRICT sp,
-                   const interpolator_array_t * RESTRICT ia );
-
-void
 center_p_pipeline_scalar( center_p_pipeline_args_t * args,
                           int pipeline_rank,
                           int n_pipeline );
@@ -113,10 +104,6 @@ center_p_pipeline_v16( center_p_pipeline_args_t * args,
                        int n_pipeline );
 
 // PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
-
-void
-uncenter_p_pipeline( species_t * RESTRICT sp,
-                     const interpolator_array_t * RESTRICT ia );
 
 void
 uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
@@ -155,10 +142,6 @@ typedef struct energy_p_pipeline_args {
 } energy_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
-
-double
-energy_p_pipeline( const species_t * RESTRICT sp,
-                   const interpolator_array_t * RESTRICT ia );
 
 void
 energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
@@ -229,9 +212,6 @@ typedef struct sort_p_pipeline_args {
 // PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
 // PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
 // PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
-
-void
-sort_p_pipeline( species_t * sp );
 
 void
 coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,

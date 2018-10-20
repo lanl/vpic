@@ -1,6 +1,6 @@
 #define IN_spa
 
-#include "spa_private.h"
+#include "species_advance.h"
 
 //----------------------------------------------------------------------------//
 // Top level function to select and call particle advance function using the

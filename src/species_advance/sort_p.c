@@ -9,7 +9,7 @@
 
 #define IN_spa
 
-#include "spa_private.h"
+#include "species_advance.h"
 
 //----------------------------------------------------------------------------//
 // This is the legacy thread serial version of the particle sort.

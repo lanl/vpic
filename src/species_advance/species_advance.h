@@ -65,12 +65,20 @@ species( const char * name,
 void
 sort_p( species_t * RESTRICT sp );
 
+void
+sort_p_pipeline( species_t * sp );
+
 // In advance_p.cxx
 
 void
-advance_p( /**/  species_t            * RESTRICT sp,
-           /**/  accumulator_array_t  * RESTRICT aa,
+advance_p( species_t * RESTRICT sp,
+           accumulator_array_t * RESTRICT aa,
            const interpolator_array_t * RESTRICT ia );
+
+void
+advance_p_pipeline( species_t * RESTRICT sp,
+                    accumulator_array_t * RESTRICT aa,
+                    const interpolator_array_t * RESTRICT ia );
 
 // In center_p.cxx
 
@@ -80,8 +88,12 @@ advance_p( /**/  species_t            * RESTRICT sp,
 // the time step.
 
 void
-center_p( /**/  species_t            * RESTRICT sp,
+center_p( species_t * RESTRICT sp,
           const interpolator_array_t * RESTRICT ia );
+
+void
+center_p_pipeline( species_t * RESTRICT sp,
+                   const interpolator_array_t * RESTRICT ia );
 
 // In uncenter_p.cxx
 
@@ -90,8 +102,12 @@ center_p( /**/  species_t            * RESTRICT sp,
 // step stale.
 
 void
-uncenter_p( /**/  species_t            * RESTRICT sp,
+uncenter_p( species_t * RESTRICT sp,
             const interpolator_array_t * RESTRICT ia );
+
+void
+uncenter_p_pipeline( species_t * RESTRICT sp,
+                     const interpolator_array_t * RESTRICT ia );
 
 // In energy.cxx
 
@@ -100,8 +116,12 @@ uncenter_p( /**/  species_t            * RESTRICT sp,
 // result.
 
 double
-energy_p( const species_t            * RESTRICT sp,
+energy_p( const species_t * RESTRICT sp,
           const interpolator_array_t * RESTRICT ia );
+
+double
+energy_p_pipeline( const species_t * RESTRICT sp,
+                   const interpolator_array_t * RESTRICT ia );
 
 // In rho_p.cxx
 

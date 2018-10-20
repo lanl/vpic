@@ -1,11 +1,10 @@
 #define IN_sfa
+#define IN_compute_div_b_err_pipeline
 
 #include "compute_div_b_err_pipeline.h"
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
-
-#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
 
 void
 compute_div_b_err_pipeline_scalar( pipeline_args_t * args,

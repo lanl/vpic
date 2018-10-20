@@ -1,4 +1,5 @@
 #define IN_sfa
+#define IN_clean_div_b_pipeline
 
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
@@ -8,12 +9,6 @@
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
-
-#define f(x,y,z) f[ VOXEL( x, y, z, nx, ny, nz ) ]
-
-#define MARDER_CBX() f0->cbx += px*( f0->div_b_err - fx->div_b_err )
-#define MARDER_CBY() f0->cby += py*( f0->div_b_err - fy->div_b_err )
-#define MARDER_CBZ() f0->cbz += pz*( f0->div_b_err - fz->div_b_err )
 
 //----------------------------------------------------------------------------//
 // Reference implementation for a clean_div_b pipeline function which does not

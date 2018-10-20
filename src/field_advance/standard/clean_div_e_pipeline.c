@@ -1,50 +1,10 @@
 #define IN_sfa
+#define IN_clean_div_e_pipeline
 
 #include "clean_div_e_pipeline.h"
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
-
-#define DECLARE_STENCIL()                                                \
-  field_t                      * ALIGNED(128) f = args->f;               \
-  const material_coefficient_t * ALIGNED(128) m = args->p->mc;           \
-  const grid_t                 *              g = args->g;               \
-  const int nx = g->nx, ny = g->ny, nz = g->nz;                          \
-                                                                         \
-  const float _rdx = (nx>1) ? g->rdx : 0;                                \
-  const float _rdy = (ny>1) ? g->rdy : 0;                                \
-  const float _rdz = (nz>1) ? g->rdz : 0;                                \
-  const float alphadt = 0.3888889/( _rdx*_rdx + _rdy*_rdy + _rdz*_rdz ); \
-  const float px   = alphadt*_rdx;                                       \
-  const float py   = alphadt*_rdy;                                       \
-  const float pz   = alphadt*_rdz;                                       \
-                                                                         \
-  field_t * ALIGNED(16) f0;                                              \
-  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;          \
-  int x, y, z
-                     
-#define f(x,y,z) f[ VOXEL(x,y,z,nx,ny,nz) ]
-
-#define INIT_STENCIL()  \
-  f0 = &f(x,  y,  z  ); \
-  fx = &f(x+1,y,  z  ); \
-  fy = &f(x,  y+1,z  ); \
-  fz = &f(x,  y,  z+1)
-
-#define NEXT_STENCIL()                \
-  f0++; fx++; fy++; fz++; x++;        \
-  if( x>nx ) {                        \
-    /**/       y++;            x = 1; \
-    if( y>ny ) z++; if( y>ny ) y = 1; \
-    INIT_STENCIL();                   \
-  }
-
-#define MARDER_EX() \
-    f0->ex += m[f0->ematx].drivex*px*(fx->div_e_err-f0->div_e_err)
-#define MARDER_EY() \
-    f0->ey += m[f0->ematy].drivey*py*(fy->div_e_err-f0->div_e_err)
-#define MARDER_EZ() \
-    f0->ez += m[f0->ematz].drivez*pz*(fz->div_e_err-f0->div_e_err)
 
 static void
 clean_div_e_pipeline_scalar( pipeline_args_t * args,
@@ -83,9 +43,11 @@ clean_div_e_pipeline( field_array_t * fa )
   // The host handles stragglers.
 
   pipeline_args_t args[1];
+
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;
+
   EXEC_PIPELINES( clean_div_e, args, 0 );
 
   // While pipelines are busy, do left overs on the host

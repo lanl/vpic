@@ -1,4 +1,5 @@
 #define IN_sfa
+#define IN_advance_e_pipeline
 
 #include "advance_e_pipeline.h"
 #include "sfa_private.h"

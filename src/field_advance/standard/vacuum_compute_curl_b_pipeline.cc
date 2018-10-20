@@ -1,4 +1,5 @@
 #define IN_sfa
+#define IN_vacuum_compute_curl_b_pipeline
 
 #define HAS_V4_PIPELINE
 #define HAS_V8_PIPELINE
@@ -8,49 +9,6 @@
 #include "sfa_private.h"
 
 #include "../../util/pipelines/pipelines_exec.h"
-
-#define DECLARE_STENCIL()                                               \
-        field_t                * ALIGNED(128) f = args->f;              \
-  const material_coefficient_t * ALIGNED(128) m = args->p->mc;          \
-  const grid_t                 *              g = args->g;              \
-  const int nx = g->nx, ny = g->ny, nz = g->nz;                         \
-                                                                        \
-  const float px_muz = ((nx>1) ? g->cvac*g->dt*g->rdx : 0)*m->rmuz;     \
-  const float px_muy = ((nx>1) ? g->cvac*g->dt*g->rdx : 0)*m->rmuy;     \
-  const float py_mux = ((ny>1) ? g->cvac*g->dt*g->rdy : 0)*m->rmux;     \
-  const float py_muz = ((ny>1) ? g->cvac*g->dt*g->rdy : 0)*m->rmuz;     \
-  const float pz_muy = ((nz>1) ? g->cvac*g->dt*g->rdz : 0)*m->rmuy;     \
-  const float pz_mux = ((nz>1) ? g->cvac*g->dt*g->rdz : 0)*m->rmux;     \
-                                                                        \
-  field_t * ALIGNED(16) f0;                                             \
-  field_t * ALIGNED(16) fx, * ALIGNED(16) fy, * ALIGNED(16) fz;         \
-  int x, y, z
-
-#define f(x,y,z) f[ VOXEL( x, y, z, nx, ny, nz ) ]
-
-#define INIT_STENCIL()        \
-  f0 = &f( x,   y,   z   );   \
-  fx = &f( x-1, y,   z   );   \
-  fy = &f( x,   y-1, z   );   \
-  fz = &f( x,   y,   z-1 )
-
-#define NEXT_STENCIL()                        \
-  f0++; fx++; fy++; fz++; x++;                \
-  if ( x > nx )                               \
-  {                                           \
-                  y++;               x = 2;   \
-    if ( y > ny ) z++; if ( y > ny ) y = 2;   \
-    INIT_STENCIL();                           \
-  }
-
-#define UPDATE_EX() f0->tcax = ( py_muz * ( f0->cbz - fy->cbz ) - \
-                                 pz_muy * ( f0->cby - fz->cby ) )
-
-#define UPDATE_EY() f0->tcay = ( pz_mux * ( f0->cbx - fz->cbx ) - \
-                                 px_muz * ( f0->cbz - fx->cbz ) )
-
-#define UPDATE_EZ() f0->tcaz = ( px_muy * ( f0->cby - fx->cby ) - \
-                                 py_mux * ( f0->cbx - fy->cbx ) )
 
 //----------------------------------------------------------------------------//
 // Reference implementation for a vacuum_compute_curl_b pipeline function

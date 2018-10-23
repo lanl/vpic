@@ -8,6 +8,7 @@
 #endif
 
 #define IN_field_advance
+
 #include "../field_advance_private.h"
 
 typedef struct material_coefficient

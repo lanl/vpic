@@ -1,8 +1,10 @@
 #define IN_sf_interface
 
-#include "sf_interface_private.h"
+#include "sf_interface_pipeline.h"
 
-#include "../util/pipelines/pipelines_exec.h"
+#include "../sf_interface_private.h"
+
+#include "../../util/pipelines/pipelines_exec.h"
 
 // FIXME: N_ARRAY>1 ALWAYS BUT THIS ISN'T STRICTLY NECESSARY BECAUSE
 // HOST IS THREAD FOR THE SERIAL AND THREADED DISPATCHERS.  SHOULD

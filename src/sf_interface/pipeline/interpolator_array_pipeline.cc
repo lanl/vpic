@@ -7,9 +7,11 @@
 // Thus, it appears that this file is not a candidate for V8_ACCELERATION.
 // #define HAS_V8_PIPELINE
 
-#include "sf_interface_private.h"
+#include "sf_interface_pipeline.h"
 
-#include "../util/pipelines/pipelines_exec.h"
+#include "../sf_interface_private.h"
+
+#include "../../util/pipelines/pipelines_exec.h"
 
 #define fi(x,y,z) fi[   VOXEL( x, y, z, nx, ny, nz ) ]
 #define f(x,y,z)  f [   VOXEL( x, y, z, nx, ny, nz ) ]

@@ -2,9 +2,11 @@
 
 /* #define HAS_V4_PIPELINE */
 
-#include "unary.h"
+#include "collision_pipeline.h"
 
-#include "../util/pipelines/pipelines_exec.h"
+#include "../unary.h"
+
+#include "../../util/pipelines/pipelines_exec.h"
 
 /* Private interface *********************************************************/
 

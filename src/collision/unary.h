@@ -18,9 +18,4 @@ typedef struct unary_collision_model
 void
 apply_unary_collision_model_pipeline( unary_collision_model_t * cm );
 
-void
-unary_pipeline_scalar( unary_collision_model_t * RESTRICT cm,
-                       int pipeline_rank,
-                       int n_pipeline );
-
 #endif /* _unary_h_ */

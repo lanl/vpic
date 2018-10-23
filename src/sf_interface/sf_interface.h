@@ -59,7 +59,8 @@
 // for voxels on the surface of the local domain (for example
 // fi(0,:,:) or fi(nx+1,:,:)) are not used.
 
-typedef struct interpolator {
+typedef struct interpolator
+{
   float ex, dexdy, dexdz, d2exdydz;
   float ey, deydz, deydx, d2eydzdx;
   float ez, dezdx, dezdy, d2ezdxdy;
@@ -72,7 +73,8 @@ typedef struct interpolator {
   // float _pad3[8];  // More padding to get 64-byte align, make conditional
 } interpolator_t;
 
-typedef struct interpolator_array {
+typedef struct interpolator_array
+{
   interpolator_t * ALIGNED(128) i;
   grid_t * g;
 } interpolator_array_t;
@@ -110,7 +112,8 @@ END_C_DECLS
 // pipelines during operations.  Like the interpolator, accumulators
 // on the surface of the local domain are not used.
 
-typedef struct accumulator {
+typedef struct accumulator
+{
   float jx[4];   // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
   float jy[4];   // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
   float jz[4];   // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
@@ -119,7 +122,8 @@ typedef struct accumulator {
   #endif
 } accumulator_t;
 
-typedef struct accumulator_array {
+typedef struct accumulator_array
+{
   accumulator_t * ALIGNED(128) a;
   int n_pipeline; // Number of pipelines supported by this accumulator
   int stride;     // Stride be each pipeline's accumulator array
@@ -178,7 +182,8 @@ END_C_DECLS
 // the surface of the local domain (for example h(0,:,:) or
 // h(nx+1,:,:)) are not used.
 
-typedef struct hydro {
+typedef struct hydro
+{
   float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
   float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
   float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
@@ -186,7 +191,8 @@ typedef struct hydro {
   float _pad[PAD_SIZE_HYDRO]; // 16, 32 and 64-byte align
 } hydro_t;
 
-typedef struct hydro_array {
+typedef struct hydro_array
+{
   hydro_t * ALIGNED(128) h;
   grid_t * g;
 } hydro_array_t;

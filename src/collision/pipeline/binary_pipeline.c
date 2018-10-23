@@ -2,9 +2,11 @@
 
 /* #define HAS_V4_PIPELINE */
 
-#include "binary.h"
+#include "collision_pipeline.h"
 
-#include "../util/pipelines/pipelines_exec.h"
+#include "../binary.h"
+
+#include "../../util/pipelines/pipelines_exec.h"
 
 /* FIXME: ADD SAMPLE TO UNARY */
 

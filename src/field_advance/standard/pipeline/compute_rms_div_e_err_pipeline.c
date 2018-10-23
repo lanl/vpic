@@ -3,6 +3,8 @@
 
 #include "compute_rms_div_e_err_pipeline.h"
 
+#include "../sfa_private.h"
+
 #include "../../../util/pipelines/pipelines_exec.h"
 
 static void

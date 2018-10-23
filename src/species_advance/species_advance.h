@@ -126,20 +126,20 @@ energy_p_pipeline( const species_t * RESTRICT sp,
 // In rho_p.cxx
 
 void
-accumulate_rho_p( /**/  field_array_t * RESTRICT fa,
-                  const species_t     * RESTRICT sp );
+accumulate_rho_p( field_array_t * RESTRICT fa,
+                  const species_t * RESTRICT sp );
 
 void
-accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
+accumulate_rhob( field_t * RESTRICT ALIGNED(128) f,
                  const particle_t * RESTRICT ALIGNED(32)  p,
-                 const grid_t     * RESTRICT              g,
-                 const float                              qsp );
+                 const grid_t * RESTRICT g,
+                 const float qsp );
 
 // In hydro_p.c
 
 void
-accumulate_hydro_p( /**/  hydro_array_t        * RESTRICT ha,
-                    const species_t            * RESTRICT sp,
+accumulate_hydro_p( hydro_array_t * RESTRICT ha,
+                    const species_t * RESTRICT sp,
                     const interpolator_array_t * RESTRICT ia );
 
 // In move_p.cxx

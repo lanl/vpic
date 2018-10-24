@@ -39,6 +39,8 @@ include_directories(${MPI_C_INCLUDE_PATH})
 
 option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
+option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+
 option(USE_OPENMP "Use OpenMP" OFF)
 
 option(USE_PTHREADS "Use Pthreads" ON)

@@ -7,7 +7,7 @@
 # Get the path to the project from which this script was called
 #------------------------------------------------------------------------------#
 
-cinch_dir="$(dirname "$(dirname "$(readlink -f $0)")")"
+src_dir="${0%/*}/.."
 
 #------------------------------------------------------------------------------#
 # Check required environment variables
@@ -32,7 +32,7 @@ cmake \
   -qoverride-limits -no-ansi-alias -xMIC-AVX512" \
   -DUSE_V4_AVX2=ON \
   -DUSE_V16_AVX512=ON \
-  $cinch_dir
+  $src_dir
 
 #------------------------------------------------------------------------------#
 # vim: syntax=sh

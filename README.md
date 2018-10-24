@@ -55,7 +55,9 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 VPIC uses nested submodules.  This requires the addition of the *--recursive*
 flag when cloning the repository:
 
+```bash
     git clone https://github.com/lanl/vpic.git
+```
 
 This command will check out the VPIC source code.
 
@@ -66,23 +68,31 @@ an up-to-date version of MPI.
 
 # Build Instructions
 
+```bash
     cd vpic 
+```
 
 VPIC uses the CMake build system. To configure a build, do the following from
 the top-level source directory:
   
+```bash
     mkdir build
     cd build
+```
 
 Then call the curses version of CMake:
 
+```bash
     ccmake ..
+```
 
 The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
 
 They can be invoked using something like:
 
+```bash
     ../arch/generic-Release
+```
 
 GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`)
 
@@ -94,14 +104,18 @@ After you have successfully built VPIC, you should have an executable in
 the *bin* directory called *vpic*.  To build an executable from one of
 the sample input decks, simply run:
 
+```bash
     ./bin/vpic input_deck
+```
 
 where *input_deck* is the name of your sample deck.  For example, to build
 the *harris* input deck in the *sample* subdirectory
 *(assuming that your build directory is located in the top-level
 source directory)*:
 
+```bash
     ./bin/vpic ../sample/harris
+```
 
 Beginners are advised to read the harris deck thoroughly, as it provides many examples of common uses cases.
 
@@ -117,13 +131,18 @@ The following specific syntax is available to the users:
 
 Threading (per MPI rank) can be enabled using the following syntax: 
 
-` ./binary.Linux --tpp n `
+```bash
+    ./binary.Linux --tpp n
+```
 
 Where n specifies the number of threads
 
 ### Example:
 
-` mpirun -n 2 ./binary.Linux --tpp 2 `
+```bash
+    mpirun -n 2 ./binary.Linux --tpp 2
+```
+
 
 To run with VPIC with two threads per MPI rank.
 
@@ -131,11 +150,15 @@ To run with VPIC with two threads per MPI rank.
 
 VPIC can restart from a checkpoint dump file, using the following syntax:
 
-` ./binary.Linux --restore <path to file> `
+```bash
+    ./binary.Linux --restore <path to file>
+```
 
 ### Example:
 
-` ./binary.Linux --restore ./restart/restart0 `
+```bash
+    ./binary.Linux --restore ./restart/restart0 
+```
 
 To restart VPIC using the restart file `./restart/restart0`
 

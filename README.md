@@ -123,29 +123,6 @@ source directory)*:
 
 Beginners are advised to read the harris deck thoroughly, as it provides many examples of common uses cases.
 
-# Compile Time Arguments
-
-Currently, the following options are exposed at compile time for the users consideration:
-
-## Threading Model
- - `USE_OPENMP`
- - `USE_PTHREADS`
-
-## Vectorization
- - `USE_V4_ALTIVEC`
- - `USE_V4_AVX`
- - `USE_V4_AVX2`
- - `USE_V4_PORTABLE`
- - `USE_V4_SSE`
- - `USE_V8_AVX`
- - `USE_V8_AVX2`
- - `USE_V8_PORTABLE`
- - `USE_V16_AVX512`
- - `USE_V16_PORTABLE`
-
-## Output 
- - `VPIC_PRINT_MORE_DIGITS`
-
 # Command Line Arguments
 
 Note: Historic VPIC users should note that the format of command line arguments was changed in the first open source release. The equals symbol is no longer accepted, and two dashes are mandatory. 
@@ -188,6 +165,47 @@ VPIC can restart from a checkpoint dump file, using the following syntax:
 ```
 
 To restart VPIC using the restart file `./restart/restart0`
+
+# Compile Time Arguments
+
+Currently, the following options are exposed at compile time for the users consideration:
+
+## Threading Model
+
+ - `USE_PTHREADS`: Use Pthreads for the threading model (default enabled)
+ - `USE_OPENMP`: Use OpenMP for the threading model
+
+## Vectorization
+
+ - `USE_V4_SSE`: Enable 4 wide (128-bit) SSE
+ - `USE_V4_AVX`: Enable 4 wide (128-bit) AVX
+ - `USE_V4_AVX2`: Enable 4 wide (128-bit) AVX2
+ - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
+ - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
+
+ - `USE_V8_AVX`: Enable 4 wide (256-bit) AVX
+ - `USE_V8_AVX2`: Enable 4 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`: Enable 4 wide (256-bit) portable implementation
+
+ - `USE_V16_AVX512`: Enable 4 wide (512-bit) AVX512
+ - `USE_V16_PORTABLE`: Enable 4 wide (512-bit) portable implementation
+
+If no combination of these are selected, the "reference" (read: unvectorized)
+version of the pusher will be used
+
+See example decks for how these are used together in combination.
+
+## Output 
+
+ - `VPIC_PRINT_MORE_DIGITS`: Enabled more digits in the debug timing implementation
+
+# Workflow
+
+Contributors are asked to be aware of the following workflow:
+
+1) Pull requests are accepted into `devel` upon tests passing
+2) `master` should reflect the *stable* state of the code
+3) Periodic releases will be made from `devel` into `master`
 
 # Feedback
 

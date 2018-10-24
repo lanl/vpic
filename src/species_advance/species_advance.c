@@ -103,8 +103,8 @@ species_t *
 species( const char * name,
          float q,
          float m,
-         int max_local_np,
-         int max_local_nm,
+         size_t max_local_np,
+         size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
          grid_t * g ) {
@@ -144,4 +144,3 @@ species( const char * name,
   REGISTER_OBJECT( sp, checkpt_species, restore_species, NULL );
   return sp;
 }
-

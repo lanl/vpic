@@ -9,7 +9,8 @@
  */
 
 #define IN_spa
-#include "spa_private.h"
+
+#include "../species_advance.h"
 
 // accumulate_rho_p adds the charge density associated with the
 // supplied particle array to the rhof of the fields.  Trilinear
@@ -208,4 +209,3 @@ accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
 
 # endif
 }
-

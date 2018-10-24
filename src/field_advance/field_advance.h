@@ -149,7 +149,8 @@
 // FIXME: SHOULD HAVE DIFFERENT FIELD_T FOR CELL BUILDS AND USE NEW
 // INFRASTRUCTURE
 
-typedef struct field {
+typedef struct field
+{
   float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
   float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
   float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
@@ -166,8 +167,8 @@ typedef struct field {
 
 struct field_array;
 
-typedef struct field_advance_kernels {
-
+typedef struct field_advance_kernels
+{
   // FIXME: DUMP.CXX SHOULD BE DECENTRALIZED AND DIAGNOSTIC DUMP
   // FOR FIELDS SHOULD BE ADDED TO THIS
   // FIXME: FOR SYSTEMS WITH MAGNETIC CURRENTS (E.G. PML LAYERS)
@@ -219,7 +220,8 @@ typedef struct field_advance_kernels {
 // A field_array holds all the field quanties and pointers to
 // kernels used to advance them.
 
-typedef struct field_array {
+typedef struct field_array
+{
   field_t * ALIGNED(128) f;          // Local field data
   grid_t  * g;                       // Underlying grid
   void    * params;                  // Field advance specific parameters

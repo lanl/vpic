@@ -1,14 +1,21 @@
 #define IN_field_advance
+
 #include "field_advance_private.h"
 
 void
-delete_field_array( field_array_t * fa ) {
-  if( !fa ) return;
+delete_field_array( field_array_t * fa )
+{
+  if ( !fa )
+  {
+    return;
+  }
+
   fa->kernel->delete_fa( fa );
 }
 
 void
-checkpt_field_advance_kernels( const field_advance_kernels_t * kernel ) {
+checkpt_field_advance_kernels( const field_advance_kernels_t * kernel )
+{
   CHECKPT_SYM( kernel->delete_fa                 );
   CHECKPT_SYM( kernel->advance_b                 );
   CHECKPT_SYM( kernel->advance_e                 );
@@ -29,7 +36,8 @@ checkpt_field_advance_kernels( const field_advance_kernels_t * kernel ) {
 }
 
 void
-restore_field_advance_kernels( field_advance_kernels_t * kernel ) {
+restore_field_advance_kernels( field_advance_kernels_t * kernel )
+{
   RESTORE_SYM( kernel->delete_fa                 );
   RESTORE_SYM( kernel->advance_b                 );
   RESTORE_SYM( kernel->advance_e                 );
@@ -48,4 +56,3 @@ restore_field_advance_kernels( field_advance_kernels_t * kernel ) {
   RESTORE_SYM( kernel->compute_rms_div_b_err     );
   RESTORE_SYM( kernel->clean_div_b               );
 }
-

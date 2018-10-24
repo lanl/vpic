@@ -8,19 +8,22 @@
 #endif
 
 #define IN_field_advance
+
 #include "../field_advance_private.h"
 
-typedef struct material_coefficient {
+typedef struct material_coefficient
+{
   float decayx, drivex;         // Decay of ex and drive of (curl H)x and Jx
   float decayy, drivey;         // Decay of ey and drive of (curl H)y and Jy
   float decayz, drivez;         // Decay of ez and drive of (curl H)z and Jz
   float rmux, rmuy, rmuz;       // Reciprocle of relative permeability
   float nonconductive;          // Divergence cleaning related coefficients
-  float epsx, epsy, epsz; 
+  float epsx, epsy, epsz;
   float pad[3];                 // For 64-byte alignment and future expansion
 } material_coefficient_t;
 
-typedef struct sfa_params {
+typedef struct sfa_params
+{
   material_coefficient_t * mc;
   int n_mc;
   float damp;
@@ -46,7 +49,11 @@ clear_rhof( field_array_t * RESTRICT fa );
 
 void
 advance_b( field_array_t * RESTRICT fa,
-           float                    frac );
+           float frac );
+
+void
+advance_b_pipeline( field_array_t * RESTRICT fa,
+                    float _frac );
 
 // In advance_e.c
 
@@ -69,11 +76,19 @@ advance_b( field_array_t * RESTRICT fa,
 
 void
 advance_e( field_array_t * RESTRICT fa,
-           float                    frac );
+           float frac );
+
+void
+advance_e_pipeline( field_array_t * RESTRICT fa,
+                    float frac );
 
 void
 vacuum_advance_e( field_array_t * RESTRICT fa,
-                  float                    frac );
+                  float frac );
+
+void
+vacuum_advance_e_pipeline( field_array_t * RESTRICT fa,
+                           float frac );
 
 // In energy_f.c
 
@@ -91,12 +106,20 @@ vacuum_advance_e( field_array_t * RESTRICT fa,
 // vacuum_energy_f is the high performance version for uniform regions
 
 void
-energy_f( /**/  double        * RESTRICT en, // 6 elem array
+energy_f( double * RESTRICT en, // 6 elem array
           const field_array_t * RESTRICT fa );
 
 void
-vacuum_energy_f( /**/  double        * RESTRICT en, // 6 elem array
+energy_f_pipeline( double * global,
+                   const field_array_t * RESTRICT fa );
+
+void
+vacuum_energy_f( double * RESTRICT en, // 6 elem array
                  const field_array_t * RESTRICT fa );
+
+void
+vacuum_energy_f_pipeline( double * global,
+                          const field_array_t * RESTRICT fa );
 
 // In compute_curl_b.c
 
@@ -112,7 +135,13 @@ void
 compute_curl_b( field_array_t * RESTRICT fa );
 
 void
+compute_curl_b_pipeline( field_array_t * RESTRICT fa );
+
+void
 vacuum_compute_curl_b( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 
 // The theory behind the Marder correction is that the Ampere and
 // Faraday equations can be modified as follows:
@@ -240,7 +269,13 @@ void
 compute_rhob( field_array_t * RESTRICT fa );
 
 void
+compute_rhob_pipeline( field_array_t * RESTRICT fa );
+
+void
 vacuum_compute_rhob( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa );
 
 // In compute_div_e_err.c
 
@@ -255,7 +290,13 @@ void
 compute_div_e_err( field_array_t * RESTRICT fa );
 
 void
+compute_div_e_err_pipeline( field_array_t * RESTRICT fa );
+
+void
 vacuum_compute_div_e_err( field_array_t * RESTRICT fa );
+
+void
+vacuum_compute_div_e_err_pipeline( field_array_t * RESTRICT fa );
 
 // In compute_rms_div_e_err.c
 
@@ -269,6 +310,9 @@ vacuum_compute_div_e_err( field_array_t * RESTRICT fa );
 double
 compute_rms_div_e_err( const field_array_t * RESTRICT fa );
 
+double
+compute_rms_div_e_err_pipeline( const field_array_t * RESTRICT fa );
+
 // In clean_div_e.c
 
 // clean_div_e applies the following difference equation:
@@ -281,7 +325,13 @@ void
 clean_div_e( field_array_t * RESTRICT fa );
 
 void
+clean_div_e_pipeline( field_array_t * fa );
+
+void
 vacuum_clean_div_e( field_array_t * RESTRICT fa );
+
+void
+vacuum_clean_div_e_pipeline( field_array_t * fa );
 
 // In compute_div_b_err.c
 
@@ -290,6 +340,9 @@ vacuum_clean_div_e( field_array_t * RESTRICT fa );
 
 void
 compute_div_b_err( field_array_t * RESTRICT fa );
+
+void
+compute_div_b_err_pipeline( field_array_t * RESTRICT fa );
 
 // In compute_rms_div_b_err.c
 
@@ -304,6 +357,9 @@ compute_div_b_err( field_array_t * RESTRICT fa );
 double
 compute_rms_div_b_err( const field_array_t * RESTRICT fa );
 
+double
+compute_rms_div_b_err_pipeline( const field_array_t * fa );
+
 // In clean_div_b.c
 
 // clean_div_b applies the following difference equation:
@@ -312,6 +368,9 @@ compute_rms_div_b_err( const field_array_t * RESTRICT fa );
 
 void
 clean_div_b( field_array_t * RESTRICT fa );
+
+void
+clean_div_b_pipeline( field_array_t * fa );
 
 // Internode functions
 
@@ -329,66 +388,66 @@ synchronize_rho( field_array_t * RESTRICT fa );
 // In local.c
 
 void
-local_ghost_tang_b( field_t      * ALIGNED(128) f,
-                    const grid_t *              g );
+local_ghost_tang_b( field_t * ALIGNED(128) f,
+                    const grid_t * g );
 
 void
-local_ghost_norm_e( field_t      * ALIGNED(128) f,
-                    const grid_t *              g );
+local_ghost_norm_e( field_t * ALIGNED(128) f,
+                    const grid_t * g );
 
 void
-local_ghost_div_b( field_t      * ALIGNED(128) f,
-                   const grid_t *              g );
+local_ghost_div_b( field_t * ALIGNED(128) f,
+                   const grid_t * g );
 
 void
-local_adjust_tang_e( field_t      * ALIGNED(128) f,
-                     const grid_t *              g );
+local_adjust_tang_e( field_t * ALIGNED(128) f,
+                     const grid_t * g );
 
 void
-local_adjust_div_e( field_t      * ALIGNED(128) f,
-                    const grid_t *              g );
+local_adjust_div_e( field_t * ALIGNED(128) f,
+                    const grid_t * g );
 
 void
-local_adjust_norm_b( field_t      * ALIGNED(128) f,
-                     const grid_t *              g );
+local_adjust_norm_b( field_t * ALIGNED(128) f,
+                     const grid_t * g );
 
 void
-local_adjust_jf( field_t      * ALIGNED(128) f,
-                 const grid_t *              g );
+local_adjust_jf( field_t * ALIGNED(128) f,
+                 const grid_t * g );
 
 void
-local_adjust_rhof( field_t      * ALIGNED(128) f,
-                   const grid_t *              g );
+local_adjust_rhof( field_t * ALIGNED(128) f,
+                   const grid_t * g );
 
 void
-local_adjust_rhob( field_t      * ALIGNED(128) f,
-                   const grid_t *              g );
+local_adjust_rhob( field_t * ALIGNED(128) f,
+                   const grid_t * g );
 
 // In remote.c
 
 void
-begin_remote_ghost_tang_b( field_t      * ALIGNED(128) f,
-                           const grid_t *              g );
+begin_remote_ghost_tang_b( field_t * ALIGNED(128) f,
+                           const grid_t * g );
 
 void
-end_remote_ghost_tang_b( field_t      * ALIGNED(128) f,
-                         const grid_t *              g );
+end_remote_ghost_tang_b( field_t * ALIGNED(128) f,
+                         const grid_t * g );
 
 void
-begin_remote_ghost_norm_e( field_t      * ALIGNED(128) f,
-                           const grid_t *              g );
+begin_remote_ghost_norm_e( field_t * ALIGNED(128) f,
+                           const grid_t * g );
 
 void
-end_remote_ghost_norm_e( field_t      * ALIGNED(128) f,
-                         const grid_t *              g );
+end_remote_ghost_norm_e( field_t * ALIGNED(128) f,
+                         const grid_t * g );
 
 void
-begin_remote_ghost_div_b( field_t      * ALIGNED(128) f,
-                          const grid_t *              g );
+begin_remote_ghost_div_b( field_t * ALIGNED(128) f,
+                          const grid_t * g );
 
 void
-end_remote_ghost_div_b( field_t      * ALIGNED(128) f,
-                        const grid_t *              g );
+end_remote_ghost_div_b( field_t * ALIGNED(128) f,
+                        const grid_t * g );
 
 END_C_DECLS
 

@@ -500,7 +500,7 @@ private:
         max_local_nm = 16*(MAX_PIPELINE+1);
     }
     return append_species( species( name, (float)q, (float)m,
-                                    (int)max_local_np, (int)max_local_nm,
+                                    (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
                                     grid ), &species_list );
   }

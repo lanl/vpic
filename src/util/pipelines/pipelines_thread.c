@@ -37,9 +37,11 @@
 // (?) Signal blocking in pipelines
 // (?) Timeouts in thread_halt, thread_boot (spin wait)
 
-#include <pthread.h>
-
 #include "pipelines.h"
+
+#if defined(VPIC_USE_PTHREADS)
+
+#include <pthread.h>
 
 static void *
 pipeline_mgr( void *_id );
@@ -175,11 +177,7 @@ thread_boot( int * pargc,
   // Attempt to detect if any old-style arguments exist, and if so warn the user.
   detect_old_style_arguments(pargc, pargv);
 
-# if defined(CELL_PPU_BUILD)
-  n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              2 );
-# else
   n_pipeline       = strip_cmdline_int( pargc, pargv, "--tpp",              1 );
-# endif
   Dispatch_To_Host = strip_cmdline_int( pargc, pargv, "--dispatch_to_host", 1 );
 
   if( n_pipeline<1 || n_pipeline>MAX_PIPELINE )
@@ -577,3 +575,4 @@ pipeline_dispatcher_t thread = {
   thread_wait      // wait
 };
 
+#endif

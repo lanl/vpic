@@ -5,13 +5,13 @@
 #error "Do not include spa_private.h; include species_advance.h"
 #endif
 
-#include "../species_advance.h"
+#include "../../species_advance.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // advance_p_pipeline interface
 
-typedef struct particle_mover_seg {
-
+typedef struct particle_mover_seg
+{
   MEM_PTR( particle_mover_t, 16 ) pm; // First mover in segment
   int max_nm;                         // Maximum number of movers
   int nm;                             // Number of movers used
@@ -21,8 +21,8 @@ typedef struct particle_mover_seg {
 
 } particle_mover_seg_t;
 
-typedef struct advance_p_pipeline_args {
-
+typedef struct advance_p_pipeline_args
+{
   MEM_PTR( particle_t,           128 ) p0;       // Particle array
   MEM_PTR( particle_mover_t,     128 ) pm;       // Particle mover array
   MEM_PTR( accumulator_t,        128 ) a0;       // Accumulator arrays
@@ -46,13 +46,33 @@ typedef struct advance_p_pipeline_args {
 
 } advance_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
+
+void
+advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
+                           int pipeline_rank,
+                           int n_pipeline );
+
+void
+advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
+void
+advance_p_pipeline_v8( advance_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
+void
+advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // center_p_pipeline and uncenter_p_pipeline interface
 
-typedef struct center_p_pipeline_args {
-
+typedef struct center_p_pipeline_args
+{
   MEM_PTR( particle_t,           128 ) p0;      // Particle array
   MEM_PTR( const interpolator_t, 128 ) f0;      // Interpolator array
   float                                qdt_2mc; // Particle/field coupling
@@ -62,14 +82,54 @@ typedef struct center_p_pipeline_args {
 
 } center_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
+
+void
+center_p_pipeline_scalar( center_p_pipeline_args_t * args,
+                          int pipeline_rank,
+                          int n_pipeline );
+
+void
+center_p_pipeline_v4( center_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+center_p_pipeline_v8( center_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+void
+center_p_pipeline_v16( center_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
+
+// PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
+
+void
+uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
+                            int pipeline_rank,
+                            int n_pipeline );
+
+void
+uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
+
+void
+uncenter_p_pipeline_v8( center_p_pipeline_args_t * args,
+                        int pipeline_rank,
+                        int n_pipeline );
+
+void
+uncenter_p_pipeline_v16( center_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // energy_p_pipeline interface
 
-typedef struct energy_p_pipeline_args {
-
+typedef struct energy_p_pipeline_args
+{
   MEM_PTR( const particle_t,     128 ) p;       // Particle array
   MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
   MEM_PTR( double,               128 ) en;      // Return values
@@ -81,7 +141,27 @@ typedef struct energy_p_pipeline_args {
 
 } energy_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
+
+void
+energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
+                          int pipeline_rank,
+                          int n_pipeline );
+
+void
+energy_p_pipeline_v4( energy_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+energy_p_pipeline_v8( energy_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+void
+energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
+                       int pipeline_rank,
+                       int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
@@ -112,8 +192,8 @@ PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 
 // FIXME: safe to remove? enum { max_subsort_voxel = 26624 };
 
-typedef struct sort_p_pipeline_args {
-
+typedef struct sort_p_pipeline_args
+{
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
   MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
@@ -129,8 +209,23 @@ typedef struct sort_p_pipeline_args {
 
 } sort_p_pipeline_args_t;
 
-PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
-PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
+// PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
+
+void
+coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,
+                              int pipeline_rank,
+                              int n_pipeline );
+
+void
+coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
+                             int pipeline_rank,
+                             int n_pipeline );
+
+void
+subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline );
 
 #endif // _spa_private_h_

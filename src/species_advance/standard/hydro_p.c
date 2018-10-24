@@ -12,7 +12,8 @@
  */
 
 #define IN_spa
-#include "spa_private.h"
+
+#include "../species_advance.h"
 
 // accumulate_hydro_p adds the hydrodynamic fields associated with the
 // supplied particle_list to the hydro array.  Trilinear interpolation

@@ -20,15 +20,27 @@ update_profile( int dump ) {
     sum_total  += p->t_total;
   }
 
-  if( dump ) {
+  if( dump )
+  {
+    #if defined(VPIC_PRINT_MORE_DIGITS)
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx 
+                "                           |      Since   Last Update         |      Since   Last Restore\n"
+                "    Operation              | Pct   Time      Count      Per   | Pct   Time      Count      Per\n"
+                "---------------------------+----------------------------------+----------------------------------\n" );
+    #else
     log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
                 "                           |      Since Last Update       |     Since Last Restore\n"
                 "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
                 "---------------------------+------------------------------+------------------------------\n" );
+    #endif
 
     for( p=profile_internal_use_only; p->name; p++ ) {
       if( p->n==0 && p->n_total==0 ) continue;
+      #if defined(VPIC_PRINT_MORE_DIGITS)
+      log_printf( "%26.26s | % 3d%% %.3e %.1e %.3e | % 3d%% %.3e %.1e %.3e\n",
+      #else
       log_printf( "%26.26s | % 3d%% %.1e %.1e %.1e | % 3d%% %.1e %.1e %.1e\n",
+      #endif
                   p->name,
                   (int)( 100.*p->t/sum + 0.5 ), p->t,
                   (double)p->n,

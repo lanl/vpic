@@ -63,11 +63,11 @@ option(USE_V16_PORTABLE "Enable V16 Portable" OFF)
 
 option(USE_V16_AVX512 "Enable V16 AVX512" OFF)
 
-option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
-
-option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
+#option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
+
+option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -214,11 +214,11 @@ endif(USE_V16_AVX512)
 # Add options for building with explicit autovec support.
 #------------------------------------------------------------------------------#
 
-if(USE_ADVANCE_P_AUTOVEC)
-  add_definitions(-DADVANCE_P_AUTOVEC)
-  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DADVANCE_P_AUTOVEC")
-  set(ADVANCE_P_AUTOVEC True)
-endif(USE_ADVANCE_P_AUTOVEC)
+#if(USE_ADVANCE_P_AUTOVEC)
+  #add_definitions(-DADVANCE_P_AUTOVEC)
+  #set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DADVANCE_P_AUTOVEC")
+  #set(ADVANCE_P_AUTOVEC True)
+#endif(USE_ADVANCE_P_AUTOVEC)
 
 #------------------------------------------------------------------------------#
 # Miscellaneous options.

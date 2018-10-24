@@ -141,7 +141,9 @@ To restart VPIC using the restart file `./restart/restart0`
 
 # Feedback
 
-Feedback, comments, or issues can be raised through [GitHub issues](https://github.com/lanl/vpic/issues)
+Feedback, comments, or issues can be raised through [GitHub issues](https://github.com/lanl/vpic/issues).
+
+A mailing list for open collaboration can also be found [here](https://groups.google.com/forum/#!forum/vpic-users)
 
 # Release
 

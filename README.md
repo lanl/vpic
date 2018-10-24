@@ -9,7 +9,7 @@ description for the electric and magnetic fields evolved via a second-
 order finite-difference-time-domain (FDTD) solve. The VPIC code has been
 optimized for modern computing architectures and uses Message Passing
 Interface (MPI) calls for multi-node application as well as data
-parallelism using pthreads. VPIC employs a variety of short-vector,
+parallelism using threads. VPIC employs a variety of short-vector,
 single-instruction-multiple-data (SIMD) intrinsics for high performance
 and has been designed so that the data structures align with cache
 boundaries. The current feature set for VPIC includes a flexible input

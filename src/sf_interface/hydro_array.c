@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -10,13 +10,31 @@
 
 #include "sf_interface.h"
 
+static int
+ha_n_pipeline(void)
+{
+#if defined(VPIC_USE_PTHREADS)                         // Pthreads case.
+  int                          n = serial.n_pipeline;
+  if ( n < thread.n_pipeline ) n = thread.n_pipeline;
+
+#elif defined(VPIC_USE_OPENMP)                         // OpenMP case.
+  int                          n = omp_helper.n_pipeline;
+
+#else                                                  // Error case.
+  #error "VPIC_USE_OPENMP or VPIC_USE_PTHREADS must be specified"
+
+#endif
+
+  return n; // max( {serial,thread}.n_pipeline )
+}
+
 /* Though the checkpt/restore functions are not part of the public
    API, they must not be declared as static. */
 
 void
 checkpt_hydro_array( const hydro_array_t * ha ) {
   CHECKPT( ha, 1 );
-  CHECKPT_ALIGNED( ha->h, ha->g->nv, 128 );
+  CHECKPT_ALIGNED( ha->h, (size_t)(ha->n_pipeline+1)*(size_t)ha->stride, 128 );
   CHECKPT_PTR( ha->g );
 }
 
@@ -26,6 +44,10 @@ restore_hydro_array( void ) {
   RESTORE( ha );
   RESTORE_ALIGNED( ha->h );
   RESTORE_PTR( ha->g );
+  if( ha->n_pipeline!=ha_n_pipeline() )
+    ERROR(( "Number of pipelines restored is not the same as the number of "
+            "pipelines checkpointed.  Did you change the number of threads "
+            "per process between checkpt and restore?" ));
   return ha;
 }
 
@@ -34,9 +56,11 @@ new_hydro_array( grid_t * g ) {
   hydro_array_t * ha;
   if( !g ) ERROR(( "NULL grid" ));
   MALLOC( ha, 1 );
-  MALLOC_ALIGNED( ha->h, g->nv, 128 );
-  ha->g = g;
-  clear_hydro_array( ha );
+  ha->n_pipeline = ha_n_pipeline();
+  ha->stride     = POW2_CEIL(g->nv,2);
+  ha->g          = g;
+  MALLOC_ALIGNED( ha->h, (size_t)(ha->n_pipeline+1)*(size_t)ha->stride, 128 );
+  CLEAR( ha->h, (size_t)(ha->n_pipeline+1)*(size_t)ha->stride );
   REGISTER_OBJECT( ha, checkpt_hydro_array, restore_hydro_array, NULL );
   return ha;
 }
@@ -49,12 +73,6 @@ delete_hydro_array( hydro_array_t * ha ) {
   FREE( ha );
 }
 
-void
-clear_hydro_array( hydro_array_t * ha ) {
-  if( !ha ) ERROR(( "NULL hydro array" ));
-  CLEAR( ha->h, ha->g->nv ); // FIXME: SPU THIS?
-}
-
 #define hydro(x,y,z) h0[ VOXEL(x,y,z, nx,ny,nz) ]
 
 // Generic looping
@@ -62,7 +80,7 @@ clear_hydro_array( hydro_array_t * ha ) {
   for( z=zl; z<=zh; z++ )	    \
     for( y=yl; y<=yh; y++ )	    \
       for( x=xl; x<=xh; x++ )
-	      
+
 // x_NODE_LOOP => Loop over all non-ghost nodes at plane x
 #define x_NODE_LOOP(x) XYZ_LOOP(x,x,1,ny+1,1,nz+1)
 #define y_NODE_LOOP(y) XYZ_LOOP(1,nx+1,y,y,1,nz+1)
@@ -77,6 +95,10 @@ synchronize_hydro_array( hydro_array_t * ha ) {
 
   if( !ha ) ERROR(( "NULL hydro array" ));
 
+  // First reduce the pipelines.
+  reduce_hydro_array(ha);
+
+  // Now begin to synchronize.
   h0 = ha->h;
   g  = ha->g;
   nx = g->nx;
@@ -112,7 +134,7 @@ synchronize_hydro_array( hydro_array_t * ha ) {
       }                                         \
     }                                           \
   } while(0)
-  
+
   ADJUST_HYDRO(-1, 0, 0,x,y,z);
   ADJUST_HYDRO( 0,-1, 0,y,z,x);
   ADJUST_HYDRO( 0, 0,-1,z,x,y);
@@ -219,4 +241,3 @@ synchronize_hydro_array( hydro_array_t * ha ) {
 # undef END_RECV
 # undef END_SEND
 }
-

@@ -1,19 +1,12 @@
-// FIXME: THREAD THIS! HYDRO MEM SEMANTICS WILL NEED UPDATING.
-// FIXME: V4 ACCELERATE THIS.  COULD BE BASED OFF ENERGY_P.
-
-/* 
- * Written by:
- *   Kevin J. Bowers, Ph.D.
- *   Plasma Physics Group (X-1)
- *   Applied Physics Division
- *   Los Alamos National Lab
- * March/April 2004 - Revised and extended from earlier V4PIC versions
- *
- */
-
 #define IN_spa
 
-#include "../species_advance.h"
+#define HAS_V4_PIPELINE
+#define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
+
+#include "spa_private.h"
+
+#include "../../../util/pipelines/pipelines_exec.h"
 
 // accumulate_hydro_p adds the hydrodynamic fields associated with the
 // supplied particle_list to the hydro array.  Trilinear interpolation
@@ -24,34 +17,32 @@
 // accumulated with a charge conserving algorithm.
 
 void
-accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
-                    const species_t            * RESTRICT sp,
-                    const interpolator_array_t * RESTRICT ia ) {
-  /**/  hydro_t        * RESTRICT ALIGNED(128) h;
-  const particle_t     * RESTRICT ALIGNED(128) p;
-  const interpolator_t * RESTRICT ALIGNED(128) f;
+hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline ) {
   float c, qsp, mspc, qdt_2mc, qdt_4mc2, r8V;
   int np, stride_10, stride_21, stride_43;
 
   float dx, dy, dz, ux, uy, uz, w, vx, vy, vz, ke_mc;
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
-  int i, n;
+  int i, n, n1, n0;
 
-  if( !ha || !sp || !ia || ha->g!=sp->g || ha->g!=ia->g )
-    ERROR(( "Bad args" ));
+  const species_t      *              sp = args->sp;
+  const grid_t         *              g  = sp->g;
+  /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
+  const particle_t     * ALIGNED(128) p  = sp->p;
+  const interpolator_t * ALIGNED(128) f  = args->f;
 
-  h = ha->h;
-  p = sp->p;
-  f = ia->i;
+  // Determine which particles this pipeline processes.
+  DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, n0, n1 ); n1 += n0;
 
   c        = sp->g->cvac;
   qsp      = sp->q;
-  mspc     = sp->m*c;
-  qdt_2mc  = (qsp*sp->g->dt)/(2*mspc);
+  mspc     = args->msp*c;
+  qdt_2mc  = args->qdt_2mc;
   qdt_4mc2 = qdt_2mc / (2*c);
   r8V      = sp->g->r8V;
 
-  np        = sp->np;
   stride_10 = VOXEL(1,0,0, sp->g->nx,sp->g->ny,sp->g->nz) -
               VOXEL(0,0,0, sp->g->nx,sp->g->ny,sp->g->nz);
   stride_21 = VOXEL(0,1,0, sp->g->nx,sp->g->ny,sp->g->nz) -
@@ -59,7 +50,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
   stride_43 = VOXEL(0,0,1, sp->g->nx,sp->g->ny,sp->g->nz) -
               VOXEL(1,1,0, sp->g->nx,sp->g->ny,sp->g->nz);
 
-  for( n=0; n<np; n++ ) {
+  for( n=n0; n<n1; n++ ) {
 
     // Load the particle
     dx = p[n].dx;
@@ -70,7 +61,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
     uy = p[n].uy;
     uz = p[n].uz;
     w  = p[n].w;
-    
+
     // Half advance E
     ux += qdt_2mc*((f[i].ex+dy*f[i].dexdy) + dz*(f[i].dexdz+dy*f[i].d2exdydz));
     uy += qdt_2mc*((f[i].ey+dz*f[i].deydz) + dx*(f[i].deydx+dz*f[i].d2eydzdx));
@@ -131,7 +122,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
     w2 *= dz;       // w2 = (1/8)(w/V)(1-x)(1+y)(1-z) = (w/V) trilin_6 *Done
     w3 *= dz;       // w3 = (1/8)(w/V)(1+x)(1+y)(1-z) = (w/V) trilin_7 *Done
 
-    // Accumulate the hydro fields
+    // ACCUMULATE the hydro fields
 #   define ACCUM_HYDRO( wn)                             \
     t  = qsp*wn;        /* t  = (qsp w/V) trilin_n */   \
     h[i].jx  += t*vx;                                   \
@@ -164,4 +155,27 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
 
 #   undef ACCUM_HYDRO
   }
+}
+
+void
+accumulate_hydro_p_pipeline( /**/  hydro_array_t        * RESTRICT ha,
+                             const species_t            * RESTRICT sp,
+                             const interpolator_array_t * RESTRICT ia ) {
+
+  if( !ha || !sp || !ia || ha->g!=sp->g || ha->g!=ia->g )
+    ERROR(( "Bad args" ));
+
+  DECLARE_ALIGNED_ARRAY(hydro_p_pipeline_args_t, 128, args, 1);
+
+  args->sp      = sp;
+  args->f       = ia->i;
+  args->h       = ha->h;
+  args->h_size  = ha->stride;
+  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->msp     = sp->m;
+  args->np      = sp->np;
+
+  EXEC_PIPELINES(hydro_p, args, 0);
+  WAIT_PIPELINES();
+
 }

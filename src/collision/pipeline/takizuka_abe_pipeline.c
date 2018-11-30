@@ -63,15 +63,17 @@
                                                                         \
     /* Handle unequal particle weights. */                              \
     t0 = frand_c0(rng);                                                 \
-    if(wi < wj) mu_j = wj*t0 <= wi ? mu_j : 0 ;                         \
-    if(wj < wi) mu_i = wi*t0 <= wj ? mu_i : 0 ;                         \
+    t1 = mu_i;                                                          \
+    t2 = mu_j;                                                          \
+    if(wj < wi && wi*t0 > wj) t1 = 0 ;                                  \
+    if(wi < wj && wj*t0 > wi) t2 = 0 ;                                  \
                                                                         \
-    pi->ux += mu_i*stack[0];                                            \
-    pi->uy += mu_i*stack[1];                                            \
-    pi->uz += mu_i*stack[2];                                            \
-    pj->ux -= mu_j*stack[0];                                            \
-    pj->uy -= mu_j*stack[1];                                            \
-    pj->uz -= mu_j*stack[2];                                            \
+    pi->ux += t1*stack[0];                                              \
+    pi->uy += t1*stack[1];                                              \
+    pi->uz += t1*stack[2];                                              \
+    pj->ux -= t2*stack[0];                                              \
+    pj->uy -= t2*stack[1];                                              \
+    pj->uz -= t2*stack[2];                                              \
                                                                         \
   } while(0)
 

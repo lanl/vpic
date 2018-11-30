@@ -4,6 +4,7 @@
 #include "../binary.h"
 #include "../langevin.h"
 #include "../unary.h"
+#include "../takizuka_abe.h"
 
 void
 binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,

@@ -55,7 +55,7 @@ typedef struct reduce_pipeline_args
 } reduce_pipeline_args_t;
 
 void
-clear_array_pipeline_scalar( reduce_pipeline_args * args,
+clear_array_pipeline_scalar( reduce_pipeline_args_t * args,
                              int pipeline_rank,
                              int n_pipeline );
 

@@ -37,7 +37,6 @@ restore_takizuka_abe( void ) {
 void
 delete_takizuka_abe( collision_op_t * cop ) {
   takizuka_abe_t * cm = (takizuka_abe_t *)cop->params;
-  // UNREGISTER_OBJECT( cm );
   FREE( cm->name );
   FREE( cm );
   delete_collision_op_internal( cop );

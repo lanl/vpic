@@ -20,4 +20,9 @@ unary_pipeline_scalar( unary_collision_model_t * RESTRICT cm,
                        int pipeline_rank,
                        int n_pipeline );
 
+void
+takizuka_abe_pipeline_scalar( takizuka_abe_t * RESTRICT cm,
+                              int pipeline_rank,
+                              int n_pipeline );
+
 #endif /* _collision_pipeline_h_ */

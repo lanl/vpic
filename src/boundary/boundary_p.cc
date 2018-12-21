@@ -3,11 +3,23 @@
 
 // If this is defined particle and mover buffers will not resize dynamically
 // (This is the common case for the users)
-#define DISABLE_DYNAMIC_RESIZING
+//#define DISABLE_DYNAMIC_RESIZING
 
 // FIXME: ARCHITECTURAL FLAW!  CUSTOM BCS AND SHARED FACES CANNOT
 // COEXIST ON THE SAME FACE!  THIS MEANS THAT CUSTOM BOUNDARYS MUST
 // REINJECT ALL ABSORBED PARTICLES IN THE SAME DOMAIN!
+
+
+// Updated by Scott V. Luedtke, XCP-6, December 6, 2018.
+// The mover array is now resized along with the particle array.  The mover
+// array is filled during advance_p and is most likely to overflow there, not
+// here.  Both arrays will now resize down as well.
+// 12/20/18: The mover array is no longer resized with the particle array, as
+// this actually uses more RAM than having static mover arrays.  The mover will
+// still size up if there are too many incoming particles, but I have not 
+// encountered this.  Some hard-to-understand bit shifts have been replaced with
+// cleaner code that the compiler should have no trouble optimizing.
+// Spits out lots of warnings. TODO: Remove warnings after testing.
 
 #ifdef V4_ACCELERATION
 using namespace v4;
@@ -196,9 +208,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         if( ((nn>=0) & (nn< rangel)) | ((nn>rangeh) & (nn<=rangem)) ) {
           pi = &pi_send[face][n_send[face]++];
-	  // This appears to be working with the different components of position
-	  // and velocity for a single particle.  Thus, I do't think it is a
-	  // candidate for longer SIMD vector lengths without further study.
 #         ifdef V4_ACCELERATION
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
@@ -249,9 +258,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       backfill:
 
         np--;
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
@@ -309,7 +315,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   // Resize particle storage to accomodate worst case inject
 
   do {
-    int n;
+    int n, nm;
     
     // Resize each species's particle and mover storage to be large
     // enough to guarantee successful injection.  (If we broke down
@@ -326,28 +332,71 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       
       n = sp->np + max_inj;
       if( n>sp->max_np ) {
-        n = n + (n>>2) + (n>>4); // Increase by 31.25% (~<"silver
+        n += 0.3125*n; // Increase by 31.25% (~<"silver
         /**/                     // ratio") to minimize resizes (max
         /**/                     // rate that avoids excessive heap
         /**/                     // fragmentation)
+        //float resize_ratio = (float)n/sp->max_np;
         WARNING(( "Resizing local %s particle storage from %i to %i",
                   sp->name, sp->max_np, n ));
         MALLOC_ALIGNED( new_p, n, 128 );
         COPY( new_p, sp->p, sp->np );
         FREE_ALIGNED( sp->p );
         sp->p = new_p, sp->max_np = n;
-      }
-      
-      n = sp->nm + max_inj;
-      if( n>sp->max_nm ) {
-        n = n + (n>>2) + (n>>4); // See note above
+
+        /*nm = sp->max_nm * resize_ratio;
         WARNING(( "Resizing local %s mover storage from %i to %i",
-                  sp->name, sp->max_nm, n ));
-        MALLOC_ALIGNED( new_pm, n, 128 );
+                  sp->name, sp->max_nm, nm ));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
         COPY( new_pm, sp->pm, sp->nm );
         FREE_ALIGNED( sp->pm );
         sp->pm = new_pm;
-        sp->max_nm = n;
+        sp->max_nm = nm;*/
+      }
+// 32768 particles is 1 MiB of memory.
+#define MIN_NP 32768
+      else if(sp->max_np > MIN_NP && n < sp->max_np>>1){
+        n += 0.125*n; // Overallocate by less since this rank is decreasing
+        if (n<MIN_NP) n = MIN_NP;
+        //float resize_ratio = (float)n/sp->max_np;
+        WARNING(( "Resizing (shrinking) local %s particle storage from "
+                    "%i to %i", sp->name, sp->max_np, n));
+        MALLOC_ALIGNED( new_p, n, 128 );
+        COPY( new_p, sp->p, sp->np );
+        FREE_ALIGNED( sp->p );
+        sp->p = new_p, sp->max_np = n;
+
+        /*nm = sp->max_nm * resize_ratio;
+        WARNING(( "Resizing (shrinking) local %s mover storage from "
+                    "%i to %i", sp->name, sp->max_nm, nm));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
+        COPY( new_pm, sp->pm, sp->nm );
+        FREE_ALIGNED( sp->pm );
+        sp->pm = new_pm, sp->max_nm = nm;*/
+      }
+#undef MIN_NP
+      // Feasibly, a vacuum-filled rank may receive a shock and need more movers
+      // than available from MIN_NP
+      nm = sp->nm + max_inj;
+      if( nm>sp->max_nm ) {
+        nm += 0.3125*nm; // See note above
+        //float resize_ratio = (float)nm/sp->max_nm;
+        WARNING(( "This happened.  Resizing local %s mover storage from "
+                    "%i to %i based on not enough movers",
+                  sp->name, sp->max_nm, nm ));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
+        COPY( new_pm, sp->pm, sp->nm );
+        FREE_ALIGNED( sp->pm );
+        sp->pm = new_pm;
+        sp->max_nm = nm;
+
+        /*n = sp->max_np * resize_ratio;
+        WARNING(( "Resizing local %s particle storage from %i to %i",
+                  sp->name, sp->max_np, n ));
+        MALLOC_ALIGNED( new_p, n, 128 );
+        COPY( new_p, sp->p, sp->np );
+        FREE_ALIGNED( sp->p );
+        sp->p = new_p, sp->max_np = n;*/
       }
     }
   } while(0);
@@ -418,9 +467,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( np>=sp_max_np[id] ) { n_dropped_particles[id]++; continue; }
 #       endif
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
@@ -433,9 +479,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( nm>=sp_max_nm[id] ) { n_dropped_movers[id]++;    continue; }
 #       endif
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;

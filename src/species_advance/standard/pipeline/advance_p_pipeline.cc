@@ -252,9 +252,13 @@ advance_p_pipeline( species_t * RESTRICT sp,
 
   int rank;
 
-  if ( !sp || !aa || !ia || sp->g != aa->g || sp->g != ia->g )
+  if ( ! sp           ||
+       ! aa           ||
+       ! ia           ||
+       sp->g != aa->g ||
+       sp->g != ia->g )
   {
-    ERROR( ( "Bad args" ) );
+    ERROR( ( "Bad args." ) );
   }
 
   args->p0      = sp->p;
@@ -264,10 +268,10 @@ advance_p_pipeline( species_t * RESTRICT sp,
   args->seg     = seg;
   args->g       = sp->g;
 
-  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
-  args->cdt_dx  = sp->g->cvac*sp->g->dt*sp->g->rdx;
-  args->cdt_dy  = sp->g->cvac*sp->g->dt*sp->g->rdy;
-  args->cdt_dz  = sp->g->cvac*sp->g->dt*sp->g->rdz;
+  args->qdt_2mc = ( sp->q * sp->g->dt ) / ( 2 * sp->m * sp->g->cvac );
+  args->cdt_dx  = sp->g->cvac * sp->g->dt * sp->g->rdx;
+  args->cdt_dy  = sp->g->cvac * sp->g->dt * sp->g->rdy;
+  args->cdt_dz  = sp->g->cvac * sp->g->dt * sp->g->rdz;
   args->qsp     = sp->q;
 
   args->np      = sp->np;
@@ -300,7 +304,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
-      WARNING( ( "Pipeline %i ran out of storage for %i movers",
+      WARNING( ( "Pipeline %i ran out of storage for %i movers.",
                  rank, args->seg[rank].n_ignored ) );
     }
 

@@ -78,8 +78,10 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
   // The host gets the first accumulator array.
 
   if ( pipeline_rank != n_pipeline )
+  {
     a0 += ( 1 + pipeline_rank ) *
           POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
+  }
 
   // Process particles for this pipeline.
 

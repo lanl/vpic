@@ -1,7 +1,7 @@
 #ifndef dumpmacros_h
 #define dumpmacros_h
 
-/* FIXME: WHEN THESE MACROS WERE HOISTED AND VARIOUS HACKS DONE TO THEm
+/* FIXME: WHEN THESE MACROS WERE HOISTED AND VARIOUS HACKS DONE TO THEM
    THEY BECAME _VERY_ _DANGEROUS. */
 
 #define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO) do { \

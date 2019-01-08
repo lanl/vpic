@@ -58,10 +58,10 @@ int string_starts_with(const char *str, const char *pre)
 
 int string_contains(const char *str, const char *substr)
 {
-    char *output = NULL;
+    const char *output = NULL;
     output = strstr(str,substr);
 
-    char* pos = strstr(str, substr);
+    const char* pos = strstr(str, substr);
 
     if (pos) {
         return 1;
@@ -140,16 +140,16 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
           }
       }
 
-		  // Check for "=" (equals)
+      // Check for "=" (equals)
       // TODO: Add an option to make this an error or a warning
-			if (string_contains(arg, "="))
-			{
+      if (string_contains(arg, "="))
+      {
          const int NUM_WARN_REPEAT = 5;
          for (j = 0; j < NUM_WARN_REPEAT; j++)
          {
             WARNING(( "Arguments contains '=', is this intentional? (use a space)" ));
          }
-			}
+      }
 
   }
 

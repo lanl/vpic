@@ -15,6 +15,12 @@
 #include <math.h>
 #include <altivec.h>
 
+// See if this fixes a problem when compiling with GNU compilers.
+#ifdef __GNUC__
+#undef bool
+#undef vector
+#endif
+
 namespace v4 {
 
   class v4;
@@ -51,14 +57,51 @@ namespace v4 {
     
     friend class v4int;
     friend class v4float;
-      
+
+    // -----------------------------------------------------------------------------
+    // hacks that need to be resolved more elegantly
+
+/*     friend inline v4 operator *( const v4 &a, const v4 &b ); */
+
+/* #   define ASSIGN(op,instr)                             \ */
+/*     inline v4 &operator op( const v4 &b )               \ */
+/*     {							\ */
+/*       instr;                                            \ */
+/*       return *this;                                     \ */
+/*     } */
+
+/*     ASSIGN(=, v = b.v ); */
+
+/* #   undef ASSIGN */
+
+/* #   define BINARY(op,instr)                                            \ */
+/*     inline v4 operator op( const v4 &a, const v4 &b )                  \ */
+/*     {								       \ */
+/*       v4 c;                                                            \ */
+/*       instr;                                                           \ */
+/*       return c;                                                        \ */
+/*     } */
+
+/*     BINARY(+, c.v = vec_add( a.v, b.v ) ) */
+/*     BINARY(-, c.v = vec_sub( a.v, b.v ) ) */
+/*     BINARY(*, c.v = vec_mul( a.v, b.v ) ) */
+/*       // BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) ) */
+
+/* #   undef BINARY */
+    // end hacks
+    // -----------------------------------------------------------------------------
+
     // v4 miscellenous friends
 
     friend inline int any( const v4 &a );
     friend inline int all( const v4 &a );
-    friend inline v4 splat( const v4 &a, int n );
-    friend inline v4 shuffle( const v4 &a,
-                              int i0, int i1, int i2, int i3 );
+    template<int n>
+    friend inline v4 splat( const v4 &a );
+    // friend inline v4 splat( const v4 &a, int n );
+    template<int i0, int i1, int i2, int i3>
+    friend inline v4 shuffle( const v4 &a );
+    // friend inline v4 shuffle( const v4 &a,
+    //                           int i0, int i1, int i2, int i3 );
     friend inline void swap( v4 &a, v4 &b );
     friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
 
@@ -120,6 +163,7 @@ namespace v4 {
                                      void * ALIGNED(16) a3 );
 
   protected:
+  public: // wdn
 
     _v4_float v;
     
@@ -142,15 +186,16 @@ namespace v4 {
   inline int all( const v4 &a ) {
     return vec_all_ne( (_v4_int)a.v, _false );
   }
-  
-  inline v4 splat( const v4 & a, int n ) {
+
+  template<int n>
+  inline v4 splat( const v4 & a ) {
     v4 b;
     b.v = vec_splat( a.v, n );
     return b;
   }
 
-  inline v4 shuffle( const v4 & a,
-                     int i0, int i1, int i2, int i3 ) {
+  template<int i0, int i1, int i2, int i3>
+  inline v4 shuffle( const v4 & a ) {
     _v4_float a_v = a.v;
     v4 b;
     b.v = vec_perm( a_v, a_v, _PERM( i0, i1, i2, i3 ) );
@@ -229,6 +274,7 @@ namespace v4 {
                        ((const float *)pd)[0] };
   }
 
+  #if 0
   inline void load_4x2_tr( const void * ALIGNED(8) pa,
                            const void * ALIGNED(8) pb,
                            const void * ALIGNED(8) pc,
@@ -242,6 +288,29 @@ namespace v4 {
                        ((const float *)pb)[1],
                        ((const float *)pc)[1],
                        ((const float *)pd)[1] };
+  }
+  #endif
+
+  inline void load_4x2_tr( const void * ALIGNED(8) pa,
+                           const void * ALIGNED(8) pb,
+                           const void * ALIGNED(8) pc,
+                           const void * ALIGNED(8) pd,
+                           v4 &a, v4 &b )
+  {
+    _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
+    _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
+    _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
+    _v4_float d1 = vec_ld( 0, (const float *)pd ); // d1 = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    _v4_float a1 = vec_mergeh( a0, c1 );           // a1 =  0  8  1  9
+    _v4_float b1 = vec_mergeh( b0, d1 );           // b1 =  4 12  5 13
+
+    // Step 2: Interleave even and odd rows
+
+    a.v          = vec_mergeh( a1, b1 );           // a  =  0  4  8 12
+    b.v          = vec_mergel( a1, b1 );           // b  =  1  5  9 13
   }
   
   inline void load_4x3_tr( const void * ALIGNED(16) pa,
@@ -272,7 +341,8 @@ namespace v4 {
                            const void * ALIGNED(16) pb,
                            const void * ALIGNED(16) pc,
                            const void * ALIGNED(16) pd,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+                           v4 &a, v4 &b, v4 &c, v4 &d )
+  {
     _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
     _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
     _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
@@ -699,6 +769,12 @@ namespace v4 {
     friend inline v4float operator  *( const v4float &a, const v4float &b );
     friend inline v4float operator  /( const v4float &a, const v4float &b );
 
+    // -------------------------------------------------------------------------
+    // begin hacks
+    // friend inline v4float operator  *( const v4float &a, const v4 &b );
+    // end hacks
+    // -------------------------------------------------------------------------
+
     // v4float logical operator friends
 
     friend inline v4int operator  <( const v4float &a, const v4float &b );
@@ -777,6 +853,33 @@ namespace v4 {
     ASSIGN(-=, v = vec_sub(v,b.v) );
     ASSIGN(*=, v = vec_madd(v,b.v,_zero) );
 
+    // This does one NR iteration and is supposed to be accurate enough.
+    inline v4float &operator /=( const v4float &a ) {
+      _v4_float a_v = a.v, b_v;
+
+      // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+      b_v = vec_re( a_v );
+
+      // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+      // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+      // IMPLEMENTATION FOR THE REFINEMENT.
+
+      // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+      // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+      // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+      b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+      // Compute n * refined( (1/a)_estimate ) to get result n/a
+
+      v = vec_madd( v, b_v, _zero );
+
+      return *this;
+    }
+
+    #if 0
+    // This is a more accurate version that does two NR iterations.
     inline v4float &operator /=( const v4float &a ) {
       _v4_float a_v = a.v, b_v;
 
@@ -801,6 +904,7 @@ namespace v4 {
 
       return *this;
     }
+    #endif
 
 #   undef ASSIGN
 
@@ -873,7 +977,7 @@ namespace v4 {
   }
 
   // v4float binary operators
-    
+
 # define BINARY(op,instr)                                            \
   inline v4float operator op( const v4float &a, const v4float &b ) { \
     v4float c;                                                       \
@@ -902,7 +1006,6 @@ namespace v4 {
     // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
 
     b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
-    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
 
     // Compute n * refined( (1/a)_estimate ) to get result n/a
     
@@ -911,7 +1014,51 @@ namespace v4 {
     return c;
   }
 
+  #if 0
+  // This is a more accurate version that does two NR iterations.
+  inline v4float operator /( const v4float &n, const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float c;
+
+    // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+    b_v = vec_re( a_v );
+
+    // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+    // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+    // IMPLEMENTATION FOR THE REFINEMENT.
+
+    // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+    // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+    // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+    // Compute n * refined( (1/a)_estimate ) to get result n/a
+    
+    c.v = vec_madd( n.v, b_v, _zero );
+
+    return c;
+  }
+  #endif
+
 # undef BINARY
+
+  // -------------------------------------------------------------------------
+  // begin hacks
+/* # define BINARY(op,instr)                                            \ */
+/*   inline v4float operator op( const v4float &a, const v4 &b ) {      \ */
+/*     v4float c;                                                       \ */
+/*     instr;                                                           \ */
+/*     return c;                                                        \ */
+/*   } */
+
+/*   BINARY(*, c.v = vec_madd( a.v, b.v, _zero ) ) */
+
+/* # undef BINARY */
+  // end hacks
+  // -------------------------------------------------------------------------
 
   // v4float logical operators
 
@@ -944,10 +1091,10 @@ namespace v4 {
     union { float f[4]; _v4_float v; } t; \
     v4float b;                            \
     t.v = a.v;                            \
-    b.v = (_v4_float){ ::fn( t.f[0] ),    \
-                       ::fn( t.f[1] ),    \
-                       ::fn( t.f[2] ),    \
-                       ::fn( t.f[3] ) };  \
+    b.v = (_v4_float){ (float) ::fn( t.f[0] ),  \
+                       (float) ::fn( t.f[1] ),    \
+                       (float) ::fn( t.f[2] ),    \
+                       (float) ::fn( t.f[3] ) };  \
     return b;                             \
   }
   
@@ -958,10 +1105,10 @@ namespace v4 {
     v4float c;                                              \
     t.v = a.v;                                              \
     u.v = b.v;                                              \
-    c.v = (_v4_float){ ::fn( t.f[0], u.f[0] ),              \
-                       ::fn( t.f[1], u.f[1] ),              \
-                       ::fn( t.f[2], u.f[2] ),              \
-                       ::fn( t.f[3], u.f[3] ) };            \
+    c.v = (_v4_float){ (float) ::fn( t.f[0], u.f[0] ),              \
+                       (float) ::fn( t.f[1], u.f[1] ),              \
+                       (float) ::fn( t.f[2], u.f[2] ),              \
+                       (float) ::fn( t.f[3], u.f[3] ) };            \
     return c;                                               \
   }
 
@@ -977,6 +1124,31 @@ namespace v4 {
     return b;
   }
 
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float sqrt( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the rsqrt (??-bit accurate)
+
+    b_v = vec_rsqrte( a_v );
+
+    // FIXME: CHECK NUMERICS.  HOW MANY N-R STEPS NECESSARY?
+    // APPLE'S ALTIVEC PAGE SUGGESTS TWO.
+
+    b_v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+                    vec_madd( b_v, _half, _zero ),
+                    b_v );
+
+    // Compute the sqrt(a) via a*refined_rsqrt_estimate(a) ~ sqrt(a)
+
+    b.v = vec_madd( a_v, b_v, _zero );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float sqrt( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1001,6 +1173,7 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float copysign( const v4float &a, const v4float &b ) {
     v4float c;
@@ -1018,7 +1191,31 @@ namespace v4 {
     b.v = vec_rsqrte( a.v );
     return b;
   }
-  
+
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float rsqrt( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the rsqrt (??-bit accurate)
+
+    b_v = vec_rsqrte( a_v );
+
+    // FIXME: CHECK NUMERICS.  HOW MANY N-R STEPS NECESSARY?
+    // APPLE'S ALTIVEC PAGE SUGGESTS TWO.
+
+    //    b_v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+    //                    vec_madd( b_v, _half, _zero ),
+    //                    b_v );
+    b.v = vec_madd( vec_nmsub( vec_madd( b_v, b_v,   _zero ), a_v, _one ),
+                    vec_madd( b_v, _half, _zero ),
+                    b_v );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float rsqrt( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1039,13 +1236,39 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float rcp_approx( const v4float &a ) {
     v4float b;
     b.v = vec_re( a.v );
     return b;
   }
-  
+
+  // This version does one NR iteration and is supposed to be accurate enough.
+  inline v4float rcp( const v4float &a ) {
+    _v4_float a_v = a.v, b_v;
+    v4float b;
+
+    // Compute an estimate of the reciprocal of a (??-bit accurate)
+
+    b_v = vec_re( a_v );
+
+    // FIXME: CHECK NUMERICS ... HOW MANY N-R STEPS TO USE?  APPLE'S
+    // ALTIVEC WEB PAGE SUGGESTS TWO STEPS AND GIVES THE BELOW
+    // IMPLEMENTATION FOR THE REFINEMENT.
+
+    // FIXME: IS THIS THE MOST ACCURATE FORM FOR THE REFINEMENT?
+    // THE SPU IMPLEMENTATION HAS AN ALTERNATE THAT MAY BE MORE
+    // ACCURATE (OR AT LEAST USES FEWER CONSTANTS).
+
+    //    b_v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+    b.v = vec_madd( vec_nmsub( b_v, a_v, _one ), b_v, b_v );
+
+    return b;
+  }
+
+  #if 0
+  // This is a more accurate version that does two NR iterations.
   inline v4float rcp( const v4float &a ) {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1067,6 +1290,7 @@ namespace v4 {
 
     return b;
   }
+  #endif
 
   inline v4float fma(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
@@ -1076,7 +1300,8 @@ namespace v4 {
 
   inline v4float fms(  const v4float &a, const v4float &b, const v4float &c ) {
     v4float d;
-    d.v = vec_sub( _zero, vec_nmsub( a.v, b.v, c.v ) ); // FIXME: Sigh ...
+    //    d.v = vec_sub( _zero, vec_nmsub( a.v, b.v, c.v ) ); // FIXME: Sigh ...
+    d.v = vec_msub( a.v, b.v, c.v ) ; 
     return d;
   }
 

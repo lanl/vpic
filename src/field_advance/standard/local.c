@@ -113,9 +113,9 @@ local_ghost_tang_b( field_t      * ALIGNED(128) f,
     }                                                                    \
   } while(0)
 
-  APPLY_LOCAL_TANG_B(-1, 0, 0,x,y,z);
-  APPLY_LOCAL_TANG_B( 0,-1, 0,y,z,x);
-  APPLY_LOCAL_TANG_B( 0, 0,-1,z,x,y);
+  APPLY_LOCAL_TANG_B((-1), 0, 0,x,y,z);
+  APPLY_LOCAL_TANG_B( 0,(-1), 0,y,z,x);
+  APPLY_LOCAL_TANG_B( 0, 0,(-1),z,x,y);
   APPLY_LOCAL_TANG_B( 1, 0, 0,x,y,z);
   APPLY_LOCAL_TANG_B( 0, 1, 0,y,z,x);
   APPLY_LOCAL_TANG_B( 0, 0, 1,z,x,y);
@@ -170,9 +170,9 @@ local_ghost_norm_e( field_t      * ALIGNED(128) f,
     }                                                           \
   } while(0)
 
-  APPLY_LOCAL_NORM_E(-1, 0, 0,x,y,z);
-  APPLY_LOCAL_NORM_E( 0,-1, 0,y,z,x);
-  APPLY_LOCAL_NORM_E( 0, 0,-1,z,x,y);
+  APPLY_LOCAL_NORM_E((-1), 0, 0,x,y,z);
+  APPLY_LOCAL_NORM_E( 0,(-1), 0,y,z,x);
+  APPLY_LOCAL_NORM_E( 0, 0,(-1),z,x,y);
   APPLY_LOCAL_NORM_E( 1, 0, 0,x,y,z);
   APPLY_LOCAL_NORM_E( 0, 1, 0,y,z,x);
   APPLY_LOCAL_NORM_E( 0, 0, 1,z,x,y);
@@ -206,9 +206,9 @@ local_ghost_div_b( field_t      * ALIGNED(128) f,
     }									    \
   } while(0)
   
-  APPLY_LOCAL_DIV_B(-1, 0, 0,x,y,z);
-  APPLY_LOCAL_DIV_B( 0,-1, 0,y,z,x);
-  APPLY_LOCAL_DIV_B( 0, 0,-1,z,x,y);
+  APPLY_LOCAL_DIV_B((-1), 0, 0,x,y,z);
+  APPLY_LOCAL_DIV_B( 0,(-1), 0,y,z,x);
+  APPLY_LOCAL_DIV_B( 0, 0,(-1),z,x,y);
   APPLY_LOCAL_DIV_B( 1, 0, 0,x,y,z);
   APPLY_LOCAL_DIV_B( 0, 1, 0,y,z,x);
   APPLY_LOCAL_DIV_B( 0, 0, 1,z,x,y);
@@ -255,9 +255,9 @@ local_adjust_tang_e( field_t      * ALIGNED(128) f,
     }                                                                   \
   } while(0)
 
-  ADJUST_TANG_E(-1, 0, 0,x,y,z);
-  ADJUST_TANG_E( 0,-1, 0,y,z,x);
-  ADJUST_TANG_E( 0, 0,-1,z,x,y);
+  ADJUST_TANG_E((-1), 0, 0,x,y,z);
+  ADJUST_TANG_E( 0,(-1), 0,y,z,x);
+  ADJUST_TANG_E( 0, 0,(-1),z,x,y);
   ADJUST_TANG_E( 1, 0, 0,x,y,z);
   ADJUST_TANG_E( 0, 1, 0,y,z,x);
   ADJUST_TANG_E( 0, 0, 1,z,x,y);
@@ -287,9 +287,9 @@ local_adjust_norm_b( field_t      * ALIGNED(128) f,
     }                                                                   \
   } while(0)
 
-  ADJUST_NORM_B(-1, 0, 0,x,y,z);
-  ADJUST_NORM_B( 0,-1, 0,y,z,x);
-  ADJUST_NORM_B( 0, 0,-1,z,x,y);
+  ADJUST_NORM_B((-1), 0, 0,x,y,z);
+  ADJUST_NORM_B( 0,(-1), 0,y,z,x);
+  ADJUST_NORM_B( 0, 0,(-1),z,x,y);
   ADJUST_NORM_B( 1, 0, 0,x,y,z);
   ADJUST_NORM_B( 0, 1, 0,y,z,x);
   ADJUST_NORM_B( 0, 0, 1,z,x,y);
@@ -319,9 +319,9 @@ local_adjust_div_e( field_t      * ALIGNED(128) f,
     }								 \
   } while(0)
 
-  ADJUST_DIV_E_ERR(-1, 0, 0,x,y,z);
-  ADJUST_DIV_E_ERR( 0,-1, 0,y,z,x);
-  ADJUST_DIV_E_ERR( 0, 0,-1,z,x,y);
+  ADJUST_DIV_E_ERR((-1), 0, 0,x,y,z);
+  ADJUST_DIV_E_ERR( 0,(-1), 0,y,z,x);
+  ADJUST_DIV_E_ERR( 0, 0,(-1),z,x,y);
   ADJUST_DIV_E_ERR( 1, 0, 0,x,y,z);
   ADJUST_DIV_E_ERR( 0, 1, 0,y,z,x);
   ADJUST_DIV_E_ERR( 0, 0, 1,z,x,y);
@@ -359,9 +359,9 @@ local_adjust_jf( field_t      * ALIGNED(128) f,
     }                                                                   \
   } while(0)
   
-  ADJUST_JF(-1, 0, 0,x,y,z);
-  ADJUST_JF( 0,-1, 0,y,z,x);
-  ADJUST_JF( 0, 0,-1,z,x,y);
+  ADJUST_JF((-1), 0, 0,x,y,z);
+  ADJUST_JF( 0,(-1), 0,y,z,x);
+  ADJUST_JF( 0, 0,(-1),z,x,y);
   ADJUST_JF( 1, 0, 0,x,y,z);
   ADJUST_JF( 0, 1, 0,y,z,x);
   ADJUST_JF( 0, 0, 1,z,x,y);
@@ -398,9 +398,9 @@ local_adjust_rhof( field_t      * ALIGNED(128) f,
     }                                                                   \
   } while(0)
   
-  ADJUST_RHOF(-1, 0, 0,x,y,z);
-  ADJUST_RHOF( 0,-1, 0,y,z,x);
-  ADJUST_RHOF( 0, 0,-1,z,x,y);
+  ADJUST_RHOF((-1), 0, 0,x,y,z);
+  ADJUST_RHOF( 0,(-1), 0,y,z,x);
+  ADJUST_RHOF( 0, 0,(-1),z,x,y);
   ADJUST_RHOF( 1, 0, 0,x,y,z);
   ADJUST_RHOF( 0, 1, 0,y,z,x);
   ADJUST_RHOF( 0, 0, 1,z,x,y);
@@ -435,9 +435,9 @@ local_adjust_rhob( field_t      * ALIGNED(128) f,
     }                                                                   \
   } while(0)
   
-  ADJUST_RHOB(-1, 0, 0,x,y,z);
-  ADJUST_RHOB( 0,-1, 0,y,z,x);
-  ADJUST_RHOB( 0, 0,-1,z,x,y);
+  ADJUST_RHOB((-1), 0, 0,x,y,z);
+  ADJUST_RHOB( 0,(-1), 0,y,z,x);
+  ADJUST_RHOB( 0, 0,(-1),z,x,y);
   ADJUST_RHOB( 1, 0, 0,x,y,z);
   ADJUST_RHOB( 0, 1, 0,y,z,x);
   ADJUST_RHOB( 0, 0, 1,z,x,y);

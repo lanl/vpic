@@ -1,4 +1,5 @@
 #define IN_sfa
+
 #include "sfa_private.h"
 
 static field_advance_kernels_t sfa_kernels = {
@@ -46,14 +47,16 @@ static field_advance_kernels_t sfa_kernels = {
 
 static float
 minf( float a, 
-      float b ) {
+      float b )
+{
   return a<b ? a : b;
 }
 
 static sfa_params_t *
-create_sfa_params( grid_t           * g,
+create_sfa_params( grid_t * g,
                    const material_t * m_list,
-                   float              damp ) {
+                   float damp )
+{
   sfa_params_t * p;
   float ax, ay, az, cg2;
   material_coefficient_t *mc;

@@ -37,13 +37,37 @@ include_directories(${MPI_C_INCLUDE_PATH})
 # Add build options
 #------------------------------------------------------------------------------#
 
-option(ENABLE_INTEGRATED_TESTS "enable integrated tests" OFF)
+option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
+
+option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+
+option(USE_OPENMP "Use OpenMP" OFF)
+
+option(USE_PTHREADS "Use Pthreads" ON)
 
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
 
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
 
 option(USE_V4_SSE "Enable V4 SSE" OFF)
+
+option(USE_V4_AVX "Enable V4 AVX" OFF)
+
+option(USE_V4_AVX2 "Enable V4 AVX2" OFF)
+
+option(USE_V8_PORTABLE "Enable V8 Portable" OFF)
+
+option(USE_V8_AVX "Enable V8 AVX" OFF)
+
+option(USE_V8_AVX2 "Enable V8 AVX2" OFF)
+
+option(USE_V16_PORTABLE "Enable V16 Portable" OFF)
+
+option(USE_V16_AVX512 "Enable V16 AVX512" OFF)
+
+#option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
+
+option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
@@ -52,12 +76,6 @@ option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 #
 # NOTE: These must be set before creating the compile scripts below.
 #------------------------------------------------------------------------------#
-
-set(VPIC_CPPFLAGS)
-if(MPI_CPPFLAGS)
-  string(REPLACE ";" " " string_cppflags "${MPI_CPPFLAGS}")
-  set(VPIC_CPPFLAGS "${string_cppflags}")
-endif(MPI_CPPFLAGS)
 
 string(REPLACE ";" " -I" string_includes "${MPI_C_INCLUDE_PATH}")
 if(NOT ${string_includes} STREQUAL "")
@@ -96,28 +114,129 @@ find_package(Threads REQUIRED)
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
 
+#------------------------------------------------------------------------------#
+# Add options for building with a threading model.
+#------------------------------------------------------------------------------#
+
+if(USE_PTHREADS)
+  add_definitions(-DVPIC_USE_PTHREADS)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
+endif(USE_PTHREADS)
+
+if(USE_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    add_definitions(-DVPIC_USE_OPENMP)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_OPENMP")
+  endif(OPENMP_FOUND)
+endif(USE_OPENMP)
+
+#------------------------------------------------------------------------------#
+# Add options for building with v4 simd vector support.
+#------------------------------------------------------------------------------#
+
 set(USE_V4)
-if(USE_V4_ALTIVEC)
-  add_definitions(-DUSE_V4_ALTIVEC)
-  set(USE_V4 True)
-endif(USE_V4_ALTIVEC)
 
 if(USE_V4_PORTABLE)
   add_definitions(-DUSE_V4_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_PORTABLE")
   set(USE_V4 True)
 endif(USE_V4_PORTABLE)
 
 if(USE_V4_SSE)
   add_definitions(-DUSE_V4_SSE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_SSE")
   set(USE_V4 True)
 endif(USE_V4_SSE)
+
+if(USE_V4_AVX)
+  add_definitions(-DUSE_V4_AVX)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_AVX")
+  set(USE_V4 True)
+endif(USE_V4_AVX)
+
+if(USE_V4_AVX2)
+  add_definitions(-DUSE_V4_AVX2)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_AVX2")
+  set(USE_V4 True)
+endif(USE_V4_AVX2)
+
+if(USE_V4_ALTIVEC)
+  add_definitions(-DUSE_V4_ALTIVEC)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_ALTIVEC")
+  set(USE_V4 True)
+endif(USE_V4_ALTIVEC)
+
+#------------------------------------------------------------------------------#
+# Add options for building with v8 simd vector support.
+#------------------------------------------------------------------------------#
+
+set(USE_V8)
+
+if(USE_V8_PORTABLE)
+  add_definitions(-DUSE_V8_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_PORTABLE")
+  set(USE_V8 True)
+endif(USE_V8_PORTABLE)
+
+if(USE_V8_AVX)
+  add_definitions(-DUSE_V8_AVX)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_AVX")
+  set(USE_V8 True)
+endif(USE_V8_AVX)
+
+if(USE_V8_AVX2)
+  add_definitions(-DUSE_V8_AVX2)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V8_AVX2")
+  set(USE_V8 True)
+endif(USE_V8_AVX2)
+
+#------------------------------------------------------------------------------#
+# Add options for building with v16 simd vector support.
+#------------------------------------------------------------------------------#
+
+set(USE_V16)
+
+if(USE_V16_PORTABLE)
+  add_definitions(-DUSE_V16_PORTABLE)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_PORTABLE")
+  set(USE_V16 True)
+endif(USE_V16_PORTABLE)
+
+if(USE_V16_AVX512)
+  add_definitions(-DUSE_V16_AVX512)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_AVX512")
+  set(USE_V16 True)
+endif(USE_V16_AVX512)
+
+#------------------------------------------------------------------------------#
+# Add options for building with explicit autovec support.
+#------------------------------------------------------------------------------#
+
+#if(USE_ADVANCE_P_AUTOVEC)
+  #add_definitions(-DADVANCE_P_AUTOVEC)
+  #set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DADVANCE_P_AUTOVEC")
+  #set(ADVANCE_P_AUTOVEC True)
+#endif(USE_ADVANCE_P_AUTOVEC)
+
+#------------------------------------------------------------------------------#
+# Miscellaneous options.
+#------------------------------------------------------------------------------#
 
 if(ENABLE_OPENSSL)
   add_definitions(-DENABLE_OPENSSL)
 endif(ENABLE_OPENSSL)
 
+if(VPIC_PRINT_MORE_DIGITS)
+  add_definitions(-DVPIC_PRINT_MORE_DIGITS)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
+endif(VPIC_PRINT_MORE_DIGITS)
+
 #------------------------------------------------------------------------------#
-# Handle vpic compile script last
+# Handle vpic compile script last.
 #------------------------------------------------------------------------------#
 
 # Allow files to be references from the root, (eg #include "src/vpic/vpic.h")
@@ -169,8 +288,14 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 # Add library target
 #------------------------------------------------------------------------------#
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VPIC_CXX_FLAGS}")
+
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
-file(GLOB_RECURSE VPIC_NOT_SRC src/util/v4/test/v4.cc src/util/rng/test/rng.cc)
+file(GLOB_RECURSE VPIC_NOT_SRC
+  src/util/v4/test/v4.cc
+  src/util/v8/test/v8.cc
+  src/util/v16/test/v16.cc
+  src/util/rng/test/rng.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
 if(NO_LIBVPIC)

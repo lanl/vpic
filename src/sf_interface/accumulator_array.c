@@ -11,10 +11,21 @@
 #include "sf_interface.h"
 
 static int
-aa_n_pipeline(void) {
-  int                       n = serial.n_pipeline;
-  if( n<thread.n_pipeline ) n = thread.n_pipeline;
-  return n; /* max( {serial,thread,spu}.n_pipeline ) */
+aa_n_pipeline(void)
+{
+#if defined(VPIC_USE_PTHREADS)                         // Pthreads case.
+  int                          n = serial.n_pipeline;
+  if ( n < thread.n_pipeline ) n = thread.n_pipeline;
+
+#elif defined(VPIC_USE_OPENMP)                         // OpenMP case.
+  int                          n = omp_helper.n_pipeline;
+
+#else                                                  // Error case.
+  #error "VPIC_USE_OPENMP or VPIC_USE_PTHREADS must be specified"
+
+#endif
+
+  return n; // max( {serial,thread}.n_pipeline )
 }
 
 void

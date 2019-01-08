@@ -2,10 +2,11 @@
 // ACCOUNT FOR SPLITTING THE MOVER ARRAY BETWEEN HOST AND PIPELINES
 
 #define IN_spa
-#include "src/species_advance/standard/spa_private.h"
+#include "src/species_advance/standard/pipeline/spa_private.h"
+#include "src/util/pipelines/pipelines_exec.h"
 
 void
-advance_p2_pipeline( advance_p_pipeline_args_t * args,
+advance_p2_pipeline_scalar( advance_p_pipeline_args_t * args,
         int pipeline_rank,
         int n_pipeline ) {
     particle_t           * ALIGNED(128) p0 = args->p0;

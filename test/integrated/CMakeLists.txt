@@ -1,2 +1,3 @@
 add_subdirectory(particle_push)
 add_subdirectory(legacy)
+add_subdirectory(to_completion)

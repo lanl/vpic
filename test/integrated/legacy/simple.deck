@@ -1,0 +1,240 @@
+// Dummy test deck to make sure ensure a small run can successfully operate
+// (based on harris, but modified. May not make much physical sense)
+
+begin_globals {
+  double energies_interval;
+  double fields_interval;
+  double ehydro_interval;
+  double ihydro_interval;
+  double eparticle_interval;
+  double iparticle_interval;
+  double restart_interval;
+};
+
+begin_initialization {
+  // At this point, there is an empty grid and the random number generator is
+  // seeded with the rank. The grid, materials, species need to be defined.
+  // Then the initial non-zero fields need to be loaded at time level 0 and the
+  // particles (position and momentum both) need to be loaded at time level 0.
+
+  double input_mass_ratio;
+  int input_seed;
+
+  // Set sensible defaults
+  input_mass_ratio = 1.0;
+  input_seed = 0;
+
+  seed_entropy( input_seed );
+
+  // Diagnostic messages can be passed written (usually to stderr)
+  sim_log( "Computing simulation parameters");
+
+  // Define the system of units for this problem (natural units)
+  double L    = 1; // Length normalization (sheet thickness)
+  double ec   = 1; // Charge normalization
+  double me   = 1; // Mass normalization
+  double c    = 1; // Speed of light
+  double eps0 = 1; // Permittivity of space
+
+  // Physics parameters
+  double mi_me   = input_mass_ratio; // Ion mass / electron mass
+  double rhoi_L  = 1;    // Ion thermal gyroradius / Sheet thickness
+  double Ti_Te   = 1;    // Ion temperature / electron temperature
+  double wpe_wce = 3;    // Electron plasma freq / electron cycltron freq
+  double theta   = 0;    // Orientation of the simulation wrt current sheet
+
+  // Numerical parameters
+  double Lx        = 16*L;  // How big should the box be in the x direction
+  double Ly        = 16*L;  // How big should the box be in the y direction
+  double Lz        = 16*L;  // How big should the box be in the z direction
+  double nx        = 8;    // Global resolution in the x direction
+  double ny        = 8;    // Global resolution in the y direction
+  double nz        = 1;     // Global resolution in the z direction
+  double nppc      = 16;    // Average number of macro particles per cell (both species combined!)
+  double cfl_req   = 0.99;  // How close to Courant should we try to run
+  double wpedt_max = 0.36;  // How big a timestep is allowed if Courant is not too restrictive
+  double damp      = 0.001; // Level of radiation damping
+
+  // Derived quantities
+  double mi   = me*mi_me;                             // Ion mass
+  double kTe  = me*c*c/(2*wpe_wce*wpe_wce*(1+Ti_Te)); // Electron temperature
+  double kTi  = kTe*Ti_Te;                            // Ion temperature
+  double vthi = sqrt(2*kTi/mi);                       // Ion thermal velocity (B.D. convention)
+  double wci  = vthi/(rhoi_L*L);                      // Ion cyclotron frequency
+  double wce  = wci*mi_me;                            // Electron cyclotron frequency
+  double wpe  = wce*wpe_wce;                          // Electron plasma frequency
+  double vdre = c*c*wce/(wpe*wpe*L*(1+Ti_Te));        // Electron drift velocity
+  double vdri = -Ti_Te*vdre;                          // Ion drift velocity
+  double b0   = me*wce/ec;                            // Asymptotic magnetic field strength
+  double n0   = me*eps0*wpe*wpe/(ec*ec);              // Peak electron density (also peak ion density)
+  double Npe  = 2*n0*Ly*Lz*L*tanh(0.5*Lx/L);          // Number of physical electrons in box
+  double Npi  = Npe;                                  // Number of physical ions in box
+  double Ne   = 0.5*nppc*nx*ny*nz;                    // Total macro electrons in box
+  Ne = trunc_granular(Ne,nproc());                    // Make it divisible by number of processors
+  double Ni   = Ne;                                   // Total macro ions in box
+  double we   = Npe/Ne;                               // Weight of a macro electron
+  double wi   = Npi/Ni;                               // Weight of a macro ion
+  double gdri = 1/sqrt(1-vdri*vdri/(c*c));            // gamma of ion drift frame
+  double gdre = 1/sqrt(1-vdre*vdre/(c*c));            // gamma of electron drift frame
+  double udri = vdri*gdri;                            // 4-velocity of ion drift frame
+  double udre = vdre*gdre;                            // 4-velocity of electron drift frame
+  double uthi = sqrt(kTi/mi)/c;                       // Normalized ion thermal velocity (K.B. convention)
+  double uthe = sqrt(kTe/me)/c;                       // Normalized electron thermal velocity (K.B. convention)
+  double cs   = cos(theta);
+  double sn   = sin(theta);
+
+  // Determine the timestep
+  double dg = courant_length(Lx,Ly,Lz,nx,ny,nz);      // Courant length
+  double dt = cfl_req*dg/c;                           // Courant limited time step
+  if( wpe*dt>wpedt_max ) dt=wpedt_max/wpe;            // Override time step if plasma frequency limited
+
+  ////////////////////////////////////////
+  // Setup high level simulation parmeters
+
+  num_step             = 2;
+  status_interval      = int(1./(wci*dt));
+
+  ///////////////////////////
+  // Setup the space and time
+
+  // Setup basic grid parameters
+  define_units( c, eps0 );
+  define_timestep( dt );
+
+  // Parition a periodic box among the processors sliced uniformly along y
+  define_periodic_grid( -0.5*Lx, 0, 0,    // Low corner
+                         0.5*Lx, Ly, Lz,  // High corner
+                         nx, ny, nz,      // Resolution
+                         1, nproc(), 1 ); // Topology
+
+  // Override some of the boundary conditions to put a particle reflecting
+  // perfect electrical conductor on the -x and +x boundaries
+  set_domain_field_bc( BOUNDARY(-1,0,0), pec_fields );
+  set_domain_field_bc( BOUNDARY( 1,0,0), pec_fields );
+  set_domain_particle_bc( BOUNDARY(-1,0,0), reflect_particles );
+  set_domain_particle_bc( BOUNDARY( 1,0,0), reflect_particles );
+
+  define_material( "vacuum", 1 );
+  // Note: define_material defaults to isotropic materials with mu=1,sigma=0
+  // Tensor electronic, magnetic and conductive materials are supported
+  // though. See "shapes" for how to define them and assign them to regions.
+  // Also, space is initially filled with the first material defined.
+
+  // If you pass NULL to define field array, the standard field array will
+  // be used (if damp is not provided, no radiation damping will be used).
+  define_field_array( NULL, damp );
+
+  ////////////////////
+  // Setup the species
+
+  // Allow 50% more local_particles in case of non-uniformity
+  // VPIC will pick the number of movers to use for each species
+  // Both species use out-of-place sorting
+  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1 );
+  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1 );
+
+  ///////////////////////////////////////////////////
+  // Log diagnostic information about this simulation
+
+  ////////////////////////////
+  // Load fields and particles
+
+  sim_log( "Loading fields" );
+
+  set_region_field( everywhere, 0, 0, 0,                    // Electric field
+                    0, -sn*b0*tanh(x/L), cs*b0*tanh(x/L) ); // Magnetic field
+  // Note: everywhere is a region that encompasses the entire simulation
+  // In general, regions are specied as logical equations (i.e. x>0 && x+y<2)
+
+  sim_log( "Loading particles" );
+
+  double ymin = rank()*Ly/nproc(), ymax = (rank()+1)*Ly/nproc();
+
+  repeat( Ni/nproc() ) {
+    double x, y, z, ux, uy, uz, d0;
+
+    // Pick an appropriately distributed random location for the pair
+    do {
+      x = L*atanh( uniform( rng(0), -1, 1 ) );
+    } while( x<=-0.5*Lx || x>=0.5*Lx );
+    y = uniform( rng(0), ymin, ymax );
+    z = uniform( rng(0), 0,    Lz   );
+
+    // For the ion, pick an isothermal normalized momentum in the drift frame
+    // (this is a proper thermal equilibrium in the non-relativistic limit),
+    // boost it from the drift frame to the frame with the magnetic field
+    // along z and then rotate it into the lab frame. Then load the particle.
+    // Repeat the process for the electron.
+
+    ux = normal( rng(0), 0, uthi );
+    uy = normal( rng(0), 0, uthi );
+    uz = normal( rng(0), 0, uthi );
+    d0 = gdri*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udri;
+    uy = d0*cs - uz*sn;
+    uz = d0*sn + uz*cs;
+    inject_particle( ion,      x, y, z, ux, uy, uz, wi, 0, 0 );
+
+    ux = normal( rng(0), 0, uthe );
+    uy = normal( rng(0), 0, uthe );
+    uz = normal( rng(0), 0, uthe );
+    d0 = gdre*uy + sqrt(ux*ux+uy*uy+uz*uz+1)*udre;
+    uy = d0*cs - uz*sn;
+    uz = d0*sn + uz*cs;
+    inject_particle( electron, x, y, z, ux, uy, uz, we, 0, 0 );
+  }
+
+  // Upon completion of the initialization, the following occurs:
+  // - The synchronization error (tang E, norm B) is computed between domains
+  //   and tang E / norm B are synchronized by averaging where discrepancies
+  //   are encountered.
+  // - The initial divergence error of the magnetic field is computed and
+  //   one pass of cleaning is done (for good measure)
+  // - The bound charge density necessary to give the simulation an initially
+  //   clean divergence e is computed.
+  // - The particle momentum is uncentered from u_0 to u_{-1/2}
+  // - The user diagnostics are called on the initial state
+  // - The physics loop is started
+  //
+  // The physics loop consists of:
+  // - Advance particles from x_0,u_{-1/2} to x_1,u_{1/2}
+  // - User particle injection at x_{1-age}, u_{1/2} (use inject_particles)
+  // - User current injection (adjust field(x,y,z).jfx, jfy, jfz)
+  // - Advance B from B_0 to B_{1/2}
+  // - Advance E from E_0 to E_1
+  // - User field injection to E_1 (adjust field(x,y,z).ex,ey,ez,cbx,cby,cbz)
+  // - Advance B from B_{1/2} to B_1
+  // - (periodically) Divergence clean electric field
+  // - (periodically) Divergence clean magnetic field
+  // - (periodically) Synchronize shared tang e and norm b
+  // - Increment the time step
+  // - Call user diagnostics
+  // - (periodically) Print a status message
+}
+
+begin_diagnostics {
+
+}
+
+begin_particle_injection {
+
+  // No particle injection for this simulation
+
+}
+
+begin_current_injection {
+
+  // No current injection for this simulation
+
+}
+
+begin_field_injection {
+
+  // No field injection for this simulation
+
+}
+
+begin_particle_collisions{
+
+  // No collisions for this simulation
+
+}

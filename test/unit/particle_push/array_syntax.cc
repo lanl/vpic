@@ -5,37 +5,6 @@
 #include "src/vpic/vpic.h"
 #include "test/integrated/particle_push/advance_p.h"
 
-particle_t * particle_arr(int size, int v) {
-    particle_t * p_arr;
-    MALLOC(p_arr, size);
-    for(int i=0; i<size; i++) {
-        particle_t p;
-        p.ux = v;
-        p.uy = v;
-        p.uz = v;
-        p.w = 1;
-        p_arr[i] = p;
-    }
-    return p_arr;
-}
-species_t *make_species(particle_t *p_arr, float mass, int num_p) {
-    species_t *sp;
-    MALLOC(sp, 1);
-    grid_t *gr;
-    MALLOC(gr, 1);
-    gr->dt = 1;
-    gr->cvac = 1;
-    gr->eps0 = 1;
-    gr->step = 2;
-    sp->g = gr;
-    sp->p = p_arr;
-    sp->m = mass;
-    sp->q = 1;
-    sp->np = num_p;
-    return sp;
-}
-
-
 void vpic_simulation::user_diagnostics() {}
 
 void

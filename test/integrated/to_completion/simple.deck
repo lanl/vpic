@@ -92,7 +92,10 @@ begin_initialization {
   // Setup high level simulation parmeters
 
   num_step             = 2;
-  status_interval      = int(1./(wci*dt));
+  status_interval      = 1;
+
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
 
   ///////////////////////////
   // Setup the space and time

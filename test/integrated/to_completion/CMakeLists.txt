@@ -21,7 +21,8 @@ endforeach()
 
 foreach(test ${DEFUALT_ARG_TESTS})
     add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_NUMPROC}
-        ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS}) endforeach()
+        ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
+endforeach()
 
 # Try a parallel run
 set (PARALLEL_TEST parallel)

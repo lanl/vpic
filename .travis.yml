@@ -9,6 +9,7 @@ addons:
     packages:
       - ccache
       - cmake
+      - libhwloc-dev
       - libopenmpi-dev
       - openmpi-bin
       - gcc-4.9

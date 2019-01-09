@@ -91,7 +91,7 @@ begin_initialization {
   ////////////////////////////////////////
   // Setup high level simulation parmeters
 
-  num_step             = 2;
+  num_step             = 500;
   status_interval      = 1;
 
   clean_div_e_interval = status_interval;

@@ -17,7 +17,7 @@ bool compare_energies(
         std::string file_a,
         std::string file_b,
         double relative_tolerance,
-        int num_lines_to_skip = 3 // Most energy files have 3 lines of padding
+        int num_lines_to_skip = 0 // Most energy files have 3 lines of padding
 )
 {
 
@@ -94,6 +94,7 @@ bool compare_energies(
                         return match;
                     }
                 }
+            }
 
             f1.close();
             f2.close();

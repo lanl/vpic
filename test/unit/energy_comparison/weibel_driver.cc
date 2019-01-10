@@ -21,8 +21,9 @@ begin_globals {
   double restart_interval;
 };
 
-std::string energy_file_name = "energies";
-std::string energy_gold_file_name = _UTIL_STRINGIFY( GOLD_ENERGY_FILE );
+std::string energy_file_name = "./energies";
+
+std::string energy_gold_file_name = EXPAND_AND_STRINGIFY( GOLD_ENERGY_FILE );
 
 void vpic_simulation::user_diagnostics() {
     dump_energies(energy_file_name.c_str(), 1);
@@ -295,16 +296,21 @@ vpic_simulation::user_initialization( int num_cmdline_arguments,
   // - (periodically) Print a status message
 }
 
-TEST_CASE( "Weibel gives correct energy (within tol)", "[energy]" )
+TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
 {
     int pargc = 0;
     char str[] = "bin/vpic";
     char **pargv = (char **) malloc(sizeof(char **));
     pargv[0] = str;
-    //serial.boot(&pargc, &pargv);
-    //thread.boot(&pargc, &pargv);
+
     boot_services( &pargc, &pargv );
 
+    // Before we run this, we must make sure we remove the energy file
+    std::ofstream ofs;
+    ofs.open(energy_file_name, std::ofstream::out | std::ofstream::trunc);
+    ofs.close();
+
+    // Init and run sim
     vpic_simulation* simulation = new vpic_simulation();
     simulation->initialize( pargc, pargv );
 

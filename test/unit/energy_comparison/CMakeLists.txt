@@ -1,6 +1,6 @@
 LIST(APPEND TESTS weibel_driver)
 
-list(APPEND gold_file "${CMAKE_CURRENT_BINARY_DIR}/energies_gold")
+list(APPEND gold_file "${CMAKE_CURRENT_SOURCE_DIR}/energies_gold")
 add_definitions(-DGOLD_ENERGY_FILE=${gold_file})
 
 foreach (test ${TESTS})

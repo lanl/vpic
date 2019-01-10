@@ -62,13 +62,6 @@ bool compare_energies(
 
                     bool within_tol = false;
 
-                    std::cout <<
-                        item1 << " (" << A << ") " <<
-                        " vs " <<
-                        item2 << " (" << B << ") " <<
-                        std::endl;
-
-
                     // Calculate if we're withing tolerances
 
                     // Right now this is pretty arbitrary..
@@ -100,12 +93,8 @@ bool compare_energies(
                         match = false;
                         return match;
                     }
-                    std::cout << item1 << std::endl;
                 }
 
-                std::cout << line1 << '\n';
-                std::cout << line2 << '\n';
-            }
             f1.close();
             f2.close();
         }
@@ -116,7 +105,10 @@ bool compare_energies(
 
         return match;
     }
-    catch (...) { // Catching all is bad form, but OK for now..
+    catch (const std::exception &exc) // Catching all is bad form, but OK for now..
+    {
+        // catch anything thrown within try block that derives from std::exception
+        std::cerr << exc.what();
         return false;
     }
 

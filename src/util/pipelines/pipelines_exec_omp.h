@@ -10,6 +10,8 @@
 // as the standard case that does not use vector acceleration.
 //----------------------------------------------------------------------------//
 
+// TODO: this could be removed as VPIC (elsewhere) knows how to stringify from a
+// macro
 #define TOSTRING( a ) #a       //convert pragma directives to string
 
 #define WAIT_PIPELINES() _Pragma( TOSTRING( omp barrier ) )

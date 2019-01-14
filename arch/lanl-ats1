@@ -104,34 +104,30 @@ SET_MORE_DIGITS="OFF"
 # In summary, when using vector versions on a machine with 256 bit SIMD, the
 # V4 and V8 implementations should be configured as ON. When using a machine
 # with 512 bit SIMD, V4 and V16 implementations should be configured as ON.
+#
+# First, we turn all of the vector options OFF. Then, we turn on the ones we
+# want.
 #------------------------------------------------------------------------------#
 
-#SET_V4_PORTABLE="ON"
 SET_V4_PORTABLE="OFF"
-
-#SET_V4_SSE="ON"
 SET_V4_SSE="OFF"
-
-#SET_V4_AVX="ON"
 SET_V4_AVX="OFF"
-
-SET_V4_AVX2="ON"
-#SET_V4_AVX2="OFF"
-
-#SET_V8_PORTABLE="ON"
+SET_V4_AVX2="OFF"
 SET_V8_PORTABLE="OFF"
-
-#SET_V8_AVX="ON"
 SET_V8_AVX="OFF"
-
-#SET_V8_AVX2="ON"
 SET_V8_AVX2="OFF"
-
-#SET_V16_PORTABLE="ON"
 SET_V16_PORTABLE="OFF"
+SET_V16_AVX512="OFF"
 
+#SET_V4_PORTABLE="ON"
+#SET_V4_SSE="ON"
+#SET_V4_AVX="ON"
+SET_V4_AVX2="ON"
+#SET_V8_PORTABLE="ON"
+#SET_V8_AVX="ON"
+#SET_V8_AVX2="ON"
+#SET_V16_PORTABLE="ON"
 SET_V16_AVX512="ON"
-#SET_V16_AVX512="OFF"
 
 #------------------------------------------------------------------------------#
 # Choose a particle sort implementation.

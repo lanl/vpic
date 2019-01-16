@@ -5,26 +5,26 @@
 #include <limits> // epsilon for limit
 #include <utility> // pair
 
-// TODO: add a namespace or similar
+#include <bitset> // TODO: Remove
 
+namespace test_utils {
 /**
  * @brief Helper function to write collective errors to file for further analysis
  *
  * @param errs The vector of all errors
  * @param field_per_line The number of values to write per file line
  */
-void write_error_ouput( std::vector<double> errs, int field_per_line)
+void write_error_ouput( std::vector<double> errs, int field_per_line, std::string err_file_base_name)
 {
     int counter = 0;
-    std::ofstream outputFile("err.out");
+    std::ofstream outputFile(err_file_base_name);
 
     for (auto e : errs)
     {
-        outputFile << e*100.0 << " "; // Convert to percent and dump
         counter++;
-        if (counter == field_per_line)
+        outputFile << counter << " " << e*100.0 << " "; // Convert to percent and dump
+        if (counter % field_per_line == 0)
         {
-            counter = 0;
             outputFile << std::endl;
         }
     }
@@ -105,6 +105,10 @@ std::pair<bool, double> compare_error(double A, double B, double relative_tolera
     return { within_tol, err };
 }
 
+enum FIELD_ENUM {
+    Individual = 0, // Track each field individually
+    Sum // Sum the masked fields
+};
 
 /**
  * @brief Function to compare the contents of two energy files
@@ -114,8 +118,16 @@ std::pair<bool, double> compare_error(double A, double B, double relative_tolera
  * @param relative_tolerance Relative tolerance which is acceptable
  * @param field_mask A mask to specify which fields in the file to use
  * @param sum_mask A mask to specify which fields in the file to sum and compare
- * @param num_lines_to_skip
- * @param write_err_ouput
+ * @param write_err_output If you should write the error output to a file
+ * @param err_file_base_name Base filename for writing output
+ * @param num_lines_to_skip The number of lines to skup into the file
+ *
+ * @NOTE A typical energy file is:
+ * <step> <ex> <ey> <ez> <bx> <by> <bz> <particle energies...>
+ * and the bit maps go accordingly with <step> being the LSB.
+ * A mask for b fields only would be 0x000001110
+ *
+ * @NOTE We could * use bitsets for the masking but * they're generally slower
  *
  * @return True is they match (within tol), false if not
  */
@@ -124,13 +136,24 @@ bool compare_energies(
         const std::string file_b,
         const double relative_tolerance,
         const unsigned short field_mask = 0b1111111111111111, /// short has 16 bytes, assume all are true
-        const int num_lines_to_skip = 0, // Most energy files have 3 lines of padding
-        const int write_err_ouput = 0 // If the run should dump the errors to disk
+        const FIELD_ENUM field_enum = FIELD_ENUM::Individual, /// short has 16 bytes, assume all are true
+        const int write_err_ouput = 0, // If the run should dump the errors to disk
+        const std::string err_file_base_name =  "err.out", // File name to write errors to
+        const int num_lines_to_skip = 0 // Most energy files have 3 lines of padding
 )
 {
+    // TODO: I could easily have a policy here based on the type of the field_mask
     std::vector<double> errs;
 
     const int DEFAULT_FILED_COUNT = 7;
+
+    unsigned short agg_total = 0;
+    unsigned short v = field_mask;
+    // Count set bits
+    for (agg_total = 0; v; agg_total++)
+    {
+        v &= v - 1; // clear the least significant bit set
+    }
 
     try {
 
@@ -173,40 +196,97 @@ bool compare_energies(
                 std::stringstream linestream2(line2);
                 std::string item2;
 
-                int this_line_token_count = 0;
+                int used_line_token_count = 0;
+                int total_line_token_count = 0;
+
+                double sum_A = 0.0;
+                double sum_B = 0.0;
+                std::pair<bool, double> returned_err;
+                returned_err.second = -1.0; // set a dummy value to show uninit
+
+                int agg_count = 0;
                 while (getline(linestream1, item1, ' '))
                 {
-                    this_line_token_count++;
+                    bool write_this_err_ouput = write_err_ouput;
+                    std::cout << "Setting write_this_err_ouput tp " << write_this_err_ouput << std::endl;
+
                     getline(linestream2, item2, ' ');
+                    total_line_token_count++;
 
-                    double A = std::stod(item1);
-                    double B = std::stod(item2);
+                    // Use this field
+                    //std::cout << "this_line " << this_line_token_count << " mask " << field_mask << std::endl;
 
-                    std::pair<bool, double> returned_err = compare_error(A, B,
-                            relative_tolerance);
+                    // Take the value one, and shift it to generate the mask to compare
+                    unsigned short this_line_token_mask = 1 << (total_line_token_count - 1); // Set correct highest bit on
+                    //this_line_token_mask |= this_line_token_mask-1; // Set lower bits on
 
-                    bool returned_match = returned_err.first;
-
-                    if (!returned_match) {
-                        match = false;
-                    }
-
-                    double err = returned_err.second;
-
-                    // Track max absolute error
-                    if (err > max_err)
+                    // If this field is within our requested mask, use it
+                    if (this_line_token_mask & field_mask)
                     {
-                        max_err = err;
-                        max_err_line = counter;
-                    }
+                        used_line_token_count++;
+                        std::cout << "Parsing field " << used_line_token_count << " val " << item1 << std::endl;
 
-                    // If we track the errors, track this one
-                    if (write_err_ouput)
-                    {
-                        errs.push_back(err);
+                        double A = std::stod(item1);
+                        double B = std::stod(item2);
+
+                        if (
+                                (field_enum == FIELD_ENUM::Sum) && // Need to aggregate
+                                (agg_count < agg_total) // Not done aggregating yet
+                            )
+                        {
+                            // Need to aggregate..
+                            sum_A += A;
+                            sum_B += B;
+                            agg_count++;
+
+                            std::cout << "sum a " << sum_A << " += " << A << std::endl;
+                            std::cout << "sum b " << sum_B << " += " << B << std::endl;
+
+                            // Don't write this particular one
+                            write_this_err_ouput = false;
+
+                            if (agg_count == agg_total) { // final_aggregation
+                                returned_err = compare_error(sum_A, sum_B, relative_tolerance);
+                                write_this_err_ouput = true;
+                            }
+                        }
+                        else // We can just compare this val
+                        {
+
+                            returned_err = compare_error(A, B, relative_tolerance);
+
+                        }
+
+                        if (returned_err.second != -1.0)  // Has some value set
+                        {
+                            bool returned_match = returned_err.first;
+
+                            if (!returned_match) {
+                                match = false;
+                            }
+
+                            double err = returned_err.second;
+
+                            // Track max absolute error
+                            if (err > max_err)
+                            {
+                                max_err = err;
+                                max_err_line = counter;
+                            }
+
+
+                            // If we track the errors, track this one
+                            if (write_this_err_ouput)
+                            {
+                                errs.push_back(err);
+                            }
+                        }
+                    }
+                    else {
+                        std::cout << "Skipping field " << this_line_token_mask << " val " << item1 << std::endl;
                     }
                 }
-                line_token_count = this_line_token_count;
+                line_token_count = used_line_token_count;
                 counter++;
             }
 
@@ -218,16 +298,22 @@ bool compare_energies(
             return false;
         }
 
-        int num_species = line_token_count - DEFAULT_FILED_COUNT;
-        std::cout << "Num species detected: " << num_species << std::endl;
+        std::cout << "Field mask : " << field_mask << std::endl;
+        std::cout << "Fields used : " << line_token_count << std::endl;
 
         std::cout << "Max found err was " << max_err*100 << "% on line " << max_err_line << " (Threshold: " <<
             relative_tolerance*100 << "%)" << std::endl;
 
         if (write_err_ouput)
         {
-            //int field_per_line = DEFAULT_FILED_COUNT + num_species;
-            write_error_ouput( errs, line_token_count);
+            int err_per_line = line_token_count;
+            if (field_enum == FIELD_ENUM::Sum) // Need to aggregate
+            {
+                err_per_line /= agg_total; // Reduce by aggregation factor
+            }
+
+            std::cout << "Writing error output " << errs.size() << std::endl;
+            write_error_ouput( errs, err_per_line, err_file_base_name);
         }
 
 
@@ -242,3 +328,4 @@ bool compare_energies(
 
 }
 
+} // namespace

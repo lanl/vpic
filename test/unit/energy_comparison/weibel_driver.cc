@@ -326,7 +326,7 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
         energy_gold_file_name << std::endl;
 
     // Compare energies to make sure everything worked out OK (within 1%)
-    REQUIRE( compare_energies(energy_file_name, energy_gold_file_name, 0.01) ); 
+    REQUIRE( compare_energies(energy_file_name, energy_gold_file_name, 0.01, 0, 1) );
 
 }
 

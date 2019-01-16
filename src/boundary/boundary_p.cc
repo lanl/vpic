@@ -25,6 +25,12 @@
 using namespace v4;
 #endif
 
+#ifndef MIN_NP
+#define MIN_NP 128 // Default to 4kb (~1 page worth of memory)
+//#define MIN_NP 32768 // 32768 particles is 1 MiB of memory.
+#endif
+
+
 enum { MAX_PBC = 32, MAX_SP = 32 };
 
 void
@@ -353,12 +359,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         sp->pm = new_pm;
         sp->max_nm = nm;*/
       }
-
-#ifndef MIN_NP
-#define MIN_NP 128 // Default to 4kb (~1 page worth of memory)
-//#define MIN_NP 32768 // 32768 particles is 1 MiB of memory.
-#endif
-
       else if(sp->max_np > MIN_NP && n < sp->max_np>>1)
       {
         n += 0.125*n; // Overallocate by less since this rank is decreasing
@@ -379,7 +379,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         FREE_ALIGNED( sp->pm );
         sp->pm = new_pm, sp->max_nm = nm;*/
       }
-#undef MIN_NP
+
       // Feasibly, a vacuum-filled rank may receive a shock and need more movers
       // than available from MIN_NP
       nm = sp->nm + max_inj;

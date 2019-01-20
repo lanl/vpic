@@ -52,14 +52,17 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 
 # Getting the Code
 
-VPIC uses nested submodules.  This requires the addition of the *--recursive*
-flag when cloning the repository:
+To checkout the VPIC source, do the following:
 
 ```bash
     git clone https://github.com/lanl/vpic.git
 ```
 
-This command will check out the VPIC source code.
+## Branches
+
+The stable release of vpic exists on `master`, the default branch.
+
+For more cutting edge features, consider using the `devel` branch.
 
 # Requirements
 
@@ -80,12 +83,6 @@ the top-level source directory:
     cd build
 ```
 
-Then call the curses version of CMake:
-
-```bash
-    ccmake ..
-```
-
 The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
 
 They can be invoked using something like:
@@ -94,15 +91,22 @@ They can be invoked using something like:
     ../arch/generic-Release
 ```
 
+After configuration, simply type: 
+
+```bash
+    make
+```
+
+Advanced users may chose to instead invoke `cmake` directly and hand select options
+
 GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`)
 
-After configuration, simply type 'make'.
 
 # Building an example input deck
 
 After you have successfully built VPIC, you should have an executable in
-the *bin* directory called *vpic*.  To build an executable from one of
-the sample input decks, simply run:
+the `bin` directory called `vpic` (`./bin/vpic`).  To build an executable from one of
+the sample input decks (found in `./sample`), simply run:
 
 ```bash
     ./bin/vpic input_deck
@@ -161,6 +165,47 @@ VPIC can restart from a checkpoint dump file, using the following syntax:
 ```
 
 To restart VPIC using the restart file `./restart/restart0`
+
+# Compile Time Arguments
+
+Currently, the following options are exposed at compile time for the users consideration:
+
+## Threading Model
+
+ - `USE_PTHREADS`: Use Pthreads for the threading model (default enabled)
+ - `USE_OPENMP`: Use OpenMP for the threading model
+
+## Vectorization
+
+ - `USE_V4_SSE`: Enable 4 wide (128-bit) SSE
+ - `USE_V4_AVX`: Enable 4 wide (128-bit) AVX
+ - `USE_V4_AVX2`: Enable 4 wide (128-bit) AVX2
+ - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
+ - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
+
+ - `USE_V8_AVX`: Enable 4 wide (256-bit) AVX
+ - `USE_V8_AVX2`: Enable 4 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`: Enable 4 wide (256-bit) portable implementation
+
+ - `USE_V16_AVX512`: Enable 4 wide (512-bit) AVX512
+ - `USE_V16_PORTABLE`: Enable 4 wide (512-bit) portable implementation
+
+If no combination of these are selected, the "reference" (read: unvectorized)
+version of the pusher will be used
+
+See example decks for how these are used together in combination.
+
+## Output 
+
+ - `VPIC_PRINT_MORE_DIGITS`: Enabled more digits in the debug timing implementation
+
+# Workflow
+
+Contributors are asked to be aware of the following workflow:
+
+1) Pull requests are accepted into `devel` upon tests passing
+2) `master` should reflect the *stable* state of the code
+3) Periodic releases will be made from `devel` into `master`
 
 # Feedback
 

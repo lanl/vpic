@@ -118,6 +118,12 @@ find_package(Threads REQUIRED)
 # Add options for building with a threading model.
 #------------------------------------------------------------------------------#
 
+# We don't want both PTHREADS and OpenMP
+if ((USE_PTHREADS) AND (USE_OPENMP))
+     message( FATAL_ERROR "Only one threading model can be selected" )
+endif()
+
+
 if(USE_PTHREADS)
   add_definitions(-DVPIC_USE_PTHREADS)
     set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")

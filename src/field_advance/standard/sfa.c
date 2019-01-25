@@ -65,10 +65,12 @@ create_sfa_params( grid_t * g,
 
   // Run sanity checks on the material list
 
-  ax = g->nx>1 ? g->cvac*g->dt*g->rdx : 0; ax *= ax;
-  ay = g->ny>1 ? g->cvac*g->dt*g->rdy : 0; ay *= ay;
-  az = g->nz>1 ? g->cvac*g->dt*g->rdz : 0; az *= az;
+  ax = g->nx>1 ? g->cvac*g->dt*g->rdx : 0.0; ax *= ax;
+  ay = g->ny>1 ? g->cvac*g->dt*g->rdy : 0.0; ay *= ay;
+  az = g->nz>1 ? g->cvac*g->dt*g->rdz : 0.0; az *= az;
+
   n_mc = 0;
+
   LIST_FOR_EACH(m,m_list) {
     if( m->sigmax/m->epsx<0 )
       WARNING(("\"%s\" is an active medium along x", m->name));
@@ -122,14 +124,14 @@ create_sfa_params( grid_t * g,
     mc->decayx = exp(-ax);
     mc->decayy = exp(-ay);
     mc->decayz = exp(-az);
-    if( ax==0 )              mc->drivex = 1./m->epsx;
-    else if( mc->decayx==0 ) mc->drivex = 0;
+    if( ax==0.0 )              mc->drivex = 1./m->epsx;
+    else if( mc->decayx==0.0 ) mc->drivex = 0.0;
     else mc->drivex = 2.*exp(-0.5*ax)*sinh(0.5*ax) / (ax*m->epsx);
-    if( ay==0 )              mc->drivey = 1./m->epsy;
-    else if( mc->decayy==0 ) mc->drivey = 0;
+    if( ay==0.0 )              mc->drivey = 1./m->epsy;
+    else if( mc->decayy==0.0 ) mc->drivey = 0.0;
     else mc->drivey = 2.*exp(-0.5*ay)*sinh(0.5*ay) / (ay*m->epsy);
-    if( az==0 )              mc->drivez = 1./m->epsz;
-    else if( mc->decayz==0 ) mc->drivez = 0;
+    if( az==0.0 )              mc->drivez = 1./m->epsz;
+    else if( mc->decayz==0.0 ) mc->drivez = 0.0;
     else mc->drivez = 2.*exp(-0.5*az)*sinh(0.5*az) / (az*m->epsz);
     mc->rmux = 1./m->mux;
     mc->rmuy = 1./m->muy;
@@ -141,7 +143,7 @@ create_sfa_params( grid_t * g,
     // multiplier is thus set to zero to ignore divergence errors
     // inside conducting materials.
 
-    mc->nonconductive = ( ax==0 && ay==0 && az==0 ) ? 1. : 0.;
+    mc->nonconductive = ( ax==0.0 && ay==0.0 && az==0.0 ) ? 1. : 0.;
     mc->epsx = m->epsx;
     mc->epsy = m->epsy;
     mc->epsz = m->epsz;

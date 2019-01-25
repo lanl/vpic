@@ -9,6 +9,7 @@
  */
 
 #include "sf_interface.h"
+#include "accumulator_array.h"
 
 static int
 aa_n_pipeline(void)

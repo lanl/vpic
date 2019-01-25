@@ -336,6 +336,7 @@ strip_cmdline_string( int * pargc,
 void detect_old_style_arguments(int* pargc, char *** pargv);
 int string_contains(const char *str, const char *substr);
 int string_matches(const char* str, const char* match);
+int string_starts_with(const char *str, const char *pre);
 
 // MALLOC is guaranteed to succeed from the caller's point of view
 // (thus, _no_ NULL checking the pointer is necessary).  n is the

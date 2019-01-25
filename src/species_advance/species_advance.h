@@ -151,6 +151,11 @@ move_p( particle_t       * ALIGNED(128) p0,    // Particle array
         const grid_t     *              g,     // Grid parameters
         const float                     qsp ); // Species particle charge
 
+// checkpoint prototypes
+void checkpt_species( const species_t * sp );
+species_t* restore_species( void );
+void delete_species( species_t * sp );
+
 END_C_DECLS
 
 #endif // _species_advance_h_

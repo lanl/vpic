@@ -91,6 +91,7 @@ dump_registry( void ) {
 
 #endif
 
+// TODO: consider if we really need to pass args here
 void
 boot_checkpt( int * pargc,
               char *** pargv ) {

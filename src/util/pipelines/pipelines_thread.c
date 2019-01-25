@@ -38,6 +38,7 @@
 // (?) Timeouts in thread_halt, thread_boot (spin wait)
 
 #include "pipelines.h"
+#include "pipelines_thread.h"
 
 #if defined(VPIC_USE_PTHREADS)
 
@@ -76,6 +77,7 @@ static int Dispatch_To_Host = 0;
 
 #include "../checkpt/checkpt.h"
 
+// TODO: Is there a good design choice behind this unused _thread arg?
 void
 checkpt_thread( const pipeline_dispatcher_t * _thread ) {
   CHECKPT_VAL( int, thread.n_pipeline );

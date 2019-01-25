@@ -5,8 +5,13 @@
 static int Busy = 0;
 
 /*****************************************************************************/
-
 #include "../checkpt/checkpt.h"
+
+///////// PROTOTYPES ////////
+// TODO: put this somewhere more sensible
+pipeline_dispatcher_t* restore_serial( void );
+void checkpt_serial( const pipeline_dispatcher_t * _serial );
+///////// END PROTOTYPES ////
 
 void
 checkpt_serial( const pipeline_dispatcher_t * _serial ) {

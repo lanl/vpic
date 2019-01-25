@@ -334,6 +334,8 @@ strip_cmdline_string( int * pargc,
 
 // In util.c
 void detect_old_style_arguments(int* pargc, char *** pargv);
+int string_contains(const char *str, const char *substr);
+int string_matches(const char* str, const char* match);
 
 // MALLOC is guaranteed to succeed from the caller's point of view
 // (thus, _no_ NULL checking the pointer is necessary).  n is the
@@ -396,6 +398,7 @@ log_printf( const char *fmt, ... );
 #define nanodelay(i) ((void)_nanodelay(i))
 uint32_t
 _nanodelay( uint32_t i );
+
 
 END_C_DECLS
 

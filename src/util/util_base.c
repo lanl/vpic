@@ -88,6 +88,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
 
   for (i=0; i<(*pargc); i++)
   {
+      // These VLA (char*) are technically not allowed by C90
       const int num_prefix_keys = 2;
       char* prefix_keys[num_prefix_keys];
 

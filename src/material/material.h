@@ -18,7 +18,7 @@ typedef struct material {
   material_id id;               // Unique identifier for material
   struct material *next;        // Next material in list
 } material_t;
-  
+
 BEGIN_C_DECLS
 
 // In material.c
@@ -50,6 +50,10 @@ material( const char * name,
           float mux,    float muy,    float muz,
           float sigmax, float sigmay, float sigmaz,
           float zetax,  float zetay,  float zetaz );
+
+void checkpt_material( const material_t * m );
+material_t* restore_material( void );
+void delete_material( material_t * m );
 
 END_C_DECLS
 

@@ -60,6 +60,7 @@ new_particle_bc_internal( void * params,
 void
 delete_particle_bc_internal( particle_bc_t * pbc );
 
+
 END_C_DECLS
 
 #endif /* _boundary_h_ */

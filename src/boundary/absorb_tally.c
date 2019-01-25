@@ -9,11 +9,7 @@
 
 /* Private interface ********************************************************/
 
-typedef struct absorb_tally {
-  /**/  species_t     * sp_list;
-  const field_array_t * fa;
-  /**/  int           * tally;
-} absorb_tally_t;
+#include "absorb_tally.h"
 
 int
 interact_absorb_tally( absorb_tally_t      * RESTRICT at,

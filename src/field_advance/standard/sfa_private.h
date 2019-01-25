@@ -61,7 +61,7 @@ advance_b_pipeline( field_array_t * RESTRICT fa,
 //   tca_new = ( 1 + damp ) c dt curl ( c B / mu_r ) -
 //               damp tca_old
 //   E_new = decay E_old + drive [ tca_new - (dt/eps0) Jf ]
-// where: 
+// where:
 //   damp is numerical Cherenkov damping parameter
 //   decay = exp( -alpha )
 //   drive = ( 1 - decay ) / ( alpha eps_r )
@@ -151,7 +151,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 //   p(div B)/pt     = alpha laplacian div B
 //   p(div D-rho)/pt = alpha laplacian ( div D - rho )
 // Since these are sourceless diffusion equation, asymptotically,
-//   div B       --> 0 
+//   div B       --> 0
 //   div D - rho --> 0
 // In particular, Fourier transforming div B in space shows that a
 // given mode decays as exp(-alpha k^2 t). The diffusion coefficient
@@ -167,7 +167,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // do not change _any_ physics. Further, if for any reason a non-zero
 // div B or (div D - rho) occurs, the above modification will drive
 // the error back to zero.
-//   
+//
 // To understand how use this in a simulation, consider the standard
 // field update equations for Bx on a Yee mesh without the additional
 // term:
@@ -181,7 +181,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // error in cBx for an arbitrary grid point will be closely
 // approximated by a Gaussian with zero mean and standard deviation
 // ~0.5 eps |cBx| sqrt(Nt). The same holds true for cBy and cBz.
-// 
+//
 // If it is assumed that the errors between different grid points are
 // uncorrelated (a _very_ accurate assumption except for very
 // specially prepared field configurations), then the power in various
@@ -194,11 +194,11 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // using forward differencing in time (this is the usual Marder pass
 // ... strictly local operations, easy and efficient to implement in
 // parallel):
-//   cBx(1/2)_clean = cBx(1/2)_unclean + 
+//   cBx(1/2)_clean = cBx(1/2)_unclean +
 //       alpha dt grad div cBx(1/2)_unclean
 // The power in various modes of cBx(1/2)_clean can be shown to be:
 //  |div cB(kx,ky,kz)_clean|^2 ~
-//     |div cB(kx,ky,kz)_unclean|^2 
+//     |div cB(kx,ky,kz)_unclean|^2
 //       { 1 - (4*alpha*dt/dg^2) [ (dg sin(pi kx/Nx)/dx)^2 +
 //                                 (dg sin(pi ky/Ny)/dy)^2 +
 //                                 (dg sin(pi kz/Nz)/dz)^2 ] }^2
@@ -208,11 +208,11 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // of div cB(kx,ky,kz) grows and the divergence cleaning pass is
 // numerically stable. Note: This is the same stability criterion as
 // the forward differenced diffusion equation.
-// 
+//
 // If alpha dt = dg^2/4, then shortest wavelength component of div cB
 // will be zeroed. Since this is where most of the divergence errors
 // are located, this is a relatively good choice.
-// 
+//
 // If we want to minimize the total RMS divergence error, it can be
 // shown (using Parseval's theorem) that the best choice of alpha dt
 // on large cubic periodic meshes is:
@@ -220,7 +220,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // This value is pretty close to optimal on other meshes also. Using
 // this value will take the total RMS divergence error to ~0.304 of
 // the original value.
-// 
+//
 // If we assume future contributions to the divergence error are
 // uncorrelated with previous contributions (a very accurate
 // assumption) and we are only going to clean every Nc time steps,
@@ -252,7 +252,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa );
 // gives the complete modified Marder pass:
 //  E_clean = E_unclean +
 //            drive alpha dt grad nonconductive (div epsr E - rho/eps0)
- 
+
 // In compute_rhob.c
 
 // compute_rhob applies the following difference equation:
@@ -448,6 +448,11 @@ begin_remote_ghost_div_b( field_t * ALIGNED(128) f,
 void
 end_remote_ghost_div_b( field_t * ALIGNED(128) f,
                         const grid_t * g );
+
+
+void destroy_sfa_params( sfa_params_t * p );
+void checkpt_standard_field_array( const field_array_t * fa );
+field_array_t* restore_standard_field_array( void );
 
 END_C_DECLS
 

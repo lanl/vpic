@@ -9,6 +9,7 @@
  */
 
 #include "grid.h"
+#include "grid_structors.h"
 
 /* Though these functions are not part of grid's public API, they must
    not be declared as static */

@@ -172,7 +172,17 @@ bool compare_energies(
         // based on number of species). It can likely be done much better
         int line_token_count = 0;
 
-        if (f1.is_open() && f2.is_open())
+        if (!f1.is_open())
+        {
+            std::cerr << "Unable to open file f1 " << file_a << std::endl;;
+            return false;
+        }
+        else if (!f2.is_open())
+        {
+            std::cerr << "Unable to open file f2 " << file_b << std::endl;
+            return false;
+        }
+        else // Performan test
         {
 
             // Perform skipping
@@ -292,10 +302,6 @@ bool compare_energies(
 
             f1.close();
             f2.close();
-        }
-        else {
-            std::cerr << "Unable to open file";
-            return false;
         }
 
         //std::cout << "Field mask : " << field_mask << std::endl;

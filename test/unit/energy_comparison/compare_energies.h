@@ -208,7 +208,7 @@ bool compare_energies(
                 while (getline(linestream1, item1, ' '))
                 {
                     bool write_this_err_ouput = write_err_ouput;
-                    std::cout << "Setting write_this_err_ouput tp " << write_this_err_ouput << std::endl;
+                    //std::cout << "Setting write_this_err_ouput tp " << write_this_err_ouput << std::endl;
 
                     getline(linestream2, item2, ' ');
                     total_line_token_count++;
@@ -224,7 +224,7 @@ bool compare_energies(
                     if (this_line_token_mask & field_mask)
                     {
                         used_line_token_count++;
-                        std::cout << "Parsing field " << used_line_token_count << " val " << item1 << std::endl;
+                        //std::cout << "Parsing field " << used_line_token_count << " val " << item1 << std::endl;
 
                         double A = std::stod(item1);
                         double B = std::stod(item2);
@@ -239,8 +239,8 @@ bool compare_energies(
                             sum_B += B;
                             agg_count++;
 
-                            std::cout << "sum a " << sum_A << " += " << A << std::endl;
-                            std::cout << "sum b " << sum_B << " += " << B << std::endl;
+                            //std::cout << "sum a " << sum_A << " += " << A << std::endl;
+                            //std::cout << "sum b " << sum_B << " += " << B << std::endl;
 
                             // Don't write this particular one
                             write_this_err_ouput = false;
@@ -283,7 +283,7 @@ bool compare_energies(
                         }
                     }
                     else {
-                        std::cout << "Skipping field " << this_line_token_mask << " val " << item1 << std::endl;
+                        //std::cout << "Skipping field " << this_line_token_mask << " val " << item1 << std::endl;
                     }
                 }
                 line_token_count = used_line_token_count;
@@ -298,8 +298,8 @@ bool compare_energies(
             return false;
         }
 
-        std::cout << "Field mask : " << field_mask << std::endl;
-        std::cout << "Fields used : " << line_token_count << std::endl;
+        //std::cout << "Field mask : " << field_mask << std::endl;
+        //std::cout << "Fields used : " << line_token_count << std::endl;
 
         std::cout << "Max found err was " << max_err*100 << "% on line " << max_err_line << " (Threshold: " <<
             relative_tolerance*100 << "%)" << std::endl;

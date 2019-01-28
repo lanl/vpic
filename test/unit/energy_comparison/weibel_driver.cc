@@ -1,4 +1,5 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#define CATCH_CONFIG_RUNNER // We will provide a custom main
 #include "catch.hpp"
 
 // TODO: this import may ultimately be a bad idea, but it lets you paste an input deck in...
@@ -301,12 +302,6 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
     // Only need to do this first time
     if (_boot_timestamp == 0) // See if VPIC already got booted
     {
-        int pargc = 0;
-        char str[] = "bin/vpic";
-        char **pargv = (char **) malloc(sizeof(char **));
-        pargv[0] = str;
-        boot_services( &pargc, &pargv );
-
         // Before we run this, we must make sure we remove the energy file
         std::ofstream ofs;
         ofs.open(energy_file_name, std::ofstream::out | std::ofstream::trunc);
@@ -314,7 +309,9 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
 
         // Init and run sim
         vpic_simulation simulation = vpic_simulation();
-        simulation.initialize( pargc, pargv );
+
+        // TODO: We should do this in a safer manner
+        simulation.initialize( 0, NULL );
 
         while( simulation.advance() );
 
@@ -331,38 +328,33 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
     const unsigned short b_mask = 0b0001110000;
     const unsigned short particle_mask = 0b011000000;
 
-    SECTION("e_field") {
-        // Test the sum of the e_field
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
-               );
+    SECTION("ENERGY_TESTS"){
+        SECTION("e_field") {
+            // Test the sum of the e_field
+            REQUIRE(
+                    test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                        0.01, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
+                   );
+        }
+
+        SECTION("b_field") {
+            // Test the sum of the b_field
+            REQUIRE(
+                    test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                        0.01, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
+                   );
+        }
+
+
+        SECTION("particle_energy") {
+            // Test particle energies individually
+            REQUIRE(
+                    test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                        0.01, particle_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.p.out")
+                   );
+
+        }
     }
-
-    SECTION("b_field") {
-        // Test the sum of the b_field
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
-               );
-    }
-
-
-    SECTION("particle_energy") {
-        // Test particle energies individually
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, particle_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.p.out")
-                );
-
-    }
-
-    /* // Technically we don't need to stop it, it can stop itself
-    if (_boot_timestamp != 0) // See if VPIC already got booted
-    {
-        // If so it's OK to stop it.
-        halt_services();
-    }*/
 
 }
 
@@ -388,4 +380,19 @@ begin_particle_collisions{
 
   // No collisions for this simulation
 
+}
+
+// Manually implement catch main
+int main( int argc, char* argv[] )
+{
+
+    // Setup
+    boot_services( &argc, &argv );
+
+    int result = Catch::Session().run( argc, argv );
+
+    // clean-up...
+    halt_services();
+
+    return result;
 }

@@ -71,6 +71,12 @@ option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
+option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
+
+# option to set minimum number of particles
+set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
+
+
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #
@@ -96,6 +102,13 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 string(REPLACE ";" " " string_libraries "${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 
+if(DISABLE_DYNAMIC_RESIZING)
+  add_definitions(-DDISABLE_DYNAMIC_RESIZING)
+endif(DISABLE_DYNAMIC_RESIZING)
+
+if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
+    add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
+endif()
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#

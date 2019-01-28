@@ -97,7 +97,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
       prefix_keys[0] = "-tpp";
       prefix_keys[1] = "-restore";
 
-      match_keys[0] = "restart";
+      match_keys[0] = "-restart";
 
       char* arg = (*pargv)[i];
 

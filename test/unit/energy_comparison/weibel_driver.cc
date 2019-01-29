@@ -328,7 +328,7 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
         // Test the sum of the e_field
         REQUIRE(
                 test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
+                    0.3, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
                );
     }
 
@@ -336,7 +336,7 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
         // Test the sum of the b_field
         REQUIRE(
                 test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
+                    0.03, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
                );
     }
 

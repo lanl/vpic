@@ -21,6 +21,60 @@ src_dir="${0%/*}/.."
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
+# Choose type of vector intrinsics support.
+#------------------------------------------------------------------------------#
+# Note the following constraints.
+#
+# Each of the eight variables in this section must have a configured value.
+# This is because the corresponding "USE" cmake variable is set on the cmake
+# command line below to allow any possible combinations to be configured using
+# a single cmake command.
+#
+# If all values are configured as OFF, the scalar implementations of VPIC
+# functions which are not vectorized will be used.
+#
+# It is possible to have a vector version configured as ON for each of the
+# three vector widths i.e. V4, V8 and V16. In that scenario, if a given VPIC
+# function has a V16 implementation, that will be used. If there is not a V16
+# implementation but there is a V8 implementation, that will be used. If there
+# is not a V16 or V8 implementation but there is a V4 implementation, that
+# will be used. Finally, for functions that have no vector implementations,
+# the scalar version will be used.
+#
+# Currently, it is recommended to always configure the appropriate V4 version
+# as on if using vector versions because there are key functions that only
+# have a V4 version because the current algorithm does not generalize to
+# longer vector lengths. An example is the move_p function. Since the V4
+# versions are generally more performant than the scalar versions, it makes
+# sense to use them even when using the longer vector length implementations
+# for other VPIC functions.
+#
+# In summary, when using vector versions on a machine with 256 bit SIMD, the
+# V4 and V8 implementations should be configured as ON.
+#
+# First, we turn all of the vector options OFF. Then, we turn on the ones we
+# want.
+#------------------------------------------------------------------------------#
+
+SET_V4_PORTABLE="OFF"
+SET_V4_SSE="OFF"
+SET_V4_AVX="OFF"
+SET_V4_AVX2="OFF"
+SET_V8_PORTABLE="OFF"
+SET_V8_AVX="OFF"
+SET_V8_AVX2="OFF"
+SET_V16_PORTABLE="OFF"
+
+#SET_V4_PORTABLE="ON"
+#SET_V4_SSE="ON"
+#SET_V4_AVX="ON"
+SET_V4_AVX2="ON"
+#SET_V8_PORTABLE="ON"
+#SET_V8_AVX="ON"
+SET_V8_AVX2="ON"
+#SET_V16_PORTABLE="ON"
+
+#------------------------------------------------------------------------------#
 # Choose a compiler.
 #------------------------------------------------------------------------------#
 # One of the compiler choices in this section must be chosen. Valid options
@@ -81,60 +135,6 @@ VTHR="PTH"
 
 SET_MORE_DIGITS="OFF"
 #SET_MORE_DIGITS="ON"
-
-#------------------------------------------------------------------------------#
-# Choose type of vector intrinsics support.
-#------------------------------------------------------------------------------#
-# Note the following constraints.
-#
-# Each of the eight variables in this section must have a configured value.
-# This is because the corresponding "USE" cmake variable is set on the cmake
-# command line below to allow any possible combinations to be configured using
-# a single cmake command.
-#
-# If all values are configured as OFF, the scalar implementations of VPIC
-# functions which are not vectorized will be used.
-#
-# It is possible to have a vector version configured as ON for each of the
-# three vector widths i.e. V4, V8 and V16. In that scenario, if a given VPIC
-# function has a V16 implementation, that will be used. If there is not a V16
-# implementation but there is a V8 implementation, that will be used. If there
-# is not a V16 or V8 implementation but there is a V4 implementation, that
-# will be used. Finally, for functions that have no vector implementations,
-# the scalar version will be used.
-#
-# Currently, it is recommended to always configure the appropriate V4 version
-# as on if using vector versions because there are key functions that only
-# have a V4 version because the current algorithm does not generalize to
-# longer vector lengths. An example is the move_p function. Since the V4
-# versions are generally more performant than the scalar versions, it makes
-# sense to use them even when using the longer vector length implementations
-# for other VPIC functions.
-#
-# In summary, when using vector versions on a machine with 256 bit SIMD, the
-# V4 and V8 implementations should be configured as ON.
-#
-# First, we turn all of the vector options OFF. Then, we turn on the ones we
-# want.
-#------------------------------------------------------------------------------#
-
-SET_V4_PORTABLE="OFF"
-SET_V4_SSE="OFF"
-SET_V4_AVX="OFF"
-SET_V4_AVX2="OFF"
-SET_V8_PORTABLE="OFF"
-SET_V8_AVX="OFF"
-SET_V8_AVX2="OFF"
-SET_V16_PORTABLE="OFF"
-
-#SET_V4_PORTABLE="ON"
-#SET_V4_SSE="ON"
-#SET_V4_AVX="ON"
-SET_V4_AVX2="ON"
-#SET_V8_PORTABLE="ON"
-#SET_V8_AVX="ON"
-SET_V8_AVX2="ON"
-#SET_V16_PORTABLE="ON"
 
 #------------------------------------------------------------------------------#
 # Choose a particle sort implementation.

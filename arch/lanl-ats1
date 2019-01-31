@@ -27,26 +27,6 @@ src_dir="${0%/*}/.."
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
-# Choose a compiler.
-#------------------------------------------------------------------------------#
-# One of the compiler choices in this section must be chosen. Valid options
-# are the following.
-#
-# INT: Intel compilers
-# GNU: GNU compilers
-# CCE: Cray compilers
-#
-# Note that selecting CCE for the Cray compilers currently does not work. The
-# main reason why you might want to compile with the Cray compilers is to use
-# some of the Cray specific tools like Reveal or a small set of features in
-# the CrayPat profiling software. This is not a common use case for users.
-#------------------------------------------------------------------------------#
-
-VCOM="INT"
-#VCOM="GNU"
-#VCOM="CCE"
-
-#------------------------------------------------------------------------------#
 # Choose a processor node type.
 #------------------------------------------------------------------------------#
 # One of the node types must be chosen. Valid options are the following.
@@ -62,46 +42,6 @@ VCOM="INT"
 
 KNL="yes"
 #HSW="yes"
-
-#------------------------------------------------------------------------------#
-# Choose an MPI implementation.
-#------------------------------------------------------------------------------#
-# One of the MPI library choices must be chosen. Valid options are the
-# following.
-#
-# CMPI: Cray Mpich, the Cray supported MPI library
-# OMPI: Open MPI
-#------------------------------------------------------------------------------#
-
-VMPI="CMPI"
-#VMPI="OMPI"
-
-#------------------------------------------------------------------------------#
-# Choose a thread model.
-#------------------------------------------------------------------------------#
-# One of the two available thread models must be chosen. Valid options are the
-# following.
-#
-# PTH: Pthreads
-# OMP: OpenMP
-#------------------------------------------------------------------------------#
-
-VTHR="PTH"
-#VTHR="OMP"
-
-#------------------------------------------------------------------------------#
-# Choose format of status update output.
-#------------------------------------------------------------------------------#
-# One of the two available options must be chosen. Valid options are ON and
-# OFF.
-#
-# If SET_MORE_DIGITS=OFF, the output has two significant figures.
-#
-# If SET_MORE_DIGITS=ON, the output has four significant figures.
-#------------------------------------------------------------------------------#
-
-SET_MORE_DIGITS="OFF"
-#SET_MORE_DIGITS="ON"
 
 #------------------------------------------------------------------------------#
 # Choose type of vector intrinsics support.
@@ -159,6 +99,66 @@ SET_V4_AVX2="ON"
 #SET_V8_AVX2="ON"
 #SET_V16_PORTABLE="ON"
 SET_V16_AVX512="ON"
+
+#------------------------------------------------------------------------------#
+# Choose a compiler.
+#------------------------------------------------------------------------------#
+# One of the compiler choices in this section must be chosen. Valid options
+# are the following.
+#
+# INT: Intel compilers
+# GNU: GNU compilers
+# CCE: Cray compilers
+#
+# Note that selecting CCE for the Cray compilers currently does not work. The
+# main reason why you might want to compile with the Cray compilers is to use
+# some of the Cray specific tools like Reveal or a small set of features in
+# the CrayPat profiling software. This is not a common use case for users.
+#------------------------------------------------------------------------------#
+
+VCOM="INT"
+#VCOM="GNU"
+#VCOM="CCE"
+
+#------------------------------------------------------------------------------#
+# Choose an MPI implementation.
+#------------------------------------------------------------------------------#
+# One of the MPI library choices must be chosen. Valid options are the
+# following.
+#
+# CMPI: Cray Mpich, the Cray supported MPI library
+# OMPI: Open MPI
+#------------------------------------------------------------------------------#
+
+VMPI="CMPI"
+#VMPI="OMPI"
+
+#------------------------------------------------------------------------------#
+# Choose a thread model.
+#------------------------------------------------------------------------------#
+# One of the two available thread models must be chosen. Valid options are the
+# following.
+#
+# PTH: Pthreads
+# OMP: OpenMP
+#------------------------------------------------------------------------------#
+
+VTHR="PTH"
+#VTHR="OMP"
+
+#------------------------------------------------------------------------------#
+# Choose format of status update output.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_MORE_DIGITS=OFF, the output has two significant figures.
+#
+# If SET_MORE_DIGITS=ON, the output has four significant figures.
+#------------------------------------------------------------------------------#
+
+SET_MORE_DIGITS="OFF"
+#SET_MORE_DIGITS="ON"
 
 #------------------------------------------------------------------------------#
 # Choose a particle sort implementation.

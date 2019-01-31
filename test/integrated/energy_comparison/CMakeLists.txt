@@ -1,18 +1,18 @@
 set(MPIEXEC_NUMPROC 1)
 set(ARGS "")
 
-list(APPEND DEFUALT_ARG_TESTS
+list(APPEND DEFAULT_ARG_TESTS
     weibel # This test is a simple run which should not die
     dump) # This is a simple run which should dump restart files
 
 list(APPEND RESTART_DECK dump) # Reuse existing deck and start half way
 list(APPEND RESTART_BINARY restore)
 
-foreach(test ${DEFUALT_ARG_TESTS})
+foreach(test ${DEFAULT_ARG_TESTS})
     build_a_vpic(${test} ${CMAKE_CURRENT_SOURCE_DIR}/${test}.deck)
 endforeach()
 
-foreach(test ${DEFUALT_ARG_TESTS})
+foreach(test ${DEFAULT_ARG_TESTS})
     add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_NUMPROC}
         ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
 endforeach()

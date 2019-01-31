@@ -193,9 +193,14 @@ To restart VPIC using the restart file `./restart/restart0`
 
 Currently, the following options are exposed at compile time for the users consideration:
 
+## Particle Array Resizing
+
+- `DISABLE_DYNAMIC_RESIZING` (default `OFF`): Enable to disable the use of dynamic particle resizing
+- `SET_MIN_NUM_PARTICLES` (default 128 [4kb]): Set the minimum number of particles allowable when dynamically resizing
+
 ## Threading Model
 
- - `USE_PTHREADS`: Use Pthreads for the threading model (default enabled)
+ - `USE_PTHREADS` (default `ON`): Use Pthreads for the threading model (default enabled)
  - `USE_OPENMP`: Use OpenMP for the threading model
 
 ## Vectorization

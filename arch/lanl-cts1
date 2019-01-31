@@ -326,8 +326,9 @@ then
     # ignored that are used to limit memory usage and excessive compile times
     # by the compiler.
     #
-    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops to
-    # be vectorized always, regardless of computation work volume.
+    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops
+    # which can be vectorized to always be vectorized, regardless of the
+    # amount of computational work in the loop.
     #--------------------------------------------------------------------------#
 
     FLAGS_CXX_COMPILER+=" -inline-forceinline"
@@ -402,8 +403,9 @@ then
     # ignored that are used to limit memory usage and excessive compile times
     # by the compiler.
     #
-    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops to
-    # be vectorized always, regardless of computation work volume.
+    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops
+    # which can be vectorized to always be vectorized, regardless of the
+    # amount of computational work in the loop.
     #--------------------------------------------------------------------------#
 
     FLAGS_C_COMPILER+=" -inline-forceinline"

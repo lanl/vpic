@@ -225,7 +225,7 @@ See example decks for how these are used together in combination.
 
 ## Output 
 
- - `VPIC_PRINT_MORE_DIGITS`: Enabled more digits in the debug timing implementation
+ - `VPIC_PRINT_MORE_DIGITS`: Enable more digits in the debug timing implementation
 
 # Workflow
 

@@ -799,6 +799,21 @@ then
 fi
 
 #------------------------------------------------------------------------------#
+# Make sure the Cray programming environment is configured as the default of
+# PrgEnv-intel.
+#------------------------------------------------------------------------------#
+
+if [ "$CRAY_PRGENVGNU" = "loaded" ]
+then
+    module swap PrgEnv-gnu PrgEnv-intel
+fi
+
+if [ "$CRAY_PRGENVCRAY" = "loaded" ]
+then
+    module swap PrgEnv-cray PrgEnv-intel
+fi
+
+#------------------------------------------------------------------------------#
 # Configure environment using modules.
 #------------------------------------------------------------------------------#
 # Note that the user may want to modify the module configuration.

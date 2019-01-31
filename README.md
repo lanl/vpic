@@ -206,12 +206,12 @@ Currently, the following options are exposed at compile time for the users consi
  - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
  - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
 
- - `USE_V8_AVX`: Enable 4 wide (256-bit) AVX
- - `USE_V8_AVX2`: Enable 4 wide (256-bit) AVX2
- - `USE_V8_PORTABLE`: Enable 4 wide (256-bit) portable implementation
+ - `USE_V8_AVX`: Enable 8 wide (256-bit) AVX
+ - `USE_V8_AVX2`: Enable 8 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`: Enable 8 wide (256-bit) portable implementation
 
- - `USE_V16_AVX512`: Enable 4 wide (512-bit) AVX512
- - `USE_V16_PORTABLE`: Enable 4 wide (512-bit) portable implementation
+ - `USE_V16_AVX512`: Enable 16 wide (512-bit) AVX512
+ - `USE_V16_PORTABLE`: Enable 16 wide (512-bit) portable implementation
 
 If no combination of these are selected, the "reference" (read: unvectorized)
 version of the pusher will be used

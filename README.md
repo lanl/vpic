@@ -103,7 +103,7 @@ of DOE Advanced Technology Systems and consist of a partition of dual socket Int
 Intel Knights Landing nodes. The LANL CTS-1 clusters are the first generation of DOE Commodity Technology Systems and consist of
 dual socket Intel Broadwell nodes running the TOSS 3.3 operating system. The lanl-ats1 and lanl-cts1 scripts are heavily
 documented and can be configured to provide a large variety of custom builds for their respective platform types. These
-scripts could also serve as a good starting point for development of a build script for other machine types. Because these
+scripts could also serve as a good starting point for development of a build script for other platform types. Because these
 scripts also configure the users build environment via the use of module commands, the scripts run both the cmake and make
 commands.
 
@@ -113,7 +113,14 @@ From the user created build directory, these scripts can be invoked as follows:
     ../arch/lanl-ats1
 ```
 
-Advanced users may chose to instead invoke `cmake` directly and hand select options.
+or
+
+```bash
+    ../arch/lanl-cts1
+```
+
+Advanced users may choose to instead invoke `cmake` directly and hand select options. Documentation on valid ways
+to select these options may be found in the lanl-ats1 and lanl-cts1 build scripts mentioned above.
 
 GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`).
 

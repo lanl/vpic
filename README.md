@@ -193,9 +193,14 @@ To restart VPIC using the restart file `./restart/restart0`
 
 Currently, the following options are exposed at compile time for the users consideration:
 
+## Particle Array Resizing
+
+- `DISABLE_DYNAMIC_RESIZING` (default `OFF`): Enable to disable the use of dynamic particle resizing
+- `SET_MIN_NUM_PARTICLES` (default 128 [4kb]): Set the minimum number of particles allowable when dynamically resizing
+
 ## Threading Model
 
- - `USE_PTHREADS`: Use Pthreads for the threading model (default enabled)
+ - `USE_PTHREADS` (default `ON`): Use Pthreads for the threading model (default enabled)
  - `USE_OPENMP`: Use OpenMP for the threading model
 
 ## Vectorization
@@ -206,12 +211,12 @@ Currently, the following options are exposed at compile time for the users consi
  - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
  - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
 
- - `USE_V8_AVX`: Enable 4 wide (256-bit) AVX
- - `USE_V8_AVX2`: Enable 4 wide (256-bit) AVX2
- - `USE_V8_PORTABLE`: Enable 4 wide (256-bit) portable implementation
+ - `USE_V8_AVX`: Enable 8 wide (256-bit) AVX
+ - `USE_V8_AVX2`: Enable 8 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`: Enable 8 wide (256-bit) portable implementation
 
- - `USE_V16_AVX512`: Enable 4 wide (512-bit) AVX512
- - `USE_V16_PORTABLE`: Enable 4 wide (512-bit) portable implementation
+ - `USE_V16_AVX512`: Enable 16 wide (512-bit) AVX512
+ - `USE_V16_PORTABLE`: Enable 16 wide (512-bit) portable implementation
 
 If no combination of these are selected, the "reference" (read: unvectorized)
 version of the pusher will be used
@@ -220,7 +225,7 @@ See example decks for how these are used together in combination.
 
 ## Output 
 
- - `VPIC_PRINT_MORE_DIGITS`: Enabled more digits in the debug timing implementation
+ - `VPIC_PRINT_MORE_DIGITS`: Enable more digits in the debug timing implementation
 
 # Workflow
 

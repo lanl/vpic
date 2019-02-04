@@ -8,7 +8,6 @@
 
 #include "src/species_advance/species_advance.h"
 #include "src/vpic/vpic.h"
-#include "test/integrated/particle_push/advance_p.h"
 
 #include "compare_energies.h"
 

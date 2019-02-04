@@ -52,14 +52,17 @@ with VPIC and Roadrunner, Journal of Physics: Conference Series 180,
 
 # Getting the Code
 
-VPIC uses nested submodules.  This requires the addition of the *--recursive*
-flag when cloning the repository:
+To checkout the VPIC source, do the following:
 
 ```bash
     git clone https://github.com/lanl/vpic.git
 ```
 
-This command will check out the VPIC source code.
+## Branches
+
+The stable release of vpic exists on `master`, the default branch.
+
+For more cutting edge features, consider using the `devel` branch.
 
 # Requirements
 
@@ -80,13 +83,7 @@ the top-level source directory:
     cd build
 ```
 
-Then call the curses version of CMake:
-
-```bash
-    ccmake ..
-```
-
-The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building
+The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building.
 
 They can be invoked using something like:
 
@@ -94,15 +91,45 @@ They can be invoked using something like:
     ../arch/generic-Release
 ```
 
-GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`)
+After configuration, simply type: 
 
-After configuration, simply type 'make'.
+```bash
+    make
+```
+
+Two scripts in the `./arch` directory are of particular note: lanl-ats1 and lanl-cts1. These scripts provide a default way to build VPIC
+on LANL ATS-1 clusters such as Trinity and Trinitite and LANL CTS-1 clusters. The LANL ATS-1 clusters are the first generation
+of DOE Advanced Technology Systems and consist of a partition of dual socket Intel Haswell nodes and a partition of single socket
+Intel Knights Landing nodes. The LANL CTS-1 clusters are the first generation of DOE Commodity Technology Systems and consist of
+dual socket Intel Broadwell nodes running the TOSS 3.3 operating system. The lanl-ats1 and lanl-cts1 scripts are heavily
+documented and can be configured to provide a large variety of custom builds for their respective platform types. These
+scripts could also serve as a good starting point for development of a build script for other platform types. Because these
+scripts also configure the users build environment via the use of module commands, the scripts run both the cmake and make
+commands.
+
+From the user created build directory, these scripts can be invoked as follows:
+
+```bash
+    ../arch/lanl-ats1
+```
+
+or
+
+```bash
+    ../arch/lanl-cts1
+```
+
+Advanced users may choose to instead invoke `cmake` directly and hand select options. Documentation on valid ways
+to select these options may be found in the lanl-ats1 and lanl-cts1 build scripts mentioned above.
+
+GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`).
+
 
 # Building an example input deck
 
 After you have successfully built VPIC, you should have an executable in
-the *bin* directory called *vpic*.  To build an executable from one of
-the sample input decks, simply run:
+the `bin` directory called `vpic` (`./bin/vpic`).  To build an executable from one of
+the sample input decks (found in `./sample`), simply run:
 
 ```bash
     ./bin/vpic input_deck
@@ -161,6 +188,52 @@ VPIC can restart from a checkpoint dump file, using the following syntax:
 ```
 
 To restart VPIC using the restart file `./restart/restart0`
+
+# Compile Time Arguments
+
+Currently, the following options are exposed at compile time for the users consideration:
+
+## Particle Array Resizing
+
+- `DISABLE_DYNAMIC_RESIZING` (default `OFF`): Enable to disable the use of dynamic particle resizing
+- `SET_MIN_NUM_PARTICLES` (default 128 [4kb]): Set the minimum number of particles allowable when dynamically resizing
+
+## Threading Model
+
+ - `USE_PTHREADS` (default `ON`): Use Pthreads for the threading model (default enabled)
+ - `USE_OPENMP`: Use OpenMP for the threading model
+
+## Vectorization
+
+ - `USE_V4_SSE`: Enable 4 wide (128-bit) SSE
+ - `USE_V4_AVX`: Enable 4 wide (128-bit) AVX
+ - `USE_V4_AVX2`: Enable 4 wide (128-bit) AVX2
+ - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
+ - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
+
+ - `USE_V8_AVX`: Enable 8 wide (256-bit) AVX
+ - `USE_V8_AVX2`: Enable 8 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`: Enable 8 wide (256-bit) portable implementation
+
+ - `USE_V16_AVX512`: Enable 16 wide (512-bit) AVX512
+ - `USE_V16_PORTABLE`: Enable 16 wide (512-bit) portable implementation
+
+If no combination of these are selected, the "reference" (read: unvectorized)
+version of the pusher will be used
+
+See example decks for how these are used together in combination.
+
+## Output 
+
+ - `VPIC_PRINT_MORE_DIGITS`: Enable more digits in the debug timing implementation
+
+# Workflow
+
+Contributors are asked to be aware of the following workflow:
+
+1) Pull requests are accepted into `devel` upon tests passing
+2) `master` should reflect the *stable* state of the code
+3) Periodic releases will be made from `devel` into `master`
 
 # Feedback
 

@@ -1,0 +1,831 @@
+#! /usr/bin/env bash
+#------------------------------------------------------------------------------#
+# This script supports building VPIC on CTS-1 machines at Los Alamos National
+# Laboratory (LANL). These machines run the Tri-lab TOSS 3.3 Operating System,
+# a customized version of Red Hat Enterprise Linux 7.5. CTS-1 machines have
+# dual socket 18 core Broadwell nodes. These machines provide three compiler
+# choices: Intel, GNU and PGI. Three MPI implementations are provided: Open
+# MPI, Intel MPI and Mvapich.
+#
+# Normal users should not need to change this script if happy with defaults.
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Get the path to the project from which this script was called.
+#------------------------------------------------------------------------------#
+
+src_dir="${0%/*}/.."
+
+#------------------------------------------------------------------------------#
+# Configure the type of build that we want to perform.
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Choose type of vector intrinsics support.
+#------------------------------------------------------------------------------#
+# Note the following constraints.
+#
+# Each of the eight variables in this section must have a configured value.
+# This is because the corresponding "USE" cmake variable is set on the cmake
+# command line below to allow any possible combinations to be configured using
+# a single cmake command.
+#
+# If all values are configured as OFF, the scalar implementations of VPIC
+# functions which are not vectorized will be used.
+#
+# It is possible to have a vector version configured as ON for each of the
+# three vector widths i.e. V4, V8 and V16. In that scenario, if a given VPIC
+# function has a V16 implementation, that will be used. If there is not a V16
+# implementation but there is a V8 implementation, that will be used. If there
+# is not a V16 or V8 implementation but there is a V4 implementation, that
+# will be used. Finally, for functions that have no vector implementations,
+# the scalar version will be used.
+#
+# Currently, it is recommended to always configure the appropriate V4 version
+# as on if using vector versions because there are key functions that only
+# have a V4 version because the current algorithm does not generalize to
+# longer vector lengths. An example is the move_p function. Since the V4
+# versions are generally more performant than the scalar versions, it makes
+# sense to use them even when using the longer vector length implementations
+# for other VPIC functions.
+#
+# In summary, when using vector versions on a machine with 256 bit SIMD, the
+# V4 and V8 implementations should be configured as ON.
+#
+# First, we turn all of the vector options OFF. Then, we turn on the ones we
+# want.
+#------------------------------------------------------------------------------#
+
+SET_V4_PORTABLE="OFF"
+SET_V4_SSE="OFF"
+SET_V4_AVX="OFF"
+SET_V4_AVX2="OFF"
+SET_V8_PORTABLE="OFF"
+SET_V8_AVX="OFF"
+SET_V8_AVX2="OFF"
+SET_V16_PORTABLE="OFF"
+
+#SET_V4_PORTABLE="ON"
+#SET_V4_SSE="ON"
+#SET_V4_AVX="ON"
+SET_V4_AVX2="ON"
+#SET_V8_PORTABLE="ON"
+#SET_V8_AVX="ON"
+SET_V8_AVX2="ON"
+#SET_V16_PORTABLE="ON"
+
+#------------------------------------------------------------------------------#
+# Choose a compiler.
+#------------------------------------------------------------------------------#
+# One of the compiler choices in this section must be chosen. Valid options
+# are the following.
+#
+# INT: Intel compilers
+# GNU: GNU compilers
+# PGI: Portland Group compilers, now part of Nvidia
+#
+# Note that selecting PGI for Portland Group compilers has not been tested
+# and probably does not work.
+#------------------------------------------------------------------------------#
+
+VCOM="INT"
+#VCOM="GNU"
+#VCOM="PGI"
+
+#------------------------------------------------------------------------------#
+# Choose an MPI implementation.
+#------------------------------------------------------------------------------#
+# One of the MPI library choices must be chosen. Valid options are the
+# following.
+#
+# OMPI: Open MPI, most commonly used MPI implementation on LANL CTS-1 machines
+# IMPI: Intel MPI
+#
+# Choose Intel MPI if you want to use the Intel Application Performance
+# Snapshot performance analysis tool to analyze MPI performance of VPIC or
+# other Intel analysis tools which provide analysis of MPI usage.
+#------------------------------------------------------------------------------#
+
+VMPI="OMPI"
+#VMPI="IMPI"
+
+#------------------------------------------------------------------------------#
+# Choose a thread model.
+#------------------------------------------------------------------------------#
+# One of the two available thread models must be chosen. Valid options are the
+# following.
+#
+# PTH: Pthreads
+# OMP: OpenMP
+#------------------------------------------------------------------------------#
+
+VTHR="PTH"
+#VTHR="OMP"
+
+#------------------------------------------------------------------------------#
+# Choose format of status update output.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_MORE_DIGITS=OFF, the output has two significant figures.
+#
+# If SET_MORE_DIGITS=ON, the output has four significant figures.
+#------------------------------------------------------------------------------#
+
+SET_MORE_DIGITS="OFF"
+#SET_MORE_DIGITS="ON"
+
+#------------------------------------------------------------------------------#
+# Choose a particle sort implementation.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are the
+# following.
+#
+# LSORT: legacy, thread serial sort
+# TSORT: thread parallel sort
+#
+# The LSORT particle sort implementation is the thread serial particle sort
+# implementation from the legacy v407 version of VPIC. This implementation
+# supports both in-place and out-of-place sorting of the particles. It is very
+# competitive with the thread parallel sort implementation for a small number
+# of threads per MPI rank, i.e. 4 or less. Also, the memory footprint of VPIC
+# is reduced by the memory of a particle array which can be significant for
+# particle dominated problems.
+#
+# The TSORT particle sort implementation is a thread parallel implementation.
+# Currently, it can only perform out-of-place sorting of the particles. It will
+# be more performant than the LSORT implementation when using many threads per
+# MPI rank but uses more memory because of the out-of-place sort.
+#------------------------------------------------------------------------------#
+
+VSORT="LSORT"
+#VSORT="TSORT"
+
+#------------------------------------------------------------------------------#
+# Choose type of library to build.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON or OFF.
+#
+# The default is to build a static library, i.e. OFF.
+#------------------------------------------------------------------------------#
+
+SET_SHARED_LIBS="OFF"
+#SET_SHARED_LIBS="ON"
+
+#------------------------------------------------------------------------------#
+# Choose integrated test support.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON or OFF.
+#
+# The default is not to build the integrated tests, i.e. OFF.
+#------------------------------------------------------------------------------#
+
+SET_INTEGRATED_TESTS="OFF"
+#SET_INTEGRATED_TESTS="ON"
+
+#------------------------------------------------------------------------------#
+# Choose unit test support.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON or OFF.
+#
+# The default is not to build the unit tests, i.e. OFF.
+#------------------------------------------------------------------------------#
+
+SET_UNIT_TESTS="OFF"
+#SET_UNIT_TESTS="ON"
+
+#------------------------------------------------------------------------------#
+# Choose the CMake build type.
+#------------------------------------------------------------------------------#
+# One of the available options must be chosen. Valid options depend on build
+# types available in the CMake version but include at least the following.
+#
+# Release: In general, the default for CMake.
+# None: Tells CMake not to use any pre-defined build type and gives VPIC build
+#       system total control of CMake variables defined on cmake command line.
+#------------------------------------------------------------------------------#
+
+SET_BUILD_TYPE="Release"
+#SET_BUILD_TYPE="None"
+
+#------------------------------------------------------------------------------#
+# Choose number of parallel make processes for build.
+#------------------------------------------------------------------------------#
+# If NJ variable is not defined, "make" will perform a parallel build using
+# maximum number of processors on the compilation machine.
+#
+# If using VERBOSE = 1 and NJ > 1, verbose output will be garbled by many
+# processes writing to STDOUT at the same time and will be difficult to
+# interpret.
+#
+# When using VERBOSE = 1,  use of NJ = 1 is recommended.
+#
+# The default is to use a modest number of processes in the parallel build.
+#
+# Comment out default below to use all processors on compilation machine.
+#------------------------------------------------------------------------------#
+
+NJ=8
+#NJ=1
+
+#------------------------------------------------------------------------------#
+# Choose verbosity of "make" output.
+#------------------------------------------------------------------------------#
+# Setting VERBOSE = 1 causes "make" to output commands it is executing.
+#
+# This information is useful if debugging a failed build.
+#
+# Setting VERBOSE = 0 or leaving VERBOSE undefined results in a quiet build.
+#
+# The default is a quiet build.
+#------------------------------------------------------------------------------#
+
+SET_VERBOSE=0
+#SET_VERBOSE=1
+
+#------------------------------------------------------------------------------#
+# Choose versions of modules to use if default is not desired.
+#------------------------------------------------------------------------------#
+# No choice is required in this section.
+#
+# Some possible alternative module versions are provided below. Change as
+# needed or desired.
+#
+# This section may need to be updated periodically as the module enviroment
+# evolves because of updates to operating system and programming environment.
+#------------------------------------------------------------------------------#
+
+#VERSION_CMAKE=3.12.1
+
+#VERSION_INTEL=18.0.3
+#VERSION_INTEL_VTUNE_AMPLIFIER=2019.1.0
+#VERSION_INTEL_VECTOR_ADVISOR=2019.1.0
+#VERSION_INTEL_INSPECTOR=2019.1.0
+#VERSION_INTEL_TRACE_ANALYZER=2019.1.022
+#VERSION_INTEL_MPI=2019.1
+
+#VERSION_GNU=7.3.0
+
+#VERSION_PGI=18.10
+
+#VERSION_OPEN_MPI=3.1.2
+
+#VERSION_FORGE=18.3
+
+#------------------------------------------------------------------------------#
+# Unless the user wants to modify options to the compiler, no changes should
+# be needed below this point.
+#
+# If the user desires to configure compiler options, proceed to the section
+# below for the chosen compiler.
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Configure default compiler names to use Cray wrapper scripts.
+#------------------------------------------------------------------------------#
+
+VPIC_COMPILER_C="mpicc"
+VPIC_COMPILER_CXX="mpicxx"
+
+if [ "$VMPI" = "IMPI" ]
+then
+    VPIC_COMPILER_C="mpiicc"
+    VPIC_COMPILER_CXX="mpiicpc"
+fi
+
+#------------------------------------------------------------------------------#
+# Configure options for the Intel compilers.
+#------------------------------------------------------------------------------#
+
+if [ "$VCOM" = "INT" ]
+then
+    #--------------------------------------------------------------------------#
+    # Use "-g" to provide debug symbols in the executable.  In general, use of
+    # "-g" with modern compilers does not degrade performance and provides
+    # information required by many tools such as debugging and performance
+    # analysis tools.
+    #
+    # Use of "-O3" provides fairly aggressive optimization. When using vector
+    # intrinsics versions, most of the optimization is explicit in the
+    # intrinsics implementations. Reasonable alternatives to "-O3" could be
+    # "-O2" or "-Ofast". These alternatives should be benchmarked sometime.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER="-g -O3"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-inline-forceinline" overrides default heuristics of compiler
+    # and forces inlining of functions marked with inline keyword if compiler
+    # is able to inline. For VPIC, this option has mainly been used when using
+    # a portable implementation to force inlining by compiler and also when
+    # use of "-Winline" option identifies functions not being inlined that are
+    # marked with inline keyword.
+    #
+    # Use of "-qoverride-limits" cause certain internal compiler limits to be
+    # ignored that are used to limit memory usage and excessive compile times
+    # by the compiler.
+    #
+    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops
+    # which can be vectorized to always be vectorized, regardless of the
+    # amount of computational work in the loop.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -inline-forceinline"
+    #FLAGS_CXX_COMPILER+=" -vec-threshold0"
+    FLAGS_CXX_COMPILER+=" -qoverride-limits"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-no-ansi-alias" informs compiler that VPIC does not obey ANSI
+    # aliasing rules which can reduce available optimizations.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -no-ansi-alias"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Winline" cause compiler to emit a warning when a function that
+    # is declared inline is not inlined. Inlining is very important to VPIC
+    # performance and it is useful to know if compiler has not inlined a
+    # function that was assumed to be inlined.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -Winline"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-qopt-report=5" specifies level of detail in compiler reports.
+    # This is the maximum level of detail.
+    #
+    # Use of "-qopt-report-phase=all" causes all phases of compilation process
+    # to provide output for compiler reports. Compiler reports are useful for
+    # understanding how compiler is optimizing various parts of VPIC.
+    #
+    # Use of "-diag-disable 10397" disables printing of diagnostic message
+    # that compiler reports are being generated.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -qopt-report=5"
+    FLAGS_CXX_COMPILER+=" -qopt-report-phase=all"
+    FLAGS_CXX_COMPILER+=" -diag-disable 10397"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Wl,--export-dynamic" removes following type of VPIC warnings.
+    #
+    # Unable to find a safely writable symbol that corresponds to address
+    # 432af0 (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").
+    # Writing out the raw address instead and keeping my fingers crossed.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -Wl,--export-dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use "-g" to provide debug symbols in the executable.  In general, use of
+    # "-g" with modern compilers does not degrade performance and provides
+    # information required by many tools such as debugging and performance
+    # analysis tools.
+    #
+    # Use of "-O3" provides fairly aggressive optimization. When using vector
+    # intrinsics versions, most of the optimization is explicit in the
+    # intrinsics implementations. Reasonable alternatives to "-O3" could be
+    # "-O2" or "-Ofast". These alternatives should be benchmarked sometime.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER="-g -O3"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-inline-forceinline" overrides default heuristics of compiler
+    # and forces inlining of functions marked with inline keyword if compiler
+    # is able to inline. For VPIC, this option has mainly been used when using
+    # a portable implementation to force inlining by compiler and also when
+    # use of "-Winline" option identifies functions not being inlined that are
+    # marked with inline keyword.
+    #
+    # Use of "-qoverride-limits" cause certain internal compiler limits to be
+    # ignored that are used to limit memory usage and excessive compile times
+    # by the compiler.
+    #
+    # Use of "-vec-threshold0" ignores compiler heuristics and causes loops
+    # which can be vectorized to always be vectorized, regardless of the
+    # amount of computational work in the loop.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -inline-forceinline"
+    #FLAGS_C_COMPILER+=" -vec-threshold0"
+    FLAGS_C_COMPILER+=" -qoverride-limits"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-no-ansi-alias" informs compiler that VPIC does not obey ANSI
+    # aliasing rules which can reduce available optimizations.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -no-ansi-alias"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Winline" cause compiler to emit a warning when a function that
+    # is declared inline is not inlined. Inlining is very important to VPIC
+    # performance and it is useful to know if compiler has not inlined a
+    # function that was assumed to be inlined.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -Winline"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-qopt-report=5" specifies level of detail in compiler reports.
+    # This is the maximum level of detail.
+    #
+    # Use of "-qopt-report-phase=all" causes all phases of compilation process
+    # to provide output for compiler reports. Compiler reports are useful for
+    # understanding how compiler is optimizing various parts of VPIC.
+    #
+    # Use of "-diag-disable 10397" disables printing of diagnostic message
+    # that compiler reports are being generated.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -qopt-report=5"
+    FLAGS_C_COMPILER+=" -qopt-report-phase=all"
+    FLAGS_C_COMPILER+=" -diag-disable 10397"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Wl,--export-dynamic" removes following type of VPIC warnings.
+    #
+    # Unable to find a safely writable symbol that corresponds to address
+    # 432af0 (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").
+    # Writing out the raw address instead and keeping my fingers crossed.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -Wl,--export-dynamic"
+fi
+
+#------------------------------------------------------------------------------#
+# Configure options for the GNU compilers.
+#------------------------------------------------------------------------------#
+
+if [ "$VCOM" = "GNU" ]
+then
+    #--------------------------------------------------------------------------#
+    # Use "-g" to provide debug symbols in the executable.  In general, use of
+    # "-g" with modern compilers does not degrade performance and provides
+    # information required by many tools such as debugging and performance
+    # analysis tools.
+    #
+    # Use of "-O2" provides fairly aggressive optimization. When using vector
+    # intrinsics versions, most of the optimization is explicit in the
+    # intrinsics implementations. Reasonable alternatives to "-O2" could be
+    # "-O3" or "-Ofast". These alternatives should be benchmarked sometime.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER="-g -O2"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-ffast-math" causes compiler to relax various IEEE or ISO rules
+    # and specifications for math functions which can result in faster code.
+    #
+    # Use of "-fno-unsafe-math-optimizations" turns off some unsafe math
+    # optimizations that got turned on by use of "-ffast-math" option. Some
+    # comments in VPIC source code indicate need for this with older compilers.
+    # This should be checked some time to see if it is still a relevant issue.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -ffast-math"
+    FLAGS_CXX_COMPILER+=" -fno-unsafe-math-optimizations"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-fomit-frame-pointer" prevents keeping the frame pointer in a
+    # register for functions that do not need one. This can make an extra
+    # register available in many functions and reduce number of overall
+    # instructions. Some profiling should be done to measure the benefit of
+    # using this option.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -fomit-frame-pointer"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-fno-strict-aliasing" informs compiler that VPIC does not obey
+    # ANSI aliasing rules which can reduce available optimizations.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -fno-strict-aliasing"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Winline" cause compiler to emit a warning when a function that
+    # is declared inline is not inlined. Inlining is very important to VPIC
+    # performance and it is useful to know if compiler has not inlined a
+    # function that was assumed to be inlined.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -Winline"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-rdynamic" removes the following type of VPIC warnings.
+    #
+    # Unable to find a safely writable symbol that corresponds to address
+    # 432af0 (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").
+    # Writing out the raw address instead and keeping my fingers crossed.
+    #
+    # From g++ man page: Pass the flag -export-dynamic to the ELF linker, on
+    # targets that support it. This instructs the linker to add all symbols,
+    # not only used ones, to the dynamic symbol table. This option is needed
+    # for some uses of "dlopen" or to allow obtaining backtraces from within
+    # a program.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -rdynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-march=broadwell" causes g++ to generate code specific to and
+    # optimized for the architecture of Broadwell.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -march=broadwell"
+
+    #--------------------------------------------------------------------------#
+    # Use "-g" to provide debug symbols in the executable.  In general, use of
+    # "-g" with modern compilers does not degrade performance and provides
+    # information required by many tools such as debugging and performance
+    # analysis tools.
+    #
+    # Use of "-O2" provides fairly aggressive optimization. When using vector
+    # intrinsics versions, most of the optimization is explicit in the
+    # intrinsics implementations. Reasonable alternatives to "-O2" could be
+    # "-O3" or "-Ofast". These alternatives should be benchmarked sometime.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER="-g -O2"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-ffast-math" causes compiler to relax various IEEE or ISO rules
+    # and specifications for math functions which can result in faster code.
+    #
+    # Use of "-fno-unsafe-math-optimizations" turns off some unsafe math
+    # optimizations that got turned on by use of "-ffast-math" option. Some
+    # comments in VPIC source code indicate need for this with older compilers.
+    # This should be checked some time to see if it is still a relevant issue.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -ffast-math"
+    FLAGS_C_COMPILER+=" -fno-unsafe-math-optimizations"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-fomit-frame-pointer" prevents keeping the frame pointer in a
+    # register for functions that do not need one. This can make an extra
+    # register available in many functions and reduce number of overall
+    # instructions. Some profiling should be done to measure the benefit of
+    # using this option.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -fomit-frame-pointer"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-fno-strict-aliasing" informs compiler that VPIC does not obey
+    # ANSI aliasing rules which can reduce available optimizations.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -fno-strict-aliasing"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-Winline" cause compiler to emit a warning when a function that
+    # is declared inline is not inlined. Inlining is very important to VPIC
+    # performance and it is useful to know if compiler has not inlined a
+    # function that was assumed to be inlined.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -Winline"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-rdynamic" removes the following type of VPIC warnings.
+    #
+    # Unable to find a safely writable symbol that corresponds to address
+    # 432af0 (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").
+    # Writing out the raw address instead and keeping my fingers crossed.
+    #
+    # From gcc man page: Pass the flag -export-dynamic to the ELF linker, on
+    # targets that support it. This instructs the linker to add all symbols,
+    # not only used ones, to the dynamic symbol table. This option is needed
+    # for some uses of "dlopen" or to allow obtaining backtraces from within
+    # a program.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -rdynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-march=broadwell" causes gcc to generate code specific to and
+    # optimized for the architecture of Broadwell.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -march=broadwell"
+fi
+
+#------------------------------------------------------------------------------#
+# Configure options for the PGI compilers.
+#------------------------------------------------------------------------------#
+
+if [ "$VCOM" = "PGI" ]
+then
+    #--------------------------------------------------------------------------#
+    #
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER="-g -O2"
+    FLAGS_CXX_COMPILER+=" -Wl,--export-dynamic"
+
+    #--------------------------------------------------------------------------#
+    #
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER="-g -O2"
+    FLAGS_C_COMPILER+=" -Wl,--export-dynamic"
+fi
+
+#------------------------------------------------------------------------------#
+# This ends user configuration section.
+#
+# No changes required below unless VPIC build system has been extended or the
+# module system on CTS-1 machines has changed in some fundamental way.
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Configure thread model.
+#------------------------------------------------------------------------------#
+
+if [ "$VTHR" = "PTH" ]
+then
+    SET_OPENMP="OFF"
+    SET_PTHREADS="ON"
+fi
+
+if [ "$VTHR" = "OMP" ]
+then
+    SET_OPENMP="ON"
+    SET_PTHREADS="OFF"
+fi
+
+#------------------------------------------------------------------------------#
+# Configure particle sort method.
+#------------------------------------------------------------------------------#
+
+if [ "$VSORT" = "LSORT" ]
+then
+    FLAGS_C_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
+
+    FLAGS_CXX_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
+fi
+
+#------------------------------------------------------------------------------#
+# Configure environment using modules.
+#------------------------------------------------------------------------------#
+# Note that the user may want to modify the module configuration.
+#
+# Note that module commands used to define the build environment are captured
+# in a Bash script named bashrc.modules which is written into the top level
+# build directory. This script can be used in run scripts and other scenarios
+# where there is a need to reproduce the environment used to build VPIC.
+#------------------------------------------------------------------------------#
+
+echo '#!/bin/bash' >> bashrc.modules
+echo "" >> bashrc.modules
+
+module purge
+echo "module purge" >> bashrc.modules
+
+module load friendly-testing
+echo "module load friendly-testing" >> bashrc.modules
+
+module load sandbox
+echo "module load sandbox" >> bashrc.modules
+
+if [ ! "x$VERSION_CMAKE" = "x" ]
+then
+    module load cmake/$VERSION_CMAKE
+    echo "module load cmake/$VERSION_CMAKE" >> bashrc.modules
+else
+    module load cmake
+    echo "module load cmake" >> bashrc.modules
+fi
+
+if [ "$VCOM" = "INT" ]
+then
+    if [ ! "x$VERSION_INTEL" = "x" ]
+    then
+        module load intel/$VERSION_INTEL
+        echo "module load intel/$VERSION_INTEL" >> bashrc.modules
+    else
+        module load intel
+        echo "module load intel" >> bashrc.modules
+    fi
+fi
+
+if [ "$VCOM" = "GNU" ]
+then
+    if [ ! "x$VERSION_GNU" = "x" ]
+    then
+        module load gcc/$VERSION_GNU
+        echo "module load gcc/$VERSION_GNU" >> bashrc.modules
+    else
+        module load gcc
+        echo "module load gcc" >> bashrc.modules
+    fi
+fi
+
+if [ "$VCOM" = "PGI" ]
+then
+    if [ ! "x$VERSION_PGI" = "x" ]
+    then
+        module load pgi/$VERSION_PGI
+        echo "module load pgi/$VERSION_PGI" >> bashrc.modules
+    else
+        module load pgi
+        echo "module load pgi" >> bashrc.modules
+    fi
+fi
+
+if [ "$VMPI" = "OMPI" ]
+then
+    if [ ! "x$VERSION_OPEN_MPI" = "x" ]
+    then
+        module load openmpi/$VERSION_OPEN_MPI
+        echo "module load openmpi/$VERSION_OPEN_MPI" >> bashrc.modules
+    else
+        module load openmpi
+        echo "module load openmpi" >> bashrc.modules
+    fi
+fi
+
+if [ "$VMPI" = "IMPI" ]
+then
+    if [ ! "x$VERSION_INTEL_MPI" = "x" ]
+    then
+        module load intel-mpi/$VERSION_INTEL_MPI
+        echo "module load intel-mpi/$VERSION_INTEL_MPI" >> bashrc.modules
+    else
+        module load intel-mpi
+        echo "module load intel-mpi" >> bashrc.modules
+    fi
+fi
+
+module list
+echo "" >> bashrc.modules
+echo "module list" >> bashrc.modules
+
+#------------------------------------------------------------------------------#
+# Call cmake command.
+#------------------------------------------------------------------------------#
+# Notes:
+#
+# Use of the "-LAH" command line option to cmake causes cmake to output the
+# values of all of its variables. This is useful information when debugging
+# a failed build.
+#
+# Note that all of the possible VPIC cmake variables relevant to a CTS-1
+# system are set on the command line so that they can all be conditionally
+# configured above through user selections.
+#------------------------------------------------------------------------------#
+
+cmake \
+    -LAH \
+    -DCMAKE_BUILD_TYPE=$SET_BUILD_TYPE \
+    -DENABLE_INTEGRATED_TESTS=$SET_INTEGRATED_TESTS \
+    -DENABLE_UNIT_TESTS=$SET_UNIT_TESTS \
+    -DUSE_V4_PORTABLE=$SET_V4_PORTABLE \
+    -DUSE_V4_SSE=$SET_V4_SSE \
+    -DUSE_V4_AVX=$SET_V4_AVX \
+    -DUSE_V4_AVX2=$SET_V4_AVX2 \
+    -DUSE_V8_PORTABLE=$SET_V8_PORTABLE \
+    -DUSE_V8_AVX=$SET_V8_AVX \
+    -DUSE_V8_AVX2=$SET_V8_AVX2 \
+    -DUSE_V16_PORTABLE=$SET_V16_PORTABLE \
+    -DVPIC_PRINT_MORE_DIGITS=$SET_MORE_DIGITS \
+    -DUSE_OPENMP=$SET_OPENMP \
+    -DUSE_PTHREADS=$SET_PTHREADS \
+    -DBUILD_SHARED_LIBS=$SET_SHARED_LIBS \
+    -DCMAKE_C_COMPILER=$VPIC_COMPILER_C \
+    -DCMAKE_CXX_COMPILER=$VPIC_COMPILER_CXX \
+    -DCMAKE_C_FLAGS="$FLAGS_C_COMPILER" \
+    -DCMAKE_CXX_FLAGS="$FLAGS_CXX_COMPILER" \
+    $src_dir
+
+#------------------------------------------------------------------------------#
+# Call make command.
+#------------------------------------------------------------------------------#
+# Notes:
+#
+# In general, it is necessary to call the "make" command within this script
+# because the module environment has been configured within this script.
+#
+# Setting VERBOSE=1 causes "make" to output the commands it is executing.
+# This information is useful if debugging a failed build.
+#
+# If the NJ variable is not defined, "make" will perform a parallel build
+# using maximum number of processors on the compilation machine. If using
+# VERBOSE=1, the verbose output will be garbled by many processes writing
+# to STDOUT at the same time and will be difficult to interpret. When using
+# VERBOSE=1, it can be helpful to also use NJ=1.
+#------------------------------------------------------------------------------#
+
+make -j $NJ VERBOSE=$SET_VERBOSE
+
+#------------------------------------------------------------------------------#
+# Done.
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# vim: syntax=sh
+#------------------------------------------------------------------------------#

@@ -3,15 +3,33 @@
 
 // If this is defined particle and mover buffers will not resize dynamically
 // (This is the common case for the users)
-#define DISABLE_DYNAMIC_RESIZING
+//#define DISABLE_DYNAMIC_RESIZING
 
 // FIXME: ARCHITECTURAL FLAW!  CUSTOM BCS AND SHARED FACES CANNOT
 // COEXIST ON THE SAME FACE!  THIS MEANS THAT CUSTOM BOUNDARYS MUST
 // REINJECT ALL ABSORBED PARTICLES IN THE SAME DOMAIN!
 
+
+// Updated by Scott V. Luedtke, XCP-6, December 6, 2018.
+// The mover array is now resized along with the particle array.  The mover
+// array is filled during advance_p and is most likely to overflow there, not
+// here.  Both arrays will now resize down as well.
+// 12/20/18: The mover array is no longer resized with the particle array, as
+// this actually uses more RAM than having static mover arrays.  The mover will
+// still size up if there are too many incoming particles, but I have not
+// encountered this.  Some hard-to-understand bit shifts have been replaced with
+// cleaner code that the compiler should have no trouble optimizing.
+// Spits out lots of warnings. TODO: Remove warnings after testing.
+
 #ifdef V4_ACCELERATION
 using namespace v4;
 #endif
+
+#ifndef MIN_NP
+#define MIN_NP 128 // Default to 4kb (~1 page worth of memory)
+//#define MIN_NP 32768 // 32768 particles is 1 MiB of memory.
+#endif
+
 
 enum { MAX_PBC = 32, MAX_SP = 32 };
 
@@ -53,9 +71,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   species_t * sp;
   int face;
 
-  // Check input args 
+  // Check input args
 
-  if( !sp_list ) return; // Nothing to do if no species 
+  if( !sp_list ) return; // Nothing to do if no species
   if( !fa || !aa || sp_list->g!=aa->g || fa->g!=aa->g )
     ERROR(( "Bad args" ));
 
@@ -92,7 +110,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     bc[face] = g->bc[f2b[face]];
     shared[face] = (bc[face]>=0) && (bc[face]<world_size) &&
                    (bc[face]!=world_rank);
-    if( shared[face] ) range[face] = g->range[bc[face]]; 
+    if( shared[face] ) range[face] = g->range[bc[face]];
   }
 
   // Begin receiving the particle counts
@@ -104,7 +122,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     }
 
   // Load the particle send and local injection buffers
-  
+
   do {
 
     particle_injector_t * RESTRICT ALIGNED(16) pi_send[6];
@@ -131,7 +149,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     // be satisfied (if the handlers conform that it).  We should be
     // more flexible though in the future (especially given above the
     // above overalloc).
-    
+
     int nm = 0; LIST_FOR_EACH( sp, sp_list ) nm += sp->nm;
 
     for( face=0; face<6; face++ )
@@ -165,7 +183,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       particle_injector_t * RESTRICT ALIGNED(16) pi;
       int i, voxel;
       int64_t nn;
-      
+
       // Note that particle movers for each species are processed in
       // reverse order.  This allows us to backfill holes in the
       // particle list created by boundary conditions and/or
@@ -182,7 +200,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         voxel >>= 3;
         p0[i].i = voxel;
         nn = neighbor[ 6*voxel + face ];
-        
+
         // Absorb
 
         if( nn==absorb_particles ) {
@@ -196,9 +214,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         if( ((nn>=0) & (nn< rangel)) | ((nn>rangeh) & (nn<=rangem)) ) {
           pi = &pi_send[face][n_send[face]++];
-	  // This appears to be working with the different components of position
-	  // and velocity for a single particle.  Thus, I do't think it is a
-	  // candidate for longer SIMD vector lengths without further study.
 #         ifdef V4_ACCELERATION
           copy_4x1( &pi->dx,    &p0[i].dx  );
           copy_4x1( &pi->ux,    &p0[i].ux  );
@@ -209,7 +224,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           pi->ux=p0[i].ux; pi->uy=p0[i].uy; pi->uz=p0[i].uz; pi->w=p0[i].w;
           pi->dispx = pm->dispx; pi->dispy = pm->dispy; pi->dispz = pm->dispz;
           pi->sp_id = sp_id;
-#         endif 
+#         endif
           (&pi->dx)[axis[face]] = dir[face];
           pi->i                 = nn - range[face];
           pi->sp_id             = sp_id;
@@ -249,9 +264,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       backfill:
 
         np--;
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &p0[i].dx, &p0[np].dx );
         copy_4x1( &p0[i].ux, &p0[np].ux );
@@ -260,7 +272,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       endif
 
       }
-      
+
       sp->np = np;
       sp->nm = 0;
     }
@@ -269,7 +281,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
   // Finish exchanging particle counts and start exchanging actual
   // particles.
-  
+
   // Note: This is wasteful of communications.  A better protocol
   // would fuse the exchange of the counts with the exchange of the
   // messages.  in a slightly more complex protocol.  However, the MP
@@ -278,7 +290,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   // prohibits such (specifically, in both, you can't do the
   // equilvanet of a MPI_Getcount to determine how much data you
   // actually received.
-  
+
   for( face=0; face<6; face++ )
     if( shared[face] ) {
       *((int *)mp_send_buffer( mp, f2b[face] )) = n_send[face];
@@ -309,13 +321,13 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   // Resize particle storage to accomodate worst case inject
 
   do {
-    int n;
-    
+    int n, nm;
+
     // Resize each species's particle and mover storage to be large
     // enough to guarantee successful injection.  (If we broke down
     // the n_recv[face] by species before sending it, we could be
     // tighter on memory footprint here.)
-    
+
     int max_inj = n_ci;
     for( face=0; face<6; face++ )
       if( shared[face] ) max_inj += n_recv[face];
@@ -323,31 +335,73 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     LIST_FOR_EACH( sp, sp_list ) {
       particle_mover_t * new_pm;
       particle_t * new_p;
-      
+
       n = sp->np + max_inj;
       if( n>sp->max_np ) {
-        n = n + (n>>2) + (n>>4); // Increase by 31.25% (~<"silver
+        n += 0.3125*n; // Increase by 31.25% (~<"silver
         /**/                     // ratio") to minimize resizes (max
         /**/                     // rate that avoids excessive heap
         /**/                     // fragmentation)
+        //float resize_ratio = (float)n/sp->max_np;
         WARNING(( "Resizing local %s particle storage from %i to %i",
                   sp->name, sp->max_np, n ));
         MALLOC_ALIGNED( new_p, n, 128 );
         COPY( new_p, sp->p, sp->np );
         FREE_ALIGNED( sp->p );
         sp->p = new_p, sp->max_np = n;
-      }
-      
-      n = sp->nm + max_inj;
-      if( n>sp->max_nm ) {
-        n = n + (n>>2) + (n>>4); // See note above
+
+        /*nm = sp->max_nm * resize_ratio;
         WARNING(( "Resizing local %s mover storage from %i to %i",
-                  sp->name, sp->max_nm, n ));
-        MALLOC_ALIGNED( new_pm, n, 128 );
+                  sp->name, sp->max_nm, nm ));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
         COPY( new_pm, sp->pm, sp->nm );
         FREE_ALIGNED( sp->pm );
         sp->pm = new_pm;
-        sp->max_nm = n;
+        sp->max_nm = nm;*/
+      }
+      else if(sp->max_np > MIN_NP && n < sp->max_np>>1)
+      {
+        n += 0.125*n; // Overallocate by less since this rank is decreasing
+        if (n<MIN_NP) n = MIN_NP;
+        //float resize_ratio = (float)n/sp->max_np;
+        WARNING(( "Resizing (shrinking) local %s particle storage from "
+                    "%i to %i", sp->name, sp->max_np, n));
+        MALLOC_ALIGNED( new_p, n, 128 );
+        COPY( new_p, sp->p, sp->np );
+        FREE_ALIGNED( sp->p );
+        sp->p = new_p, sp->max_np = n;
+
+        /*nm = sp->max_nm * resize_ratio;
+        WARNING(( "Resizing (shrinking) local %s mover storage from "
+                    "%i to %i", sp->name, sp->max_nm, nm));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
+        COPY( new_pm, sp->pm, sp->nm );
+        FREE_ALIGNED( sp->pm );
+        sp->pm = new_pm, sp->max_nm = nm;*/
+      }
+
+      // Feasibly, a vacuum-filled rank may receive a shock and need more movers
+      // than available from MIN_NP
+      nm = sp->nm + max_inj;
+      if( nm>sp->max_nm ) {
+        nm += 0.3125*nm; // See note above
+        //float resize_ratio = (float)nm/sp->max_nm;
+        WARNING(( "This happened.  Resizing local %s mover storage from "
+                    "%i to %i based on not enough movers",
+                  sp->name, sp->max_nm, nm ));
+        MALLOC_ALIGNED( new_pm, nm, 128 );
+        COPY( new_pm, sp->pm, sp->nm );
+        FREE_ALIGNED( sp->pm );
+        sp->pm = new_pm;
+        sp->max_nm = nm;
+
+        /*n = sp->max_np * resize_ratio;
+        WARNING(( "Resizing local %s particle storage from %i to %i",
+                  sp->name, sp->max_np, n ));
+        MALLOC_ALIGNED( new_p, n, 128 );
+        COPY( new_p, sp->p, sp->np );
+        FREE_ALIGNED( sp->p );
+        sp->p = new_p, sp->max_np = n;*/
       }
     }
   } while(0);
@@ -368,7 +422,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     int sp_max_nm[64], n_dropped_movers[64];
 #   endif
 
-    if( num_species( sp_list ) > MAX_SP ) 
+    if( num_species( sp_list ) > MAX_SP )
       ERROR(( "Update this to support more species" ));
     LIST_FOR_EACH( sp, sp_list ) {
       sp_p[  sp->id ] = sp->p;
@@ -391,7 +445,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       /**/  particle_mover_t    * RESTRICT ALIGNED(16) pm;
       const particle_injector_t * RESTRICT ALIGNED(16) pi;
       int np, nm, n, id;
-  
+
       face++; if( face==7 ) face = 0;
       if( face==6 ) pi = ci, n = n_ci;
       else if( shared[face] ) {
@@ -400,7 +454,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           (((char *)mp_recv_buffer(mp,f2b[face]))+16);
         n  = n_recv[face];
       } else continue;
-        
+
       // Reverse order injection is done to reduce thrashing of the
       // particle list (particles are removed reverse order so the
       // overall impact of removal + injection is to keep injected
@@ -408,7 +462,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       //
       // WARNING: THIS TRUSTS THAT THE INJECTORS (INCLUDING THOSE
       // RECEIVED FROM OTHER NODES) HAVE VALID PARTICLE IDS.
-  
+
       pi += n-1;
       for( ; n; pi--, n-- ) {
         id = pi->sp_id;
@@ -418,9 +472,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( np>=sp_max_np[id] ) { n_dropped_particles[id]++; continue; }
 #       endif
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1(  &p[np].dx,    &pi->dx    );
         copy_4x1(  &p[np].ux,    &pi->ux    );
@@ -433,9 +484,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 #       ifdef DISABLE_DYNAMIC_RESIZING
         if( nm>=sp_max_nm[id] ) { n_dropped_movers[id]++;    continue; }
 #       endif
-	// This appears to be working with the different components of position
-	// and velocity for a single particle.  Thus, I do't think it is a
-	// candidate for longer SIMD vector lengths without further study.
 #       ifdef V4_ACCELERATION
         copy_4x1( &pm[nm].dispx, &pi->dispx );
         pm[nm].i = np;
@@ -446,7 +494,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         sp_nm[id] = nm + move_p( p, pm+nm, a0, g, sp_q[id] );
       }
     } while(face!=5);
-  
+
     LIST_FOR_EACH( sp, sp_list ) {
 #     ifdef DISABLE_DYNAMIC_RESIZING
       if( n_dropped_particles[sp->id] )
@@ -466,7 +514,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     }
 
   } while(0);
-  
+
   for( face=0; face<6; face++ )
     if( shared[face] ) mp_end_send(mp,f2b[face]);
 }

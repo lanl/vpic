@@ -27,10 +27,10 @@ env: #maybe add mpich later
   matrix:
     - COVERAGE=ON
     - USE_V4_SSE=ON
-    - USE_V4_AVX=ON
+    - USE_V4_AVX2=ON
     - USE_V4_PORTABLE=ON
-    - USE_V4_AVX=ON USE_V8_AVX=ON
-    - USE_V4_AVX=ON USE_V8_PORTABLE=ON
+    - USE_V4_AVX2=ON USE_V8_AVX2=ON
+    - USE_V4_PORTABLE=ON USE_V8_PORTABLE=ON
 
 script:
   - mkdir build && cd build &&

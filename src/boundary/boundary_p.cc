@@ -220,10 +220,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           copy_4x1( &pi->dispx, &pm->dispx );
 #         else
           pi->dx=p0[i].dx; pi->dy=p0[i].dy; pi->dz=p0[i].dz;
-          pi->i =nn - range[face];
           pi->ux=p0[i].ux; pi->uy=p0[i].uy; pi->uz=p0[i].uz; pi->w=p0[i].w;
           pi->dispx = pm->dispx; pi->dispy = pm->dispy; pi->dispz = pm->dispz;
-          pi->sp_id = sp_id;
 #         endif
           (&pi->dx)[axis[face]] = dir[face];
           pi->i                 = nn - range[face];

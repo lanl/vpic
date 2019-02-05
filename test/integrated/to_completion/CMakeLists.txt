@@ -10,7 +10,9 @@ set(ARGS "")
 
 list(APPEND DEFAULT_ARG_TESTS
     simple # This test is a simple run which should not die
-    dump) # This is a simple run which should dump restart files
+    dump # This is a simple run which should dump restart files
+    reconnection_test # This is a simple reconnection run
+    )
 
 list(APPEND RESTART_DECK dump) # Reuse existing deck and start half way
 list(APPEND RESTART_BINARY restore)

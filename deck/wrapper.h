@@ -16,9 +16,9 @@
 //-----------------------------------------------------------------------------
 
 #define begin_globals struct user_global_t
-#define global ((struct user_global_t *)user_global)
 
 #define begin_initialization                                      \
+user_global_t* global = new user_global_t(); \
 void                                                              \
 vpic_simulation::user_initialization( int num_cmdline_arguments,  \
                                       char ** cmdline_argument )

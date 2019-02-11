@@ -222,6 +222,48 @@ SET_UNIT_TESTS="OFF"
 #SET_UNIT_TESTS="ON"
 
 #------------------------------------------------------------------------------#
+# Choose OpenSSL support for checksums.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_ENABLE_OPENSSL=OFF, use of checksums is turned off.
+#
+# If SET_ENABLE_OPENSSL=ON, use of checksums is turned on.
+#------------------------------------------------------------------------------#
+
+SET_ENABLE_OPENSSL="OFF"
+#SET_ENABLE_OPENSSL="ON"
+
+#------------------------------------------------------------------------------#
+# Choose support for dynamic resizing of particle arrays.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_DISABLE_DYNAMIC_RESIZING=OFF, particle arrays will be resized
+# dynamically.
+#
+# If SET_DISABLE_DYNAMIC_RESIZING=ON, particle arrays will not be resized
+# dynamically and the user will be responsible for ensuring that particle
+# arrays have enough space to handle the evolution of a non-uniform particle
+# distribution.
+#------------------------------------------------------------------------------#
+
+SET_DISABLE_DYNAMIC_RESIZING="OFF"
+#SET_DISABLE_DYNAMIC_RESIZING="ON"
+
+#------------------------------------------------------------------------------#
+# Choose the minimum number of particles to dynamically allocate space for.
+#------------------------------------------------------------------------------#
+# A value must be chosen.  The default is 128 particles which allocates space
+# equal to a 4 KByte page size.
+#------------------------------------------------------------------------------#
+
+SET_PARTICLE_MIN_NUM="128"
+#SET_PARTICLE_MIN_NUM="32768"
+
+#------------------------------------------------------------------------------#
 # Choose the CMake build type.
 #------------------------------------------------------------------------------#
 # One of the available options must be chosen. Valid options depend on build
@@ -793,9 +835,7 @@ fi
 
 if [ "$VSORT" = "LSORT" ]
 then
-    FLAGS_C_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
-
-    FLAGS_CXX_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
+    SET_LEGACY_SORT="ON"
 fi
 
 #------------------------------------------------------------------------------#
@@ -936,6 +976,10 @@ cmake \
     -DCMAKE_BUILD_TYPE=$SET_BUILD_TYPE \
     -DENABLE_INTEGRATED_TESTS=$SET_INTEGRATED_TESTS \
     -DENABLE_UNIT_TESTS=$SET_UNIT_TESTS \
+    -DENABLE_OPENSSL=$SET_ENABLE_OPENSSL \
+    -DDISABLE_DYNAMIC_RESIZING=$SET_DISABLE_DYNAMIC_RESIZING \
+    -DSET_MIN_NUM_PARTICLES=$SET_PARTICLE_MIN_NUM \
+    -DUSE_LEGACY_SORT=$SET_LEGACY_SORT \
     -DUSE_V4_PORTABLE=$SET_V4_PORTABLE \
     -DUSE_V4_SSE=$SET_V4_SSE \
     -DUSE_V4_AVX=$SET_V4_AVX \

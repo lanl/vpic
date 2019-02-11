@@ -65,6 +65,8 @@ option(USE_V16_PORTABLE "Enable V16 Portable" OFF)
 
 option(USE_V16_AVX512 "Enable V16 AVX512" OFF)
 
+option(USE_LEGACY_SORT "Enable Legacy Sort Implementation" OFF)
+
 #option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
@@ -109,6 +111,7 @@ endif(DISABLE_DYNAMIC_RESIZING)
 if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
     add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
 endif()
+
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#
@@ -126,6 +129,15 @@ find_package(Threads REQUIRED)
 #------------------------------------------------------------------------------#
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Add options for building with the legacy particle sort implementation.
+#------------------------------------------------------------------------------#
+
+if(USE_LEGACY_SORT)
+  add_definitions(-DVPIC_USE_LEGACY_SORT)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
+endif(USE_LEGACY_SORT)
 
 #------------------------------------------------------------------------------#
 # Add options for building with a threading model.

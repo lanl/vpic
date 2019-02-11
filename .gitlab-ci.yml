@@ -1,0 +1,100 @@
+before_script:
+    #- export http_proxy=http://proxyout.lanl.gov:8080
+    #- export HTTP_PROXY=http://proxyout.lanl.gov:8080
+    #- export https_proxy=https://proxyout.lanl.gov:8080
+    #- export HTTPS_PROXY=https://proxyout.lanl.gov:8080
+    - . /mnt/local/ssd/vpic/spack/share/spack/setup-env.sh
+    - . $(spack location -i lmod)/lmod/lmod/init/zsh
+    - . /mnt/local/ssd/vpic/spack/share/spack/setup-env.sh
+    - module unuse /mnt/local/ssd/vpic/spack/share/spack/modules/linux-centos7-x86_64
+    - module use /mnt/local/ssd/vpic/spack/share/spack/lmod/linux-centos7-x86_64
+
+stages:
+    - build_intel
+    - build_gcc
+
+# TODO: add werror build
+# TODO: Add v8/v16/etc
+
+.build_gcc:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  stage: build_gcc
+  script:
+    - module load Core/gcc/8.2.0-sxbf4jq
+    - module load cmake/3.13.3-zd4lpat
+    - module load openmpi/3.1.3-atscp4j
+    - j="$(grep -c processor /proc/cpuinfo 2>/dev/null)" || j=0; ((j++))
+    - build_dir=build-${CI_JOB_NAME}-${CI_JOB_ID}
+    - mkdir -p ${build_dir}
+    - pushd ${build_dir}
+    - CC=${_CC} CXX=${_CXX} cmake
+      -DENABLE_INTEGRATED_TESTS=ON
+      -DENABLE_UNIT_TESTS=ON
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      ..
+    - make -j ${j} -l ${l} VERBOSE=1
+    - make test CTEST_OUTPUT_ON_FAILURE=1
+    - make install DESTDIR=${PWD}/install
+
+.build_intel:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  stage: build_intel
+  script:
+    - module load Core/gcc/8.2.0-sxbf4jq
+    - module load gcc/8.2.0/cmake/3.13.3-zd4lpat
+    - source /mnt/local/ssd/vpic/spack/opt/spack/linux-centos7-x86_64/gcc-8.2.0/intel-19.0.1-p7galop7xyykgiz67bwmth44xwitbbfg/compilers_and_libraries_2019.1.144/linux/bin/compilervars.sh intel64
+    - module load  intel/19.0.1.144/openmpi/3.1.3-dhknpg2
+    - j="$(grep -c processor /proc/cpuinfo 2>/dev/null)" || j=0; ((j++))
+    - build_dir=build-${CI_JOB_NAME}-${CI_JOB_ID}
+    - mkdir -p ${build_dir}
+    - pushd ${build_dir}
+    - CC=${_CC} CXX=${_CXX} cmake
+      -DENABLE_INTEGRATED_TESTS=ON
+      -DENABLE_UNIT_TESTS=ON
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      ..
+    - make -j ${j} -l ${l} VERBOSE=1
+    - make test CTEST_OUTPUT_ON_FAILURE=1
+    - make install DESTDIR=${PWD}/install
+
+.gcc:
+  variables:
+    _CC: "gcc"
+    _CXX: "g++"
+  extends: .build_gcc
+
+Release-GCC:
+  variables:
+    CMAKE_BUILD_TYPE: "Release"
+  extends: .gcc
+
+Debug-GCC:
+  variables:
+    CMAKE_BUILD_TYPE: "Debug"
+  extends: .gcc
+
+  #.clang:
+  #variables:
+  #_CC: "clang"
+  #_CXX: "clang++"
+  #extends: .build
+
+  #Release-Clang:
+  #variables:
+  #CMAKE_BUILD_TYPE: "Release"
+  #extends: .clang
+
+.intel:
+    variables:
+        #_CC: "icc"
+        #_CXX: "icpc"
+        _CC: "mpicc"
+        _CXX: "mpic++"
+    extends: .build_intel
+
+Release-Intel:
+  variables:
+      CMAKE_BUILD_TYPE: "Release"
+  extends: .intel

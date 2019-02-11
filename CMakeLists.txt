@@ -231,6 +231,18 @@ if(USE_V16_AVX512)
   set(USE_V16 True)
 endif(USE_V16_AVX512)
 
+# TODO: Can we improve the way this is done so it's detection of a positive not
+# multiple negatives?
+if (NOT USE_V4 AND NOT USE_V8 AND NOT USE_V16)
+    # This option is intended to indicate that we're not using any of the
+    # specialized intrinsics code paths, and we can expect numerical answer to
+    # be the same as the "reference" (serial/auto-vec) implementation. This can
+    # be especially useful when trying to test small differences in expressions
+    # and we want bitwise answers to a known implementation
+    set(NO_EXPLICIT_VECTOR True)
+endif()
+
+
 #------------------------------------------------------------------------------#
 # Add options for building with explicit autovec support.
 #------------------------------------------------------------------------------#
@@ -377,6 +389,8 @@ if(ENABLE_UNIT_TESTS)
   add_executable(rng src/util/rng/test/rng.cc)
   target_link_libraries(rng vpic)
   add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
+
+  add_subdirectory(test/unit)
 
 endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#

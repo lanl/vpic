@@ -240,13 +240,13 @@ move_p( particle_t       * ALIGNED(128) p0,
 
     s_dir[0] = (s_dispx>0.0f) ? 1.0f : -1.0f;
     s_dir[1] = (s_dispy>0.0f) ? 1.0f : -1.0f;
-    s_dir[2] = (s_dispz>0.0) ? 1.0f : -1.0f;
+    s_dir[2] = (s_dispz>0.0f) ? 1.0f : -1.0f;
 
     // Compute the twice the fractional distance to each potential
     // streak/cell face intersection.
-    v0 = (s_dispx==0) ? 3.4e38f : (s_dir[0]-s_midx)/s_dispx;
-    v1 = (s_dispy==0) ? 3.4e38f : (s_dir[1]-s_midy)/s_dispy;
-    v2 = (s_dispz==0) ? 3.4e38f : (s_dir[2]-s_midz)/s_dispz;
+    v0 = (s_dispx==0.0f) ? 3.4e38f : (s_dir[0]-s_midx)/s_dispx;
+    v1 = (s_dispy==0.0f) ? 3.4e38f : (s_dir[1]-s_midy)/s_dispy;
+    v2 = (s_dispz==0.0f) ? 3.4e38f : (s_dir[2]-s_midz)/s_dispz;
 
     // Determine the fractional length and axis of current streak. The
     // streak ends on either the first face intersected by the
@@ -254,10 +254,10 @@ move_p( particle_t       * ALIGNED(128) p0,
     //
     //   axis 0,1 or 2 ... streak ends on a x,y or z-face respectively
     //   axis 3        ... streak ends at end of the particle track
-    /**/      v3=2.0f,  axis=3.0f;
-    if(v0<v3) v3=v0, axis=0.0f;
-    if(v1<v3) v3=v1, axis=1.0f;
-    if(v2<v3) v3=v2, axis=2.0f;
+    /**/      v3=2.0f, axis=3;
+    if(v0<v3) v3=v0,   axis=0;
+    if(v1<v3) v3=v1,   axis=1;
+    if(v2<v3) v3=v2,   axis=2;
     v3 *= 0.5f;
 
     // Compute the midpoint and the normalized displacement of the streak

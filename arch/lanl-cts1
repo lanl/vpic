@@ -21,6 +21,54 @@ src_dir="${0%/*}/.."
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
+# Choose a compiler.
+#------------------------------------------------------------------------------#
+# One of the compiler choices in this section must be chosen. Valid options
+# are the following.
+#
+# INT: Intel compilers
+# GNU: GNU compilers
+# PGI: Portland Group compilers, now part of Nvidia
+#
+# Note that selecting PGI for Portland Group compilers has not been tested
+# and probably does not work.
+#------------------------------------------------------------------------------#
+
+VCOM="INT"
+#VCOM="GNU"
+#VCOM="PGI"
+
+#------------------------------------------------------------------------------#
+# Choose an MPI implementation.
+#------------------------------------------------------------------------------#
+# One of the MPI library choices must be chosen. Valid options are the
+# following.
+#
+# OMPI: Open MPI, most commonly used MPI implementation on LANL CTS-1 machines
+# IMPI: Intel MPI
+#
+# Choose Intel MPI if you want to use the Intel Application Performance
+# Snapshot performance analysis tool to analyze MPI performance of VPIC or
+# other Intel analysis tools which provide analysis of MPI usage.
+#------------------------------------------------------------------------------#
+
+VMPI="OMPI"
+#VMPI="IMPI"
+
+#------------------------------------------------------------------------------#
+# Choose a thread model.
+#------------------------------------------------------------------------------#
+# One of the two available thread models must be chosen. Valid options are the
+# following.
+#
+# PTH: Pthreads
+# OMP: OpenMP
+#------------------------------------------------------------------------------#
+
+VTHR="PTH"
+#VTHR="OMP"
+
+#------------------------------------------------------------------------------#
 # Choose type of vector intrinsics support.
 #------------------------------------------------------------------------------#
 # Note the following constraints.

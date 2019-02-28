@@ -1,13 +1,15 @@
 #! /usr/bin/env bash
 #------------------------------------------------------------------------------#
-# This script supports building VPIC on CTS-1 machines at Los Alamos National
-# Laboratory (LANL). These machines run the Tri-lab TOSS 3.3 Operating System,
-# a customized version of Red Hat Enterprise Linux 7.5. CTS-1 machines have
-# dual socket 18 core Broadwell nodes. These machines provide three compiler
-# choices: Intel, GNU and PGI. Three MPI implementations are provided: Open
-# MPI, Intel MPI and Mvapich.
+# This script supports building VPIC on ATS-1 machines at Los Alamos National
+# Laboratory (LANL) for Knights Landing nodes. These machines run the Cray
+# Linux Environment Operating System and have two compute partitions, a Haswell
+# partition and a Knights Landing (KNL) partition. Both processor types are
+# Intel processors. These machines provide three compiler choices: Intel, GNU
+# and Cray compilers. Two MPI implementations are provided: Cray Mpich and Open
+# MPI.
 #
-# Normal users should not need to change this script if happy with defaults.
+# Normal users should not need to change this script if building VPIC to run
+# on the KNL nodes of ATS-1 machines and happy with defaults.
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
@@ -28,15 +30,17 @@ src_dir="${0%/*}/.."
 #
 # INT: Intel compilers
 # GNU: GNU compilers
-# PGI: Portland Group compilers, now part of Nvidia
+# CCE: Cray compilers
 #
-# Note that selecting PGI for Portland Group compilers has not been tested
-# and probably does not work.
+# Note that selecting CCE for the Cray compilers currently does not work. The
+# main reason why you might want to compile with the Cray compilers is to use
+# some of the Cray specific tools like Reveal or a small set of features in
+# the CrayPat profiling software. This is not a common use case for users.
 #------------------------------------------------------------------------------#
 
 VCOM="INT"
 #VCOM="GNU"
-#VCOM="PGI"
+#VCOM="CCE"
 
 #------------------------------------------------------------------------------#
 # Choose an MPI implementation.
@@ -44,16 +48,12 @@ VCOM="INT"
 # One of the MPI library choices must be chosen. Valid options are the
 # following.
 #
-# OMPI: Open MPI, most commonly used MPI implementation on LANL CTS-1 machines
-# IMPI: Intel MPI
-#
-# Choose Intel MPI if you want to use the Intel Application Performance
-# Snapshot performance analysis tool to analyze MPI performance of VPIC or
-# other Intel analysis tools which provide analysis of MPI usage.
+# CMPI: Cray Mpich, the Cray supported MPI library
+# OMPI: Open MPI
 #------------------------------------------------------------------------------#
 
-VMPI="OMPI"
-#VMPI="IMPI"
+VMPI="CMPI"
+#VMPI="OMPI"
 
 #------------------------------------------------------------------------------#
 # Choose a thread model.
@@ -73,7 +73,7 @@ VTHR="PTH"
 #------------------------------------------------------------------------------#
 # Note the following constraints.
 #
-# Each of the eight variables in this section must have a configured value.
+# Each of the nine variables in this section must have a configured value.
 # This is because the corresponding "USE" cmake variable is set on the cmake
 # command line below to allow any possible combinations to be configured using
 # a single cmake command.
@@ -98,7 +98,8 @@ VTHR="PTH"
 # for other VPIC functions.
 #
 # In summary, when using vector versions on a machine with 256 bit SIMD, the
-# V4 and V8 implementations should be configured as ON.
+# V4 and V8 implementations should be configured as ON. When using a machine
+# with 512 bit SIMD, V4 and V16 implementations should be configured as ON.
 #
 # First, we turn all of the vector options OFF. Then, we turn on the ones we
 # want.
@@ -112,6 +113,7 @@ SET_V8_PORTABLE="OFF"
 SET_V8_AVX="OFF"
 SET_V8_AVX2="OFF"
 SET_V16_PORTABLE="OFF"
+SET_V16_AVX512="OFF"
 
 #SET_V4_PORTABLE="ON"
 #SET_V4_SSE="ON"
@@ -119,8 +121,9 @@ SET_V16_PORTABLE="OFF"
 SET_V4_AVX2="ON"
 #SET_V8_PORTABLE="ON"
 #SET_V8_AVX="ON"
-SET_V8_AVX2="ON"
+#SET_V8_AVX2="ON"
 #SET_V16_PORTABLE="ON"
+SET_V16_AVX512="ON"
 
 #------------------------------------------------------------------------------#
 # Choose format of status update output.
@@ -149,9 +152,11 @@ SET_MORE_DIGITS="OFF"
 # implementation from the legacy v407 version of VPIC. This implementation
 # supports both in-place and out-of-place sorting of the particles. It is very
 # competitive with the thread parallel sort implementation for a small number
-# of threads per MPI rank, i.e. 4 or less. Also, the memory footprint of VPIC
-# is reduced by the memory of a particle array which can be significant for
-# particle dominated problems.
+# of threads per MPI rank, i.e. 4 or less, especially on KNL because sorting
+# the particles in-place allows the fraction of particles stored in High
+# Bandwidth Memory (HBM) to remain stored in HBM. Also, the memory footprint
+# of VPIC is reduced by the memory of a particle array which can be significant
+# for particle dominated problems.
 #
 # The TSORT particle sort implementation is a thread parallel implementation.
 # Currently, it can only perform out-of-place sorting of the particles. It will
@@ -300,16 +305,17 @@ SET_VERBOSE=0
 
 #VERSION_CMAKE=3.12.1
 
-#VERSION_INTEL=18.0.3
+#VERSION_INTEL=19.0.1
 #VERSION_INTEL_VTUNE_AMPLIFIER=2019.1.0
 #VERSION_INTEL_VECTOR_ADVISOR=2019.1.0
 #VERSION_INTEL_INSPECTOR=2019.1.0
 #VERSION_INTEL_TRACE_ANALYZER=2019.1.022
-#VERSION_INTEL_MPI=2019.1
 
 #VERSION_GNU=7.3.0
 
-#VERSION_PGI=18.10
+#VERSION_CCE=9.0.0.21672
+#VERSION_CRAY_MPICH=7.7.4.4
+#VERSION_CRAY_PERF_TOOLS=7.0.4
 
 #VERSION_OPEN_MPI=3.1.2
 
@@ -327,13 +333,13 @@ SET_VERBOSE=0
 # Configure default compiler names to use Cray wrapper scripts.
 #------------------------------------------------------------------------------#
 
-VPIC_COMPILER_C="mpicc"
-VPIC_COMPILER_CXX="mpicxx"
+VPIC_COMPILER_C="cc"
+VPIC_COMPILER_CXX="CC"
 
-if [ "$VMPI" = "IMPI" ]
+if [ "$VMPI" = "OMPI" ]
 then
-    VPIC_COMPILER_C="mpiicc"
-    VPIC_COMPILER_CXX="mpiicpc"
+    VPIC_COMPILER_C="mpicc"
+    VPIC_COMPILER_CXX="mpicxx"
 fi
 
 #------------------------------------------------------------------------------#
@@ -389,9 +395,15 @@ then
     # is declared inline is not inlined. Inlining is very important to VPIC
     # performance and it is useful to know if compiler has not inlined a
     # function that was assumed to be inlined.
+    #
+    # Use of "-craype-verbose" causes Cray compiler wrapper script to print
+    # command it is forwarding to actual compiler for invocation. This is very
+    # useful for producing a build log to make sure compiler is being invoked
+    # with expected options.
     #--------------------------------------------------------------------------#
 
     FLAGS_CXX_COMPILER+=" -Winline"
+    FLAGS_CXX_COMPILER+=" -craype-verbose"
 
     #--------------------------------------------------------------------------#
     # Use of "-qopt-report=5" specifies level of detail in compiler reports.
@@ -418,6 +430,27 @@ then
     #--------------------------------------------------------------------------#
 
     FLAGS_CXX_COMPILER+=" -Wl,--export-dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-dynamic" causes Cray compiler wrapper to direct compiler driver
+    # to link dynamic libraries at runtime instead of static libraries. The
+    # default on Cray systems is to link static libraries. It is important for
+    # many tools, especially performance analysis tools, to have an executable
+    # that has been linked dynamically to system libraries and MPI libraries.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-qopt-zmm-usage=high" causes the compiler to generate zmm code,
+    # i.e. AVX-512 code, without any restrictions. Extensive use of AVX-512
+    # code causes the CPU core to down clock or throttle to avoid overheating.
+    # The default is for the compiler to use some internal limits on how much
+    # AVX-512 instructions are used. This is relevant on ATS-1 systems only
+    # for KNL processors.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -qopt-zmm-usage=high"
 
     #--------------------------------------------------------------------------#
     # Use "-g" to provide debug symbols in the executable.  In general, use of
@@ -466,9 +499,15 @@ then
     # is declared inline is not inlined. Inlining is very important to VPIC
     # performance and it is useful to know if compiler has not inlined a
     # function that was assumed to be inlined.
+    #
+    # Use of "-craype-verbose" causes Cray compiler wrapper script to print
+    # command it is forwarding to actual compiler for invocation. This is very
+    # useful for producing a build log to make sure compiler is being invoked
+    # with expected options.
     #--------------------------------------------------------------------------#
 
     FLAGS_C_COMPILER+=" -Winline"
+    FLAGS_C_COMPILER+=" -craype-verbose"
 
     #--------------------------------------------------------------------------#
     # Use of "-qopt-report=5" specifies level of detail in compiler reports.
@@ -495,6 +534,27 @@ then
     #--------------------------------------------------------------------------#
 
     FLAGS_C_COMPILER+=" -Wl,--export-dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-dynamic" causes Cray compiler wrapper to direct compiler driver
+    # to link dynamic libraries at runtime instead of static libraries. The
+    # default on Cray systems is to link static libraries. It is important for
+    # many tools, especially performance analysis tools, to have an executable
+    # that has been linked dynamically to system libraries and MPI libraries.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-qopt-zmm-usage=high" causes the compiler to generate zmm code,
+    # i.e. AVX-512 code, without any restrictions. Extensive use of AVX-512
+    # code causes the CPU core to down clock or throttle to avoid overheating.
+    # The default is for the compiler to use some internal limits on how much
+    # AVX-512 instructions are used. This is relevant on ATS-1 systems only
+    # for KNL processors.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -qopt-zmm-usage=high"
 fi
 
 #------------------------------------------------------------------------------#
@@ -573,11 +633,23 @@ then
     FLAGS_CXX_COMPILER+=" -rdynamic"
 
     #--------------------------------------------------------------------------#
-    # Use of "-march=broadwell" causes g++ to generate code specific to and
-    # optimized for the architecture of Broadwell.
+    # Use of "-dynamic" causes Cray compiler wrapper to direct compiler driver
+    # to link dynamic libraries at runtime instead of static libraries. The
+    # default on Cray systems is to link static libraries. It is important for
+    # many tools, especially performance analysis tools, to have an executable
+    # that has been linked dynamically to system libraries and MPI libraries.
     #--------------------------------------------------------------------------#
 
-    FLAGS_CXX_COMPILER+=" -march=broadwell"
+    FLAGS_CXX_COMPILER+=" -dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-march=knl" or "-march=haswell" causes g++ to generate code
+    # specific to and optimized for the specific architecture of either KNL
+    # or Haswell. It appears that the Cray wrappers already do this correctly
+    # for KNL but it seems they may not for Haswell.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_CXX_COMPILER+=" -march=knl"
 
     #--------------------------------------------------------------------------#
     # Use "-g" to provide debug symbols in the executable.  In general, use of
@@ -649,39 +721,59 @@ then
     FLAGS_C_COMPILER+=" -rdynamic"
 
     #--------------------------------------------------------------------------#
-    # Use of "-march=broadwell" causes gcc to generate code specific to and
-    # optimized for the architecture of Broadwell.
+    # Use of "-dynamic" causes Cray compiler wrapper to direct compiler driver
+    # to link dynamic libraries at runtime instead of static libraries. The
+    # default on Cray systems is to link static libraries. It is important for
+    # many tools, especially performance analysis tools, to have an executable
+    # that has been linked dynamically to system libraries and MPI libraries.
     #--------------------------------------------------------------------------#
 
-    FLAGS_C_COMPILER+=" -march=broadwell"
+    FLAGS_C_COMPILER+=" -dynamic"
+
+    #--------------------------------------------------------------------------#
+    # Use of "-march=knl" or "-march=haswell" causes gcc to generate code
+    # specific to and optimized for the specific architecture of either KNL
+    # or Haswell. It appears that the Cray wrappers already do this correctly
+    # for KNL but it seems they may not for Haswell.
+    #--------------------------------------------------------------------------#
+
+    FLAGS_C_COMPILER+=" -march=knl"
 fi
 
 #------------------------------------------------------------------------------#
-# Configure options for the PGI compilers.
+# Configure options for the Cray compilers.
 #------------------------------------------------------------------------------#
 
-if [ "$VCOM" = "PGI" ]
+if [ "$VCOM" = "CCE" ]
 then
     #--------------------------------------------------------------------------#
     #
     #--------------------------------------------------------------------------#
 
     FLAGS_CXX_COMPILER="-g -O2"
+    #FLAGS_CXX_COMPILER+=" -hlist=ad"
+    #FLAGS_CXX_COMPILER+=" -hipa5"
     FLAGS_CXX_COMPILER+=" -Wl,--export-dynamic"
+    #FLAGS_CXX_COMPILER+=" -rdynamic"
+    FLAGS_CXX_COMPILER+=" -dynamic"
 
     #--------------------------------------------------------------------------#
     #
     #--------------------------------------------------------------------------#
 
     FLAGS_C_COMPILER="-g -O2"
+    #FLAGS_C_COMPILER+=" -hlist=ad"
+    #FLAGS_C_COMPILER+=" -hipa5"
     FLAGS_C_COMPILER+=" -Wl,--export-dynamic"
+    #FLAGS_C_COMPILER+=" -rdynamic"
+    FLAGS_C_COMPILER+=" -dynamic"
 fi
 
 #------------------------------------------------------------------------------#
 # This ends user configuration section.
 #
 # No changes required below unless VPIC build system has been extended or the
-# module system on CTS-1 machines has changed in some fundamental way.
+# module system on ATS-1 machines has changed in some fundamental way.
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
@@ -710,6 +802,21 @@ then
 fi
 
 #------------------------------------------------------------------------------#
+# Make sure the Cray programming environment is configured as the default of
+# PrgEnv-intel.
+#------------------------------------------------------------------------------#
+
+if [ "$CRAY_PRGENVGNU" = "loaded" ]
+then
+    module swap PrgEnv-gnu PrgEnv-intel
+fi
+
+if [ "$CRAY_PRGENVCRAY" = "loaded" ]
+then
+    module swap PrgEnv-cray PrgEnv-intel
+fi
+
+#------------------------------------------------------------------------------#
 # Configure environment using modules.
 #------------------------------------------------------------------------------#
 # Note that the user may want to modify the module configuration.
@@ -723,81 +830,86 @@ fi
 echo '#!/bin/bash' >> bashrc.modules
 echo "" >> bashrc.modules
 
-module purge
-echo "module purge" >> bashrc.modules
-
 module load friendly-testing
 echo "module load friendly-testing" >> bashrc.modules
 
 module load sandbox
 echo "module load sandbox" >> bashrc.modules
 
+module load cmake
+echo "module load cmake" >> bashrc.modules
+
 if [ ! "x$VERSION_CMAKE" = "x" ]
 then
-    module load cmake/$VERSION_CMAKE
-    echo "module load cmake/$VERSION_CMAKE" >> bashrc.modules
-else
-    module load cmake
-    echo "module load cmake" >> bashrc.modules
+    module swap cmake cmake/$VERSION_CMAKE
+    echo "module swap cmake cmake/$VERSION_CMAKE" >> bashrc.modules
 fi
+
+module unload craype-hugepages2M
+echo "module unload craype-hugepages2M" >> bashrc.modules
+
+module swap craype-haswell craype-mic-knl
+echo "module swap craype-haswell craype-mic-knl" >> bashrc.modules
 
 if [ "$VCOM" = "INT" ]
 then
     if [ ! "x$VERSION_INTEL" = "x" ]
     then
-        module load intel/$VERSION_INTEL
-        echo "module load intel/$VERSION_INTEL" >> bashrc.modules
-    else
-        module load intel
-        echo "module load intel" >> bashrc.modules
+        module swap intel intel/$VERSION_INTEL
+        echo "module swap intel intel/$VERSION_INTEL" >> bashrc.modules
     fi
 fi
 
 if [ "$VCOM" = "GNU" ]
 then
+    module swap PrgEnv-intel PrgEnv-gnu
+    echo "module swap PrgEnv-intel PrgEnv-gnu" >> bashrc.modules
+
     if [ ! "x$VERSION_GNU" = "x" ]
     then
-        module load gcc/$VERSION_GNU
-        echo "module load gcc/$VERSION_GNU" >> bashrc.modules
-    else
-        module load gcc
-        echo "module load gcc" >> bashrc.modules
+        module swap gcc gcc/$VERSION_GNU
+        echo "module swap gcc gcc/$VERSION_GNU" >> bashrc.modules
     fi
 fi
 
-if [ "$VCOM" = "PGI" ]
+if [ "$VCOM" = "CCE" ]
 then
-    if [ ! "x$VERSION_PGI" = "x" ]
+    module swap PrgEnv-intel PrgEnv-cray
+    echo "module swap PrgEnv-intel PrgEnv-cray" >> bashrc.modules
+
+    if [ ! "x$VERSION_CCE" = "x" ]
     then
-        module load pgi/$VERSION_PGI
-        echo "module load pgi/$VERSION_PGI" >> bashrc.modules
-    else
-        module load pgi
-        echo "module load pgi" >> bashrc.modules
+        module swap cce cce/$VERSION_CCE
+        echo "module swap cce cce/$VERSION_CCE" >> bashrc.modules
     fi
+fi
+
+if [ "$VMPI" = "CMPI" ]
+then
+    if [ ! "x$VERSION_CRAY_MPICH" = "x" ]
+    then
+        module swap cray-mpich cray-mpich/$VERSION_CRAY_MPICH
+        echo "module swap cray-mpich cray-mpich/$VERSION_CRAY_MPICH" >> bashrc.modules
+    fi
+
+    export MPI_ROOT=$MPICH_DIR
 fi
 
 if [ "$VMPI" = "OMPI" ]
 then
+    module unload cray-mpich
+    echo "module unload cray-mpich" >> bashrc.modules
+
+    module unload cray-libsci
+    echo "module unload cray-libsci" >> bashrc.modules
+
+    module load openmpi
+    echo "module load openmpi" >> bashrc.modules
+
     if [ ! "x$VERSION_OPEN_MPI" = "x" ]
     then
-        module load openmpi/$VERSION_OPEN_MPI
-        echo "module load openmpi/$VERSION_OPEN_MPI" >> bashrc.modules
-    else
-        module load openmpi
-        echo "module load openmpi" >> bashrc.modules
-    fi
-fi
-
-if [ "$VMPI" = "IMPI" ]
-then
-    if [ ! "x$VERSION_INTEL_MPI" = "x" ]
-    then
-        module load intel-mpi/$VERSION_INTEL_MPI
-        echo "module load intel-mpi/$VERSION_INTEL_MPI" >> bashrc.modules
-    else
-        module load intel-mpi
-        echo "module load intel-mpi" >> bashrc.modules
+        module swap openmpi openmpi/$VERSION_OPEN_MPI
+        echo "module swap openmpi openmpi/$VERSION_OPEN_MPI" >> bashrc.modules
     fi
 fi
 
@@ -814,7 +926,7 @@ echo "module list" >> bashrc.modules
 # values of all of its variables. This is useful information when debugging
 # a failed build.
 #
-# Note that all of the possible VPIC cmake variables relevant to a CTS-1
+# Note that all of the possible VPIC cmake variables relevant to an ATS-1
 # system are set on the command line so that they can all be conditionally
 # configured above through user selections.
 #------------------------------------------------------------------------------#
@@ -836,6 +948,7 @@ cmake \
     -DUSE_V8_AVX=$SET_V8_AVX \
     -DUSE_V8_AVX2=$SET_V8_AVX2 \
     -DUSE_V16_PORTABLE=$SET_V16_PORTABLE \
+    -DUSE_V16_AVX512=$SET_V16_AVX512 \
     -DVPIC_PRINT_MORE_DIGITS=$SET_MORE_DIGITS \
     -DUSE_OPENMP=$SET_OPENMP \
     -DUSE_PTHREADS=$SET_PTHREADS \

@@ -1,19 +1,15 @@
 #! /usr/bin/env bash
 #------------------------------------------------------------------------------#
 # This script supports building VPIC on ATS-1 machines at Los Alamos National
-# Laboratory (LANL). These machines run the Cray Linux Environment Operating
-# System and have two compute partitions, a Haswell partition and a Knights
-# Landing (KNL) partition. Both processor types are Intel processors. These
-# machines provide three compiler choices: Intel, GNU and Cray compilers. Two
-# MPI implementations are provided: Cray Mpich and Open MPI.
+# Laboratory (LANL) for Haswell nodes. These machines run the Cray Linux
+# Environment Operating System and have two compute partitions, a Haswell
+# partition and a Knights Landing (KNL) partition. Both processor types are
+# Intel processors. These machines provide three compiler choices: Intel, GNU
+# and Cray compilers. Two MPI implementations are provided: Cray Mpich and Open
+# MPI.
 #
 # Normal users should not need to change this script if building VPIC to run
-# on the KNL nodes of ATS-1 machines and happy with defaults.
-#
-# If normal users desire to build VPIC to run on the Haswell nodes of ATS-1
-# machines, they will need to change this script in two places: first in the
-# section where a node type is chosen and second in the section where the type
-# of vector intrinsics used are chosen.
+# on the Haswell nodes of ATS-1 machines and happy with defaults.
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
@@ -27,21 +23,50 @@ src_dir="${0%/*}/.."
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
-# Choose a processor node type.
+# Choose a compiler.
 #------------------------------------------------------------------------------#
-# One of the node types must be chosen. Valid options are the following.
+# One of the compiler choices in this section must be chosen. Valid options
+# are the following.
 #
-# KNL: Knights Landing nodes
-# HSW: Haswell nodes
+# INT: Intel compilers
+# GNU: GNU compilers
+# CCE: Cray compilers
 #
-# If HSW, for Haswell, is chosen, you must also change the section on vector
-# intrinsics support below to turn off support for V16_AVX512. Normally, you
-# would also turn on support for V8_AVX2. See the documentation on the vector
-# intrinsics section below for more details.
+# Note that selecting CCE for the Cray compilers currently does not work. The
+# main reason why you might want to compile with the Cray compilers is to use
+# some of the Cray specific tools like Reveal or a small set of features in
+# the CrayPat profiling software. This is not a common use case for users.
 #------------------------------------------------------------------------------#
 
-KNL="yes"
-#HSW="yes"
+VCOM="INT"
+#VCOM="GNU"
+#VCOM="CCE"
+
+#------------------------------------------------------------------------------#
+# Choose an MPI implementation.
+#------------------------------------------------------------------------------#
+# One of the MPI library choices must be chosen. Valid options are the
+# following.
+#
+# CMPI: Cray Mpich, the Cray supported MPI library
+# OMPI: Open MPI
+#------------------------------------------------------------------------------#
+
+VMPI="CMPI"
+#VMPI="OMPI"
+
+#------------------------------------------------------------------------------#
+# Choose a thread model.
+#------------------------------------------------------------------------------#
+# One of the two available thread models must be chosen. Valid options are the
+# following.
+#
+# PTH: Pthreads
+# OMP: OpenMP
+#------------------------------------------------------------------------------#
+
+VTHR="PTH"
+#VTHR="OMP"
 
 #------------------------------------------------------------------------------#
 # Choose type of vector intrinsics support.
@@ -96,55 +121,9 @@ SET_V16_AVX512="OFF"
 SET_V4_AVX2="ON"
 #SET_V8_PORTABLE="ON"
 #SET_V8_AVX="ON"
-#SET_V8_AVX2="ON"
+SET_V8_AVX2="ON"
 #SET_V16_PORTABLE="ON"
-SET_V16_AVX512="ON"
-
-#------------------------------------------------------------------------------#
-# Choose a compiler.
-#------------------------------------------------------------------------------#
-# One of the compiler choices in this section must be chosen. Valid options
-# are the following.
-#
-# INT: Intel compilers
-# GNU: GNU compilers
-# CCE: Cray compilers
-#
-# Note that selecting CCE for the Cray compilers currently does not work. The
-# main reason why you might want to compile with the Cray compilers is to use
-# some of the Cray specific tools like Reveal or a small set of features in
-# the CrayPat profiling software. This is not a common use case for users.
-#------------------------------------------------------------------------------#
-
-VCOM="INT"
-#VCOM="GNU"
-#VCOM="CCE"
-
-#------------------------------------------------------------------------------#
-# Choose an MPI implementation.
-#------------------------------------------------------------------------------#
-# One of the MPI library choices must be chosen. Valid options are the
-# following.
-#
-# CMPI: Cray Mpich, the Cray supported MPI library
-# OMPI: Open MPI
-#------------------------------------------------------------------------------#
-
-VMPI="CMPI"
-#VMPI="OMPI"
-
-#------------------------------------------------------------------------------#
-# Choose a thread model.
-#------------------------------------------------------------------------------#
-# One of the two available thread models must be chosen. Valid options are the
-# following.
-#
-# PTH: Pthreads
-# OMP: OpenMP
-#------------------------------------------------------------------------------#
-
-VTHR="PTH"
-#VTHR="OMP"
+#SET_V16_AVX512="ON"
 
 #------------------------------------------------------------------------------#
 # Choose format of status update output.
@@ -220,6 +199,48 @@ SET_INTEGRATED_TESTS="OFF"
 
 SET_UNIT_TESTS="OFF"
 #SET_UNIT_TESTS="ON"
+
+#------------------------------------------------------------------------------#
+# Choose OpenSSL support for checksums.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_ENABLE_OPENSSL=OFF, use of checksums is turned off.
+#
+# If SET_ENABLE_OPENSSL=ON, use of checksums is turned on.
+#------------------------------------------------------------------------------#
+
+SET_ENABLE_OPENSSL="OFF"
+#SET_ENABLE_OPENSSL="ON"
+
+#------------------------------------------------------------------------------#
+# Choose support for dynamic resizing of particle arrays.
+#------------------------------------------------------------------------------#
+# One of the two available options must be chosen. Valid options are ON and
+# OFF.
+#
+# If SET_DISABLE_DYNAMIC_RESIZING=OFF, particle arrays will be resized
+# dynamically.
+#
+# If SET_DISABLE_DYNAMIC_RESIZING=ON, particle arrays will not be resized
+# dynamically and the user will be responsible for ensuring that particle
+# arrays have enough space to handle the evolution of a non-uniform particle
+# distribution.
+#------------------------------------------------------------------------------#
+
+SET_DISABLE_DYNAMIC_RESIZING="OFF"
+#SET_DISABLE_DYNAMIC_RESIZING="ON"
+
+#------------------------------------------------------------------------------#
+# Choose the minimum number of particles to dynamically allocate space for.
+#------------------------------------------------------------------------------#
+# A value must be chosen.  The default is 128 particles which allocates space
+# equal to a 4 KByte page size.
+#------------------------------------------------------------------------------#
+
+SET_PARTICLE_MIN_NUM="128"
+#SET_PARTICLE_MIN_NUM="32768"
 
 #------------------------------------------------------------------------------#
 # Choose the CMake build type.
@@ -421,20 +442,6 @@ then
     FLAGS_CXX_COMPILER+=" -dynamic"
 
     #--------------------------------------------------------------------------#
-    # Use of "-qopt-zmm-usage=high" causes the compiler to generate zmm code,
-    # i.e. AVX-512 code, without any restrictions. Extensive use of AVX-512
-    # code causes the CPU core to down clock or throttle to avoid overheating.
-    # The default is for the compiler to use some internal limits on how much
-    # AVX-512 instructions are used. This is relevant on ATS-1 systems only
-    # for KNL processors.
-    #--------------------------------------------------------------------------#
-
-    if [ "$KNL" = "yes" ]
-    then
-        FLAGS_CXX_COMPILER+=" -qopt-zmm-usage=high"
-    fi
-
-    #--------------------------------------------------------------------------#
     # Use "-g" to provide debug symbols in the executable.  In general, use of
     # "-g" with modern compilers does not degrade performance and provides
     # information required by many tools such as debugging and performance
@@ -526,20 +533,6 @@ then
     #--------------------------------------------------------------------------#
 
     FLAGS_C_COMPILER+=" -dynamic"
-
-    #--------------------------------------------------------------------------#
-    # Use of "-qopt-zmm-usage=high" causes the compiler to generate zmm code,
-    # i.e. AVX-512 code, without any restrictions. Extensive use of AVX-512
-    # code causes the CPU core to down clock or throttle to avoid overheating.
-    # The default is for the compiler to use some internal limits on how much
-    # AVX-512 instructions are used. This is relevant on ATS-1 systems only
-    # for KNL processors.
-    #--------------------------------------------------------------------------#
-
-    if [ "$KNL" = "yes" ]
-    then
-        FLAGS_C_COMPILER+=" -qopt-zmm-usage=high"
-    fi
 fi
 
 #------------------------------------------------------------------------------#
@@ -634,12 +627,7 @@ then
     # for KNL but it seems they may not for Haswell.
     #--------------------------------------------------------------------------#
 
-    if [ "$KNL" = "yes" ]
-    then
-        FLAGS_CXX_COMPILER+=" -march=knl"
-    else
-        FLAGS_CXX_COMPILER+=" -march=haswell"
-    fi
+    FLAGS_CXX_COMPILER+=" -march=haswell"
 
     #--------------------------------------------------------------------------#
     # Use "-g" to provide debug symbols in the executable.  In general, use of
@@ -727,12 +715,7 @@ then
     # for KNL but it seems they may not for Haswell.
     #--------------------------------------------------------------------------#
 
-    if [ "$KNL" = "yes" ]
-    then
-        FLAGS_C_COMPILER+=" -march=knl"
-    else
-        FLAGS_C_COMPILER+=" -march=haswell"
-    fi
+    FLAGS_C_COMPILER+=" -march=haswell"
 fi
 
 #------------------------------------------------------------------------------#
@@ -793,9 +776,7 @@ fi
 
 if [ "$VSORT" = "LSORT" ]
 then
-    FLAGS_C_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
-
-    FLAGS_CXX_COMPILER+=" -DVPIC_USE_LEGACY_SORT"
+    SET_LEGACY_SORT="ON"
 fi
 
 #------------------------------------------------------------------------------#
@@ -878,12 +859,6 @@ then
     fi
 fi
 
-if [ "$KNL" = "yes" ]
-then
-    module swap craype-haswell craype-mic-knl
-    echo "module swap craype-haswell craype-mic-knl" >> bashrc.modules
-fi
-
 if [ "$VMPI" = "CMPI" ]
 then
     if [ ! "x$VERSION_CRAY_MPICH" = "x" ]
@@ -936,6 +911,10 @@ cmake \
     -DCMAKE_BUILD_TYPE=$SET_BUILD_TYPE \
     -DENABLE_INTEGRATED_TESTS=$SET_INTEGRATED_TESTS \
     -DENABLE_UNIT_TESTS=$SET_UNIT_TESTS \
+    -DENABLE_OPENSSL=$SET_ENABLE_OPENSSL \
+    -DDISABLE_DYNAMIC_RESIZING=$SET_DISABLE_DYNAMIC_RESIZING \
+    -DSET_MIN_NUM_PARTICLES=$SET_PARTICLE_MIN_NUM \
+    -DUSE_LEGACY_SORT=$SET_LEGACY_SORT \
     -DUSE_V4_PORTABLE=$SET_V4_PORTABLE \
     -DUSE_V4_SSE=$SET_V4_SSE \
     -DUSE_V4_AVX=$SET_V4_AVX \

@@ -29,10 +29,12 @@ void vpic_simulation::user_diagnostics() {
     dump_energies(energy_file_name.c_str(), 1);
 }
 
-void
-vpic_simulation::user_initialization( int num_cmdline_arguments,
-                                      char ** cmdline_argument )
-{
+begin_initialization {
+// AKA:
+//void
+//vpic_simulation::user_initialization( int num_cmdline_arguments,
+                                      //char ** cmdline_argument )
+//{
   // At this point, there is an empty grid and the random number generator is
   // seeded with the rank. The grid, materials, species need to be defined.
   // Then the initial non-zero fields need to be loaded at time level 0 and the

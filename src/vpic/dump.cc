@@ -125,6 +125,7 @@ enum dump_types {
 };
 */
 
+// TODO: should this be an enum?
 namespace dump_type {
   const int grid_dump = 0;
   const int field_dump = 1;

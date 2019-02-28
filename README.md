@@ -83,12 +83,12 @@ the top-level source directory:
     cd build
 ```
 
-The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building.
+The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building, but the user is left to select which compiler they wish to use.  The scripts are largely organized into folders by compiler, with specific flags and options set to match the target compiler.
 
-They can be invoked using something like:
+Any of the arch scripts can be invoked specifying the file name from inside a build directory:
 
 ```bash
-    ../arch/generic-Release
+    ../arch/refernece-Debug
 ```
 
 After configuration, simply type: 

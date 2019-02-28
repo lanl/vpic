@@ -83,12 +83,12 @@ the top-level source directory:
     cd build
 ```
 
-The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building.
+The `./arch` directory also contains various cmake scripts (including specific build options) which can help with building, but the user is left to select which compiler they wish to use.  The scripts are largely organized into folders by compiler, with specific flags and options set to match the target compiler.
 
-They can be invoked using something like:
+Any of the arch scripts can be invoked specifying the file name from inside a build directory:
 
 ```bash
-    ../arch/generic-Release
+    ../arch/refernece-Debug
 ```
 
 After configuration, simply type: 
@@ -97,33 +97,26 @@ After configuration, simply type:
     make
 ```
 
-Two scripts in the `./arch` directory are of particular note: lanl-ats1 and lanl-cts1. These scripts provide a default way to build VPIC
-on LANL ATS-1 clusters such as Trinity and Trinitite and LANL CTS-1 clusters. The LANL ATS-1 clusters are the first generation
-of DOE Advanced Technology Systems and consist of a partition of dual socket Intel Haswell nodes and a partition of single socket
-Intel Knights Landing nodes. The LANL CTS-1 clusters are the first generation of DOE Commodity Technology Systems and consist of
-dual socket Intel Broadwell nodes running the TOSS 3.3 operating system. The lanl-ats1 and lanl-cts1 scripts are heavily
-documented and can be configured to provide a large variety of custom builds for their respective platform types. These
-scripts could also serve as a good starting point for development of a build script for other platform types. Because these
-scripts also configure the users build environment via the use of module commands, the scripts run both the cmake and make
-commands.
+Two scripts in the `./arch` directory are of particular note: lanl-ats1 and
+lanl-cts1. These scripts provide a default way to build VPIC on LANL ATS-1
+clusters such as Trinity and Trinitite and LANL CTS-1 clusters. The LANL ATS-1
+clusters are the first generation of DOE Advanced Technology Systems and
+consist of a partition of dual socket Intel Haswell nodes and a partition of
+single socket Intel Knights Landing nodes. The LANL CTS-1 clusters are the
+first generation of DOE Commodity Technology Systems and consist of dual socket
+Intel Broadwell nodes running the TOSS 3.3 operating system. The lanl-ats1 and
+lanl-cts1 scripts are heavily documented and can be configured to provide a
+large variety of custom builds for their respective platform types. These
+scripts could also serve as a good starting point for development of a build
+script for other platform types. Because these scripts also configure the users
+build environment via the use of module commands, the scripts run both the
+cmake and make commands.
 
-From the user created build directory, these scripts can be invoked as follows:
+Advanced users may choose to instead invoke `cmake` directly and hand select
+options. Documentation on valid ways to select these options may be found in
+the lanl-ats1 and lanl-cts1 build scripts mentioned above.
 
-```bash
-    ../arch/lanl-ats1
-```
-
-or
-
-```bash
-    ../arch/lanl-cts1
-```
-
-Advanced users may choose to instead invoke `cmake` directly and hand select options. Documentation on valid ways
-to select these options may be found in the lanl-ats1 and lanl-cts1 build scripts mentioned above.
-
-GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in `./arch/generic-gcc-sse`).
-
+GCC users should ensure the `-fno-strict-aliasing` compiler flag is set (as shown in the examples in `./arch/gcc/`).
 
 # Building an example input deck
 

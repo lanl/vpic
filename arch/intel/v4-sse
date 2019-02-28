@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+#------------------------------------------------------------------------------#
+# Get the path to the project from which this script was called
+#------------------------------------------------------------------------------#
+
+src_dir="${0%/*}/../.."
+
+#------------------------------------------------------------------------------#
+# Call CMake command
+#------------------------------------------------------------------------------#
+
+cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_INTEGRATED_TESTS=OFF \
+  -DENABLE_UNIT_TESTS=OFF \
+  -DCMAKE_C_COMPILER=mpiicc \
+  -DCMAKE_CXX_COMPILER=mpiicpc \
+  -DCMAKE_C_FLAGS="-O3 -rdynamic -inline-forceinline  \
+  -qoverride-limits -no-ansi-alias -xHost" \
+  -DCMAKE_CXX_FLAGS="-O3 -rdynamic -inline-forceinline \
+  -qoverride-limits -no-ansi-alias -xHost" \
+  -DUSE_V4_SSE=ON \
+  $src_dir

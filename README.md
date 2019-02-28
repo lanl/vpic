@@ -206,32 +206,84 @@ Currently, the following options are exposed at compile time for the users consi
 
 ## Threading Model
 
- - `USE_PTHREADS` (default `ON`): Use Pthreads for the threading model (default enabled)
- - `USE_OPENMP`: Use OpenMP for the threading model
+ - `USE_PTHREADS`: Use Pthreads for threading model, (default `ON`)
+ - `USE_OPENMP`:   Use OpenMP for threading model
 
 ## Vectorization
 
- - `USE_V4_SSE`: Enable 4 wide (128-bit) SSE
- - `USE_V4_AVX`: Enable 4 wide (128-bit) AVX
- - `USE_V4_AVX2`: Enable 4 wide (128-bit) AVX2
- - `USE_V4_ALTIVEC`: Enable 4 wide (128-bit) Altivec
- - `USE_V4_PORTABLE`: Enable 4 wide (128-bit) portable implementation
+The following CMake variables are used to control the vector implementation that
+VPIC uses for each SIMD width.  Currently, there is support for 128 bit, 256 bit
+and 512 bit SIMD widths.  The default is for each of these CMake variables to be
+disabled which means that an unvectorized reference implementation of functions
+will be used.
 
- - `USE_V8_AVX`: Enable 8 wide (256-bit) AVX
- - `USE_V8_AVX2`: Enable 8 wide (256-bit) AVX2
- - `USE_V8_PORTABLE`: Enable 8 wide (256-bit) portable implementation
+ - `USE_V4_SSE`:       Enable 4 wide (128-bit) SSE
+ - `USE_V4_AVX`:       Enable 4 wide (128-bit) AVX
+ - `USE_V4_AVX2`:      Enable 4 wide (128-bit) AVX2
+ - `USE_V4_ALTIVEC`:   Enable 4 wide (128-bit) Altivec
+ - `USE_V4_PORTABLE`:  Enable 4 wide (128-bit) portable implementation
 
- - `USE_V16_AVX512`: Enable 16 wide (512-bit) AVX512
+ - `USE_V8_AVX`:       Enable 8 wide (256-bit) AVX
+ - `USE_V8_AVX2`:      Enable 8 wide (256-bit) AVX2
+ - `USE_V8_PORTABLE`:  Enable 8 wide (256-bit) portable implementation
+
+ - `USE_V16_AVX512`:   Enable 16 wide (512-bit) AVX512
  - `USE_V16_PORTABLE`: Enable 16 wide (512-bit) portable implementation
 
-If no combination of these are selected, the "reference" (read: unvectorized)
-version of the pusher will be used
+Several functions in VPIC have vector implementations for each of the three SIMD
+widths.  Some only have a single implementation.  An example of the latter is
+move_p which only has a reference implementation and a V4 implementation.
 
-See example decks for how these are used together in combination.
+It is possible to have a single CMake vector variable configured as ON for each
+of the three supported SIMD vector widths.  It is recommended to always have a
+CMake variable configured as ON for the 128 bit SIMD vector width so that move_p
+will be vectorized.  In addition, it is recommended to configure as ON the CMake
+variable that is associated with the native SIMD vector width of the processor
+that VPIC is targeting.  If a CMake variable is configured as ON for each of the
+three available SIMD vector widths, then for a given function in VPIC, the
+implementation which supports the largest SIMD vector length will be chosen.  If
+a V16 implementation exists, it will be chosen.  If a V16 implementation does not
+exist but V8 and V4 implementations exist, the V8 implementation will be chosen.
+If V16 and V8 implementations do not exist but a V4 implementation does, it will
+be chosen.  If no SIMD vector implementation exists, the unvectorized reference
+implementation will be chosen.
+
+In summary, when using vector versions on a machine with 256 bit SIMD, the
+V4 and V8 implementations should be configured as ON. When using a machine
+with 512 bit SIMD, V4 and V16 implementations should be configured as ON.
+When choosing a vector implementation for a given SIMD vector length, the
+implementation that is closest to the SIMD instruction set for the targeted
+processor should be chosen.  The portable versions are most commonly used for
+debugging the implementation of new intrinsics versions.  However, the portable
+versions are generally more performant than the unvectorized reference
+implemenation.  So, one might consider using the V4_PORTABLE version on ARM
+processors until a V4_NEON implementation becomes available.
 
 ## Output 
 
- - `VPIC_PRINT_MORE_DIGITS`: Enable more digits in the debug timing implementation
+ - `VPIC_PRINT_MORE_DIGITS`: Enable more digits in timing output of status reports
+
+## Particle sorting implementation
+
+The CMake variable below allows building VPIC to use the legacy, thread serial
+implementation of the particle sort algorithm.
+
+ - `USE_LEGACY_SORT`: Use legacy thread serial particle sort, (default `OFF`)
+
+The legacy particle sort implementation is the thread serial particle sort
+implementation from the legacy v407 version of VPIC. This implementation
+supports both in-place and out-of-place sorting of the particles. It is very
+competitive with the thread parallel sort implementation for a small number
+of threads per MPI rank, i.e. 4 or less, especially on KNL because sorting
+the particles in-place allows the fraction of particles stored in High
+Bandwidth Memory (HBM) to remain stored in HBM. Also, the memory footprint
+of VPIC is reduced by the memory of a particle array which can be significant
+for particle dominated problems.
+
+The default particle sort implementation is a thread parallel implementation.
+Currently, it can only perform out-of-place sorting of the particles. It will
+be more performant than the legacy implementation when using many threads per
+MPI rank but uses more memory because of the out-of-place sort.
 
 # Workflow
 

@@ -88,7 +88,7 @@ The `./arch` directory also contains various cmake scripts (including specific b
 Any of the arch scripts can be invoked specifying the file name from inside a build directory:
 
 ```bash
-    ../arch/refernece-Debug
+    ../arch/reference-Debug
 ```
 
 After configuration, simply type: 

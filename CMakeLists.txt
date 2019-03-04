@@ -65,11 +65,19 @@ option(USE_V16_PORTABLE "Enable V16 Portable" OFF)
 
 option(USE_V16_AVX512 "Enable V16 AVX512" OFF)
 
+option(USE_LEGACY_SORT "Enable Legacy Sort Implementation" OFF)
+
 #option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
+
+option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
+
+# option to set minimum number of particles
+set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
+
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -96,6 +104,14 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 string(REPLACE ";" " " string_libraries "${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 
+if(DISABLE_DYNAMIC_RESIZING)
+  add_definitions(-DDISABLE_DYNAMIC_RESIZING)
+endif(DISABLE_DYNAMIC_RESIZING)
+
+if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
+    add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
+endif()
+
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#
@@ -115,8 +131,23 @@ find_package(Threads REQUIRED)
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
+# Add options for building with the legacy particle sort implementation.
+#------------------------------------------------------------------------------#
+
+if(USE_LEGACY_SORT)
+  add_definitions(-DVPIC_USE_LEGACY_SORT)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
+endif(USE_LEGACY_SORT)
+
+#------------------------------------------------------------------------------#
 # Add options for building with a threading model.
 #------------------------------------------------------------------------------#
+
+# We don't want both PTHREADS and OpenMP
+if ((USE_PTHREADS) AND (USE_OPENMP))
+     message( FATAL_ERROR "Only one threading model can be selected" )
+endif()
+
 
 if(USE_PTHREADS)
   add_definitions(-DVPIC_USE_PTHREADS)
@@ -211,6 +242,18 @@ if(USE_V16_AVX512)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_AVX512")
   set(USE_V16 True)
 endif(USE_V16_AVX512)
+
+# TODO: Can we improve the way this is done so it's detection of a positive not
+# multiple negatives?
+if (NOT USE_V4 AND NOT USE_V8 AND NOT USE_V16)
+    # This option is intended to indicate that we're not using any of the
+    # specialized intrinsics code paths, and we can expect numerical answer to
+    # be the same as the "reference" (serial/auto-vec) implementation. This can
+    # be especially useful when trying to test small differences in expressions
+    # and we want bitwise answers to a known implementation
+    set(NO_EXPLICIT_VECTOR True)
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add options for building with explicit autovec support.
@@ -358,6 +401,8 @@ if(ENABLE_UNIT_TESTS)
   add_executable(rng src/util/rng/test/rng.cc)
   target_link_libraries(rng vpic)
   add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
+
+  add_subdirectory(test/unit)
 
 endif(ENABLE_UNIT_TESTS)
 #~---------------------------------------------------------------------------~-#

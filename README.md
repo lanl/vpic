@@ -301,6 +301,8 @@ A mailing list for open collaboration can also be found [here](https://groups.go
 
 # Versioning
 
+Version release summary: 
+
 ## V1.1 (March 2019)
 
 - Added V8 and V16 functionality

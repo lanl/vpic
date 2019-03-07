@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -18,7 +18,7 @@
 	_iz  = _iy/int(py);   /* iz = iz */                   \
 	_iy -= _iz*int(py);   /* iy = iy */                   \
 	(ix) = _ix;                                           \
-} END_PRIMITIVE 
+} END_PRIMITIVE
 
 /*------------------------------------------------------------------------------
  * Compute poynting flux at left boundary
@@ -26,13 +26,14 @@
  * Note: This should maybe be made more general by adding which face to use.
  *
  * Note: This implementation is taken from Brian's GB deck
- * 
+ *
  * Inputs:
  *   e0 Peak instantaneous E field in "natural units"
  *----------------------------------------------------------------------------*/
 // FIXME: THIS COULD BE WRITTEN MUCH CLEANER NOW
 double vpic_simulation::poynting_flux(double e0) {
-	double psum, gpsum;
+	double psum = 0.0;
+  double gpsum = 0.0;
 	int stride = (grid->ny-1)*(grid->nz-1);
 
 	float * pvec = new float[stride];
@@ -40,7 +41,7 @@ double vpic_simulation::poynting_flux(double e0) {
 	if(!pvec) {
 		ERROR(("Failed pvec allocation in poynting flux diagnostic"));
 	} // if
-	
+
 	memset(pvec, 0, stride);
 
 	int ix, k1, k2;
@@ -67,7 +68,7 @@ double vpic_simulation::poynting_flux(double e0) {
 	for(int i(0); i<stride; i++) {
 		psum += pvec[i];
 	} // for
-	
+
 	// Collect sums over all ranks
 	mp_allsum_d( &psum, &gpsum, 1 );
 

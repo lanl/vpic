@@ -1,0 +1,630 @@
+//  Reconnection Problem
+//  Physical Motivation: Hotspots in Pictor A
+//  Numerically: 2d, sigma ~ 1, low beta
+//               double force free sheets
+//               double periodic,
+//               duplicate species above and below current sheet
+//  Author: Patrick Kilian
+///////////////////////////////////////////////////////////////////////
+#include <math.h>
+
+// naming convention for the hydro dump files
+#define HYDRO_FILE_FORMAT "hydro/T.%d/%s.%d.%d"
+
+begin_globals {
+    int energies_interval;
+    int fields_interval;
+    int hydro_interval;
+    int particle_interval;
+
+    double topology_x;       // domain topology
+    double topology_y;
+    double topology_z;
+
+    //  Variables for output configuration
+    DumpParameters fdParams;
+    DumpParameters he1dParams;
+    DumpParameters he2dParams;
+    DumpParameters hH1dParams;
+    DumpParameters hH2dParams;
+    std::vector<DumpParameters *> outputParams;
+};
+
+
+begin_initialization {
+    int smalltest = 1;
+
+    // use natural PIC units
+    double ec   = 1.;              // Charge normalization
+    double me   = 1.;              // Mass normalization
+    double c    = 1.;              // Speed of light
+    double de   = 1.;              // Length normalization (electron inertial length)
+    double eps0 = 1.;              // Permittivity of space
+
+    // key parameters
+    double mi_me   = 1836.2;       // natural mass ratio
+    double nd_nb   = 0.;           // Over density in the initial CS
+    double b_drift = 0.0;          // Beta of drift in initial CS
+    double sigma_i = 3.0;          // cold magnetization
+    double sigma_e = sigma_i*mi_me;// electron cold magnetization
+    double th_be   = sigma_e/200.; // background electron temperature (as a fraction of rest energy)
+    double th_bi   = sigma_i/200.; // background electron temperature
+
+    // derived quantities
+    //double mu0     = 1./(c*c*eps0);// Permeability
+    double wpe     = c / de;       // electron plasma frequency
+    double nbe0    = wpe*wpe * me *eps0 / (ec*ec); // background electron density
+    double nbi0    = nbe0;         // neutral background
+    double nde0    = nd_nb * nbe0; // peak electron density
+    double ndi0    = nd_nb * nbi0; // peak ion density
+    double mi      = mi_me * me;   // proton mass
+    double wpi     = sqrt(nbi0 * ec*ec / (eps0 * mi));
+    double di      = c / wpi;      // Ion inertial length
+    double Ti_Te   = (th_bi * mi*c*c) / (th_be * me*c*c);// Temperature ratio
+    double g_drift = 1./sqrt(1. - b_drift*b_drift);
+    double vthe    = sqrt(th_be * me*c*c / me);  // Horrible non-relativistic approximation
+    double vthi    = sqrt(th_bi * mi*c*c / mi);  // for ions probably ok
+
+    // reconnecting magnetic field
+    double B0      = 1. * sqrt(sigma_i * nbi0 * mi * c*c / eps0);
+    // guide field
+    double Bg      = 0. * sqrt(sigma_i * nbi0 * mi * c*c / eps0);
+    // magnetic field perturbation strength
+    double dB      = 0.01 * B0;
+
+    // non-relativistic electron gyro radius
+    //double rho_e0  = me * c*c / (ec * B0);
+    // non-relativistic ion gyro radius
+    double rho_i0  = mi * c*c / (ec * B0);
+    // non-relativistic electron gyro frequency
+    double wce     = ec * B0 / (me * c);
+    double wci     = ec * B0 / (mi * c);
+    double wpe_wce = wpe/wce;
+    // relativistic gyro radius
+    double rho_c   = sigma_i * rho_i0; // this is also about sigma_e * rho_e0
+    // relativistic gyro frequency
+    double W_c     = c / rho_c;
+
+    // system size
+    double Lx      = 120. * rho_c; // large enough
+    if (smalltest) {
+        double smallLx = 1.2 * rho_c;
+        sim_log("Using Lx = "<<smallLx<<" instead of "<<Lx);
+        Lx = smallLx;
+    }
+    double Ly;                     // one cell, we will get back to that
+    double Lz      =   2. * Lx;    // enlongated for two CS
+
+    // target resolution
+    double dx      = rho_c / 20.;
+    double dy      = dx;
+    double dz      = dx;
+    Ly      = 1. * dy;
+
+
+    double topology_x = nproc();  // Number of domains in x, y, and z
+    double topology_y = 1;
+    double topology_z = 1;
+
+    // cell counts
+    double nx      = topology_x * std::round(Lx/dx / topology_x);
+    double ny      = topology_y * std::round(Ly/dy / topology_y);
+    double nz      = topology_z * std::round(Lz/dz / topology_z);
+
+    // adjust dx, dy, dz to reality
+    dx      = Lx / nx;
+    dy      = Ly / ny;
+    dz      = Lz / nz;
+
+    // time step
+    double dt_cfl  = courant_length(Lx,Ly,Lz,nx,ny,nz);
+    //double dt_wpe  = 1.0 / wpe;
+    //double dt_Wc   = 1.0 / W_c;
+    double dt      = 0.99 * dt_cfl;
+
+    // Debye length
+    double lD      = sqrt( (th_be * me * c*c) / (4.*M_PI * (nbe0 + nbi0) * ec*ec) ); // this should be about rho_c / 20.
+
+    // upstream plasma beta
+    double beta_up = 8.*M_PI*(nbe0*th_be + nbi0 * th_bi)/(B0*B0); // this should be about 50.
+
+    // temperature in the initial CS
+    double th_di   = g_drift/4. * nbi0/ndi0 * sigma_i; // should be about 0.05 sigma_i
+    double th_de   = g_drift/4. * nbe0/nde0 * sigma_e;
+    //double vthde   = sqrt(th_de);
+    //double vthdi   = sqrt(th_di);
+
+    // half thickness of current sheet
+    //double delta   = rho_c / 3.;
+    //double delta   = 17.44189453125;
+    double delta   = di;
+
+    // Simulation duration
+    double taui     = 2000.; // Duration in inverse w_c
+    double duration = taui / W_c;
+    num_step = trunc_granular(duration/dt, 100);
+    if (smalltest) {
+        double smallnumstep = 100;
+        sim_log("Using num_step = "<<smallnumstep<<" instead of "<<num_step);
+        num_step = smallnumstep;
+    }
+
+    double ion_sort_interval = 25;       //  Injector moments are also updated at this internal
+    double electron_sort_interval = 25;    //  Injector moments are also updated at this internal
+    double nppc  =  100; // Average number of macro particle per cell per species
+    if (smalltest) {
+        double smallnppc = 10;
+        sim_log("Using nppc = "<<smallnppc<<" instead of "<<nppc);
+        nppc = smallnppc;
+    }
+
+    double Ne  = nppc*nx*ny*nz;  // total macro electrons in box
+    double Np  = nbe0*Lx*Ly*Lz;  //  total number of physical electrons
+    double weight = Np/Ne;
+    double qe = -ec*Np/Ne;       // Charge per macro electron
+    double qi =  ec*Np/Ne;       // Charge per macro ion
+
+    int energies_interval = 100;
+    int interval = 1000;
+    int fields_interval = interval;
+    int hydro_interval  = interval;
+    int particle_interval = 10000;
+    if (smalltest) {
+        double smallpi = 1000;
+        sim_log("Using particle_interval = "<<smallpi<<" instead of "<<particle_interval);
+        particle_interval = smallpi;
+    }
+
+    status_interval      = 200;
+    sync_shared_interval = status_interval/2;
+    clean_div_e_interval = status_interval/2;
+    clean_div_b_interval = status_interval/2;
+
+    global->energies_interval  = energies_interval;
+    global->fields_interval    = fields_interval;
+    global->hydro_interval     = hydro_interval;
+    global->particle_interval  = particle_interval;
+
+    global->topology_x  = topology_x;
+    global->topology_y  = topology_y;
+    global->topology_z  = topology_z;
+
+    // Setup basic grid parameters
+    grid->dx = dx;
+    grid->dy = dy;
+    grid->dz = dz;
+    grid->dt = dt;
+    grid->cvac = c;
+    grid->eps0 = eps0;
+
+    // Define the grid
+    define_periodic_grid(         0,          0,          0,  // Low corner
+            Lx,         Ly,         Lz,  // High corner
+            nx,         ny,         nz,  // Resolution
+            topology_x, topology_y, topology_z); // Topology
+
+    // Setup materials
+    sim_log("Setting up materials. ");
+    define_material( "vacuum", 1 );
+    define_field_array(NULL);
+
+    // Setup the species
+    sim_log("Setting up species. ");
+    double nmax = 4.0*Ne/nproc();
+    double nmovers = 0.1*nmax;
+    double sort_method = 1;   //  0=in place and 1=out of place
+    species_t *electron1 = define_species("electron1",-ec, me, nmax, nmovers, electron_sort_interval, sort_method);
+    species_t *electron2 = define_species("electron2",-ec, me, nmax, nmovers, electron_sort_interval, sort_method);
+    species_t *ion1      = define_species("ion1",      ec, mi, nmax, nmovers, ion_sort_interval,      sort_method);
+    species_t *ion2      = define_species("ion2",      ec, mi, nmax, nmovers, ion_sort_interval,      sort_method);
+
+    ///////////////////////////////////////////////////
+    // Log diagnostic information about this simulation
+
+    sim_log( "***********************************************" );
+    sim_log("* Topology:                       "<<topology_x<<" "<<topology_y<<" "<<topology_z);
+    sim_log ( "L_di = " << delta/di );
+    sim_log ( "Ti/Te = " << Ti_Te ) ;
+    sim_log ( "wpe/wce = " << wpe_wce );
+    sim_log ( "mi/me = " << mi_me );
+    //sim_log ( "theta = " << theta );
+    sim_log ( "taui = " << taui );
+    sim_log ( "num_step = " << num_step );
+    sim_log ( "Lx/di = " << Lx/di );
+    sim_log ( "Lx/de = " << Lx/de );
+    sim_log ( "Ly/di = " << Ly/di );
+    sim_log ( "Ly/de = " << Ly/de );
+    sim_log ( "Lz/di = " << Lz/di );
+    sim_log ( "Lz/de = " << Lz/de );
+    sim_log ( "nx = " << nx );
+    sim_log ( "ny = " << ny );
+    sim_log ( "nz = " << nz );
+    sim_log ( "courant = " << c*dt/dx );
+    sim_log ( "nproc = " << nproc()  );
+    sim_log ( "nppc = " << nppc );
+    sim_log ( " B0 = " << B0 );
+    sim_log ( " di = " << di );
+    sim_log ( " Ne = " << Ne );
+    sim_log ( "total # of particles = " << 2*Ne );
+    sim_log ( " qi = " << qi );
+    sim_log ( " qe = " << qe );
+    sim_log ( "dt*wpe = " << wpe*dt );
+    sim_log ( "dt*wce = " << wce*dt );
+    sim_log ( "dt*wci = " << wci*dt );
+    sim_log ( " energies_interval: " << energies_interval );
+    sim_log ( "dx/de = " << Lx/(de*nx) );
+    sim_log ( "dy/de = " << Ly/(de*ny) );
+    sim_log ( "dz/de = " << Lz/(de*nz) );
+    sim_log ( "dx/rhoe = " << dx/(vthe/wce)  );
+    sim_log ( "Lx/debye = " << Lx/lD  );
+    sim_log ( "dx/debye = " << dx/lD  );
+    sim_log ( "nbe0 = " << nbe0 );
+    sim_log ( "vthi/c = " << vthi/c );
+    sim_log ( "vthe/c = " << vthe/c );
+    sim_log ( "beta = " << beta_up );
+
+    sim_log( "mi_me = " << mi_me );
+    sim_log( "nd_nb = " << nd_nb );
+    sim_log( "b_drift = " << b_drift );
+    sim_log( "sigma_i = " << sigma_i );
+    sim_log( "sigma_e = " << sigma_e );
+    sim_log( "th_be = " << th_be );
+    sim_log( "th_bi = " << th_bi );
+    sim_log( "th_de = " << th_de );
+    sim_log( "th_di = " << th_di );
+
+    sim_log( "g_drift = " << g_drift );
+    sim_log( "nbe0 = " << nbe0 );
+    sim_log( "nbi0 = " << nbi0 );
+    sim_log( "nde0 = " << nde0 );
+    sim_log( "ndi0 = " << ndi0 );
+    sim_log( "wpe = " << wpe );
+    sim_log( "wpi = " << wpi );
+
+    sim_log( "rho_c/dx = " << rho_c/dx );
+    sim_log( "delta/dx = " << delta/dx );
+
+
+    // Dump simulation information to file "info"
+    if (rank() == 0 ) {
+        FileIO fp_info;
+
+        if ( ! (fp_info.open("info", io_write)==ok) ) ERROR(("Cannot open file."));
+
+        fp_info.print( "           ***** Simulation parameters ***** \n");
+        fp_info.print( " L/di=%e\n", delta/di);
+        fp_info.print( " L/de=%e\n", delta/de);
+        fp_info.print( " Ti/Te=%e\n", Ti_Te );
+        fp_info.print( " wpe/wce = %e\n", wpe_wce );
+        fp_info.print( " mi/me =%e\n", mi_me );
+        //fp_info.print( " theta =%e\n", theta );
+        fp_info.print( " taui =%e\n", taui );
+        fp_info.print( " num_step = %i\n", num_step );
+        fp_info.print( " Lx/de = %e\n", Lx/de );
+        fp_info.print( " Ly/de = %e\n", Ly/de );
+        fp_info.print( " Lz/de =%e\n", Lz/de );
+        fp_info.print( " Lx/di = %e\n", Lx/di );
+        fp_info.print( " Ly/di = %e\n", Ly/di );
+        fp_info.print( " Lz/di =%e\n", Lz/di );
+        fp_info.print( " nx = %e\n", nx );
+        fp_info.print( " ny = %e\n", ny );
+        fp_info.print( " nz =%e\n", nz );
+        fp_info.print( " courant = %e\n", c*dt/dx );
+        fp_info.print( " nproc = %d\n", nproc() );
+        fp_info.print( " nppc = %e\n", nppc );
+        fp_info.print( " B0 = %e\n", B0 );
+        fp_info.print( " di = %e\n", di );
+        fp_info.print( " Ne = %e\n", Ne );
+        fp_info.print( " total # of particles = %e\n", 2*Ne );
+        fp_info.print( " dt*wpe = %e\n", wpe*dt );
+        fp_info.print( " dt*wce = %e\n", wce*dt );
+        fp_info.print( " dt*wci = %e\n", wci*dt );
+        fp_info.print( " energies_interval: %i\n", energies_interval);
+        fp_info.print( " dx/de =%e\n", Lx/(de*nx) );
+        fp_info.print( " dy/de =%e\n", Ly/(de*ny) );
+        fp_info.print( " dz/de =%e\n", Lz/(de*nz) );
+        fp_info.print( " Lx/debye =%e\n", Lx/lD );
+        fp_info.print( " dx/rhoi =%e\n", dx/(vthi/wci) );
+        fp_info.print( " dx/rhoe = %e\n", dx/(vthe/wce) );
+        fp_info.print( " dx/debye = %e\n", dx/lD );
+        fp_info.print( " n0 = %e\n", nbe0 );
+        fp_info.print( " vthi/c =%e\n", vthi/c );
+        fp_info.print( " vthe/c =%e\n", vthe/c );
+        fp_info.print( " beta = %e\n", beta_up);
+        fp_info.print( " mi_me = %e\n", mi_me );
+        fp_info.print( " nd_nb = %e\n", nd_nb );
+        fp_info.print( " b_drift = %e\n", b_drift );
+        fp_info.print( " sigma_i = %e\n", sigma_i );
+        fp_info.print( " sigma_e = %e\n", sigma_e );
+        fp_info.print( " th_be = %e\n", th_be );
+        fp_info.print( " th_bi = %e\n", th_bi );
+        fp_info.print( " th_de = %e\n", th_de );
+        fp_info.print( " th_di = %e\n", th_di );
+        fp_info.print( " g_drift = %e\n", g_drift );
+        fp_info.print( " nbe0 = %e\n", nbe0 );
+        fp_info.print( " nbi0 = %e\n", nbi0 );
+        fp_info.print( " nde0 = %e\n", nde0 );
+        fp_info.print( " ndi0 = %e\n", ndi0 );
+        fp_info.print( " wpe = %e\n", wpe );
+        fp_info.print( " wpi = %e\n", wpi );
+        fp_info.print( " rho_c/dx = %e\n", rho_c/dx );
+        fp_info.print( " delta/dx = %e\n", delta/dx );
+        fp_info.print( " ***************************\n");
+        fp_info.close();
+
+
+        // for the parallized translate.f90 written by Vadim
+        // write binary info file
+        if ( ! (fp_info.open("info.bin", io_write)==ok) ) ERROR(("Cannot open file."));
+
+        fp_info.write(&topology_x, 1 );
+        fp_info.write(&topology_y, 1 );
+        fp_info.write(&topology_z, 1 );
+
+        fp_info.write(&Lx, 1 );
+        fp_info.write(&Ly, 1 );
+        fp_info.write(&Lz, 1 );
+
+        fp_info.write(&nx, 1 );
+        fp_info.write(&ny, 1 );
+        fp_info.write(&nz, 1 );
+
+        fp_info.write(&dt, 1 );
+
+        fp_info.write(&mi_me, 1 );
+        fp_info.write(&wpe_wce, 1 );
+        fp_info.write(&vthe, 1 );
+        fp_info.write(&vthi, 1 );
+
+        fp_info.close();
+    }
+
+
+    // Load fields
+    sim_log( "Loading fields" );
+#define BX B0*(   tanh((z-0.75*Lz)/delta) -    tanh((z-0.25*Lz)/delta) + 1.)
+#define BY B0*(1./cosh((z-0.75*Lz)/delta) - 1./cosh((z-0.25*Lz)/delta))
+
+#define  KX  2.*M_PI/Lx
+#define  KZ  2.*M_PI/Lz
+#define dBX -dB*Lx/(2.0*Lz)*cos(KX*x)*sin(0.5*KZ*z)
+#define dBZ  dB*            sin(KX*x)*cos(0.5*KZ*z)
+
+    set_region_field(everywhere, 0, 0, 0, BX+dBX, BY+Bg, dBZ);
+
+
+    // Load particles
+    sim_log( "Loading particles" );
+
+    seed_entropy( rank() );  //Generators desynchronized
+    double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
+    double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
+    double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
+
+    int particle_number = 0;
+    //int rank_int        = int(rank());
+    repeat ( Ne/nproc() ) {
+        double x, y, z, ux, uy, uz;
+        double gu, ua, ub;
+        species_t* target_species;
+
+        x = uniform( rng(0), xmin, xmax);
+        y = uniform( rng(0), ymin, ymax);
+        z = uniform( rng(0), zmin, zmax);
+
+# define VDY -0.5*(B0/delta) * (pow(cosh((z-0.75*Lz)/delta), -2.) - pow(cosh((z-0.25*Lz)/delta), -2.))
+# define VDX VDY*BX/BY
+# define VD sqrt(VDX*VDX + VDY*VDY)
+# define GVD 1./sqrt(1.-VD*VD/(c*c))
+
+        if(!(VDX < 1.) || !(VDY < 1.) ){
+            sim_log("x = "<<x<<", y = "<<y<<", z = "<<z<<" VDX = "<<VDX<<", VDY = "<<VDY);
+            exit(1);
+        }
+
+        //thermal gamma is much larger than unity, non-relativistic
+        //approximation is not very good
+        //ua = normal( rng(0), 0, vthe);
+        //ub = normal( rng(0), 0 ,vthe);
+        //uz = normal( rng(0), 0, vthe);
+        //gu = sqrt(1. + ua*ua + ub*ub + uz*uz);
+
+        const double ue_range = 6.0 * th_be/(me * c*c); // a few times the thermal gamma factor
+        double       f        = 1.0;
+        double       fs       = 0.0;
+        do {
+            ua = uniform(rng(0), -ue_range, ue_range);
+            ub = uniform(rng(0), -ue_range, ue_range);
+            uz = uniform(rng(0), -ue_range, ue_range);
+            gu = sqrt(1.0 + ua*ua + ub*ub + uz*uz);
+            fs = exp(-(gu-1)*me*c*c/th_be);
+            f  = uniform(rng(0), 0., 1.01);
+        } while(f > fs);
+
+        ux = (GVD*ua*VDX/VD - ub*VDY/VD) + GVD*VDX*gu;
+        uy = (GVD*ua*VDY/VD + ub*VDX/VD) + GVD*VDY*gu;
+
+        if(0.25*Lz < z && z <= 0.75*Lz) {
+            target_species = electron1;
+        } else {
+            target_species = electron2;
+        }
+        inject_particle(target_species, x, y, z, ux, uy, uz, weight, 0, 0);
+
+
+        // Ions are cold enough
+        ua = normal( rng(0), 0, vthi);
+        ub = normal( rng(0), 0, vthi);
+        uz = normal( rng(0), 0, vthi);
+        gu = sqrt(1. + ua*ua + ub*ub + uz*uz);
+        ux = (-GVD*ua*VDX/VD + ub*VDY/VD) - GVD*VDX*gu;
+        uy = (-GVD*ua*VDY/VD - ub*VDX/VD) - GVD*VDY*gu;
+        if(0.25*Lz < z && z <= 0.75*Lz) {
+            target_species = ion1;
+        } else {
+            target_species = ion2;
+        }
+        inject_particle(target_species, x, y, z, ux, uy, uz, weight, 0, 0);
+
+        particle_number++;
+    }
+
+    sim_log( "Finished loading particles" );
+
+    // Configure output
+    global->fdParams.format = band;
+    sim_log ( "Fields output format = band" );
+
+    global->he1dParams.format = band;
+    global->he2dParams.format = band;
+    sim_log ( "Electron species output format = band" );
+
+    global->hH1dParams.format = band;
+    global->hH2dParams.format = band;
+    sim_log ( "Ion species output format = band" );
+
+    // relative path to fields data from global header
+    sprintf(global->fdParams.baseDir, "fields");
+
+    // base file name for fields output
+    sprintf(global->fdParams.baseFileName, "fields");
+
+    global->fdParams.stride_x = 1;
+    global->fdParams.stride_y = 1;
+    global->fdParams.stride_z = 1;
+
+    // add field parameters to list
+    global->outputParams.push_back(&global->fdParams);
+
+    sim_log ( "Fields x-stride " << global->fdParams.stride_x );
+    sim_log ( "Fields y-stride " << global->fdParams.stride_y );
+    sim_log ( "Fields z-stride " << global->fdParams.stride_z );
+
+    // relative path to electron species data from global header
+    sprintf(global->he1dParams.baseDir, "hydro");
+    sprintf(global->he2dParams.baseDir, "hydro");
+
+    // base file name for fields output
+    sprintf(global->he1dParams.baseFileName, "ehydro1");
+    sprintf(global->he2dParams.baseFileName, "ehydro2");
+
+    global->he1dParams.stride_x = 1;
+    global->he1dParams.stride_y = 1;
+    global->he1dParams.stride_z = 1;
+    global->he2dParams.stride_x = 1;
+    global->he2dParams.stride_y = 1;
+    global->he2dParams.stride_z = 1;
+
+    // add electron species parameters to list
+    global->outputParams.push_back(&global->he1dParams);
+    global->outputParams.push_back(&global->he2dParams);
+
+    sim_log ( "Electron species x-stride " << global->he1dParams.stride_x );
+    sim_log ( "Electron species y-stride " << global->he1dParams.stride_y );
+    sim_log ( "Electron species z-stride " << global->he1dParams.stride_z );
+
+    // relative path to electron species data from global header
+    sprintf(global->hH1dParams.baseDir, "hydro");
+    sprintf(global->hH2dParams.baseDir, "hydro");
+
+    // base file name for fields output
+    sprintf(global->hH1dParams.baseFileName, "Hhydro1");
+    sprintf(global->hH2dParams.baseFileName, "Hhydro2");
+
+    global->hH1dParams.stride_x = 1;
+    global->hH1dParams.stride_y = 1;
+    global->hH1dParams.stride_z = 1;
+    global->hH2dParams.stride_x = 1;
+    global->hH2dParams.stride_y = 1;
+    global->hH2dParams.stride_z = 1;
+
+    sim_log ( "Ion species x-stride " << global->hH1dParams.stride_x );
+    sim_log ( "Ion species y-stride " << global->hH1dParams.stride_y );
+    sim_log ( "Ion species z-stride " << global->hH1dParams.stride_z );
+
+    // add electron species parameters to list
+    global->outputParams.push_back(&global->hH1dParams);
+    global->outputParams.push_back(&global->hH2dParams);
+
+    global->fdParams.output_variables( electric | magnetic );
+    global->he1dParams.output_variables( current_density | charge_density | stress_tensor );
+    global->he2dParams.output_variables( current_density | charge_density | stress_tensor );
+    global->hH1dParams.output_variables( current_density | charge_density | stress_tensor );
+    global->hH2dParams.output_variables( current_density | charge_density | stress_tensor );
+
+    sim_log("*** Finished with user-specified initialization ***");
+} //begin_initialization
+
+#define should_dump(x) \
+    (global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
+
+begin_diagnostics {
+    /*--------------------------------------------------------------------------
+     * Normal rundata dump
+     *------------------------------------------------------------------------*/
+    if(step()==0) {
+        dump_mkdir("fields");
+        dump_mkdir("hydro");
+        dump_mkdir("rundata");
+        dump_mkdir("particle");
+
+        dump_grid("rundata/grid");
+        dump_materials("rundata/materials");
+        dump_species("rundata/species");
+        global_header("global", global->outputParams);
+    }
+
+    // Normal rundata energies dump
+    if(should_dump(energies)) {
+        dump_energies("rundata/energies", step() == 0 ? 0 : 1);
+    }
+
+    // Field data output
+    if(step() == 1 || should_dump(fields)) {
+        field_dump(global->fdParams);
+    }
+
+    // Hydro data output
+    if(should_dump(hydro)) {
+        hydro_dump("electron1", global->he1dParams);
+        hydro_dump("electron2", global->he2dParams);
+        hydro_dump("ion1", global->hH1dParams);
+        hydro_dump("ion2", global->hH2dParams);
+    }
+
+    // Dump particle data
+    char subdir[36];
+    if(should_dump(particle))
+    {
+        sprintf(subdir,"particle/T.%lld",step());
+        dump_mkdir(subdir);
+        sprintf(subdir,"particle/T.%lld/eparticle1",step());
+        dump_particles("electron1",subdir);
+        sprintf(subdir,"particle/T.%lld/eparticle2",step());
+        dump_particles("electron2",subdir);
+        sprintf(subdir,"particle/T.%lld/Hparticle1",step());
+        dump_particles("ion1",subdir);
+        sprintf(subdir,"particle/T.%lld/Hparticle2",step());
+        dump_particles("ion2",subdir);
+    }
+
+} // end diagnostics
+
+
+
+begin_particle_injection {
+    // no particle injection
+}
+
+begin_current_injection {
+    // No current injection for this simulation
+}
+
+begin_field_injection {
+    // No field injection
+}
+
+begin_particle_collisions {
+    // No particle collisions in this simulation
+}
+

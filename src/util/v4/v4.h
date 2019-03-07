@@ -10,6 +10,10 @@
 #   include "v4_portable.h"
 # elif defined USE_V4_SSE
 #   include "v4_sse.h"
+# elif defined USE_V4_AVX
+#   include "v4_avx.h"
+# elif defined USE_V4_AVX2
+#   include "v4_avx2.h"
 # endif
 #endif
 #undef IN_v4_h

@@ -1,5 +1,6 @@
 #define IN_spa
-#include "spa_private.h"
+
+#include "../species_advance.h"
 
 // move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
 // depositing particle current as it goes. If the particle was moved
@@ -55,9 +56,9 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 
   q  = v4float(qsp)*splat<3>(u); // q  = p_q,   p_q,   p_q,   D/C
   q3 = v4float(1.f/3.f)*q;      // q3 = p_q/3, p_q/3, p_q/3, D/C
-  dr = shuffle<0,1,2,2>( dr );  // dr = p_ddx, p_ddy, p_ddz, D/C 
+  dr = shuffle<0,1,2,2>( dr );  // dr = p_ddx, p_ddy, p_ddz, D/C
   r  = shuffle<0,1,2,2>( r );  // r  = p_dx,  p_dy,  p_dz,  D/C
-  
+
   for(;;) {
 
     // At this point:
@@ -82,14 +83,14 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // Likewise, due to speed of light limitations, generally dr
     // cannot get much larger than 1 or so and the numerator, if not
     // zero, can generally never be smaller than FLT_EPS/2.  Thus,
-    // likewise, the divide will never underflow either. 
+    // likewise, the divide will never underflow either.
 
-    // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER 
+    // FIXME: THIS COULD PROBABLY BE DONE EVEN FASTER
     sgn_dr = copysign( one,  dr );
     v0     = copysign( tiny, dr );
     store_4x1( (sgn_dr-r) / ((dr+dr)+v0), stack_vf );
     /**/                          type = 3;             f0 = 1;
-    f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov 
+    f1 = stack_vf[0]; if( f1<f0 ) type = 0; if( f1<f0 ) f0 = f1; // Branchless cmov
     f1 = stack_vf[1]; if( f1<f0 ) type = 1; if( f1<f0 ) f0 = f1;
     f1 = stack_vf[2]; if( f1<f0 ) type = 2; if( f1<f0 ) f0 = f1;
     s = v4float( f0 );
@@ -147,7 +148,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
     // If streak ended at the end of the particle track, this mover
     // was succesfully processed.  Should be just under ~50% of the
     // time.
-       
+
     if( type==3 ) { store_4x1( r, &p[n].dx ); p[n].i = voxel; break; }
 
     // Streak terminated on a voxel face.  Determine if the particle
@@ -201,7 +202,7 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 
     // Crossed into a normal voxel.  Update the voxel index, convert the
     // particle coordinate system and keep moving the particle.
-      
+
     voxel = (int32_t)( neighbor - g->rangel );
     r = toggle_bits( bits, r );
   }
@@ -237,27 +238,27 @@ move_p( particle_t       * ALIGNED(128) p0,
     s_dispy = pm->dispy;
     s_dispz = pm->dispz;
 
-    s_dir[0] = (s_dispx>0) ? 1 : -1;
-    s_dir[1] = (s_dispy>0) ? 1 : -1;
-    s_dir[2] = (s_dispz>0) ? 1 : -1;
-    
+    s_dir[0] = (s_dispx>0.0f) ? 1.0f : -1.0f;
+    s_dir[1] = (s_dispy>0.0f) ? 1.0f : -1.0f;
+    s_dir[2] = (s_dispz>0.0f) ? 1.0f : -1.0f;
+
     // Compute the twice the fractional distance to each potential
     // streak/cell face intersection.
-    v0 = (s_dispx==0) ? 3.4e38 : (s_dir[0]-s_midx)/s_dispx;
-    v1 = (s_dispy==0) ? 3.4e38 : (s_dir[1]-s_midy)/s_dispy;
-    v2 = (s_dispz==0) ? 3.4e38 : (s_dir[2]-s_midz)/s_dispz;
+    v0 = (s_dispx==0.0f) ? 3.4e38f : (s_dir[0]-s_midx)/s_dispx;
+    v1 = (s_dispy==0.0f) ? 3.4e38f : (s_dir[1]-s_midy)/s_dispy;
+    v2 = (s_dispz==0.0f) ? 3.4e38f : (s_dir[2]-s_midz)/s_dispz;
 
     // Determine the fractional length and axis of current streak. The
     // streak ends on either the first face intersected by the
     // particle track or at the end of the particle track.
-    // 
+    //
     //   axis 0,1 or 2 ... streak ends on a x,y or z-face respectively
     //   axis 3        ... streak ends at end of the particle track
-    /**/      v3=2,  axis=3;
-    if(v0<v3) v3=v0, axis=0;
-    if(v1<v3) v3=v1, axis=1;
-    if(v2<v3) v3=v2, axis=2;
-    v3 *= 0.5;
+    /**/      v3=2.0f, axis=3;
+    if(v0<v3) v3=v0,   axis=0;
+    if(v1<v3) v3=v1,   axis=1;
+    if(v2<v3) v3=v2,   axis=2;
+    v3 *= 0.5f;
 
     // Compute the midpoint and the normalized displacement of the streak
     s_dispx *= v3;
@@ -322,7 +323,7 @@ move_p( particle_t       * ALIGNED(128) p0,
                            // _exactly_ on the boundary.
     face = axis; if( v0>0 ) face += 3;
     neighbor = g->neighbor[ 6*p->i + face ];
-    
+
     if( UNLIKELY( neighbor==reflect_particles ) ) {
       // Hit a reflecting boundary condition.  Reflect the particle
       // momentum and remaining displacement and keep moving the
@@ -342,7 +343,7 @@ move_p( particle_t       * ALIGNED(128) p0,
 
     // Crossed into a normal voxel.  Update the voxel index, convert the
     // particle coordinate system and keep moving the particle.
-    
+
     p->i = neighbor - g->rangel; // Compute local index of neighbor
     /**/                         // Note: neighbor - g->rangel < 2^31 / 6
     (&(p->dx))[axis] = -v0;      // Convert coordinate system

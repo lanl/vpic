@@ -24,13 +24,24 @@ boot_services( int * pargc,
   // FIXME: The thread utilities should take responsibility for
   // thread-core affinity instead of leaving this to chance.
 
-  serial.boot( pargc, pargv );
-  thread.boot( pargc, pargv );
-
   // Boot up the communications layer
-  // See note above about thread-core-affinity
 
-  boot_mp( pargc, pargv );
+#if defined(VPIC_USE_PTHREADS)
+  #if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
+    boot_mp( pargc, pargv );      // Boot communication layer first.
+    serial.boot( pargc, pargv );
+    thread.boot( pargc, pargv );
+  #else
+    serial.boot( pargc, pargv );
+    thread.boot( pargc, pargv );
+    boot_mp( pargc, pargv );      // Boot communication layer last.
+  #endif
+
+#elif defined(VPIC_USE_OPENMP)
+  boot_mp( pargc, pargv );        // Boot communication layer first.
+  omp_helper.boot( pargc, pargv );
+
+#endif
 
   // Set the boot_timestamp
 
@@ -42,11 +53,26 @@ boot_services( int * pargc,
 // This operates in reverse order from boot_services
 
 void
-halt_services( void ) {
+halt_services( void )
+{
   _boot_timestamp = 0;
+
+#if defined(VPIC_USE_PTHREADS)
+  #if defined(VPIC_SWAP_MPI_PTHREAD_INIT)
+    thread.halt();
+    serial.halt();
+    halt_mp();
+  #else
+    halt_mp();
+    thread.halt();
+    serial.halt();
+  #endif
+
+#elif defined(VPIC_USE_OPENMP)
   halt_mp();
-  thread.halt();
-  serial.halt();
+
+#endif
+
   halt_checkpt();
 }
 

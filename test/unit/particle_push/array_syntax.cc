@@ -107,7 +107,7 @@ vpic_simulation::user_initialization( int num_cmdline_arguments,
   std::cout << "pass" << std::endl;
 }
 
-TEST_CASE( "vectors can be sized and resized", "[vector]" )
+TEST_CASE( "test that calling the push with array syntax matches the result of the old method", "[particle_push]" )
 {
 
     int pargc = 0;
@@ -116,17 +116,14 @@ TEST_CASE( "vectors can be sized and resized", "[vector]" )
     pargv[0] = str;
     boot_services( &pargc, &pargv );
 
-    SECTION( "resizing bigger changes size and capacity" )
-    {
-        int num_particles = 64;
+    int num_particles = 64;
 
-        vpic_simulation* simulation = new vpic_simulation;
-        simulation->initialize( pargc, pargv );
+    vpic_simulation* simulation = new vpic_simulation;
+    simulation->initialize( pargc, pargv );
 
-        simulation->finalize();
-        delete simulation;
-        if( world_rank==0 ) log_printf( "normal exit\n" );
+    simulation->finalize();
+    delete simulation;
+    if( world_rank==0 ) log_printf( "normal exit\n" );
 
-        halt_mp();
-    }
+    halt_mp();
 }

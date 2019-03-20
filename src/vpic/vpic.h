@@ -122,7 +122,7 @@ public:
   int advance( void );
   void finalize( void );
 
-private:
+protected:
 
   // Directly initialized by user
 

@@ -14,8 +14,6 @@ population to give an upper bound of "particle push" speed
 ## Future
 
 - Add a test to do a full `advance_p` call and then undo it (`uncenter_p`?)
-- Add sorting to existing test to determine it's affects
-- Add threading
 
 # TODO 
 

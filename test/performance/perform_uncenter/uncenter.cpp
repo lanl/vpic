@@ -1,4 +1,4 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a =
 #include "catch.hpp"
 
 #include <chrono>
@@ -62,7 +62,12 @@ class vpic_test_simulation : public vpic_simulation
 
             load_interpolator_array( interpolator_array, field_array );
 
+#ifdef ENABLE_SORT
+            std::cout << "Sort is enabled." << std::endl;
+            sort_p( sp );
+#endif
             auto start = std::chrono::system_clock::now();
+
             for( int n=0; n<nstep; n++)
             {
                 uncenter_p( sp, interpolator_array );
@@ -82,10 +87,25 @@ class vpic_test_simulation : public vpic_simulation
 TEST_CASE( "repeatedly center and uncenter particles in a timed loop", "[uncenter]" )
 {
 
-    int pargc = 0;
+#ifndef NUM_THREADS
+#define NUM_THREADS 1
+#endif
+
+    int pargc = 1;
+
+    if (NUM_THREADS > 1) { pargc = 3; }
+
     char str[] = "bin/vpic";
-    char **pargv = (char **) malloc(sizeof(char **));
+    char **pargv = (char **) malloc( (pargc+1) *sizeof(char **));
     pargv[0] = str;
+
+    if (NUM_THREADS > 1)
+    {
+        char str2[] = "--tpp";
+        char str3[] = "" EXPAND_AND_STRINGIFY(NUM_THREADS);
+        pargv[1] = str2;
+        pargv[2] = str3;
+    }
 
     boot_services( &pargc, &pargv );
 

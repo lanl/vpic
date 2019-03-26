@@ -167,6 +167,10 @@ begin_initialization {
   // though. See "shapes" for how to define them and assign them to regions.
   // Also, space is initially filled with the first material defined.
 
+#ifdef ADD_EXTRA_MATERIAL
+  define_material( "not-vacuum", 1 );
+#endif
+
   // If you pass NULL to define field array, the standard field array will
   // be used (if damp is not provided, no radiation damping will be used).
   define_field_array( NULL, damp );

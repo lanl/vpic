@@ -25,6 +25,6 @@ add_test(NAME ${test} COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PRE
 
 set(test 3d_test_non_vaccum_threaded)
 add_executable(${test} ./3d_test.cc)
-target_compile_definitions(${test} PRIVATE ADD_EXTRA_MATERIAL=1 GOLD_ENERGY_FILE=${gold_file}.3d_test)
+target_compile_definitions(${test} PRIVATE ADD_EXTRA_MATERIAL=1 GOLD_ENERGY_FILE=${gold_file}.3d_test_threaded)
 target_link_libraries(${test} vpic)
 add_test(NAME ${test} COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./${test} --tpp 8)

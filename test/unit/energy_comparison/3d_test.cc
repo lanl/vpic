@@ -331,31 +331,24 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
     const unsigned short b_mask = 0b0001110000;
     const unsigned short particle_mask = 0b011000000;
 
-    SECTION("e_field") {
-        // Test the sum of the e_field
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.3, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
-               );
-    }
+    // Test the sum of the e_field
+    REQUIRE(
+            test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                0.3, e_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.e.out")
+           );
 
-    SECTION("b_field") {
-        // Test the sum of the b_field
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.03, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
-               );
-    }
+    // Test the sum of the b_field
+    REQUIRE(
+            test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                0.03, b_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.b.out")
+           );
 
 
-    SECTION("particle_energy") {
-        // Test particle energies individually
-        REQUIRE(
-                test_utils::compare_energies(energy_file_name, energy_gold_file_name,
-                    0.01, particle_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.p.out")
-               );
-
-    }
+    // Test particle energies individually
+    REQUIRE(
+            test_utils::compare_energies(energy_file_name, energy_gold_file_name,
+                0.01, particle_mask, test_utils::FIELD_ENUM::Sum, 1, "Weibel.p.out")
+           );
 
 }
 

@@ -190,7 +190,20 @@ int vpic_simulation::advance(void) {
 
   if( (status_interval>0) && ((step() % status_interval)==0) ) {
     if( rank()==0 ) MESSAGE(( "Completed step %i of %i", step(), num_step ));
-    update_profile( rank()==0 );
+    interval_time = update_profile( rank()==0 );
+  }
+
+
+  if( (load_balance_interval>0) && ((step() % load_balance_interval)==0) ) {
+    if( rank()==0 ) MESSAGE(( "Completed step %i of %i", step(), num_step ));
+
+    int np_total = 0;
+    LIST_FOR_EACH( sp, species_list )
+    {
+        np_total += sp->np;
+    }
+
+    diagnostics.detect_load_imbalance<FULL_GATHER>( rank(), nproc(), interval_time, np_total );
   }
 
   // Let the user compute diagnostics

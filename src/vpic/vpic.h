@@ -24,6 +24,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "../util/diagnostics/internal.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -126,6 +127,9 @@ public:
   int advance( void );
   void finalize( void );
 
+  // Used to do some simple debug and diagnostics tracking
+  internal_diagnostics_t diagnostics;
+
 private:
 
   // Directly initialized by user
@@ -139,6 +143,9 @@ private:
   int clean_div_b_interval; // How often to clean div b
   int num_div_b_round;      // How many clean div b rounds per div b interval
   int sync_shared_interval; // How often to synchronize shared faces
+
+  int load_balance_interval; // How often to run load balance diagnostic
+  double interval_time;
 
   // FIXME: THESE INTERVALS SHOULDN'T BE PART OF vpic_simulation
   // THE BIG LIST FOLLOWING IT SHOULD BE CLEANED UP TOO

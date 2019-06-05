@@ -85,7 +85,7 @@ BEGIN_C_DECLS
 // Updates the cumulative profile, resets the local profile and, if
 // dump is true, writes the local and cumulative profiles to the log.
 
-void
+double
 update_profile( int dump );
 
 // Returns a local wallclock in seconds.  Only relative values are

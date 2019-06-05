@@ -8,7 +8,7 @@ profile_internal_use_only_timer_t profile_internal_use_only[] = {
   { NULL, 0., 0., 0, 0 }
 };
 
-void
+double
 update_profile( int dump ) {
   profile_internal_use_only_timer_t * p;
   double sum = 0, sum_total = 0;
@@ -23,12 +23,12 @@ update_profile( int dump ) {
   if( dump )
   {
     #if defined(VPIC_PRINT_MORE_DIGITS)
-    log_printf( "\n" // 8901234567890123456 | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx 
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx
                 "                           |      Since   Last Update         |      Since   Last Restore\n"
                 "    Operation              | Pct   Time      Count      Per   | Pct   Time      Count      Per\n"
                 "---------------------------+----------------------------------+----------------------------------\n" );
     #else
-    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx
                 "                           |      Since Last Update       |     Since Last Restore\n"
                 "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
                 "---------------------------+------------------------------+------------------------------\n" );
@@ -49,7 +49,7 @@ update_profile( int dump ) {
                   (double)p->n_total,
                   p->t_total/(DBL_EPSILON+(double)p->n_total) );
     }
-    
+
     log_printf( "\n" );
   }
 
@@ -57,6 +57,7 @@ update_profile( int dump ) {
     p->t = 0;
     p->n = 0;
   }
+  return sum;
 }
 
 double

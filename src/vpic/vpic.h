@@ -144,8 +144,9 @@ private:
   int num_div_b_round;      // How many clean div b rounds per div b interval
   int sync_shared_interval; // How often to synchronize shared faces
 
+  // This should be a multiple of status_interval for correct behaviour
   int load_balance_interval; // How often to run load balance diagnostic
-  double interval_time;
+  double interval_time; // Placeholder to store the time for a given time-step
 
   // FIXME: THESE INTERVALS SHOULDN'T BE PART OF vpic_simulation
   // THE BIG LIST FOLLOWING IT SHOULD BE CLEANED UP TOO
@@ -205,7 +206,7 @@ private:
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
- 
+
   char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------

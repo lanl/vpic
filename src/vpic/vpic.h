@@ -128,7 +128,7 @@ public:
   void finalize( void );
 
   // Used to do some simple debug and diagnostics tracking
-  internal_diagnostics_t diagnostics;
+  Experimental::internal_diagnostics_t diagnostics;
 
 private:
 

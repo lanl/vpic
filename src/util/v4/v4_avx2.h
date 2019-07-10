@@ -204,39 +204,39 @@ namespace v4
   inline void load_4x1( const void * ALIGNED(16) p,
 			v4 &a )
   {
-    a.v = _mm_load_ps( (float *)p );
+    a.v = _mm_load_ps( ( float * ) p );
   }
 
   inline void store_4x1( const v4 &a,
 			 void * ALIGNED(16) p )
   {
-    _mm_store_ps( (float *)p, a.v );
+    _mm_store_ps( ( float * ) p, a.v );
   }
 
   inline void stream_4x1( const v4 &a,
 			  void * ALIGNED(16) p )
   {
-    _mm_stream_ps( (float *)p, a.v );
+    _mm_stream_ps( ( float * ) p, a.v );
   }
 
   inline void clear_4x1( void * ALIGNED(16) p )
   {
-    _mm_store_ps( (float *)p, _mm_setzero_ps() );
+    _mm_store_ps( ( float * ) p, _mm_setzero_ps() );
   }
 
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
-    _mm_store_ps( (float *)dst, _mm_load_ps( (const float *)src ) );
+    _mm_store_ps( ( float * ) dst, _mm_load_ps( ( const float * ) src ) );
   }
 
   /* FIXME: MAKE ROBUST AGAINST ALIASING ISSUES */
   inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
   {
-    __m128 t = _mm_load_ps((float *)a);
+    __m128 t = _mm_load_ps( ( float * ) a );
 
-    _mm_store_ps( (float *)a, _mm_load_ps( (float *)b ) );
-    _mm_store_ps( (float *)b, t );
+    _mm_store_ps( ( float * ) a, _mm_load_ps( ( float * ) b ) );
+    _mm_store_ps( ( float * ) b, t );
   }
 
   // v4 transposed memory manipulation functions

@@ -24,7 +24,8 @@ link_boundary( link_boundary_t     * lb,
                species_t           * sp, 
                particle_injector_t * pi,
                rng_t               * rng,
-               int                   face ) {
+               int                   face )
+{
   static FILE *fp = NULL; 
   int ix, iy, iz;
   double x, y, z;

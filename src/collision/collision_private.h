@@ -44,7 +44,8 @@ END_C_DECLS
 ///////////////////////////////////////////////////////////////////////////////
 // Langevin pipeline interface
 
-typedef struct langevin_pipeline_args {
+typedef struct langevin_pipeline_args
+{
   MEM_PTR( particle_t, 128 ) p;
   MEM_PTR( rng_t,      128 ) rng[ MAX_PIPELINE ];
   float decay; 

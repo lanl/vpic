@@ -232,33 +232,45 @@ namespace v4 {
 
   // v4 memory manipulation functions
   
-  inline void load_4x1( const void * ALIGNED(16) p, v4 &a ) {
-    a.v = vec_ld( 0, (const float *)p );
+  inline void load_4x1( const void * ALIGNED(16) p,
+			v4 &a )
+  {
+    a.v = vec_ld( 0, ( const float * ) p );
   }
 
-  inline void store_4x1( const v4 &a, void * ALIGNED(16) p ) {
-    vec_st( a.v, 0, (float *)p );
+  inline void store_4x1( const v4 &a,
+			 void * ALIGNED(16) p )
+  {
+    vec_st( a.v, 0, ( float * ) p );
   }
 
-  inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) {
-    vec_stl( a.v, 0, (float *)p );
+  inline void stream_4x1( const v4 &a,
+			  void * ALIGNED(16) p )
+  {
+    vec_stl( a.v, 0, ( float * ) p );
   }
 
   // FIXME: Ordering semantics
-  inline void clear_4x1( void * ALIGNED(16) d ) {
-    vec_st( _zero, 0, (float *)d );
+  inline void clear_4x1( void * ALIGNED(16) d )
+  {
+    vec_st( _zero, 0, ( float * ) d );
   }
 
   // FIXME: Ordering semantics
-  inline void copy_4x1( void * ALIGNED(16) d, const void * ALIGNED(16) s ) {
-    vec_st( vec_ld( 0, (const float *)s ), 0, (float *)d );
+  inline void copy_4x1( void * ALIGNED(16) d,
+			const void * ALIGNED(16) s )
+  {
+    vec_st( vec_ld( 0, ( const float * ) s ), 0, ( float * ) d );
   }
 
-  inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) {
-    _v4_float va = vec_ld( 0, (float *)a );
-    _v4_float vb = vec_ld( 0, (float *)b );
-    vec_st( vb, 0, (float *)a );
-    vec_st( va, 0, (float *)b );
+  inline void swap_4x1( void * ALIGNED(16) a,
+			void * ALIGNED(16) b )
+  {
+    _v4_float va = vec_ld( 0, ( float * ) a );
+    _v4_float vb = vec_ld( 0, ( float * ) b );
+
+    vec_st( vb, 0, ( float * ) a );
+    vec_st( va, 0, ( float * ) b );
   }
 
   // v4 transposed memory manipulation functions

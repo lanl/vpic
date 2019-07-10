@@ -1,12 +1,9 @@
-/* 
- * Written by:
- *   Kevin J. Bowers, Ph.D.
- *   Plasma Physics Group (X-1)
- *   Applied Physics Division
- *   Los Alamos National Lab
- * March/April 2004 - Original version
- *
- */
+// Written by:
+//   Kevin J. Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - Original version
 
 #include "vpic.h"
 
@@ -17,7 +14,8 @@ vpic_simulation::inject_particle( species_t * sp,
                                   double x,  double y,  double z,
                                   double ux, double uy, double uz,
                                   double w,  double age,
-                                  int update_rhob ) {
+                                  int update_rhob )
+{
   int ix, iy, iz;
 
   // Check input parameters
@@ -96,9 +94,8 @@ vpic_simulation::inject_particle( species_t * sp,
     pm->i     = sp->np-1;
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
   }
-
 }
- 
+
 // Add capability to modify certain fields "on the fly" so that one
 // can, e.g., extend a run, change a quota, or modify a dump interval
 // without having to rerun from the start.

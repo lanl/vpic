@@ -208,4 +208,3 @@ child_langmuir( /**/  species_t            * RESTRICT sp,
                                (restore_func_t)restore_child_langmuir,
                                NULL );
 }
-

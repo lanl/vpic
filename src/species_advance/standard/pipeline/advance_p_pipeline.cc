@@ -13,7 +13,8 @@
 
 //----------------------------------------------------------------------------//
 // Reference implementation for an advance_p pipeline function which does not
-// make use of explicit calls to vector intrinsic functions.
+// make use of explicit calls to vector intrinsic functions. This is the AoS
+// version.
 //----------------------------------------------------------------------------//
 
 void

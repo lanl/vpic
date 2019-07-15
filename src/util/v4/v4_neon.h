@@ -1097,11 +1097,11 @@ namespace v4
   {
     v4float d;
 
-    // d.v = _mm_fmadd_ps( a.v, b.v, c.v );
+    d.v = vfmaq_f32( a.v, b.v, c.v );
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      d.f[j] = a.f[j] * b.f[j] + c.f[j];
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   d.f[j] = a.f[j] * b.f[j] + c.f[j];
 
     return d;
   }
@@ -1110,9 +1110,11 @@ namespace v4
   {
     v4float d;
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      d.f[j] = a.f[j] * b.f[j] - c.f[j];
+    d.v = vfmsq_f32( a.v, b.v, c.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   d.f[j] = a.f[j] * b.f[j] - c.f[j];
 
     return d;
   }

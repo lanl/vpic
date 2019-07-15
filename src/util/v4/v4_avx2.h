@@ -130,7 +130,7 @@ namespace v4
 
     v4( const v4 &a )          // Copy constructor
     {
-      v=a.v;
+      v = a.v;
     }
 
     ~v4() {}                   // Default destructor
@@ -202,19 +202,19 @@ namespace v4
   // v4 memory manipulation functions
 
   inline void load_4x1( const void * ALIGNED(16) p,
-			v4 &a )
+                        v4 &a )
   {
     a.v = _mm_load_ps( ( float * ) p );
   }
 
   inline void store_4x1( const v4 &a,
-			 void * ALIGNED(16) p )
+                         void * ALIGNED(16) p )
   {
     _mm_store_ps( ( float * ) p, a.v );
   }
 
   inline void stream_4x1( const v4 &a,
-			  void * ALIGNED(16) p )
+                          void * ALIGNED(16) p )
   {
     _mm_stream_ps( ( float * ) p, a.v );
   }
@@ -243,7 +243,7 @@ namespace v4
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3,
-			   v4 &a )
+                           v4 &a )
   {
     a.v = _mm_setr_ps( ((const float *)a0)[0],
                        ((const float *)a1)[0],
@@ -397,7 +397,7 @@ namespace v4
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1,
-			    void *a2, void *a3 )
+                            void *a2, void *a3 )
   {
     ((float *)a0)[0] = a.f[0];
     ((float *)a1)[0] = a.f[1];
@@ -446,7 +446,7 @@ namespace v4
 
   // FIXME: IS THIS FASTER THAN THE OLD WAY (HAD MORE STORE INSTR)
   inline void store_4x4_tr( const v4 &a, const v4 &b,
-			    const v4 &c, const v4 &d,
+                            const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
   {
@@ -564,8 +564,8 @@ namespace v4
     {
       union
       {
-	int i;
-	float f;
+        int i;
+        float f;
       } u;
 
       u.i = a;
@@ -576,8 +576,8 @@ namespace v4
     {
       union
       {
-	int i;
-	float f;
+        int i;
+        float f;
       } u0, u1, u2, u3;
 
       u0.i = i0;
@@ -592,9 +592,9 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)			          \
+#   define ASSIGN(op)                             \
     inline v4int &operator op( const v4int &b )   \
-    {						  \
+    {                                             \
       i[0] op b.i[0];                             \
       i[1] op b.i[1];                             \
       i[2] op b.i[2];                             \
@@ -658,7 +658,7 @@ namespace v4
 
 # define PREFIX_UNARY(op)                       \
   inline v4int operator op( const v4int & a )   \
-  {						\
+  {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
     b.i[1] = ( op a.i[1] );                     \
@@ -712,7 +712,7 @@ namespace v4
 
 # define PREFIX_INCDEC(op)                      \
   inline v4int operator op( v4int & a )         \
-  {						\
+  {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
     b.i[1] = ( op a.i[1] );                     \
@@ -730,7 +730,7 @@ namespace v4
 
 # define POSTFIX_INCDEC(op)                    \
   inline v4int operator op( v4int & a, int )   \
-  {					       \
+  {                                            \
     v4int b;                                   \
     b.i[0] = ( a.i[0] op );                    \
     b.i[1] = ( a.i[1] op );                    \
@@ -748,7 +748,7 @@ namespace v4
 
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b )    \
-  {								\
+  {                                                             \
     v4int c;                                                    \
     c.i[0] = a.i[0] op b.i[0];                                  \
     c.i[1] = a.i[1] op b.i[1];                                  \
@@ -799,7 +799,7 @@ namespace v4
 
 # define LOGICAL(op)                                           \
   inline v4int operator op( const v4int &a, const v4int &b )   \
-  {							       \
+  {                                                            \
     v4int c;                                                   \
     c.i[0] = - ( a.i[0] op b.i[0] );                           \
     c.i[1] = - ( a.i[1] op b.i[1] );                           \
@@ -857,7 +857,7 @@ namespace v4
     v4 tf;
 
     tf.v = _mm_or_ps( _mm_andnot_ps( c_v, f.v ),
-		      _mm_and_ps( c_v, t.v ) );
+                      _mm_and_ps( c_v, t.v ) );
 
     return tf;
   }
@@ -967,11 +967,11 @@ namespace v4
 
     // v4float assignment operators
 
-#   define ASSIGN(op,intrin)				\
+#   define ASSIGN(op,intrin)                            \
     inline v4float &operator op( const v4float &b )     \
-    {							\
+    {                                                   \
       v = intrin( v, b.v );                             \
-      return *this;					\
+      return *this;                                     \
     }
 
     inline v4float &operator =( const v4float &b )
@@ -1086,7 +1086,7 @@ namespace v4
 
 # define BINARY(op,intrin)                                           \
   inline v4float operator op( const v4float &a, const v4float &b )   \
-  {								     \
+  {                                                                  \
     v4float c;                                                       \
     c.v = intrin( a.v, b.v );                                        \
     return c;                                                        \
@@ -1103,7 +1103,7 @@ namespace v4
 
 # define LOGICAL(op,intrin)                                        \
   inline v4int operator op( const v4float &a, const v4float &b )   \
-  {								   \
+  {                                                                \
     v4int c;                                                       \
     c.v = intrin( a.v, b.v );                                      \
     return c;                                                      \
@@ -1123,7 +1123,7 @@ namespace v4
     __m128 vzero = _mm_setzero_ps();
 
     c.v = _mm_and_ps( _mm_cmpneq_ps( a.v, vzero ),
-		      _mm_cmpneq_ps( b.v, vzero ) );
+                      _mm_cmpneq_ps( b.v, vzero ) );
 
     return c;
   }
@@ -1135,7 +1135,7 @@ namespace v4
     __m128 vzero = _mm_setzero_ps();
 
     c.v = _mm_or_ps( _mm_cmpneq_ps( a.v, vzero ),
-		     _mm_cmpneq_ps( b.v, vzero ) );
+                     _mm_cmpneq_ps( b.v, vzero ) );
 
     return c;
   }
@@ -1146,7 +1146,7 @@ namespace v4
 
 # define CMATH_FR1(fn)                          \
   inline v4float fn( const v4float &a )         \
-  {						\
+  {                                             \
     v4float b;                                  \
     b.f[0] = ::fn( a.f[0] );                    \
     b.f[1] = ::fn( a.f[1] );                    \
@@ -1157,7 +1157,7 @@ namespace v4
 
 # define CMATH_FR2(fn)                                          \
   inline v4float fn( const v4float &a, const v4float &b )       \
-  {								\
+  {                                                             \
     v4float c;                                                  \
     c.f[0] = ::fn( a.f[0], b.f[0] );                            \
     c.f[1] = ::fn( a.f[1], b.f[1] );                            \
@@ -1197,7 +1197,7 @@ namespace v4
     __m128 t = _mm_set1_ps( -0.0f );
 
     c.v = _mm_or_ps( _mm_and_ps( t, b.v ),
-		     _mm_andnot_ps( t, a.v ) );
+                     _mm_andnot_ps( t, a.v ) );
 
     return c;
   }
@@ -1228,15 +1228,15 @@ namespace v4
     // Note: It is quicker to just call div_ps and sqrt_ps if more
     // refinement desired!
     b.v = _mm_add_ps( b_v, _mm_mul_ps( _mm_set1_ps( 0.5f ),
-				       _mm_sub_ps( b_v,
-						   _mm_mul_ps( a_v,
-							       _mm_mul_ps( b_v,
-									   _mm_mul_ps( b_v, b_v )
-									 )
-							     )
-						 )
-				     )
-		    );
+                                       _mm_sub_ps( b_v,
+                                                   _mm_mul_ps( a_v,
+                                                               _mm_mul_ps( b_v,
+                                                                           _mm_mul_ps( b_v, b_v )
+                                                                         )
+                                                             )
+                                                 )
+                                     )
+                    );
 
     return b;
   }
@@ -1255,11 +1255,11 @@ namespace v4
     // refinement desired!
 
     b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
-			_mm_fnmadd_ps( a_v,
-				       _mm_mul_ps( b_v,
-						   _mm_mul_ps( b_v, b_v ) ),
-				       b_v ),
-			b_v );
+                        _mm_fnmadd_ps( a_v,
+                                       _mm_mul_ps( b_v,
+                                                   _mm_mul_ps( b_v, b_v ) ),
+                                       b_v ),
+                        b_v );
 
     return b;
   }
@@ -1277,11 +1277,11 @@ namespace v4
     // refinement desired!
 
     b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
-			_mm_fnmadd_ps( a.v,
-				       _mm_mul_ps( b_v,
-						   _mm_mul_ps( b_v, b_v ) ),
-				       b_v ),
-			b_v );
+                        _mm_fnmadd_ps( a.v,
+                                       _mm_mul_ps( b_v,
+                                                   _mm_mul_ps( b_v, b_v ) ),
+                                       b_v ),
+                        b_v );
 
     return b;
   }
@@ -1305,10 +1305,10 @@ namespace v4
     b_v = _mm_rcp_ps( a_v );
 
     b.v = _mm_sub_ps( _mm_add_ps( b_v, b_v ),
-		      _mm_mul_ps( a_v,
-				  _mm_mul_ps( b_v, b_v )
-				)
-		    );
+                      _mm_mul_ps( a_v,
+                                  _mm_mul_ps( b_v, b_v )
+                                )
+                    );
 
     return b;
   }
@@ -1324,8 +1324,8 @@ namespace v4
     b_v = _mm_rcp_ps( a_v );
 
     b.v = _mm_fnmadd_ps( a_v,
-			 _mm_mul_ps( b_v, b_v ),
-			 _mm_add_ps( b_v, b_v ) );
+                         _mm_mul_ps( b_v, b_v ),
+                         _mm_add_ps( b_v, b_v ) );
 
     return b;
   }
@@ -1340,8 +1340,8 @@ namespace v4
     b_v = _mm_rcp_ps( a.v );
 
     b.v = _mm_fnmadd_ps( a.v,
-			 _mm_mul_ps( b_v, b_v ),
-			 _mm_add_ps( b_v, b_v ) );
+                         _mm_mul_ps( b_v, b_v ),
+                         _mm_add_ps( b_v, b_v ) );
 
     return b;
   }

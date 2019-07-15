@@ -134,9 +134,11 @@ namespace v4
 
     v4( const v4 &a )          // Copy constructor
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        i[j] = a.i[j];
+      v = a.v;
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   i[j] = a.i[j];
     }
 
     ~v4() {}                   // Default destructor
@@ -179,7 +181,7 @@ namespace v4
     return b;
   }
 
-# define sw(x,y) x^=y, y^=x, x^=y
+  #define sw(x,y) x^=y, y^=x, x^=y
 
   inline void swap( v4 &a, v4 &b )
   {
@@ -195,7 +197,7 @@ namespace v4
                                                   sw( a2.i[3],a3.i[2] );
   }
 
-# undef sw
+  #undef sw
 
   // v4 memory manipulation functions
 
@@ -491,27 +493,53 @@ namespace v4
 
     v4int( const v4int &a )                   // Copy constructor
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        i[j] = a.i[j];
+      v = a.v;
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   i[j] = a.i[j];
     }
 
     v4int( const v4 &a )                      // Init from mixed
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        i[j] = a.i[j];
+      v = a.v;
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   i[j] = a.i[j];
     }
 
     v4int( int a )                            // Init from scalar
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        i[j] = a;
+      union
+      {
+        int i;
+        float f;
+      } u;
+
+      u.i = a;
+      v   = vdupq_n_f32( u.f );
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   i[j] = a;
     }
 
     v4int( int i0, int i1, int i2, int i3 )   // Init from scalars
     {
+      // union
+      // {
+      //   int i;
+      //   float f;
+      // } u0, u1, u2, u3;
+
+      // u0.i = i0;
+      // u1.i = i1;
+      // u2.i = i2;
+      // u3.i = i3;
+
+      // v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
+
       i[0] = i0;
       i[1] = i1;
       i[2] = i2;
@@ -799,23 +827,29 @@ namespace v4
 
     v4float( const v4float &a )                         // Copy constructor
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        f[j] = a.f[j];
+      v = a.v;
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   f[j] = a.f[j];
     }
 
     v4float( const v4 &a )                              // Init from mixed
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        f[j] = a.f[j];
+      v = a.v;
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   f[j] = a.f[j];
     }
 
     v4float( float a )                                  // Init from scalar
     {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        f[j] = a;
+      v = vdupq_n_f32( a );
+
+      // ALWAYS_VECTORIZE
+      // for( int j = 0; j < 4; j++ )
+      //   f[j] = a;
     }
 
     v4float( float f0, float f1, float f2, float f3 )   // Init from scalars
@@ -830,7 +864,7 @@ namespace v4
 
     // v4float assignment operators
 
-#   define ASSIGN(op)                                   \
+    #define ASSIGN(op)                                  \
     inline v4float &operator op( const v4float &b )     \
     {                                                   \
       ALWAYS_VECTORIZE                                  \
@@ -845,7 +879,7 @@ namespace v4
     ASSIGN(*=)
     ASSIGN(/=)
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4float member access operator
 

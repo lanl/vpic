@@ -189,7 +189,7 @@ namespace v4
   // v4 memory manipulation functions
 
   inline void load_4x1( const void * ALIGNED(16) p,
-			v4 &a )
+                        v4 &a )
   {
     a.i[0] = ((const int * ALIGNED(16))p)[0];
     a.i[1] = ((const int * ALIGNED(16))p)[1];
@@ -198,7 +198,7 @@ namespace v4
   }
 
   inline void store_4x1( const v4 &a,
-			 void * ALIGNED(16) p )
+                         void * ALIGNED(16) p )
   {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
@@ -207,7 +207,7 @@ namespace v4
   }
 
   inline void stream_4x1( const v4 &a,
-			  void * ALIGNED(16) p )
+                          void * ALIGNED(16) p )
   {
     ((int * ALIGNED(16))p)[0] = a.i[0];
     ((int * ALIGNED(16))p)[1] = a.i[1];
@@ -234,7 +234,7 @@ namespace v4
   }
 
   inline void swap_4x1( void * ALIGNED(16) a,
-			void * ALIGNED(16) b )
+                        void * ALIGNED(16) b )
   {
     int t;
 
@@ -259,7 +259,7 @@ namespace v4
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3,
-			   v4 &a )
+                           v4 &a )
   {
     a.i[0] = ((const int *)a0)[0];
     a.i[1] = ((const int *)a1)[0];
@@ -338,7 +338,7 @@ namespace v4
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1,
-			    void *a2, void *a3 )
+                            void *a2, void *a3 )
   {
     ((int *)a0)[0] = a.i[0];
     ((int *)a1)[0] = a.i[1];
@@ -527,9 +527,9 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)			          \
+#   define ASSIGN(op)                             \
     inline v4int &operator op( const v4int &b )   \
-    {						  \
+    {                                             \
       i[0] op b.i[0];                             \
       i[1] op b.i[1];                             \
       i[2] op b.i[2];                             \
@@ -568,7 +568,7 @@ namespace v4
 
 # define PREFIX_UNARY(op)                       \
   inline v4int operator op( const v4int & a )   \
-  {						\
+  {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
     b.i[1] = ( op a.i[1] );                     \
@@ -600,7 +600,7 @@ namespace v4
 
 # define PREFIX_INCDEC(op)                      \
   inline v4int operator op( v4int & a )         \
-  {						\
+  {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
     b.i[1] = ( op a.i[1] );                     \
@@ -618,7 +618,7 @@ namespace v4
 
 # define POSTFIX_INCDEC(op)                    \
   inline v4int operator op( v4int & a, int )   \
-  {					       \
+  {                                            \
     v4int b;                                   \
     b.i[0] = ( a.i[0] op );                    \
     b.i[1] = ( a.i[1] op );                    \
@@ -636,7 +636,7 @@ namespace v4
 
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b )    \
-  {								\
+  {                                                             \
     v4int c;                                                    \
     c.i[0] = a.i[0] op b.i[0];                                  \
     c.i[1] = a.i[1] op b.i[1];                                  \
@@ -662,7 +662,7 @@ namespace v4
 
 # define LOGICAL(op)                                           \
   inline v4int operator op( const v4int &a, const v4int &b )   \
-  {							       \
+  {                                                            \
     v4int c;                                                   \
     c.i[0] = -(a.i[0] op b.i[0]);                              \
     c.i[1] = -(a.i[1] op b.i[1]);                              \
@@ -851,8 +851,8 @@ namespace v4
 
 #   define ASSIGN(op)                                   \
     inline v4float &operator op( const v4float &b )     \
-    {							\
-      f[0] op b.f[0];		             		\
+    {                                                   \
+      f[0] op b.f[0];                                   \
       f[1] op b.f[1];                                   \
       f[2] op b.f[2];                                   \
       f[3] op b.f[3];                                   \
@@ -974,7 +974,7 @@ namespace v4
 
 # define BINARY(op)                                                  \
   inline v4float operator op( const v4float &a, const v4float &b )   \
-  {								     \
+  {                                                                  \
     v4float c;                                                       \
     c.f[0] = a.f[0] op b.f[0];                                       \
     c.f[1] = a.f[1] op b.f[1];                                       \
@@ -994,7 +994,7 @@ namespace v4
 
 # define LOGICAL(op)                                               \
   inline v4int operator op( const v4float &a, const v4float &b )   \
-  {								   \
+  {                                                                \
     v4int c;                                                       \
     c.i[0] = - ( a.f[0] op b.f[0] );                               \
     c.i[1] = - ( a.f[1] op b.f[1] );                               \
@@ -1018,7 +1018,7 @@ namespace v4
 
 # define CMATH_FR1(fn)                          \
   inline v4float fn( const v4float &a )         \
-  {						\
+  {                                             \
     v4float b;                                  \
     b.f[0] = ::fn( a.f[0] );                    \
     b.f[1] = ::fn( a.f[1] );                    \
@@ -1029,7 +1029,7 @@ namespace v4
 
 # define CMATH_FR2(fn)                                          \
   inline v4float fn( const v4float &a, const v4float &b )       \
-  {								\
+  {                                                             \
     v4float c;                                                  \
     c.f[0] = ::fn( a.f[0], b.f[0] );                            \
     c.f[1] = ::fn( a.f[1], b.f[1] );                            \

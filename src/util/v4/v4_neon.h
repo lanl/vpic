@@ -192,7 +192,7 @@ namespace v4
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
-    fload32x4_t a0_v, a2_v, t, u;
+    float32x4_t a0_v, a2_v, t, u;
 
     //-----------------------------------------------------------------
     float32x2_t a0_vh = vget_high_f32( a0.v );

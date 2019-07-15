@@ -125,6 +125,7 @@ namespace v4
     {
       int i[4];
       float f[4];
+      float32x4_t v;
     };
 
   public:

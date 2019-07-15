@@ -135,7 +135,7 @@ namespace v4
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	i[j] = a.i[j];
+        i[j] = a.i[j];
     }
 
     ~v4() {}                   // Default destructor
@@ -199,7 +199,7 @@ namespace v4
   // v4 memory manipulation functions
 
   inline void load_4x1( const void * ALIGNED(16) p,
-			v4 &a )
+                        v4 &a )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
@@ -207,7 +207,7 @@ namespace v4
   }
 
   inline void store_4x1( const v4 &a,
-			 void * ALIGNED(16) p )
+                         void * ALIGNED(16) p )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
@@ -215,7 +215,7 @@ namespace v4
   }
 
   inline void stream_4x1( const v4 &a,
-			  void * ALIGNED(16) p )
+                          void * ALIGNED(16) p )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
@@ -239,7 +239,7 @@ namespace v4
   }
 
   inline void swap_4x1( void * ALIGNED(16) a,
-			void * ALIGNED(16) b )
+                        void * ALIGNED(16) b )
   {
     int t;
 
@@ -256,7 +256,7 @@ namespace v4
 
   inline void load_4x1_tr( const void *a0, const void *a1,
                            const void *a2, const void *a3,
-			   v4 &a )
+                           v4 &a )
   {
     a.i[0] = ((const int *)a0)[0];
     a.i[1] = ((const int *)a1)[0];
@@ -335,7 +335,7 @@ namespace v4
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0, void *a1,
-			    void *a2, void *a3 )
+                            void *a2, void *a3 )
   {
     ((int *)a0)[0] = a.i[0];
     ((int *)a1)[0] = a.i[1];
@@ -492,21 +492,21 @@ namespace v4
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	i[j] = a.i[j];
+        i[j] = a.i[j];
     }
 
     v4int( const v4 &a )                      // Init from mixed
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	i[j] = a.i[j];
+        i[j] = a.i[j];
     }
 
     v4int( int a )                            // Init from scalar
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	i[j] = a;
+        i[j] = a;
     }
 
     v4int( int i0, int i1, int i2, int i3 )   // Init from scalars
@@ -521,9 +521,9 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)			          \
+#   define ASSIGN(op)                             \
     inline v4int &operator op( const v4int &b )   \
-    {						  \
+    {                                             \
       ALWAYS_VECTORIZE                            \
       for( int j = 0; j < 4; j++ )                \
         i[j] op b.i[j];                           \
@@ -561,7 +561,7 @@ namespace v4
 
 # define PREFIX_UNARY(op)                       \
   inline v4int operator op( const v4int & a )   \
-  {						\
+  {                                             \
     v4int b;                                    \
     ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
@@ -591,7 +591,7 @@ namespace v4
 
 # define PREFIX_INCDEC(op)                      \
   inline v4int operator op( v4int & a )         \
-  {						\
+  {                                             \
     v4int b;                                    \
     ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
@@ -608,7 +608,7 @@ namespace v4
 
 # define POSTFIX_INCDEC(op)                    \
   inline v4int operator op( v4int & a, int )   \
-  {					       \
+  {                                            \
     v4int b;                                   \
     ALWAYS_VECTORIZE                           \
     for( int j = 0; j < 4; j++ )               \
@@ -625,7 +625,7 @@ namespace v4
 
 # define BINARY(op)                                             \
   inline v4int operator op( const v4int &a, const v4int &b )    \
-  {								\
+  {                                                             \
     v4int c;                                                    \
     ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 4; j++ )                                \
@@ -650,7 +650,7 @@ namespace v4
 
 # define LOGICAL(op)                                           \
   inline v4int operator op( const v4int &a, const v4int &b )   \
-  {							       \
+  {                                                            \
     v4int c;                                                   \
     ALWAYS_VECTORIZE                                           \
     for( int j = 0; j < 4; j++ )                               \
@@ -800,21 +800,21 @@ namespace v4
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	f[j] = a.f[j];
+        f[j] = a.f[j];
     }
 
     v4float( const v4 &a )                              // Init from mixed
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	f[j] = a.f[j];
+        f[j] = a.f[j];
     }
 
     v4float( float a )                                  // Init from scalar
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )
-	f[j] = a;
+        f[j] = a;
     }
 
     v4float( float f0, float f1, float f2, float f3 )   // Init from scalars
@@ -831,10 +831,10 @@ namespace v4
 
 #   define ASSIGN(op)                                   \
     inline v4float &operator op( const v4float &b )     \
-    {							\
+    {                                                   \
       ALWAYS_VECTORIZE                                  \
       for( int j = 0; j < 4; j++ )                      \
-        f[j] op b.f[j];		             		\
+        f[j] op b.f[j];                                 \
       return *this;                                     \
     }
 
@@ -944,28 +944,43 @@ namespace v4
 
   // v4float binary operators
 
-# define BINARY(op)                                                  \
+  #define BINARY(op,intrin)                                          \
   inline v4float operator op( const v4float &a, const v4float &b )   \
-  {								     \
+  {                                                                  \
     v4float c;                                                       \
-    ALWAYS_VECTORIZE                                                 \
-    for( int j = 0; j < 4; j++ )                                     \
-      c.f[j] = a.f[j] op b.f[j];                                     \
+    c.v = intrin( a.v, b.v );                                        \
     return c;                                                        \
   }
 
-  BINARY(+)
-  BINARY(-)
-  BINARY(*)
-  BINARY(/)
+  BINARY( +, vaddq_f32 )
+  BINARY( -, vsubq_f32 )
+  BINARY( *, vmulq_f32 )
+  BINARY( /, vdivq_f32 )
 
-# undef BINARY
+  #undef BINARY
+
+  // #define BINARY(op)                                                 \
+  // inline v4float operator op( const v4float &a, const v4float &b )   \
+  // {                                                               \
+  //   v4float c;                                                       \
+  //   ALWAYS_VECTORIZE                                                 \
+  //   for( int j = 0; j < 4; j++ )                                     \
+  //     c.f[j] = a.f[j] op b.f[j];                                     \
+  //   return c;                                                        \
+  // }
+
+  // BINARY(+)
+  // BINARY(-)
+  // BINARY(*)
+  // BINARY(/)
+
+  // #undef BINARY
 
   // v4float logical operators
 
 # define LOGICAL(op)                                               \
   inline v4int operator op( const v4float &a, const v4float &b )   \
-  {								   \
+  {                                                                \
     v4int c;                                                       \
     ALWAYS_VECTORIZE                                               \
     for( int j = 0; j < 4; j++ )                                   \
@@ -988,7 +1003,7 @@ namespace v4
 
 # define CMATH_FR1(fn)                          \
   inline v4float fn( const v4float &a )         \
-  {						\
+  {                                             \
     v4float b;                                  \
     ALWAYS_VECTORIZE                            \
     for( int j = 0; j < 4; j++ )                \
@@ -998,7 +1013,7 @@ namespace v4
 
 # define CMATH_FR2(fn)                                          \
   inline v4float fn( const v4float &a, const v4float &b )       \
-  {								\
+  {                                                             \
     v4float c;                                                  \
     ALWAYS_VECTORIZE                                            \
     for( int j = 0; j < 4; j++ )                                \
@@ -1080,6 +1095,8 @@ namespace v4
   inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
   {
     v4float d;
+
+    // d.v = _mm_fmadd_ps( a.v, b.v, c.v );
 
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )

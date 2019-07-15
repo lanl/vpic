@@ -592,7 +592,7 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)                             \
+    #define ASSIGN(op)                            \
     inline v4int &operator op( const v4int &b )   \
     {                                             \
       i[0] op b.i[0];                             \
@@ -639,7 +639,7 @@ namespace v4
     ASSIGN(<<=)
     ASSIGN(>>=)
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4int member access operator
 
@@ -967,7 +967,7 @@ namespace v4
 
     // v4float assignment operators
 
-#   define ASSIGN(op,intrin)                            \
+    #define ASSIGN(op,intrin)                           \
     inline v4float &operator op( const v4float &b )     \
     {                                                   \
       v = intrin( v, b.v );                             \
@@ -986,7 +986,7 @@ namespace v4
     ASSIGN( *=, _mm_mul_ps )
     ASSIGN( /=, _mm_div_ps )
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4float member access operator
 

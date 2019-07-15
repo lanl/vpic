@@ -759,7 +759,7 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)                             \
+    #define ASSIGN(op)                            \
     inline v4int &operator op( const v4int &b )   \
     {                                             \
       ALWAYS_VECTORIZE                            \
@@ -780,7 +780,7 @@ namespace v4
     ASSIGN(<<=)
     ASSIGN(>>=)
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4int member access operator
 
@@ -1073,22 +1073,43 @@ namespace v4
 
     // v4float assignment operators
 
-    #define ASSIGN(op)                                  \
+    #define ASSIGN(op,intrin)                           \
     inline v4float &operator op( const v4float &b )     \
     {                                                   \
-      ALWAYS_VECTORIZE                                  \
-      for( int j = 0; j < 4; j++ )                      \
-        f[j] op b.f[j];                                 \
+      v = intrin( v, b.v );                             \
       return *this;                                     \
     }
 
-    ASSIGN(=)
-    ASSIGN(+=)
-    ASSIGN(-=)
-    ASSIGN(*=)
-    ASSIGN(/=)
+    inline v4float &operator =( const v4float &b )
+    {
+      v = b.v;
+
+      return *this;
+    }
+
+    ASSIGN( +=, vaddq_f32 )
+    ASSIGN( -=, vsubq_f32 )
+    ASSIGN( *=, vmulq_f32 )
+    ASSIGN( /=, vdivq_f32 )
 
     #undef ASSIGN
+
+    // #define ASSIGN(op)                                  \
+    // inline v4float &operator op( const v4float &b )     \
+    // {                                                   \
+    //   ALWAYS_VECTORIZE                                  \
+    //   for( int j = 0; j < 4; j++ )                      \
+    //     f[j] op b.f[j];                                 \
+    //   return *this;                                     \
+    // }
+
+    // ASSIGN(=)
+    // ASSIGN(+=)
+    // ASSIGN(-=)
+    // ASSIGN(*=)
+    // ASSIGN(/=)
+
+    // #undef ASSIGN
 
     // v4float member access operator
 

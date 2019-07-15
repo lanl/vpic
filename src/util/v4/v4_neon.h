@@ -797,7 +797,7 @@ namespace v4
 
   // v4int prefix unary operators
 
-# define PREFIX_UNARY(op)                       \
+  #define PREFIX_UNARY(op)                      \
   inline v4int operator op( const v4int & a )   \
   {                                             \
     v4int b;                                    \
@@ -823,11 +823,11 @@ namespace v4
 
   PREFIX_UNARY(~)
 
-# undef PREFIX_UNARY
+  #undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
 
-# define PREFIX_INCDEC(op)                      \
+  #define PREFIX_INCDEC(op)                     \
   inline v4int operator op( v4int & a )         \
   {                                             \
     v4int b;                                    \
@@ -840,11 +840,11 @@ namespace v4
   PREFIX_INCDEC(++)
   PREFIX_INCDEC(--)
 
-# undef PREFIX_INCDEC
+  #undef PREFIX_INCDEC
 
   // v4int postfix increment / decrement
 
-# define POSTFIX_INCDEC(op)                    \
+  #define POSTFIX_INCDEC(op)                   \
   inline v4int operator op( v4int & a, int )   \
   {                                            \
     v4int b;                                   \
@@ -857,11 +857,11 @@ namespace v4
   POSTFIX_INCDEC(++)
   POSTFIX_INCDEC(--)
 
-# undef POSTFIX_INCDEC
+  #undef POSTFIX_INCDEC
 
   // v4int binary operators
 
-# define BINARY(op)                                             \
+  #define BINARY(op)                                            \
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {                                                             \
     v4int c;                                                    \
@@ -882,11 +882,11 @@ namespace v4
   BINARY(<<)
   BINARY(>>)
 
-# undef BINARY
+  #undef BINARY
 
   // v4int logical operators
 
-# define LOGICAL(op)                                           \
+  #define LOGICAL(op)                                          \
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {                                                            \
     v4int c;                                                   \
@@ -905,7 +905,7 @@ namespace v4
   LOGICAL(&&)
   LOGICAL(||)
 
-# undef LOGICAL
+  #undef LOGICAL
 
   // v4int miscellaneous functions
 
@@ -996,8 +996,8 @@ namespace v4
 
     // v4float math library friends
 
-#   define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
-#   define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
+    #define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
+    #define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
                                                    const v4float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
@@ -1008,8 +1008,8 @@ namespace v4
 
     CMATH_FR2(copysign);
 
-#   undef CMATH_FR1
-#   undef CMATH_FR2
+    #undef CMATH_FR1
+    #undef CMATH_FR2
 
     // v4float miscellaneous friends
 
@@ -1266,7 +1266,7 @@ namespace v4
 
   // v4float math library functions
 
-# define CMATH_FR1(fn)                          \
+  #define CMATH_FR1(fn)                         \
   inline v4float fn( const v4float &a )         \
   {                                             \
     v4float b;                                  \
@@ -1276,7 +1276,7 @@ namespace v4
     return b;                                   \
   }
 
-# define CMATH_FR2(fn)                                          \
+  #define CMATH_FR2(fn)                                         \
   inline v4float fn( const v4float &a, const v4float &b )       \
   {                                                             \
     v4float c;                                                  \
@@ -1308,8 +1308,8 @@ namespace v4
     return c;
   }
 
-# undef CMATH_FR1
-# undef CMATH_FR2
+  #undef CMATH_FR1
+  #undef CMATH_FR2
 
   // v4float miscellaneous functions
 
@@ -1317,9 +1317,11 @@ namespace v4
   {
     v4float b;
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = ::sqrt( 1.0f / a.f[j] );
+    b.v = vrsqrteq_f32( a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1328,9 +1330,26 @@ namespace v4
   {
     v4float b;
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = ::sqrt( 1.0f / a.f[j] );
+    float32x4_t a_v = a.v, b_v;
+
+    b_v = vrsqrteq_f32( a_v );
+
+    // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // refinement desired!
+    b.v = vaddq_f32( b_v, vmulq_f32( vdupq_n_f32( 0.5f ),
+                                     vsubq_f32( b_v,
+                                                vmulq_f32( a_v,
+                                                           vmulq_f32( b_v,
+                                                                      vmulq_f32( b_v, b_v )
+                                                                    )
+                                                         )
+                                              )
+                                   )
+                    );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1339,9 +1358,11 @@ namespace v4
   {
     v4float b;
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = 1.0f / a.f[j];
+    b.v = vrecpeq_f32( a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
@@ -1350,9 +1371,19 @@ namespace v4
   {
     v4float b;
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = 1.0f / a.f[j];
+    float32x4_t a_v = a.v, b_v;
+
+    b_v = vrecpeq_f32( a_v );
+
+    b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
+                     vmulq_f32( a_v,
+                                vmulq_f32( b_v, b_v )
+                              )
+                   );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = 1.0f / a.f[j];
 
     return b;
   }

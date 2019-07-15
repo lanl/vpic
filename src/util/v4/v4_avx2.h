@@ -1202,8 +1202,8 @@ namespace v4
     return c;
   }
 
-# undef CMATH_FR1
-# undef CMATH_FR2
+  #undef CMATH_FR1
+  #undef CMATH_FR2
 
   // v4float miscelleanous functions
 

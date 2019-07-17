@@ -443,7 +443,7 @@ namespace v4
     b.v = vtrn1q_f64( s, u );
   }
 
-  inline void load_4x3_tr( const void * ALIGNED(16) a0,
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
@@ -469,6 +469,7 @@ namespace v4
     c.v = vtrn2q_f64( r, t );
   }
 
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,

@@ -123,8 +123,10 @@ namespace v4
 
     union
     {
-      int i[4];
-      float f[4];
+      int         i[4];
+      float       f[4];
+      int32x4_t   vsi;
+      uint32x4_t  vui;
       float32x4_t v;
     };
 
@@ -1325,26 +1327,96 @@ namespace v4
 
   // v4float logical operators
 
-# define LOGICAL(op)                                               \
+  #define LOGICAL(op,intrin)                                       \
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {                                                                \
     v4int c;                                                       \
-    ALWAYS_VECTORIZE                                               \
-    for( int j = 0; j < 4; j++ )                                   \
-      c.i[j] = - ( a.f[j] op b.f[j] );                             \
+    c.v = intrin( a.v, b.v );                                      \
     return c;                                                      \
   }
 
-  LOGICAL(< )
-  LOGICAL(> )
-  LOGICAL(==)
-  LOGICAL(!=)
-  LOGICAL(<=)
-  LOGICAL(>=)
-  LOGICAL(&&)
-  LOGICAL(||)
+  LOGICAL(  <, vcltq_f32 )
+  LOGICAL(  >, vcgtq_f32 )
+  LOGICAL( ==, vceqq_f32 )
+  LOGICAL( <=, vcleq_f32 )
+  LOGICAL( >=, vcgeq_f32 )
+  // LOGICAL( !=, _mm_cmpneq_ps )
 
-# undef LOGICAL
+  inline v4int operator !=( const v4float &a, const v4float &b )
+  {
+    v4int c;
+
+    // r.neon_u32 = vmvnq_u32(vceqq_f32(a.neon_f32, b.neon_f32));
+    // return type looks wrong here. try adding uint32x4_t vi to
+    // the union. may need to do a cast.
+
+    c.vui = vmvnq_u32( vceqq_f32( a.v, b.v ) );
+
+    return c;
+  }
+
+  inline v4int operator &&( const v4float &a, const v4float &b )
+  {
+    v4int c;
+
+    float32x4_t vzero = vdupq_n_f32(0.0f);
+
+    // __m128 vzero = _mm_setzero_ps();
+
+    // Is there a better way to do this than the SSE way?
+    c.vsi = vandq_s32( vmvnq_u32( vceqq_f32( a.v,
+					     vzero ) ),
+		       vmvnq_u32( vceqq_f32( b.v,
+					     vzero ) ) );
+
+    // c.v = _mm_and_ps( _mm_cmpneq_ps( a.v, vzero ),
+    //                   _mm_cmpneq_ps( b.v, vzero ) );
+
+    return c;
+  }
+
+  inline v4int operator ||( const v4float &a, const v4float &b )
+  {
+    v4int c;
+
+    float32x4_t vzero = vdupq_n_f32(0.0f);
+
+    // __m128 vzero = _mm_setzero_ps();
+
+    // Is there a better way to do this than the SSE way?
+    c.vsi = vorrq_s32( vmvnq_u32( vceqq_f32( a.v,
+					     vzero ) ),
+		       vmvnq_u32( vceqq_f32( b.v,
+					     vzero ) ) );
+
+    // c.v = _mm_or_ps( _mm_cmpneq_ps( a.v, vzero ),
+    //                  _mm_cmpneq_ps( b.v, vzero ) );
+
+    return c;
+  }
+
+  #undef LOGICAL
+
+  // #define LOGICAL(op)                                              \
+  // inline v4int operator op( const v4float &a, const v4float &b )   \
+  // {                                                                \
+  //   v4int c;                                                       \
+  //   ALWAYS_VECTORIZE                                               \
+  //   for( int j = 0; j < 4; j++ )                                   \
+  //     c.i[j] = - ( a.f[j] op b.f[j] );                             \
+  //   return c;                                                      \
+  // }
+
+  // LOGICAL(< )
+  // LOGICAL(> )
+  // LOGICAL(==)
+  // LOGICAL(!=)
+  // LOGICAL(<=)
+  // LOGICAL(>=)
+  // LOGICAL(&&)
+  // LOGICAL(||)
+
+  // #undef LOGICAL
 
   // v4float math library functions
 

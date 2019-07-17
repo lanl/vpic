@@ -1101,7 +1101,7 @@ namespace v4
 
   // v4float logical operators
 
-# define LOGICAL(op,intrin)                                        \
+  #define LOGICAL(op,intrin)                                       \
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {                                                                \
     v4int c;                                                       \

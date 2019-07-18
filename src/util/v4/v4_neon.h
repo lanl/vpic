@@ -408,6 +408,7 @@ namespace v4
     // c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
   }
 
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -441,8 +442,9 @@ namespace v4
     // c.i[3] = ((const int * ALIGNED(16))a3)[2];
     // d.i[3] = ((const int * ALIGNED(16))a3)[3];
   }
+  #endif
 
-  #if 0
+  #if 1
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -617,6 +619,7 @@ namespace v4
     ((int * ALIGNED(16))a3)[2] = c.i[3];
   }
 
+  #if 0
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
@@ -650,8 +653,9 @@ namespace v4
     // ((int * ALIGNED(16))a3)[2] = c.i[3];
     // ((int * ALIGNED(16))a3)[3] = d.i[3];
   }
+  #endif
 
-  #if 0
+  #if 1
   inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
                             void * ALIGNED(16) a0, void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2, void * ALIGNED(16) a3 )

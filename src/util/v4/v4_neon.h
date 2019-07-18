@@ -497,6 +497,7 @@ namespace v4
     c.v = vtrn2q_f64( r, t );
     d.v = vtrn2q_f64( s, u );
   }
+  #endif
 
   #if 1
   inline void load_4x8_tr( const void * ALIGNED(16) a0,
@@ -640,6 +641,7 @@ namespace v4
     ( ( int * ALIGNED(8) ) a3 )[0] = a.i[3];
     ( ( int * ALIGNED(8) ) a3 )[1] = b.i[3];
   }
+  #endif
 
   inline void store_4x3_tr( const v4 &a,
                             const v4 &b,

@@ -198,6 +198,10 @@ namespace v4
   inline v4 splat( const v4 & a )
   {
     v4 b;
+    // __m128 a_v = a.v;
+
+    // b.v = _mm_shuffle_ps( a_v, a_v, ( n*permute<1,1,1,1>::value ) );
+
 
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
@@ -210,6 +214,9 @@ namespace v4
   inline v4 shuffle( const v4 & a )
   {
     v4 b;
+    // __m128 a_v = a.v;
+
+    // b.v = _mm_shuffle_ps( a_v, a_v, ( permute<i0,i1,i2,i3>::value ) );
 
     b.i[0] = a.i[i0];
     b.i[1] = a.i[i1];
@@ -380,6 +387,8 @@ namespace v4
   inline void stream_4x1( const v4 &a,
                           void * ALIGNED(16) p )
   {
+    // _mm_stream_ps( ( float * ) p, a.v );
+
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       ( (int * ALIGNED(16) ) p )[j] = a.i[j];
@@ -884,6 +893,38 @@ namespace v4
     ASSIGN(%=)
     ASSIGN(<<=)
     ASSIGN(>>=)
+    // ASSIGN( =)
+    // ASSIGN(^=)
+    // ASSIGN(&=)
+    // ASSIGN(|=)
+
+    inline v4int &operator =( const v4int &b )
+    {
+      v = b.v;
+
+      return *this;
+    }
+
+    inline v4int &operator ^=( const v4int &b )
+    {
+      vsi = veorq_s32( vsi, b.vsi );
+
+      return *this;
+    }
+
+    inline v4int &operator &=( const v4int &b )
+    {
+      vsi = vandq_s32( vsi, b.vsi );
+
+      return *this;
+    }
+
+    inline v4int &operator |=( const v4int &b )
+    {
+      vsi = vorrq_s32( vsi, b.vsi );
+
+      return *this;
+    }
 
     #undef ASSIGN
 
@@ -1011,6 +1052,36 @@ namespace v4
   BINARY(%)
   BINARY(<<)
   BINARY(>>)
+  // BINARY(^)
+  // BINARY(&)
+  // BINARY(|)
+
+  inline v4int operator ^( const v4int &a, const v4int &b )
+  {
+    v4int c;
+
+    c.vsi = veorq_s32( a.vsi, b.vsi );
+
+    return c;
+  }
+
+  inline v4int operator &( const v4int &a, const v4int &b )
+  {
+    v4int c;
+
+    c.vsi = vandq_s32( a.vsi, b.vsi );
+
+    return c;
+  }
+
+  inline v4int operator |( const v4int &a, const v4int &b )
+  {
+    v4int c;
+
+    c.vsi = vorrq_s32( a.vsi, b.vsi );
+
+    return c;
+  }
 
   #undef BINARY
 

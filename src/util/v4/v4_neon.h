@@ -207,6 +207,24 @@ namespace v4
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
+    float32x4_t r, s, t, u;
+
+    r = vtrn1q_f32( a0.v, a1.v );
+    s = vtrn2q_f32( a0.v, a1.v );
+
+    t = vtrn1q_f32( a2.v, a3.v );
+    u = vtrn2q_f32( a2.v, a3.v );
+
+    a0.v = vtrn1q_f64( r, t );
+    a2.v = vtrn2q_f64( r, t );
+
+    a1.v = vtrn1q_f64( s, u );
+    a3.v = vtrn2q_f64( s, u );
+  }
+
+  #if 0
+  inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
+  {
     float32x4_t a0_v, a2_v, t, u;
 
     //-----------------------------------------------------------------
@@ -293,6 +311,17 @@ namespace v4
     //                        sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
     //                                               sw( a2.i[3],a3.i[2] );
   }
+  #endif
+
+  #if 0
+  // Portable version.
+  inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
+  {
+    sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
+                           sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
+                                                  sw( a2.i[3],a3.i[2] );
+  }
+  #endif
 
   #undef sw
 

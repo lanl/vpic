@@ -29,7 +29,7 @@ namespace v4
     constexpr static int value = i0 + i1*4 + i2*16 + i3*64;
   };
 
-# define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
+  #define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
 
   ////////////////
   // v4 base class
@@ -151,8 +151,8 @@ namespace v4
   template<int n>
   inline v4 splat( const v4 & a )
   {
-    __m128 a_v = a.v;
     v4 b;
+    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a_v, a_v, ( n*permute<1,1,1,1>::value ) );
 
@@ -162,8 +162,8 @@ namespace v4
   template<int i0, int i1, int i2, int i3>
   inline v4 shuffle( const v4 & a )
   {
-    __m128 a_v = a.v;
     v4 b;
+    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a_v, a_v, ( permute<i0,i1,i2,i3>::value ) );
 
@@ -231,7 +231,8 @@ namespace v4
   }
 
   /* FIXME: MAKE ROBUST AGAINST ALIASING ISSUES */
-  inline void swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b )
+  inline void swap_4x1( void * ALIGNED(16) a,
+			void * ALIGNED(16) b )
   {
     __m128 t = _mm_load_ps( ( float * ) a );
 
@@ -241,21 +242,24 @@ namespace v4
 
   // v4 transposed memory manipulation functions
 
-  inline void load_4x1_tr( const void *a0, const void *a1,
-                           const void *a2, const void *a3,
+  inline void load_4x1_tr( const void *a0,
+			   const void *a1,
+                           const void *a2,
+			   const void *a3,
                            v4 &a )
   {
-    a.v = _mm_setr_ps( ((const float *)a0)[0],
-                       ((const float *)a1)[0],
-                       ((const float *)a2)[0],
-                       ((const float *)a3)[0] );
+    a.v = _mm_setr_ps( ( (const float *) a0 )[0],
+                       ( (const float *) a1 )[0],
+                       ( (const float *) a2 )[0],
+                       ( (const float *) a3 )[0] );
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
                            const void * ALIGNED(8) a3,
-                           v4 &a, v4 &b )
+                           v4 &a,
+			   v4 &b )
   {
     __m128 a_v, b_v, t;
 
@@ -275,7 +279,9 @@ namespace v4
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c )
+                           v4 &a,
+			   v4 &b,
+			   v4 &c )
   {
     __m128 a_v, b_v, c_v, t, u;
 
@@ -298,12 +304,16 @@ namespace v4
     c.v = c_v;
   }
 
-#if 0
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
+  {
     __m128 a_v, b_v, c_v, d_v, t, u;
     a_v = _mm_load_ps( (const float *)a0 );
     b_v = _mm_load_ps( (const float *)a1 );
@@ -319,14 +329,18 @@ namespace v4
     d_v = _mm_movehl_ps( u, t );
     a.v = a_v; b.v = b_v; c.v = c_v; d.v = d_v;
   }
-#endif
+  #endif
 
-#if 0
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
+  {
     __m128 a_v, b_v, c_v, d_v, t, u;
 
     a_v = _mm_load_ps( (const float *)a0 );
@@ -344,14 +358,18 @@ namespace v4
     c.v = _mm_movelh_ps( t, u );
     d.v = _mm_movehl_ps( u, t );
   }
-#endif
+  #endif
 
-#if 0
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d ) {
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
+  {
     __m128 a_v, b_v, c_v, d_v, t, u;
 
     a_v = _mm_load_ps( (const float *)a0 );
@@ -369,13 +387,16 @@ namespace v4
     d.v = _mm_movehl_ps( u, t );
     c.v = _mm_movelh_ps( t, u );
   }
-#endif
+  #endif
 
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d )
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
   {
     __m128 a_v, b_v, c_v, d_v, t, u;
 
@@ -396,18 +417,23 @@ namespace v4
   }
 
   inline void store_4x1_tr( const v4 &a,
-                            void *a0, void *a1,
-                            void *a2, void *a3 )
+                            void *a0,
+			    void *a1,
+                            void *a2,
+			    void *a3 )
   {
-    ((float *)a0)[0] = a.f[0];
-    ((float *)a1)[0] = a.f[1];
-    ((float *)a2)[0] = a.f[2];
-    ((float *)a3)[0] = a.f[3];
+    ( (float *) a0 )[0] = a.f[0];
+    ( (float *) a1 )[0] = a.f[1];
+    ( (float *) a2 )[0] = a.f[2];
+    ( (float *) a3 )[0] = a.f[3];
   }
 
-  inline void store_4x2_tr( const v4 &a, const v4 &b,
-                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
-                            void * ALIGNED(8) a2, void * ALIGNED(8) a3 )
+  inline void store_4x2_tr( const v4 &a,
+			    const v4 &b,
+                            void * ALIGNED(8) a0,
+			    void * ALIGNED(8) a1,
+                            void * ALIGNED(8) a2,
+			    void * ALIGNED(8) a3 )
   {
     __m128 a_v = a.v, b_v = b.v, t;
 
@@ -422,9 +448,13 @@ namespace v4
     _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
   }
 
-  inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
+  inline void store_4x3_tr( const v4 &a,
+			    const v4 &b,
+			    const v4 &c,
+                            void * ALIGNED(16) a0,
+			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+			    void * ALIGNED(16) a3 )
   {
     __m128 a_v = a.v, b_v = b.v, t;
 
@@ -445,10 +475,14 @@ namespace v4
   }
 
   // FIXME: IS THIS FASTER THAN THE OLD WAY (HAD MORE STORE INSTR)
-  inline void store_4x4_tr( const v4 &a, const v4 &b,
-                            const v4 &c, const v4 &d,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
+  inline void store_4x4_tr( const v4 &a,
+			    const v4 &b,
+                            const v4 &c,
+			    const v4 &d,
+                            void * ALIGNED(16) a0,
+			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+			    void * ALIGNED(16) a3 )
   {
     __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
 
@@ -602,18 +636,20 @@ namespace v4
       return *this;                               \
     }
 
+    ASSIGN(+=)
+    ASSIGN(-=)
+    ASSIGN(*=)
+    ASSIGN(/=)
+    ASSIGN(%=)
+    ASSIGN(<<=)
+    ASSIGN(>>=)
+
     inline v4int &operator =( const v4int &b )
     {
       v = b.v;
 
       return *this;
     }
-
-    ASSIGN(+=)
-    ASSIGN(-=)
-    ASSIGN(*=)
-    ASSIGN(/=)
-    ASSIGN(%=)
 
     inline v4int &operator ^=( const v4int &b )
     {
@@ -636,9 +672,6 @@ namespace v4
       return *this;
     }
 
-    ASSIGN(<<=)
-    ASSIGN(>>=)
-
     #undef ASSIGN
 
     // v4int member access operator
@@ -656,7 +689,7 @@ namespace v4
 
   // v4int prefix unary operators
 
-# define PREFIX_UNARY(op)                       \
+  #define PREFIX_UNARY(op)                      \
   inline v4int operator op( const v4int & a )   \
   {                                             \
     v4int b;                                    \
@@ -706,11 +739,11 @@ namespace v4
     return b;
   }
 
-# undef PREFIX_UNARY
+  #undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
 
-# define PREFIX_INCDEC(op)                      \
+  #define PREFIX_INCDEC(op)                     \
   inline v4int operator op( v4int & a )         \
   {                                             \
     v4int b;                                    \
@@ -724,11 +757,11 @@ namespace v4
   PREFIX_INCDEC(++)
   PREFIX_INCDEC(--)
 
-# undef PREFIX_INCDEC
+  #undef PREFIX_INCDEC
 
   // v4int postfix increment / decrement
 
-# define POSTFIX_INCDEC(op)                    \
+  #define POSTFIX_INCDEC(op)                   \
   inline v4int operator op( v4int & a, int )   \
   {                                            \
     v4int b;                                   \
@@ -742,11 +775,11 @@ namespace v4
   POSTFIX_INCDEC(++)
   POSTFIX_INCDEC(--)
 
-# undef POSTFIX_INCDEC
+  #undef POSTFIX_INCDEC
 
   // v4int binary operators
 
-# define BINARY(op)                                             \
+  #define BINARY(op)                                            \
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {                                                             \
     v4int c;                                                    \
@@ -762,6 +795,8 @@ namespace v4
   BINARY(*)
   BINARY(/)
   BINARY(%)
+  BINARY(<<)
+  BINARY(>>)
 
   inline v4int operator ^( const v4int &a, const v4int &b )
   {
@@ -790,14 +825,11 @@ namespace v4
     return c;
   }
 
-  BINARY(<<)
-  BINARY(>>)
-
-# undef BINARY
+  #undef BINARY
 
   // v4int logical operators
 
-# define LOGICAL(op)                                           \
+  #define LOGICAL(op)                                          \
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {                                                            \
     v4int c;                                                   \
@@ -817,7 +849,7 @@ namespace v4
   LOGICAL(&&)
   LOGICAL(||)
 
-# undef LOGICAL
+  #undef LOGICAL
 
   // v4int miscellaneous functions
 
@@ -905,9 +937,9 @@ namespace v4
 
     // v4float math library friends
 
-#   define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
-#   define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
-                                                   const v4float &b ) ALWAYS_INLINE
+    #define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
+    #define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
+                                                    const v4float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -917,8 +949,8 @@ namespace v4
 
     CMATH_FR2(copysign);
 
-#   undef CMATH_FR1
-#   undef CMATH_FR2
+    #undef CMATH_FR1
+    #undef CMATH_FR2
 
     // v4float miscellaneous friends
 
@@ -974,17 +1006,17 @@ namespace v4
       return *this;                                     \
     }
 
+    ASSIGN( +=, _mm_add_ps )
+    ASSIGN( -=, _mm_sub_ps )
+    ASSIGN( *=, _mm_mul_ps )
+    ASSIGN( /=, _mm_div_ps )
+
     inline v4float &operator =( const v4float &b )
     {
       v = b.v;
 
       return *this;
     }
-
-    ASSIGN( +=, _mm_add_ps )
-    ASSIGN( -=, _mm_sub_ps )
-    ASSIGN( *=, _mm_mul_ps )
-    ASSIGN( /=, _mm_div_ps )
 
     #undef ASSIGN
 
@@ -1140,11 +1172,11 @@ namespace v4
     return c;
   }
 
-# undef LOGICAL
+  #undef LOGICAL
 
   // v4float math library functions
 
-# define CMATH_FR1(fn)                          \
+  #define CMATH_FR1(fn)                         \
   inline v4float fn( const v4float &a )         \
   {                                             \
     v4float b;                                  \
@@ -1155,7 +1187,7 @@ namespace v4
     return b;                                   \
   }
 
-# define CMATH_FR2(fn)                                          \
+  #define CMATH_FR2(fn)                                         \
   inline v4float fn( const v4float &a, const v4float &b )       \
   {                                                             \
     v4float c;                                                  \

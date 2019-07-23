@@ -208,6 +208,22 @@ namespace v4
   #if 1
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
+    float32x4x2_t r, s;
+
+    r = vtrnq_f32( a0.v, a1.v );
+    s = vtrnq_f32( a2.v, a3.v );
+
+    a0.v = vtrn1q_f64( r.val[0], s.val[0] );
+    a2.v = vtrn2q_f64( r.val[0], s.val[0] );
+
+    a1.v = vtrn1q_f64( r.val[1], s.val[1] );
+    a3.v = vtrn2q_f64( r.val[1], s.val[1] );
+  }
+  #endif
+
+  #if 0
+  inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
+  {
     float32x4_t r, s, t, u;
 
     r = vtrn1q_f32( a0.v, a1.v );

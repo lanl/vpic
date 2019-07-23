@@ -205,6 +205,7 @@ namespace v4
       sw( a.i[j], b.i[j] );
   }
 
+  #if 1
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
     float32x4_t r, s, t, u;
@@ -221,6 +222,7 @@ namespace v4
     a1.v = vtrn1q_f64( s, u );
     a3.v = vtrn2q_f64( s, u );
   }
+  #endif
 
   #if 0
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
@@ -306,10 +308,6 @@ namespace v4
     //-----------------------------------------------------------------
     // a3.v = _mm_movehl_ps( u, t );
     //-----------------------------------------------------------------
-
-    // sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
-    //                        sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
-    //                                               sw( a2.i[3],a3.i[2] );
   }
   #endif
 
@@ -433,6 +431,7 @@ namespace v4
     a.i[3] = ((const int *)a3)[0];
   }
 
+  #if 1
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
@@ -440,37 +439,46 @@ namespace v4
                            v4 &a,
 			   v4 &b )
   {
-    // __m128 a_v, b_v, t;
+    float32x4_t r, s, t, u, a2_v, a3_v;
 
-    // b_v = _mm_setzero_ps();
+    a.v  = vld1q_f32( (const float *) a0 );
+    b.v  = vld1q_f32( (const float *) a1 );
+    a2_v = vld1q_f32( (const float *) a2 );
+    a3_v = vld1q_f32( (const float *) a3 );
 
-    // t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a0 ), (__m64 *)a1 );
-    // b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a2 ), (__m64 *)a3 );
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
 
-    // a_v = _mm_shuffle_ps( t, b_v, 0x88 );
-    // b_v = _mm_shuffle_ps( t, b_v, 0xdd );
+    t = vtrn1q_f32( a2_v, a3_v );
+    u = vtrn2q_f32( a2_v, a3_v );
 
-    // a.v = a_v;
-    // b.v = b_v;
-
-    // Not correct.
-    // float32x4x4_t mat = vld4q_f32( (const float *) a0 );
-
-    // a.v = mat.val[0];
-    // b.v = mat.val[1];
-
-    a.i[0] = ((const int * ALIGNED(8))a0)[0];
-    b.i[0] = ((const int * ALIGNED(8))a0)[1];
-
-    a.i[1] = ((const int * ALIGNED(8))a1)[0];
-    b.i[1] = ((const int * ALIGNED(8))a1)[1];
-
-    a.i[2] = ((const int * ALIGNED(8))a2)[0];
-    b.i[2] = ((const int * ALIGNED(8))a2)[1];
-
-    a.i[3] = ((const int * ALIGNED(8))a3)[0];
-    b.i[3] = ((const int * ALIGNED(8))a3)[1];
+    a.v = vtrn1q_f64( r, t );
+    b.v = vtrn1q_f64( s, u );
   }
+  #endif
+
+  #if 0
+  // Portable version.
+  inline void load_4x2_tr( const void * ALIGNED(8) a0,
+                           const void * ALIGNED(8) a1,
+                           const void * ALIGNED(8) a2,
+                           const void * ALIGNED(8) a3,
+                           v4 &a,
+			   v4 &b )
+  {
+    a.i[0] = ( ( const int * ALIGNED(8) ) a0 )[0];
+    b.i[0] = ( ( const int * ALIGNED(8) ) a0 )[1];
+
+    a.i[1] = ( ( const int * ALIGNED(8) ) a1 )[0];
+    b.i[1] = ( ( const int * ALIGNED(8) ) a1 )[1];
+
+    a.i[2] = ( ( const int * ALIGNED(8) ) a2 )[0];
+    b.i[2] = ( ( const int * ALIGNED(8) ) a2 )[1];
+
+    a.i[3] = ( ( const int * ALIGNED(8) ) a3 )[0];
+    b.i[3] = ( ( const int * ALIGNED(8) ) a3 )[1];
+  }
+  #endif
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
@@ -565,6 +573,36 @@ namespace v4
   #endif
 
   #if 1
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
+  {
+    float32x4_t r, s, t, u;
+
+    a.v = vld1q_f32( (const float *) a0 );
+    b.v = vld1q_f32( (const float *) a1 );
+    c.v = vld1q_f32( (const float *) a2 );
+    d.v = vld1q_f32( (const float *) a3 );
+
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
+
+    t = vtrn1q_f32( c.v, d.v );
+    u = vtrn2q_f32( c.v, d.v );
+
+    a.v = vtrn1q_f64( r, t );
+    b.v = vtrn1q_f64( s, u );
+    c.v = vtrn2q_f64( r, t );
+    d.v = vtrn2q_f64( s, u );
+  }
+  #endif
+
+  #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
@@ -671,26 +709,39 @@ namespace v4
     //-----------------------------------------------------------------
     // d.v = _mm_movehl_ps( u, t );
     //-----------------------------------------------------------------
+  }
+  #endif
 
-    // a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    // b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    // c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    // d.i[0] = ((const int * ALIGNED(16))a0)[3];
+  #if 0
+  // Portable version.
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a,
+			   v4 &b,
+			   v4 &c,
+			   v4 &d )
+  {
+    a.i[0] = ((const int * ALIGNED(16))a0)[0];
+    b.i[0] = ((const int * ALIGNED(16))a0)[1];
+    c.i[0] = ((const int * ALIGNED(16))a0)[2];
+    d.i[0] = ((const int * ALIGNED(16))a0)[3];
 
-    // a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    // b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    // c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    // d.i[1] = ((const int * ALIGNED(16))a1)[3];
+    a.i[1] = ((const int * ALIGNED(16))a1)[0];
+    b.i[1] = ((const int * ALIGNED(16))a1)[1];
+    c.i[1] = ((const int * ALIGNED(16))a1)[2];
+    d.i[1] = ((const int * ALIGNED(16))a1)[3];
 
-    // a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    // b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    // c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    // d.i[2] = ((const int * ALIGNED(16))a2)[3];
+    a.i[2] = ((const int * ALIGNED(16))a2)[0];
+    b.i[2] = ((const int * ALIGNED(16))a2)[1];
+    c.i[2] = ((const int * ALIGNED(16))a2)[2];
+    d.i[2] = ((const int * ALIGNED(16))a2)[3];
 
-    // a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    // b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    // c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    // d.i[3] = ((const int * ALIGNED(16))a3)[3];
+    a.i[3] = ((const int * ALIGNED(16))a3)[0];
+    b.i[3] = ((const int * ALIGNED(16))a3)[1];
+    c.i[3] = ((const int * ALIGNED(16))a3)[2];
+    d.i[3] = ((const int * ALIGNED(16))a3)[3];
   }
   #endif
 
@@ -832,6 +883,31 @@ namespace v4
                             void * ALIGNED(16) a2,
 			    void * ALIGNED(16) a3 )
   {
+    float32x4_t r, s, t, u;
+
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
+
+    t = vtrn1q_f32( c.v, d.v );
+    u = vtrn2q_f32( c.v, d.v );
+
+    vst1q_f32( (float *) a0, vtrn1q_f64( r, t ) );
+    vst1q_f32( (float *) a1, vtrn1q_f64( s, u ) );
+    vst1q_f32( (float *) a2, vtrn2q_f64( r, t ) );
+    vst1q_f32( (float *) a3, vtrn2q_f64( s, u ) );
+  }
+  #endif
+
+  #if 0
+  inline void store_4x4_tr( const v4 &a,
+			    const v4 &b,
+			    const v4 &c,
+			    const v4 &d,
+                            void * ALIGNED(16) a0,
+			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+			    void * ALIGNED(16) a3 )
+  {
     //-----------------------------------------------------------------
     float32x4_t a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
     //-----------------------------------------------------------------
@@ -949,6 +1025,39 @@ namespace v4
     // ((int * ALIGNED(16))a3)[1] = b.i[3];
     // ((int * ALIGNED(16))a3)[2] = c.i[3];
     // ((int * ALIGNED(16))a3)[3] = d.i[3];
+  }
+  #endif
+
+  #if 0
+  // Portable version.
+  inline void store_4x4_tr( const v4 &a,
+			    const v4 &b,
+			    const v4 &c,
+			    const v4 &d,
+                            void * ALIGNED(16) a0,
+			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+			    void * ALIGNED(16) a3 )
+  {
+    ( ( int * ALIGNED(16) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[1] = b.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[2] = c.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[3] = d.i[0];
+
+    ( ( int * ALIGNED(16) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[1] = b.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[2] = c.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[3] = d.i[1];
+
+    ( ( int * ALIGNED(16) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[1] = b.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[2] = c.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[3] = d.i[2];
+
+    ( ( int * ALIGNED(16) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[1] = b.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[2] = c.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[3] = d.i[3];
   }
   #endif
 

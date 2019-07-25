@@ -803,8 +803,8 @@ namespace v4
                             v4 &b14,
                             v4 &b15 )
   {
-    float32x4 c00, c01, c02, c03, c04, c05, c06, c07;
-    float32x4 c08, c09, c10, c11, c12, c13, c14, c15;
+    float32x4_t c00, c01, c02, c03, c04, c05, c06, c07;
+    float32x4_t c08, c09, c10, c11, c12, c13, c14, c15;
 
     float32x4x4_t mat0 = vld4q_f32( (const float *) a0 );
     float32x4x4_t mat1 = vld4q_f32( (const float *) a1 );

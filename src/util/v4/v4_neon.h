@@ -624,6 +624,105 @@ namespace v4
   }
   #endif
 
+  #if 1
+  inline void load_4x8_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &b00,
+                           v4 &b01,
+                           v4 &b02,
+                           v4 &b03,
+                           v4 &b04,
+                           v4 &b05,
+                           v4 &b06,
+                           v4 &b07 )
+  {
+    float32x4x4_t mat0 = vld4q_f32( (const float *) a0 );
+    float32x4x4_t mat2 = vld4q_f32( (const float *) a2 );
+
+    b00.v = vuzp1q_f32( mat0.val[0], mat2.val[0] );
+    b01.v = vuzp1q_f32( mat0.val[1], mat2.val[1] );
+    b02.v = vuzp1q_f32( mat0.val[2], mat2.val[2] );
+    b03.v = vuzp1q_f32( mat0.val[3], mat2.val[3] );
+
+    b04.v = vuzp2q_f32( mat0.val[0], mat2.val[0] );
+    b05.v = vuzp2q_f32( mat0.val[1], mat2.val[1] );
+    b06.v = vuzp2q_f32( mat0.val[2], mat2.val[2] );
+    b07.v = vuzp2q_f32( mat0.val[3], mat2.val[3] );
+  }
+  #endif
+
+  #if 1
+  inline void load_4x16_tr( const void * ALIGNED(16) a0,
+                            const void * ALIGNED(16) a1,
+                            const void * ALIGNED(16) a2,
+                            const void * ALIGNED(16) a3,
+                            v4 &b00,
+                            v4 &b01,
+                            v4 &b02,
+                            v4 &b03,
+                            v4 &b04,
+                            v4 &b05,
+                            v4 &b06,
+                            v4 &b07,
+                            v4 &b08,
+                            v4 &b09,
+                            v4 &b10,
+                            v4 &b11,
+                            v4 &b12,
+                            v4 &b13,
+                            v4 &b14,
+                            v4 &b15 )
+  {
+    float32x4 c00, c01, c02, c03, c04, c05, c06, c07;
+    float32x4 c08, c09, c10, c11, c12, c13, c14, c15;
+
+    float32x4x4_t mat0 = vld4q_f32( (const float *) a0 );
+    float32x4x4_t mat1 = vld4q_f32( (const float *) a1 );
+    float32x4x4_t mat2 = vld4q_f32( (const float *) a2 );
+    float32x4x4_t mat3 = vld4q_f32( (const float *) a3 );
+
+    c00 = vuzp1q_f32( mat0.val[0], mat1.val[0] );
+    c01 = vuzp1q_f32( mat0.val[1], mat1.val[1] );
+    c02 = vuzp1q_f32( mat0.val[2], mat1.val[2] );
+    c03 = vuzp1q_f32( mat0.val[3], mat1.val[3] );
+
+    c04 = vuzp2q_f32( mat0.val[0], mat1.val[0] );
+    c05 = vuzp2q_f32( mat0.val[1], mat1.val[1] );
+    c06 = vuzp2q_f32( mat0.val[2], mat1.val[2] );
+    c07 = vuzp2q_f32( mat0.val[3], mat1.val[3] );
+
+    c08 = vuzp1q_f32( mat2.val[0], mat3.val[0] );
+    c09 = vuzp1q_f32( mat2.val[1], mat3.val[1] );
+    c10 = vuzp1q_f32( mat2.val[2], mat3.val[2] );
+    c11 = vuzp1q_f32( mat2.val[3], mat3.val[3] );
+
+    c12 = vuzp2q_f32( mat2.val[0], mat3.val[0] );
+    c13 = vuzp2q_f32( mat2.val[1], mat3.val[1] );
+    c14 = vuzp2q_f32( mat2.val[2], mat3.val[2] );
+    c15 = vuzp2q_f32( mat2.val[3], mat3.val[3] );
+
+    b00.v = vuzp1q_f32( c00, c08 );
+    b01.v = vuzp1q_f32( c01, c09 );
+    b02.v = vuzp1q_f32( c02, c10 );
+    b03.v = vuzp1q_f32( c03, c11 );
+    b04.v = vuzp1q_f32( c04, c12 );
+    b05.v = vuzp1q_f32( c05, c13 );
+    b06.v = vuzp1q_f32( c06, c14 );
+    b07.v = vuzp1q_f32( c07, c15 );
+
+    b08.v = vuzp2q_f32( c00, c08 );
+    b09.v = vuzp2q_f32( c01, c09 );
+    b10.v = vuzp2q_f32( c02, c10 );
+    b11.v = vuzp2q_f32( c03, c11 );
+    b12.v = vuzp2q_f32( c04, c12 );
+    b13.v = vuzp2q_f32( c05, c13 );
+    b14.v = vuzp2q_f32( c06, c14 );
+    b15.v = vuzp2q_f32( c07, c15 );
+  }
+  #endif
+
   inline void store_4x1_tr( const v4 &a,
                             void *a0,
                             void *a1,
@@ -795,6 +894,37 @@ namespace v4
     ( ( int * ALIGNED(16) ) a3 )[1] = b.i[3];
     ( ( int * ALIGNED(16) ) a3 )[2] = c.i[3];
     ( ( int * ALIGNED(16) ) a3 )[3] = d.i[3];
+  }
+  #endif
+
+  #if 1
+  inline void store_4x8_tr( const v4 &b00,
+			    const v4 &b01,
+			    const v4 &b02,
+			    const v4 &b03,
+			    const v4 &b04,
+			    const v4 &b05,
+			    const v4 &b06,
+			    const v4 &b07,
+                            void * ALIGNED(16) a0,
+			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+			    void * ALIGNED(16) a3 )
+  {
+    float32x4x4_t mat0, mat2;
+
+    mat0.val[0] = vuzp1q_f32( b00.v, b04.v );
+    mat0.val[1] = vuzp1q_f32( b01.v, b05.v );
+    mat0.val[2] = vuzp1q_f32( b02.v, b06.v );
+    mat0.val[3] = vuzp1q_f32( b03.v, b07.v );
+
+    mat2.val[0] = vuzp2q_f32( b00.v, b04.v );
+    mat2.val[1] = vuzp2q_f32( b01.v, b05.v );
+    mat2.val[2] = vuzp2q_f32( b02.v, b06.v );
+    mat2.val[3] = vuzp2q_f32( b03.v, b07.v );
+
+    vst4q_f32( (float *) a0, mat0 );
+    vst4q_f32( (float *) a2, mat2 );
   }
   #endif
 

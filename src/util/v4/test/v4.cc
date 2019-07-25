@@ -274,6 +274,63 @@ TEST_CASE("TEST_CASE_load_4x4_tr", "[v4]") {
   REQUIRE( i==16 );
 } // TEST_CASE
 
+#ifdef V4_NEON_ACCELERATION
+TEST_CASE("TEST_CASE_load_4x8_tr", "[v4]") {
+  DECLARE_ALIGNED_ARRAY( int, 64, mem, 32 );
+  v4int a0, a1, a2, a3, a4, a5, a6, a7;
+  int i;
+  for( i=0; i<32; i++ ) mem[i] = i;
+  load_4x8_tr(mem,mem+8,mem+16,mem+24,a0,a1,a2,a3,a4,a5,a6,a7);
+  for( i=0; i<32; i++ ) if( mem[i]!=i ) break;
+  //ASSERT_FALSE( any(a0!=v4int( 0, 4, 8,12)) || any(a1!=v4int( 1, 5, 9,13)) ||
+  //any(a2!=v4int( 2, 6,10,14)) || any(a3!=v4int( 3, 7,11,15)) || i!=16 );
+
+  REQUIRE( any(a0==v4int( 0,  8, 16, 24 )) );
+  REQUIRE( any(a1==v4int( 1,  9, 17, 25 )) );
+  REQUIRE( any(a2==v4int( 2, 10, 18, 26 )) );
+  REQUIRE( any(a3==v4int( 3, 11, 19, 27 )) );
+  REQUIRE( any(a4==v4int( 4, 12, 20, 28 )) );
+  REQUIRE( any(a5==v4int( 5, 13, 21, 29 )) );
+  REQUIRE( any(a6==v4int( 6, 14, 22, 30 )) );
+  REQUIRE( any(a7==v4int( 7, 15, 23, 31 )) );
+  REQUIRE( i==32 );
+} // TEST_CASE
+#endif
+
+#ifdef V4_NEON_ACCELERATION
+TEST_CASE("TEST_CASE_load_4x16_tr", "[v4]") {
+  DECLARE_ALIGNED_ARRAY( int, 64, mem, 64 );
+  v4int a00, a01, a02, a03, a04, a05, a06, a07;
+  v4int a08, a09, a10, a11, a12, a13, a14, a15;
+  int i;
+  for( i=0; i<64; i++ ) mem[i] = i;
+  load_4x16_tr(mem,mem+16,mem+32,mem+48,
+	       a00,a01,a02,a03,a04,a05,a06,a07,
+	       a08,a09,a10,a11,a12,a13,a14,a15);
+  for( i=0; i<64; i++ ) if( mem[i]!=i ) break;
+  //ASSERT_FALSE( any(a0!=v4int( 0, 4, 8,12)) || any(a1!=v4int( 1, 5, 9,13)) ||
+  //any(a2!=v4int( 2, 6,10,14)) || any(a3!=v4int( 3, 7,11,15)) || i!=16 );
+
+  REQUIRE( any(a00==v4int(  0, 16, 32, 48 )) );
+  REQUIRE( any(a01==v4int(  1, 17, 33, 49 )) );
+  REQUIRE( any(a02==v4int(  2, 18, 34, 50 )) );
+  REQUIRE( any(a03==v4int(  3, 19, 35, 51 )) );
+  REQUIRE( any(a04==v4int(  4, 20, 36, 52 )) );
+  REQUIRE( any(a05==v4int(  5, 21, 37, 53 )) );
+  REQUIRE( any(a06==v4int(  6, 22, 38, 54 )) );
+  REQUIRE( any(a07==v4int(  7, 23, 39, 55 )) );
+  REQUIRE( any(a08==v4int(  8, 24, 40, 56 )) );
+  REQUIRE( any(a09==v4int(  9, 25, 41, 57 )) );
+  REQUIRE( any(a10==v4int( 10, 26, 42, 58 )) );
+  REQUIRE( any(a11==v4int( 11, 27, 43, 59 )) );
+  REQUIRE( any(a12==v4int( 12, 28, 44, 60 )) );
+  REQUIRE( any(a13==v4int( 13, 29, 45, 61 )) );
+  REQUIRE( any(a14==v4int( 14, 30, 46, 62 )) );
+  REQUIRE( any(a15==v4int( 15, 31, 47, 63 )) );
+  REQUIRE( i==64 );
+} // TEST_CASE
+#endif
+
 TEST_CASE("TEST_CASE_store_4x1_tr", "[v4]") {
   DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
   v4int a0( 0, 4, 8,12), a1( 1, 5, 9,13), a2( 2, 6,10,14), a3( 3, 7,11,15);

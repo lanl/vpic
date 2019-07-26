@@ -206,8 +206,8 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
 
 
     // FIXME-KJB: COULD SHORT CIRCUIT ACCUMULATION IN THE CASE WHERE QSP==0!
-    if (  v3 <= one &&  v4 <= one &&  v5 <= one &&   // Check if inbnds
-         -v3 <= one && -v4 <= one && -v5 <= one )
+    if (  v3 < one &&  v4 < one &&  v5 < one &&   // Check if inbnds
+         -v3 < one && -v4 < one && -v5 < one )
     {
       // Common case (inbnds).  Note: accumulator values are 4 times
       // the total physical charge that passed through the appropriate
@@ -265,14 +265,14 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
 
         int face = 0;
         // Only one of crossed x/y/z true?
-        if (v3 > one) { crossed_x = 1; face = 3; }
-        if (v3 < -one) { crossed_x = 1; face = 0; }
+        if (v3 >= one) { crossed_x = 1; face = 3; }
+        if (v3 <= -one) { crossed_x = 1; face = 0; }
 
-        if (v4 > one) { crossed_y = 1; face = 4; }
-        if (v4 < -one) { crossed_y = 1; face = 1; }
+        if (v4 >= one) { crossed_y = 1; face = 4; }
+        if (v4 <= -one) { crossed_y = 1; face = 1; }
 
-        if (v5 > one) { crossed_z = 1; face = 5; }
-        if (v5 < -one) { crossed_z = 1; face = 2; }
+        if (v5 >= one) { crossed_z = 1; face = 5; }
+        if (v5 <= -one) { crossed_z = 1; face = 2; }
 
         //if ( (v4 > one) || (v4 < -one) ) { crossed_y = true; }
         //if ( (v5 > one) || (v5 < -one) ) { crossed_z = true; }
@@ -289,12 +289,17 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
 
         local_pm->i     = p - p0;
 
+    //if (local_pm->i == 91716)
+    //{
+        //std::cout << "v3 " << v3 << " v4 " << v4 << " v5 " << v5 << std::endl;
+    //}
         if ( is_local_move && crossed_single_face )
         {
             // zig zag
             int i = p - p0;
             //std::cout << "Calling move_p_zz for " << i << " with " << p->dx << " and " << p->dy << " and " << p->dz << " v3 " << v3 << " v4 " << v4 << " v5 " << v5 << std::endl;
             move_p_zz( p0, local_pm, a0, g, qsp, face );
+            //move_p( p0, local_pm, a0, g, qsp );
         }
         else {
             // else

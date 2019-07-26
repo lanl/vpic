@@ -214,7 +214,6 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 
 #else
 
-// TODO: gy wants to make this 1d
 int
 move_p_zz(
         particle_t       * ALIGNED(128) p0,
@@ -302,20 +301,20 @@ move_p_zz(
     v5 = q*s_disp[0]*s_disp[1]*s_disp[2]*(1./3.);
     float* a = (float *)(a0 + p->i);
 #   define accumulate_j(X,Y,Z)                                        \
-    v4  = q*s_disp[X];    /* v2 = q ux                            */  \
-    v1  = v4*s_mid[Y];    /* v1 = q ux dy                         */  \
-    v0  = v4-v1;          /* v0 = q ux (1-dy)                     */  \
-    v1 += v4;             /* v1 = q ux (1+dy)                     */  \
-    v4  = 1+s_mid[Z];     /* v4 = 1+dz                            */  \
-    v2  = v0*v4;          /* v2 = q ux (1-dy)(1+dz)               */  \
-    v3  = v1*v4;          /* v3 = q ux (1+dy)(1+dz)               */  \
-    v4  = 1-s_mid[Z];     /* v4 = 1-dz                            */  \
-    v0 *= v4;             /* v0 = q ux (1-dy)(1-dz)               */  \
-    v1 *= v4;             /* v1 = q ux (1+dy)(1-dz)               */  \
-    v0 += v5;             /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */  \
-    v1 -= v5;             /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */  \
-    v2 -= v5;             /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */  \
-    v3 += v5;             /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */  \
+    v4  = q*s_disp[X];      \
+    v1  = v4*s_mid[Y];      \
+    v0  = v4-v1;            \
+    v1 += v4;               \
+    v4  = 1+s_mid[Z];       \
+    v2  = v0*v4;            \
+    v3  = v1*v4;            \
+    v4  = 1-s_mid[Z];       \
+    v0 *= v4;               \
+    v1 *= v4;               \
+    v0 += v5;               \
+    v1 -= v5;               \
+    v2 -= v5;               \
+    v3 += v5;               \
     a[0] += v0;                                                       \
     a[1] += v1;                                                       \
     a[2] += v2;                                                       \
@@ -334,6 +333,10 @@ move_p_zz(
     s_mid[0] += s_disp[0];
     s_mid[1] += s_disp[1];
     s_mid[2] += s_disp[2];
+
+    float end_f1_x = s_mid[0];
+    float end_f1_y = s_mid[1];
+    float end_f1_z = s_mid[2];
 
     // float because we use it for assignment only
     float sign = 0.0;
@@ -375,10 +378,13 @@ move_p_zz(
     accumulate_j(1,2,0); a += 4;
     accumulate_j(2,0,1);
 
-    //std::cout << "moving particle from " << p->dx << " " << p->dy << " " << p->dz << std::endl;
-    //std::cout << "disp " << pm->dispx << " " << pm->dispy << " " << pm->dispz << std::endl;
-    //std::cout << "Putting particle at " << r[0] << " " << r[1] << " " << r[2] << " at axis " << axis << " face " << face << std::endl;
+    if (r[1] > 1.0)
+    {
+    std::cout << "moving particle from " << p->dx << " " << p->dy << " " << p->dz << std::endl;
+    std::cout << "disp " << pm->dispx << " " << pm->dispy << " " << pm->dispz << std::endl;
+    std::cout << "Putting particle at " << r[0] << " " << r[1] << " " << r[2] << " at axis " << axis << " face " << face << std::endl;
 
+    }
     p->dx = r[0];
     p->dy = r[1];
     p->dz = r[2];
@@ -394,6 +400,161 @@ move_p_zz(
 #undef accumulate_j
 
 }
+
+/*
+int
+move_p_zz(
+        particle_t       * ALIGNED(128) p0,
+        particle_mover_t * ALIGNED(16)  pm,
+        accumulator_t    * ALIGNED(128) a0,
+        const grid_t     *              g,
+        const float                     qsp,
+       int face2
+       )
+{
+  float s_midx, s_midy, s_midz;
+  float s_dispx, s_dispy, s_dispz;
+  float s_dir[3];
+  float v0, v1, v2, v3, v4, v5, q;
+  int axis, face;
+  int64_t neighbor;
+  float *a;
+  particle_t * ALIGNED(32) p = p0 + pm->i;
+
+  q = qsp*p->w;
+
+  for(int zz = 0; zz < 2; zz++)
+  {
+    s_midx = p->dx;
+    s_midy = p->dy;
+    s_midz = p->dz;
+
+    s_dispx = pm->dispx;
+    s_dispy = pm->dispy;
+    s_dispz = pm->dispz;
+
+    s_dir[0] = (s_dispx>0.0f) ? 1.0f : -1.0f;
+    s_dir[1] = (s_dispy>0.0f) ? 1.0f : -1.0f;
+    s_dir[2] = (s_dispz>0.0f) ? 1.0f : -1.0f;
+
+    // Compute the twice the fractional distance to each potential
+    // streak/cell face intersection.
+    v0 = (s_dispx==0.0f) ? 3.4e38f : (s_dir[0]-s_midx)/s_dispx;
+    v1 = (s_dispy==0.0f) ? 3.4e38f : (s_dir[1]-s_midy)/s_dispy;
+    v2 = (s_dispz==0.0f) ? 3.4e38f : (s_dir[2]-s_midz)/s_dispz;
+
+    // Determine the fractional length and axis of current streak. The
+    // streak ends on either the first face intersected by the
+    // particle track or at the end of the particle track.
+    //
+    //   axis 0,1 or 2 ... streak ends on a x,y or z-face respectively
+    //   axis 3        ... streak ends at end of the particle track
+    v3=2.0f, axis=3;
+    if(v0<v3) v3=v0,   axis=0;
+    if(v1<v3) v3=v1,   axis=1;
+    if(v2<v3) v3=v2,   axis=2;
+    v3 *= 0.5f;
+
+    // Compute the midpoint and the normalized displacement of the streak
+    s_dispx *= v3;
+    s_dispy *= v3;
+    s_dispz *= v3;
+    s_midx += s_dispx;
+    s_midy += s_dispy;
+    s_midz += s_dispz;
+
+    // Accumulate the streak.  Note: accumulator values are 4 times
+    // the total physical charge that passed through the appropriate
+    // current quadrant in a time-step
+    v5 = q*s_dispx*s_dispy*s_dispz*(1./3.);
+    a = (float *)(a0 + p->i);
+#   define accumulate_j(X,Y,Z)                                        \
+    v4  = q*s_disp##X;      \
+    v1  = v4*s_mid##Y;      \
+    v0  = v4-v1;            \
+    v1 += v4;               \
+    v4  = 1+s_mid##Z;       \
+    v2  = v0*v4;            \
+    v3  = v1*v4;            \
+    v4  = 1-s_mid##Z;       \
+    v0 *= v4;               \
+    v1 *= v4;               \
+    v0 += v5;               \
+    v1 -= v5;               \
+    v2 -= v5;               \
+    v3 += v5;               \
+    a[0] += v0;                                                       \
+    a[1] += v1;                                                       \
+    a[2] += v2;                                                       \
+    a[3] += v3
+    accumulate_j(x,y,z); a += 4;
+    accumulate_j(y,z,x); a += 4;
+    accumulate_j(z,x,y);
+#   undef accumulate_j
+
+    // Compute the remaining particle displacment
+    pm->dispx -= s_dispx;
+    pm->dispy -= s_dispy;
+    pm->dispz -= s_dispz;
+
+    // Compute the new particle offset
+    p->dx += s_dispx+s_dispx;
+    p->dy += s_dispy+s_dispy;
+    p->dz += s_dispz+s_dispz;
+
+    // If an end streak, return success (should be ~50% of the time)
+
+    if ((zz == 1) && (axis != 3))
+    {
+        std::cout << "z1 " << zz << " axis " << axis << " pmi " << pm->i << std::endl;
+    }
+    if (zz == 2)
+    {
+        std::cout << "z2 zz " << zz << " axis " << axis << " pmi " << pm->i << std::endl;
+    }
+    if( axis==3 ) break;
+
+    // Determine if the particle crossed into a local cell or if it
+    // hit a boundary and convert the coordinate system accordingly.
+    // Note: Crossing into a local cell should happen ~50% of the
+    // time; hitting a boundary is usually a rare event.  Note: the
+    // entry / exit coordinate for the particle is guaranteed to be
+    // +/-1 _exactly_ for the particle.
+
+    v0 = s_dir[axis];
+    (&(p->dx))[axis] = v0; // Avoid roundoff fiascos--put the particle
+                           // _exactly_ on the boundary.
+    face = axis; if( v0>0 ) face += 3;
+    neighbor = g->neighbor[ 6*p->i + face ];
+
+    if( UNLIKELY( neighbor==reflect_particles ) ) {
+      // Hit a reflecting boundary condition.  Reflect the particle
+      // momentum and remaining displacement and keep moving the
+      // particle.
+      (&(p->ux    ))[axis] = -(&(p->ux    ))[axis];
+      (&(pm->dispx))[axis] = -(&(pm->dispx))[axis];
+      continue;
+    }
+
+    if( UNLIKELY( neighbor<g->rangel || neighbor>g->rangeh ) ) {
+      // Cannot handle the boundary condition here.  Save the updated
+      // particle position, face it hit and update the remaining
+      // displacement in the particle mover.
+      p->i = 8*p->i + face;
+      return 1; // Return "mover still in use"
+    }
+
+    // Crossed into a normal voxel.  Update the voxel index, convert the
+    // particle coordinate system and keep moving the particle.
+
+    p->i = neighbor - g->rangel; // Compute local index of neighbor
+                            // Note: neighbor - g->rangel < 2^31 / 6
+    (&(p->dx))[axis] = -v0;      // Convert coordinate system
+  }
+
+  return 0; // Return "mover not in use"
+}
+*/
 
 int
 move_p( particle_t       * ALIGNED(128) p0,

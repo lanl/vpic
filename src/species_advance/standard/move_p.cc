@@ -378,23 +378,26 @@ move_p_zz(
     accumulate_j(1,2,0); a += 4;
     accumulate_j(2,0,1);
 
-    if (r[1] > 1.0)
+    if (r[1] >= 1.0)
     {
+    std::cout << "end f1 x " << end_f1_x << " y " << end_f1_y << " z " << end_f1_z << std::endl;
     std::cout << "moving particle from " << p->dx << " " << p->dy << " " << p->dz << std::endl;
     std::cout << "disp " << pm->dispx << " " << pm->dispy << " " << pm->dispz << std::endl;
     std::cout << "Putting particle at " << r[0] << " " << r[1] << " " << r[2] << " at axis " << axis << " face " << face << std::endl;
+    exit(1);
 
     }
+    //std::cout << std::endl;
     p->dx = r[0];
     p->dy = r[1];
     p->dz = r[2];
 
-    assert( r[0] < 1.0 );
-    assert( r[0] > -1.0 );
-    assert( r[1] < 1.0 );
-    assert( r[1] < 1.0 );
-    assert( r[2] > -1.0 );
-    assert( r[2] > -1.0 );
+    assert( r[0] <= 1.0 );
+    assert( r[0] >= -1.0 );
+    assert( r[1] <= 1.0 );
+    assert( r[1] >= -1.0 );
+    assert( r[2] <= 1.0 );
+    assert( r[2] >= -1.0 );
 
 
 #undef accumulate_j

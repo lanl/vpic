@@ -151,6 +151,15 @@ move_p( particle_t       * ALIGNED(128) p0,    // Particle array
         const grid_t     *              g,     // Grid parameters
         const float                     qsp ); // Species particle charge
 
+int
+move_p_zz( particle_t       * ALIGNED(128) p0,    // Particle array
+        particle_mover_t * ALIGNED(16)  m,     // Particle mover to apply
+        accumulator_t    * ALIGNED(128) a0,    // Accumulator to use
+        const grid_t     *              g,     // Grid parameters
+        const float                     qsp,
+        int axis
+        ); // Species particle charge
+
 END_C_DECLS
 
 #endif // _species_advance_h_

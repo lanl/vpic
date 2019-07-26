@@ -1,6 +1,8 @@
 #define IN_spa
 
 #include "../species_advance.h"
+#include <cassert>
+#include <iostream>
 
 // move_p moves the particle m->p by m->dispx, m->dispy, m->dispz
 // depositing particle current as it goes. If the particle was moved
@@ -211,6 +213,187 @@ move_p( particle_t       * RESTRICT ALIGNED(128) p,
 }
 
 #else
+
+// TODO: gy wants to make this 1d
+int
+move_p_zz(
+        particle_t       * ALIGNED(128) p0,
+        particle_mover_t * ALIGNED(16)  pm,
+        accumulator_t    * ALIGNED(128) a0,
+        const grid_t     *              g,
+        const float                     qsp,
+       int face
+       )
+{
+
+    // relay position in local coordinates
+    // TODO: ideally this half calc could be lower
+
+    particle_t * ALIGNED(32) p = p0 + pm->i;
+    float q = qsp*p->w;
+
+    float s_mid[3];
+    s_mid[0] = p->dx;
+    s_mid[1] = p->dy;
+    s_mid[2] = p->dz;
+
+    float s_disp[3];
+    s_disp[0] = pm->dispx;
+    s_disp[1] = pm->dispy;
+    s_disp[2] = pm->dispz;
+
+    // No 0.5 because we really do two movements, and s_dispx represents one
+    // move, i.e. half the total move
+    //float xr = s_midx + (s_dispx * 0.5);
+    //float yr = s_midy + (s_dispy * 0.5);
+    //float zr = s_midz + (s_dispz * 0.5);
+    float r[3];
+    r[0] = s_mid[0] + s_disp[0];
+    r[1] = s_mid[1] + s_disp[1];
+    r[2] = s_mid[2] + s_disp[2];
+
+    int axis = 0;
+
+    // if we cross y to the right
+    if (face == 0) {
+        r[0] = -1.0;
+        axis = 0;
+    }
+    else if (face == 3) {
+        r[0] = 1.0;
+        axis = 0;
+    }
+    else if (face == 1) {
+        r[1] = -1.0;
+        axis = 1;
+    }
+    else if (face == 4) {
+        r[1] = 1.0;
+        axis = 1;
+    }
+    else if (face == 2) {
+        r[2] = -1.0;
+        axis = 2;
+    }
+    else if (face == 5) {
+        r[2] = 1.0;
+        axis = 2;
+    }
+
+    // by the time we're here, we've finished the min/max from eq 21 (14 for
+    // 2d) in the paper
+    // Now we apply F1 and F2
+
+    // Calc displacement from new "end" (xr) and start pos (p->dx)
+    // Here we multiply by 0.5 because we want to accumulate from half way
+    s_disp[0] = (r[0] - s_mid[0]) * 0.5;
+    s_disp[1] = (r[1] - s_mid[1]) * 0.5;
+    s_disp[2] = (r[2] - s_mid[2]) * 0.5;
+
+    // mid means halfway through f1
+    s_mid[0] += s_disp[0];
+    s_mid[1] += s_disp[1];
+    s_mid[2] += s_disp[2];
+
+    // Accumulate the streak.  Note: accumulator values are 4 times
+    // the total physical charge that passed through the appropriate
+    // current quadrant in a time-step
+    float v0, v1, v2, v3, v4, v5;
+    v5 = q*s_disp[0]*s_disp[1]*s_disp[2]*(1./3.);
+    float* a = (float *)(a0 + p->i);
+#   define accumulate_j(X,Y,Z)                                        \
+    v4  = q*s_disp[X];    /* v2 = q ux                            */  \
+    v1  = v4*s_mid[Y];    /* v1 = q ux dy                         */  \
+    v0  = v4-v1;          /* v0 = q ux (1-dy)                     */  \
+    v1 += v4;             /* v1 = q ux (1+dy)                     */  \
+    v4  = 1+s_mid[Z];     /* v4 = 1+dz                            */  \
+    v2  = v0*v4;          /* v2 = q ux (1-dy)(1+dz)               */  \
+    v3  = v1*v4;          /* v3 = q ux (1+dy)(1+dz)               */  \
+    v4  = 1-s_mid[Z];     /* v4 = 1-dz                            */  \
+    v0 *= v4;             /* v0 = q ux (1-dy)(1-dz)               */  \
+    v1 *= v4;             /* v1 = q ux (1+dy)(1-dz)               */  \
+    v0 += v5;             /* v0 = q ux [ (1-dy)(1-dz) + uy*uz/3 ] */  \
+    v1 -= v5;             /* v1 = q ux [ (1+dy)(1-dz) - uy*uz/3 ] */  \
+    v2 -= v5;             /* v2 = q ux [ (1-dy)(1+dz) - uy*uz/3 ] */  \
+    v3 += v5;             /* v3 = q ux [ (1+dy)(1+dz) + uy*uz/3 ] */  \
+    a[0] += v0;                                                       \
+    a[1] += v1;                                                       \
+    a[2] += v2;                                                       \
+    a[3] += v3
+    // TODO: add enum to give this a stronger semantic
+    accumulate_j(0,1,2); a += 4;
+    accumulate_j(1,2,0); a += 4;
+    accumulate_j(2,0,1);
+    //accumulate_j(x,y,z); a += 4;
+    //accumulate_j(y,z,x); a += 4;
+    //accumulate_j(z,x,y);
+
+    // End of f1
+    // Start f2
+    // Finish move in f1, to get us to start of 2
+    s_mid[0] += s_disp[0];
+    s_mid[1] += s_disp[1];
+    s_mid[2] += s_disp[2];
+
+    // float because we use it for assignment only
+    float sign = 0.0;
+    if (face < 3)
+    {
+        sign = -1.0;
+    }
+    else {
+        sign = 1.0;
+    }
+    // reset the guy we crossed to be a local coordinate
+    s_mid[axis] = sign;
+
+    // Update pii
+    size_t neighbor = g->neighbor[ 6*p->i + face ];
+    p->i = neighbor - g->rangel; // Compute local index of neighbor
+
+    // Update xr to now be the end of the move for f2
+    // original pm->dispx is full step without zigzag
+    r[0] = p->dx + 2.0 * (pm->dispx);
+    r[1] = p->dy + 2.0 * (pm->dispy);
+    r[2] = p->dz + 2.0 * (pm->dispz);
+    // account for it crossing and convert to local coords
+    r[axis] = r[axis] - 2.0*sign;
+
+    // calculate positions for f2
+    s_disp[0] = (r[0] - s_mid[0]) * 0.5;
+    s_disp[1] = (r[1] - s_mid[1]) * 0.5;
+    s_disp[2] = (r[2] - s_mid[2]) * 0.5;
+
+    // mid means halfway through
+    s_mid[0] += s_disp[0];
+    s_mid[1] += s_disp[1];
+    s_mid[2] += s_disp[2];
+
+    v5 = q*s_disp[0]*s_disp[1]*s_disp[2]*(1./3.);
+    a = (float *)(a0 + p->i);
+    accumulate_j(0,1,2); a += 4;
+    accumulate_j(1,2,0); a += 4;
+    accumulate_j(2,0,1);
+
+    //std::cout << "moving particle from " << p->dx << " " << p->dy << " " << p->dz << std::endl;
+    //std::cout << "disp " << pm->dispx << " " << pm->dispy << " " << pm->dispz << std::endl;
+    //std::cout << "Putting particle at " << r[0] << " " << r[1] << " " << r[2] << " at axis " << axis << " face " << face << std::endl;
+
+    p->dx = r[0];
+    p->dy = r[1];
+    p->dz = r[2];
+
+    assert( r[0] < 1.0 );
+    assert( r[0] > -1.0 );
+    assert( r[1] < 1.0 );
+    assert( r[1] < 1.0 );
+    assert( r[2] > -1.0 );
+    assert( r[2] > -1.0 );
+
+
+#undef accumulate_j
+
+}
 
 int
 move_p( particle_t       * ALIGNED(128) p0,

@@ -11,6 +11,8 @@
 
 #include "../../../util/pipelines/pipelines_exec.h"
 
+#include <iostream>
+
 //----------------------------------------------------------------------------//
 // Reference implementation for an advance_p pipeline function which does not
 // make use of explicit calls to vector intrinsic functions.
@@ -158,6 +160,51 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
     v4   = v1 + uy;
     v5   = v2 + uz;
 
+
+    //////// ZIG ZAG CHANGES ////////
+    //////// ZIG ZAG CHANGES ////////
+    //
+
+    // Cell runs from -1 to 1 to delta is 2??
+    float delta = 2.0;
+
+
+
+    /*
+    // TODO we can probably get rid of this stuff if we know the direction it's going?
+    int ix1, iy1, iz1;
+    VOXEL(ix1, iy1, iz1, nx, ny, nz);
+
+    int ix2, iy2, iz2; // TODO: set or remove
+
+    // LOCAL TO THE CELL
+    float x1 = dx;
+    float y1 = dy;
+    float z1 = dz;
+
+    // Local to x1... (can be >1)
+    float x2 = v3;
+    float y2 = v4;
+    float z2 = v5;
+
+    // Calculate relay point
+    float xr = min(
+            min(ix1, ix2) * delta,
+            max( max(ix1, ix2), (x1+x2)*0.5));
+    float yr = min(
+            min(iy1, iy2) * delta,
+            max( max( iy1, iy2), (y1+y2)*0.5));
+    float zr = min(
+            min(iz1, iz2) * delta,
+            max( max( iz1, iz2), (z1+z2)*0.5));
+    */
+
+    //
+    //////// END ZIG ZAG CHANGES ////////
+    //////// END ZIG ZAG CHANGES ////////
+
+
+
     // FIXME-KJB: COULD SHORT CIRCUIT ACCUMULATION IN THE CASE WHERE QSP==0!
     if (  v3 <= one &&  v4 <= one &&  v5 <= one &&   // Check if inbnds
          -v3 <= one && -v4 <= one && -v5 <= one )
@@ -206,27 +253,66 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
 
 #     undef ACCUMULATE_J
     }
-
     else                                        // Unlikely
     {
-      local_pm->dispx = ux;
-      local_pm->dispy = uy;
-      local_pm->dispz = uz;
+        // if we cross a single face in the local domain
+        bool is_local_move = false;
+        bool crossed_single_face = false;
 
-      local_pm->i     = p - p0;
+        int crossed_x = 0;
+        int crossed_y = 0;
+        int crossed_z = 0;
 
-      if ( move_p( p0, local_pm, a0, g, qsp ) ) // Unlikely
-      {
-        if ( nm < max_nm )
-        {
-          pm[nm++] = local_pm[0];
+        int face = 0;
+        // Only one of crossed x/y/z true?
+        if (v3 > one) { crossed_x = 1; face = 3; }
+        if (v3 < -one) { crossed_x = 1; face = 0; }
+
+        if (v4 > one) { crossed_y = 1; face = 4; }
+        if (v4 < -one) { crossed_y = 1; face = 1; }
+
+        if (v5 > one) { crossed_z = 1; face = 5; }
+        if (v5 < -one) { crossed_z = 1; face = 2; }
+
+        //if ( (v4 > one) || (v4 < -one) ) { crossed_y = true; }
+        //if ( (v5 > one) || (v5 < -one) ) { crossed_z = true; }
+        if (  (crossed_x + crossed_y + crossed_z) == 1) { crossed_single_face = true; }
+
+        size_t neighbor = g->neighbor[ 6*p->i + face ];
+        if( neighbor > g->rangel && neighbor < g->rangeh ) {
+            is_local_move = true;
         }
 
-        else
+        local_pm->dispx = ux;
+        local_pm->dispy = uy;
+        local_pm->dispz = uz;
+
+        local_pm->i     = p - p0;
+
+        if ( is_local_move && crossed_single_face )
         {
-          itmp++;                               // Unlikely
+            // zig zag
+            int i = p - p0;
+            //std::cout << "Calling move_p_zz for " << i << " with " << p->dx << " and " << p->dy << " and " << p->dz << " v3 " << v3 << " v4 " << v4 << " v5 " << v5 << std::endl;
+            move_p_zz( p0, local_pm, a0, g, qsp, face );
         }
-      }
+        else {
+            // else
+            // old way
+
+            if ( move_p( p0, local_pm, a0, g, qsp ) ) // Unlikely
+            {
+                if ( nm < max_nm )
+                {
+                    pm[nm++] = local_pm[0];
+                }
+
+                else
+                {
+                    itmp++;                               // Unlikely
+                }
+            }
+        }
     }
   }
 

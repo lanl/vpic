@@ -53,7 +53,7 @@
 #endif
 
 // Temporary hack.
-#ifdef V4_NEON_ACCELERATION
+#ifdef V4_NEON_ACCELERATION_SNOUT
 
 #define PAD_SIZE_INTERPOLATOR 14
 #define PAD_SIZE_ACCUMULATOR   4

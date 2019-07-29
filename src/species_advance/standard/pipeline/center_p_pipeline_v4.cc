@@ -6,7 +6,7 @@
 
 using namespace v4;
 
-#ifdef V4_NEON_ACCELERATION
+#ifdef V4_NEON_ACCELERATION_SNOUT
 
 void
 center_p_pipeline_v4( center_p_pipeline_args_t * args,

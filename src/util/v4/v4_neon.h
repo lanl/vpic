@@ -2038,26 +2038,26 @@ namespace v4
   {
     v4float b;
 
-    float32x4_t a_v = a.v, b_v;
+    // float32x4_t a_v = a.v, b_v;
 
-    b_v = vrsqrteq_f32( a_v );
+    // b_v = vrsqrteq_f32( a_v );
 
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-    b.v = vaddq_f32( b_v, vmulq_f32( vdupq_n_f32( 0.5f ),
-                                     vsubq_f32( b_v,
-                                                vmulq_f32( a_v,
-                                                           vmulq_f32( b_v,
-                                                                      vmulq_f32( b_v, b_v )
-                                                                    )
-                                                         )
-                                              )
-                                   )
-                    );
+    // // Note: It is quicker to just call div_ps and sqrt_ps if more
+    // // refinement desired!
+    // b.v = vaddq_f32( b_v, vmulq_f32( vdupq_n_f32( 0.5f ),
+    //                                  vsubq_f32( b_v,
+    //                                             vmulq_f32( a_v,
+    //                                                        vmulq_f32( b_v,
+    //                                                                   vmulq_f32( b_v, b_v )
+    //                                                                 )
+    //                                                      )
+    //                                           )
+    //                                )
+    //                 );
 
-    // ALWAYS_VECTORIZE
-    // for( int j = 0; j < 4; j++ )
-    //   b.f[j] = ::sqrt( 1.0f / a.f[j] );
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -2079,19 +2079,19 @@ namespace v4
   {
     v4float b;
 
-    float32x4_t a_v = a.v, b_v;
+    // float32x4_t a_v = a.v, b_v;
 
-    b_v = vrecpeq_f32( a_v );
+    // b_v = vrecpeq_f32( a_v );
 
-    b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
-                     vmulq_f32( a_v,
-                                vmulq_f32( b_v, b_v )
-                              )
-                   );
+    // b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
+    //                  vmulq_f32( a_v,
+    //                             vmulq_f32( b_v, b_v )
+    //                           )
+    //                );
 
-    // ALWAYS_VECTORIZE
-    // for( int j = 0; j < 4; j++ )
-    //   b.f[j] = 1.0f / a.f[j];
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = 1.0f / a.f[j];
 
     return b;
   }

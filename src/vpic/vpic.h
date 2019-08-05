@@ -25,6 +25,10 @@
 #include "../util/checksum.h"
 #include "../util/system.h"
 
+#ifndef USER_GLOBAL_SIZE
+#define USER_GLOBAL_SIZE 16384
+#endif
+
 #ifndef NVARHISMX
 #define NVARHISMX 250
 #endif
@@ -191,6 +195,11 @@ private:
   emitter_t            * emitter_list;       // define_emitter /
                                              // emitter helpers
   collision_op_t       * collision_op_list;  // collision helpers
+
+  // User defined checkpt preserved variables
+  // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
+ 
+  char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------
    * Diagnostics

@@ -198,10 +198,6 @@ namespace v4
   inline v4 splat( const v4 & a )
   {
     v4 b;
-    // __m128 a_v = a.v;
-
-    // b.v = _mm_shuffle_ps( a_v, a_v, ( n*permute<1,1,1,1>::value ) );
-
 
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
@@ -214,9 +210,6 @@ namespace v4
   inline v4 shuffle( const v4 & a )
   {
     v4 b;
-    // __m128 a_v = a.v;
-
-    // b.v = _mm_shuffle_ps( a_v, a_v, ( permute<i0,i1,i2,i3>::value ) );
 
     b.i[0] = a.i[i0];
     b.i[1] = a.i[i1];
@@ -402,8 +395,6 @@ namespace v4
   inline void stream_4x1( const v4 &a,
                           void * ALIGNED(16) p )
   {
-    // _mm_stream_ps( ( float * ) p, a.v );
-
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       ( (int * ALIGNED(16) ) p )[j] = a.i[j];
@@ -443,7 +434,6 @@ namespace v4
     a.i[3] = ( (const int *) a3 )[0];
   }
 
-  #if 1
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
@@ -899,17 +889,17 @@ namespace v4
 
   #if 1
   inline void store_4x8_tr( const v4 &b00,
-			    const v4 &b01,
-			    const v4 &b02,
-			    const v4 &b03,
-			    const v4 &b04,
-			    const v4 &b05,
-			    const v4 &b06,
-			    const v4 &b07,
+                            const v4 &b01,
+                            const v4 &b02,
+                            const v4 &b03,
+                            const v4 &b04,
+                            const v4 &b05,
+                            const v4 &b06,
+                            const v4 &b07,
                             void * ALIGNED(16) a0,
-			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2,
-			    void * ALIGNED(16) a3 )
+                            void * ALIGNED(16) a3 )
   {
     float32x4x4_t mat0, mat2;
 
@@ -1073,10 +1063,8 @@ namespace v4
     ASSIGN(%=)
     ASSIGN(<<=)
     ASSIGN(>>=)
-    // ASSIGN( =)
-    // ASSIGN(^=)
-    // ASSIGN(&=)
-    // ASSIGN(|=)
+
+    #undef ASSIGN
 
     inline v4int &operator =( const v4int &b )
     {
@@ -1232,9 +1220,8 @@ namespace v4
   BINARY(%)
   BINARY(<<)
   BINARY(>>)
-  // BINARY(^)
-  // BINARY(&)
-  // BINARY(|)
+
+  #undef BINARY
 
   inline v4int operator ^( const v4int &a, const v4int &b )
   {
@@ -1794,9 +1781,9 @@ namespace v4
                                    )
                     );
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = ::sqrt( 1.0f / a.f[j] );
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1814,19 +1801,19 @@ namespace v4
   {
     v4float b;
 
-    // float32x4_t a_v = a.v, b_v;
+    float32x4_t a_v = a.v, b_v;
 
-    // b_v = vrecpeq_f32( a_v );
+    b_v = vrecpeq_f32( a_v );
 
-    // b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
-    //                  vmulq_f32( a_v,
-    //                             vmulq_f32( b_v, b_v )
-    //                           )
-    //                );
+    b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
+                     vmulq_f32( a_v,
+                                vmulq_f32( b_v, b_v )
+                              )
+                   );
 
-    ALWAYS_VECTORIZE
-    for( int j = 0; j < 4; j++ )
-      b.f[j] = 1.0f / a.f[j];
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = 1.0f / a.f[j];
 
     return b;
   }

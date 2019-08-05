@@ -161,7 +161,6 @@ namespace v4
   inline v4 splat( const v4 & a )
   {
     v4 b;
-    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a.v, a.v, ( n * permute<1,1,1,1>::value ) );
 
@@ -172,7 +171,6 @@ namespace v4
   inline v4 shuffle( const v4 & a )
   {
     v4 b;
-    __m128 a_v = a.v;
 
     b.v = _mm_shuffle_ps( a.v, a.v, ( permute<i0,i1,i2,i3>::value ) );
 

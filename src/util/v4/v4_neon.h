@@ -1039,7 +1039,7 @@ namespace v4
 
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
-      m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
+      tf.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
     return tf;
   }

@@ -287,20 +287,37 @@ namespace v4
                            v4 &a,
                            v4 &b )
   {
-    _v4_float r = vec_ld( 0, (const float *) a0 ); // r =  0  1  2  3
-    _v4_float s = vec_ld( 0, (const float *) a1 ); // s =  4  5  6  7
-    _v4_float t = vec_ld( 0, (const float *) a2 ); // t =  8  9 10 11
-    _v4_float u = vec_ld( 0, (const float *) a3 ); // u = 12 13 14 15
+    _v4_float r, s, t, u;
+
+    a.v = vec_ld( 0, (const float *) a0 ); // a =  0  1  2  3
+    b.v = vec_ld( 0, (const float *) a1 ); // b =  4  5  6  7
+    t   = vec_ld( 0, (const float *) a2 ); // c =  8  9 10 11
+    u   = vec_ld( 0, (const float *) a3 ); // d = 12 13 14 15
 
     // Step 1: Interleave top and bottom half
 
-    _v4_float v = vec_mergeh( r, t );              // v =  0  8  1  9
-    _v4_float w = vec_mergeh( s, u );              // w =  4 12  5 13
+    r   = vec_mergeh( a.v, t );            // r =  0  8  1  9
+    s   = vec_mergeh( b.v, u );            // s =  4 12  5 13
 
     // Step 2: Interleave even and odd rows
 
-    a.v         = vec_mergeh( v, w );              // a  =  0  4  8 12
-    b.v         = vec_mergel( v, w );              // b  =  1  5  9 13
+    a.v = vec_mergeh( r, s );              // a =  0  4  8 12
+    b.v = vec_mergel( r, s );              // b =  1  5  9 13
+
+    // _v4_float r = vec_ld( 0, (const float *) a0 ); // r =  0  1  2  3
+    // _v4_float s = vec_ld( 0, (const float *) a1 ); // s =  4  5  6  7
+    // _v4_float t = vec_ld( 0, (const float *) a2 ); // t =  8  9 10 11
+    // _v4_float u = vec_ld( 0, (const float *) a3 ); // u = 12 13 14 15
+
+    // Step 1: Interleave top and bottom half
+
+    // _v4_float w = vec_mergeh( r, t );              // v =  0  8  1  9
+    // _v4_float x = vec_mergeh( s, u );              // w =  4 12  5 13
+
+    // Step 2: Interleave even and odd rows
+
+    // a.v         = vec_mergeh( w, x );              // a  =  0  4  8 12
+    // b.v         = vec_mergel( w, x );              // b  =  1  5  9 13
   }
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,

@@ -60,17 +60,26 @@ namespace v4
 
     friend inline v4    czero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
     friend inline v4 notczero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
-    friend inline v4 merge( const v4int &c, const v4 &a, const v4 &b ) ALWAYS_INLINE;
+    friend inline v4    merge( const v4int &c, const v4 &a, const v4 &b ) ALWAYS_INLINE;
 
     // v4 memory manipulation friends
 
-    friend inline void   load_4x1( const void * ALIGNED(16) p, v4 &a ) ALWAYS_INLINE;
-    friend inline void  store_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
-    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void   load_4x1( const void * ALIGNED(16) p,
+                                   v4 &a ) ALWAYS_INLINE;
+
+    friend inline void  store_4x1( const v4 &a,
+                                   void * ALIGNED(16) p ) ALWAYS_INLINE;
+
+    friend inline void stream_4x1( const v4 &a,
+                                   void * ALIGNED(16) p ) ALWAYS_INLINE;
+
     friend inline void  clear_4x1( void * ALIGNED(16) dst ) ALWAYS_INLINE;
+
     friend inline void   copy_4x1( void * ALIGNED(16) dst,
                                    const void * ALIGNED(16) src ) ALWAYS_INLINE;
-    friend inline void   swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) ALWAYS_INLINE;
+
+    friend inline void   swap_4x1( void * ALIGNED(16) a,
+                                   void * ALIGNED(16) b ) ALWAYS_INLINE;
 
     // v4 transposed memory manipulation friends
 
@@ -177,7 +186,7 @@ namespace v4
     return b;
   }
 
-# define sw(x,y) x^=y, y^=x, x^=y
+  #define sw(x,y) x^=y, y^=x, x^=y
 
   inline void swap( v4 &a, v4 &b )
   {
@@ -193,7 +202,7 @@ namespace v4
                                                   sw( a2.i[3],a3.i[2] );
   }
 
-# undef sw
+  #undef sw
 
   // v4 memory manipulation functions
 
@@ -228,7 +237,6 @@ namespace v4
       ((int * ALIGNED(16))p)[j] = 0;
   }
 
-  // FIXME: Ordering semantics
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
@@ -253,156 +261,178 @@ namespace v4
 
   // v4 transposed memory manipulation functions
 
-  inline void load_4x1_tr( const void *a0, const void *a1,
-                           const void *a2, const void *a3,
+  inline void load_4x1_tr( const void *a0,
+                           const void *a1,
+                           const void *a2,
+                           const void *a3,
                            v4 &a )
   {
-    a.i[0] = ((const int *)a0)[0];
-    a.i[1] = ((const int *)a1)[0];
-    a.i[2] = ((const int *)a2)[0];
-    a.i[3] = ((const int *)a3)[0];
+    a.i[0] = ( (const int *) a0 )[0];
+    a.i[1] = ( (const int *) a1 )[0];
+    a.i[2] = ( (const int *) a2 )[0];
+    a.i[3] = ( (const int *) a3 )[0];
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
                            const void * ALIGNED(8) a1,
                            const void * ALIGNED(8) a2,
                            const void * ALIGNED(8) a3,
-                           v4 &a, v4 &b )
+                           v4 &a,
+                           v4 &b )
   {
-    a.i[0] = ((const int * ALIGNED(8))a0)[0];
-    b.i[0] = ((const int * ALIGNED(8))a0)[1];
+    a.i[0] = ( ( const int * ALIGNED(8) ) a0 )[0];
+    b.i[0] = ( ( const int * ALIGNED(8) ) a0 )[1];
 
-    a.i[1] = ((const int * ALIGNED(8))a1)[0];
-    b.i[1] = ((const int * ALIGNED(8))a1)[1];
+    a.i[1] = ( ( const int * ALIGNED(8) ) a1 )[0];
+    b.i[1] = ( ( const int * ALIGNED(8) ) a1 )[1];
 
-    a.i[2] = ((const int * ALIGNED(8))a2)[0];
-    b.i[2] = ((const int * ALIGNED(8))a2)[1];
+    a.i[2] = ( ( const int * ALIGNED(8) ) a2 )[0];
+    b.i[2] = ( ( const int * ALIGNED(8) ) a2 )[1];
 
-    a.i[3] = ((const int * ALIGNED(8))a3)[0];
-    b.i[3] = ((const int * ALIGNED(8))a3)[1];
+    a.i[3] = ( ( const int * ALIGNED(8) ) a3 )[0];
+    b.i[3] = ( ( const int * ALIGNED(8) ) a3 )[1];
   }
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c )
+                           v4 &a,
+                           v4 &b,
+                           v4 &c )
   {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
+    a.i[0] = ( ( const int * ALIGNED(16) ) a0 )[0];
+    b.i[0] = ( ( const int * ALIGNED(16) ) a0 )[1];
+    c.i[0] = ( ( const int * ALIGNED(16) ) a0 )[2];
 
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
+    a.i[1] = ( ( const int * ALIGNED(16) ) a1 )[0];
+    b.i[1] = ( ( const int * ALIGNED(16) ) a1 )[1];
+    c.i[1] = ( ( const int * ALIGNED(16) ) a1 )[2];
 
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
+    a.i[2] = ( ( const int * ALIGNED(16) ) a2 )[0];
+    b.i[2] = ( ( const int * ALIGNED(16) ) a2 )[1];
+    c.i[2] = ( ( const int * ALIGNED(16) ) a2 )[2];
 
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2]; 
+    a.i[3] = ( ( const int * ALIGNED(16) ) a3 )[0];
+    b.i[3] = ( ( const int * ALIGNED(16) ) a3 )[1];
+    c.i[3] = ( ( const int * ALIGNED(16) ) a3 )[2];
   }
 
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
                            const void * ALIGNED(16) a1,
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
-                           v4 &a, v4 &b, v4 &c, v4 &d )
+                           v4 &a,
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
   {
-    a.i[0] = ((const int * ALIGNED(16))a0)[0];
-    b.i[0] = ((const int * ALIGNED(16))a0)[1];
-    c.i[0] = ((const int * ALIGNED(16))a0)[2];
-    d.i[0] = ((const int * ALIGNED(16))a0)[3];
+    a.i[0] = ( ( const int * ALIGNED(16) ) a0 )[0];
+    b.i[0] = ( ( const int * ALIGNED(16) ) a0 )[1];
+    c.i[0] = ( ( const int * ALIGNED(16) ) a0 )[2];
+    d.i[0] = ( ( const int * ALIGNED(16) ) a0 )[3];
 
-    a.i[1] = ((const int * ALIGNED(16))a1)[0];
-    b.i[1] = ((const int * ALIGNED(16))a1)[1];
-    c.i[1] = ((const int * ALIGNED(16))a1)[2];
-    d.i[1] = ((const int * ALIGNED(16))a1)[3];
+    a.i[1] = ( ( const int * ALIGNED(16) ) a1 )[0];
+    b.i[1] = ( ( const int * ALIGNED(16) ) a1 )[1];
+    c.i[1] = ( ( const int * ALIGNED(16) ) a1 )[2];
+    d.i[1] = ( ( const int * ALIGNED(16) ) a1 )[3];
 
-    a.i[2] = ((const int * ALIGNED(16))a2)[0];
-    b.i[2] = ((const int * ALIGNED(16))a2)[1];
-    c.i[2] = ((const int * ALIGNED(16))a2)[2];
-    d.i[2] = ((const int * ALIGNED(16))a2)[3];
+    a.i[2] = ( ( const int * ALIGNED(16) ) a2 )[0];
+    b.i[2] = ( ( const int * ALIGNED(16) ) a2 )[1];
+    c.i[2] = ( ( const int * ALIGNED(16) ) a2 )[2];
+    d.i[2] = ( ( const int * ALIGNED(16) ) a2 )[3];
 
-    a.i[3] = ((const int * ALIGNED(16))a3)[0];
-    b.i[3] = ((const int * ALIGNED(16))a3)[1];
-    c.i[3] = ((const int * ALIGNED(16))a3)[2];
-    d.i[3] = ((const int * ALIGNED(16))a3)[3];
+    a.i[3] = ( ( const int * ALIGNED(16) ) a3 )[0];
+    b.i[3] = ( ( const int * ALIGNED(16) ) a3 )[1];
+    c.i[3] = ( ( const int * ALIGNED(16) ) a3 )[2];
+    d.i[3] = ( ( const int * ALIGNED(16) ) a3 )[3];
   }
 
   inline void store_4x1_tr( const v4 &a,
-                            void *a0, void *a1,
-                            void *a2, void *a3 )
+                            void *a0,
+                            void *a1,
+                            void *a2,
+                            void *a3 )
   {
-    ((int *)a0)[0] = a.i[0];
-    ((int *)a1)[0] = a.i[1];
-    ((int *)a2)[0] = a.i[2];
-    ((int *)a3)[0] = a.i[3];
+    ( (int *) a0 )[0] = a.i[0];
+    ( (int *) a1 )[0] = a.i[1];
+    ( (int *) a2 )[0] = a.i[2];
+    ( (int *) a3 )[0] = a.i[3];
   }
 
-  inline void store_4x2_tr( const v4 &a, const v4 &b,
-                            void * ALIGNED(8) a0, void * ALIGNED(8) a1,
-                            void * ALIGNED(8) a2, void * ALIGNED(8) a3 )
+  inline void store_4x2_tr( const v4 &a,
+                            const v4 &b,
+                            void * ALIGNED(8) a0,
+                            void * ALIGNED(8) a1,
+                            void * ALIGNED(8) a2,
+                            void * ALIGNED(8) a3 )
   {
-    ((int * ALIGNED(8))a0)[0] = a.i[0];
-    ((int * ALIGNED(8))a0)[1] = b.i[0];
+    ( ( int * ALIGNED(8) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(8) ) a0 )[1] = b.i[0];
 
-    ((int * ALIGNED(8))a1)[0] = a.i[1];
-    ((int * ALIGNED(8))a1)[1] = b.i[1];
+    ( ( int * ALIGNED(8) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(8) ) a1 )[1] = b.i[1];
 
-    ((int * ALIGNED(8))a2)[0] = a.i[2];
-    ((int * ALIGNED(8))a2)[1] = b.i[2];
+    ( ( int * ALIGNED(8) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(8) ) a2 )[1] = b.i[2];
 
-    ((int * ALIGNED(8))a3)[0] = a.i[3];
-    ((int * ALIGNED(8))a3)[1] = b.i[3];
+    ( ( int * ALIGNED(8) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(8) ) a3 )[1] = b.i[3];
   }
 
-  inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
+  inline void store_4x3_tr( const v4 &a,
+                            const v4 &b,
+                            const v4 &c,
+                            void * ALIGNED(16) a0,
+                            void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+                            void * ALIGNED(16) a3 )
   {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[1] = b.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[2] = c.i[0];
 
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[1] = b.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[2] = c.i[1];
 
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[1] = b.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[2] = c.i[2];
 
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[1] = b.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[2] = c.i[3];
   }
 
-  inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-                            void * ALIGNED(16) a0, void * ALIGNED(16) a1,
-                            void * ALIGNED(16) a2, void * ALIGNED(16) a3 )
+  inline void store_4x4_tr( const v4 &a,
+                            const v4 &b,
+                            const v4 &c,
+                            const v4 &d,
+                            void * ALIGNED(16) a0,
+                            void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+                            void * ALIGNED(16) a3 )
   {
-    ((int * ALIGNED(16))a0)[0] = a.i[0];
-    ((int * ALIGNED(16))a0)[1] = b.i[0];
-    ((int * ALIGNED(16))a0)[2] = c.i[0];
-    ((int * ALIGNED(16))a0)[3] = d.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[1] = b.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[2] = c.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[3] = d.i[0];
 
-    ((int * ALIGNED(16))a1)[0] = a.i[1];
-    ((int * ALIGNED(16))a1)[1] = b.i[1];
-    ((int * ALIGNED(16))a1)[2] = c.i[1];
-    ((int * ALIGNED(16))a1)[3] = d.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[1] = b.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[2] = c.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[3] = d.i[1];
 
-    ((int * ALIGNED(16))a2)[0] = a.i[2];
-    ((int * ALIGNED(16))a2)[1] = b.i[2];
-    ((int * ALIGNED(16))a2)[2] = c.i[2];
-    ((int * ALIGNED(16))a2)[3] = d.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[1] = b.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[2] = c.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[3] = d.i[2];
 
-    ((int * ALIGNED(16))a3)[0] = a.i[3];
-    ((int * ALIGNED(16))a3)[1] = b.i[3];
-    ((int * ALIGNED(16))a3)[2] = c.i[3];
-    ((int * ALIGNED(16))a3)[3] = d.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[1] = b.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[2] = c.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[3] = d.i[3];
   }
 
   //////////////
@@ -520,7 +550,7 @@ namespace v4
 
     // v4int assignment operators
 
-#   define ASSIGN(op)                             \
+    #define ASSIGN(op)                            \
     inline v4int &operator op( const v4int &b )   \
     {                                             \
       ALWAYS_VECTORIZE                            \
@@ -529,19 +559,19 @@ namespace v4
       return *this;                               \
     }
 
-    ASSIGN( =)
     ASSIGN(+=)
     ASSIGN(-=)
     ASSIGN(*=)
     ASSIGN(/=)
     ASSIGN(%=)
+    ASSIGN(<<=)
+    ASSIGN(>>=)
+    ASSIGN( =)
     ASSIGN(^=)
     ASSIGN(&=)
     ASSIGN(|=)
-    ASSIGN(<<=)
-    ASSIGN(>>=)
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4int member access operator
 
@@ -558,7 +588,7 @@ namespace v4
 
   // v4int prefix unary operators
 
-# define PREFIX_UNARY(op)                       \
+  #define PREFIX_UNARY(op)                      \
   inline v4int operator op( const v4int & a )   \
   {                                             \
     v4int b;                                    \
@@ -584,11 +614,11 @@ namespace v4
 
   PREFIX_UNARY(~)
 
-# undef PREFIX_UNARY
+  #undef PREFIX_UNARY
 
   // v4int prefix increment / decrement
 
-# define PREFIX_INCDEC(op)                      \
+  #define PREFIX_INCDEC(op)                     \
   inline v4int operator op( v4int & a )         \
   {                                             \
     v4int b;                                    \
@@ -601,11 +631,11 @@ namespace v4
   PREFIX_INCDEC(++)
   PREFIX_INCDEC(--)
 
-# undef PREFIX_INCDEC
+  #undef PREFIX_INCDEC
 
   // v4int postfix increment / decrement
 
-# define POSTFIX_INCDEC(op)                    \
+  #define POSTFIX_INCDEC(op)                   \
   inline v4int operator op( v4int & a, int )   \
   {                                            \
     v4int b;                                   \
@@ -618,11 +648,11 @@ namespace v4
   POSTFIX_INCDEC(++)
   POSTFIX_INCDEC(--)
 
-# undef POSTFIX_INCDEC
+  #undef POSTFIX_INCDEC
 
   // v4int binary operators
 
-# define BINARY(op)                                             \
+  #define BINARY(op)                                            \
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {                                                             \
     v4int c;                                                    \
@@ -637,17 +667,17 @@ namespace v4
   BINARY(*)
   BINARY(/)
   BINARY(%)
+  BINARY(<<)
+  BINARY(>>)
   BINARY(^)
   BINARY(&)
   BINARY(|)
-  BINARY(<<)
-  BINARY(>>)
 
-# undef BINARY
+  #undef BINARY
 
   // v4int logical operators
 
-# define LOGICAL(op)                                           \
+  #define LOGICAL(op)                                          \
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {                                                            \
     v4int c;                                                   \
@@ -666,7 +696,7 @@ namespace v4
   LOGICAL(&&)
   LOGICAL(||)
 
-# undef LOGICAL
+  #undef LOGICAL
 
   // v4int miscellaneous functions
 
@@ -705,13 +735,13 @@ namespace v4
 
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f )
   {
-    v4 m;
+    v4 tf;
 
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
-      m.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
+      tf.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
-    return m;
+    return tf;
   }
 
   ////////////////
@@ -757,9 +787,9 @@ namespace v4
 
     // v4float math library friends
 
-#   define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
-#   define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
-                                                   const v4float &b ) ALWAYS_INLINE
+    #define CMATH_FR1(fn) friend inline v4float fn( const v4float &a ) ALWAYS_INLINE
+    #define CMATH_FR2(fn) friend inline v4float fn( const v4float &a,  \
+                                                    const v4float &b ) ALWAYS_INLINE
 
     CMATH_FR1(acos);  CMATH_FR1(asin);  CMATH_FR1(atan); CMATH_FR2(atan2);
     CMATH_FR1(ceil);  CMATH_FR1(cos);   CMATH_FR1(cosh); CMATH_FR1(exp);
@@ -769,8 +799,8 @@ namespace v4
 
     CMATH_FR2(copysign);
 
-#   undef CMATH_FR1
-#   undef CMATH_FR2
+    #undef CMATH_FR1
+    #undef CMATH_FR2
 
     // v4float miscellaneous friends
 
@@ -828,7 +858,7 @@ namespace v4
 
     // v4float assignment operators
 
-#   define ASSIGN(op)                                   \
+    #define ASSIGN(op)                                  \
     inline v4float &operator op( const v4float &b )     \
     {                                                   \
       ALWAYS_VECTORIZE                                  \
@@ -843,7 +873,7 @@ namespace v4
     ASSIGN(*=)
     ASSIGN(/=)
 
-#   undef ASSIGN
+    #undef ASSIGN
 
     // v4float member access operator
 
@@ -943,7 +973,7 @@ namespace v4
 
   // v4float binary operators
 
-# define BINARY(op)                                                  \
+  #define BINARY(op)                                                 \
   inline v4float operator op( const v4float &a, const v4float &b )   \
   {                                                                  \
     v4float c;                                                       \
@@ -958,11 +988,11 @@ namespace v4
   BINARY(*)
   BINARY(/)
 
-# undef BINARY
+  #undef BINARY
 
   // v4float logical operators
 
-# define LOGICAL(op)                                               \
+  #define LOGICAL(op)                                              \
   inline v4int operator op( const v4float &a, const v4float &b )   \
   {                                                                \
     v4int c;                                                       \
@@ -975,17 +1005,17 @@ namespace v4
   LOGICAL(< )
   LOGICAL(> )
   LOGICAL(==)
-  LOGICAL(!=)
   LOGICAL(<=)
   LOGICAL(>=)
+  LOGICAL(!=)
   LOGICAL(&&)
   LOGICAL(||)
 
-# undef LOGICAL
+  #undef LOGICAL
 
   // v4float math library functions
 
-# define CMATH_FR1(fn)                          \
+  #define CMATH_FR1(fn)                         \
   inline v4float fn( const v4float &a )         \
   {                                             \
     v4float b;                                  \
@@ -995,7 +1025,7 @@ namespace v4
     return b;                                   \
   }
 
-# define CMATH_FR2(fn)                                          \
+  #define CMATH_FR2(fn)                                         \
   inline v4float fn( const v4float &a, const v4float &b )       \
   {                                                             \
     v4float c;                                                  \
@@ -1010,6 +1040,9 @@ namespace v4
   CMATH_FR1(fabs)     CMATH_FR1(floor) CMATH_FR2(fmod) CMATH_FR1(log)
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
   CMATH_FR1(sqrt)     CMATH_FR1(tan)   CMATH_FR1(tanh)
+
+  #undef CMATH_FR1
+  #undef CMATH_FR2
 
   inline v4float copysign( const v4float &a, const v4float &b )
   {
@@ -1026,9 +1059,6 @@ namespace v4
 
     return c;
   }
-
-# undef CMATH_FR1
-# undef CMATH_FR2
 
   // v4float miscellaneous functions
 
@@ -1142,28 +1172,34 @@ namespace v4
     return b;
   }
 
-  inline void increment_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void increment_4x1( float * ALIGNED(16) p,
+                             const v4float &a )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       p[j] += a.f[j];
   }
 
-  inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void decrement_4x1( float * ALIGNED(16) p,
+                             const v4float &a )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       p[j] -= a.f[j];
   }
 
-  inline void scale_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void scale_4x1( float * ALIGNED(16) p,
+                         const v4float &a )
   {
     ALWAYS_VECTORIZE
     for( int j = 0; j < 4; j++ )
       p[j] *= a.f[j];
   }
 
-  inline void trilinear( v4float & wl, v4float & wh )
+  // Given wl = x y z w, compute:
+  // wl = (1-x)(1-y)(1-z) (1+x)(1-y)(1-z) (1-x)(1+y)(1-z) (1+x)(1+y)(1-z)
+  // wh = (1-x)(1-y)(1+z) (1+x)(1-y)(1+z) (1-x)(1+y)(1+z) (1+x)(1+y)(1+z)
+  inline void trilinear( v4float &wl, v4float &wh )
   {
     float x = wl.f[0], y = wl.f[1], z = wl.f[2];
 

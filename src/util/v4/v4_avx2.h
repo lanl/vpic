@@ -57,17 +57,26 @@ namespace v4
 
     friend inline v4    czero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
     friend inline v4 notczero( const v4int &c, const v4 &a ) ALWAYS_INLINE;
-    friend inline v4 merge( const v4int &c, const v4 &a, const v4 &b ) ALWAYS_INLINE;
+    friend inline v4    merge( const v4int &c, const v4 &a, const v4 &b ) ALWAYS_INLINE;
 
     // v4 memory manipulation friends
 
-    friend inline void   load_4x1( const void * ALIGNED(16) p, v4 &a ) ALWAYS_INLINE;
-    friend inline void  store_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
-    friend inline void stream_4x1( const v4 &a, void * ALIGNED(16) p ) ALWAYS_INLINE;
+    friend inline void   load_4x1( const void * ALIGNED(16) p,
+                                   v4 &a ) ALWAYS_INLINE;
+
+    friend inline void  store_4x1( const v4 &a,
+                                   void * ALIGNED(16) p ) ALWAYS_INLINE;
+
+    friend inline void stream_4x1( const v4 &a,
+                                   void * ALIGNED(16) p ) ALWAYS_INLINE;
+
     friend inline void  clear_4x1( void * ALIGNED(16) dst ) ALWAYS_INLINE;
+
     friend inline void   copy_4x1( void * ALIGNED(16) dst,
                                    const void * ALIGNED(16) src ) ALWAYS_INLINE;
-    friend inline void   swap_4x1( void * ALIGNED(16) a, void * ALIGNED(16) b ) ALWAYS_INLINE;
+
+    friend inline void   swap_4x1( void * ALIGNED(16) a,
+                                   void * ALIGNED(16) b ) ALWAYS_INLINE;
 
     // v4 transposed memory manipulation friends
 
@@ -152,9 +161,8 @@ namespace v4
   inline v4 splat( const v4 & a )
   {
     v4 b;
-    __m128 a_v = a.v;
 
-    b.v = _mm_shuffle_ps( a_v, a_v, ( n*permute<1,1,1,1>::value ) );
+    b.v = _mm_shuffle_ps( a.v, a.v, ( n * permute<1,1,1,1>::value ) );
 
     return b;
   }
@@ -163,20 +171,19 @@ namespace v4
   inline v4 shuffle( const v4 & a )
   {
     v4 b;
-    __m128 a_v = a.v;
 
-    b.v = _mm_shuffle_ps( a_v, a_v, ( permute<i0,i1,i2,i3>::value ) );
+    b.v = _mm_shuffle_ps( a.v, a.v, ( permute<i0,i1,i2,i3>::value ) );
 
     return b;
   }
 
   inline void swap( v4 &a, v4 &b )
-  { 
-    __m128 a_v = a.v;
+  {
+    __m128 t = a.v;
 
     a.v = b.v;
 
-    b.v = a_v;
+    b.v = t;
   }
 
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
@@ -230,9 +237,8 @@ namespace v4
     _mm_store_ps( ( float * ) dst, _mm_load_ps( ( const float * ) src ) );
   }
 
-  /* FIXME: MAKE ROBUST AGAINST ALIASING ISSUES */
   inline void swap_4x1( void * ALIGNED(16) a,
-			void * ALIGNED(16) b )
+                        void * ALIGNED(16) b )
   {
     __m128 t = _mm_load_ps( ( float * ) a );
 
@@ -243,9 +249,9 @@ namespace v4
   // v4 transposed memory manipulation functions
 
   inline void load_4x1_tr( const void *a0,
-			   const void *a1,
+                           const void *a1,
                            const void *a2,
-			   const void *a3,
+                           const void *a3,
                            v4 &a )
   {
     a.v = _mm_setr_ps( ( (const float *) a0 )[0],
@@ -259,20 +265,17 @@ namespace v4
                            const void * ALIGNED(8) a2,
                            const void * ALIGNED(8) a3,
                            v4 &a,
-			   v4 &b )
+                           v4 &b )
   {
     __m128 a_v, b_v, t;
 
     b_v = _mm_setzero_ps();
 
-    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a0 ), (__m64 *)a1 );
-    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *)a2 ), (__m64 *)a3 );
+    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *) a0 ), (__m64 *) a1 );
+    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *) a2 ), (__m64 *) a3 );
 
-    a_v = _mm_shuffle_ps( t, b_v, 0x88 );
-    b_v = _mm_shuffle_ps( t, b_v, 0xdd );
-
-    a.v = a_v;
-    b.v = b_v;
+    a.v = _mm_shuffle_ps( t, b_v, 0x88 );
+    b.v = _mm_shuffle_ps( t, b_v, 0xdd );
   }
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
@@ -280,8 +283,35 @@ namespace v4
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
                            v4 &a,
-			   v4 &b,
-			   v4 &c )
+                           v4 &b,
+                           v4 &c )
+  {
+    __m128 r, s, t, u, d_v;
+
+    a.v = _mm_load_ps( (const float *) a0 );
+    b.v = _mm_load_ps( (const float *) a1 );
+    c.v = _mm_load_ps( (const float *) a2 );
+    d_v = _mm_load_ps( (const float *) a3 );
+
+    r   = _mm_unpacklo_ps( a.v, b.v );
+    s   = _mm_unpackhi_ps( a.v, b.v );
+
+    t   = _mm_unpacklo_ps( c.v, d_v );
+    u   = _mm_unpackhi_ps( c.v, d_v );
+
+    a.v = _mm_movelh_ps( r, t );
+    b.v = _mm_movehl_ps( t, r );
+    c.v = _mm_movelh_ps( s, u );
+  }
+
+  #if 0
+  inline void load_4x3_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a,
+                           v4 &b,
+                           v4 &c )
   {
     __m128 a_v, b_v, c_v, t, u;
 
@@ -303,6 +333,35 @@ namespace v4
     b.v = b_v;
     c.v = c_v;
   }
+  #endif
+
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a,
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
+  {
+    __m128 r, s, t, u;
+
+    a.v = _mm_load_ps( (const float *) a0 );
+    b.v = _mm_load_ps( (const float *) a1 );
+    c.v = _mm_load_ps( (const float *) a2 );
+    d.v = _mm_load_ps( (const float *) a3 );
+
+    r   = _mm_unpackhi_ps( a.v, b.v );
+    s   = _mm_unpacklo_ps( a.v, b.v );
+
+    t   = _mm_unpackhi_ps( c.v, d.v );
+    u   = _mm_unpacklo_ps( c.v, d.v );
+
+    a.v = _mm_movelh_ps( s, u );
+    b.v = _mm_movehl_ps( u, s );
+    c.v = _mm_movelh_ps( r, t );
+    d.v = _mm_movehl_ps( t, r );
+  }
 
   #if 0
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
@@ -310,9 +369,38 @@ namespace v4
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
                            v4 &a,
-			   v4 &b,
-			   v4 &c,
-			   v4 &d )
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
+  {
+    __m128 a_v, b_v, c_v, d_v, t, u;
+
+    a_v = _mm_load_ps( (const float *)a0 );
+    b_v = _mm_load_ps( (const float *)a1 );
+    c_v = _mm_load_ps( (const float *)a2 );
+    d_v = _mm_load_ps( (const float *)a3 );
+
+    t   = _mm_unpackhi_ps( a_v, b_v );
+    u   = _mm_unpackhi_ps( c_v, d_v );
+    a_v = _mm_unpacklo_ps( a_v, b_v );
+    c_v = _mm_unpacklo_ps( c_v, d_v );
+
+    a.v = _mm_movelh_ps( a_v, c_v );
+    c.v = _mm_movelh_ps( t, u );
+    b.v = _mm_movehl_ps( c_v, a_v );
+    d.v = _mm_movehl_ps( u, t );
+  }
+  #endif
+
+  #if 0
+  inline void load_4x4_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &a,
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
   {
     __m128 a_v, b_v, c_v, d_v, t, u;
     a_v = _mm_load_ps( (const float *)a0 );
@@ -337,9 +425,9 @@ namespace v4
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
                            v4 &a,
-			   v4 &b,
-			   v4 &c,
-			   v4 &d )
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
   {
     __m128 a_v, b_v, c_v, d_v, t, u;
 
@@ -366,9 +454,9 @@ namespace v4
                            const void * ALIGNED(16) a2,
                            const void * ALIGNED(16) a3,
                            v4 &a,
-			   v4 &b,
-			   v4 &c,
-			   v4 &d )
+                           v4 &b,
+                           v4 &c,
+                           v4 &d )
   {
     __m128 a_v, b_v, c_v, d_v, t, u;
 
@@ -389,38 +477,11 @@ namespace v4
   }
   #endif
 
-  inline void load_4x4_tr( const void * ALIGNED(16) a0,
-                           const void * ALIGNED(16) a1,
-                           const void * ALIGNED(16) a2,
-                           const void * ALIGNED(16) a3,
-                           v4 &a,
-			   v4 &b,
-			   v4 &c,
-			   v4 &d )
-  {
-    __m128 a_v, b_v, c_v, d_v, t, u;
-
-    a_v = _mm_load_ps( (const float *)a0 );
-    b_v = _mm_load_ps( (const float *)a1 );
-    c_v = _mm_load_ps( (const float *)a2 );
-    d_v = _mm_load_ps( (const float *)a3 );
-
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
-
-    a.v = _mm_movelh_ps( a_v, c_v );
-    c.v = _mm_movelh_ps( t, u );
-    b.v = _mm_movehl_ps( c_v, a_v );
-    d.v = _mm_movehl_ps( u, t );
-  }
-
   inline void store_4x1_tr( const v4 &a,
                             void *a0,
-			    void *a1,
+                            void *a1,
                             void *a2,
-			    void *a3 )
+                            void *a3 )
   {
     ( (float *) a0 )[0] = a.f[0];
     ( (float *) a1 )[0] = a.f[1];
@@ -429,77 +490,76 @@ namespace v4
   }
 
   inline void store_4x2_tr( const v4 &a,
-			    const v4 &b,
+                            const v4 &b,
                             void * ALIGNED(8) a0,
-			    void * ALIGNED(8) a1,
+                            void * ALIGNED(8) a1,
                             void * ALIGNED(8) a2,
-			    void * ALIGNED(8) a3 )
+                            void * ALIGNED(8) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, t;
+    __m128 t;
 
-    t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
+    t = _mm_unpacklo_ps( a.v, b.v );  // a0 b0 a1 b1 -> t
 
-    _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
+    _mm_storel_pi( (__m64 *) a0, t ); // a0 b0       -> a0
+    _mm_storeh_pi( (__m64 *) a1, t ); // a1 b1       -> a1
 
-    t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
+    t = _mm_unpackhi_ps( a.v, b.v );  // a2 b2 a3 b3 -> t
 
-    _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
+    _mm_storel_pi( (__m64 *) a2, t ); // a2 b2       -> a2
+    _mm_storeh_pi( (__m64 *) a3, t ); // a3 b3       -> a3
   }
 
   inline void store_4x3_tr( const v4 &a,
-			    const v4 &b,
-			    const v4 &c,
+                            const v4 &b,
+                            const v4 &c,
                             void * ALIGNED(16) a0,
-			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2,
-			    void * ALIGNED(16) a3 )
+                            void * ALIGNED(16) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, t;
+    __m128 t;
 
-    t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
+    t = _mm_unpacklo_ps( a.v, b.v );  // a0 b0 a1 b1 -> t
 
-    _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
+    _mm_storel_pi( (__m64 *) a0, t ); // a0 b0       -> a0
+    _mm_storeh_pi( (__m64 *) a1, t ); // a1 b1       -> a1
 
-    t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
+    t = _mm_unpackhi_ps( a.v, b.v );  // a2 b2 a3 b3 -> t
 
-    _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
+    _mm_storel_pi( (__m64 *) a2, t ); // a2 b2       -> a2
+    _mm_storeh_pi( (__m64 *) a3, t ); // a3 b3       -> a3
 
-    ((float *)a0)[2] = c.f[0];
-    ((float *)a1)[2] = c.f[1];
-    ((float *)a2)[2] = c.f[2];
-    ((float *)a3)[2] = c.f[3];
+    ( (float *) a0 )[2] = c.f[0];
+    ( (float *) a1 )[2] = c.f[1];
+    ( (float *) a2 )[2] = c.f[2];
+    ( (float *) a3 )[2] = c.f[3];
   }
 
-  // FIXME: IS THIS FASTER THAN THE OLD WAY (HAD MORE STORE INSTR)
   inline void store_4x4_tr( const v4 &a,
-			    const v4 &b,
+                            const v4 &b,
                             const v4 &c,
-			    const v4 &d,
+                            const v4 &d,
                             void * ALIGNED(16) a0,
-			    void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a1,
                             void * ALIGNED(16) a2,
-			    void * ALIGNED(16) a3 )
+                            void * ALIGNED(16) a3 )
   {
-    __m128 a_v = a.v, b_v = b.v, c_v = c.v, d_v = d.v, t, u;
+    __m128 a_v, b_v, c_v, d_v, t, u;
 
-    t   = _mm_unpackhi_ps( a_v, b_v );
-    a_v = _mm_unpacklo_ps( a_v, b_v );
-    u   = _mm_unpackhi_ps( c_v, d_v );
-    c_v = _mm_unpacklo_ps( c_v, d_v );
+    t   = _mm_unpackhi_ps( a.v, b.v );
+    a_v = _mm_unpacklo_ps( a.v, b.v );
+    u   = _mm_unpackhi_ps( c.v, d.v );
+    c_v = _mm_unpacklo_ps( c.v, d.v );
 
     b_v = _mm_movehl_ps( c_v, a_v );
     a_v = _mm_movelh_ps( a_v, c_v );
     c_v = _mm_movelh_ps( t, u );
     d_v = _mm_movehl_ps( u, t );
 
-    _mm_store_ps( (float *)a0, a_v );
-    _mm_store_ps( (float *)a1, b_v );
-    _mm_store_ps( (float *)a2, c_v );
-    _mm_store_ps( (float *)a3, d_v );
+    _mm_store_ps( (float *) a0, a_v );
+    _mm_store_ps( (float *) a1, b_v );
+    _mm_store_ps( (float *) a2, c_v );
+    _mm_store_ps( (float *) a3, d_v );
   }
 
   //////////////
@@ -644,6 +704,8 @@ namespace v4
     ASSIGN(<<=)
     ASSIGN(>>=)
 
+    #undef ASSIGN
+
     inline v4int &operator =( const v4int &b )
     {
       v = b.v;
@@ -672,8 +734,6 @@ namespace v4
       return *this;
     }
 
-    #undef ASSIGN
-
     // v4int member access operator
 
     inline int &operator []( int n )
@@ -690,7 +750,7 @@ namespace v4
   // v4int prefix unary operators
 
   #define PREFIX_UNARY(op)                      \
-  inline v4int operator op( const v4int & a )   \
+  inline v4int operator op( const v4int &a )    \
   {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
@@ -700,7 +760,7 @@ namespace v4
     return b;                                   \
   }
 
-  inline v4int operator +( const v4int & a )
+  inline v4int operator +( const v4int &a )
   {
     v4int b;
 
@@ -711,19 +771,19 @@ namespace v4
 
   PREFIX_UNARY(-)
 
-  inline v4int operator !( const v4int & a )
+  inline v4int operator !( const v4int &a )
   {
     v4int b;
 
-    b.i[0] = - ( !a.i[0] );
-    b.i[1] = - ( !a.i[1] );
-    b.i[2] = - ( !a.i[2] );
-    b.i[3] = - ( !a.i[3] );
+    b.i[0] = - ( ! a.i[0] );
+    b.i[1] = - ( ! a.i[1] );
+    b.i[2] = - ( ! a.i[2] );
+    b.i[3] = - ( ! a.i[3] );
 
     return b;
   }
 
-  inline v4int operator ~( const v4int & a )
+  inline v4int operator ~( const v4int &a )
   {
     v4int b;
 
@@ -734,6 +794,7 @@ namespace v4
     } u;
 
     u.i = -1;
+
     b.v = _mm_xor_ps( a.v, _mm_set1_ps( u.f ) );
 
     return b;
@@ -744,7 +805,7 @@ namespace v4
   // v4int prefix increment / decrement
 
   #define PREFIX_INCDEC(op)                     \
-  inline v4int operator op( v4int & a )         \
+  inline v4int operator op( v4int &a )          \
   {                                             \
     v4int b;                                    \
     b.i[0] = ( op a.i[0] );                     \
@@ -762,7 +823,7 @@ namespace v4
   // v4int postfix increment / decrement
 
   #define POSTFIX_INCDEC(op)                   \
-  inline v4int operator op( v4int & a, int )   \
+  inline v4int operator op( v4int &a, int )    \
   {                                            \
     v4int b;                                   \
     b.i[0] = ( a.i[0] op );                    \
@@ -798,6 +859,8 @@ namespace v4
   BINARY(<<)
   BINARY(>>)
 
+  #undef BINARY
+
   inline v4int operator ^( const v4int &a, const v4int &b )
   {
     v4int c;
@@ -824,8 +887,6 @@ namespace v4
 
     return c;
   }
-
-  #undef BINARY
 
   // v4int logical operators
 
@@ -885,8 +946,9 @@ namespace v4
 
   inline v4 merge( const v4int &c, const v4 &t, const v4 &f )
   {
-    __m128 c_v = c.v;
     v4 tf;
+
+    __m128 c_v = c.v;
 
     tf.v = _mm_or_ps( _mm_andnot_ps( c_v, f.v ),
                       _mm_and_ps( c_v, t.v ) );
@@ -1011,14 +1073,14 @@ namespace v4
     ASSIGN( *=, _mm_mul_ps )
     ASSIGN( /=, _mm_div_ps )
 
+    #undef ASSIGN
+
     inline v4float &operator =( const v4float &b )
     {
       v = b.v;
 
       return *this;
     }
-
-    #undef ASSIGN
 
     // v4float member access operator
 
@@ -1116,7 +1178,7 @@ namespace v4
 
   // v4float binary operators
 
-# define BINARY(op,intrin)                                           \
+  #define BINARY(op,intrin)                                          \
   inline v4float operator op( const v4float &a, const v4float &b )   \
   {                                                                  \
     v4float c;                                                       \
@@ -1129,7 +1191,7 @@ namespace v4
   BINARY( *, _mm_mul_ps )
   BINARY( /, _mm_div_ps )
 
-# undef BINARY
+  #undef BINARY
 
   // v4float logical operators
 
@@ -1141,12 +1203,14 @@ namespace v4
     return c;                                                      \
   }
 
-  LOGICAL(  <, _mm_cmplt_ps )
-  LOGICAL(  >, _mm_cmpgt_ps )
-  LOGICAL( ==, _mm_cmpeq_ps )
+  LOGICAL(  <, _mm_cmplt_ps  )
+  LOGICAL(  >, _mm_cmpgt_ps  )
+  LOGICAL( ==, _mm_cmpeq_ps  )
+  LOGICAL( <=, _mm_cmple_ps  )
+  LOGICAL( >=, _mm_cmpge_ps  )
   LOGICAL( !=, _mm_cmpneq_ps )
-  LOGICAL( <=, _mm_cmple_ps )
-  LOGICAL( >=, _mm_cmpge_ps )
+
+  #undef LOGICAL
 
   inline v4int operator &&( const v4float &a, const v4float &b )
   {
@@ -1171,8 +1235,6 @@ namespace v4
 
     return c;
   }
-
-  #undef LOGICAL
 
   // v4float math library functions
 
@@ -1204,6 +1266,9 @@ namespace v4
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
   /*CMATH_FR1(sqrt)*/ CMATH_FR1(tan)   CMATH_FR1(tanh)
 
+  #undef CMATH_FR1
+  #undef CMATH_FR2
+
   inline v4float fabs( const v4float &a )
   {
     v4float b;
@@ -1234,16 +1299,31 @@ namespace v4
     return c;
   }
 
-  #undef CMATH_FR1
-  #undef CMATH_FR2
-
-  // v4float miscelleanous functions
+  // v4float miscellaneous functions
 
   inline v4float rsqrt_approx( const v4float &a )
- {
+  {
     v4float b;
 
     b.v = _mm_rsqrt_ps( a.v );
+
+    return b;
+  }
+
+  inline v4float rsqrt( const v4float &a )
+  {
+    v4float b;
+
+    __m128 b_v;
+
+    b_v = _mm_rsqrt_ps( a.v );
+
+    b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
+                        _mm_fnmadd_ps( a.v,
+                                       _mm_mul_ps( b_v,
+                                                   _mm_mul_ps( b_v, b_v ) ),
+                                       b_v ),
+                        b_v );
 
     return b;
   }
@@ -1257,8 +1337,6 @@ namespace v4
 
     b_v = _mm_rsqrt_ps( a_v );
 
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
     b.v = _mm_add_ps( b_v, _mm_mul_ps( _mm_set1_ps( 0.5f ),
                                        _mm_sub_ps( b_v,
                                                    _mm_mul_ps( a_v,
@@ -1283,9 +1361,6 @@ namespace v4
 
     b_v = _mm_rsqrt_ps( a_v );
 
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-
     b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
                         _mm_fnmadd_ps( a_v,
                                        _mm_mul_ps( b_v,
@@ -1297,32 +1372,26 @@ namespace v4
   }
   #endif
 
-  inline v4float rsqrt( const v4float &a )
-  {
-    v4float b;
-
-    __m128 b_v;
-
-    b_v = _mm_rsqrt_ps( a.v );
-
-    // Note: It is quicker to just call div_ps and sqrt_ps if more
-    // refinement desired!
-
-    b.v = _mm_fmadd_ps( _mm_set1_ps( 0.5f ),
-                        _mm_fnmadd_ps( a.v,
-                                       _mm_mul_ps( b_v,
-                                                   _mm_mul_ps( b_v, b_v ) ),
-                                       b_v ),
-                        b_v );
-
-    return b;
-  }
-
   inline v4float rcp_approx( const v4float &a )
   {
     v4float b;
 
     b.v = _mm_rcp_ps( a.v );
+
+    return b;
+  }
+
+  inline v4float rcp( const v4float &a )
+  {
+    v4float b;
+
+    __m128 b_v;
+
+    b_v = _mm_rcp_ps( a.v );
+
+    b.v = _mm_fnmadd_ps( a.v,
+                         _mm_mul_ps( b_v, b_v ),
+                         _mm_add_ps( b_v, b_v ) );
 
     return b;
   }
@@ -1362,21 +1431,6 @@ namespace v4
     return b;
   }
   #endif
-
-  inline v4float rcp( const v4float &a )
-  {
-    v4float b;
-
-    __m128 b_v;
-
-    b_v = _mm_rcp_ps( a.v );
-
-    b.v = _mm_fnmadd_ps( a.v,
-                         _mm_mul_ps( b_v, b_v ),
-                         _mm_add_ps( b_v, b_v ) );
-
-    return b;
-  }
 
   inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
   {
@@ -1432,17 +1486,20 @@ namespace v4
     return b;
   }
 
-  inline void increment_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void increment_4x1( float * ALIGNED(16) p,
+                             const v4float &a )
   {
     _mm_store_ps( p, _mm_add_ps( _mm_load_ps( p ), a.v ) );
   }
 
-  inline void decrement_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void decrement_4x1( float * ALIGNED(16) p,
+                             const v4float &a )
   {
     _mm_store_ps( p, _mm_sub_ps( _mm_load_ps( p ), a.v ) );
   }
 
-  inline void scale_4x1( float * ALIGNED(16) p, const v4float &a )
+  inline void scale_4x1( float * ALIGNED(16) p,
+                         const v4float &a )
   {
     _mm_store_ps( p, _mm_mul_ps( _mm_load_ps( p ), a.v ) );
   }
@@ -1452,22 +1509,33 @@ namespace v4
   // wh = (1-x)(1-y)(1+z) (1+x)(1-y)(1+z) (1-x)(1+y)(1+z) (1+x)(1+y)(1+z)
   inline void trilinear( v4float &wl, v4float &wh )
   {
-    __m128 l = _mm_set1_ps( 1.0f ), s = _mm_setr_ps( -0.0f, +0.0f, -0.0f, +0.0f );
+    __m128 l = _mm_set1_ps( 1.0f );
+
+    __m128 s = _mm_setr_ps( -0.0f, +0.0f, -0.0f, +0.0f );
+
     __m128 z = wl.v, xy;
 
-    xy = _mm_add_ps( l, _mm_xor_ps( s, _mm_shuffle_ps( z,z, PERM(0,0,1,1) ) ) );
+    xy = _mm_add_ps( l,
+                     _mm_xor_ps( s,
+                                 _mm_shuffle_ps( z, z, PERM(0,0,1,1) )
+                               )
+                   );
 
-    z  = _mm_add_ps( l, _mm_xor_ps( s, _mm_shuffle_ps( z,z, PERM(2,2,2,2) ) ) );
+    z  = _mm_add_ps( l,
+                     _mm_xor_ps( s,
+                                 _mm_shuffle_ps( z, z, PERM(2,2,2,2) )
+                               )
+                   );
 
-    xy = _mm_mul_ps( _mm_shuffle_ps( xy,xy, PERM(0,1,0,1) ),
-                     _mm_shuffle_ps( xy,xy, PERM(2,2,3,3) ) );
+    xy = _mm_mul_ps( _mm_shuffle_ps( xy, xy, PERM(0,1,0,1) ),
+                     _mm_shuffle_ps( xy, xy, PERM(2,2,3,3) ) );
 
-    wl.v = _mm_mul_ps( xy, _mm_shuffle_ps( z,z, PERM(0,0,0,0) ) );
+    wl.v = _mm_mul_ps( xy, _mm_shuffle_ps( z, z, PERM(0,0,0,0) ) );
 
-    wh.v = _mm_mul_ps( xy, _mm_shuffle_ps( z,z, PERM(1,1,1,1) ) );
+    wh.v = _mm_mul_ps( xy, _mm_shuffle_ps( z, z, PERM(1,1,1,1) ) );
   }
 
-# undef PERM
+  #undef PERM
 
 } // namespace v4
 

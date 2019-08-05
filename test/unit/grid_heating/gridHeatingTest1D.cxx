@@ -168,7 +168,7 @@ begin_initialization {
   // some of these numbers.  Generally speaking, add lines at the end only.
   if(rank() == 0){
     FILE * out;
-    out = fopen("params.txt", "w");
+    out = fopen("params_1d.txt", "w");
     fprintf(out, "# Parameter file used for plotters.\n");
     fprintf(out, "%.14e   Time step (dt), code units\n", dt);
     fprintf(out, "%.14e   Laser wavelength, SI\n", vacuum_wavelength*1e-2);

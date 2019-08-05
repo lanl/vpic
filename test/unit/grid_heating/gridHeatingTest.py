@@ -20,8 +20,15 @@ base_dir = ""
 if len(sys.argv) > 1:
     base_dir = sys.argv[1]
 
+try:
+    # TODO: presumably it only makes sense to use this if it has value 1-3?
+    # We should do some checking on it
+    dim = int(sys.argv[2])
+except:
+    dim = 2
+
 # Read in simulation specific parameters from a file
-params_path = os.path.join(base_dir, "params.txt")
+params_path = os.path.join(base_dir, "params_" + str(dim) + "d.txt")
 print("Param path is " + params_path)
 params = open(params_path, 'r')
 
@@ -59,13 +66,6 @@ timeToSI = 1./wpe
 lengthToSI = lamb/(2*np.pi*np.sqrt(ne_over_nc))
 efieldToSI = const.m_e*np.sqrt(ne_over_nc)*2.*np.pi*const.c*const.c/(lamb*const.e)
 energyToSI = efieldToSI**2 * lengthToSI**3 * const.epsilon_0
-
-try:
-    # TODO: presumably it only makes sense to use this if it has value 1-3?
-    # We should do some checking on it
-    dim = int(sys.argv[2])
-except:
-    dim = 2
 
 filename = os.path.join(base_dir,'rundata_' + str(dim) + 'd/energies')
 

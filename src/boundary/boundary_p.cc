@@ -5,7 +5,7 @@
 // If this is defined particle and mover buffers will not resize dynamically.
 // This is the common case for the users.
 
-#define DISABLE_DYNAMIC_RESIZING
+// #define DISABLE_DYNAMIC_RESIZING
 
 // FIXME: ARCHITECTURAL FLAW!  CUSTOM BCS AND SHARED FACES CANNOT
 // COEXIST ON THE SAME FACE!  THIS MEANS THAT CUSTOM BOUNDARYS MUST

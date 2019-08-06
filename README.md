@@ -299,6 +299,21 @@ Feedback, comments, or issues can be raised through [GitHub issues](https://gith
 
 A mailing list for open collaboration can also be found [here](https://groups.google.com/forum/#!forum/vpic-users)
 
+# Versioning
+
+Version release summary: 
+
+## V1.1 (March 2019)
+
+- Added V8 and V16 functionality
+- Improved documentation and build processes
+- Significantly improved testing and correctness capabilities
+
+## V1.0
+
+Initial release
+
+
 # Release
 
 This software has been approved for open source release and has been assigned **LA-CC-15-109**.

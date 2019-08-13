@@ -64,6 +64,14 @@ add_test(${perform_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
     ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${perform_restore}
     ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
 
+# TODO: re-enable modify test
+#list(APPEND MODIFY_BINARY restore-modify)
+#list(APPEND RESTART_ARGS --modify "${CMAKE_CURRENT_SOURCE_DIR}/modify_file")
+#build_a_vpic(${MODIFY_BINARY} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
+#add_test(${MODIFY_BINARY} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
+#    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${MODIFY_BINARY}
+#    ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
+
 # Link the two tests
 set(RESTORE_LABEL "restore_group")
 set_tests_properties(${perform_restore} PROPERTIES DEPENDS ${generate_restore})

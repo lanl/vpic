@@ -14,6 +14,7 @@ addons:
       - openmpi-bin
       - gcc-4.9
       - g++-4.9
+      - numpy
 before_install:
  - mkdir -p "$HOME/bin"
  - if [[ ${CMAKE_VERSION} ]]; then wget --no-check-certificate -qO- http://www.cmake.org/files/v${CMAKE_VERSION:0:3}/cmake-${CMAKE_VERSION}.tar.gz | tar -xz && ln -s $PWD/cmake-${CMAKE_VERSION}/bin/cmake "$HOME/bin/cmake"; fi

@@ -233,10 +233,18 @@ private:
 
   // Binary dumps
   void dump_grid( const char *fbase );
+
   void dump_fields( const char *fbase, int fname_tag = 1 );
+  void dump_fields_hdf5( const char *fbase, int fname_tag = 1 );
+
   void dump_hydro( const char *sp_name, const char *fbase,
                    int fname_tag = 1 );
+  void dump_hydro_hdf5( const char *sp_name, const char *fbase,
+                   int fname_tag = 1 );
+
   void dump_particles( const char *sp_name, const char *fbase,
+                       int fname_tag = 1 );
+  void dump_particles_hdf5( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
   // convenience functions for simlog output

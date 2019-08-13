@@ -278,6 +278,22 @@ vpic_simulation::dump_hydro( const char *sp_name,
 #ifdef VPIC_ENABLE_HDF5
 #define DUMP_DIR_FORMAT "./%s"
 
+// TODO: rename or remove this
+#define RANK_TO_INDEX2(rank, ix, iy, iz)                                      \
+    BEGIN_PRIMITIVE                                                           \
+    {                                                                         \
+        int _ix, _iy, _iz;                                                    \
+        _ix = (rank);                         /* ix = ix+gpx*( iy+gpy*iz ) */ \
+        _iy = _ix / grid->gpx;  /* iy = iy+gpy*iz */            \
+        _ix -= _iy * grid->gpx; /* ix = ix */                   \
+        _iz = _iy / grid->gpy;  /* iz = iz */                   \
+        _iy -= _iz * grid->gpy; /* iy = iy */                   \
+        (ix) = _ix;                                                           \
+        (iy) = _iy;                                                           \
+        (iz) = _iz;                                                           \
+    }                                                                         \
+    END_PRIMITIVE
+
 /* define to do C-style indexing */
 #define hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
 
@@ -426,26 +442,26 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
     field_local_size[1] = grid->ny;
     field_local_size[2] = grid->nz;
 
-    // TODO: delete this
-#define RANK_TO_INDEX2(rank, ix, iy, iz)                                      \
-    BEGIN_PRIMITIVE                                                           \
-    {                                                                         \
-        int _ix, _iy, _iz;                                                    \
-        _ix = (rank);                         /* ix = ix+gpx*( iy+gpy*iz ) */ \
-        _iy = _ix / int(grid->gpx);  /* iy = iy+gpy*iz */            \
-        _ix -= _iy * int(grid->gpx); /* ix = ix */                   \
-        _iz = _iy / int(grid->gpy);  /* iz = iz */                   \
-        _iy -= _iz * int(grid->gpy); /* iy = iy */                   \
-        (ix) = _ix;                                                           \
-        (iy) = _iy;                                                           \
-        (iz) = _iz;                                                           \
-    }                                                                         \
-    END_PRIMITIVE
+    int gpx = grid->gpx;
+    int gpy = grid->gpy;
+    int gpz = grid->gpz;
 
     int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-    RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    //RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
 
-    printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    int _ix, _iy, _iz;
+    _ix = (mpi_rank);
+    _iy = _ix / grid->gpx;
+    _ix -= _iy * grid->gpx;
+    _iz = _iy / grid->gpy;
+    _iy -= _iz * grid->gpy;
+    int ix = _ix;
+    int iy = _iy;
+    int iz = _iz;
+
+    mpi_rank_x = ix;
+    mpi_rank_y = iy;
+    mpi_rank_z = iz;
 
     global_offset[0] = (grid->nx) * mpi_rank_x;
     global_offset[1] = (grid->ny) * mpi_rank_y;
@@ -744,21 +760,6 @@ printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid-
     hydro_local_size[1] = grid->ny;
     hydro_local_size[2] = grid->nz;
 
-#define RANK_TO_INDEX2(rank, ix, iy, iz)                                      \
-    BEGIN_PRIMITIVE                                                           \
-    {                                                                         \
-        int _ix, _iy, _iz;                                                    \
-        _ix = (rank);                         /* ix = ix+gpx*( iy+gpy*iz ) */ \
-        _iy = _ix / int(grid->gpx);  /* iy = iy+gpy*iz */            \
-        _ix -= _iy * int(grid->gpx); /* ix = ix */                   \
-        _iz = _iy / int(grid->gpy);  /* iz = iz */                   \
-        _iy -= _iz * int(grid->gpy); /* iy = iy */                   \
-        (ix) = _ix;                                                           \
-        (iy) = _iy;                                                           \
-        (iz) = _iz;                                                           \
-    }                                                                         \
-    END_PRIMITIVE
-
     int mpi_rank_x, mpi_rank_y, mpi_rank_z;
     RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
 
@@ -962,7 +963,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         {
             COPY(&sp->p[i], &sp_p[iptl], 1);
         }
-    #ifdef ENABLE_V407_SCIDAC 
+    #ifdef ENABLE_V407_SCIDAC
         # define PBUF_SIZE 32768 // 1MB of particles
         for( int buf_start=0; buf_start<np_local; buf_start += PBUF_SIZE ) {
             int n_buf = PBUF_SIZE;

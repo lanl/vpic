@@ -16,7 +16,8 @@
 //-----------------------------------------------------------------------------
 
 #define begin_globals struct user_global_t
-#define DECLARE_GLOBAL_STRUCT user_global_t* global = new user_global_t();
+//#define DECLARE_GLOBAL_STRUCT user_global_t* global = new user_global_t();
+#define global ((struct user_global_t *)user_global)
 
 // RFB: This macro *also* declares the global struct. global cannot be used
 // before begin_initialization in input decks. If you see something like:
@@ -25,8 +26,8 @@
 // most likely be fixed by hoisting begin_globals and begin_initialization to
 // the top of your input deck. Alternatively, you can manually invoke
 // DECLARE_GLOBAL_STRUCT.
+
 #define begin_initialization                                      \
-DECLARE_GLOBAL_STRUCT                                             \
 void                                                              \
 vpic_simulation::user_initialization( int num_cmdline_arguments,  \
                                       char ** cmdline_argument )

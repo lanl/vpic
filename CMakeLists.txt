@@ -298,6 +298,13 @@ endif(ENABLE_COVERAGE_BUILD)
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
   ${CMAKE_BINARY_DIR}/bin/Makefile.run)
 
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
+
 # install script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)

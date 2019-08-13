@@ -300,8 +300,8 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
-      WARNING( ( "Pipeline %i ran out of storage for %i movers",
-                 rank, args->seg[rank].n_ignored ) );
+      WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers",
+                 rank, sp->name, args->seg[rank].n_ignored ) );
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )

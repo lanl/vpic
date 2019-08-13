@@ -243,6 +243,8 @@ protected:
   void dump_particles( const char *sp_name,
 		       const char *fbase,
                        int fname_tag = 1 );
+  void dump_particles_hdf5( const char *sp_name, const char *fbase,
+                       int fname_tag = 1 );
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);

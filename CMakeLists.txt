@@ -84,9 +84,9 @@ option(USE_LEGACY_SORT "Enable Legacy Sort Implementation" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
-option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
-
 option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
+
+option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install HDF5" OFF)
 
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
@@ -125,24 +125,11 @@ if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
     add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
 endif()
 
-#------------------------------------------------------------------------------#
-# OpenSSL
-#------------------------------------------------------------------------------#
-
-if(ENABLE_OPENSSL)
-  find_package(OpenSSL REQUIRED)
-
-  include_directories(${OPENSSL_INCLUDE_DIR})
-  string(REPLACE ";" " " string_libraries "${OPENSSL_LIBRARIES}")
-  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
-endif(ENABLE_OPENSSL)
-
 find_package(Threads REQUIRED)
 
 #------------------------------------------------------------------------------#
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
-
 #------------------------------------------------------------------------------#
 # Add options for building with the legacy particle sort implementation.
 #------------------------------------------------------------------------------#
@@ -298,10 +285,6 @@ endif()
 # Miscellaneous options.
 #------------------------------------------------------------------------------#
 
-if(ENABLE_OPENSSL)
-  add_definitions(-DENABLE_OPENSSL)
-endif(ENABLE_OPENSSL)
-
 if(VPIC_PRINT_MORE_DIGITS)
   add_definitions(-DVPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
@@ -352,18 +335,6 @@ install(DIRECTORY src/ DESTINATION include/vpic
          FILES_MATCHING PATTERN "*.h")
 
 
-# local script
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
-
-file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
-  DESTINATION ${CMAKE_BINARY_DIR}/bin
-  FILE_PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-)
-
 #------------------------------------------------------------------------------#
 # Add library target
 #------------------------------------------------------------------------------#
@@ -387,8 +358,29 @@ else()
   set(VPIC_SRC)
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
+
+if(USE_HDF5)
+    # Enable HDF5, and the relevant defines
+    find_package(HDF5 REQUIRED)
+    add_definitions(-DVPIC_ENABLE_HDF5)
+    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+endif(USE_HDF5)
+
+# Configure local script to generate bin/vpic
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
+
+file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
+  DESTINATION ${CMAKE_BINARY_DIR}/bin
+  FILE_PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+)
+
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
 
 macro(build_a_vpic name deck)

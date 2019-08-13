@@ -57,8 +57,8 @@ partition_periodic_box( grid_t * g,
 
   // Capture global processor decomposition
   g->gpx = gpx;
-  g->gpx = gpy;
-  g->gpx = gpz;
+  g->gpy = gpy;
+  g->gpz = gpz;
 
   g->dx = (gx1-gx0)/(double)gnx;
   g->dy = (gy1-gy0)/(double)gny;

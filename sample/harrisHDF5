@@ -130,6 +130,7 @@ begin_initialization {
 
   num_step             = int(0.2*taui/(wci*dt));
   status_interval      = int(1./(wci*dt));
+  field_interval = 1;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
   clean_div_b_interval = status_interval;

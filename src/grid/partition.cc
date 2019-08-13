@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -39,7 +39,7 @@ partition_periodic_box( grid_t * g,
                         int gnx, int gny, int gnz,
                         int gpx, int gpy, int gpz ) {
   double f;
-  int rank, px, py, pz; 
+  int rank, px, py, pz;
 
   // Make sure the grid can be setup
 
@@ -54,6 +54,11 @@ partition_periodic_box( grid_t * g,
 
   // Setup basic variables
   RANK_TO_INDEX( world_rank, px,py,pz );
+
+  // Capture global processor decomposition
+  g->gpx = gpx;
+  g->gpx = gpy;
+  g->gpx = gpz;
 
   g->dx = (gx1-gx0)/(double)gnx;
   g->dy = (gy1-gy0)/(double)gny;
@@ -96,7 +101,7 @@ partition_absorbing_box( grid_t * g,
                          int gnx, int gny, int gnz,
                          int gpx, int gpy, int gpz,
                          int pbc ) {
-  int px, py, pz; 
+  int px, py, pz;
 
   partition_periodic_box( g,
                           gx0, gy0, gz0,
@@ -148,7 +153,7 @@ partition_metal_box( grid_t * g,
                      double gx1, double gy1, double gz1,
                      int gnx, int gny, int gnz,
                      int gpx, int gpy, int gpz ) {
-  int px, py, pz; 
+  int px, py, pz;
 
   partition_periodic_box( g,
                           gx0, gy0, gz0,

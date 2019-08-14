@@ -222,22 +222,22 @@ TEST_CASE("TEST_CASE_load_4x1_tr", "[v4]") {
 } // TEST_CASE
 
 TEST_CASE("TEST_CASE_load_4x2_tr", "[v4]") {
-  DECLARE_ALIGNED_ARRAY( int, 16, mem, 16 );
+  DECLARE_ALIGNED_ARRAY( int, 16, mem, 32 );
   v4int a0, a1, a2, a3;
   int i;
-  for( i=0; i<16; i++ ) mem[i] = i;
-  load_4x2_tr(mem,  mem+4,mem+8, mem+12,a0,a1);
-  load_4x2_tr(mem+2,mem+6,mem+10,mem+14,a2,a3);
-  for( i=0; i<16; i++ ) if( mem[i]!=i ) break;
+  for( i=0; i<32; i++ ) mem[i] = i;
+  load_4x2_tr(mem,   mem+4, mem+8, mem+12,a0,a1);
+  load_4x2_tr(mem+16,mem+20,mem+24,mem+28,a2,a3);
+  for( i=0; i<32; i++ ) if( mem[i]!=i ) break;
 
   //ASSERT_FALSE( any(a0!=v4int( 0, 4, 8,12)) || any(a1!=v4int( 1, 5, 9,13)) ||
   //any(a2!=v4int( 2, 6,10,14)) || any(a3!=v4int( 3, 7,11,15)) || i!=16 );
 
   REQUIRE( any(a0==v4int( 0, 4, 8,12)) );
   REQUIRE( any(a1==v4int( 1, 5, 9,13)) );
-  REQUIRE( any(a2==v4int( 2, 6,10,14)) );
-  REQUIRE( any(a3==v4int( 3, 7,11,15)) );
-  REQUIRE( i==16 );
+  REQUIRE( any(a2==v4int(16,20,24,28)) );
+  REQUIRE( any(a3==v4int(17,21,25,29)) );
+  REQUIRE( i==32 );
 
 } // TEST_CASE
 

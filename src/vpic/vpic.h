@@ -540,7 +540,8 @@ private:
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w ) {
+                       float ux, float uy, float uz, float w )
+  {
     particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -553,7 +554,8 @@ private:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w,
                        float dispx, float dispy, float dispz,
-                       int update_rhob ) {
+                       int update_rhob )
+  {
     particle_t       * RESTRICT p  = sp->p  + (sp->np++);
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;

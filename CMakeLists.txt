@@ -47,6 +47,8 @@ option(USE_PTHREADS "Use Pthreads" ON)
 
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
 
+option(USE_V4_NEON "Enable V4 NEON" OFF)
+
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
 
 option(USE_V4_SSE "Enable V4 SSE" OFF)
@@ -200,6 +202,12 @@ if(USE_V4_ALTIVEC)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_ALTIVEC")
   set(USE_V4 True)
 endif(USE_V4_ALTIVEC)
+
+if(USE_V4_NEON)
+  add_definitions(-DUSE_V4_NEON)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_NEON")
+  set(USE_V4 True)
+endif(USE_V4_NEON)
 
 #------------------------------------------------------------------------------#
 # Add options for building with v8 simd vector support.

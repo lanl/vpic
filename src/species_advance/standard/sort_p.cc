@@ -153,9 +153,9 @@ sort_p( species_t * sp )
 void
 sort_p( species_t * sp )
 {
-  if ( !sp )
+  if ( ! sp )
   {
-    ERROR( ( "Bad args" ) );
+    ERROR( ( "Bad args." ) );
   }
 
   // Conditionally execute this when more abstractions are available.

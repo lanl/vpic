@@ -12,7 +12,6 @@ Written by Scott V. Luedtke, XCP-6, August 1, 2019'''
 
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.constants as const
 import os
 
@@ -87,6 +86,7 @@ fields = ex + ey + ez + bx + by + bz
 # Set this to 1 if you want visual output
 draw_plot = 0
 if draw_plot:
+    import matplotlib.pyplot as plt
     plt.plot(x,fields/elec[0], 'r-', label='Fields')
     plt.plot(x,elec/elec[0], 'b-', label='Electrons')
     plt.plot(x,I2/elec[0], 'g-', label='Protons')

@@ -5,7 +5,7 @@ set(GRID_HEATING_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/gridHeatingTest.py")
 
 LIST(APPEND dims_to_test 1 2)
 
-set(MPI_NUMPROC 10)
+set(MPI_NUMPROC 5)
 
 foreach(dim IN LISTS dims_to_test)
     set(test "gridHeatingTest${dim}D")

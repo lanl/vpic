@@ -5,11 +5,13 @@ set(GRID_HEATING_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/gridHeatingTest.py")
 
 LIST(APPEND dims_to_test 1 2)
 
+set(MPI_NUMPROC 10)
+
 foreach(dim IN LISTS dims_to_test)
     set(test "gridHeatingTest${dim}D")
     add_executable(${test} ./${test}.cxx)
     target_link_libraries(${test} vpic)
-    add_test(NAME ${test} COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./${test})
+    add_test(NAME ${test} COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPI_NUMPROC} ${MPIEXEC_PREFLAGS} ./${test})
 
     set(PY_TEST_NAME "grid_heating_check_${dim}d")
     set(TEST_GROUP_LABEL "${dim}d_heating")

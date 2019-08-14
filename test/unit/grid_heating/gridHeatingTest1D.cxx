@@ -1,8 +1,8 @@
 //==============================================================================
-/* Grid heating test case in 1D
+/* Grid heating test case in 1 or 2D
 
    This deck is made for quickly testing code changes by testing the grid
-   heating rate. It initializes a 1D box of plasma with periodic boundary
+   heating rate. It initializes a box of plasma with periodic boundary
    conditions and lets it evolve for for 2 picoseconds.  With unchanged
    parameters, the electrons will enter a linear heating regime after about 0.7
    picoseconds.  The protons will not heat up enough to enter a linear regime.
@@ -79,8 +79,13 @@ begin_initialization {
   double vacuum_wavelength  = 1000 * 1e-7; // 1 micron laser (not used)
   double delta = (vacuum_wavelength/(2.0*M_PI))/sqrt(n_e_over_n_crit); // c/wpe
 
+#if NDIM == 2
+  double nx = 10;
+  double ny = 10;
+#else
   double nx = 100;
   double ny = 1;
+#endif
   double nz = 1;
 
   double box_size_x         = nx*0.5*delta;//0.02 * 1e-4;  // microns
@@ -226,7 +231,7 @@ begin_initialization {
   // FIXME : proper normalization in these units for: xfocus, ycenter, zcenter, waist
   sim_log("Setting up high-level simulation parameters. ");
   num_step             = int(t_stop/(dt));
-  status_interval      = 200;
+  status_interval      = 10000;
 //????????????????????????????????????????????????????????????????????????????????
 //sync_shared_interval = status_interval/10;
 //clean_div_e_interval = status_interval/10;

@@ -1,8 +1,8 @@
 //==============================================================================
-/* Grid heating test case in 2D
+/* Grid heating test case in 1 or 2D
 
    This deck is made for quickly testing code changes by testing the grid
-   heating rate. It initializes a 2D box of plasma with periodic boundary
+   heating rate. It initializes a box of plasma with periodic boundary
    conditions and lets it evolve for for 2 picoseconds.  With unchanged
    parameters, the electrons will enter a linear heating regime after about 0.7
    picoseconds.  The protons will not heat up enough to enter a linear regime.
@@ -39,12 +39,12 @@ begin_globals {
   int energies_interval;        // how frequently to dump energies
   int    field_interval;         // how frequently to dump field built-in diagnostic
   int    mobile_ions;	         // flag: 0 if ions are not to be pushed
-  int    I1_present;             // flag nonzero when H ions are present. 
-  int    I2_present;             // flag nonzero when He ions are present.  
+  int    I1_present;             // flag nonzero when H ions are present.
+  int    I2_present;             // flag nonzero when He ions are present.
 
   int    eparticle_interval;
   int    I2particle_interval;
-  int    load_particles;         // Flag to turn off particle load for testing wave launch. 
+  int    load_particles;         // Flag to turn off particle load for testing wave launch.
 
   // Dump parameters for standard VPIC output formats
   DumpParameters fdParams;
@@ -64,7 +64,7 @@ begin_initialization {
 
   // do not change parameters in this block:
   double elementary_charge  = 4.8032e-10;             // stat coulomb
-  double elementary_charge2 = elementary_charge * elementary_charge;    
+  double elementary_charge2 = elementary_charge * elementary_charge;
   double speed_of_light     = 2.99792458e10;          // cm/sec
   double m_e                = 9.1094e-28;             // g
   double k_boltz            = 1.6022e-12;             // ergs/eV
@@ -96,8 +96,8 @@ begin_initialization {
   int mobile_ions         = 1;           // whether or not to push ions
 
   //????????????????????????????????????????????????????????????????????
-  double quota = 3.9;             // Run quota in hours.  
-  double quota_sec = quota*3600;  // Run quota in seconds. 
+  double quota = 3.9;             // Run quota in hours.
+  double quota_sec = quota*3600;  // Run quota in seconds.
 
   double A_I2     = 1.0;             // proton
   double Z_I2     = 1;
@@ -114,7 +114,7 @@ begin_initialization {
   double debye = uthe*delta;
 
   //??????????????????????????????????????????????????????????????????????????
-  int topology_x = 1;
+  int topology_x = nproc();
   int topology_y = 1;
   int topology_z = 1;
 
@@ -137,7 +137,7 @@ begin_initialization {
 
   double t_stop = 2000 * 1e-15*speed_of_light/delta;                // runtime in 1/omega_pe
 
-  // Diagnostics intervals.  
+  // Diagnostics intervals.
   int energies_interval = 100;
   int field_interval    = 100000;
 //?????????????????????????????????????????????????????????????????????????????
@@ -151,13 +151,13 @@ begin_initialization {
   double delta_0 = delta*sqrt(n_e_over_n_crit); // c/w0
 
   double Ne    = nppc*nx*ny*nz;             // Number of macro electrons in box
-  Ne = trunc_granular(Ne, nproc());         // Make Ne divisible by number of processors       
+  Ne = trunc_granular(Ne, nproc());         // Make Ne divisible by number of processors
   double Ni    = Ne;
   double Npe   = Lx*Ly*Lz;                  // Number of physical electrons in box, wpe = 1
   double qe    = -Npe/Ne;                   // Charge per macro electron
   double qi_I1 = -dfrac*qe;                 // Charge per macro ion of type 1. Note that species
   double qi_I2 = -(1.0-dfrac)*qe;           // I2 and I1 are separate from one another in the loading.
-  if ( load_particles==0 ) Ne=Ni=98.7654;   // A weird number to signal that load_particles turned off. 
+  if ( load_particles==0 ) Ne=Ni=98.7654;   // A weird number to signal that load_particles turned off.
 
   int I1_present=0;
   int I2_present=1;
@@ -193,9 +193,9 @@ begin_initialization {
     fprintf(out, "%d   This is my rank\n", rank());
     fclose(out);
   }
-  
-  // PRINT SIMULATION PARAMETERS 
-    
+
+  // PRINT SIMULATION PARAMETERS
+
   sim_log("***** Simulation parameters *****");
   sim_log("* Processors:                    "<<nproc());
   sim_log("* dt_courant"<<dt_courant);
@@ -224,9 +224,9 @@ begin_initialization {
 
   // SETUP HIGH-LEVEL SIMULATION PARMETERS
   // FIXME : proper normalization in these units for: xfocus, ycenter, zcenter, waist
-  sim_log("Setting up high-level simulation parameters. "); 
-  num_step             = int(t_stop/(dt)); 
-  status_interval      = 200; 
+  sim_log("Setting up high-level simulation parameters. ");
+  num_step             = int(t_stop/(dt));
+  status_interval      = 10000;
 //????????????????????????????????????????????????????????????????????????????????
 //sync_shared_interval = status_interval/10;
 //clean_div_e_interval = status_interval/10;
@@ -236,21 +236,21 @@ begin_initialization {
   clean_div_b_interval = status_interval;
   verbose = 0;
   global->energies_interval        = energies_interval;
-  global->field_interval           = field_interval; 
+  global->field_interval           = field_interval;
   global->vthe                     = uthe;     // c=1
   global->vthi_I2                  = uthi_I2;  // c=1
   global->omega_0                  = omega_0;
-  global->mobile_ions              = mobile_ions; 
+  global->mobile_ions              = mobile_ions;
 
-  global->eparticle_interval          = eparticle_interval; 
-  global->I2particle_interval           = I2particle_interval; 
-  global->load_particles           = load_particles; 
+  global->eparticle_interval          = eparticle_interval;
 
-  global->I1_present           = I1_present; 
-  global->I2_present           = I2_present; 
+  global->load_particles           = load_particles;
+
+  global->I1_present           = I1_present;
+  global->I2_present           = I2_present;
 
   // SETUP THE GRID
-  sim_log("Setting up computational grid."); 
+  sim_log("Setting up computational grid.");
   grid->dx = hx;
   grid->dy = hy;
   grid->dz = hz;
@@ -258,7 +258,7 @@ begin_initialization {
   grid->cvac = 1;
   grid->eps0 = eps0;
 
-  // Partition a periodic box among the processors sliced uniformly in z: 
+  // Partition a periodic box among the processors sliced uniformly in z:
   define_periodic_grid( 0,      -0.5*Ly,  -0.5*Lz,    // Low corner
                         Lx,      0.5*Ly,   0.5*Lz,    // High corner
                         nx,      ny,       nz,        // Resolution
@@ -290,19 +290,19 @@ begin_initialization {
   // Note: the semantics of Kevin's boundary handler for systems where the particles are absorbed
   //       requires that the field array be defined prior to setting up the custom boundary handlers
 
-  sim_log("Setting up materials. "); 
+  sim_log("Setting up materials. ");
   define_material( "vacuum", 1 );
   // define_material( "impermeable_vacuum", 1 );
 //define_material( "impermeable_vacuum_xr", 1 );
-  define_field_array( NULL, damp ); 
+  define_field_array( NULL, damp );
 
   // LOAD PARTICLES
 
-  // Load particles using rejection method (p. 290 Num. Recipes in C 2ed, Press et al.)  
+  // Load particles using rejection method (p. 290 Num. Recipes in C 2ed, Press et al.)
 
   if ( load_particles!=0 ) {
     sim_log( "Loading particles" );
-  
+
     seed_entropy( 2392 );  // Kevin said it should be this way
     // Fast load of particles
     double xmin = grid->x0;
@@ -311,7 +311,7 @@ begin_initialization {
     double ymax = (grid->y0+grid->ny*grid->dy);
     double zmin = grid->z0;
     double zmax = (grid->z0+grid->nz*grid->dz);
- 
+
     // Convert to SI for the density function
     double lengthtoSI = box_size_x/(1e2*Lx);
     double SItolength = 1./lengthtoSI;
@@ -323,10 +323,10 @@ begin_initialization {
     double minz = -0.5*Lz*lengthtoSI;
     double maxz = 0.5*Lz*lengthtoSI;
 
-    
+
     repeat( (Ne)/(topology_x*topology_y*topology_z) ) {
       double x = uniform( rng(0), xmin, xmax );
-      double y = uniform( rng(0), ymin, ymax );   
+      double y = uniform( rng(0), ymin, ymax );
       double z = uniform( rng(0), zmin, zmax );
 
       // Rejection method, based on user-defined density function
@@ -341,7 +341,7 @@ begin_initialization {
                          normal( rng(0), 0, uthi_I2 ), fabs(qi_I2)/Z_I2, 0, 0 );
       }
     }
- 
+
  } // if load_particles
 
  /*--------------------------------------------------------------------------
@@ -350,20 +350,20 @@ begin_initialization {
 
  /*--------------------------------------------------------------------------
   * Set data output format
-  * 
+  *
   * This option allows the user to specify the data format for an output
   * dump.  Legal settings are 'band' and 'band_interleave'.  Band-interleave
   * format is the native storage format for data in VPIC.  For field data,
   * this looks something like:
-  * 
+  *
   *   ex0 ey0 ez0 div_e_err0 cbx0 ... ex1 ey1 ez1 div_e_err1 cbx1 ...
-  *   
+  *
   * Banded data format stores all data of a particular state variable as a
-  * contiguous array, and is easier for ParaView to process efficiently. 
+  * contiguous array, and is easier for ParaView to process efficiently.
   * Banded data looks like:
-  * 
+  *
   *   ex0 ex1 ex2 ... exN ey0 ey1 ey2 ...
-  *   
+  *
   *------------------------------------------------------------------------*/
   sim_log("Setting up hydro and field diagnostics.");
 
@@ -379,12 +379,12 @@ begin_initialization {
 
  /*--------------------------------------------------------------------------
   * Set stride
-  * 
+  *
   * This option allows data down-sampling at output.  Data are down-sampled
   * in each dimension by the stride specified for that dimension.  For
   * example, to down-sample the x-dimension of the field data by a factor
   * of 2, i.e., half as many data will be output, select:
-  * 
+  *
   *   global->fdParams.stride_x = 2;
   *
   * The following 2-D example shows down-sampling of a 7x7 grid (nx = 7,
@@ -411,13 +411,13 @@ begin_initialization {
   *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
   *------------------------------------------------------------------------*/
 
-  // Strides for field and hydro arrays.  Note that here we have defined them 
+  // Strides for field and hydro arrays.  Note that here we have defined them
   // the same for fields and all hydro species; if desired, we could use different
-  // strides for each.   Also note that strides must divide evenly into the number 
-  // of cells in a given domain. 
+  // strides for each.   Also note that strides must divide evenly into the number
+  // of cells in a given domain.
 
   // Define strides and test that they evenly divide into grid->nx, ny, nz
-//int stride_x = 2, stride_y = 4, stride_z = 4; 
+//int stride_x = 2, stride_y = 4, stride_z = 4;
 //??????????????????????????????????????????????????????????????????????
 //int stride_x = 4, stride_y = 4, stride_z = 4;
 //int stride_x = 4, stride_y = 3, stride_z = 3;
@@ -551,7 +551,7 @@ begin_initialization {
  /*------------------------------------------------------------------------*/
 
 
-  sim_log("*** Finished with user-specified initialization ***"); 
+  sim_log("*** Finished with user-specified initialization ***");
 
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains
@@ -583,11 +583,11 @@ begin_initialization {
 
 
 begin_diagnostics {
-//int mobile_ions=global->mobile_ions, 
+//int mobile_ions=global->mobile_ions,
 //    I1_present=global->I1_present,
 //    I2_present=global->I2_present;
 
-  //if ( step()%1==0 ) sim_log("Time step: "<<step()); 
+  //if ( step()%1==0 ) sim_log("Time step: "<<step());
 
 # define should_dump(x) \
   (global->x##_interval>0 && remainder(step(),global->x##_interval)==0)
@@ -616,12 +616,12 @@ begin_diagnostics {
 
     global_header("global", global->outputParams);
 
-    } // if 
+    } // if
 
   }
 
 
-  // energy in various fields/particles 
+  // energy in various fields/particles
   if( should_dump(energies) ) {
             dump_energies( "rundata_2d/energies", step() ==0 ? 0 : 1 );
   } //if
@@ -648,8 +648,8 @@ begin_current_injection {
   // No current injection for this simulation
 }
 
-begin_field_injection { 
-} 
+begin_field_injection {
+}
 
 begin_particle_collisions {
   // No particle collisions for this simulation

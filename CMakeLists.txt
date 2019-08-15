@@ -41,6 +41,8 @@ option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 
+option(ENABLE_LONG_TESTS "Enable longer running tests, often skipped for most CI builds" OFF)
+
 option(USE_OPENMP "Use OpenMP" OFF)
 
 option(USE_PTHREADS "Use Pthreads" ON)

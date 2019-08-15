@@ -1,22 +1,38 @@
 #! /usr/bin/env bash
 #------------------------------------------------------------------------------#
 # Get the path to the project from which this script was called
+# and init the cmake variable cache with the desired values.
 #------------------------------------------------------------------------------#
 
 src_dir="${0%/*}/../.."
+. ${src_dir}/arch/cmake-fns.sh      # load helper functions
 
 #------------------------------------------------------------------------------#
-# Call CMake command
+# establish cache values for this config
 #------------------------------------------------------------------------------#
-
 # The flag -rdynamic removes warnings of the form:
 # Unable to find a safely writable symbol that corresponds to address 432af0
 # (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").  Writing out
 # the raw address instead and keeping my fingers crossed.
 
-cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DENABLE_INTEGRATED_TESTS=ON \
-  -DCMAKE_C_FLAGS="-rdynamic -fno-strict-aliasing" \
-  -DCMAKE_CXX_FLAGS="-rdynamic -fno-strict-aliasing" \
-  $src_dir
+create_cmake_cache
+set_cache_string   CMAKE_BUILD_TYPE        Release
+set_cache_bool     ENABLE_INTEGRATED_TESTS ON
+set_cache_string   CMAKE_C_FLAGS           "-rdynamic -fno-strict-aliasing"
+set_cache_string   CMAKE_CXX_FLAGS         "-rdynamic -fno-strict-aliasing"
+
+# allow user to skip running cmake.
+if [ x$1 = xinitcache ]; then
+    echo ${init_cache} created.
+    echo Now you can run \"cmake -C ${init_cache} src_dir\" to configure.
+    exit 0
+fi
+
+#------------------------------------------------------------------------------#
+# Call CMake command
+#------------------------------------------------------------------------------#
+cmake -C $init_cache $src_dir
+
+if [ $? = 0 ]; then
+    echo Now you can run \"make\" to build VPIC.
+fi

@@ -12,6 +12,13 @@ cmake_minimum_required(VERSION 3.1)
 project(vpic)
 
 #------------------------------------------------------------------------------#
+# Quiet newer versions of cmake about MPI_ROOT
+#------------------------------------------------------------------------------#
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
+#------------------------------------------------------------------------------#
 # If a C++11 compiler is available, then set the appropriate flags
 #------------------------------------------------------------------------------#
 
@@ -312,10 +319,11 @@ install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
     WORLD_READ WORLD_EXECUTE
     )
 
-install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
-  DESTINATION share/vpic)
-install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
-  DESTINATION share/vpic)
+install(FILES deck/main.cc deck/wrapper.cc DESTINATION share/vpic)
+install(FILES deck/wrapper.h DESTINATION include/vpic)
+install(DIRECTORY src/ DESTINATION include/vpic
+         FILES_MATCHING PATTERN "*.h")
+
 
 # local script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in

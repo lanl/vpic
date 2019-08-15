@@ -28,7 +28,7 @@ env: #maybe add mpich later
     - GVER=4.9
   matrix:
     - COVERAGE=ON
-    - USE_V4_SSE=ON ENABLE_LONG_TESTS=ON
+    - USE_V4_SSE=ON LONG_TESTS=ON
     - USE_V4_AVX2=ON
     - USE_V4_PORTABLE=ON
     - USE_V4_AVX2=ON USE_V8_AVX2=ON
@@ -37,7 +37,7 @@ env: #maybe add mpich later
 
 script:
   - mkdir build && cd build &&
-    PATH="$HOME/bin:/usr/lib/ccache:$PATH" CC=gcc-${GVER} CXX=g++-${GVER} cmake -DENABLE_INTEGRATED_TESTS=ON -DENABLE_UNIT_TESTS=ON ${USE_V4_SSE:+-DUSE_V4_SSE=ON} ${USE_V4_PORTABLE:+-DUSE_V4_PORTABLE=ON} $(ENABLE_LONG_TESTS:+-DENABLE_LONG_TESTS=ON} ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} .. &&
+    PATH="$HOME/bin:/usr/lib/ccache:$PATH" CC=gcc-${GVER} CXX=g++-${GVER} cmake -DENABLE_INTEGRATED_TESTS=ON -DENABLE_UNIT_TESTS=ON ${USE_V4_SSE:+-DUSE_V4_SSE=ON} ${USE_V4_PORTABLE:+-DUSE_V4_PORTABLE=ON} $(LONG_TESTS:+-DENABLE_LONG_TESTS=ON} ${COVERAGE:+-DENABLE_COVERAGE_BUILD=ON} .. &&
     make -j4 VERBOSE=1 && make test CTEST_OUTPUT_ON_FAILURE=1 && make install DESTDIR=$PWD
 
 after_success:

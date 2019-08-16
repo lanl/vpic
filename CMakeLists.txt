@@ -41,11 +41,15 @@ option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 
+option(ENABLE_LONG_TESTS "Enable longer running tests, often skipped for most CI builds" OFF)
+
 option(USE_OPENMP "Use OpenMP" OFF)
 
 option(USE_PTHREADS "Use Pthreads" ON)
 
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
+
+option(USE_V4_NEON "Enable V4 NEON" OFF)
 
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
 
@@ -201,6 +205,12 @@ if(USE_V4_ALTIVEC)
   set(USE_V4 True)
 endif(USE_V4_ALTIVEC)
 
+if(USE_V4_NEON)
+  add_definitions(-DUSE_V4_NEON)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_NEON")
+  set(USE_V4 True)
+endif(USE_V4_NEON)
+
 #------------------------------------------------------------------------------#
 # Add options for building with v8 simd vector support.
 #------------------------------------------------------------------------------#
@@ -297,6 +307,13 @@ endif(ENABLE_COVERAGE_BUILD)
 # local built exe wrapper, and has example deck/platform.
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
   ${CMAKE_BINARY_DIR}/bin/Makefile.run)
+
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
 
 # install script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in

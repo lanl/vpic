@@ -259,7 +259,8 @@ vpic_simulation::dump_hydro( const char *sp_name,
 void
 vpic_simulation::dump_particles( const char *sp_name,
                                  const char *fbase,
-                                 int ftag ) {
+                                 int ftag )
+{
   species_t *sp;
   char fname[256];
   FileIO fileIO;

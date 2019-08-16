@@ -2,7 +2,8 @@
 
 /* Private interface *********************************************************/
 
-typedef struct hard_sphere {
+typedef struct hard_sphere
+{
   float twomu_mi, twomu_mj, Kc;
   float udx, udy, udz, ut;
   float ut2, alpha_Kt2ut4, beta_Kt2ut2, gamma_Kt2;
@@ -99,7 +100,8 @@ typedef struct hard_sphere {
 float
 hard_sphere_fluid_rate_constant( const hard_sphere_t * RESTRICT hs,
                                  const species_t     * RESTRICT spi,
-                                 const particle_t    * RESTRICT pi ) {
+                                 const particle_t    * RESTRICT pi )
+{
   static const float gamma = (3.*M_PI-8.)/(24.-6*M_PI);
   float urx = pi->ux - hs->udx;
   float ury = pi->uy - hs->udy;
@@ -116,7 +118,8 @@ hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
                            const species_t     * RESTRICT spi,
                            const species_t     * RESTRICT spj,
                            const particle_t    * RESTRICT pi,
-                           const particle_t    * RESTRICT pj ) {
+                           const particle_t    * RESTRICT pj )
+{
   float urx = pi->ux - pj->ux;
   float ury = pi->uy - pj->uy;
   float urz = pi->uz - pj->uz;
@@ -236,45 +239,46 @@ hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
 
 #define CMOV(a,b) if(t0<t1) a=b
 
-#define COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng) do {        \
-    float bcs_R, bsn_R, b2_R2, ur, tx, ty, tz, t0, t1, t2, stack[3];    \
-    int d0, d1, d2;                                                     \
-                                                                        \
-    do {                                                                \
-      bcs_R = 2*frand_c0(rng) - 1;                                      \
-      bsn_R = 2*frand_c0(rng) - 1;                                      \
-      b2_R2 = bcs_R*bcs_R + bsn_R*bsn_R;                                \
-    } while( b2_R2>=1 );                                                \
-                                                                        \
-    /* There are lots of ways to formulate T vector formation    */     \
-    /* This has no branches (but uses L1 heavily)                */     \
-                                                                        \
+#define COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng)                  \
+  do {									     \
+    float bcs_R, bsn_R, b2_R2, ur, tx, ty, tz, t0, t1, t2, stack[3];         \
+    int d0, d1, d2;                                                          \
+                                                                             \
+    do {                                                                     \
+      bcs_R = 2*frand_c0(rng) - 1;                                           \
+      bsn_R = 2*frand_c0(rng) - 1;                                           \
+      b2_R2 = bcs_R*bcs_R + bsn_R*bsn_R;                                     \
+    } while( b2_R2>=1 );                                                     \
+                                                                             \
+    /* There are lots of ways to formulate T vector formation    */          \
+    /* This has no branches (but uses L1 heavily)                */          \
+                                                                             \
     t0 = urx*urx;      d0=0;       d1=1;       d2=2;       t1=t0;  ur  = t0; \
     t0 = ury*ury; CMOV(d0,1); CMOV(d1,2); CMOV(d2,0); CMOV(t1,t0); ur += t0; \
     t0 = urz*urz; CMOV(d0,2); CMOV(d1,0); CMOV(d2,1);              ur += t0; \
-    ur = sqrtf( ur );                                                   \
-                                                                        \
-    stack[0] = urx;                                                     \
-    stack[1] = ury;                                                     \
-    stack[2] = urz;                                                     \
-    t1  = stack[d1];                                                    \
-    t2  = stack[d2];                                                    \
-    t0  = 1 / sqrtf( t1*t1 + t2*t2 + FLT_MIN );                         \
-    stack[d0] =  0;                                                     \
-    stack[d1] =  t0*t2;                                                 \
-    stack[d2] = -t0*t1;                                                 \
-    tx = stack[0];                                                      \
-    ty = stack[1];                                                      \
-    tz = stack[2];                                                      \
-                                                                        \
-    t0  = 1 - b2_R2;                                                    \
-    t2  = sqrtf( t0 );                                                  \
-    t1  = t2*bcs_R*ur;                                                  \
-    t2 *= bsn_R;                                                        \
-                                                                        \
-    ax = (t0*urx - t1*tx) - t2*( ury*tz - urz*ty );                     \
-    ay = (t0*ury - t1*ty) - t2*( urz*tx - urx*tz );                     \
-    az = (t0*urz - t1*tz) - t2*( urx*ty - ury*tx );                     \
+    ur = sqrtf( ur );                                                        \
+                                                                             \
+    stack[0] = urx;                                                          \
+    stack[1] = ury;                                                          \
+    stack[2] = urz;                                                          \
+    t1  = stack[d1];                                                         \
+    t2  = stack[d2];                                                         \
+    t0  = 1 / sqrtf( t1*t1 + t2*t2 + FLT_MIN );                              \
+    stack[d0] =  0;                                                          \
+    stack[d1] =  t0*t2;                                                      \
+    stack[d2] = -t0*t1;                                                      \
+    tx = stack[0];                                                           \
+    ty = stack[1];                                                           \
+    tz = stack[2];                                                           \
+                                                                             \
+    t0  = 1 - b2_R2;                                                         \
+    t2  = sqrtf( t0 );                                                       \
+    t1  = t2*bcs_R*ur;                                                       \
+    t2 *= bsn_R;                                                             \
+                                                                             \
+    ax = (t0*urx - t1*tx) - t2*( ury*tz - urz*ty );                          \
+    ay = (t0*ury - t1*ty) - t2*( urz*tx - urx*tz );                          \
+    az = (t0*urz - t1*tz) - t2*( urx*ty - ury*tx );                          \
   } while(0)
 
 /* It would be nice to preserve redundant rate constant
@@ -284,7 +288,8 @@ void
 hard_sphere_fluid_collision( const hard_sphere_t * RESTRICT hs,
                              const species_t     * RESTRICT spi,
                              /**/  particle_t    * RESTRICT pi,
-                             /**/  rng_t         * RESTRICT rng ) {
+                             /**/  rng_t         * RESTRICT rng )
+{
   float urx, ury, urz, ax, ay, az, w;
 
   urx = pi->ux - hs->udx;
@@ -313,7 +318,8 @@ hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
                        /**/  particle_t    * RESTRICT pi,
                        /**/  particle_t    * RESTRICT pj,
                        /**/  rng_t         * RESTRICT rng,
-                       const int                      type ) {
+                       const int                      type )
+{
   float urx, ury, urz, ax, ay, az, w;
 
   urx = pi->ux - pj->ux;
@@ -340,12 +346,14 @@ hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
 #undef CMOV
 
 void
-checkpt_hard_sphere( const hard_sphere_t * hs ) {
+checkpt_hard_sphere( const hard_sphere_t * hs )
+{
   CHECKPT( hs, 1 );
 }
 
 hard_sphere_t *
-restore_hard_sphere( void ) {
+restore_hard_sphere( void )
+{
   hard_sphere_t * hs;
   RESTORE( hs );
   return hs;
@@ -365,7 +373,8 @@ hard_sphere_fluid( const char * RESTRICT name, /* Model name */
                    species_t * RESTRICT sp,    /* Species */
                    const float rsp,            /* Species p. radius (LENGTH) */
                    rng_pool_t * RESTRICT rp,   /* Entropy pool */
-                   const int interval ) {      /* How often to apply this */
+                   const int interval )        /* How often to apply this */
+{
   hard_sphere_t * hs;
 
   if( n0<0 || kT0<0 || m0<=0 || r0<0 ||
@@ -401,7 +410,8 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const float rj,             /* Species-j p. radius (LENGTH) */
              rng_pool_t * RESTRICT rp,   /* Entropy pool */
              const double sample,        /* Sampling density */
-             const int interval ) {      /* How often to apply this */
+             const int interval )        /* How often to apply this */
+{
   hard_sphere_t * hs;
 
   if( !spi || spi->m<=0 || ri<0 ||
@@ -419,4 +429,3 @@ hard_sphere( const char * RESTRICT name, /* Model name */
                         (binary_collision_func_t)    hard_sphere_collision,
                                  hs, spi, spj, rp, sample, interval );
 }
-

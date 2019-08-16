@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
     // Do any post init/restore simulation modifications
 
-    // Detec if the "modify" option is passed, which allows users to change
+    // Detect if the "modify" option is passed, which allows users to change
     // options (such as quota, num_step, etc) when restoring
     fbase = strip_cmdline_string( &argc, &argv, "--modify", NULL );
     if( fbase )

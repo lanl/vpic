@@ -1,12 +1,9 @@
-/* 
- * Written by:
- *   Kevin J. Bowers, Ph.D.
- *   Plasma Physics Group (X-1)
- *   Applied Physics Division
- *   Los Alamos National Lab
- * March/April 2004 - Original version
- *
- */
+// Written by:
+//   Kevin J. Bowers, Ph.D.
+//   Plasma Physics Group (X-1)
+//   Applied Physics Division
+//   Los Alamos National Lab
+// March/April 2004 - Original version
 
 #include "vpic.h"
 
@@ -17,7 +14,8 @@ vpic_simulation::inject_particle( species_t * sp,
                                   double x,  double y,  double z,
                                   double ux, double uy, double uz,
                                   double w,  double age,
-                                  int update_rhob ) {
+                                  int update_rhob )
+{
   int ix, iy, iz;
 
   // Check input parameters
@@ -28,7 +26,7 @@ vpic_simulation::inject_particle( species_t * sp,
   const double x0 = (double)grid->x0, y0 = (double)grid->y0, z0 = (double)grid->z0;
   const double x1 = (double)grid->x1, y1 = (double)grid->y1, z1 = (double)grid->z1;
   const int    nx = grid->nx,         ny = grid->ny,         nz = grid->nz;
-  
+
   // Do not inject if the particle is strictly outside the local domain
   // or if a far wall of local domain shared with a neighbor
   // FIXME: DO THIS THE PHASE-3 WAY WITH GRID->NEIGHBOR
@@ -39,16 +37,16 @@ vpic_simulation::inject_particle( species_t * sp,
   if( (z<z0) | (z>z1) | ( (z==z1) & (grid->bc[BOUNDARY(0,0,1)]>=0 ) ) ) return;
 
   // This node should inject the particle
-    
+
   if( sp->np>=sp->max_np ) ERROR(( "No room to inject particle" ));
 
   // Compute the injection cell and coordinate in cell coordinate system
-  // BJA:  Note the use of double precision here for accurate particle 
-  //       placement on large meshes. 
- 
+  // BJA:  Note the use of double precision here for accurate particle
+  //       placement on large meshes.
+
   // The ifs allow for injection on the far walls of the local computational
   // domain when necessary
- 
+
   x  = ((double)nx)*((x-x0)/(x1-x0)); // x is rigorously on [0,nx]
   ix = (int)x;                        // ix is rigorously on [0,nx]
   x -= (double)ix;                    // x is rigorously on [0,1)
@@ -96,9 +94,8 @@ vpic_simulation::inject_particle( species_t * sp,
     pm->i     = sp->np-1;
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
   }
-
 }
- 
+
 // Add capability to modify certain fields "on the fly" so that one
 // can, e.g., extend a run, change a quota, or modify a dump interval
 // without having to rerun from the start.
@@ -115,7 +112,7 @@ vpic_simulation::inject_particle( species_t * sp,
 // to zero to turn off dump type.
 //
 // FIXME-KJB: STRIP_CMDLINE ALLOWS SOMETHING CLEANER AND MORE POWERFUL
- 
+
 #define SETIVAR( V, A, S ) do {                                          \
     V=(A);                                                               \
     if ( rank()==0 ) log_printf( "*** Modifying %s to value %d", S, A ); \
@@ -131,14 +128,14 @@ vpic_simulation::inject_particle( species_t * sp,
 
 #define DTEST( V, N, A ) \
   if( sscanf( line, N " %le", &darg )==1 ) SETDVAR( V, A, N )
- 
+
 void
 vpic_simulation::modify( const char *fname ) {
   FILE *handle=NULL;
   char line[128];
   int iarg=0;
   double darg=0;
- 
+
   // Open the modfile
   handle = fopen( fname, "r" );
   if( !handle ) ERROR(( "Modfile read failed" ));
@@ -150,6 +147,10 @@ vpic_simulation::modify( const char *fname ) {
     ITEST( hydro_interval,    "hydro_interval",    (iarg<0 ? 0 : iarg) );
     ITEST( field_interval,    "field_interval",    (iarg<0 ? 0 : iarg) );
     ITEST( particle_interval, "particle_interval", (iarg<0 ? 0 : iarg) );
+
+    // RFB: No existing decks I know of use these quantities. They are for
+    // striding output and are a legacy hangover from 407
+#ifdef EXTEND_MODIFY
     ITEST( ndfld, "ndfld", (iarg<0 ? 0 : iarg) );
     ITEST( ndhyd, "ndhyd", (iarg<0 ? 0 : iarg) );
     ITEST( ndpar, "ndpar", (iarg<0 ? 0 : iarg) );
@@ -163,6 +164,8 @@ vpic_simulation::modify( const char *fname ) {
     ITEST( pstride, "pstride", (iarg<1 ? 1 : iarg) );
     ITEST( stepdigit, "stepdigit", (iarg<0 ? 0 : iarg) );
     ITEST( rankdigit, "rankdigit", (iarg<0 ? 0 : iarg) );
+#endif
+
   }
 }
 
@@ -226,7 +229,7 @@ void vpic_simulation::checksum_species(const char * species, CheckSum & cs) {
   if(sp == NULL) {
     ERROR(("Invalid species name \"%s\".", species));
   } // if
-  
+
   checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
 
   if(nproc() > 1) {
@@ -253,7 +256,7 @@ void vpic_simulation::output_checksum_species(const char * species) {
   if(sp == NULL) {
     ERROR(("Invalid species name \"%s\".", species));
   } // if
-  
+
   CheckSum cs;
   checkSumBuffer<particle_t>(sp->p, sp->np, cs, "sha1");
 

@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <cmath>
+#include <functional>
 
 #include "../boundary/boundary.h"
 #include "../collision/collision.h"
@@ -238,6 +239,14 @@ private:
                    int fname_tag = 1 );
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
+
+  void dump_particles_predicate(
+      const char *sp_name,
+      const char *fbase,
+      int fname_tag = 1,
+      //const std::function <bool (int)>& f = nullptr
+      const std::function <bool (particle_t)>& f = nullptr
+  );
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);

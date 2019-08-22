@@ -15,10 +15,10 @@
 // This is the legacy thread serial version of the particle sort.
 //----------------------------------------------------------------------------//
 
-#if defined(VPIC_USE_LEGACY_SORT) 
+#if defined(VPIC_USE_LEGACY_SORT)
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -31,7 +31,7 @@ sort_p( species_t * sp )
 
   particle_t * ALIGNED(128) p = sp->p;
 
-  const int np                = sp->np; 
+  const int np                = sp->np;
   const int nc                = sp->g->nv;
   const int nc1               = nc + 1;
 
@@ -49,7 +49,7 @@ sort_p( species_t * sp )
 
   // Allocate the sorting intermediate. Making this into a static is done to
   // avoid heap shredding.
- 
+
   if ( max_nc1 < nc1 )
   {
     // Hack around RESTRICT issues.
@@ -88,19 +88,29 @@ sort_p( species_t * sp )
     const particle_t * RESTRICT ALIGNED( 32)  in_p;
     /**/  particle_t * RESTRICT ALIGNED( 32) out_p;
 
+    const size_t* RESTRICT ALIGNED( 32)  in_p_id;
+    /**/  size_t* RESTRICT ALIGNED( 32) out_p_id;
+
     MALLOC_ALIGNED( new_p, sp->max_np, 128 );
+    MALLOC_ALIGNED( new_p_id, sp->max_np, 128 );
 
     in_p  = sp->p;
+    in_p_id  = sp->p_id;
+
     out_p = new_p;
+    out_p_id = new_p_id;
 
     for( i = 0; i < np; i++ )
     {
       out_p[ next[ in_p[i].i ]++ ] = in_p[i];
+      out_p_id[ next[ in_p[i].i ]++ ] = in_p_id[i];
     }
 
     FREE_ALIGNED( sp->p );
+    FREE_ALIGNED( sp->p_id );
 
     sp->p = new_p;
+    sp->p_id = new_p_id;
   }
 
   else

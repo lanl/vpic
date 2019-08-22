@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -136,6 +136,7 @@ species( const char * name,
   sp->m = m;
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
+  MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
   sp->max_np = max_local_np;
 
   MALLOC_ALIGNED( sp->pm, max_local_nm, 128 );
@@ -146,7 +147,7 @@ species( const char * name,
   sp->sort_out_of_place = sort_out_of_place;
   MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 
-  sp->g = g;   
+  sp->g = g;
 
   /* id, next are set by append species */
 

@@ -50,6 +50,8 @@ option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 
 option(ENABLE_LONG_TESTS "Enable longer running tests, often skipped for most CI builds" OFF)
 
+option(ENABLE_PERFORMANCE_TESTS "Enable performance tests" OFF)
+
 option(USE_OPENMP "Use OpenMP" OFF)
 
 option(USE_PTHREADS "Use Pthreads" ON)
@@ -406,16 +408,15 @@ endif()
 if(ENABLE_INTEGRATED_TESTS)
   enable_testing()
   add_subdirectory(test/integrated)
-
 endif(ENABLE_INTEGRATED_TESTS)
+
+# Add includes for Catch2
+set(CATCH_DIR "./test/include")
 
 if(ENABLE_UNIT_TESTS)
   enable_testing()
 
-  # NOTE: This can also be done by a subdirectory (useful when we have multiple tests)
-  # Add includes for Catch2
-  set(TEST_DIR "./test/include")
-  include_directories(${TEST_DIR})
+  include_directories(${CATCH_DIR})
 
   # Add tests individually
   if (USE_V4)
@@ -431,6 +432,12 @@ if(ENABLE_UNIT_TESTS)
   add_subdirectory(test/unit)
 
 endif(ENABLE_UNIT_TESTS)
+
+if(ENABLE_PERFORMANCE_TESTS)
+  enable_testing()
+  include_directories(${CATCH_DIR})
+  add_subdirectory(test/performance)
+endif(ENABLE_PERFORMANCE_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

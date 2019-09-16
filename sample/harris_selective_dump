@@ -379,17 +379,16 @@ begin_diagnostics {
   if( should_dump(eparticle) ) {
 
      // TODO: do we want to support predicate over ids, particles, or both
-     /*
      std::function<bool(int)> my_predicate = [=](int i) -> bool {
          if (i % 10 == 0) { return true; }
          else { return false; }
      };
-     */
 
-     std::function<bool(particle_t)> my_predicate = [=](particle_t p) -> bool {
-         if (p.i % 10 == 0) { return true; }
-         else { return false; }
-     };
+     //std::function<bool(particle_t)> my_predicate = [=](particle_t p) -> bool {
+         //if (p.i % 10 == 0) { return true; }
+         //else { return false; }
+     //};
+     //my_predicate = nullptr;
 
      dump_particles_predicate("electron","eparticle",
              1, //ftag?

@@ -9,11 +9,7 @@
  * snell - revised to add strided dumps, time history dumps, others  20080404
  */
 
-#include <cassert>
-#include <algorithm>
-
 #include "vpic.h"
-#include "dumpmacros.h"
 #include "../util/io/FileUtils.h"
 
 /* -1 means no ranks talk */
@@ -34,6 +30,46 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
 /*****************************************************************************
  * ASCII dump IO
  *****************************************************************************/
+
+int vpic_simulation::predicate_count(species_t* sp, std::function <bool (int)> f)
+{
+    if (f != nullptr) return std::count_if( sp->p_id, sp->p_id + sp->np, f);
+    else return sp->np;
+}
+int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particle_t)> f)
+{
+    if (f != nullptr) return std::count_if( sp->p, sp->p + sp->np, f);
+    else return sp->np;
+}
+
+void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f)
+{
+    if (f != nullptr)
+        std::copy_if( sp_from->p, sp_from->p + sp_from->np, sp_to->p, f);
+}
+void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f)
+{
+    if (f != nullptr)
+    {
+        //std::copy_if( sp->p_id, sp->p_id + sp->np, _sp.p, f);
+        // Manually loop over particles to do the 'cross copy' from p_id->p
+
+        int next = 0; // track where we fill
+        for (int i = 0; i < sp_from->np; i++)
+        {
+            int this_id = sp_from->p_id[i];
+            if (f(this_id))
+            {
+                // copy i (inherently serial..)
+                sp_to->p[next] = sp_from->p[i];
+                next++;
+            }
+
+        }
+        std::cout << "copied " << next << std::endl;
+    }
+}
+
 
 void
 vpic_simulation::dump_energies( const char *fname,
@@ -125,16 +161,6 @@ enum dump_types {
   restart_dump = 4
 };
 */
-
-// TODO: should this be an enum?
-namespace dump_type {
-  const int grid_dump = 0;
-  const int field_dump = 1;
-  const int hydro_dump = 2;
-  const int particle_dump = 3;
-  const int restart_dump = 4;
-  const int history_dump = 5;
-} // namespace
 
 void
 vpic_simulation::dump_grid( const char *fbase ) {
@@ -255,106 +281,6 @@ vpic_simulation::dump_hydro( const char *sp_name,
   WRITE_ARRAY_HEADER( hydro_array->h, 3, dim, fileIO );
   fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
-}
-
-// TODO: merge back down to one function
-// TODO: template out the functor type
-// TODO: find a way to specify if we want to predicate on particle array, or
-// particle index
-void
-vpic_simulation::dump_particles_predicate(
-        const char *sp_name,
-        const char *fbase,
-        int ftag,
-        //const std::function <bool (int)>& f
-        const std::function <bool (particle_t)>& f
-)
-{
-    species_t *sp;
-    char fname[256];
-    FileIO fileIO;
-    int dim[1], buf_start;
-    static particle_t * ALIGNED(128) p_buf = NULL;
-# define PBUF_SIZE 32768 // 1MB of particles
-
-    sp = find_species_name( sp_name, species_list );
-    if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
-
-    if( !fbase ) ERROR(( "Invalid filename" ));
-
-    if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
-
-    if( rank()==0 )
-        MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
-
-    if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
-    else       sprintf( fname, "%s.%i", fbase, rank() );
-    FileIOStatus status = fileIO.open(fname, io_write);
-    if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
-
-    /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-    nxout = grid->nx;
-    nyout = grid->ny;
-    nzout = grid->nz;
-    dxout = grid->dx;
-    dyout = grid->dy;
-    dzout = grid->dz;
-
-    WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
-
-    int count_true = sp->np;
-    if (f != nullptr)
-    {
-        //count_true = std::count_if( sp->p_id, sp->p_id + sp->np, f);
-        count_true = std::count_if( sp->p, sp->p + sp->np, f);
-        std::cout << "found " << count_true << " true of " << sp->np << std::endl;
-    }
-
-    dim[0] = count_true;
-    WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
-
-    // Copy a PBUF_SIZE hunk of the particle list into the particle
-    // buffer, timecenter it and write it out. This is done this way to
-    // guarantee the particle list unchanged while not requiring too
-    // much memory.
-
-    // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
-    // LARGE.
-
-    // Make a second species array, something that can hold the uniq id too
-    particle_t* ALIGNED(128) _p;
-    MALLOC_ALIGNED( _p, count_true, 128 );
-
-    species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
-    _sp.p = _p;
-    _sp.np = count_true;
-
-    // TODO: why do we need to update max_np?
-    _sp.max_np = PBUF_SIZE;
-
-
-    // Copy the right particles over, that meet the predicate
-    std::copy_if( sp->p, sp->p + sp->np, _sp.p, f);
-
-    // Use that instead below
-    for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
-        _sp.np = count_true-buf_start;
-
-        if( sp->np > PBUF_SIZE ) {
-            sp->np = PBUF_SIZE;
-        }
-
-        //COPY( _sp.p, &sp_p[buf_start], _sp.np );
-
-        center_p( &_sp, interpolator_array );
-
-        fileIO.write( _p, _sp.np );
-    }
-
-    // Free the particle array (sp done by scope)
-    FREE_ALIGNED( _p );
-
-    if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }
 
 void

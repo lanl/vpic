@@ -89,10 +89,10 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
   for (i=0; i<(*pargc); i++)
   {
       const int num_prefix_keys = 2;
-      char* prefix_keys[num_prefix_keys];
+      const char* prefix_keys[num_prefix_keys];
 
       const int num_match_keys = 1;
-      char* match_keys[num_match_keys];
+      const char* match_keys[num_match_keys];
 
       prefix_keys[0] = "-tpp";
       prefix_keys[1] = "-restore";

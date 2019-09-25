@@ -198,7 +198,7 @@ protected:
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
- 
+
   char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------

@@ -76,8 +76,11 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   // Determine which accumulator array to use.
   // The host gets the first accumulator array.
 
-  a0 += ( 1 + pipeline_rank ) *
-        POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
+  if ( pipeline_rank != n_pipeline )
+  {
+    a0 += ( 1 + pipeline_rank ) *
+          POW2_CEIL( (args->nx+2)*(args->ny+2)*(args->nz+2), 2 );
+  }
 
   // Process the particle blocks for this pipeline.
 
@@ -242,7 +245,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     //--------------------------------------------------------------------------
     // Accumulate current density.
     //--------------------------------------------------------------------------
-#   define ACCUMULATE_J(X,Y,Z,offset)                                  \
+    #define ACCUMULATE_J(X,Y,Z,offset)                                 \
     v04  = q*u##X;    /* v04 = q ux                            */      \
     v01  = v04*d##Y;  /* v01 = q ux dy                         */      \
     v00  = v04-v01;   /* v00 = q ux (1-dy)                     */      \
@@ -267,14 +270,14 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     ACCUMULATE_J( y, z, x, 4 );
     ACCUMULATE_J( z, x, y, 8 );
 
-#   undef ACCUMULATE_J
+    #undef ACCUMULATE_J
 
     //--------------------------------------------------------------------------
     // Update position and accumulate current density for out of bounds
     // particles.
     //--------------------------------------------------------------------------
 
-#   define MOVE_OUTBND(N)                                               \
+    #define MOVE_OUTBND(N)                                              \
     if ( outbnd(N) )                                /* Unlikely */      \
     {                                                                   \
       local_pm->dispx = ux(N);                                          \
@@ -299,7 +302,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     MOVE_OUTBND( 2);
     MOVE_OUTBND( 3);
 
-#   undef MOVE_OUTBND
+    #undef MOVE_OUTBND
   }
 
   args->seg[pipeline_rank].pm        = pm;

@@ -26,7 +26,8 @@
 void
 accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
                     const species_t            * RESTRICT sp,
-                    const interpolator_array_t * RESTRICT ia ) {
+                    const interpolator_array_t * RESTRICT ia )
+{
   /**/  hydro_t        * RESTRICT ALIGNED(128) h;
   const particle_t     * RESTRICT ALIGNED(128) p;
   const interpolator_t * RESTRICT ALIGNED(128) f;

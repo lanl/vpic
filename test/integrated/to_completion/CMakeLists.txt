@@ -14,9 +14,6 @@ list(APPEND DEFAULT_ARG_TESTS
     reconnection_test # This is a simple reconnection run
     )
 
-list(APPEND RESTART_DECK dump) # Reuse existing deck and start half way
-list(APPEND RESTART_BINARY restore)
-
 foreach(test ${DEFAULT_ARG_TESTS})
     build_a_vpic(${test} ${CMAKE_CURRENT_SOURCE_DIR}/${test}.deck)
 endforeach()
@@ -44,11 +41,39 @@ add_test(${THREADED_TEST} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_NUMPROC}
 # TODO: Do we want to try an MPI + Threaded runs
 
 # Test Restart (restore) functionality
+# We use two linked tests to do this:
+# A) Runs and makes a dump
+# B) Runs second and reads the dump
 
-list(APPEND CHECKPOINT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/checkpt.1")
+list(APPEND RESTART_BINARY restore)
+list(APPEND CHECKPOINT_FILE "${CMAKE_CURRENT_BINARY_DIR}/checkpt_test.1")
 list(APPEND RESTART_ARGS --restore ${CHECKPOINT_FILE})
+list(APPEND RESTART_DECK dump) # Reuse existing deck and start half way
 
-build_a_vpic(${RESTART_BINARY} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
-add_test(${RESTART_BINARY} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
-    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${RESTART_BINARY}
+set(generate_restore "generate_${RESTART_BINARY}")
+build_a_vpic(${generate_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
+add_test(${generate_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
+    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${generate_restore}
+    ${MPIEXEC_POSTFLAGS})
+
+# Run using the restore file
+# TODO: caps?
+set(perform_restore "perform_${RESTART_BINARY}")
+build_a_vpic(${perform_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
+add_test(${perform_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
+    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${perform_restore}
     ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
+
+# TODO: re-enable modify test
+#list(APPEND MODIFY_BINARY restore-modify)
+#list(APPEND RESTART_ARGS --modify "${CMAKE_CURRENT_SOURCE_DIR}/modify_file")
+#build_a_vpic(${MODIFY_BINARY} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
+#add_test(${MODIFY_BINARY} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
+#    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${MODIFY_BINARY}
+#    ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
+
+# Link the two tests
+set(RESTORE_LABEL "restore_group")
+set_tests_properties(${perform_restore} PROPERTIES DEPENDS ${generate_restore})
+#set_property(TEST ${generate_restore} PROPERTY FIXTURES_SETUP ${RESTORE_LABEL})
+#set_property(TEST ${perform_restore} PROPERTY FIXTURES_REQUIRED ${RESTORE_LABEL})

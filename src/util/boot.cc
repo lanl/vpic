@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include "stdio.h"
+
 double _boot_timestamp = 0;
 
 double
@@ -48,6 +50,11 @@ boot_services( int * pargc,
   mp_barrier();
   _boot_timestamp = 0;
   _boot_timestamp = uptime();
+
+  if (_world_rank == 0)
+  {
+      printf("Booting with %d threads and %d (MPI) ranks \n", thread.n_pipeline, _world_size);
+  }
 }
 
 // This operates in reverse order from boot_services

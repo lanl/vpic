@@ -47,6 +47,11 @@ begin_initialization {
   // Then the initial non-zero fields need to be loaded at time level 0 and the
   // particles (position and momentum both) need to be loaded at time level 0.
 
+
+  // Example of how to call / set dumping
+  field_dump_flag.disableEMAT();
+
+
   double input_mass_ratio;
   int input_seed;
 

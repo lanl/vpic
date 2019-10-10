@@ -25,6 +25,12 @@
 // to zero before the user's initialization block is executed. Up to 16K
 // of global variables can be defined.
 
+
+// Deck only works if VPIC was build with HDF support. Check for that:
+#ifndef VPIC_ENABLE_HDF5
+#error "VPIC_ENABLE_HDF5" is required
+#endif
+
 begin_globals {
   double energies_interval;
   double fields_interval;

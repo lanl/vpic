@@ -1,3 +1,5 @@
+#ifndef VPIC_WRAPPER_H
+#define VPIC_WRAPPER_H
 /*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
@@ -419,3 +421,4 @@ checkpt( const char * fbase,
          int tag );
 
 //-----------------------------------------------------------------------------
+#endif // guard

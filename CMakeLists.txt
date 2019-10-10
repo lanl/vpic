@@ -12,6 +12,13 @@ cmake_minimum_required(VERSION 3.1)
 project(vpic)
 
 #------------------------------------------------------------------------------#
+# Quiet newer versions of cmake about MPI_ROOT
+#------------------------------------------------------------------------------#
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
+#------------------------------------------------------------------------------#
 # If a C++11 compiler is available, then set the appropriate flags
 #------------------------------------------------------------------------------#
 
@@ -40,6 +47,10 @@ include_directories(${MPI_C_INCLUDE_PATH})
 option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
+
+option(ENABLE_LONG_TESTS "Enable longer running tests, often skipped for most CI builds" OFF)
+
+option(ENABLE_PERFORMANCE_TESTS "Enable performance tests" OFF)
 
 option(USE_OPENMP "Use OpenMP" OFF)
 
@@ -269,6 +280,18 @@ if(VPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
 endif(VPIC_PRINT_MORE_DIGITS)
 
+if(USE_HDF5)
+    # Enable HDF5, and the relevant defines
+    find_package(HDF5 REQUIRED)
+    if (NOT HDF5_IS_PARALLEL)
+        message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
+    endif()
+    add_definitions(-DVPIC_ENABLE_HDF5)
+    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    include_directories(${HDF5_INCLUDE_DIRS})
+endif(USE_HDF5)
+
 #------------------------------------------------------------------------------#
 # Handle vpic compile script last.
 #------------------------------------------------------------------------------#
@@ -289,6 +312,13 @@ endif(ENABLE_COVERAGE_BUILD)
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
   ${CMAKE_BINARY_DIR}/bin/Makefile.run)
 
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
+
 # install script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
@@ -301,10 +331,11 @@ install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
     WORLD_READ WORLD_EXECUTE
     )
 
-install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
-  DESTINATION share/vpic)
-install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
-  DESTINATION share/vpic)
+install(FILES deck/main.cc deck/wrapper.cc DESTINATION share/vpic)
+install(FILES deck/wrapper.h DESTINATION include/vpic)
+install(DIRECTORY src/ DESTINATION include/vpic
+         FILES_MATCHING PATTERN "*.h")
+
 
 #------------------------------------------------------------------------------#
 # Add library target
@@ -329,18 +360,6 @@ else()
   set(VPIC_SRC)
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
-
-if(USE_HDF5)
-    # Enable HDF5, and the relevant defines
-    find_package(HDF5 REQUIRED)
-    if (NOT HDF5_IS_PARALLEL)
-        message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
-    endif()
-    add_definitions(-DVPIC_ENABLE_HDF5)
-    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
-    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
-    include_directories(${HDF5_INCLUDE_DIRS})
-endif(USE_HDF5)
 
 # Configure local script to generate bin/vpic
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
@@ -385,16 +404,15 @@ endif()
 if(ENABLE_INTEGRATED_TESTS)
   enable_testing()
   add_subdirectory(test/integrated)
-
 endif(ENABLE_INTEGRATED_TESTS)
+
+# Add includes for Catch2
+set(CATCH_DIR "./test/include")
 
 if(ENABLE_UNIT_TESTS)
   enable_testing()
 
-  # NOTE: This can also be done by a subdirectory (useful when we have multiple tests)
-  # Add includes for Catch2
-  set(TEST_DIR "./test/include")
-  include_directories(${TEST_DIR})
+  include_directories(${CATCH_DIR})
 
   # Add tests individually
   if (USE_V4)
@@ -410,6 +428,12 @@ if(ENABLE_UNIT_TESTS)
   add_subdirectory(test/unit)
 
 endif(ENABLE_UNIT_TESTS)
+
+if(ENABLE_PERFORMANCE_TESTS)
+  enable_testing()
+  include_directories(${CATCH_DIR})
+  add_subdirectory(test/performance)
+endif(ENABLE_PERFORMANCE_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

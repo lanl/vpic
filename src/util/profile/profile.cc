@@ -20,15 +20,19 @@ update_profile( int dump ) {
     sum_total  += p->t_total;
   }
 
+  // Avoid div by zero which gives confusing prints for when status interval
+  // divides num_steps
+  if (sum == 0) { sum = 1.0; }
+
   if( dump )
   {
     #if defined(VPIC_PRINT_MORE_DIGITS)
-    log_printf( "\n" // 8901234567890123456 | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx 
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx | xxx% x.xxxe+xx x.xe+xx x.xxxe+xx
                 "                           |      Since   Last Update         |      Since   Last Restore\n"
                 "    Operation              | Pct   Time      Count      Per   | Pct   Time      Count      Per\n"
                 "---------------------------+----------------------------------+----------------------------------\n" );
     #else
-    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx 
+    log_printf( "\n" // 8901234567890123456 | xxx% x.xe+xx x.xe+xx x.xe+xx | xxx% x.xe+xx x.xe+xx x.xe+xx
                 "                           |      Since Last Update       |     Since Last Restore\n"
                 "    Operation              | Pct   Time    Count    Per   | Pct   Time    Count    Per\n"
                 "---------------------------+------------------------------+------------------------------\n" );
@@ -49,7 +53,7 @@ update_profile( int dump ) {
                   (double)p->n_total,
                   p->t_total/(DBL_EPSILON+(double)p->n_total) );
     }
-    
+
     log_printf( "\n" );
   }
 

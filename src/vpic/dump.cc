@@ -15,8 +15,6 @@
 #include "dumpmacros.h"
 #include "../util/io/FileUtils.h"
 
-#include <mpi.h>
-
 #ifdef VPIC_ENABLE_HDF5
 #include "hdf5.h" // from the lib
 #include "hdf5_header_info.h" // from vpic

@@ -34,6 +34,144 @@
 #endif
 //  #include "dumpvars.h"
 
+
+// TODO: move these to a better header?
+#ifdef VPIC_ENABLE_HDF5
+struct field_dump_flag_t
+{
+  bool ex = true, ey = true, ez = true, div_e_err = true;
+  bool cbx = true, cby = true, cbz = true, div_b_err = true;
+  bool tcax = true, tcay = true, tcaz = true, rhob = true;
+  bool jfx = true, jfy = true, jfz = true, rhof = true;
+  bool ematx = true, ematy = true, ematz = true, nmat = true;
+  bool fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  void disableE()
+  {
+    ex = false, ey = false, ez = false, div_e_err = false;
+  }
+
+  void disableCB()
+  {
+    cbx = false, cby = false, cbz = false, div_b_err = false;
+  }
+
+  void disableTCA()
+  {
+    tcax = false, tcay = false, tcaz = false, rhob = false;
+  }
+
+  void disableJF()
+  {
+    jfx = false, jfy = false, jfz = false, rhof = false;
+  }
+
+  void disableEMAT()
+  {
+    ematx = false, ematy = false, ematz = false, nmat = false;
+  }
+
+  void disableFMAT()
+  {
+    fmatx = false, fmaty = false, fmatz = false, cmat = false;
+  }
+
+  void resetToDefaults()
+  {
+    ex = true, ey = true, ez = true, div_e_err = true;
+    cbx = true, cby = true, cbz = true, div_b_err = true;
+    tcax = true, tcay = true, tcaz = true, rhob = true;
+    jfx = true, jfy = true, jfz = true, rhof = true;
+    ematx = true, ematy = true, ematz = true, nmat = true;
+    fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  }
+
+  bool enabledE()
+  {
+    return ex && ey && ez;
+  }
+
+  bool enabledCB()
+  {
+    return cbx && cby && cbz;
+  }
+
+  bool enabledTCA()
+  {
+    return tcax && tcay && tcaz;
+  }
+
+  bool enabledJF()
+  {
+    return jfx && jfy && jfz;
+  }
+
+  bool enabledEMAT()
+  {
+    return ematx && ematy && ematz;
+  }
+
+  bool enabledFMAT()
+  {
+    return fmatx && fmaty && fmatz;
+  }
+};
+
+struct hydro_dump_flag_t
+{
+  bool jx = true, jy = true, jz = true, rho = true;
+  bool px = true, py = true, pz = true, ke = true;
+  bool txx = true, tyy = true, tzz = true;
+  bool tyz = true, tzx = true, txy = true;
+
+  void disableJ()
+  {
+    jx = false, jy = false, jz = false, rho = false;
+  }
+
+  void disableP()
+  {
+    px = false, py = false, pz = false, ke = false;
+  }
+
+  void disableTD() //Stress diagonal
+  {
+    txx = false, tyy = false, tzz = false;
+  }
+
+  void disableTOD() //Stress off-diagonal
+  {
+    tyz = false, tzx = false, txy = false;
+  }
+  void resetToDefaults()
+  {
+    jx = true, jy = true, jz = true, rho = true;
+    px = true, py = true, pz = true, ke = true;
+    txx = true, tyy = true, tzz = true;
+    tyz = true, tzx = true, txy = true;
+  }
+
+  bool enabledJ()
+  {
+    return jx && jy && jz;
+  }
+
+  bool enabledP()
+  {
+    return px && py && pz;
+  }
+
+  bool enabledTD()
+  {
+    return txx && tyy && tzz;
+  }
+
+  bool enabledTOD()
+  {
+    return tyz && tzx && txy;
+  }
+};
+#endif
+
 typedef FileIO FILETYPE;
 
 const uint32_t all                      (0xffffffff);
@@ -243,8 +381,17 @@ protected:
   void dump_particles( const char *sp_name,
 		       const char *fbase,
                        int fname_tag = 1 );
+#ifdef VPIC_ENABLE_HDF5
   void dump_particles_hdf5( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
+  void dump_hydro_hdf5( const char *sp_name, const char *fbase,
+                   int fname_tag = 1 );
+  void dump_fields_hdf5( const char *fbase, int fname_tag = 1 );
+
+  // Declare vars to use
+  hydro_dump_flag_t hydro_dump_flag;
+  field_dump_flag_t field_dump_flag;
+#endif
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);

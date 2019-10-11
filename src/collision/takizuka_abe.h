@@ -9,7 +9,7 @@ typedef struct takizuka_abe {
   species_t  * spj;
   rng_pool_t * rp;
   int interval;
-  double nu0;
+  double cvar0; // Base cvar0, which will later be scaled by q and mu
 } takizuka_abe_t;
 
 void

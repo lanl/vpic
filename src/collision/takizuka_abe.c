@@ -49,7 +49,7 @@ takizuka_abe( const char       * RESTRICT name,
               /**/  species_t  * RESTRICT spi,
               /**/  species_t  * RESTRICT spj,
               /**/  rng_pool_t * RESTRICT rp,
-              const double                nu0,
+              const double                cvar0,
               const int                   interval ) {
   takizuka_abe_t * cm;
   size_t len = name ? strlen(name) : 0;
@@ -63,7 +63,7 @@ takizuka_abe( const char       * RESTRICT name,
   cm->spi      = spi;
   cm->spj      = spj;
   cm->rp       = rp;
-  cm->nu0      = nu0;
+  cm->cvar0      = cvar0;
   cm->interval = interval;
 
   return new_collision_op_internal( cm,

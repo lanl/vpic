@@ -47,6 +47,9 @@ append_collision_op( collision_op_t * cop,
    transfer rate (i.e., "the" collision rate) is related to nu0 via
 
    nu_s = 4 (mc^2 / T)^3 nu0 / 3 sqrt(pi)
+
+   The paper defines variance ~= sqrt(2)*nu_0, and here we expect the user to
+   pass us the base cvar
 */
 
 collision_op_t *
@@ -54,7 +57,7 @@ takizuka_abe( const char       * RESTRICT name,
               /**/  species_t  * RESTRICT spi,
               /**/  species_t  * RESTRICT spj,
               /**/  rng_pool_t * RESTRICT rp,
-              const double                nu0,
+              const double                cvar0,
               const int                   interval );
 
 /* In langevin.c */

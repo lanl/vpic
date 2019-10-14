@@ -107,6 +107,12 @@ vpic_simulation::vpic_simulation() {
 
   REGISTER_OBJECT( this, checkpt_vpic_simulation,
                    restore_vpic_simulation, reanimate_vpic_simulation );
+
+#ifdef VPIC_ENABLE_HDF5
+  // Default init hdf5 dump flags
+  field_dump_flag = field_dump_flag_t();
+  hydro_dump_flag = hydro_dump_flag_t();
+#endif
 }
 
 vpic_simulation::~vpic_simulation() {

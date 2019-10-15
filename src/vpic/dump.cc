@@ -330,11 +330,11 @@ vpic_simulation::dump_fields_hdf5( const char *fbase, int ftag )
 
 #ifdef DUMP_INFO_DEBUG
     printf("MPI rank = %d, size = %d \n", mpi_rank, mpi_size);
-    printf("base dir for field: %s \n", global->fdParams.baseDir);
-    printf("stride x y z  = (%ld, %ld, %ld)\n", global->fdParams.stride_x, global->fdParams.stride_y, global->fdParams.stride_z);
+    //printf("base dir for field: %s \n", fdParams.baseDir);
+    //printf("stride x y z  = (%ld, %ld, %ld)\n", fdParams.stride_x, fdParams.stride_y, fdParams.stride_z);
     printf("grid x, y z  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);
     printf("domain loc (x0, y0, z0) -> (x1, y1, z1) = (%f, %f, %f) -> (%f, %f, %f) \n", grid->x0, grid->y0, grid->z0, grid->x1, grid->y1, grid->z1);
-    printf("global->topology_x, y, z =  %f, %f, %f \n ", global->topology_x, global->topology_y, global->topology_z);
+    //printf("global->topology_x, y, z =  %f, %f, %f \n ", global->topology_x, global->topology_y, global->topology_z);
     printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid->sz, grid->nv);
 #endif
 
@@ -458,9 +458,9 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
     global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
-    printf("global size   = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", field_global_size[0], field_global_size[1], field_global_size[2]);
-    printf("global_offset = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", global_offset[0], global_offset[1], global_offset[2]);
-    printf("global_count  = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", global_count[0], global_count[1], global_count[2]);
+    printf("global size   = %d  %d %d \n", field_global_size[0], field_global_size[1], field_global_size[2]);
+    printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
+    printf("global_count  = %d  %d %d \n", global_count[0], global_count[1], global_count[2]);
     printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
     fflush(stdout);
 #endif
@@ -624,6 +624,9 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
         field_tframe++;
     }
 }
+
+// TODO: fix this, it currently uses a static global and the logic only
+// supports 1 species otherwise things get out of sync
 void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
                              const char *fbase,
                              int ftag )
@@ -758,9 +761,9 @@ printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid-
     global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
-    printf("global size   = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
-    printf("global_offset = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", global_offset[0], global_offset[1], global_offset[2]);
-    printf("global_count  = " HSIZE_T ", " HSIZE_T ", " HSIZE_T "\n", global_count[0], global_count[1], global_count[2]);
+    printf("global size   = %d %d %d \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
+    printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
+    printf("global_count  = %d %d %d \n", global_count[0], global_count[1], global_count[2]);
     printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
     fflush(stdout);
 #endif

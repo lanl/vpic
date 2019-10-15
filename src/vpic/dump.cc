@@ -663,24 +663,9 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
     if (!sp)
         ERROR(("Invalid species name: %s", speciesname));
 
-#ifdef ENABLE_V407_SCIDAC
-    clear_hydro( hydro, grid );
-    accumulate_hydro_p( hydro, sp->p, sp->np, sp->q_m, interpolator, grid );
-    synchronize_hydro( hydro, grid );
-#else
     clear_hydro_array(hydro_array);
     accumulate_hydro_p(hydro_array, sp, interpolator_array);
     synchronize_hydro_array(hydro_array);
-#endif
-    /*#ifdef DUMP_INFO_DEBUG
-printf("MPI rank = %d, size = %d \n", mpi_rank, mpi_size);
-printf("base dir for field: %s \n", global->fdParams.baseDir);
-printf("stride x y z  = (%ld, %ld, %ld)\n", global->fdParams.stride_x, global->fdParams.stride_y, global->fdParams.stride_z);
-printf("grid x, y z  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);
-printf("domain loc (x0, y0, z0) -> (x1, y1, z1) = (%f, %f, %f) -> (%f, %f, %f) \n", grid->x0, grid->y0, grid->z0, grid->x1, grid->y1, grid->z1);
-printf("global->topology_x, y, z =  %f, %f, %f \n ", global->topology_x, global->topology_y, global->topology_z);
-printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid->sz, grid->nv);
-#endif*/
 
     char hname[256];
     char hydro_scratch[128];
@@ -952,17 +937,9 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         {
             COPY(&sp->p[i], &sp_p[iptl], 1);
         }
-    #ifdef ENABLE_V407_SCIDAC
-        # define PBUF_SIZE 32768 // 1MB of particles
-        for( int buf_start=0; buf_start<np_local; buf_start += PBUF_SIZE ) {
-            int n_buf = PBUF_SIZE;
-            if( buf_start+n_buf > np_local ) n_buf = np_local - buf_start;
-                COPY( p_buf, &sp->p[buf_start], n_buf );
-            center_p( p_buf, n_buf, sp->q_m, interpolator, grid );
-        }
-    #else
+
         center_p(sp, interpolator_array);
-    #endif
+
         ec1 = uptime() - ec1;
         int mpi_rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);

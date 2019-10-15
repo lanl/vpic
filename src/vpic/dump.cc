@@ -366,17 +366,17 @@ vpic_simulation::dump_fields_hdf5( const char *fbase, int ftag )
 
     sprintf(field_scratch, DUMP_DIR_FORMAT, "field_hdf5");
     dump_mkdir(field_scratch);
-    sprintf(subfield_scratch, "%s/T.%lld/", field_scratch, step_for_viou);
+    sprintf(subfield_scratch, "%s/T.%zu/", field_scratch, step_for_viou);
     dump_mkdir(subfield_scratch);
 
-    sprintf(fname, "%s/%s_%lld.h5", subfield_scratch, "fields", step_for_viou);
+    sprintf(fname, "%s/%s_%zu.h5", subfield_scratch, "fields", step_for_viou);
     double el1 = uptime();
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
-    sprintf(fname, "Timestep_%lld", step_for_viou);
+    sprintf(fname, "Timestep_%zu", step_for_viou);
     hid_t group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     el1 = uptime() - el1;
@@ -688,17 +688,17 @@ printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid-
 
     sprintf(hydro_scratch, "./%s", "hydro_hdf5");
     dump_mkdir(hydro_scratch);
-    sprintf(subhydro_scratch, "%s/T.%lld/", hydro_scratch, step_for_viou);
+    sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step_for_viou);
     dump_mkdir(subhydro_scratch);
 
-    sprintf(hname, "%s/hydro_%s_%lld.h5", subhydro_scratch, speciesname, step_for_viou);
+    sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, speciesname, step_for_viou);
     double el1 = uptime();
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t file_id = H5Fcreate(hname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
-    sprintf(hname, "Timestep_%lld", step_for_viou);
+    sprintf(hname, "Timestep_%zu", step_for_viou);
     hid_t group_id = H5Gcreate(file_id, hname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     el1 = uptime() - el1;
@@ -713,7 +713,7 @@ printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid-
     //    if (global->fdParams.output_vars.bitset(i))
     //        varlist[c++] = i;
 
-    //printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);
+    //printf("\nBEGIN_OUTPUT: numvars = %zu \n", numvars);
 
 
     //typedef struct hydro {

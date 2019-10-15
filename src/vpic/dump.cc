@@ -10,6 +10,7 @@
  */
 
 #include <cassert>
+#include <unordered_map>
 
 #include "vpic.h"
 #include "dumpmacros.h"
@@ -26,6 +27,10 @@
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
 // COMPATIBLE WITH EXISTING EXTERNAL 3RD PARTY VISUALIZATION SOFTWARE.
 // IN THE LONG RUN, THIS EXTERNAL SOFTWARE WILL NEED TO BE UPDATED.
+
+// TODO: this should live somewhere more sensible, but it's better than the
+// global static it replaces
+std::unordered_map<species_id, size_t> tframe_map;
 
 int vpic_simulation::dump_mkdir(const char * dname) {
         return FileUtils::makeDirectory(dname);
@@ -592,8 +597,6 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
         char dxdydz[128];
         sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
 
-        //int fields_interval = global->fields_interval;
-        // TODO: make sure field interval is set
         int nframes = num_step / field_interval + 1;
         static int field_tframe = 0;
 
@@ -612,6 +615,8 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
         printf("             tframe: %d \n", field_tframe);
 #endif
 
+        // TODO: this footer dumping is more likely better done in a
+        // destructor, rather than hoping a multiple division works out
         if (field_tframe >= 1)
         {
             if (field_tframe == (nframes - 1))
@@ -856,9 +861,9 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
         char dxdydz[128];
         sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
 
-        int nframes = num_step / field_interval + 1;
-        int fields_interval = field_interval;
-        static int tframe = 0;
+        int nframes = num_step / hydro_interval + 1;
+
+        const int tframe = tframe_map[sp->id];
 
 #ifdef DUMP_INFO_DEBUG
         printf("         meta file : %s \n", output_xml_file);
@@ -867,7 +872,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
         printf("            orignal: %s \n", orignal);
         printf("             dxdydz: %s \n", dxdydz);
         printf("            nframes: %d \n", nframes);
-        printf("    fields_interval: %d \n", fields_interval);
+        printf("    hydro_fields_interval: %d \n", hydro_interval);
         printf("       current step: %lld \n", step_for_viou);
         printf("    Simulation time: %f \n", grid->t0);
         printf("             tframe: %d \n", tframe);
@@ -888,7 +893,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
         }
         else
         {
-            create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, fields_interval);
+            create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, hydro_interval);
             if (tframe == (nframes - 1))
             {
                 invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
@@ -898,7 +903,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
                 invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
             }
         }
-        tframe++;
+        tframe_map[sp->id]++;
     }
 }
 

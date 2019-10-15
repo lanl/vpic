@@ -110,6 +110,8 @@ vpic_simulation::vpic_simulation() {
 
 #ifdef VPIC_ENABLE_HDF5
   // Default init hdf5 dump flags
+  field_interval = 1;
+  hydro_interval = 1;
   field_dump_flag = field_dump_flag_t();
   hydro_dump_flag = hydro_dump_flag_t();
 #endif

@@ -284,7 +284,7 @@ protected:
   double quota;
   int checkpt_interval;
   int hydro_interval;
-  int field_interval = 1;
+  int field_interval;
   int particle_interval;
 
   size_t nxout, nyout, nzout;

@@ -381,8 +381,8 @@ begin_diagnostics {
   // purely diagnostic. It is not used by the simulation and it is not
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
   // are in a binary format. Each rank makes a hydro dump.
-  if( should_dump(ehydro) ) dump_hydro_hdf5("electron","ehydro");
-  //if( should_dump(ihydro) ) dump_hydro_hdf5("ion",     "ihydro");
+  if(should_dump(ehydro) ) dump_hydro_hdf5("electron","ehydro");
+  if( should_dump(ihydro) ) dump_hydro_hdf5("ion",     "ihydro");
 
   // Particle dumps store the particle data for a given species. The data
   // written is known at the time t = time().  By default, particle dumps

@@ -693,7 +693,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
 
     el1 = uptime() - el1;
     //sim_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
-    double el2 = uptime();
+    //double el2 = uptime();
 
     // Create a variable list of field values to output.
     //size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
@@ -802,7 +802,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
     if (hydro_dump_flag.txy)
         DUMP_HYDRO_TO_HDF5("txy", txy, H5T_NATIVE_FLOAT);
 
-    el2 = uptime() - el2;
+    //el2 = uptime() - el2;
     //sim_log("TimeHDF5Write: " << el2 << " s");
 
     double el3 = uptime();
@@ -990,49 +990,81 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         el1 = uptime() - el1;
         //sim_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
 
-        double el2 = uptime();
+        //double el2 = uptime();
 
+        // This point offset is silly, and loses the type safety (pf+1)
         hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         int ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable dX \n");
 
         dset_id = H5Dcreate(group_id, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 1);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable dY \n");
 
         dset_id = H5Dcreate(group_id, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable dZ \n");
+
+        int local_i = *(Pi + 3);
+        int write_i = local_i;
+
+#ifdef OUTPUT_CONVERT_GLOBAL_ID
+# define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
+    int _ix, _iy, _iz;                                                  \
+    _ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */       \
+    _iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                  \
+    _ix -= _iy*int(nx);   /* ix = ix */                         \
+    _iz  = _iy/int(ny);   /* iz = iz */                         \
+    _iy -= _iz*int(ny);   /* iy = iy */                         \
+    (ix) = _ix;                                                         \
+    (iy) = _iy;                                                         \
+    (iz) = _iz;                                                         \
+  } END_PRIMITIVE
+        int ix, iy, iz, rx, ry, rz;
+        // Convert rank to local x/y/z
+        UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+        // Calculate local ix/iy/iz
+        UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
+
+        // Convert ix/iy/iz to global
+        int gix = ix + (grid->nx * (rx));
+        int giy = iy + (grid->ny * (ry));
+        int giz = iz + (grid->nz * (rz));
+
+        // calculate global grid sizes
+        int gnx = grid->nx * grid->gpx;
+        int gny = grid->ny * grid->gpy;
+        int gnz = grid->nz * grid->gpz;
+
+        int global_i = VOXEL(gix, giy, giz, gnx, gny, gnz);
+
+        write_i = global_i;
+        // TODO: update the address written below, it requires something more stable than a statced int
+#undef UNVOXEL
+#endif
 
         dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, Pi + 3);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable i \n");
 
         dset_id = H5Dcreate(group_id, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 4);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable  Ux \n");
 
         dset_id = H5Dcreate(group_id, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 5);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable Uy \n");
 
         dset_id = H5Dcreate(group_id, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 6);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable Uz \n");
 
         dset_id = H5Dcreate(group_id, "q", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
         H5Dclose(dset_id);
-        //if (rank == 0) printf ("Written variable q \n");
 
-        el2 = uptime() - el2;
+        //el2 = uptime() - el2;
         //sim_log("Particle TimeHDF5Write: " << el2 << " s");
 
         double el3 = uptime();

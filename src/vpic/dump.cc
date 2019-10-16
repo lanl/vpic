@@ -978,6 +978,11 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
 
         hsize_t memspace_count_temp = numparticles * 8;
         hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
+
+        // Don't need, can just use H5S_ALL
+        //hsize_t linearspace_count_temp = numparticles;
+        //hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
+
         plist_id = H5Pcreate(H5P_DATASET_XFER);
 
         //Comment out for test only
@@ -1005,9 +1010,6 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
         H5Dclose(dset_id);
 
-        int local_i = *(Pi + 3);
-        int write_i = local_i;
-
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
 # define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
     int _ix, _iy, _iz;                                                  \
@@ -1020,33 +1022,49 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
     (iy) = _iy;                                                         \
     (iz) = _iz;                                                         \
   } END_PRIMITIVE
-        int ix, iy, iz, rx, ry, rz;
-        // Convert rank to local x/y/z
-        UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
-        // Calculate local ix/iy/iz
-        UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
+        std::vector<int> global_pi;
+        global_pi.reserve(numparticles);
+        // TODO: this could be parallel
+        for (int i = 0; i < numparticles; i++)
+        {
+            int local_i = *(Pi + 3);
+            int write_i = local_i;
 
-        // Convert ix/iy/iz to global
-        int gix = ix + (grid->nx * (rx));
-        int giy = iy + (grid->ny * (ry));
-        int giz = iz + (grid->nz * (rz));
+            int ix, iy, iz, rx, ry, rz;
+            // Convert rank to local x/y/z
+            UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
-        // calculate global grid sizes
-        int gnx = grid->nx * grid->gpx;
-        int gny = grid->ny * grid->gpy;
-        int gnz = grid->nz * grid->gpz;
+            // Calculate local ix/iy/iz
+            UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
 
-        int global_i = VOXEL(gix, giy, giz, gnx, gny, gnz);
+            // Convert ix/iy/iz to global
+            int gix = ix + (grid->nx * (rx));
+            int giy = iy + (grid->ny * (ry));
+            int giz = iz + (grid->nz * (rz));
 
-        write_i = global_i;
-        // TODO: update the address written below, it requires something more stable than a statced int
+            // calculate global grid sizes
+            int gnx = grid->nx * grid->gpx;
+            int gny = grid->ny * grid->gpy;
+            int gnz = grid->nz * grid->gpz;
+
+            int global_i = VOXEL(gix, giy, giz, gnx, gny, gnz);
+            int* hmm = new int();
+            *hmm = 10;
+
+            global_pi[i] = global_i;
+        }
+
 #undef UNVOXEL
-#endif
+        dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, filespace, plist_id, global_pi.data());
+        H5Dclose(dset_id);
 
+#else
         dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, Pi + 3);
         H5Dclose(dset_id);
+#endif
 
         dset_id = H5Dcreate(group_id, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 4);

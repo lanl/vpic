@@ -1024,6 +1024,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
         H5Dclose(dset_id);
 
+#define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
 # define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
     int _ix, _iy, _iz;                                                  \
@@ -1042,8 +1043,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         // TODO: this could be parallel
         for (int i = 0; i < numparticles; i++)
         {
-            int local_i = *(Pi + 3);
-            int write_i = local_i;
+            int local_i = sp->p[i].i;
 
             int ix, iy, iz, rx, ry, rz;
             // Convert rank to local x/y/z
@@ -1062,10 +1062,10 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
             int gny = grid->ny * grid->gpy;
             int gnz = grid->nz * grid->gpz;
 
-            int global_i = VOXEL(gix, giy, giz, gnx, gny, gnz);
-            int* hmm = new int();
-            *hmm = 10;
+            // TODO: find a better way to account for the hard coded ghosts in VOXEL
+            int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
 
+            //std::cout << rank() << " local i " << local_i << " becomes " << global_i << std::endl;
             global_pi[i] = global_i;
         }
 

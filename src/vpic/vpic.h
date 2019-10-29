@@ -379,6 +379,9 @@ protected:
 
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
+
+//#ifdef  // TODO: add ifdef
+  void dump_fields_openpmd( const char *fbase, int fname_tag = 1 );
 #ifdef VPIC_ENABLE_HDF5
   void dump_particles_hdf5( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );

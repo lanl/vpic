@@ -88,6 +88,8 @@ option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizi
 
 option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install HDF5" OFF)
 
+option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you install OpenPM" OFF)
+
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
@@ -136,7 +138,7 @@ find_package(Threads REQUIRED)
 
 if(USE_LEGACY_SORT)
   add_definitions(-DVPIC_USE_LEGACY_SORT)
-    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
 endif(USE_LEGACY_SORT)
 
 #------------------------------------------------------------------------------#
@@ -151,7 +153,7 @@ endif()
 
 if(USE_PTHREADS)
   add_definitions(-DVPIC_USE_PTHREADS)
-    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
 endif(USE_PTHREADS)
 
 if(USE_OPENMP)
@@ -307,30 +309,6 @@ if(ENABLE_COVERAGE_BUILD)
     set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} --coverage")
 endif(ENABLE_COVERAGE_BUILD)
 
-# process Makefile.run.in to get a simple Makefile.run for a run. Points to
-# local built exe wrapper, and has example deck/platform.
-configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
-  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
-
-# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
-get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
-#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
-foreach(d ${ALL_DEFINES})
-    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
-endforeach()
-
-# install script
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
-install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
-  DESTINATION bin
-  RENAME vpic
-  PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-    )
-
 install(FILES deck/main.cc deck/wrapper.cc DESTINATION share/vpic)
 install(FILES deck/wrapper.h DESTINATION include/vpic)
 install(DIRECTORY src/ DESTINATION include/vpic
@@ -361,21 +339,21 @@ else()
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 
-# Configure local script to generate bin/vpic
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
-
-file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
-  DESTINATION ${CMAKE_BINARY_DIR}/bin
-  FILE_PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-)
-
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
+
+if(USE_OPENPMD)
+    # Enable OpenPMD, and the relevant defines
+    message("Using OpenPMD")
+    find_package(openPMD REQUIRED)
+    add_definitions(-DVPIC_ENABLE_OPENPMD)
+    link_libraries(openPMD::openPMD)
+    get_target_property(openPMD_LIBRARIES openPMD::openPMD LOCATION)
+    string(REPLACE ";" " " string_libraries ${openPMD_LIBRARIES})
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+endif(USE_OPENPMD)
+message(${VPIC_CXX_LIBRARIES})
 
 macro(build_a_vpic name deck)
   if(NOT EXISTS ${deck})
@@ -434,6 +412,40 @@ if(ENABLE_PERFORMANCE_TESTS)
   include_directories(${CATCH_DIR})
   add_subdirectory(test/performance)
 endif(ENABLE_PERFORMANCE_TESTS)
-#~---------------------------------------------------------------------------~-#
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#~---------------------------------------------------------------------------~-#
+
+# process Makefile.run.in to get a simple Makefile.run for a run. Points to
+# local built exe wrapper, and has example deck/platform.
+configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
+  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
+
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
+
+# install script
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
+install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
+  DESTINATION bin
+  RENAME vpic
+  PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+)
+
+# Configure local script to generate bin/vpic
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
+
+file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
+  DESTINATION ${CMAKE_BINARY_DIR}/bin
+  FILE_PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+)
+

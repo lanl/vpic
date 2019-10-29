@@ -21,6 +21,11 @@
 #include "hdf5_header_info.h" // from vpic
 #endif
 
+#define VPIC_ENABLE_OPENPMD 1
+#ifdef VPIC_ENABLE_OPENPMD
+#include <openPMD/openPMD.hpp>
+#endif
+
 /* -1 means no ranks talk */
 #define VERBOSE_rank -1
 
@@ -265,6 +270,17 @@ vpic_simulation::dump_hydro( const char *sp_name,
   fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
 }
+
+#ifdef VPIC_ENABLE_OPENPMD
+void vpic_simulation::dump_fields_openpmd( const char *fbase, int ftag )
+{
+    openPMD::Series series = openPMD::Series(
+        "../samples/5_parallel_write.h5",
+        openPMD::AccessType::CREATE,
+        MPI_COMM_WORLD
+    );
+}
+#endif
 
 #ifdef VPIC_ENABLE_HDF5
 #define DUMP_DIR_FORMAT "./%s"

@@ -367,8 +367,9 @@ begin_diagnostics {
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
-  if( step()==-10 )         dump_fields_openpmd("fields"); // Get first valid total J
-  if( should_dump(fields) ) dump_fields_openpmd("fields");
+  std::string openpm_field_name = "fields.h5";
+  if( step()==-10 )         dump_fields_openpmd(openpm_field_name.c_str()); // Get first valid total J
+  if( should_dump(fields) ) dump_fields_openpmd(openpm_field_name.c_str());
 
   // Hydro dumps store particle charge density, current density and
   // stress-energy tensor. All these quantities are known at the time

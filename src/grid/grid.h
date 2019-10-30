@@ -138,6 +138,20 @@ typedef struct grid {
 
 #define VOXEL(x,y,z, nx,ny,nz) ((x) + ((nx)+2)*((y) + ((ny)+2)*(z)))
 
+// TODO: make the asymmetry in how nx+2 is handled more obvious
+#define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {  \
+    int _ix, _iy, _iz;                                           \
+    _ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */        \
+    _iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                   \
+    _ix -= _iy*int(nx);   /* ix = ix */                          \
+    _iz  = _iy/int(ny);   /* iz = iz */                          \
+    _iy -= _iz*int(ny);   /* iy = iy */                          \
+    (ix) = _ix;                                                  \
+    (iy) = _iy;                                                  \
+    (iz) = _iz;                                                  \
+  } END_PRIMITIVE
+
+
 // Advance the voxel mesh index (v) and corresponding voxel mesh
 // coordinates (x,y,z) in a region with min- and max-corners of
 // (xl,yl,zl) and (xh,yh,zh) of a (nx,ny,nz) resolution voxel mesh in

@@ -343,17 +343,39 @@ target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
 
+# get absolute paths to linked libraries, and their transitive dependencies
+function(openpmdreclibs tgtname outname)
+    get_target_property(PC_PRIVATE_LIBS_TGT ${tgtname} INTERFACE_LINK_LIBRARIES)
+    foreach(PC_LIB IN LISTS PC_PRIVATE_LIBS_TGT)
+       if(TARGET ${PC_LIB})
+           openpmdreclibs(${PC_LIB} ${outname})
+       else()
+           if(PC_LIB)
+               string(APPEND ${outname} " ${PC_LIB}")
+           endif()
+       endif()
+    endforeach()
+    set(${outname} ${${outname}} PARENT_SCOPE)
+endfunction()
+
 if(USE_OPENPMD)
-    # Enable OpenPMD, and the relevant defines
-    message("Using OpenPMD")
-    find_package(openPMD REQUIRED)
+    # Enable openPMD, and the relevant defines
+    find_package(openPMD REQUIRED CONFIG COMPONENTS MPI)
+    target_link_libraries(vpic PRIVATE openPMD::openPMD)
+    target_compile_definitions(vpic PRIVATE "-DVPIC_ENABLE_OPENPMD")
+
     add_definitions(-DVPIC_ENABLE_OPENPMD)
-    link_libraries(openPMD::openPMD)
+
+    # legacy stuff for 2-phase compile
     get_target_property(openPMD_LIBRARIES openPMD::openPMD LOCATION)
-    string(REPLACE ";" " " string_libraries ${openPMD_LIBRARIES})
+    string(REPLACE ";" " " string_libraries "${openPMD_LIBRARIES}")
     set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    get_target_property(openPMD_TYPE openPMD::openPMD TYPE)
+    if("${openPMD_TYPE}" STREQUAL "STATIC_LIBRARY")
+        openpmdreclibs(openPMD openPMD_TRANSITIVE_LIBS)
+        set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${openPMD_TRANSITIVE_LIBS}")
+    endif()
 endif(USE_OPENPMD)
-message(${VPIC_CXX_LIBRARIES})
 
 macro(build_a_vpic name deck)
   if(NOT EXISTS ${deck})

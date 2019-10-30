@@ -271,35 +271,102 @@ vpic_simulation::dump_hydro( const char *sp_name,
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
 }
 
+// TODO: remove this hack
+static openPMD::Series* series;
+
 #ifdef VPIC_ENABLE_OPENPMD
-void vpic_simulation::dump_fields_openpmd( const char *fbase, int ftag )
+void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
 {
-    openPMD::Series series = openPMD::Series(
-        "../samples/5_parallel_write.h5",
-        openPMD::AccessType::CREATE,
-        MPI_COMM_WORLD
-    );
+
+    // TODO: recreating the series every time is probably not what we want?
+    std::cout << "Writing openPMD data" << std::endl;
+
+    if (series == nullptr) {
+        std::cout << "init series" << std::endl;
+        series = new openPMD::Series(
+                fbase,
+                //"test_parallel_write.h5",
+                //"test_parallel_write.bp",
+                openPMD::AccessType::CREATE,
+                MPI_COMM_WORLD
+                );
+    }
+
+    std::cout << "Writing itration " << step() << std::endl;
+    auto i = series->iterations[ step() + 0 ];
+    // TODO: it would be nice to set these...
+    //series.setAuthor( "Axel Huebl <a.huebl@hzdr.de>");
+    //series.setMachine( "Hall Probe 5000, Model 3");
+    i.setAttribute( "vacuum", true);
+
+    auto cB = i.meshes["B"];
+
+    // record components
+    auto cbx = cB["x"];
+    //auto B_y = B["y"];
+    //auto B_z = B["z"];
+
+    // TODO: set unitDimension so the anaylsis software knows what fields
+    // things are
+
+    //auto dataset = api::Dataset( api::determineDatatype<float>(), {150, 300});
+    size_t gnx = (grid->nx * grid->gpx);
+    size_t gny = (grid->ny * grid->gpy);
+    size_t gnz = (grid->nz * grid->gpz);
+    openPMD::Extent global_extent = {gny, gny, gnz};
+
+    openPMD::Datatype datatype = openPMD::determineDatatype<float>();
+    openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
+
+    cbx.resetDataset(dataset);
+    //B_y.resetDataset(dataset);
+    //B_z.resetDataset(dataset);
+
+    // Convert rank to local x/y/z
+    int rx, ry, rz;
+    UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+    size_t nx = grid->nx;
+    size_t ny = grid->ny;
+    size_t nz = grid->nz;
+
+    // NOTE: this assumes a static mesh decomposition in nx/ny/nz
+    size_t global_offset_x = (nx) * rx;
+    size_t global_offset_y = (ny) * ry;
+    size_t global_offset_z = (nz) * rz;
+
+    openPMD::Offset chunk_offset = {global_offset_x, global_offset_y, global_offset_z};
+    openPMD::Extent chunk_extent = {nx, ny, nz};
+
+    // Store a local copy of the data which we pull out of the AoS
+    std::vector<float> cbx_data;
+    cbx_data.reserve(nx * ny * nz);
+
+    // We could do 1D here, but we don't really care about the ghosts, and we
+    // can thread over nz/ny (collapsed?)
+    // Go over non-ghosts and grab just that data into a dense array
+    for (size_t k = 1; k < grid->nz + 1; k++)
+    {
+        for (size_t j = 1; j < grid->ny + 1; j++)
+        {
+            for (size_t i = 1; i < grid->nx + 1; i++)
+            {
+                int local_index  = VOXEL(i-1, j-1, k-1, grid->nx-2, grid->ny-2, grid->nz-2);
+                int global_index = VOXEL(i, j, k, grid->nx, grid->ny, grid->nz);
+                cbx_data[local_index] = field_array->f[global_index].cbx;
+            }
+        }
+    }
+
+    cbx.storeChunk( cbx_data, chunk_offset, chunk_extent);
+    //B_y.storeChunk( y_data, chunk_offset, chunk_extent);
+    //B_z.storeChunk( z_data, chunk_offset, chunk_extent);
+    series->flush();
 }
 #endif
 
 #ifdef VPIC_ENABLE_HDF5
 #define DUMP_DIR_FORMAT "./%s"
-
-// TODO: rename or remove this
-#define RANK_TO_INDEX2(rank, ix, iy, iz)                                      \
-    BEGIN_PRIMITIVE                                                           \
-    {                                                                         \
-        int _ix, _iy, _iz;                                                    \
-        _ix = (rank);                         /* ix = ix+gpx*( iy+gpy*iz ) */ \
-        _iy = _ix / grid->gpx;  /* iy = iy+gpy*iz */            \
-        _ix -= _iy * grid->gpx; /* ix = ix */                   \
-        _iz = _iy / grid->gpy;  /* iz = iz */                   \
-        _iy -= _iz * grid->gpy; /* iy = iy */                   \
-        (ix) = _ix;                                                           \
-        (iy) = _iy;                                                           \
-        (iz) = _iz;                                                           \
-    }                                                                         \
-    END_PRIMITIVE
 
 /* define to do C-style indexing */
 #define hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
@@ -453,22 +520,13 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
     int gpy = grid->gpy;
     int gpz = grid->gpz;
 
-    int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-    //RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    // Convert rank to local decomposition
+    int rx, ry, rz;
+    UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
-    int _ix, _iy, _iz;
-    _ix = (mpi_rank);
-    _iy = _ix / grid->gpx;
-    _ix -= _iy * grid->gpx;
-    _iz = _iy / grid->gpy;
-    _iy -= _iz * grid->gpy;
-    int ix = _ix;
-    int iy = _iy;
-    int iz = _iz;
-
-    mpi_rank_x = ix;
-    mpi_rank_y = iy;
-    mpi_rank_z = iz;
+    mpi_rank_x = rx;
+    mpi_rank_y = ry;
+    mpi_rank_z = rz;
 
     global_offset[0] = (grid->nx) * mpi_rank_x;
     global_offset[1] = (grid->ny) * mpi_rank_y;
@@ -1028,18 +1086,6 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
 
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
-# define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
-    int _ix, _iy, _iz;                                                  \
-    _ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */       \
-    _iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                  \
-    _ix -= _iy*int(nx);   /* ix = ix */                         \
-    _iz  = _iy/int(ny);   /* iz = iz */                         \
-    _iy -= _iz*int(ny);   /* iy = iy */                         \
-    (ix) = _ix;                                                         \
-    (iy) = _iy;                                                         \
-    (iz) = _iz;                                                         \
-  } END_PRIMITIVE
-
         std::vector<int> global_pi;
         global_pi.reserve(numparticles);
         // TODO: this could be parallel
@@ -1048,6 +1094,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
             int local_i = sp->p[i].i;
 
             int ix, iy, iz, rx, ry, rz;
+
             // Convert rank to local x/y/z
             UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 

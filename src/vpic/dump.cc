@@ -271,25 +271,22 @@ vpic_simulation::dump_hydro( const char *sp_name,
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
 }
 
-// TODO: remove this hack
+#ifdef VPIC_ENABLE_OPENPMD
+
+// TODO: remove this hack, and actually store the state properly
 static openPMD::Series* series;
 
-#ifdef VPIC_ENABLE_OPENPMD
 void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
 {
-
-    // TODO: recreating the series every time is probably not what we want?
     std::cout << "Writing openPMD data" << std::endl;
 
     if (series == nullptr) {
         std::cout << "init series" << std::endl;
         series = new openPMD::Series(
-                fbase,
-                //"test_parallel_write.h5",
-                //"test_parallel_write.bp",
-                openPMD::AccessType::CREATE,
-                MPI_COMM_WORLD
-                );
+            fbase,
+            openPMD::AccessType::CREATE,
+            MPI_COMM_WORLD
+        );
     }
 
     std::cout << "Writing itration " << step() << std::endl;
@@ -300,16 +297,25 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     i.setAttribute( "vacuum", true);
 
     auto cB = i.meshes["B"];
+    auto E = i.meshes["E"];
+    auto J = i.meshes["J"];
 
     // record components
     auto cbx = cB["x"];
     auto cby = cB["y"];
     auto cbz = cB["z"];
 
+    auto Ex = E["x"];
+    auto Ey = E["y"];
+    auto Ez = E["z"];
+
+    auto Jx = J["x"];
+    auto Jy = J["y"];
+    auto Jz = J["z"];
+
     // TODO: set unitDimension so the anaylsis software knows what fields
     // things are
 
-    //auto dataset = api::Dataset( api::determineDatatype<float>(), {150, 300});
     size_t gnx = (grid->nx * grid->gpx);
     size_t gny = (grid->ny * grid->gpy);
     size_t gnz = (grid->nz * grid->gpz);
@@ -321,8 +327,14 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     cbx.resetDataset(dataset);
     cby.resetDataset(dataset);
     cbz.resetDataset(dataset);
-    //B_y.resetDataset(dataset);
-    //B_z.resetDataset(dataset);
+
+    Ex.resetDataset(dataset);
+    Ey.resetDataset(dataset);
+    Ez.resetDataset(dataset);
+
+    Jx.resetDataset(dataset);
+    Jy.resetDataset(dataset);
+    Jz.resetDataset(dataset);
 
     // Convert rank to local x/y/z
     int rx, ry, rz;
@@ -345,9 +357,27 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     std::vector<float> cby_data;
     std::vector<float> cbz_data;
 
-    cbx_data.reserve(nx * ny * nz);
-    cby_data.reserve(nx * ny * nz);
-    cbz_data.reserve(nx * ny * nz);
+    std::vector<float> ex_data;
+    std::vector<float> ey_data;
+    std::vector<float> ez_data;
+
+    std::vector<float> jx_data;
+    std::vector<float> jy_data;
+    std::vector<float> jz_data;
+
+    size_t nv = nx * ny * nz;
+
+    cbx_data.reserve(nv);
+    cby_data.reserve(nv);
+    cbz_data.reserve(nv);
+
+    ex_data.reserve(nv);
+    ey_data.reserve(nv);
+    ez_data.reserve(nv);
+
+    jx_data.reserve(nv);
+    jy_data.reserve(nv);
+    jz_data.reserve(nv);
 
     // We could do 1D here, but we don't really care about the ghosts, and we
     // can thread over nz/ny (collapsed?)
@@ -364,6 +394,14 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
                 cbx_data[local_index] = field_array->f[global_index].cbx;
                 cby_data[local_index] = field_array->f[global_index].cby;
                 cbz_data[local_index] = field_array->f[global_index].cbz;
+
+                ex_data[local_index] = field_array->f[global_index].ex;
+                ey_data[local_index] = field_array->f[global_index].ey;
+                ez_data[local_index] = field_array->f[global_index].ez;
+
+                jx_data[local_index] = field_array->f[global_index].jfx;
+                jy_data[local_index] = field_array->f[global_index].jfy;
+                jz_data[local_index] = field_array->f[global_index].jfz;
             }
         }
     }
@@ -371,6 +409,14 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     cbx.storeChunk( cbx_data, chunk_offset, chunk_extent);
     cby.storeChunk( cby_data, chunk_offset, chunk_extent);
     cbz.storeChunk( cbz_data, chunk_offset, chunk_extent);
+
+    Ex.storeChunk( ex_data, chunk_offset, chunk_extent);
+    Ey.storeChunk( ey_data, chunk_offset, chunk_extent);
+    Ez.storeChunk( ez_data, chunk_offset, chunk_extent);
+
+    Jx.storeChunk( jx_data, chunk_offset, chunk_extent);
+    Jy.storeChunk( jy_data, chunk_offset, chunk_extent);
+    Jz.storeChunk( jz_data, chunk_offset, chunk_extent);
 
     series->flush();
 }

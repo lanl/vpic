@@ -367,7 +367,9 @@ begin_diagnostics {
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
+
   std::string openpm_field_name = "fields.h5";
+  //std::string openpm_field_name = "fields.bp";
   if( step()==-10 )         dump_fields_openpmd(openpm_field_name.c_str()); // Get first valid total J
   if( should_dump(fields) ) dump_fields_openpmd(openpm_field_name.c_str());
 

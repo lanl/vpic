@@ -303,8 +303,8 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
 
     // record components
     auto cbx = cB["x"];
-    //auto B_y = B["y"];
-    //auto B_z = B["z"];
+    auto cby = cB["y"];
+    auto cbz = cB["z"];
 
     // TODO: set unitDimension so the anaylsis software knows what fields
     // things are
@@ -319,6 +319,8 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
 
     cbx.resetDataset(dataset);
+    cby.resetDataset(dataset);
+    cbz.resetDataset(dataset);
     //B_y.resetDataset(dataset);
     //B_z.resetDataset(dataset);
 
@@ -340,7 +342,12 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
 
     // Store a local copy of the data which we pull out of the AoS
     std::vector<float> cbx_data;
+    std::vector<float> cby_data;
+    std::vector<float> cbz_data;
+
     cbx_data.reserve(nx * ny * nz);
+    cby_data.reserve(nx * ny * nz);
+    cbz_data.reserve(nx * ny * nz);
 
     // We could do 1D here, but we don't really care about the ghosts, and we
     // can thread over nz/ny (collapsed?)
@@ -353,14 +360,18 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
             {
                 int local_index  = VOXEL(i-1, j-1, k-1, grid->nx-2, grid->ny-2, grid->nz-2);
                 int global_index = VOXEL(i, j, k, grid->nx, grid->ny, grid->nz);
+
                 cbx_data[local_index] = field_array->f[global_index].cbx;
+                cby_data[local_index] = field_array->f[global_index].cby;
+                cbz_data[local_index] = field_array->f[global_index].cbz;
             }
         }
     }
 
     cbx.storeChunk( cbx_data, chunk_offset, chunk_extent);
-    //B_y.storeChunk( y_data, chunk_offset, chunk_extent);
-    //B_z.storeChunk( z_data, chunk_offset, chunk_extent);
+    cby.storeChunk( cby_data, chunk_offset, chunk_extent);
+    cbz.storeChunk( cbz_data, chunk_offset, chunk_extent);
+
     series->flush();
 }
 #endif

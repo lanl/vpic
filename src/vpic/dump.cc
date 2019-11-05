@@ -1224,9 +1224,9 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
         hsize_t memspace_count_temp = numparticles * 8;
         hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
 
-        // Don't need, can just use H5S_ALL
-        //hsize_t linearspace_count_temp = numparticles;
-        //hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
+        // The converted global_ids are stored compact, not strided
+        hsize_t linearspace_count_temp = numparticles;
+        hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
 
         plist_id = H5Pcreate(H5P_DATASET_XFER);
 
@@ -1273,6 +1273,11 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
             // Calculate local ix/iy/iz
             UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
 
+            // Account for the "first" ghost cell
+            ix = ix - 1;
+            iy = iy - 1;
+            iz = iz - 1;
+
             // Convert ix/iy/iz to global
             int gix = ix + (grid->nx * (rx));
             int giy = iy + (grid->ny * (ry));
@@ -1292,7 +1297,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
 
 #undef UNVOXEL
         dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, filespace, plist_id, global_pi.data());
+        ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
         H5Dclose(dset_id);
 
 #else

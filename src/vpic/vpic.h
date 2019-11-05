@@ -380,8 +380,15 @@ protected:
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
-//#ifdef  // TODO: add ifdef
+#ifdef VPIC_ENABLE_OPENPMD
   void dump_fields_openpmd( const char *fbase, int fname_tag = 1 );
+  void dump_particles_openpmd(
+      const char *sp_name,
+      const char *fbase,
+      int ftag = 1
+  );
+#endif
+
 #ifdef VPIC_ENABLE_HDF5
   void dump_particles_hdf5( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );

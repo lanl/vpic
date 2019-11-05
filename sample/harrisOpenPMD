@@ -390,7 +390,7 @@ begin_diagnostics {
   // are tagged with step(). However, if a "0" is added to the call, the
   // filename will not be tagged. Particle dumps are in a binary format.
   // Each rank makes a particle dump.
-  //if( should_dump(eparticle) ) dump_particles_hdf5("electron","eparticle");
+  if( should_dump(eparticle) ) dump_particles_openpmd("electron","eparticle");
   //if( should_dump(iparticle) ) dump_particles_hdf5("ion",     "iparticle");
 
   // A checkpt is made by calling checkpt( fbase, tag ) where fname is a string

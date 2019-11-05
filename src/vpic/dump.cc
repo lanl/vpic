@@ -21,7 +21,6 @@
 #include "hdf5_header_info.h" // from vpic
 #endif
 
-#define VPIC_ENABLE_OPENPMD 1
 #ifdef VPIC_ENABLE_OPENPMD
 #include <openPMD/openPMD.hpp>
 #endif
@@ -44,6 +43,39 @@ int vpic_simulation::dump_mkdir(const char * dname) {
 int vpic_simulation::dump_cwd(char * dname, size_t size) {
 	return FileUtils::getCurrentWorkingDirectory(dname, size);
 } // dump_mkdir
+
+
+// TODO: move this somewhere more sensible
+std::array<int, 4> global_particle_index(int local_i, grid_t* grid, int rank)
+{
+    int ix, iy, iz, rx, ry, rz;
+    // Convert rank to local x/y/z
+    UNVOXEL(rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+    // Calculate local ix/iy/iz
+    UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
+
+    // Account for the "first" ghost cell
+    ix = ix - 1;
+    iy = iy - 1;
+    iz = iz - 1;
+
+    // Convert ix/iy/iz to global
+    int gix = ix + (grid->nx * (rx));
+    int giy = iy + (grid->ny * (ry));
+    int giz = iz + (grid->nz * (rz));
+
+    // calculate global grid sizes
+    int gnx = grid->nx * grid->gpx;
+    int gny = grid->ny * grid->gpy;
+    int gnz = grid->nz * grid->gpz;
+
+    // TODO: find a better way to account for the hard coded ghosts in VOXEL
+    int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
+
+    return { global_i, gix, giy, giz };
+}
+
 
 /*****************************************************************************
  * ASCII dump IO
@@ -276,6 +308,86 @@ vpic_simulation::dump_hydro( const char *sp_name,
 // TODO: remove this hack, and actually store the state properly
 static openPMD::Series* series;
 
+void
+vpic_simulation::dump_particles_openpmd( const char *sp_name,
+                                 const char *fbase,
+                                 int ftag )
+{
+
+    species_t *sp = find_species_name( sp_name, species_list );
+
+    if (series == nullptr) {
+        std::cout << "init series" << std::endl;
+        series = new openPMD::Series(
+            fbase,
+            openPMD::AccessType::CREATE,
+            MPI_COMM_WORLD
+        );
+    }
+
+    auto i = series->iterations[ step() ];
+
+    // TODO: set these
+    i.setTime( (float)step() );
+    i.setDt(1.0);
+    i.setTimeUnitSI(1.0);
+
+    auto& p = i.particles[sp_name];
+    //openPMD::ParticleSpecies& p = i.particles[sp_name];
+
+    const int np = sp->np;
+
+    // TODO: this could be a function call as it's used elsewhere (in hdf5)
+    unsigned long long total_particles, offset;
+    unsigned long long numparticles = np;
+    MPI_Allreduce(&numparticles, &total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Scan(&numparticles, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    offset -= numparticles;
+
+    openPMD::Extent global_extent = {total_particles};
+    openPMD::Datatype datatype = openPMD::determineDatatype<float>();
+    openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
+
+    auto px = p["position"]["x"];
+    auto pxo = p["positionOffset"]["x"];
+
+    px.resetDataset(dataset);
+    pxo.resetDataset(dataset);
+
+    // convert data to SoA, allowing the user to chunk the operation
+    const int max_chunk = 32768*8; // 1MB SoA
+    // Loop over all particles in chunks
+    for (int i = 0; i < np; i += max_chunk)
+    {
+        // We have to be careful as the last chunk may not be full
+        // Find how many are left and do that many
+        size_t to_write = std::min(np-i, max_chunk);
+
+        // Convert the chunk ready to write
+        std::vector<float> x_pos;
+        std::vector<float> x_off;
+        x_pos.reserve(to_write);
+        x_off.reserve(to_write);
+
+        for (int j = 0; j < to_write; j++)
+        {
+            // TODO: do I need to center the particles?
+            auto& particle = sp->p[i+j];
+            x_pos[j] = particle.dx;
+            std::array<int, 4> gi = global_particle_index(particle.i, grid, rank());
+            x_off[j] = (float)gi[1];
+        }
+
+        // Base offset plus i to account for chunks
+        auto o = openPMD::Offset{offset + i};
+        auto e = openPMD::Extent{to_write};
+        px.storeChunk(x_pos, o, e);
+        pxo.storeChunk(x_off, o, e);
+    }
+
+
+}
+
 void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
 {
     std::cout << "Writing openPMD data" << std::endl;
@@ -290,7 +402,7 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     }
 
     std::cout << "Writing itration " << step() << std::endl;
-    auto i = series->iterations[ step() + 0 ];
+    auto i = series->iterations[ step() ];
     // TODO: it would be nice to set these...
     //series.setAuthor( "Axel Huebl <a.huebl@hzdr.de>");
     //series.setMachine( "Hall Probe 5000, Model 3");
@@ -378,6 +490,8 @@ void vpic_simulation::dump_fields_openpmd(const char *fbase, int ftag)
     jx_data.reserve(nv);
     jy_data.reserve(nv);
     jz_data.reserve(nv);
+
+    // TODO: make this AoS to SoA conversion a function
 
     // We could do 1D here, but we don't really care about the ghosts, and we
     // can thread over nz/ny (collapsed?)
@@ -1143,6 +1257,7 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
 
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
+        // TODO: make a function out of this too, its used in openpmd
         std::vector<int> global_pi;
         global_pi.reserve(numparticles);
         // TODO: this could be parallel

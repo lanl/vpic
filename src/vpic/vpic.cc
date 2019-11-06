@@ -72,7 +72,7 @@ reanimate_vpic_simulation( vpic_simulation * vpic ) {
 }
 
 
-vpic_simulation::vpic_simulation() : dump_strategy(BinaryDump( rank(), nproc() ))
+vpic_simulation::vpic_simulation()
 {
   // TODO: why is this a good idea?
   // Is this just trying to 0 initialize everything?
@@ -112,6 +112,11 @@ vpic_simulation::vpic_simulation() : dump_strategy(BinaryDump( rank(), nproc() )
   REGISTER_OBJECT( this, checkpt_vpic_simulation,
                    restore_vpic_simulation, reanimate_vpic_simulation );
 
+  // Initialize the dump strategy to use the binary dumpin, assuming the user
+  // may overwrite this later
+  dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
+
+  // TODO: this this still makes sense now we have a dump strategy
 #ifdef VPIC_ENABLE_HDF5
   // Default init hdf5 dump flags
   field_interval = 1;

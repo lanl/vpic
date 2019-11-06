@@ -384,7 +384,9 @@ protected:
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
-  Dump_Strategy  dump_strategy;
+  // Very likely a user will forgot to delete this if they change the strategy,
+  // a smart ptr will save us from the small leak
+  std::unique_ptr<Dump_Strategy> dump_strategy;
 
 #ifdef VPIC_ENABLE_HDF5
   // Declare vars to use

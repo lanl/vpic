@@ -12,6 +12,8 @@
 #ifndef _species_advance_aos_h_
 #define _species_advance_aos_h_
 
+// TODO: should we restrict the direct include of this header?
+
 typedef int32_t species_id; // Must be 32-bit wide for particle_injector_t
 
 // FIXME: Eventually particle_t (definitely) and their other formats

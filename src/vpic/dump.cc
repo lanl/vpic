@@ -44,7 +44,7 @@ void vpic_simulation::dump_particles( const char *sp_name,
                                  int ftag )
 {
     species_t * sp = find_species_name(sp_name, species_list);
-    dump_strategy.dump_particles(
+    dump_strategy->dump_particles(
         fbase,
         sp,
         grid,
@@ -54,12 +54,28 @@ void vpic_simulation::dump_particles( const char *sp_name,
     );
 }
 
-void dump_fields( const char *fbase, int fname_tag = 1 )
+void vpic_simulation::dump_fields( const char *fbase, int ftag )
 {
+    dump_strategy->dump_fields(
+        fbase,
+        step(),grid,
+        field_array,
+        ftag
+    );
 }
 
-void dump_hydro( const char *sp_name, const char *fbase, int fname_tag = 1 )
+void vpic_simulation::dump_hydro( const char *sp_name, const char *fbase, int ftag )
 {
+    species_t * sp = find_species_name(sp_name, species_list);
+    dump_strategy->dump_hydro(
+        fbase,
+        step(),
+        hydro_array,
+        sp,
+        interpolator_array,
+        grid,
+        ftag
+    );
 }
 
 void

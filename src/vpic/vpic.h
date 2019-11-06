@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <cmath>
+#include <memory> // unique_ptr
 
 #include "../boundary/boundary.h"
 #include "../collision/collision.h"

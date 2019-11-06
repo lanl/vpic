@@ -22,6 +22,9 @@
 #include <openPMD/openPMD.hpp>
 #endif
 
+// Runtime inheritance is obviously not very "VPIC like", as we will [probably]
+// incur a penalty for the vtable lookup, but given we're about to do IO this
+// is very negligible.
 class Dump_Strategy {
     public:
     int rank, nproc;

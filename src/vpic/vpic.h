@@ -24,6 +24,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "dump_strategy.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -33,6 +34,144 @@
 #define NVARHISMX 250
 #endif
 //  #include "dumpvars.h"
+
+
+// TODO: move these to a better header?
+#ifdef VPIC_ENABLE_HDF5
+struct field_dump_flag_t
+{
+  bool ex = true, ey = true, ez = true, div_e_err = true;
+  bool cbx = true, cby = true, cbz = true, div_b_err = true;
+  bool tcax = true, tcay = true, tcaz = true, rhob = true;
+  bool jfx = true, jfy = true, jfz = true, rhof = true;
+  bool ematx = true, ematy = true, ematz = true, nmat = true;
+  bool fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  void disableE()
+  {
+    ex = false, ey = false, ez = false, div_e_err = false;
+  }
+
+  void disableCB()
+  {
+    cbx = false, cby = false, cbz = false, div_b_err = false;
+  }
+
+  void disableTCA()
+  {
+    tcax = false, tcay = false, tcaz = false, rhob = false;
+  }
+
+  void disableJF()
+  {
+    jfx = false, jfy = false, jfz = false, rhof = false;
+  }
+
+  void disableEMAT()
+  {
+    ematx = false, ematy = false, ematz = false, nmat = false;
+  }
+
+  void disableFMAT()
+  {
+    fmatx = false, fmaty = false, fmatz = false, cmat = false;
+  }
+
+  void resetToDefaults()
+  {
+    ex = true, ey = true, ez = true, div_e_err = true;
+    cbx = true, cby = true, cbz = true, div_b_err = true;
+    tcax = true, tcay = true, tcaz = true, rhob = true;
+    jfx = true, jfy = true, jfz = true, rhof = true;
+    ematx = true, ematy = true, ematz = true, nmat = true;
+    fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  }
+
+  bool enabledE()
+  {
+    return ex && ey && ez;
+  }
+
+  bool enabledCB()
+  {
+    return cbx && cby && cbz;
+  }
+
+  bool enabledTCA()
+  {
+    return tcax && tcay && tcaz;
+  }
+
+  bool enabledJF()
+  {
+    return jfx && jfy && jfz;
+  }
+
+  bool enabledEMAT()
+  {
+    return ematx && ematy && ematz;
+  }
+
+  bool enabledFMAT()
+  {
+    return fmatx && fmaty && fmatz;
+  }
+};
+
+struct hydro_dump_flag_t
+{
+  bool jx = true, jy = true, jz = true, rho = true;
+  bool px = true, py = true, pz = true, ke = true;
+  bool txx = true, tyy = true, tzz = true;
+  bool tyz = true, tzx = true, txy = true;
+
+  void disableJ()
+  {
+    jx = false, jy = false, jz = false, rho = false;
+  }
+
+  void disableP()
+  {
+    px = false, py = false, pz = false, ke = false;
+  }
+
+  void disableTD() //Stress diagonal
+  {
+    txx = false, tyy = false, tzz = false;
+  }
+
+  void disableTOD() //Stress off-diagonal
+  {
+    tyz = false, tzx = false, txy = false;
+  }
+  void resetToDefaults()
+  {
+    jx = true, jy = true, jz = true, rho = true;
+    px = true, py = true, pz = true, ke = true;
+    txx = true, tyy = true, tzz = true;
+    tyz = true, tzx = true, txy = true;
+  }
+
+  bool enabledJ()
+  {
+    return jx && jy && jz;
+  }
+
+  bool enabledP()
+  {
+    return px && py && pz;
+  }
+
+  bool enabledTD()
+  {
+    return txx && tyy && tzz;
+  }
+
+  bool enabledTOD()
+  {
+    return tyz && tzx && txy;
+  }
+};
+#endif
 
 typedef FileIO FILETYPE;
 
@@ -149,9 +288,12 @@ protected:
   int field_interval;
   int particle_interval;
 
-  size_t nxout, nyout, nzout;
+  // TODO: these can probably now be removed, as they should only be used by dump?
+  // TODO: check if any decks used them
+  //size_t nxout, nyout, nzout;
+  //float dxout, dyout, dzout;
+
   size_t px, py, pz;
-  float dxout, dyout, dzout;
 
   int ndfld;
   int ndhyd;
@@ -198,7 +340,7 @@ protected:
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
- 
+
   char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------
@@ -223,7 +365,7 @@ protected:
   ///////////////
   // Dump helpers
 
-  int dump_mkdir(const char * dname);
+  static int dump_mkdir(const char * dname);
   int dump_cwd(char * dname, size_t size);
 
   // Text dumps
@@ -233,11 +375,24 @@ protected:
 
   // Binary dumps
   void dump_grid( const char *fbase );
+
   void dump_fields( const char *fbase, int fname_tag = 1 );
+
   void dump_hydro( const char *sp_name, const char *fbase,
                    int fname_tag = 1 );
+
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
+
+  // Very likely a user will forgot to delete this if they change the strategy,
+  // a smart ptr will save us from the small leak
+  std::unique_ptr<Dump_Strategy> dump_strategy;
+
+#ifdef VPIC_ENABLE_HDF5
+  // Declare vars to use
+  hydro_dump_flag_t hydro_dump_flag;
+  field_dump_flag_t field_dump_flag;
+#endif
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);
@@ -540,7 +695,8 @@ protected:
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w ) {
+                       float ux, float uy, float uz, float w )
+  {
     particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -553,7 +709,8 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w,
                        float dispx, float dispy, float dispz,
-                       int update_rhob ) {
+                       int update_rhob )
+  {
     particle_t       * RESTRICT p  = sp->p  + (sp->np++);
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;

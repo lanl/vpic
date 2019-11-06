@@ -1,3 +1,5 @@
+// WARNING: THIS IS NOT A REAL WEIBEL TEST
+
 //#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
 #define CATCH_CONFIG_RUNNER // We will provide a custom main
 #include "catch.hpp"
@@ -77,9 +79,9 @@ begin_initialization {
   double Ly        = 1; //0.0721875*de;  // How big should the box be in the y direction
   double Lz        = 1; //0.0721875*de;  // How big should the box be in the z direction
   double nx        = 16; //64; //64; //32;    // Global resolution in the x direction
-  double ny        = 1;    // Global resolution in the y direction
-  double nz        = 1; //32;     // Global resolution in the z direction
-  double nppc      = 200; //800; //200; //2048; //1024; //128;    // Average number of macro particles per cell (both species combined!)
+  double ny        = 16;    // Global resolution in the y direction
+  double nz        = 16; //32;     // Global resolution in the z direction
+  double nppc      = 16; //800; //200; //2048; //1024; //128;    // Average number of macro particles per cell (both species combined!)
   double cfl_req   = 0.99f; //0.99;  // How close to Courant should we try to run
   double wpedt_max = 0.36;  // How big a timestep is allowed if Courant is not too restrictive
   double damp      = 0.0; // Level of radiation damping
@@ -116,7 +118,7 @@ begin_initialization {
   ////////////////////////////////////////
   // Setup high level simulation parmeters
 
-  num_step             = 700; //4000; // int(tauwpe/(wpe*dt));
+  num_step             = 50; //4000; // int(tauwpe/(wpe*dt));
   status_interval      = 0; //2000;
   sync_shared_interval = 0; //status_interval;
   clean_div_e_interval = 0; //turn off cleaning (GY)//status_interval;

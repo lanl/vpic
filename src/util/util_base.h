@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -21,7 +21,7 @@
 #endif
 
 // C99 does requires some key macros of stdint to only be defined in
-// C++ implementations if explicitly requested. 
+// C++ implementations if explicitly requested.
 
 #define __STDC_LIMIT_MACROS
 
@@ -102,7 +102,7 @@ typedef struct collective collective_t;
 
 #ifndef RESTRICT
 #define RESTRICT __restrict
-#endif 
+#endif
 
 // Normal pointers (e.g. a *) are in whatever address space the given
 // compile unit uses.  However, sometimes it is necessary to declare
@@ -154,7 +154,7 @@ typedef struct collective collective_t;
 // allow correct autogeneration when no alignment necessary ... sigh
 // ...
 
-#define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) ) 
+#define PAD(s,a) ( (a) - ( (s) & ( (a)-1 ) ) )
 
 // POW2_CEIL rounds "u" up to the nearest multiple of the power of two
 // "a".  If u is a multiple of "a", its value is unchanged.  "a" should
@@ -344,7 +344,7 @@ void detect_old_style_arguments(int* pargc, char *** pargv);
 #define MALLOC(x,n)                                                    \
   util_malloc( "MALLOC( "#x", "#n" (%lu bytes) ) at "                  \
                __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ") failed", \
-               &(x), (n)*sizeof(*(x)) ) 
+               &(x), (n)*sizeof(*(x)) )
 
 void
 util_malloc( const char * err_fmt, // Has exactly one %lu in it
@@ -370,7 +370,7 @@ util_free( void * mem_ref );
                                          #n" (%lu bytes), "                    \
                                          #a" (%lu bytes) ) at "                \
                        __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ") failed", \
-                       &(x), (n)*sizeof(*(x)), (a) ) 
+                       &(x), (n)*sizeof(*(x)), (a) )
 
 
 void

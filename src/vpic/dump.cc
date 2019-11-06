@@ -10,9 +10,10 @@
  */
 
 #include <cassert>
+#include <unordered_map>
 
-#include "vpic.h"
 #include "dumpmacros.h"
+#include "vpic.h"
 #include "../util/io/FileUtils.h"
 
 /* -1 means no ranks talk */
@@ -21,6 +22,10 @@
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
 // COMPATIBLE WITH EXISTING EXTERNAL 3RD PARTY VISUALIZATION SOFTWARE.
 // IN THE LONG RUN, THIS EXTERNAL SOFTWARE WILL NEED TO BE UPDATED.
+
+// TODO: this should live somewhere more sensible, but it's better than the
+// global static it replaces
+std::unordered_map<species_id, size_t> tframe_map;
 
 int vpic_simulation::dump_mkdir(const char * dname) {
 	return FileUtils::makeDirectory(dname);
@@ -33,6 +38,45 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
 /*****************************************************************************
  * ASCII dump IO
  *****************************************************************************/
+
+void vpic_simulation::dump_particles( const char *sp_name,
+                                 const char *fbase,
+                                 int ftag )
+{
+    species_t * sp = find_species_name(sp_name, species_list);
+    dump_strategy->dump_particles(
+        fbase,
+        sp,
+        grid,
+        step(),
+        interpolator_array,
+        ftag
+    );
+}
+
+void vpic_simulation::dump_fields( const char *fbase, int ftag )
+{
+    dump_strategy->dump_fields(
+        fbase,
+        step(),grid,
+        field_array,
+        ftag
+    );
+}
+
+void vpic_simulation::dump_hydro( const char *sp_name, const char *fbase, int ftag )
+{
+    species_t * sp = find_species_name(sp_name, species_list);
+    dump_strategy->dump_hydro(
+        fbase,
+        step(),
+        hydro_array,
+        sp,
+        interpolator_array,
+        grid,
+        ftag
+    );
+}
 
 void
 vpic_simulation::dump_energies( const char *fname,
@@ -115,26 +159,6 @@ vpic_simulation::dump_materials( const char *fname ) {
  * Binary dump IO
  *****************************************************************************/
 
-/*
-enum dump_types {
-  grid_dump = 0,
-  field_dump = 1,
-  hydro_dump = 2,
-  particle_dump = 3,
-  restart_dump = 4
-};
-*/
-
-// TODO: should this be an enum?
-namespace dump_type {
-  const int grid_dump = 0;
-  const int field_dump = 1;
-  const int hydro_dump = 2;
-  const int particle_dump = 3;
-  const int restart_dump = 4;
-  const int history_dump = 5;
-} // namespace
-
 void
 vpic_simulation::dump_grid( const char *fbase ) {
   char fname[256];
@@ -149,14 +173,14 @@ vpic_simulation::dump_grid( const char *fbase ) {
   if( status==fail ) ERROR(( "Could not open \"%s\".", fname ));
 
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = grid->nx;
-  nyout = grid->ny;
-  nzout = grid->nz;
-  dxout = grid->dx;
-  dyout = grid->dy;
-  dzout = grid->dz;
+  size_t nxout = grid->nx;
+  size_t nyout = grid->ny;
+  size_t nzout = grid->nz;
+  float dxout = grid->dx;
+  float dyout = grid->dy;
+  float dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, fileIO, step(), rank(), nproc());
 
   dim[0] = 3;
   dim[1] = 3;
@@ -176,147 +200,6 @@ vpic_simulation::dump_grid( const char *fbase ) {
   fileIO.write( grid->neighbor, dim[0]*dim[1]*dim[2]*dim[3] );
 
   if( fileIO.close() ) ERROR(( "File close failed on dump grid!!!" ));
-}
-
-void
-vpic_simulation::dump_fields( const char *fbase, int ftag ) {
-  char fname[256];
-  FileIO fileIO;
-  int dim[3];
-
-  if( !fbase ) ERROR(( "Invalid filename" ));
-
-  if( rank()==0 ) MESSAGE(( "Dumping fields to \"%s\"", fbase ));
-
-  if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
-  else       sprintf( fname, "%s.%i", fbase, rank() );
-
-  FileIOStatus status = fileIO.open(fname, io_write);
-  if( status==fail ) ERROR(( "Could not open \"%s\".", fname ));
-
-  /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = grid->nx;
-  nyout = grid->ny;
-  nzout = grid->nz;
-  dxout = grid->dx;
-  dyout = grid->dy;
-  dzout = grid->dz;
-
-  WRITE_HEADER_V0( dump_type::field_dump, -1, 0, fileIO );
-
-  dim[0] = grid->nx+2;
-  dim[1] = grid->ny+2;
-  dim[2] = grid->nz+2;
-  WRITE_ARRAY_HEADER( field_array->f, 3, dim, fileIO );
-  fileIO.write( field_array->f, dim[0]*dim[1]*dim[2] );
-  if( fileIO.close() ) ERROR(( "File close failed on dump fields!!!" ));
-}
-
-void
-vpic_simulation::dump_hydro( const char *sp_name,
-                             const char *fbase,
-                             int ftag ) {
-  species_t *sp;
-  char fname[256];
-  FileIO fileIO;
-  int dim[3];
-
-  sp = find_species_name( sp_name, species_list );
-  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
-
-  clear_hydro_array( hydro_array );
-  accumulate_hydro_p( hydro_array, sp, interpolator_array );
-  synchronize_hydro_array( hydro_array );
-
-  if( !fbase ) ERROR(( "Invalid filename" ));
-
-  if( rank()==0 )
-    MESSAGE(("Dumping \"%s\" hydro fields to \"%s\"",sp->name,fbase));
-
-  if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
-  else       sprintf( fname, "%s.%i", fbase, rank() );
-  FileIOStatus status = fileIO.open(fname, io_write);
-  if( status==fail) ERROR(( "Could not open \"%s\".", fname ));
-
-  /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = grid->nx;
-  nyout = grid->ny;
-  nzout = grid->nz;
-  dxout = grid->dx;
-  dyout = grid->dy;
-  dzout = grid->dz;
-
-  WRITE_HEADER_V0( dump_type::hydro_dump,sp->id,sp->q/sp->m,fileIO);
-
-  dim[0] = grid->nx+2;
-  dim[1] = grid->ny+2;
-  dim[2] = grid->nz+2;
-  WRITE_ARRAY_HEADER( hydro_array->h, 3, dim, fileIO );
-  fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
-  if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
-}
-
-void
-vpic_simulation::dump_particles( const char *sp_name,
-                                 const char *fbase,
-                                 int ftag ) {
-  species_t *sp;
-  char fname[256];
-  FileIO fileIO;
-  int dim[1], buf_start;
-  static particle_t * ALIGNED(128) p_buf = NULL;
-# define PBUF_SIZE 32768 // 1MB of particles
-
-  sp = find_species_name( sp_name, species_list );
-  if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
-
-  if( !fbase ) ERROR(( "Invalid filename" ));
-
-  if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
-
-  if( rank()==0 )
-    MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
-
-  if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
-  else       sprintf( fname, "%s.%i", fbase, rank() );
-  FileIOStatus status = fileIO.open(fname, io_write);
-  if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
-
-  /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = grid->nx;
-  nyout = grid->ny;
-  nzout = grid->nz;
-  dxout = grid->dx;
-  dyout = grid->dy;
-  dzout = grid->dz;
-
-  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
-
-  dim[0] = sp->np;
-  WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
-
-  // Copy a PBUF_SIZE hunk of the particle list into the particle
-  // buffer, timecenter it and write it out. This is done this way to
-  // guarantee the particle list unchanged while not requiring too
-  // much memory.
-
-  // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
-  // LARGE.
-
-  particle_t * sp_p = sp->p;      sp->p      = p_buf;
-  int sp_np         = sp->np;     sp->np     = 0;
-  int sp_max_np     = sp->max_np; sp->max_np = PBUF_SIZE;
-  for( buf_start=0; buf_start<sp_np; buf_start += PBUF_SIZE ) {
-    sp->np = sp_np-buf_start; if( sp->np > PBUF_SIZE ) sp->np = PBUF_SIZE;
-    COPY( sp->p, &sp_p[buf_start], sp->np );
-    center_p( sp, interpolator_array );
-    fileIO.write( sp->p, sp->np );
-  }
-  sp->p      = sp_p;
-  sp->np     = sp_np;
-  sp->max_np = sp_max_np;
-
-  if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }
 
 /*------------------------------------------------------------------------------
@@ -515,6 +398,8 @@ vpic_simulation::global_header( const char * base,
   if( fileIO.close() ) ERROR(( "File close failed on global header!!!" ));
 }
 
+// TODO: why is there field_dump and dump_fields?
+// TODO: this could probably move into the dump_strategy
 void
 vpic_simulation::field_dump( DumpParameters & dumpParams ) {
 
@@ -553,12 +438,12 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
 # define f(x,y,z) f[ VOXEL(x,y,z, grid->nx,grid->ny,grid->nz) ]
 
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = (grid->nx)/istride;
-  nyout = (grid->ny)/jstride;
-  nzout = (grid->nz)/kstride;
-  dxout = (grid->dx)*istride;
-  dyout = (grid->dy)*jstride;
-  dzout = (grid->dz)*kstride;
+  size_t nxout = (grid->nx)/istride;
+  size_t nyout = (grid->ny)/jstride;
+  size_t nzout = (grid->nz)/kstride;
+  float dxout = (grid->dx)*istride;
+  float dyout = (grid->dy)*jstride;
+  float dzout = (grid->dz)*kstride;
 
   /* Banded output will write data as a single block-array as opposed to
    * the Array-of-Structure format that is used for native storage.
@@ -570,7 +455,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
 
   if(dumpParams.format == band) {
 
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO, step(), rank(), nproc());
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -631,7 +516,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
 
   } else { // band_interleave
 
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO, step(), rank(), nproc());
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -698,16 +583,13 @@ vpic_simulation::hydro_dump( const char * speciesname,
 
   int dim[3];
 
-  /* define to do C-style indexing */
-# define hydro(x,y,z) hydro_array->h[VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)]
-
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-  nxout = (grid->nx)/istride;
-  nyout = (grid->ny)/jstride;
-  nzout = (grid->nz)/kstride;
-  dxout = (grid->dx)*istride;
-  dyout = (grid->dy)*jstride;
-  dzout = (grid->dz)*kstride;
+  size_t nxout = (grid->nx)/istride;
+  size_t nyout = (grid->ny)/jstride;
+  size_t nzout = (grid->nz)/kstride;
+  float dxout = (grid->dx)*istride;
+  float dyout = (grid->dy)*jstride;
+  float dzout = (grid->dz)*kstride;
 
   /* Banded output will write data as a single block-array as opposed to
    * the Array-of-Structure format that is used for native storage.
@@ -719,7 +601,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
    */
   if(dumpParams.format == band) {
 
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO, step(), rank(), nproc());
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -763,7 +645,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
 
   } else { // band_interleave
 
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO, step(), rank(), nproc());
 
     dim[0] = nxout;
     dim[1] = nyout;

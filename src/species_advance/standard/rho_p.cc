@@ -17,11 +17,12 @@
 // interpolation is used.  rhof is known at the nodes at the same time
 // as particle positions.  No effort is made to fix up edges of the
 // computational domain; see note in synchronize_rhob about why this
-// is done this way.  All particles on the list must be inbounds.
+// is done this way.  All particles on the list must be in bounds.
 
 void
 accumulate_rho_p( /**/  field_array_t * RESTRICT fa,
-                  const species_t     * RESTRICT sp ) {
+                  const species_t     * RESTRICT sp )
+{
   if( !fa || !sp || fa->g!=sp->g ) ERROR(( "Bad args" ));
 
   /**/  field_t    * RESTRICT ALIGNED(128) f = fa->f;
@@ -126,7 +127,8 @@ void
 accumulate_rhob( field_t          * RESTRICT ALIGNED(128) f,
                  const particle_t * RESTRICT ALIGNED(32)  p,
                  const grid_t     * RESTRICT              g,
-                 const float                              qsp ) {
+                 const float                              qsp )
+{
 # if 1
 
   // See note in rhof for why this variant is used.

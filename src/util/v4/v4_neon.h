@@ -1,19 +1,31 @@
-#ifndef _v4_avx_h_
-#define _v4_avx_h_
+#ifndef _v4_neon_h_
+#define _v4_neon_h_
 
 #ifndef IN_v4_h
-#error "Do not include v4_avx.h directly; use v4.h"
+#error "Do not include v4_neon.h directly; use v4.h"
 #endif
 
-#include <xmmintrin.h>
+#include <arm_neon.h>
 #include <math.h>
 
 #define V4_ACCELERATION
-#define V4_AVX_ACCELERATION
+#define V4_NEON_ACCELERATION
 
 #ifndef ALIGNED
 #define ALIGNED(n)
 #endif
+
+// This does not work with gcc 5.3.1 and the -fopenmp-simd
+// flag.  Does not seem to work with -fopenmp either.  Not
+// sure why.  It does work with the Intel compiler.  Need
+// to try later versions of gcc.
+// #define ALWAYS_VECTORIZE _Pragma( "omp simd" )
+
+// #define ALWAYS_VECTORIZE _Pragma( "simd" )
+
+#define ALWAYS_VECTORIZE \
+  _Pragma( "simd" ) \
+  _Pragma( "vector aligned" )
 
 #define ALWAYS_INLINE __attribute__((always_inline))
 
@@ -22,14 +34,6 @@ namespace v4
   class v4;
   class v4int;
   class v4float;
-
-  template<int i0, int i1, int i2, int i3>
-  struct permute
-  {
-    constexpr static int value = i0 + i1*4 + i2*16 + i3*64;
-  };
-
-  #define PERM(i0,i1,i2,i3) ((i0) + (i1)*4 + (i2)*16 + (i3)*64)
 
   ////////////////
   // v4 base class
@@ -102,6 +106,28 @@ namespace v4
                                     const void * ALIGNED(16) a3,
                                     v4 &a, v4 &b, v4 &c, v4 &d ) ALWAYS_INLINE;
 
+    friend inline void load_4x8_tr( const void * ALIGNED(16) a0,
+                                    const void * ALIGNED(16) a1,
+                                    const void * ALIGNED(16) a2,
+                                    const void * ALIGNED(16) a3,
+                                    v4 &b00, v4 &b01,
+                                    v4 &b02, v4 &b03,
+                                    v4 &b04, v4 &b05,
+                                    v4 &b06, v4 &b07 ) ALWAYS_INLINE;
+
+    friend inline void load_4x16_tr( const void * ALIGNED(16) a0,
+                                     const void * ALIGNED(16) a1,
+                                     const void * ALIGNED(16) a2,
+                                     const void * ALIGNED(16) a3,
+                                     v4 &b00, v4 &b01,
+                                     v4 &b02, v4 &b03,
+                                     v4 &b04, v4 &b05,
+                                     v4 &b06, v4 &b07,
+                                     v4 &b08, v4 &b09,
+                                     v4 &b10, v4 &b11,
+                                     v4 &b12, v4 &b13,
+                                     v4 &b14, v4 &b15 ) ALWAYS_INLINE;
+
     friend inline void store_4x1_tr( const v4 &a,
                                      void *a0, void *a1, void *a2, void *a3 ) ALWAYS_INLINE;
 
@@ -124,13 +150,24 @@ namespace v4
                                      void * ALIGNED(16) a2,
                                      void * ALIGNED(16) a3 ) ALWAYS_INLINE;
 
+    friend inline void store_4x8_tr( const v4 &b00, const v4 &b01,
+                                     const v4 &b02, const v4 &b03,
+                                     const v4 &b04, const v4 &b05,
+                                     const v4 &b06, const v4 &b07,
+                                     void * ALIGNED(16) a0,
+                                     void * ALIGNED(16) a1,
+                                     void * ALIGNED(16) a2,
+                                     void * ALIGNED(16) a3 ) ALWAYS_INLINE;
+
   protected:
 
     union
     {
-      int i[4];
-      float f[4];
-      __m128 v;
+      int         i[4];
+      float       f[4];
+      int32x4_t   vsi;
+      uint32x4_t  vui;
+      float32x4_t v;
     };
 
   public:
@@ -162,7 +199,9 @@ namespace v4
   {
     v4 b;
 
-    b.v = _mm_shuffle_ps( a.v, a.v, ( n * permute<1,1,1,1>::value ) );
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[n];
 
     return b;
   }
@@ -172,78 +211,116 @@ namespace v4
   {
     v4 b;
 
-    b.v = _mm_shuffle_ps( a.v, a.v, ( permute<i0,i1,i2,i3>::value ) );
+    b.i[0] = a.i[i0];
+    b.i[1] = a.i[i1];
+    b.i[2] = a.i[i2];
+    b.i[3] = a.i[i3];
 
     return b;
   }
 
+  #define sw(x,y) x^=y, y^=x, x^=y
+
   inline void swap( v4 &a, v4 &b )
   {
-    __m128 t = a.v;
+    // __m128 a_v = a.v;
 
-    a.v = b.v;
+    // a.v = b.v;
 
-    b.v = t;
+    // b.v = a_v;
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      sw( a.i[j], b.i[j] );
   }
 
+  #if 1
   inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
   {
-    __m128 a0_v = a0.v, a1_v = a1.v, a2_v = a2.v, a3_v = a3.v, t, u;
+    float32x4x2_t r, s;
 
-    t    = _mm_unpackhi_ps( a0_v, a1_v );
-    a0_v = _mm_unpacklo_ps( a0_v, a1_v );
-    u    = _mm_unpackhi_ps( a2_v, a3_v );
-    a2_v = _mm_unpacklo_ps( a2_v, a3_v );
+    r = vtrnq_f32( a0.v, a1.v );
+    s = vtrnq_f32( a2.v, a3.v );
 
-    a1_v = _mm_movehl_ps( a2_v, a0_v );
-    a0_v = _mm_movelh_ps( a0_v, a2_v );
-    a2_v = _mm_movelh_ps( t, u );
-    a3_v = _mm_movehl_ps( u, t );
+    a0.v = vtrn1q_f64( r.val[0], s.val[0] );
+    a2.v = vtrn2q_f64( r.val[0], s.val[0] );
 
-    a0.v = a0_v;
-    a1.v = a1_v;
-    a2.v = a2_v;
-    a3.v = a3_v;
+    a1.v = vtrn1q_f64( r.val[1], s.val[1] );
+    a3.v = vtrn2q_f64( r.val[1], s.val[1] );
   }
+  #endif
+
+  #if 0
+  inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
+  {
+    float32x4_t r, s, t, u;
+
+    r = vtrn1q_f32( a0.v, a1.v );
+    s = vtrn2q_f32( a0.v, a1.v );
+
+    t = vtrn1q_f32( a2.v, a3.v );
+    u = vtrn2q_f32( a2.v, a3.v );
+
+    a0.v = vtrn1q_f64( r, t );
+    a2.v = vtrn2q_f64( r, t );
+
+    a1.v = vtrn1q_f64( s, u );
+    a3.v = vtrn2q_f64( s, u );
+  }
+  #endif
+
+  #if 0
+  // Portable version.
+  inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 )
+  {
+    sw( a0.i[1],a1.i[0] ); sw( a0.i[2],a2.i[0] ); sw( a0.i[3],a3.i[0] );
+                           sw( a1.i[2],a2.i[1] ); sw( a1.i[3],a3.i[1] );
+                                                  sw( a2.i[3],a3.i[2] );
+  }
+  #endif
+
+  #undef sw
 
   // v4 memory manipulation functions
 
   inline void load_4x1( const void * ALIGNED(16) p,
                         v4 &a )
   {
-    a.v = _mm_load_ps( ( float * ) p );
+    a.v = vld1q_f32( ( float * ) p );
   }
 
   inline void store_4x1( const v4 &a,
                          void * ALIGNED(16) p )
   {
-    _mm_store_ps( ( float * ) p, a.v );
+    vst1q_f32( ( float * ) p, a.v );
   }
 
   inline void stream_4x1( const v4 &a,
                           void * ALIGNED(16) p )
   {
-    _mm_stream_ps( ( float * ) p, a.v );
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      ( (int * ALIGNED(16) ) p )[j] = a.i[j];
   }
 
   inline void clear_4x1( void * ALIGNED(16) p )
   {
-    _mm_store_ps( ( float * ) p, _mm_setzero_ps() );
+    vst1q_f32( ( float * ) p, vdupq_n_f32( 0.0f ) );
   }
 
   inline void copy_4x1( void * ALIGNED(16) dst,
                         const void * ALIGNED(16) src )
   {
-    _mm_store_ps( ( float * ) dst, _mm_load_ps( ( const float * ) src ) );
+    vst1q_f32( ( float * ) dst, vld1q_f32( ( const float * ) src ) );
   }
 
   inline void swap_4x1( void * ALIGNED(16) a,
                         void * ALIGNED(16) b )
   {
-    __m128 t = _mm_load_ps( ( float * ) a );
+    float32x4_t t = vld1q_f32( ( float * ) a );
 
-    _mm_store_ps( ( float * ) a, _mm_load_ps( ( float * ) b ) );
-    _mm_store_ps( ( float * ) b, t );
+    vst1q_f32( ( float * ) a, vld1q_f32( ( float * ) b ) );
+    vst1q_f32( ( float * ) b, t );
   }
 
   // v4 transposed memory manipulation functions
@@ -254,10 +331,10 @@ namespace v4
                            const void *a3,
                            v4 &a )
   {
-    a.v = _mm_setr_ps( ( (const float *) a0 )[0],
-                       ( (const float *) a1 )[0],
-                       ( (const float *) a2 )[0],
-                       ( (const float *) a3 )[0] );
+    a.i[0] = ( (const int *) a0 )[0];
+    a.i[1] = ( (const int *) a1 )[0];
+    a.i[2] = ( (const int *) a2 )[0];
+    a.i[3] = ( (const int *) a3 )[0];
   }
 
   inline void load_4x2_tr( const void * ALIGNED(8) a0,
@@ -267,15 +344,21 @@ namespace v4
                            v4 &a,
                            v4 &b )
   {
-    __m128 a_v, b_v, t;
+    float32x4_t r, s, t, u, a2_v, a3_v;
 
-    b_v = _mm_setzero_ps();
+    a.v  = vld1q_f32( (const float *) a0 );
+    b.v  = vld1q_f32( (const float *) a1 );
+    a2_v = vld1q_f32( (const float *) a2 );
+    a3_v = vld1q_f32( (const float *) a3 );
 
-    t   = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *) a0 ), (__m64 *) a1 );
-    b_v = _mm_loadh_pi( _mm_loadl_pi( b_v, (__m64 *) a2 ), (__m64 *) a3 );
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
 
-    a.v = _mm_shuffle_ps( t, b_v, 0x88 );
-    b.v = _mm_shuffle_ps( t, b_v, 0xdd );
+    t = vtrn1q_f32( a2_v, a3_v );
+    u = vtrn2q_f32( a2_v, a3_v );
+
+    a.v = vtrn1q_f64( r, t );
+    b.v = vtrn1q_f64( s, u );
   }
 
   inline void load_4x3_tr( const void * ALIGNED(16) a0,
@@ -286,22 +369,22 @@ namespace v4
                            v4 &b,
                            v4 &c )
   {
-    __m128 r, s, t, u, d_v;
+    float32x4_t r, s, t, u, d_v;
 
-    a.v = _mm_load_ps( (const float *) a0 );
-    b.v = _mm_load_ps( (const float *) a1 );
-    c.v = _mm_load_ps( (const float *) a2 );
-    d_v = _mm_load_ps( (const float *) a3 );
+    a.v = vld1q_f32( (const float *) a0 );
+    b.v = vld1q_f32( (const float *) a1 );
+    c.v = vld1q_f32( (const float *) a2 );
+    d_v = vld1q_f32( (const float *) a3 );
 
-    r   = _mm_unpacklo_ps( a.v, b.v );
-    s   = _mm_unpackhi_ps( a.v, b.v );
+    r   = vtrn1q_f32( a.v, b.v );
+    s   = vtrn2q_f32( a.v, b.v );
 
-    t   = _mm_unpacklo_ps( c.v, d_v );
-    u   = _mm_unpackhi_ps( c.v, d_v );
+    t   = vtrn1q_f32( c.v, d_v );
+    u   = vtrn2q_f32( c.v, d_v );
 
-    a.v = _mm_movelh_ps( r, t );
-    b.v = _mm_movehl_ps( t, r );
-    c.v = _mm_movelh_ps( s, u );
+    a.v = vtrn1q_f64( r, t );
+    b.v = vtrn1q_f64( s, u );
+    c.v = vtrn2q_f64( r, t );
   }
 
   inline void load_4x4_tr( const void * ALIGNED(16) a0,
@@ -313,24 +396,123 @@ namespace v4
                            v4 &c,
                            v4 &d )
   {
-    __m128 r, s, t, u;
+    float32x4_t r, s, t, u;
 
-    a.v = _mm_load_ps( (const float *) a0 );
-    b.v = _mm_load_ps( (const float *) a1 );
-    c.v = _mm_load_ps( (const float *) a2 );
-    d.v = _mm_load_ps( (const float *) a3 );
+    a.v = vld1q_f32( (const float *) a0 );
+    b.v = vld1q_f32( (const float *) a1 );
+    c.v = vld1q_f32( (const float *) a2 );
+    d.v = vld1q_f32( (const float *) a3 );
 
-    r   = _mm_unpackhi_ps( a.v, b.v );
-    s   = _mm_unpacklo_ps( a.v, b.v );
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
 
-    t   = _mm_unpackhi_ps( c.v, d.v );
-    u   = _mm_unpacklo_ps( c.v, d.v );
+    t = vtrn1q_f32( c.v, d.v );
+    u = vtrn2q_f32( c.v, d.v );
 
-    a.v = _mm_movelh_ps( s, u );
-    b.v = _mm_movehl_ps( u, s );
-    c.v = _mm_movelh_ps( r, t );
-    d.v = _mm_movehl_ps( t, r );
+    a.v = vtrn1q_f64( r, t );
+    b.v = vtrn1q_f64( s, u );
+    c.v = vtrn2q_f64( r, t );
+    d.v = vtrn2q_f64( s, u );
   }
+
+  #if 1
+  inline void load_4x8_tr( const void * ALIGNED(16) a0,
+                           const void * ALIGNED(16) a1,
+                           const void * ALIGNED(16) a2,
+                           const void * ALIGNED(16) a3,
+                           v4 &b00,
+                           v4 &b01,
+                           v4 &b02,
+                           v4 &b03,
+                           v4 &b04,
+                           v4 &b05,
+                           v4 &b06,
+                           v4 &b07 )
+  {
+    float32x4x4_t mat0 = vld4q_f32( (const float *) a0 );
+    float32x4x4_t mat2 = vld4q_f32( (const float *) a2 );
+
+    b00.v = vuzp1q_f32( mat0.val[0], mat2.val[0] );
+    b01.v = vuzp1q_f32( mat0.val[1], mat2.val[1] );
+    b02.v = vuzp1q_f32( mat0.val[2], mat2.val[2] );
+    b03.v = vuzp1q_f32( mat0.val[3], mat2.val[3] );
+
+    b04.v = vuzp2q_f32( mat0.val[0], mat2.val[0] );
+    b05.v = vuzp2q_f32( mat0.val[1], mat2.val[1] );
+    b06.v = vuzp2q_f32( mat0.val[2], mat2.val[2] );
+    b07.v = vuzp2q_f32( mat0.val[3], mat2.val[3] );
+  }
+  #endif
+
+  #if 1
+  inline void load_4x16_tr( const void * ALIGNED(16) a0,
+                            const void * ALIGNED(16) a1,
+                            const void * ALIGNED(16) a2,
+                            const void * ALIGNED(16) a3,
+                            v4 &b00,
+                            v4 &b01,
+                            v4 &b02,
+                            v4 &b03,
+                            v4 &b04,
+                            v4 &b05,
+                            v4 &b06,
+                            v4 &b07,
+                            v4 &b08,
+                            v4 &b09,
+                            v4 &b10,
+                            v4 &b11,
+                            v4 &b12,
+                            v4 &b13,
+                            v4 &b14,
+                            v4 &b15 )
+  {
+    float32x4_t c00, c01, c02, c03, c04, c05, c06, c07;
+    float32x4_t c08, c09, c10, c11, c12, c13, c14, c15;
+
+    float32x4x4_t mat0 = vld4q_f32( (const float *) a0 );
+    float32x4x4_t mat1 = vld4q_f32( (const float *) a1 );
+    float32x4x4_t mat2 = vld4q_f32( (const float *) a2 );
+    float32x4x4_t mat3 = vld4q_f32( (const float *) a3 );
+
+    c00 = vuzp1q_f32( mat0.val[0], mat1.val[0] );
+    c01 = vuzp1q_f32( mat0.val[1], mat1.val[1] );
+    c02 = vuzp1q_f32( mat0.val[2], mat1.val[2] );
+    c03 = vuzp1q_f32( mat0.val[3], mat1.val[3] );
+
+    c04 = vuzp2q_f32( mat0.val[0], mat1.val[0] );
+    c05 = vuzp2q_f32( mat0.val[1], mat1.val[1] );
+    c06 = vuzp2q_f32( mat0.val[2], mat1.val[2] );
+    c07 = vuzp2q_f32( mat0.val[3], mat1.val[3] );
+
+    c08 = vuzp1q_f32( mat2.val[0], mat3.val[0] );
+    c09 = vuzp1q_f32( mat2.val[1], mat3.val[1] );
+    c10 = vuzp1q_f32( mat2.val[2], mat3.val[2] );
+    c11 = vuzp1q_f32( mat2.val[3], mat3.val[3] );
+
+    c12 = vuzp2q_f32( mat2.val[0], mat3.val[0] );
+    c13 = vuzp2q_f32( mat2.val[1], mat3.val[1] );
+    c14 = vuzp2q_f32( mat2.val[2], mat3.val[2] );
+    c15 = vuzp2q_f32( mat2.val[3], mat3.val[3] );
+
+    b00.v = vuzp1q_f32( c00, c08 );
+    b01.v = vuzp1q_f32( c01, c09 );
+    b02.v = vuzp1q_f32( c02, c10 );
+    b03.v = vuzp1q_f32( c03, c11 );
+    b04.v = vuzp1q_f32( c04, c12 );
+    b05.v = vuzp1q_f32( c05, c13 );
+    b06.v = vuzp1q_f32( c06, c14 );
+    b07.v = vuzp1q_f32( c07, c15 );
+
+    b08.v = vuzp2q_f32( c00, c08 );
+    b09.v = vuzp2q_f32( c01, c09 );
+    b10.v = vuzp2q_f32( c02, c10 );
+    b11.v = vuzp2q_f32( c03, c11 );
+    b12.v = vuzp2q_f32( c04, c12 );
+    b13.v = vuzp2q_f32( c05, c13 );
+    b14.v = vuzp2q_f32( c06, c14 );
+    b15.v = vuzp2q_f32( c07, c15 );
+  }
+  #endif
 
   inline void store_4x1_tr( const v4 &a,
                             void *a0,
@@ -338,10 +520,10 @@ namespace v4
                             void *a2,
                             void *a3 )
   {
-    ( (float *) a0 )[0] = a.f[0];
-    ( (float *) a1 )[0] = a.f[1];
-    ( (float *) a2 )[0] = a.f[2];
-    ( (float *) a3 )[0] = a.f[3];
+    ( (int *) a0 )[0] = a.i[0];
+    ( (int *) a1 )[0] = a.i[1];
+    ( (int *) a2 )[0] = a.i[2];
+    ( (int *) a3 )[0] = a.i[3];
   }
 
   inline void store_4x2_tr( const v4 &a,
@@ -351,17 +533,29 @@ namespace v4
                             void * ALIGNED(8) a2,
                             void * ALIGNED(8) a3 )
   {
-    __m128 t;
+    // __m128 a_v = a.v, b_v = b.v, t;
 
-    t = _mm_unpacklo_ps( a.v, b.v );  // a0 b0 a1 b1 -> t
+    // t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
 
-    _mm_storel_pi( (__m64 *) a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *) a1, t ); // a1 b1       -> a1
+    // _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
+    // _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
 
-    t = _mm_unpackhi_ps( a.v, b.v );  // a2 b2 a3 b3 -> t
+    // t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
 
-    _mm_storel_pi( (__m64 *) a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *) a3, t ); // a3 b3       -> a3
+    // _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
+    // _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
+
+    ( ( int * ALIGNED(8) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(8) ) a0 )[1] = b.i[0];
+
+    ( ( int * ALIGNED(8) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(8) ) a1 )[1] = b.i[1];
+
+    ( ( int * ALIGNED(8) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(8) ) a2 )[1] = b.i[2];
+
+    ( ( int * ALIGNED(8) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(8) ) a3 )[1] = b.i[3];
   }
 
   inline void store_4x3_tr( const v4 &a,
@@ -372,22 +566,38 @@ namespace v4
                             void * ALIGNED(16) a2,
                             void * ALIGNED(16) a3 )
   {
-    __m128 t;
+    // __m128 a_v = a.v, b_v = b.v, t;
 
-    t = _mm_unpacklo_ps( a.v, b.v );  // a0 b0 a1 b1 -> t
+    // t = _mm_unpacklo_ps( a_v, b_v ); // a0 b0 a1 b1 -> t
 
-    _mm_storel_pi( (__m64 *) a0, t ); // a0 b0       -> a0
-    _mm_storeh_pi( (__m64 *) a1, t ); // a1 b1       -> a1
+    // _mm_storel_pi( (__m64 *)a0, t ); // a0 b0       -> a0
+    // _mm_storeh_pi( (__m64 *)a1, t ); // a1 b1       -> a1
 
-    t = _mm_unpackhi_ps( a.v, b.v );  // a2 b2 a3 b3 -> t
+    // t = _mm_unpackhi_ps( a_v, b_v ); // a2 b2 a3 b3 -> t
 
-    _mm_storel_pi( (__m64 *) a2, t ); // a2 b2       -> a2
-    _mm_storeh_pi( (__m64 *) a3, t ); // a3 b3       -> a3
+    // _mm_storel_pi( (__m64 *)a2, t ); // a2 b2       -> a2
+    // _mm_storeh_pi( (__m64 *)a3, t ); // a3 b3       -> a3
 
-    ( (float *) a0 )[2] = c.f[0];
-    ( (float *) a1 )[2] = c.f[1];
-    ( (float *) a2 )[2] = c.f[2];
-    ( (float *) a3 )[2] = c.f[3];
+    // ((float *)a0)[2] = c.f[0];
+    // ((float *)a1)[2] = c.f[1];
+    // ((float *)a2)[2] = c.f[2];
+    // ((float *)a3)[2] = c.f[3];
+
+    ( ( int * ALIGNED(16) ) a0 )[0] = a.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[1] = b.i[0];
+    ( ( int * ALIGNED(16) ) a0 )[2] = c.i[0];
+
+    ( ( int * ALIGNED(16) ) a1 )[0] = a.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[1] = b.i[1];
+    ( ( int * ALIGNED(16) ) a1 )[2] = c.i[1];
+
+    ( ( int * ALIGNED(16) ) a2 )[0] = a.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[1] = b.i[2];
+    ( ( int * ALIGNED(16) ) a2 )[2] = c.i[2];
+
+    ( ( int * ALIGNED(16) ) a3 )[0] = a.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[1] = b.i[3];
+    ( ( int * ALIGNED(16) ) a3 )[2] = c.i[3];
   }
 
   inline void store_4x4_tr( const v4 &a,
@@ -399,23 +609,50 @@ namespace v4
                             void * ALIGNED(16) a2,
                             void * ALIGNED(16) a3 )
   {
-    __m128 a_v, b_v, c_v, d_v, t, u;
+    float32x4_t r, s, t, u;
 
-    t   = _mm_unpackhi_ps( a.v, b.v );
-    a_v = _mm_unpacklo_ps( a.v, b.v );
-    u   = _mm_unpackhi_ps( c.v, d.v );
-    c_v = _mm_unpacklo_ps( c.v, d.v );
+    r = vtrn1q_f32( a.v, b.v );
+    s = vtrn2q_f32( a.v, b.v );
 
-    b_v = _mm_movehl_ps( c_v, a_v );
-    a_v = _mm_movelh_ps( a_v, c_v );
-    c_v = _mm_movelh_ps( t, u );
-    d_v = _mm_movehl_ps( u, t );
+    t = vtrn1q_f32( c.v, d.v );
+    u = vtrn2q_f32( c.v, d.v );
 
-    _mm_store_ps( (float *) a0, a_v );
-    _mm_store_ps( (float *) a1, b_v );
-    _mm_store_ps( (float *) a2, c_v );
-    _mm_store_ps( (float *) a3, d_v );
+    vst1q_f32( (float *) a0, vtrn1q_f64( r, t ) );
+    vst1q_f32( (float *) a1, vtrn1q_f64( s, u ) );
+    vst1q_f32( (float *) a2, vtrn2q_f64( r, t ) );
+    vst1q_f32( (float *) a3, vtrn2q_f64( s, u ) );
   }
+
+  #if 1
+  inline void store_4x8_tr( const v4 &b00,
+                            const v4 &b01,
+                            const v4 &b02,
+                            const v4 &b03,
+                            const v4 &b04,
+                            const v4 &b05,
+                            const v4 &b06,
+                            const v4 &b07,
+                            void * ALIGNED(16) a0,
+                            void * ALIGNED(16) a1,
+                            void * ALIGNED(16) a2,
+                            void * ALIGNED(16) a3 )
+  {
+    float32x4x4_t mat0, mat2;
+
+    mat0.val[0] = vuzp1q_f32( b00.v, b04.v );
+    mat0.val[1] = vuzp1q_f32( b01.v, b05.v );
+    mat0.val[2] = vuzp1q_f32( b02.v, b06.v );
+    mat0.val[3] = vuzp1q_f32( b03.v, b07.v );
+
+    mat2.val[0] = vuzp2q_f32( b00.v, b04.v );
+    mat2.val[1] = vuzp2q_f32( b01.v, b05.v );
+    mat2.val[2] = vuzp2q_f32( b02.v, b06.v );
+    mat2.val[3] = vuzp2q_f32( b03.v, b07.v );
+
+    vst4q_f32( (float *) a0, mat0 );
+    vst4q_f32( (float *) a2, mat2 );
+  }
+  #endif
 
   //////////////
   // v4int class
@@ -518,23 +755,28 @@ namespace v4
       } u;
 
       u.i = a;
-      v   = _mm_set1_ps( u.f );
+      v   = vdupq_n_f32( u.f );
     }
 
     v4int( int i0, int i1, int i2, int i3 )   // Init from scalars
     {
-      union
-      {
-        int i;
-        float f;
-      } u0, u1, u2, u3;
+      // union
+      // {
+      //   int i;
+      //   float f;
+      // } u0, u1, u2, u3;
 
-      u0.i = i0;
-      u1.i = i1;
-      u2.i = i2;
-      u3.i = i3;
+      // u0.i = i0;
+      // u1.i = i1;
+      // u2.i = i2;
+      // u3.i = i3;
 
-      v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
+      // v = _mm_setr_ps( u0.f, u1.f, u2.f, u3.f );
+
+      i[0] = i0;
+      i[1] = i1;
+      i[2] = i2;
+      i[3] = i3;
     }
 
     ~v4int() {}                               // Destructor
@@ -544,10 +786,9 @@ namespace v4
     #define ASSIGN(op)                            \
     inline v4int &operator op( const v4int &b )   \
     {                                             \
-      i[0] op b.i[0];                             \
-      i[1] op b.i[1];                             \
-      i[2] op b.i[2];                             \
-      i[3] op b.i[3];                             \
+      ALWAYS_VECTORIZE                            \
+      for( int j = 0; j < 4; j++ )                \
+        i[j] op b.i[j];                           \
       return *this;                               \
     }
 
@@ -570,21 +811,21 @@ namespace v4
 
     inline v4int &operator ^=( const v4int &b )
     {
-      v = _mm_xor_ps( v, b.v );
+      vsi = veorq_s32( vsi, b.vsi );
 
       return *this;
     }
 
     inline v4int &operator &=( const v4int &b )
     {
-      v = _mm_and_ps( v, b.v );
+      vsi = vandq_s32( vsi, b.vsi );
 
       return *this;
     }
 
     inline v4int &operator |=( const v4int &b )
     {
-      v = _mm_or_ps( v, b.v );
+      vsi = vorrq_s32( vsi, b.vsi );
 
       return *this;
     }
@@ -608,52 +849,27 @@ namespace v4
   inline v4int operator op( const v4int &a )    \
   {                                             \
     v4int b;                                    \
-    b.i[0] = ( op a.i[0] );                     \
-    b.i[1] = ( op a.i[1] );                     \
-    b.i[2] = ( op a.i[2] );                     \
-    b.i[3] = ( op a.i[3] );                     \
+    ALWAYS_VECTORIZE                            \
+    for( int j = 0; j < 4; j++ )                \
+      b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
   }
 
-  inline v4int operator +( const v4int &a )
-  {
-    v4int b;
-
-    b.v = a.v;
-
-    return b;
-  }
-
+  PREFIX_UNARY(+)
   PREFIX_UNARY(-)
 
   inline v4int operator !( const v4int &a )
   {
     v4int b;
 
-    b.i[0] = - ( ! a.i[0] );
-    b.i[1] = - ( ! a.i[1] );
-    b.i[2] = - ( ! a.i[2] );
-    b.i[3] = - ( ! a.i[3] );
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = - ( !a.i[j] );
 
     return b;
   }
 
-  inline v4int operator ~( const v4int &a )
-  {
-    v4int b;
-
-    union
-    {
-      int i;
-      float f;
-    } u;
-
-    u.i = -1;
-
-    b.v = _mm_xor_ps( a.v, _mm_set1_ps( u.f ) );
-
-    return b;
-  }
+  PREFIX_UNARY(~)
 
   #undef PREFIX_UNARY
 
@@ -663,10 +879,9 @@ namespace v4
   inline v4int operator op( v4int &a )          \
   {                                             \
     v4int b;                                    \
-    b.i[0] = ( op a.i[0] );                     \
-    b.i[1] = ( op a.i[1] );                     \
-    b.i[2] = ( op a.i[2] );                     \
-    b.i[3] = ( op a.i[3] );                     \
+    ALWAYS_VECTORIZE                            \
+    for( int j = 0; j < 4; j++ )                \
+      b.i[j] = ( op a.i[j] );                   \
     return b;                                   \
   }
 
@@ -681,10 +896,9 @@ namespace v4
   inline v4int operator op( v4int &a, int )    \
   {                                            \
     v4int b;                                   \
-    b.i[0] = ( a.i[0] op );                    \
-    b.i[1] = ( a.i[1] op );                    \
-    b.i[2] = ( a.i[2] op );                    \
-    b.i[3] = ( a.i[3] op );                    \
+    ALWAYS_VECTORIZE                           \
+    for( int j = 0; j < 4; j++ )               \
+      b.i[j] = ( a.i[j] op );                  \
     return b;                                  \
   }
 
@@ -699,10 +913,9 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )    \
   {                                                             \
     v4int c;                                                    \
-    c.i[0] = a.i[0] op b.i[0];                                  \
-    c.i[1] = a.i[1] op b.i[1];                                  \
-    c.i[2] = a.i[2] op b.i[2];                                  \
-    c.i[3] = a.i[3] op b.i[3];                                  \
+    ALWAYS_VECTORIZE                                            \
+    for( int j = 0; j < 4; j++ )                                \
+      c.i[j] = a.i[j] op b.i[j];                                \
     return c;                                                   \
   }
 
@@ -720,7 +933,7 @@ namespace v4
   {
     v4int c;
 
-    c.v = _mm_xor_ps( a.v, b.v );
+    c.vsi = veorq_s32( a.vsi, b.vsi );
 
     return c;
   }
@@ -729,7 +942,7 @@ namespace v4
   {
     v4int c;
 
-    c.v = _mm_and_ps( a.v, b.v );
+    c.vsi = vandq_s32( a.vsi, b.vsi );
 
     return c;
   }
@@ -738,7 +951,7 @@ namespace v4
   {
     v4int c;
 
-    c.v = _mm_or_ps( a.v, b.v );
+    c.vsi = vorrq_s32( a.vsi, b.vsi );
 
     return c;
   }
@@ -749,10 +962,9 @@ namespace v4
   inline v4int operator op( const v4int &a, const v4int &b )   \
   {                                                            \
     v4int c;                                                   \
-    c.i[0] = - ( a.i[0] op b.i[0] );                           \
-    c.i[1] = - ( a.i[1] op b.i[1] );                           \
-    c.i[2] = - ( a.i[2] op b.i[2] );                           \
-    c.i[3] = - ( a.i[3] op b.i[3] );                           \
+    ALWAYS_VECTORIZE                                           \
+    for( int j = 0; j < 4; j++ )                               \
+      c.i[j] = - ( a.i[j] op b.i[j] );                         \
     return c;                                                  \
   }
 
@@ -773,10 +985,9 @@ namespace v4
   {
     v4int b;
 
-    b.i[0] = ( a.i[0] >= 0 ) ? a.i[0] : -a.i[0];
-    b.i[1] = ( a.i[1] >= 0 ) ? a.i[1] : -a.i[1];
-    b.i[2] = ( a.i[2] >= 0 ) ? a.i[2] : -a.i[2];
-    b.i[3] = ( a.i[3] >= 0 ) ? a.i[3] : -a.i[3];
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = ( a.i[j] >= 0 ) ? a.i[j] : -a.i[j];
 
     return b;
   }
@@ -785,7 +996,14 @@ namespace v4
   {
     v4 b;
 
-    b.v = _mm_andnot_ps( c.v, a.v );
+    // This seems broken.
+    // b.vsi = vbicq_s32( c.vsi, a.vsi );
+
+    // b.v = _mm_andnot_ps( c.v, a.v );
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[j] & ~c.i[j];
 
     return b;
   }
@@ -794,7 +1012,13 @@ namespace v4
   {
     v4 b;
 
-    b.v = _mm_and_ps( c.v, a.v );
+    b.vsi = vandq_s32( c.vsi, a.vsi );
+
+    // b.v = _mm_and_ps( c.v, a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.i[j] = a.i[j] & c.i[j];
 
     return b;
   }
@@ -803,10 +1027,19 @@ namespace v4
   {
     v4 tf;
 
-    __m128 c_v = c.v;
+    // This seems broken.
+    // tf.vsi = vorrq_s32( vbicq_s32( c.vsi, f.vsi ),
+    //                     vandq_s32( c.vsi, t.vsi ) );
 
-    tf.v = _mm_or_ps( _mm_andnot_ps( c_v, f.v ),
-                      _mm_and_ps( c_v, t.v ) );
+    // __m128 c_v = c.v;
+    // v4 tf;
+
+    // tf.v = _mm_or_ps( _mm_andnot_ps( c_v, f.v ),
+    //                   _mm_and_ps( c_v, t.v ) );
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      tf.i[j] = ( f.i[j] & ~c.i[j] ) | ( t.i[j] & c.i[j] );
 
     return tf;
   }
@@ -904,12 +1137,17 @@ namespace v4
 
     v4float( float a )                                  // Init from scalar
     {
-      v = _mm_set1_ps( a );
+      v = vdupq_n_f32( a );
     }
 
     v4float( float f0, float f1, float f2, float f3 )   // Init from scalars
     {
-      v = _mm_setr_ps( f0, f1, f2, f3 );
+      // v = _mm_setr_ps( f0, f1, f2, f3 );
+
+      f[0] = f0;
+      f[1] = f1;
+      f[2] = f2;
+      f[3] = f3;
     }
 
     ~v4float() {}                                       // Destructor
@@ -923,10 +1161,10 @@ namespace v4
       return *this;                                     \
     }
 
-    ASSIGN( +=, _mm_add_ps )
-    ASSIGN( -=, _mm_sub_ps )
-    ASSIGN( *=, _mm_mul_ps )
-    ASSIGN( /=, _mm_div_ps )
+    ASSIGN( +=, vaddq_f32 )
+    ASSIGN( -=, vsubq_f32 )
+    ASSIGN( *=, vmulq_f32 )
+    ASSIGN( /=, vdivq_f32 )
 
     #undef ASSIGN
 
@@ -965,7 +1203,11 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_sub_ps( _mm_setzero_ps(), a.v );
+    // b.v = _mm_sub_ps( _mm_setzero_ps(), a.v );
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = -a.f[j];
 
     return b;
   }
@@ -974,7 +1216,11 @@ namespace v4
   {
     v4int b;
 
-    b.v = _mm_cmpeq_ps( _mm_setzero_ps(), a.v );
+    // b.v = _mm_cmpeq_ps( _mm_setzero_ps(), a.v );
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.i[j] = a.i[j] ? 0 : -1;
 
     return b;
   }
@@ -985,10 +1231,14 @@ namespace v4
   {
     v4float b;
 
-    __m128 t = _mm_add_ps( a.v, _mm_set1_ps( 1 ) );
+    // __m128 t = _mm_add_ps( a.v, _mm_set1_ps( 1 ) );
 
-    a.v = t;
-    b.v = t;
+    // a.v = t;
+    // b.v = t;
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = ++a.f[j];
 
     return b;
   }
@@ -997,10 +1247,14 @@ namespace v4
   {
     v4float b;
 
-    __m128 t = _mm_sub_ps( a.v, _mm_set1_ps( 1 ) );
+    // __m128 t = _mm_sub_ps( a.v, _mm_set1_ps( 1 ) );
 
-    a.v = t;
-    b.v = t;
+    // a.v = t;
+    // b.v = t;
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = --a.f[j];
 
     return b;
   }
@@ -1011,10 +1265,14 @@ namespace v4
   {
     v4float b;
 
-    __m128 a_v = a.v;
+    // __m128 a_v = a.v;
 
-    a.v = _mm_add_ps( a_v, _mm_set1_ps( 1 ) );
-    b.v = a_v;
+    // a.v = _mm_add_ps( a_v, _mm_set1_ps( 1 ) );
+    // b.v = a_v;
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = a.f[j]++;
 
     return b;
   }
@@ -1023,10 +1281,14 @@ namespace v4
   {
     v4float b;
 
-    __m128 a_v = a.v;
+    // __m128 a_v = a.v;
 
-    a.v = _mm_sub_ps( a_v, _mm_set1_ps( 1 ) );
-    b.v = a_v;
+    // a.v = _mm_sub_ps( a_v, _mm_set1_ps( 1 ) );
+    // b.v = a_v;
+
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+      b.f[j] = a.f[j]--;
 
     return b;
   }
@@ -1041,10 +1303,10 @@ namespace v4
     return c;                                                        \
   }
 
-  BINARY( +, _mm_add_ps )
-  BINARY( -, _mm_sub_ps )
-  BINARY( *, _mm_mul_ps )
-  BINARY( /, _mm_div_ps )
+  BINARY( +, vaddq_f32 )
+  BINARY( -, vsubq_f32 )
+  BINARY( *, vmulq_f32 )
+  BINARY( /, vdivq_f32 )
 
   #undef BINARY
 
@@ -1058,23 +1320,43 @@ namespace v4
     return c;                                                      \
   }
 
-  LOGICAL(  <, _mm_cmplt_ps  )
-  LOGICAL(  >, _mm_cmpgt_ps  )
-  LOGICAL( ==, _mm_cmpeq_ps  )
-  LOGICAL( <=, _mm_cmple_ps  )
-  LOGICAL( >=, _mm_cmpge_ps  )
-  LOGICAL( !=, _mm_cmpneq_ps )
+  LOGICAL(  <, vcltq_f32 )
+  LOGICAL(  >, vcgtq_f32 )
+  LOGICAL( ==, vceqq_f32 )
+  LOGICAL( <=, vcleq_f32 )
+  LOGICAL( >=, vcgeq_f32 )
 
   #undef LOGICAL
+
+  inline v4int operator !=( const v4float &a, const v4float &b )
+  {
+    v4int c;
+
+    // r.neon_u32 = vmvnq_u32(vceqq_f32(a.neon_f32, b.neon_f32));
+    // return type looks wrong here. try adding uint32x4_t vi to
+    // the union. may need to do a cast.
+
+    c.vui = vmvnq_u32( vceqq_f32( a.v, b.v ) );
+
+    return c;
+  }
 
   inline v4int operator &&( const v4float &a, const v4float &b )
   {
     v4int c;
 
-    __m128 vzero = _mm_setzero_ps();
+    float32x4_t vzero = vdupq_n_f32(0.0f);
 
-    c.v = _mm_and_ps( _mm_cmpneq_ps( a.v, vzero ),
-                      _mm_cmpneq_ps( b.v, vzero ) );
+    // __m128 vzero = _mm_setzero_ps();
+
+    // Is there a better way to do this than the SSE way?
+    c.vsi = vandq_s32( vmvnq_u32( vceqq_f32( a.v,
+                                             vzero ) ),
+                       vmvnq_u32( vceqq_f32( b.v,
+                                             vzero ) ) );
+
+    // c.v = _mm_and_ps( _mm_cmpneq_ps( a.v, vzero ),
+    //                   _mm_cmpneq_ps( b.v, vzero ) );
 
     return c;
   }
@@ -1083,10 +1365,18 @@ namespace v4
   {
     v4int c;
 
-    __m128 vzero = _mm_setzero_ps();
+    float32x4_t vzero = vdupq_n_f32(0.0f);
 
-    c.v = _mm_or_ps( _mm_cmpneq_ps( a.v, vzero ),
-                     _mm_cmpneq_ps( b.v, vzero ) );
+    // __m128 vzero = _mm_setzero_ps();
+
+    // Is there a better way to do this than the SSE way?
+    c.vsi = vorrq_s32( vmvnq_u32( vceqq_f32( a.v,
+                                             vzero ) ),
+                       vmvnq_u32( vceqq_f32( b.v,
+                                             vzero ) ) );
+
+    // c.v = _mm_or_ps( _mm_cmpneq_ps( a.v, vzero ),
+    //                  _mm_cmpneq_ps( b.v, vzero ) );
 
     return c;
   }
@@ -1097,10 +1387,9 @@ namespace v4
   inline v4float fn( const v4float &a )         \
   {                                             \
     v4float b;                                  \
-    b.f[0] = ::fn( a.f[0] );                    \
-    b.f[1] = ::fn( a.f[1] );                    \
-    b.f[2] = ::fn( a.f[2] );                    \
-    b.f[3] = ::fn( a.f[3] );                    \
+    ALWAYS_VECTORIZE                            \
+    for( int j = 0; j < 4; j++ )                \
+      b.f[j] = ::fn( a.f[j] );                  \
     return b;                                   \
   }
 
@@ -1108,48 +1397,33 @@ namespace v4
   inline v4float fn( const v4float &a, const v4float &b )       \
   {                                                             \
     v4float c;                                                  \
-    c.f[0] = ::fn( a.f[0], b.f[0] );                            \
-    c.f[1] = ::fn( a.f[1], b.f[1] );                            \
-    c.f[2] = ::fn( a.f[2], b.f[2] );                            \
-    c.f[3] = ::fn( a.f[3], b.f[3] );                            \
+    ALWAYS_VECTORIZE                                            \
+    for( int j = 0; j < 4; j++ )                                \
+      c.f[j] = ::fn( a.f[j], b.f[j] );                          \
     return c;                                                   \
   }
 
   CMATH_FR1(acos)     CMATH_FR1(asin)  CMATH_FR1(atan) CMATH_FR2(atan2)
   CMATH_FR1(ceil)     CMATH_FR1(cos)   CMATH_FR1(cosh) CMATH_FR1(exp)
-  /*CMATH_FR1(fabs)*/ CMATH_FR1(floor) CMATH_FR2(fmod) CMATH_FR1(log)
+  CMATH_FR1(fabs)     CMATH_FR1(floor) CMATH_FR2(fmod) CMATH_FR1(log)
   CMATH_FR1(log10)    CMATH_FR2(pow)   CMATH_FR1(sin)  CMATH_FR1(sinh)
-  /*CMATH_FR1(sqrt)*/ CMATH_FR1(tan)   CMATH_FR1(tanh)
+  CMATH_FR1(sqrt)     CMATH_FR1(tan)   CMATH_FR1(tanh)
 
   #undef CMATH_FR1
   #undef CMATH_FR2
 
-  inline v4float fabs( const v4float &a )
-  {
-    v4float b;
-
-    b.v = _mm_andnot_ps( _mm_set1_ps( -0.0f ), a.v );
-
-    return b;
-  }
-
-  inline v4float sqrt( const v4float &a )
-  {
-    v4float b;
-
-    b.v = _mm_sqrt_ps( a.v );
-
-    return b;
-  }
-
   inline v4float copysign( const v4float &a, const v4float &b )
   {
     v4float c;
+    float t;
 
-    __m128 t = _mm_set1_ps( -0.0f );
-
-    c.v = _mm_or_ps( _mm_and_ps( t, b.v ),
-                     _mm_andnot_ps( t, a.v ) );
+    ALWAYS_VECTORIZE
+    for( int j = 0; j < 4; j++ )
+    {
+      t = ::fabs( a.f[j] );
+      if( b.f[j] < 0 ) t = -t;
+      c.f[j] = t;
+    }
 
     return c;
   }
@@ -1160,7 +1434,7 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_rsqrt_ps( a.v );
+    b.v = vrsqrteq_f32( a.v );
 
     return b;
   }
@@ -1169,20 +1443,24 @@ namespace v4
   {
     v4float b;
 
-    __m128 a_v = a.v, b_v;
+    float32x4_t a_v = a.v, b_v;
 
-    b_v = _mm_rsqrt_ps( a_v );
+    b_v = vrsqrteq_f32( a_v );
 
-    b.v = _mm_add_ps( b_v, _mm_mul_ps( _mm_set1_ps( 0.5f ),
-                                       _mm_sub_ps( b_v,
-                                                   _mm_mul_ps( a_v,
-                                                               _mm_mul_ps( b_v,
-                                                                           _mm_mul_ps( b_v, b_v )
-                                                                         )
-                                                             )
-                                                 )
-                                     )
+    b.v = vaddq_f32( b_v, vmulq_f32( vdupq_n_f32( 0.5f ),
+                                     vsubq_f32( b_v,
+                                                vmulq_f32( a_v,
+                                                           vmulq_f32( b_v,
+                                                                      vmulq_f32( b_v, b_v )
+                                                                    )
+                                                         )
+                                              )
+                                   )
                     );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = ::sqrt( 1.0f / a.f[j] );
 
     return b;
   }
@@ -1191,7 +1469,7 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_rcp_ps( a.v );
+    b.v = vrecpeq_f32( a.v );
 
     return b;
   }
@@ -1200,15 +1478,19 @@ namespace v4
   {
     v4float b;
 
-    __m128 a_v = a.v, b_v;
+    float32x4_t a_v = a.v, b_v;
 
-    b_v = _mm_rcp_ps( a_v );
+    b_v = vrecpeq_f32( a_v );
 
-    b.v = _mm_sub_ps( _mm_add_ps( b_v, b_v ),
-                      _mm_mul_ps( a_v,
-                                  _mm_mul_ps( b_v, b_v )
-                                )
-                    );
+    b.v = vsubq_f32( vaddq_f32( b_v, b_v ),
+                     vmulq_f32( a_v,
+                                vmulq_f32( b_v, b_v )
+                              )
+                   );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.f[j] = 1.0f / a.f[j];
 
     return b;
   }
@@ -1217,7 +1499,10 @@ namespace v4
   {
     v4float d;
 
-    d.v = _mm_add_ps( _mm_mul_ps( a.v, b.v ), c.v );
+    d.v = vaddq_f32( vmulq_f32( a.v, b.v ), c.v );
+
+    // This seems broken.
+    // d.v = vfmaq_f32( a.v, b.v, c.v );
 
     return d;
   }
@@ -1226,7 +1511,10 @@ namespace v4
   {
     v4float d;
 
-    d.v = _mm_sub_ps( _mm_mul_ps( a.v, b.v ), c.v );
+    d.v = vsubq_f32( vmulq_f32( a.v, b.v ), c.v );
+
+    // This seems broken.
+    // d.v = vfmsq_f32( a.v, b.v, c.v );
 
     return d;
   }
@@ -1235,7 +1523,7 @@ namespace v4
   {
     v4float d;
 
-    d.v = _mm_sub_ps( c.v, _mm_mul_ps( a.v, b.v ) );
+    d.v = vsubq_f32( c.v, vmulq_f32( a.v, b.v ) );
 
     return d;
   }
@@ -1244,7 +1532,13 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_andnot_ps( m.v, a.v );
+    b.vsi = vbicq_s32( m.vsi, a.vsi );
+
+    // b.v = _mm_andnot_ps( m.v, a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.i[j] = ( ~m.i[j] ) & a.i[j];
 
     return b;
   }
@@ -1253,7 +1547,13 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_or_ps( m.v, a.v );
+    b.vsi = vorrq_s32( m.vsi, a.vsi );
+
+    // b.v = _mm_or_ps( m.v, a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.i[j] = m.i[j] | a.i[j];
 
     return b;
   }
@@ -1262,7 +1562,13 @@ namespace v4
   {
     v4float b;
 
-    b.v = _mm_xor_ps( m.v, a.v );
+    b.vsi = veorq_s32( m.vsi, a.vsi );
+
+    // b.v = _mm_xor_ps( m.v, a.v );
+
+    // ALWAYS_VECTORIZE
+    // for( int j = 0; j < 4; j++ )
+    //   b.i[j] = m.i[j] ^ a.i[j];
 
     return b;
   }
@@ -1270,19 +1576,19 @@ namespace v4
   inline void increment_4x1( float * ALIGNED(16) p,
                              const v4float &a )
   {
-    _mm_store_ps( p, _mm_add_ps( _mm_load_ps( p ), a.v ) );
+    vst1q_f32( p, vaddq_f32( vld1q_f32( p ), a.v ) );
   }
 
   inline void decrement_4x1( float * ALIGNED(16) p,
                              const v4float &a )
   {
-    _mm_store_ps( p, _mm_sub_ps( _mm_load_ps( p ), a.v ) );
+    vst1q_f32( p, vsubq_f32( vld1q_f32( p ), a.v ) );
   }
 
   inline void scale_4x1( float * ALIGNED(16) p,
                          const v4float &a )
   {
-    _mm_store_ps( p, _mm_mul_ps( _mm_load_ps( p ), a.v ) );
+    vst1q_f32( p, vmulq_f32( vld1q_f32( p ), a.v ) );
   }
 
   // Given wl = x y z w, compute:
@@ -1290,34 +1596,19 @@ namespace v4
   // wh = (1-x)(1-y)(1+z) (1+x)(1-y)(1+z) (1-x)(1+y)(1+z) (1+x)(1+y)(1+z)
   inline void trilinear( v4float &wl, v4float &wh )
   {
-    __m128 l = _mm_set1_ps( 1.0f );
+    float x = wl.f[0], y = wl.f[1], z = wl.f[2];
 
-    __m128 s = _mm_setr_ps( -0.0f, +0.0f, -0.0f, +0.0f );
+    wl.f[0] = ( ( 1.0f - x ) * ( 1.0f - y ) ) * ( 1.0f - z );
+    wl.f[1] = ( ( 1.0f + x ) * ( 1.0f - y ) ) * ( 1.0f - z );
+    wl.f[2] = ( ( 1.0f - x ) * ( 1.0f + y ) ) * ( 1.0f - z );
+    wl.f[3] = ( ( 1.0f + x ) * ( 1.0f + y ) ) * ( 1.0f - z );
 
-    __m128 z = wl.v, xy;
-
-    xy = _mm_add_ps( l,
-                     _mm_xor_ps( s,
-                                 _mm_shuffle_ps( z, z, PERM(0,0,1,1) )
-                               )
-                   );
-
-    z  = _mm_add_ps( l,
-                     _mm_xor_ps( s,
-                                 _mm_shuffle_ps( z, z, PERM(2,2,2,2) )
-                               )
-                   );
-
-    xy = _mm_mul_ps( _mm_shuffle_ps( xy, xy, PERM(0,1,0,1) ),
-                     _mm_shuffle_ps( xy, xy, PERM(2,2,3,3) ) );
-
-    wl.v = _mm_mul_ps( xy, _mm_shuffle_ps( z, z, PERM(0,0,0,0) ) );
-
-    wh.v = _mm_mul_ps( xy, _mm_shuffle_ps( z, z, PERM(1,1,1,1) ) );
+    wh.f[0] = ( ( 1.0f - x ) * ( 1.0f - y ) ) * ( 1.0f + z );
+    wh.f[1] = ( ( 1.0f + x ) * ( 1.0f - y ) ) * ( 1.0f + z );
+    wh.f[2] = ( ( 1.0f - x ) * ( 1.0f + y ) ) * ( 1.0f + z );
+    wh.f[3] = ( ( 1.0f + x ) * ( 1.0f + y ) ) * ( 1.0f + z );
   }
-
-  #undef PERM
 
 } // namespace v4
 
-#endif // _v4_avx_h_
+#endif // _v4_neon_h_

@@ -13,6 +13,7 @@
 #define FileIO_h
 
 #include <stdarg.h>
+#include <stdint.h>
 #include "FileIOData.h"
 
 /*!

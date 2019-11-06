@@ -108,11 +108,11 @@ uncenter_p_pipeline( species_t * RESTRICT sp,
 {
   DECLARE_ALIGNED_ARRAY( center_p_pipeline_args_t, 128, args, 1 );
 
-  if ( !sp ||
-       !ia ||
+  if ( ! sp ||
+       ! ia ||
        sp->g != ia->g )
   {
-    ERROR( ( "Bad args" ) );
+    ERROR( ( "Bad args." ) );
   }
 
   // Have the pipelines do the bulk of particles in blocks and have the
@@ -120,7 +120,7 @@ uncenter_p_pipeline( species_t * RESTRICT sp,
 
   args->p0      = sp->p;
   args->f0      = ia->i;
-  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->qdt_2mc = ( sp->q * sp->g->dt ) / ( 2 * sp->m * sp->g->cvac );
   args->np      = sp->np;
 
   EXEC_PIPELINES( uncenter_p, args, 0 );

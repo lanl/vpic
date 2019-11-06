@@ -7,9 +7,10 @@
  * March/April 2004 - Heavily revised and extended from earlier V4PIC versions
  *
  */
- 
+
 #include "vpic.h"
- 
+#include "dump_strategy.h"
+
 /* Note that, when a vpic_simulation is created (and thus registered
    with the checkpt service), it is created empty; none of the simulation
    objects on which it depends have been created yet. (These get created
@@ -71,8 +72,11 @@ reanimate_vpic_simulation( vpic_simulation * vpic ) {
 }
 
 
-vpic_simulation::vpic_simulation() {
-  CLEAR( this, 1 );
+vpic_simulation::vpic_simulation()
+{
+  // TODO: why is this a good idea?
+  // Is this just trying to 0 initialize everything?
+  // CLEAR( this, 1 );
 
   /* Set non-zero defaults */
   verbose = 1;
@@ -99,7 +103,7 @@ vpic_simulation::vpic_simulation() {
   //   if( n_rng<spu.n_pipeline    ) n_rng = spu.n_pipeline;
   // # endif
 
-  n_rng++; 
+  n_rng++;
 
   entropy      = new_rng_pool( n_rng, 0, 0 );
   sync_entropy = new_rng_pool( n_rng, 0, 1 );
@@ -107,8 +111,21 @@ vpic_simulation::vpic_simulation() {
 
   REGISTER_OBJECT( this, checkpt_vpic_simulation,
                    restore_vpic_simulation, reanimate_vpic_simulation );
+
+  // Initialize the dump strategy to use the binary dumpin, assuming the user
+  // may overwrite this later
+  dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
+
+  // TODO: this this still makes sense now we have a dump strategy
+#ifdef VPIC_ENABLE_HDF5
+  // Default init hdf5 dump flags
+  field_interval = 1;
+  hydro_interval = 1;
+  field_dump_flag = field_dump_flag_t();
+  hydro_dump_flag = hydro_dump_flag_t();
+#endif
 }
- 
+
 vpic_simulation::~vpic_simulation() {
   UNREGISTER_OBJECT( this );
   delete_emitter_list( emitter_list );
@@ -123,4 +140,4 @@ vpic_simulation::~vpic_simulation() {
   delete_rng_pool( sync_entropy );
   delete_rng_pool( entropy );
 }
- 
+

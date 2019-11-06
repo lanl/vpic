@@ -1,0 +1,6 @@
+quota 10
+num_step 10
+checkpt_interval 10
+hydro_interval 5
+field_interval 10
+particle_interval 10

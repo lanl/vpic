@@ -9,6 +9,7 @@
  */
 
 #include "vpic.h"
+#include "dump_strategy.h"
 
 /* Note that, when a vpic_simulation is created (and thus registered
    with the checkpt service), it is created empty; none of the simulation
@@ -71,8 +72,11 @@ reanimate_vpic_simulation( vpic_simulation * vpic ) {
 }
 
 
-vpic_simulation::vpic_simulation() {
-  CLEAR( this, 1 );
+vpic_simulation::vpic_simulation() : dump_strategy(BinaryDump( rank(), nproc() ))
+{
+  // TODO: why is this a good idea?
+  // Is this just trying to 0 initialize everything?
+  // CLEAR( this, 1 );
 
   /* Set non-zero defaults */
   verbose = 1;

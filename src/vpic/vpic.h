@@ -24,6 +24,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "dump_strategy.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -287,9 +288,12 @@ protected:
   int field_interval;
   int particle_interval;
 
-  size_t nxout, nyout, nzout;
+  // TODO: these can probably now be removed, as they should only be used by dump?
+  // TODO: check if any decks used them
+  //size_t nxout, nyout, nzout;
+  //float dxout, dyout, dzout;
+
   size_t px, py, pz;
-  float dxout, dyout, dzout;
 
   int ndfld;
   int ndhyd;
@@ -361,7 +365,7 @@ protected:
   ///////////////
   // Dump helpers
 
-  int dump_mkdir(const char * dname);
+  static int dump_mkdir(const char * dname);
   int dump_cwd(char * dname, size_t size);
 
   // Text dumps
@@ -380,22 +384,9 @@ protected:
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
-#ifdef VPIC_ENABLE_OPENPMD
-  void dump_fields_openpmd( const char *fbase, int fname_tag = 1 );
-  void dump_particles_openpmd(
-      const char *sp_name,
-      const char *fbase,
-      int ftag = 1
-  );
-#endif
+  Dump_Strategy  dump_strategy;
 
 #ifdef VPIC_ENABLE_HDF5
-  void dump_particles_hdf5( const char *sp_name, const char *fbase,
-                       int fname_tag = 1 );
-  void dump_hydro_hdf5( const char *sp_name, const char *fbase,
-                   int fname_tag = 1 );
-  void dump_fields_hdf5( const char *fbase, int fname_tag = 1 );
-
   // Declare vars to use
   hydro_dump_flag_t hydro_dump_flag;
   field_dump_flag_t field_dump_flag;

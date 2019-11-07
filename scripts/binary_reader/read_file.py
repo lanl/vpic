@@ -35,9 +35,10 @@ cur_byte = f.tell()
 print str(header["end_byte"] - cur_byte)+" bytes data"
 
 if header["dump_type"] == 1: # fields
-    print("Num Fields")
-    print(   array_header["no_fields"] )
-    ex,ey,ez,bx,by,bz = read_data(f, array_header["dim"], header["floatfmt"] , 6)# , array_header["no_fields"])
+    print("Num Fields %s" % array_header["no_fields"])
+
+    #WARNING: Users may have to edit this line by hand if they want to unpack different fields
+    ex,ey,ez,bx,by,bz = read_data(f, array_header["dim"], header["floatfmt"], array_header["no_fields"])
 
     cur_byte = f.tell()
     print str(header["end_byte"] - cur_byte)+" bytes unread"

@@ -42,6 +42,9 @@ begin_globals {
 };
 
 begin_initialization {
+
+  enable_openpmd_dump();
+
   // At this point, there is an empty grid and the random number generator is
   // seeded with the rank. The grid, materials, species need to be defined.
   // Then the initial non-zero fields need to be loaded at time level 0 and the
@@ -370,8 +373,8 @@ begin_diagnostics {
 
   std::string openpm_field_name = "fields.h5";
   //std::string openpm_field_name = "fields.bp";
-  if( step()==-10 )         dump_fields_openpmd(openpm_field_name.c_str()); // Get first valid total J
-  if( should_dump(fields) ) dump_fields_openpmd(openpm_field_name.c_str());
+  if( step()==-10 )         dump_fields(openpm_field_name.c_str()); // Get first valid total J
+  if( should_dump(fields) ) dump_fields(openpm_field_name.c_str());
 
   // Hydro dumps store particle charge density, current density and
   // stress-energy tensor. All these quantities are known at the time
@@ -390,7 +393,7 @@ begin_diagnostics {
   // are tagged with step(). However, if a "0" is added to the call, the
   // filename will not be tagged. Particle dumps are in a binary format.
   // Each rank makes a particle dump.
-  if( should_dump(eparticle) ) dump_particles_openpmd("electron","eparticle");
+  if( should_dump(eparticle) ) dump_particles("electron","eparticle");
   //if( should_dump(iparticle) ) dump_particles_hdf5("ion",     "iparticle");
 
   // A checkpt is made by calling checkpt( fbase, tag ) where fname is a string

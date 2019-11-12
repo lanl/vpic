@@ -1123,7 +1123,7 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef VPIC_ENABLE_OPENPMD
 class OpenPMDDump : public Dump_Strategy {
     public:
-        static openPMD::Series* series;
+        openPMD::Series* series;
         using Dump_Strategy::Dump_Strategy; // inherit constructor
         void dump_fields(
             const char *fbase,

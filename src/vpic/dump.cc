@@ -921,275 +921,275 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
     // TODO: Allow the user to set this
 
     int stride_particle_dump = 1;
-    while (sp)
+    //while (sp)
+    //{
+    np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
+
+    // make a copy of the part of particle data to be dumped
+    double ec1 = uptime();
+
+    int sp_np = sp->np;
+    int sp_max_np = sp->max_np;
+    particle_t *ALIGNED(128) p_buf = NULL;
+    if (!p_buf)
+        MALLOC_ALIGNED(p_buf, np_local, 128);
+    particle_t *sp_p = sp->p;
+    sp->p = p_buf;
+    sp->np = np_local;
+    sp->max_np = np_local;
+
+    for (long long iptl = 0, i = 0; iptl < sp_np; iptl += stride_particle_dump, ++i)
     {
-        np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
+        COPY(&sp->p[i], &sp_p[iptl], 1);
+    }
 
-        // make a copy of the part of particle data to be dumped
-        double ec1 = uptime();
+    center_p(sp, interpolator_array);
 
-        int sp_np = sp->np;
-        int sp_max_np = sp->max_np;
-        particle_t *ALIGNED(128) p_buf = NULL;
-        if (!p_buf)
-            MALLOC_ALIGNED(p_buf, np_local, 128);
-        particle_t *sp_p = sp->p;
-        sp->p = p_buf;
-        sp->np = np_local;
-        sp->max_np = np_local;
+    ec1 = uptime() - ec1;
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
-        for (long long iptl = 0, i = 0; iptl < sp_np; iptl += stride_particle_dump, ++i)
-        {
-            COPY(&sp->p[i], &sp_p[iptl], 1);
-        }
+    //std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
+    //sim_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
 
-        center_p(sp, interpolator_array);
+    Pf = (float *)sp->p;
+    Pi = (int *)sp->p;
 
-        ec1 = uptime() - ec1;
-        int mpi_rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    // open HDF5 file in "particle/T.<step>/" subdirectory
+    // filename: eparticle.h5p
+    sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
+    sprintf(group_name, "/Timestep_%ld", step_for_viou);
+    double el1 = uptime();
 
-        //std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
-        //sim_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
+    hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+    hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    hid_t group_id = H5Gcreate(file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        Pf = (float *)sp->p;
-        Pi = (int *)sp->p;
+    H5Pclose(plist_id);
 
-        // open HDF5 file in "particle/T.<step>/" subdirectory
-        // filename: eparticle.h5p
-        sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
-        sprintf(group_name, "/Timestep_%ld", step_for_viou);
-        double el1 = uptime();
+    long long total_particles, offset;
+    long long numparticles = np_local;
+    MPI_Allreduce(&numparticles, &total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Scan(&numparticles, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    offset -= numparticles;
 
-        hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-        hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-        hid_t group_id = H5Gcreate(file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t filespace = H5Screate_simple(1, (hsize_t *)&total_particles, NULL);
 
-        H5Pclose(plist_id);
+    hsize_t memspace_count_temp = numparticles * 8;
+    hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
 
-        long long total_particles, offset;
-        long long numparticles = np_local;
-        MPI_Allreduce(&numparticles, &total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Scan(&numparticles, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-        offset -= numparticles;
+    // The converted global_ids are stored compact, not strided
+    hsize_t linearspace_count_temp = numparticles;
+    hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
 
-        hid_t filespace = H5Screate_simple(1, (hsize_t *)&total_particles, NULL);
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
 
-        hsize_t memspace_count_temp = numparticles * 8;
-        hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
+    //Comment out for test only
+    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *)&offset, NULL, (hsize_t *)&numparticles, NULL);
 
-        // The converted global_ids are stored compact, not strided
-        hsize_t linearspace_count_temp = numparticles;
-        hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
+    hsize_t memspace_start = 0, memspace_stride = 8, memspace_count = np_local;
+    H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
 
-        plist_id = H5Pcreate(H5P_DATASET_XFER);
+    el1 = uptime() - el1;
+    //sim_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
 
-        //Comment out for test only
-        H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *)&offset, NULL, (hsize_t *)&numparticles, NULL);
+    //double el2 = uptime();
 
-        hsize_t memspace_start = 0, memspace_stride = 8, memspace_count = np_local;
-        H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
+    // This point offset is silly, and loses the type safety (pf+1)
+    hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    int ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf);
+    H5Dclose(dset_id);
 
-        el1 = uptime() - el1;
-        //sim_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+    dset_id = H5Dcreate(group_id, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 1);
+    H5Dclose(dset_id);
 
-        //double el2 = uptime();
-
-        // This point offset is silly, and loses the type safety (pf+1)
-        hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        int ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf);
-        H5Dclose(dset_id);
-
-        dset_id = H5Dcreate(group_id, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 1);
-        H5Dclose(dset_id);
-
-        dset_id = H5Dcreate(group_id, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
+    H5Dclose(dset_id);
 
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
 # define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
-    int _ix, _iy, _iz;                                                  \
-    _ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */       \
-    _iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                  \
-    _ix -= _iy*int(nx);   /* ix = ix */                         \
-    _iz  = _iy/int(ny);   /* iz = iz */                         \
-    _iy -= _iz*int(ny);   /* iy = iy */                         \
-    (ix) = _ix;                                                         \
-    (iy) = _iy;                                                         \
-    (iz) = _iz;                                                         \
-  } END_PRIMITIVE
+int _ix, _iy, _iz;                                                  \
+_ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */       \
+_iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                  \
+_ix -= _iy*int(nx);   /* ix = ix */                         \
+_iz  = _iy/int(ny);   /* iz = iz */                         \
+_iy -= _iz*int(ny);   /* iy = iy */                         \
+(ix) = _ix;                                                         \
+(iy) = _iy;                                                         \
+(iz) = _iz;                                                         \
+} END_PRIMITIVE
 
-        std::vector<int> global_pi;
-        global_pi.reserve(numparticles);
-        // TODO: this could be parallel
-        for (int i = 0; i < numparticles; i++)
-        {
-            int local_i = sp->p[i].i;
+    std::vector<int> global_pi;
+    global_pi.reserve(numparticles);
+    // TODO: this could be parallel
+    for (int i = 0; i < numparticles; i++)
+    {
+        int local_i = sp->p[i].i;
 
-            int ix, iy, iz, rx, ry, rz;
-            // Convert rank to local x/y/z
-            UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+        int ix, iy, iz, rx, ry, rz;
+        // Convert rank to local x/y/z
+        UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
-            // Calculate local ix/iy/iz
-            UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
+        // Calculate local ix/iy/iz
+        UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
 
-            // Account for the "first" ghost cell
-            ix = ix - 1;
-            iy = iy - 1;
-            iz = iz - 1;
+        // Account for the "first" ghost cell
+        ix = ix - 1;
+        iy = iy - 1;
+        iz = iz - 1;
 
-            // Convert ix/iy/iz to global
-            int gix = ix + (grid->nx * (rx));
-            int giy = iy + (grid->ny * (ry));
-            int giz = iz + (grid->nz * (rz));
+        // Convert ix/iy/iz to global
+        int gix = ix + (grid->nx * (rx));
+        int giy = iy + (grid->ny * (ry));
+        int giz = iz + (grid->nz * (rz));
 
-            // calculate global grid sizes
-            int gnx = grid->nx * grid->gpx;
-            int gny = grid->ny * grid->gpy;
-            int gnz = grid->nz * grid->gpz;
+        // calculate global grid sizes
+        int gnx = grid->nx * grid->gpx;
+        int gny = grid->ny * grid->gpy;
+        int gnz = grid->nz * grid->gpz;
 
-            // TODO: find a better way to account for the hard coded ghosts in VOXEL
-            int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
+        // TODO: find a better way to account for the hard coded ghosts in VOXEL
+        int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
 
-            //std::cout << rank() << " local i " << local_i << " becomes " << global_i << std::endl;
-            global_pi[i] = global_i;
-        }
+        //std::cout << rank() << " local i " << local_i << " becomes " << global_i << std::endl;
+        global_pi[i] = global_i;
+    }
 
 #undef UNVOXEL
-        dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
+    H5Dclose(dset_id);
 
 #else
-        dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, Pi + 3);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, Pi + 3);
+    H5Dclose(dset_id);
 #endif
 
-        dset_id = H5Dcreate(group_id, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 4);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 4);
+    H5Dclose(dset_id);
 
-        dset_id = H5Dcreate(group_id, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 5);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 5);
+    H5Dclose(dset_id);
 
-        dset_id = H5Dcreate(group_id, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 6);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 6);
+    H5Dclose(dset_id);
 
-        dset_id = H5Dcreate(group_id, "q", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
-        H5Dclose(dset_id);
+    dset_id = H5Dcreate(group_id, "q", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
+    H5Dclose(dset_id);
 
-        //el2 = uptime() - el2;
-        //sim_log("Particle TimeHDF5Write: " << el2 << " s");
+    //el2 = uptime() - el2;
+    //sim_log("Particle TimeHDF5Write: " << el2 << " s");
 
-        double el3 = uptime();
-        H5Sclose(memspace);
-        H5Sclose(filespace);
-        H5Pclose(plist_id);
-        H5Gclose(group_id);
-        H5Fclose(file_id);
-        el3 = uptime() - el3;
-        //sim_log("Particle TimeHDF5Close: " << el3 << " s");
+    double el3 = uptime();
+    H5Sclose(memspace);
+    H5Sclose(filespace);
+    H5Pclose(plist_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+    el3 = uptime() - el3;
+    //sim_log("Particle TimeHDF5Close: " << el3 << " s");
 
-        sp->p = sp_p;
-        sp->np = sp_np;
-        sp->max_np = sp_max_np;
-        FREE_ALIGNED(p_buf);
+    sp->p = sp_p;
+    sp->np = sp_np;
+    sp->max_np = sp_max_np;
+    FREE_ALIGNED(p_buf);
 
-        // Write metadata if step() == 0
-        char meta_fname[256];
+    // Write metadata if step() == 0
+    char meta_fname[256];
 
-        sprintf(meta_fname, "%s/grid_metadata_%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
+    sprintf(meta_fname, "%s/grid_metadata_%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
 
-        double meta_el1 = uptime();
+    double meta_el1 = uptime();
 
-        hid_t meta_plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(meta_plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-        hid_t meta_file_id = H5Fcreate(meta_fname, H5F_ACC_TRUNC, H5P_DEFAULT, meta_plist_id);
-        hid_t meta_group_id = H5Gcreate(meta_file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        H5Pclose(meta_plist_id);
+    hid_t meta_plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(meta_plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+    hid_t meta_file_id = H5Fcreate(meta_fname, H5F_ACC_TRUNC, H5P_DEFAULT, meta_plist_id);
+    hid_t meta_group_id = H5Gcreate(meta_file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Pclose(meta_plist_id);
 
-        long long meta_total_particles, meta_offset;
-        long long meta_numparticles = 1;
-        MPI_Allreduce(&meta_numparticles, &meta_total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Scan(&meta_numparticles, &meta_offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-        meta_offset -= meta_numparticles;
+    long long meta_total_particles, meta_offset;
+    long long meta_numparticles = 1;
+    MPI_Allreduce(&meta_numparticles, &meta_total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Scan(&meta_numparticles, &meta_offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    meta_offset -= meta_numparticles;
 
-        hid_t meta_filespace = H5Screate_simple(1, (hsize_t *)&meta_total_particles, NULL);
-        hid_t meta_memspace = H5Screate_simple(1, (hsize_t *)&meta_numparticles, NULL);
-        meta_plist_id = H5Pcreate(H5P_DATASET_XFER);
-        H5Pset_dxpl_mpio(meta_plist_id, H5FD_MPIO_COLLECTIVE);
-        H5Sselect_hyperslab(meta_filespace, H5S_SELECT_SET, (hsize_t *)&meta_offset, NULL, (hsize_t *)&meta_numparticles, NULL);
-        meta_el1 = uptime() - meta_el1;
-        //sim_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
+    hid_t meta_filespace = H5Screate_simple(1, (hsize_t *)&meta_total_particles, NULL);
+    hid_t meta_memspace = H5Screate_simple(1, (hsize_t *)&meta_numparticles, NULL);
+    meta_plist_id = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(meta_plist_id, H5FD_MPIO_COLLECTIVE);
+    H5Sselect_hyperslab(meta_filespace, H5S_SELECT_SET, (hsize_t *)&meta_offset, NULL, (hsize_t *)&meta_numparticles, NULL);
+    meta_el1 = uptime() - meta_el1;
+    //sim_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
 
-        double meta_el2 = uptime();
+    double meta_el2 = uptime();
 
-        hid_t meta_dset_id = H5Dcreate(meta_group_id, "np_local", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, (int32_t *)&np_local);
-        H5Dclose(meta_dset_id);
-        //if (rank == 0) printf ("Written variable dX \n");
+    hid_t meta_dset_id = H5Dcreate(meta_group_id, "np_local", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, (int32_t *)&np_local);
+    H5Dclose(meta_dset_id);
+    //if (rank == 0) printf ("Written variable dX \n");
 
-        meta_dset_id = H5Dcreate(meta_group_id, "nx", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nx);
-        H5Dclose(meta_dset_id);
-        //if (rank == 0) printf ("Written variable dY \n");
+    meta_dset_id = H5Dcreate(meta_group_id, "nx", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nx);
+    H5Dclose(meta_dset_id);
+    //if (rank == 0) printf ("Written variable dY \n");
 
-        meta_dset_id = H5Dcreate(meta_group_id, "ny", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->ny);
-        H5Dclose(meta_dset_id);
-        //if (rank == 0) printf ("Written variable dZ \n");
+    meta_dset_id = H5Dcreate(meta_group_id, "ny", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->ny);
+    H5Dclose(meta_dset_id);
+    //if (rank == 0) printf ("Written variable dZ \n");
 
-        meta_dset_id = H5Dcreate(meta_group_id, "nz", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nz);
-        H5Dclose(meta_dset_id);
-        //if (rank == 0) printf ("Written variable i \n");
+    meta_dset_id = H5Dcreate(meta_group_id, "nz", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nz);
+    H5Dclose(meta_dset_id);
+    //if (rank == 0) printf ("Written variable i \n");
 
-        meta_dset_id = H5Dcreate(meta_group_id, "x0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->x0);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "x0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->x0);
+    H5Dclose(meta_dset_id);
 
-        meta_dset_id = H5Dcreate(meta_group_id, "y0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->y0);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "y0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->y0);
+    H5Dclose(meta_dset_id);
 
-        meta_dset_id = H5Dcreate(meta_group_id, "z0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->z0);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "z0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->z0);
+    H5Dclose(meta_dset_id);
 
-        meta_dset_id = H5Dcreate(meta_group_id, "dx", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dx);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "dx", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dx);
+    H5Dclose(meta_dset_id);
 
-        meta_dset_id = H5Dcreate(meta_group_id, "dy", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dy);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "dy", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dy);
+    H5Dclose(meta_dset_id);
 
-        meta_dset_id = H5Dcreate(meta_group_id, "dz", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dz);
-        H5Dclose(meta_dset_id);
+    meta_dset_id = H5Dcreate(meta_group_id, "dz", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dz);
+    H5Dclose(meta_dset_id);
 
-        meta_el2 = uptime() - meta_el2;
-        //sim_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
-        double meta_el3 = uptime();
-        H5Sclose(meta_memspace);
-        H5Sclose(meta_filespace);
-        H5Pclose(meta_plist_id);
-        H5Gclose(meta_group_id);
-        H5Fclose(meta_file_id);
-        meta_el3 = uptime() - meta_el3;
-        //sim_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
+    meta_el2 = uptime() - meta_el2;
+    //sim_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
+    double meta_el3 = uptime();
+    H5Sclose(meta_memspace);
+    H5Sclose(meta_filespace);
+    H5Pclose(meta_plist_id);
+    H5Gclose(meta_group_id);
+    H5Fclose(meta_file_id);
+    meta_el3 = uptime() - meta_el3;
+    //sim_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
 
-        sp = sp->next;
-    }
+    sp = sp->next;
+    //}
 }
 #endif
 

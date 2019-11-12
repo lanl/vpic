@@ -123,6 +123,9 @@ class vpic_simulation {
 public:
   vpic_simulation();
   ~vpic_simulation();
+  vpic_simulation(const vpic_simulation&) = delete;
+  vpic_simulation& operator=(const vpic_simulation&) = delete;
+
   void initialize( int argc, char **argv );
   void modify( const char *fname );
   int advance( void );

@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
 #include <mpi.h> // TODO: it would be good if this didn't have to know about MPI
 

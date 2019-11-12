@@ -114,16 +114,20 @@ vpic_simulation::vpic_simulation()
 
   // Initialize the dump strategy to use the binary dumpin, assuming the user
   // may overwrite this later
-  dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
+  //dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
+  enable_binary_dump();
 
   // TODO: this this still makes sense now we have a dump strategy
-#ifdef VPIC_ENABLE_HDF5
+//#ifdef VPIC_ENABLE_HDF5
   // Default init hdf5 dump flags
+  //field_interval = 1;
+  //hydro_interval = 1;
+  //field_dump_flag = field_dump_flag_t();
+  //hydro_dump_flag = hydro_dump_flag_t();
+//#endif
+
   field_interval = 1;
   hydro_interval = 1;
-  field_dump_flag = field_dump_flag_t();
-  hydro_dump_flag = hydro_dump_flag_t();
-#endif
 }
 
 vpic_simulation::~vpic_simulation() {

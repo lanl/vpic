@@ -49,7 +49,7 @@ begin_initialization {
 
 
   // Example of how to call / set dumping
-  field_dump_flag.disableEMAT();
+  //field_dump_flag.disableEMAT();
 
 
   double input_mass_ratio;
@@ -141,16 +141,16 @@ begin_initialization {
 
   num_step             = int(0.2*taui/(wci*dt));
   status_interval      = int(1./(wci*dt));
-  field_interval = status_interval;
-  hydro_interval = status_interval;
+  field_interval = 1; //status_interval;
+  hydro_interval = 1; //status_interval;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
   clean_div_b_interval = status_interval;
 
   global->energies_interval  = status_interval;
-  global->fields_interval    = status_interval;
-  global->ehydro_interval    = status_interval;
-  global->ihydro_interval    = status_interval;
+  global->fields_interval    = 1; //status_interval;
+  global->ehydro_interval    = 1; //status_interval;
+  global->ihydro_interval    = 1; //status_interval;
   global->eparticle_interval = status_interval;
   global->iparticle_interval = status_interval;
   global->restart_interval   = status_interval;
@@ -324,6 +324,11 @@ begin_initialization {
   // - Increment the time step
   // - Call user diagnostics
   // - (periodically) Print a status message
+
+  // Explicitly enable HDF5 backend for IO dump
+  // WARNING: Call this after you have set `num_step` (for now.. soon fixed)
+
+  enable_hdf5_dump();
 }
 
 begin_diagnostics {
@@ -369,8 +374,8 @@ begin_diagnostics {
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
-  if( step()==-10 )         dump_fields_hdf5("fields"); // Get first valid total J
-  if( should_dump(fields) ) dump_fields_hdf5("fields");
+  if( step()==-10 )         dump_fields("fields"); // Get first valid total J
+  if( should_dump(fields) ) dump_fields("fields");
 
   // Hydro dumps store particle charge density, current density and
   // stress-energy tensor. All these quantities are known at the time
@@ -381,16 +386,16 @@ begin_diagnostics {
   // purely diagnostic. It is not used by the simulation and it is not
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
   // are in a binary format. Each rank makes a hydro dump.
-  if(should_dump(ehydro) ) dump_hydro_hdf5("electron","ehydro");
-  if( should_dump(ihydro) ) dump_hydro_hdf5("ion",     "ihydro");
+  if(should_dump(ehydro) ) dump_hydro("electron","ehydro");
+  if( should_dump(ihydro) ) dump_hydro("ion",     "ihydro");
 
   // Particle dumps store the particle data for a given species. The data
   // written is known at the time t = time().  By default, particle dumps
   // are tagged with step(). However, if a "0" is added to the call, the
   // filename will not be tagged. Particle dumps are in a binary format.
   // Each rank makes a particle dump.
-  if( should_dump(eparticle) ) dump_particles_hdf5("electron","eparticle");
-  if( should_dump(iparticle) ) dump_particles_hdf5("ion",     "iparticle");
+  if( should_dump(eparticle) ) dump_particles("electron","eparticle");
+  if( should_dump(iparticle) ) dump_particles("ion",     "iparticle");
 
   // A checkpt is made by calling checkpt( fbase, tag ) where fname is a string
   // and tag is an integer.  A typical usage is:

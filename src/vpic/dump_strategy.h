@@ -1,6 +1,13 @@
 #ifndef Dump_Strategy_h
 #define Dump_Strategy_h
 
+#include <unordered_map>
+#include <vector>
+
+#include <mpi.h> // TODO: it would be good if this didn't have to know about MPI
+
+#define DUMP_INFO_DEBUG 1
+
 // TODO: should I drop the ./src here?
 #include "../util/io/FileIO.h"
 #include "../util/util_base.h"
@@ -27,9 +34,14 @@
 // is very negligible.
 class Dump_Strategy {
     public:
-    int rank, nproc;
+    int rank, nproc, num_step;
 
-    Dump_Strategy(int _rank, int _nproc) : rank(_rank), nproc(_nproc) { } // empty
+    Dump_Strategy(int _rank, int _nproc, int total_steps) :
+        rank(_rank),
+        nproc(_nproc),
+        num_step(total_steps) // TODO: remove the need for this
+    { } // empty
+
     virtual ~Dump_Strategy() { };
 
     virtual void dump_fields(
@@ -61,7 +73,7 @@ class Dump_Strategy {
 class BinaryDump : public Dump_Strategy {
     public:
         using Dump_Strategy::Dump_Strategy; // inherit constructor
-        BinaryDump(int _rank, int _nproc) : Dump_Strategy(_rank, _nproc){ } // empty
+        BinaryDump(int _rank, int _nproc, int total_steps) : Dump_Strategy(_rank, _nproc, total_steps){ } // empty
 
         // TODO: now we pass rank and step, ftag has odd semanticds
         void dump_fields(
@@ -91,49 +103,157 @@ class BinaryDump : public Dump_Strategy {
 };
 
 #ifdef VPIC_ENABLE_HDF5
+
+struct field_dump_flag_t
+{
+  bool ex = true, ey = true, ez = true, div_e_err = true;
+  bool cbx = true, cby = true, cbz = true, div_b_err = true;
+  bool tcax = true, tcay = true, tcaz = true, rhob = true;
+  bool jfx = true, jfy = true, jfz = true, rhof = true;
+  bool ematx = true, ematy = true, ematz = true, nmat = true;
+  bool fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  void disableE()
+  {
+    ex = false, ey = false, ez = false, div_e_err = false;
+  }
+
+  void disableCB()
+  {
+    cbx = false, cby = false, cbz = false, div_b_err = false;
+  }
+
+  void disableTCA()
+  {
+    tcax = false, tcay = false, tcaz = false, rhob = false;
+  }
+
+  void disableJF()
+  {
+    jfx = false, jfy = false, jfz = false, rhof = false;
+  }
+
+  void disableEMAT()
+  {
+    ematx = false, ematy = false, ematz = false, nmat = false;
+  }
+
+  void disableFMAT()
+  {
+    fmatx = false, fmaty = false, fmatz = false, cmat = false;
+  }
+
+  void resetToDefaults()
+  {
+    ex = true, ey = true, ez = true, div_e_err = true;
+    cbx = true, cby = true, cbz = true, div_b_err = true;
+    tcax = true, tcay = true, tcaz = true, rhob = true;
+    jfx = true, jfy = true, jfz = true, rhof = true;
+    ematx = true, ematy = true, ematz = true, nmat = true;
+    fmatx = true, fmaty = true, fmatz = true, cmat = true;
+  }
+
+  bool enabledE()
+  {
+    return ex && ey && ez;
+  }
+
+  bool enabledCB()
+  {
+    return cbx && cby && cbz;
+  }
+
+  bool enabledTCA()
+  {
+    return tcax && tcay && tcaz;
+  }
+
+  bool enabledJF()
+  {
+    return jfx && jfy && jfz;
+  }
+
+  bool enabledEMAT()
+  {
+    return ematx && ematy && ematz;
+  }
+
+  bool enabledFMAT()
+  {
+    return fmatx && fmaty && fmatz;
+  }
+};
+
+struct hydro_dump_flag_t
+{
+  bool jx = true, jy = true, jz = true, rho = true;
+  bool px = true, py = true, pz = true, ke = true;
+  bool txx = true, tyy = true, tzz = true;
+  bool tyz = true, tzx = true, txy = true;
+
+  void disableJ()
+  {
+    jx = false, jy = false, jz = false, rho = false;
+  }
+
+  void disableP()
+  {
+    px = false, py = false, pz = false, ke = false;
+  }
+
+  void disableTD() //Stress diagonal
+  {
+    txx = false, tyy = false, tzz = false;
+  }
+
+  void disableTOD() //Stress off-diagonal
+  {
+    tyz = false, tzx = false, txy = false;
+  }
+  void resetToDefaults()
+  {
+    jx = true, jy = true, jz = true, rho = true;
+    px = true, py = true, pz = true, ke = true;
+    txx = true, tyy = true, tzz = true;
+    tyz = true, tzx = true, txy = true;
+  }
+
+  bool enabledJ()
+  {
+    return jx && jy && jz;
+  }
+
+  bool enabledP()
+  {
+    return px && py && pz;
+  }
+
+  bool enabledTD()
+  {
+    return txx && tyy && tzz;
+  }
+
+  bool enabledTOD()
+  {
+    return tyz && tzx && txy;
+  }
+};
 class HDF5Dump : public Dump_Strategy {
+    std::unordered_map<species_id, size_t> tframe_map;
     public:
         using Dump_Strategy::Dump_Strategy; // inherit constructor
+
+        // TODO: replace these with a common dump interface
+        // Declare vars to use
+        hydro_dump_flag_t hydro_dump_flag;
+        field_dump_flag_t field_dump_flag;
+
 #define DUMP_DIR_FORMAT "./%s"
 
-        /* define to do C-style indexing */
-#define hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
+// TODO: naming a macro so close to existing functions AND data is not a good
+// define to do C-style indexing
+#define _hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
 
         // TODO: make function?
-#define invert_field_xml_item(xml_file_name, speciesname_p, time_step, dims_4d, dims_3d, add_footer_flag)                                 \
-        {                                                                                                                                       \
-            FILE *fp;                                                                                                                             \
-            fp = fopen(xml_file_name, "a");                                                                                                       \
-            fprintf(fp, main_body_head, time_step);                                                                                               \
-            if (field_dump_flag.enabledE())                                                                                                       \
-            write_main_body_attribute(fp, main_body_attributeV, "E", dims_4d, dims_3d, speciesname_p, time_step, "ex", "ey", "ez");             \
-            if (field_dump_flag.div_e_err)                                                                                                        \
-            fprintf(fp, main_body_attributeS, "div_e_err", dims_3d, time_step, speciesname_p, time_step, time_step, "div_e_err");               \
-            if (field_dump_flag.enabledCB())                                                                                                      \
-            write_main_body_attribute(fp, main_body_attributeV, "B", dims_4d, dims_3d, speciesname_p, time_step, "cbx", "cby", "cbz");          \
-            if (field_dump_flag.div_b_err)                                                                                                        \
-            fprintf(fp, main_body_attributeS, "div_b_err", dims_3d, time_step, speciesname_p, time_step, time_step, "div_b_err");               \
-            if (field_dump_flag.enabledTCA())                                                                                                     \
-            write_main_body_attribute(fp, main_body_attributeV, "TCA", dims_4d, dims_3d, speciesname_p, time_step, "tcax", "tcay", "tcaz");     \
-            if (field_dump_flag.rhob)                                                                                                             \
-            fprintf(fp, main_body_attributeS, "rhob", dims_3d, time_step, speciesname_p, time_step, time_step, "rhob");                         \
-            if (field_dump_flag.enabledJF())                                                                                                      \
-            write_main_body_attribute(fp, main_body_attributeV, "JF", dims_4d, dims_3d, speciesname_p, time_step, "jfx", "jfy", "jfz");         \
-            if (field_dump_flag.rhof)                                                                                                             \
-            fprintf(fp, main_body_attributeS, "rhof", dims_3d, time_step, speciesname_p, time_step, time_step, "rhof");                         \
-            if (field_dump_flag.enabledEMAT())                                                                                                    \
-            write_main_body_attribute(fp, main_body_attributeV, "EMAT", dims_4d, dims_3d, speciesname_p, time_step, "ematx", "ematy", "ematz"); \
-            if (field_dump_flag.nmat)                                                                                                             \
-            fprintf(fp, main_body_attributeS, "nmat", dims_3d, time_step, speciesname_p, time_step, time_step, "nmat");                         \
-            if (field_dump_flag.enabledFMAT())                                                                                                    \
-            write_main_body_attribute(fp, main_body_attributeV, "FMAT", dims_4d, dims_3d, speciesname_p, time_step, "fmatx", "fmaty", "fmatz"); \
-            if (field_dump_flag.cmat)                                                                                                             \
-            fprintf(fp, main_body_attributeS, "cmat", dims_3d, time_step, speciesname_p, time_step, time_step, "cmat");                         \
-            fprintf(fp, "%s", main_body_foot);                                                                                                          \
-            if (add_footer_flag)                                                                                                                  \
-            fputs(footer, fp);                                                                                                                  \
-            fclose(fp);                                                                                                                           \
-        }
         void dump_fields(
             const char *fbase,
             int step,
@@ -257,6 +377,7 @@ class HDF5Dump : public Dump_Strategy {
             int rx, ry, rz;
             UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
+            int mpi_rank_x, mpi_rank_y, mpi_rank_z;
             mpi_rank_x = rx;
             mpi_rank_y = ry;
             mpi_rank_z = rz;
@@ -270,9 +391,9 @@ class HDF5Dump : public Dump_Strategy {
             global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
-            printf("global size   = %d  %d %d \n", field_global_size[0], field_global_size[1], field_global_size[2]);
-            printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
-            printf("global_count  = %d  %d %d \n", global_count[0], global_count[1], global_count[2]);
+            printf("global size   = %llu  %llu %llu \n", field_global_size[0], field_global_size[1], field_global_size[2]);
+            printf("global_offset = %llu %llu %llu \n", global_offset[0], global_offset[1], global_offset[2]);
+            printf("global_count  = %llu  %llu %llu \n", global_count[0], global_count[1], global_count[2]);
             printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
             fflush(stdout);
 #endif
@@ -390,6 +511,13 @@ class HDF5Dump : public Dump_Strategy {
                 char dxdydz[128];
                 sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
 
+
+                // TODO: remove or let the user set
+                int field_interval = 1;
+
+                // TODO: remove this dependence on number of steps
+                std::cout << "num_step " << num_step << std::endl;
+
                 int nframes = num_step / field_interval + 1;
                 static int field_tframe = 0;
 
@@ -401,8 +529,8 @@ class HDF5Dump : public Dump_Strategy {
                 printf("             dxdydz: %s \n", dxdydz);
                 printf("            nframes: %d \n", nframes);
                 printf("    field_interval: %d \n", field_interval);
-                printf("       current step: %lld \n", step_for_viou);
-                printf("       current step: %lld \n", step_for_viou);
+                printf("       current step: %zd \n", step_for_viou);
+                printf("       current step: %zd \n", step_for_viou);
 
                 //printf("    Simulation time: %f \n", grid->t0);
                 printf("             tframe: %d \n", field_tframe);
@@ -459,9 +587,9 @@ class HDF5Dump : public Dump_Strategy {
             // get the total number of particles. in this example, output only electrons
             //sp = species_list;
             sprintf(particle_scratch, DUMP_DIR_FORMAT, "particle_hdf5");
-            FileUtils::makeDirector(particle_scratch);
+            FileUtils::makeDirectory(particle_scratch);
             sprintf(subparticle_scratch, "%s/T.%ld/", particle_scratch, step_for_viou);
-            FileUtils::makeDirector(subparticle_scratch);
+            FileUtils::makeDirectory(subparticle_scratch);
 
             // TODO: Allow the user to set this
             int stride_particle_dump = 1;
@@ -588,7 +716,6 @@ class HDF5Dump : public Dump_Strategy {
                 global_pi[i] = global_i;
             }
 
-#undef UNVOXEL
             dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, filespace, plist_id, global_pi.data());
             H5Dclose(dset_id);
@@ -740,7 +867,7 @@ class HDF5Dump : public Dump_Strategy {
                     {                                                                                                     \
                         for (size_t k(1); k < grid->nz + 1; k++)                                                          \
                         {                                                                                                 \
-                            temp_buf[temp_buf_index] = hydro(i, j, k).ATTRIBUTE_NAME;                                     \
+                            temp_buf[temp_buf_index] = _hydro(i, j, k).ATTRIBUTE_NAME;                                     \
                             temp_buf_index = temp_buf_index + 1;                                                          \
                         }                                                                                                 \
                     }                                                                                                     \
@@ -756,9 +883,10 @@ class HDF5Dump : public Dump_Strategy {
             MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
             MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
-            species_t *sp = find_species_name(speciesname, species_list);
             if (!sp)
-                ERROR(("Invalid species name: %s", speciesname));
+            {
+                ERROR(("Invalid species"));
+            }
 
             clear_hydro_array(hydro_array);
             accumulate_hydro_p(hydro_array, sp, interpolator_array);
@@ -769,11 +897,11 @@ class HDF5Dump : public Dump_Strategy {
             char subhydro_scratch[128];
 
             sprintf(hydro_scratch, "./%s", "hydro_hdf5");
-            FileUtils::makeDirector(hydro_scratch);
+            FileUtils::makeDirectory(hydro_scratch);
             sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step_for_viou);
-            FileUtils::makeDirector(subhydro_scratch);
+            FileUtils::makeDirectory(subhydro_scratch);
 
-            sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, speciesname, step_for_viou);
+            sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, sp->name, step_for_viou);
             double el1 = uptime();
             hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
             H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -832,7 +960,7 @@ class HDF5Dump : public Dump_Strategy {
             hydro_local_size[2] = grid->nz;
 
             int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-            RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+            UNVOXEL(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z, grid->gpx, grid->gpy, grid->gpz);
 
             global_offset[0] = (grid->nx) * mpi_rank_x;
             global_offset[1] = (grid->ny) * mpi_rank_y;
@@ -843,9 +971,9 @@ class HDF5Dump : public Dump_Strategy {
             global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
-            printf("global size   = %d %d %d \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
-            printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
-            printf("global_count  = %d %d %d \n", global_count[0], global_count[1], global_count[2]);
+            printf("global size   = %llu %llu %llu \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
+            printf("global_offset = %llu %llu %llu \n", global_offset[0], global_offset[1], global_offset[2]);
+            printf("global_count  = %llu %llu %llu \n", global_count[0], global_count[1], global_count[2]);
             printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
             fflush(stdout);
 #endif
@@ -929,7 +1057,7 @@ class HDF5Dump : public Dump_Strategy {
             if (mpi_rank == 0)
             {
                 char output_xml_file[128];
-                sprintf(output_xml_file, "./%s/%s%s%s", "hydro_hdf5", "hydro-", speciesname, ".xdmf");
+                sprintf(output_xml_file, "./%s/%s%s%s", "hydro_hdf5", "hydro-", sp->name, ".xdmf");
                 char dimensions_3d[128];
                 sprintf(dimensions_3d, "%lld %lld %lld", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
                 char dimensions_4d[128];
@@ -939,6 +1067,10 @@ class HDF5Dump : public Dump_Strategy {
                 char dxdydz[128];
                 sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
 
+                // TODO: remove or let user set
+                int hydro_interval = 1;
+
+                // TODO: remove this dependence on number of steps
                 int nframes = num_step / hydro_interval + 1;
 
                 const int tframe = tframe_map[sp->id];
@@ -951,13 +1083,14 @@ class HDF5Dump : public Dump_Strategy {
                 printf("             dxdydz: %s \n", dxdydz);
                 printf("            nframes: %d \n", nframes);
                 printf("    hydro_fields_interval: %d \n", hydro_interval);
-                printf("       current step: %lld \n", step_for_viou);
+                printf("       current step: %zu \n", step_for_viou);
                 printf("    Simulation time: %f \n", grid->t0);
                 printf("             tframe: %d \n", tframe);
 #endif
 
+                // TODO: why doesnt this just use the cstr?
                 char speciesname_new[128];
-                sprintf(speciesname_new, "hydro_%s", speciesname);
+                sprintf(speciesname_new, "hydro_%s", sp->name);
                 if (tframe >= 1)
                 {
                     if (tframe == (nframes - 1))

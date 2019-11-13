@@ -204,7 +204,7 @@ def read_data(inputfile, dim, floatfmt, no_fields):
     f = inputfile
     volume = no_fields*dim[0]*dim[1]*dim[2]
     #data1d = struct.unpack('='+str(volume)+'f', f.read(volume*4))
-    numpy.fromfile(f,dtype=numpy.single,count=volume)
+    data1d = numpy.fromfile(f,dtype=numpy.single,count=volume)
 
     dim4 = [dim[0], dim[1], dim[2], no_fields]
     data4d = numpy.reshape(data1d, dim4, order='F')

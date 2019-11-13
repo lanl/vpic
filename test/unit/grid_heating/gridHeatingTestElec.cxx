@@ -249,7 +249,7 @@ begin_initialization {
 TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
 {
     // Init and run sim
-    vpic_simulation simulation = vpic_simulation();
+    vpic_simulation simulation;
 
     // TODO: We should do this in a safer manner
     simulation.initialize( 0, NULL );

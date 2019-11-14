@@ -1124,7 +1124,7 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef VPIC_ENABLE_OPENPMD
 class OpenPMDDump : public Dump_Strategy {
     public:
-        openPMD::Series* series;
+        //openPMD::Series* series;
         using Dump_Strategy::Dump_Strategy; // inherit constructor
         void dump_fields(
             const char *fbase,
@@ -1136,17 +1136,17 @@ class OpenPMDDump : public Dump_Strategy {
         {
             std::cout << "Writing openPMD data" << std::endl;
 
-            if (series == nullptr) {
+            //if (series == nullptr) {
                 std::cout << "init series" << std::endl;
-                series = new openPMD::Series(
+                openPMD::Series series = openPMD::Series(
                         fbase,
                         openPMD::AccessType::CREATE,
                         MPI_COMM_WORLD
-                        );
-            }
+                );
+            //}
 
             std::cout << "Writing itration " << step << std::endl;
-            auto i = series->iterations[ step ];
+            auto i = series.iterations[ step ];
             // TODO: it would be nice to set these...
             //series.setAuthor( "Axel Huebl <a.huebl@hzdr.de>");
             //series.setMachine( "Hall Probe 5000, Model 3");
@@ -1175,7 +1175,7 @@ class OpenPMDDump : public Dump_Strategy {
             size_t gnx = (grid->nx * grid->gpx);
             size_t gny = (grid->ny * grid->gpy);
             size_t gnz = (grid->nz * grid->gpz);
-            openPMD::Extent global_extent = {gny, gny, gnz};
+            openPMD::Extent global_extent = {gnx, gny, gnz};
 
             openPMD::Datatype datatype = openPMD::determineDatatype<float>();
             openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
@@ -1207,6 +1207,12 @@ class OpenPMDDump : public Dump_Strategy {
 
             openPMD::Offset chunk_offset = {global_offset_x, global_offset_y, global_offset_z};
             openPMD::Extent chunk_extent = {nx, ny, nz};
+
+            std::cout << "Local offset " <<
+                " x: " << global_offset_x  <<
+                " y: " << global_offset_y  <<
+                " z: " << global_offset_z  <<
+                std::endl;
 
             // Store a local copy of the data which we pull out of the AoS
             std::vector<float> cbx_data;
@@ -1276,7 +1282,7 @@ class OpenPMDDump : public Dump_Strategy {
             Jy.storeChunk( jy_data, chunk_offset, chunk_extent);
             Jz.storeChunk( jz_data, chunk_offset, chunk_extent);
 
-            series->flush();
+            series.flush();
         }
         void dump_particles(
             const char *fbase,
@@ -1287,16 +1293,16 @@ class OpenPMDDump : public Dump_Strategy {
             int ftag
         )
         {
-            if (series == nullptr) {
+            //if (series == nullptr) {
                 std::cout << "init series" << std::endl;
-                series = new openPMD::Series(
+                openPMD::Series series = openPMD::Series(
                         fbase,
                         openPMD::AccessType::CREATE,
                         MPI_COMM_WORLD
                         );
-            }
+            //}
 
-            auto i = series->iterations[ step ];
+            auto i = series.iterations[ step ];
 
             // TODO: set these
             i.setTime( (float)step );
@@ -1356,6 +1362,7 @@ class OpenPMDDump : public Dump_Strategy {
             }
 
 
+            series.flush();
         }
         void dump_hydro(
             const char *fbase,

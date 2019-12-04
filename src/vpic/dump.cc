@@ -255,13 +255,6 @@ vpic_simulation::dump_hydro( const char *sp_name,
   fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
 
-  for (int k = 0; k < dim[2]; k++) {
-      for (int j = 0; j < dim[1]; j++) {
-              for (int i = 0; i < dim[0]; i++) {
-                  printf("Writing %d %d %d = %e \n", i, j, k, hydro(i,j,k).jx);
-              }
-      }
-  }
 }
 
 void

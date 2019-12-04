@@ -25,6 +25,10 @@
 #include "../util/checksum.h"
 #include "../util/system.h"
 
+#ifndef USER_GLOBAL_SIZE
+#define USER_GLOBAL_SIZE 16384
+#endif
+
 #ifndef NVARHISMX
 #define NVARHISMX 250
 #endif
@@ -191,6 +195,11 @@ protected:
   emitter_t            * emitter_list;       // define_emitter /
                                              // emitter helpers
   collision_op_t       * collision_op_list;  // collision helpers
+
+  // User defined checkpt preserved variables
+  // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
+
+  char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------
    * Diagnostics
@@ -531,7 +540,8 @@ protected:
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w ) {
+                       float ux, float uy, float uz, float w )
+  {
     particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -544,7 +554,8 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w,
                        float dispx, float dispy, float dispz,
-                       int update_rhob ) {
+                       int update_rhob )
+  {
     particle_t       * RESTRICT p  = sp->p  + (sp->np++);
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;

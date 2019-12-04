@@ -300,7 +300,7 @@ begin_diagnostics {
   // the checkpt but before the next timestep will be missed on restore.
   // Restart dumps are in a binary format unique to the each simulation.
 
-  if( should_dump(restart) ) checkpt( "checkpt", step() );
+  if( should_dump(restart) ) checkpt( "checkpt_test", step() );
 
   // If you want to write a checkpt after a certain amount of simulation time,
   // use uptime() in conjunction with checkpt.  For example, this will cause

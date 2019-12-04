@@ -58,8 +58,6 @@ class vpic_test_simulation : public vpic_simulation
                 inject_particle( sp , x, y, z, 0., 0., 0., 1., 0., 0);
             }
 
-            //clear_accumulator_array(accumulator_array);
-
             load_interpolator_array( interpolator_array, field_array );
 
 #ifdef ENABLE_SORT

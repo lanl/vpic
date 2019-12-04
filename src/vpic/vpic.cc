@@ -7,9 +7,9 @@
  * March/April 2004 - Heavily revised and extended from earlier V4PIC versions
  *
  */
- 
+
 #include "vpic.h"
- 
+
 /* Note that, when a vpic_simulation is created (and thus registered
    with the checkpt service), it is created empty; none of the simulation
    objects on which it depends have been created yet. (These get created
@@ -99,7 +99,7 @@ vpic_simulation::vpic_simulation() {
   //   if( n_rng<spu.n_pipeline    ) n_rng = spu.n_pipeline;
   // # endif
 
-  n_rng++; 
+  n_rng++;
 
   entropy      = new_rng_pool( n_rng, 0, 0 );
   sync_entropy = new_rng_pool( n_rng, 0, 1 );
@@ -108,9 +108,10 @@ vpic_simulation::vpic_simulation() {
   REGISTER_OBJECT( this, checkpt_vpic_simulation,
                    restore_vpic_simulation, reanimate_vpic_simulation );
 }
- 
+
 vpic_simulation::~vpic_simulation() {
   UNREGISTER_OBJECT( this );
+  delete_collision_op_list( collision_op_list );
   delete_emitter_list( emitter_list );
   delete_particle_bc_list( particle_bc_list );
   delete_species_list( species_list );
@@ -123,4 +124,3 @@ vpic_simulation::~vpic_simulation() {
   delete_rng_pool( sync_entropy );
   delete_rng_pool( entropy );
 }
- 

@@ -34,6 +34,7 @@
   _( load_interpolator ) \
   _( compute_curl_b    ) \
   _( compute_rhob      ) \
+  _( center_p          ) \
   _( uncenter_p        ) \
   _( user_initialization ) \
   _( user_particle_collisions ) \

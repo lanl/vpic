@@ -638,15 +638,15 @@ begin_diagnostics {
   if ( should_dump(eparticle) && step() !=0
        && step() > 56*(global->fields_interval)  ) {
     // if ( should_dump(eparticle) && step() !=0 ) {
-    sprintf(subdir,"particle/T.%d",step());
+    sprintf(subdir,"particle/T.%lld",step());
     dump_mkdir(subdir);
-    sprintf(subdir,"particle/T.%d/eparticle",step());
+    sprintf(subdir,"particle/T.%lld/eparticle",step());
     dump_particles("electron", subdir);
   }
 
   if ( should_dump(Hparticle) && step() !=0
        && step() > 56*(global->fields_interval)  ) {
-    sprintf(subdir,"particle/T.%d/Hparticle",step());
+    sprintf(subdir,"particle/T.%lld/Hparticle",step());
     dump_particles("ion", subdir);
   }
 

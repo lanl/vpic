@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
 
 
@@ -36,6 +35,7 @@ theory = jx[0]*np.exp(-t*nuei)
 
 show_plot = 0
 if show_plot:
+    import matplotlib.pyplot as plt
     fig, (ax1) = plt.subplots(nrows=1)
     im = ax1.plot(t, jx, 'b')
     im2 = ax1.plot(t, theory, 'r')

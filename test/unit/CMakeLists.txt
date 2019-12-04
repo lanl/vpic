@@ -1,0 +1,5 @@
+add_subdirectory(particle_push)
+add_subdirectory(energy_comparison)
+if (ENABLE_LONG_TESTS)
+    add_subdirectory(grid_heating)
+endif(ENABLE_LONG_TESTS)

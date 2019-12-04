@@ -49,7 +49,7 @@ uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
     // Load particle position data.
     //--------------------------------------------------------------------------
     load_4x4_tr( &p[0].dx, &p[1].dx, &p[2].dx, &p[3].dx,
-		 dx, dy, dz, ii );
+    		 dx, dy, dz, ii );
 
     //--------------------------------------------------------------------------
     // Set field interpolation pointers.
@@ -63,31 +63,31 @@ uncenter_p_pipeline_v4( center_p_pipeline_args_t * args,
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00, vp01, vp02, vp03,
-		 hax, v00, v01, v02 );
+    		 hax, v00, v01, v02 );
 
-    hax = qdt_2mc*fma( fma( dy, v02, v01 ), dz, fma( dy, v00, hax ) );
+    hax = qdt_2mc * fma( fma( dy, v02, v01 ), dz, fma( dy, v00, hax ) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+4, vp01+4, vp02+4, vp03+4,
-		 hay, v03, v04, v05 );
+    		 hay, v03, v04, v05 );
 
-    hay = qdt_2mc*fma( fma( dz, v05, v04 ), dx, fma( dz, v03, hay ) );
+    hay = qdt_2mc * fma( fma( dz, v05, v04 ), dx, fma( dz, v03, hay ) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+8, vp01+8, vp02+8, vp03+8,
-		 haz, v00, v01, v02 );
+    		 haz, v00, v01, v02 );
 
-    haz = qdt_2mc*fma( fma( dx, v02, v01 ), dy, fma( dx, v00, haz ) );
+    haz = qdt_2mc * fma( fma( dx, v02, v01 ), dy, fma( dx, v00, haz ) );
 
     //--------------------------------------------------------------------------
     // Load interpolation data for particles.
     //--------------------------------------------------------------------------
     load_4x4_tr( vp00+12, vp01+12, vp02+12, vp03+12,
-		 cbx, v03, cby, v04 );
+    		 cbx, v03, cby, v04 );
 
     cbx = fma( v03, dx, cbx );
     cby = fma( v04, dy, cby );

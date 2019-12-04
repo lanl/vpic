@@ -138,9 +138,9 @@ begin_initialization {
   global->fields_interval    = status_interval;
   global->ehydro_interval    = status_interval;
   global->ihydro_interval    = status_interval;
-  global->eparticle_interval = status_interval; // Do not dump
-  global->iparticle_interval = status_interval; // Do not dump
-  global->restart_interval   = status_interval; // Do not dump
+  global->eparticle_interval = status_interval;
+  global->iparticle_interval = status_interval;
+  global->restart_interval   = status_interval;
 
   ///////////////////////////
   // Setup the space and time

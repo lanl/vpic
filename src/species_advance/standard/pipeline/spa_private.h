@@ -43,7 +43,6 @@ typedef struct advance_p_pipeline_args
   int                                  nz;       // z-mesh resolution
  
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
-
 } advance_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
@@ -79,7 +78,6 @@ typedef struct center_p_pipeline_args
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 2*SIZEOF_MEM_PTR + sizeof(float) + sizeof(int) )
-
 } center_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
@@ -138,7 +136,6 @@ typedef struct energy_p_pipeline_args
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + sizeof(int) )
-
 } energy_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
@@ -243,7 +240,6 @@ typedef struct sort_p_pipeline_args
   int n_voxel;   // Number of voxels total (including ghosts)
 
   PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
-
 } sort_p_pipeline_args_t;
 
 // PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );

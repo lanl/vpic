@@ -12,6 +12,13 @@ cmake_minimum_required(VERSION 3.1)
 project(vpic)
 
 #------------------------------------------------------------------------------#
+# Quiet newer versions of cmake about MPI_ROOT
+#------------------------------------------------------------------------------#
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
+#------------------------------------------------------------------------------#
 # If a C++11 compiler is available, then set the appropriate flags
 #------------------------------------------------------------------------------#
 
@@ -41,11 +48,17 @@ option(ENABLE_INTEGRATED_TESTS "Enable integrated tests" OFF)
 
 option(ENABLE_UNIT_TESTS "Enable unit tests" OFF)
 
+option(ENABLE_LONG_TESTS "Enable longer running tests, often skipped for most CI builds" OFF)
+
+option(ENABLE_PERFORMANCE_TESTS "Enable performance tests" OFF)
+
 option(USE_OPENMP "Use OpenMP" OFF)
 
 option(USE_PTHREADS "Use Pthreads" ON)
 
 option(USE_V4_ALTIVEC "Enable V4 Altivec" OFF)
+
+option(USE_V4_NEON "Enable V4 NEON" OFF)
 
 option(USE_V4_PORTABLE "Enable V4 Portable" OFF)
 
@@ -65,11 +78,19 @@ option(USE_V16_PORTABLE "Enable V16 Portable" OFF)
 
 option(USE_V16_AVX512 "Enable V16 AVX512" OFF)
 
+option(USE_LEGACY_SORT "Enable Legacy Sort Implementation" OFF)
+
 #option(USE_ADVANCE_P_AUTOVEC "Enable Explicit Autovec" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
 option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
+
+option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
+
+# option to set minimum number of particles
+set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
+
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -96,6 +117,14 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 string(REPLACE ";" " " string_libraries "${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
 
+if(DISABLE_DYNAMIC_RESIZING)
+  add_definitions(-DDISABLE_DYNAMIC_RESIZING)
+endif(DISABLE_DYNAMIC_RESIZING)
+
+if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
+    add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
+endif()
+
 #------------------------------------------------------------------------------#
 # OpenSSL
 #------------------------------------------------------------------------------#
@@ -115,8 +144,23 @@ find_package(Threads REQUIRED)
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
+# Add options for building with the legacy particle sort implementation.
+#------------------------------------------------------------------------------#
+
+if(USE_LEGACY_SORT)
+  add_definitions(-DVPIC_USE_LEGACY_SORT)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
+endif(USE_LEGACY_SORT)
+
+#------------------------------------------------------------------------------#
 # Add options for building with a threading model.
 #------------------------------------------------------------------------------#
+
+# We don't want both PTHREADS and OpenMP
+if ((USE_PTHREADS) AND (USE_OPENMP))
+     message( FATAL_ERROR "Only one threading model can be selected" )
+endif()
+
 
 if(USE_PTHREADS)
   add_definitions(-DVPIC_USE_PTHREADS)
@@ -170,6 +214,12 @@ if(USE_V4_ALTIVEC)
   set(USE_V4 True)
 endif(USE_V4_ALTIVEC)
 
+if(USE_V4_NEON)
+  add_definitions(-DUSE_V4_NEON)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V4_NEON")
+  set(USE_V4 True)
+endif(USE_V4_NEON)
+
 #------------------------------------------------------------------------------#
 # Add options for building with v8 simd vector support.
 #------------------------------------------------------------------------------#
@@ -211,6 +261,18 @@ if(USE_V16_AVX512)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DUSE_V16_AVX512")
   set(USE_V16 True)
 endif(USE_V16_AVX512)
+
+# TODO: Can we improve the way this is done so it's detection of a positive not
+# multiple negatives?
+if (NOT USE_V4 AND NOT USE_V8 AND NOT USE_V16)
+    # This option is intended to indicate that we're not using any of the
+    # specialized intrinsics code paths, and we can expect numerical answer to
+    # be the same as the "reference" (serial/auto-vec) implementation. This can
+    # be especially useful when trying to test small differences in expressions
+    # and we want bitwise answers to a known implementation
+    set(NO_EXPLICIT_VECTOR True)
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add options for building with explicit autovec support.
@@ -255,6 +317,13 @@ endif(ENABLE_COVERAGE_BUILD)
 configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
   ${CMAKE_BINARY_DIR}/bin/Makefile.run)
 
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
+
 # install script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
@@ -267,10 +336,11 @@ install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
     WORLD_READ WORLD_EXECUTE
     )
 
-install(FILES ${CMAKE_SOURCE_DIR}/deck/main.cc
-  DESTINATION share/vpic)
-install(FILES ${CMAKE_SOURCE_DIR}/deck/wrapper.cc
-  DESTINATION share/vpic)
+install(FILES deck/main.cc deck/wrapper.cc DESTINATION share/vpic)
+install(FILES deck/wrapper.h DESTINATION include/vpic)
+install(DIRECTORY src/ DESTINATION include/vpic
+         FILES_MATCHING PATTERN "*.h")
+
 
 # local script
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
@@ -338,15 +408,15 @@ endif()
 if(ENABLE_INTEGRATED_TESTS)
   enable_testing()
   add_subdirectory(test/integrated)
-
 endif(ENABLE_INTEGRATED_TESTS)
 
-if(ENABLE_UNIT_TESTS)
+# Add includes for Catch2
+set(CATCH_DIR "./test/include")
 
-  # NOTE: This can also be done by a subdirectory (useful when we have multiple tests)
-  # Add includes for Catch2
-  set(TEST_DIR "./test/include")
-  include_directories(${TEST_DIR})
+if(ENABLE_UNIT_TESTS)
+  enable_testing()
+
+  include_directories(${CATCH_DIR})
 
   # Add tests individually
   if (USE_V4)
@@ -359,7 +429,15 @@ if(ENABLE_UNIT_TESTS)
   target_link_libraries(rng vpic)
   add_test(NAME rng COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./rng)
 
+  add_subdirectory(test/unit)
+
 endif(ENABLE_UNIT_TESTS)
+
+if(ENABLE_PERFORMANCE_TESTS)
+  enable_testing()
+  include_directories(${CATCH_DIR})
+  add_subdirectory(test/performance)
+endif(ENABLE_PERFORMANCE_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#

@@ -68,4 +68,3 @@ vpic_simulation::finalize( void ) {
   barrier();
   update_profile( rank()==0 );
 }
-

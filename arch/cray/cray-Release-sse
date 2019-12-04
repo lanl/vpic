@@ -1,0 +1,50 @@
+#! /usr/bin/env bash
+
+# To build on ciel(it)o:
+# module swap PrgEnv-pgi PrgEnv-intel
+# module load user_contrib
+# module load cmake/3.4.0
+# cd /path/to/code
+# mkdir build
+# cd build
+# ../arch/cray-Release-sse
+# make -j
+
+#------------------------------------------------------------------------------#
+# Get the path to the project from which this script was called
+#------------------------------------------------------------------------------#
+
+src_dir="${0%/*}/../.."
+
+#------------------------------------------------------------------------------#
+# Call CMake command
+#------------------------------------------------------------------------------#
+
+# The flag -rdynamic removes warnings of the form:
+# Unable to find a safely writable symbol that corresponds to address 432af0
+# (the closest match was "(null)" from "./lpi_2d_F6_test.Linux").  Writing out
+# the raw address instead and keeping my fingers crossed.
+# The flags -dynamic and -craype-verbose were required for the trinitite build.
+
+cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DENABLE_INTEGRATED_TESTS=OFF \
+  -DUSE_V4_SSE=ON \
+  -DCMAKE_C_COMPILER=cc \
+  -DCMAKE_CXX_COMPILER=CC \
+  -DCMAKE_C_FLAGS="-rdynamic -dynamic -craype-verbose" \
+  -DCMAKE_CXX_FLAGS="-rdynamic -dynamic -craype-verbose" \
+  -DCMAKE_EXE_LINKER_FLAGS="-rdynamic -dynamic" \
+  -DMPI_C_LIBRARIES="" \
+  -DMPI_CXX_LIBRARIES="" \
+  -DMPI_C_INCLUDE_PATH="" \
+  -DMPI_CXX_INCLUDE_PATH="" \
+  -DMPI_C_COMPILER="" \
+  -DMPI_CXX_COMPILER="" \
+  $src_dir
+
+# To turn on unit/integrated tests add the following. Note that `which aprun`
+# will ONLY WORK ON THE BACK END.
+#  -DENABLE_INTEGRATED_TESTS=OFF \
+#  -DMPIEXEC=`which aprun` \
+#  -DMPIEXEC_NUMPROC_FLAG="-n" \

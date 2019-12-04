@@ -19,7 +19,8 @@
 void
 hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
                          int pipeline_rank,
-                         int n_pipeline ) {
+                         int n_pipeline )
+{
   float c, qsp, mspc, qdt_2mc, qdt_4mc2, r8V;
   int np, stride_10, stride_21, stride_43;
 

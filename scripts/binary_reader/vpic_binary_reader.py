@@ -207,8 +207,9 @@ def read_data(inputfile, dim, floatfmt, no_fields):
     #data1d = struct.unpack('='+str(volume)+'f', f.read(volume*4))
     data1d = numpy.fromfile(f,dtype=numpy.single,count=volume)
 
-    dim4 = [dim[0], dim[1], dim[2], no_fields]
-    data4d = numpy.reshape(data1d, dim4, order='F')
+    #dim4 = [dim[0], dim[1], dim[2], no_fields]
+    dim4 = [dim[2], dim[1], dim[0], no_fields]
+    data4d = numpy.reshape(data1d, dim4, order='C')
 
     ret_list = []
     for i in range(no_fields):
@@ -226,8 +227,9 @@ def read_field(inputfile, dim, floatfmt, field_i, no_fields):
 
     data1d = struct.unpack('='+str(volume)+'f', f.read(volume*4))
 
-    dim4 = [dim[0], dim[1], dim[2], no_fields]
-    data4d = numpy.reshape(data1d, dim4, order='F')
+    #dim4 = [dim[0], dim[1], dim[2], no_fields]
+    dim4 = [dim[2], dim[1], dim[0], no_fields]
+    data4d = numpy.reshape(data1d, dim4, order='C')
 
     return data4d[:,:,:, field_i]
 

@@ -40,31 +40,37 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 // (16KB) which is particularly convenient on Cell.  The pipeline
 // dispatcher will handle any stragglers.
 
-enum { accumulators_n_block = 256 };
+enum { accumulators_n_block = 256, hydro_n_block = 1 };
 
-typedef struct accumulators_pipeline_args
+typedef struct reduce_pipeline_args
 {
-  MEM_PTR( accumulator_t, 128) a; // First accumulator to reduce
-  int n;                          // Number of accumulators to reduce
-  int n_array;                    // Number of accumulator arrays
+  MEM_PTR(float, 128) a;          // First array element to reduce
+  int n;                          // Number of array elements to reduce
+  int n_array;                    // Number of pipeline arrays
   int s_array;                    // Stride between each array
+  int n_block;                    // Number of floats/block.
 
-  PAD_STRUCT( SIZEOF_MEM_PTR + 3*sizeof(int) )
+  PAD_STRUCT( SIZEOF_MEM_PTR + 4*sizeof(int) )
 
-} accumulators_pipeline_args_t;
+} reduce_pipeline_args_t;
 
 void
-clear_accumulators_pipeline_scalar( accumulators_pipeline_args_t * args,
-                                    int pipeline_rank,
-                                    int n_pipeline );
+clear_array_pipeline_scalar( reduce_pipeline_args_t * args,
+                             int pipeline_rank,
+                             int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // reduce_accumulators_pipeline interface
 
 void
-reduce_accumulators_pipeline_scalar( accumulators_pipeline_args_t * args,
-                                     int pipeline_rank,
-                                     int n_pipeline );
+reduce_array_pipeline_scalar( reduce_pipeline_args_t * args,
+                              int pipeline_rank,
+                              int n_pipeline );
+
+void
+reduce_array_pipeline_v4( reduce_pipeline_args_t * args,
+                          int pipeline_rank,
+                          int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 

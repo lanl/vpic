@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: configure
-      run: mkdir build; pushd build; cmake ..
+      run: sudo apt-get install openmpi-bin libopenmpi-dev; mkdir build; pushd build; cmake ..
     - name: make
       run: make
     - name: make check

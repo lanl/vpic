@@ -254,6 +254,7 @@ vpic_simulation::dump_hydro( const char *sp_name,
   WRITE_ARRAY_HEADER( hydro_array->h, 3, dim, fileIO );
   fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
   if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
+
 }
 
 void

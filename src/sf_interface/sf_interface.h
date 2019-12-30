@@ -194,6 +194,8 @@ typedef struct hydro
 typedef struct hydro_array
 {
   hydro_t * ALIGNED(128) h;
+  int n_pipeline; // Number of pipelines supported by this hydro
+  int stride;     // Stride be each pipeline's hydro array
   grid_t * g;
 } hydro_array_t;
 
@@ -217,9 +219,16 @@ delete_hydro_array( hydro_array_t * ha );
 void
 clear_hydro_array( hydro_array_t * ha );
 
-// Synchronize the hydro array with local boundary conditions and
-// neighboring processes.  Use after all species have been
-// accumulated to the hydro array.
+// Reduces all the pipelines to the host array. This is called by
+// synchronize_hydro_array and does not typically need to be otherwise
+// called.
+
+void
+reduce_hydro_array( hydro_array_t * ha );
+
+// Reduces all the pipelines to the host array and then synchronizes
+// the hydro array with local boundary conditions and neighboring
+// processes. Use after all species have been accumulated to the hydro array.
 
 void
 synchronize_hydro_array( hydro_array_t * ha );

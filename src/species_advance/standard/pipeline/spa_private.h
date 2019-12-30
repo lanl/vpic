@@ -161,6 +161,43 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
                        int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
+// hydro_p_pipeline interface
+
+typedef struct hydro_p_pipeline_args {
+
+  MEM_PTR( const species_t,      128 ) sp;      // Species array
+  MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
+  MEM_PTR( /**/  hydro_t,        128 ) h;       // Hydro values
+  int                                  h_size;  // Size of each hydro array
+  float                                qdt_2mc; // Particle/field coupling
+  float                                msp;     // Species particle rest mass
+  int                                  np;      // Number of particles
+
+  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
+
+} hydro_p_pipeline_args_t;
+
+void
+hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
+                         int pipeline_rank,
+                         int n_pipeline );
+
+void
+hydro_p_pipeline_v4( hydro_p_pipeline_args_t * args,
+                     int pipeline_rank,
+                     int n_pipeline );
+
+void
+hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
+                     int pipeline_rank,
+                     int n_pipeline );
+
+void
+hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
+                      int pipeline_rank,
+                      int n_pipeline );
+
+///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
 
 // Given the voxel index, compute which subsort is responsible for

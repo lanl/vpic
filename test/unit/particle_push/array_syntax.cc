@@ -97,7 +97,7 @@ vpic_simulation::user_initialization( int num_cmdline_arguments,
             }
         }
       if( failed )
-      {  std::cout << "FAIL" << std::endl; 
+      {  std::cout << "FAIL" << std::endl;
       }
       REQUIRE_FALSE(failed);
     }
@@ -107,41 +107,23 @@ vpic_simulation::user_initialization( int num_cmdline_arguments,
   std::cout << "pass" << std::endl;
 }
 
-TEST_CASE( "vectors can be sized and resized", "[vector]" ) {
+TEST_CASE( "test that calling the push with array syntax matches the result of the old method", "[particle_push]" )
+{
 
-    std::vector<int> v( 5 );
-
-    REQUIRE( v.size() == 5 );
-    REQUIRE( v.capacity() >= 5 );
-
-    //boot_checkpt(NULL, NULL);
     int pargc = 0;
     char str[] = "bin/vpic";
     char **pargv = (char **) malloc(sizeof(char **));
     pargv[0] = str;
-    //serial.boot(&pargc, &pargv);
-    //thread.boot(&pargc, &pargv);
     boot_services( &pargc, &pargv );
 
-    SECTION( "resizing bigger changes size and capacity" )
-    {
-        int num_particles = 64;
-        v.resize( 10 );
+    int num_particles = 64;
 
-        REQUIRE( v.size() == 10 );
-        REQUIRE( v.capacity() >= 10 );
+    vpic_simulation* simulation = new vpic_simulation;
+    simulation->initialize( pargc, pargv );
 
-        // initialize all the variables
-        //particle_t *p_arr = particle_arr(num_particles, 1);
-        //species_t *sp = make_species(p_arr, 1, 1);
+    simulation->finalize();
+    delete simulation;
+    if( world_rank==0 ) log_printf( "normal exit\n" );
 
-        vpic_simulation* simulation = new vpic_simulation;
-        simulation->initialize( pargc, pargv );
-
-        simulation->finalize();
-        delete simulation;
-        if( world_rank==0 ) log_printf( "normal exit\n" ); 
-
-        halt_mp();
-    }
+    halt_mp();
 }

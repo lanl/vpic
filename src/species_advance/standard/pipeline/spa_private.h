@@ -155,7 +155,7 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
 ///////////////////////////////////////////////////////////////////////////////
 // hydro_p_pipeline interface
 
-typedef struct hydro_p_pipeline_args
+typedef struct accumulate_hydro_p_pipeline_args
 {
   MEM_PTR( const species_t,      128 ) sp;      // Species array
   MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
@@ -166,25 +166,25 @@ typedef struct hydro_p_pipeline_args
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
-} hydro_p_pipeline_args_t;
+} accumulate_hydro_p_pipeline_args_t;
 
 void
-hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
                          int pipeline_rank,
                          int n_pipeline );
 
 void
-hydro_p_pipeline_v4( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v4( accumulate_hydro_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline );
 
 void
-hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v8( accumulate_hydro_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline );
 
 void
-hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline );
 

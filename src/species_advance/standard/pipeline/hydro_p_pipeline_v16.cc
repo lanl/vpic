@@ -7,7 +7,7 @@
 using namespace v16;
 
 void
-hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline)
 {
@@ -271,10 +271,10 @@ hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
 #else
 
 void
-hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
                       int pipeline_rank,
                       int n_pipeline) {
-  ERROR(("No hydro_p_pipeline_v16 implementation."));
+  ERROR(("No accumulate_hydro_p_pipeline_v16 implementation."));
 }
 
 #endif

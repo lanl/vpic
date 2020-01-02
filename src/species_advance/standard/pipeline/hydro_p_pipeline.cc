@@ -17,7 +17,7 @@
 // accumulated with a charge conserving algorithm.
 
 void
-hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
                          int pipeline_rank,
                          int n_pipeline )
 {
@@ -166,7 +166,7 @@ accumulate_hydro_p_pipeline( /**/  hydro_array_t        * RESTRICT ha,
   if( !ha || !sp || !ia || ha->g!=sp->g || ha->g!=ia->g )
     ERROR(( "Bad args" ));
 
-  DECLARE_ALIGNED_ARRAY(hydro_p_pipeline_args_t, 128, args, 1);
+  DECLARE_ALIGNED_ARRAY(accumulate_hydro_p_pipeline_args_t, 128, args, 1);
 
   args->sp      = sp;
   args->f       = ia->i;
@@ -176,7 +176,7 @@ accumulate_hydro_p_pipeline( /**/  hydro_array_t        * RESTRICT ha,
   args->msp     = sp->m;
   args->np      = sp->np;
 
-  EXEC_PIPELINES(hydro_p, args, 0);
+  EXEC_PIPELINES(accumulate_hydro_p, args, 0);
   WAIT_PIPELINES();
 
 }

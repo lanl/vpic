@@ -7,7 +7,7 @@
 using namespace v8;
 
 void
-hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v8( accumulate_hydro_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline)
 {
@@ -247,10 +247,10 @@ hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
 #else
 
 void
-hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
+accumulate_hydro_p_pipeline_v8( accumulate_hydro_p_pipeline_args_t * args,
                      int pipeline_rank,
                      int n_pipeline) {
-  ERROR(("No hydro_p_pipeline_v8 implementation."));
+  ERROR(("No accumulate_hydro_p_pipeline_v8 implementation."));
 }
 
 #endif

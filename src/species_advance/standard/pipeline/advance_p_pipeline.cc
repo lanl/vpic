@@ -75,7 +75,7 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
   nm   = 0;
   itmp = 0;
 
-  // Determine which accumulator array to use
+  // Determine which accumulator array to use.
   // The host gets the first accumulator array.
 
   if ( pipeline_rank != n_pipeline )
@@ -233,10 +233,10 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
     }
   }
 
-  args->seg[pipeline_rank].pm        = pm;
-  args->seg[pipeline_rank].max_nm    = max_nm;
-  args->seg[pipeline_rank].nm        = nm;
-  args->seg[pipeline_rank].n_ignored = itmp;
+  args->seg[ pipeline_rank ].pm        = pm;
+  args->seg[ pipeline_rank ].max_nm    = max_nm;
+  args->seg[ pipeline_rank ].nm        = nm;
+  args->seg[ pipeline_rank ].n_ignored = itmp;
 }
 
 //----------------------------------------------------------------------------//
@@ -307,13 +307,17 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
-      WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers",
-                 rank, sp->name, args->seg[rank].n_ignored ) );
+      WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers.",
+                 rank,
+                 sp->name,
+                 args->seg[rank].n_ignored ) );
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )
     {
-      MOVE( sp->pm + sp->nm, args->seg[rank].pm, args->seg[rank].nm );
+      MOVE( sp->pm + sp->nm,
+            args->seg[rank].pm,
+            args->seg[rank].nm );
     }
 
     sp->nm += args->seg[rank].nm;

@@ -132,7 +132,7 @@ vacuum_compute_curl_b_pipeline( field_array_t * RESTRICT fa )
   }
 
   WAIT_PIPELINES();
-  
+
   //--------------------------------------------------------------------------//
   // Finish tangential B ghost setup
   //--------------------------------------------------------------------------//

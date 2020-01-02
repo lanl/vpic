@@ -28,7 +28,7 @@ compute_div_b_err_pipeline_scalar( pipeline_args_t * args,
   const float pz = (nz>1) ? g->rdz : 0;
 
   // Process the voxels assigned to this pipeline
-  
+
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
@@ -261,7 +261,7 @@ compute_div_b_err_pipeline( field_array_t * RESTRICT fa )
   {
     ERROR( ( "Bad args" ) );
   }
-  
+
 # if 0 // Original non-pipelined version
   for( z = 1; z <= nz; z++ )
   {

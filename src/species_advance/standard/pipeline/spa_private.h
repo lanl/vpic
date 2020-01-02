@@ -45,8 +45,6 @@ typedef struct advance_p_pipeline_args
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
 } advance_p_pipeline_args_t;
 
-// PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
-
 void
 advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
                            int pipeline_rank,
@@ -80,8 +78,6 @@ typedef struct center_p_pipeline_args
   PAD_STRUCT( 2*SIZEOF_MEM_PTR + sizeof(float) + sizeof(int) )
 } center_p_pipeline_args_t;
 
-// PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
-
 void
 center_p_pipeline_scalar( center_p_pipeline_args_t * args,
                           int pipeline_rank,
@@ -100,8 +96,6 @@ void
 center_p_pipeline_v16( center_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline );
-
-// PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
 
 void
 uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
@@ -138,8 +132,6 @@ typedef struct energy_p_pipeline_args
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + sizeof(int) )
 } energy_p_pipeline_args_t;
 
-// PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
-
 void
 energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
                           int pipeline_rank,
@@ -163,8 +155,8 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
 ///////////////////////////////////////////////////////////////////////////////
 // hydro_p_pipeline interface
 
-typedef struct hydro_p_pipeline_args {
-
+typedef struct hydro_p_pipeline_args
+{
   MEM_PTR( const species_t,      128 ) sp;      // Species array
   MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
   MEM_PTR( /**/  hydro_t,        128 ) h;       // Hydro values
@@ -174,7 +166,6 @@ typedef struct hydro_p_pipeline_args {
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
-
 } hydro_p_pipeline_args_t;
 
 void
@@ -241,10 +232,6 @@ typedef struct sort_p_pipeline_args
 
   PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
 } sort_p_pipeline_args_t;
-
-// PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
-// PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
-// PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
 
 void
 coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,

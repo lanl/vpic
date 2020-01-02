@@ -34,44 +34,45 @@ typedef struct pipeline_args
   double en_ex = 0, en_ey = 0, en_ez = 0, en_bx = 0, en_by = 0, en_bz = 0; \
   int x, y, z
 
-#define f(x,y,z) f[ VOXEL(x,y,z, nx,ny,nz) ]
+#define f(x,y,z) f[ VOXEL( x, y, z, nx, ny, nz ) ]
 
-#define INIT_STENCIL()   \
-  f0  = &f(x,  y,  z  ); \
-  fx  = &f(x+1,y,  z  ); \
-  fy  = &f(x,  y+1,z  ); \
-  fz  = &f(x,  y,  z+1); \
-  fyz = &f(x,  y+1,z+1); \
-  fzx = &f(x+1,y,  z+1); \
-  fxy = &f(x+1,y+1,z  )
+#define INIT_STENCIL()       \
+  f0  = &f( x,   y,   z   ); \
+  fx  = &f( x+1, y,   z   ); \
+  fy  = &f( x,   y+1, z   ); \
+  fz  = &f( x,   y,   z+1 ); \
+  fyz = &f( x,   y+1, z+1 ); \
+  fzx = &f( x+1, y,   z+1 ); \
+  fxy = &f( x+1, y+1, z   )
 
 #define NEXT_STENCIL()                              \
   f0++; fx++; fy++; fz++; fyz++; fzx++; fxy++; x++; \
-  if( x>nx ) {                                      \
-    /**/       y++;            x = 1;               \
-    if( y>ny ) z++; if( y>ny ) y = 1;               \
+  if ( x > nx )                                     \
+  {                                                 \
+    /**/          y++;               x = 1;         \
+    if ( y > ny ) z++; if ( y > ny ) y = 1;         \
     INIT_STENCIL();                                 \
   }
 
-#define REDUCE_EN()                     \
-  en_ex += qepsx*(  f0->ex * f0->ex +   \
-                    fy->ex * fy->ex +   \
-                    fz->ex * fz->ex +   \
-                   fyz->ex *fyz->ex );  \
-  en_ey += qepsy*(  f0->ey * f0->ey +   \
-                    fz->ey * fz->ey +   \
-                    fx->ey * fx->ey +   \
-                   fzx->ey *fzx->ey );  \
-  en_ez += qepsz*(  f0->ez * f0->ez +   \
-                    fx->ez * fx->ez +   \
-                    fy->ez * fy->ez +   \
-                   fxy->ez *fxy->ez );  \
-  en_bx += hrmux*(  f0->cbx* f0->cbx +  \
-                    fx->cbx* fx->cbx ); \
-  en_by += hrmuy*(  f0->cby* f0->cby +  \
-                    fy->cby* fy->cby ); \
-  en_bz += hrmuz*(  f0->cbz* f0->cbz +  \
-                    fz->cbz* fz->cbz )
+#define REDUCE_EN()                        \
+  en_ex += qepsx * (  f0->ex  *  f0->ex +  \
+                      fy->ex  *  fy->ex +  \
+                      fz->ex  *  fz->ex +  \
+                     fyz->ex  * fyz->ex ); \
+  en_ey += qepsy * (  f0->ey  *  f0->ey +  \
+                      fz->ey  *  fz->ey +  \
+                      fx->ey  *  fx->ey +  \
+                     fzx->ey  * fzx->ey ); \
+  en_ez += qepsz * (  f0->ez  *  f0->ez +  \
+                      fx->ez  *  fx->ez +  \
+                      fy->ez  *  fy->ez +  \
+                     fxy->ez  * fxy->ez ); \
+  en_bx += hrmux * (  f0->cbx * f0->cbx +  \
+                      fx->cbx * fx->cbx ); \
+  en_by += hrmuy * (  f0->cby * f0->cby +  \
+                      fy->cby * fy->cby ); \
+  en_bz += hrmuz * (  f0->cbz * f0->cbz +  \
+                      fz->cbz * fz->cbz )
 
 void
 vacuum_energy_f_pipeline_scalar( pipeline_args_t * args,

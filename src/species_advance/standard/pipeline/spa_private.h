@@ -153,7 +153,7 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
                        int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
-// hydro_p_pipeline interface
+// accumulate_hydro_p_pipeline interface
 
 typedef struct accumulate_hydro_p_pipeline_args
 {
@@ -170,23 +170,23 @@ typedef struct accumulate_hydro_p_pipeline_args
 
 void
 accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline );
+                                    int pipeline_rank,
+                                    int n_pipeline );
 
 void
 accumulate_hydro_p_pipeline_v4( accumulate_hydro_p_pipeline_args_t * args,
-                     int pipeline_rank,
-                     int n_pipeline );
+                                int pipeline_rank,
+                                int n_pipeline );
 
 void
 accumulate_hydro_p_pipeline_v8( accumulate_hydro_p_pipeline_args_t * args,
-                     int pipeline_rank,
-                     int n_pipeline );
+                                int pipeline_rank,
+                                int n_pipeline );
 
 void
 accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
-                      int pipeline_rank,
-                      int n_pipeline );
+                                 int pipeline_rank,
+                                 int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface

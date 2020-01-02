@@ -18,21 +18,24 @@
 
 void
 accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
-                         int pipeline_rank,
-                         int n_pipeline )
+                                    int pipeline_rank,
+                                    int n_pipeline )
 {
+  const species_t      *              sp = args->sp;
+  const grid_t         *              g  = sp->g;
+  /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank * args->h_size;
+  const particle_t     * ALIGNED(128) p  = sp->p;
+  const interpolator_t * ALIGNED(128) f  = args->f;
+
+  // Constants.
+
   float c, qsp, mspc, qdt_2mc, qdt_4mc2, r8V;
+
   int np, stride_10, stride_21, stride_43;
 
   float dx, dy, dz, ux, uy, uz, w, vx, vy, vz, ke_mc;
   float w0, w1, w2, w3, w4, w5, w6, w7, t;
   int i, n, n1, n0;
-
-  const species_t      *              sp = args->sp;
-  const grid_t         *              g  = sp->g;
-  /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
-  const particle_t     * ALIGNED(128) p  = sp->p;
-  const interpolator_t * ALIGNED(128) f  = args->f;
 
   // Determine which particles this pipeline processes.
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, n0, n1 ); n1 += n0;

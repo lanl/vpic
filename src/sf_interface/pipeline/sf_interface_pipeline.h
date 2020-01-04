@@ -34,7 +34,29 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                                int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
-// clear_accumulators_pipeline interface
+
+typedef struct unload_accumulator_pipeline_args
+{
+  MEM_PTR( field_t, 128 ) f;             // Reduce accumulators to this
+  MEM_PTR( const accumulator_t, 128 ) a; // Accumulator array to reduce
+  int nx;                                // Local domain x-resolution
+  int ny;                                // Local domain y-resolution
+  int nz;                                // Local domain z-resolution
+  float cx;                              // x-axis coupling constant
+  float cy;                              // y-axis coupling constant
+  float cz;                              // z-axis coupling constant
+
+  PAD_STRUCT( 2*SIZEOF_MEM_PTR + 3*sizeof(int) + 3*sizeof(float) )
+
+} unload_accumulator_pipeline_args_t;
+
+void
+unload_accumulator_pipeline_scalar( unload_accumulator_pipeline_args_t * args,
+                                    int pipeline_rank,
+                                    int n_pipeline );
+
+///////////////////////////////////////////////////////////////////////////////
+// clear_array_pipeline interface
 
 // Pipelines are be assigned accumulator blocks in multiples of 256
 // (16KB) which is particularly convenient on Cell.  The pipeline
@@ -60,7 +82,7 @@ clear_array_pipeline_scalar( reduce_pipeline_args_t * args,
                              int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
-// reduce_accumulators_pipeline interface
+// reduce_array_pipeline interface
 
 void
 reduce_array_pipeline_scalar( reduce_pipeline_args_t * args,
@@ -71,27 +93,5 @@ void
 reduce_array_pipeline_v4( reduce_pipeline_args_t * args,
                           int pipeline_rank,
                           int n_pipeline );
-
-///////////////////////////////////////////////////////////////////////////////
-
-typedef struct unload_accumulator_pipeline_args
-{
-  MEM_PTR( field_t, 128 ) f;             // Reduce accumulators to this
-  MEM_PTR( const accumulator_t, 128 ) a; // Accumulator array to reduce
-  int nx;                                // Local domain x-resolution
-  int ny;                                // Local domain y-resolution
-  int nz;                                // Local domain z-resolution
-  float cx;                              // x-axis coupling constant
-  float cy;                              // y-axis coupling constant
-  float cz;                              // z-axis coupling constant
-
-  PAD_STRUCT( 2*SIZEOF_MEM_PTR + 3*sizeof(int) + 3*sizeof(float) )
-
-} unload_accumulator_pipeline_args_t;
-
-void
-unload_accumulator_pipeline_scalar( unload_accumulator_pipeline_args_t * args,
-                                    int pipeline_rank,
-                                    int n_pipeline );
 
 #endif // _sf_interface_pipeline_h_

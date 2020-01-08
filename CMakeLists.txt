@@ -25,6 +25,8 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 #------------------------------------------------------------------------------#
 # Set C flags
 #------------------------------------------------------------------------------#
@@ -361,6 +363,7 @@ file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VPIC_CXX_FLAGS}")
 
 file(GLOB_RECURSE VPIC_SRC src/*.c src/*.cc)
+file(GLOB_RECURSE VPIC_HEADER src/*.h)
 file(GLOB_RECURSE VPIC_NOT_SRC
   src/util/v4/test/v4.cc
   src/util/v8/test/v8.cc
@@ -438,6 +441,13 @@ if(ENABLE_PERFORMANCE_TESTS)
   include_directories(${CATCH_DIR})
   add_subdirectory(test/performance)
 endif(ENABLE_PERFORMANCE_TESTS)
-#~---------------------------------------------------------------------------~-#
-# vim: set tabstop=2 shiftwidth=2 expandtab :
-#~---------------------------------------------------------------------------~-#
+
+# enable "make format" and clang-format
+find_package(CLANG_FORMAT)
+if(CLANG_FORMAT_FOUND)
+  #file(GLOB_RECURSE FORMAT_SOURCES core/*.cpp core/*.hpp)
+  set(FORMAT_SOURCES ${VPIC_SRC} ${VPIC_HEADER})
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT_EXECUTABLE} -i -style=file ${FORMAT_SOURCES}
+    DEPENDS ${FORMAT_SOURCES})
+endif()

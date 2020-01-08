@@ -3,6 +3,8 @@
 // NOTE: Experimentation shows no benefit to explicitly vectorizing array
 // reductions, but maintaining a v4 version just in case.
 #define HAS_V4_PIPELINE
+#define HAS_V8_PIPELINE
+#define HAS_V16_PIPELINE
 
 #include "sf_interface_pipeline.h"
 

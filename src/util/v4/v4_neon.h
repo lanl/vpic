@@ -1499,10 +1499,10 @@ namespace v4
   {
     v4float d;
 
-    d.v = vaddq_f32( vmulq_f32( a.v, b.v ), c.v );
+    d.v = vfmaq_f32( c.v, a.v, b.v );
 
-    // This seems broken.
-    // d.v = vfmaq_f32( a.v, b.v, c.v );
+    // This may be faster but why.
+    // d.v = vaddq_f32( vmulq_f32( a.v, b.v ), c.v );
 
     return d;
   }
@@ -1511,10 +1511,10 @@ namespace v4
   {
     v4float d;
 
-    d.v = vsubq_f32( vmulq_f32( a.v, b.v ), c.v );
+    d.v = vfmsq_f32( c.v, a.v, b.v );
 
-    // This seems broken.
-    // d.v = vfmsq_f32( a.v, b.v, c.v );
+    // This may be faster but why.
+    // d.v = vsubq_f32( vmulq_f32( a.v, b.v ), c.v );
 
     return d;
   }

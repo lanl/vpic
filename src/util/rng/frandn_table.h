@@ -6,7 +6,7 @@
 #endif
 
 #define FRANDN_N 64
-#define FRANDN_R (3.2159292455085228233657712593185351579450e+00f)
+#define FRANDN_R ( 3.2159292455085228233657712593185351579450e+00f )
 
 extern const float frandn_zig_x[];
 extern const float frandn_zig_y[];

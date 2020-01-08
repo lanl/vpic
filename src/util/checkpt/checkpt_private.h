@@ -12,24 +12,15 @@ typedef struct checkpt checkpt_t;
 
 BEGIN_C_DECLS
 
-checkpt_t *
-checkpt_open_rdonly( const char * name );
+checkpt_t *checkpt_open_rdonly( const char *name );
 
-checkpt_t *
-checkpt_open_wronly( const char * name );
+checkpt_t *checkpt_open_wronly( const char *name );
 
-void
-checkpt_close( checkpt_t * checkpt );
+void checkpt_close( checkpt_t *checkpt );
 
-void
-checkpt_read( checkpt_t * checkpt,
-              void * data,
-              size_t sz );
+void checkpt_read( checkpt_t *checkpt, void *data, size_t sz );
 
-void
-checkpt_write( checkpt_t * checkpt,
-               const void * data,
-               size_t sz );
+void checkpt_write( checkpt_t *checkpt, const void *data, size_t sz );
 
 END_C_DECLS
 

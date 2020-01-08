@@ -13,7 +13,7 @@
 //
 // This module implements the following the difference equations on a
 // superhexahedral domain decomposed Yee-mesh:
-//  
+//
 // advance_b -> Finite Differenced Faraday
 //   cB_new = cB_old - frac c dt curl E
 //
@@ -32,7 +32,7 @@
 //     rapidly reduce RMS divergence error assuming divergences errors
 //     are due to accumulation of numerical roundoff when integrating
 //     Faraday. See clean_div.c for details.
-//     
+//
 // div_clean_e -> Modified Marder pass on electric fields
 //   E_new = E_old + drive D dt grad err_mul div ( epsr E_old - rho/eps0 )
 //     Since the total rho may not be known everywhere (for example in
@@ -65,7 +65,7 @@
 // fmatx,fmaty,fmatz are all on the "face
 // mesh". rhof,rhob,div_e_err,nmat are on the "nodes mesh".
 // div_b_err,cmat are on the "cell mesh".
-// 
+//
 // Above, for "edge mesh" quantities, interior means that the
 // component is not a tangential field directly on the surface of the
 // domain. For "face mesh" quantities, interior means that the
@@ -97,7 +97,7 @@
 //   ...
 //   material_coefficients = new_material_coefficients(grid,material_list);
 //   fields = new_fields(grid);
-// 
+//
 //   ... Set the initial field values and place materials ...
 //
 //   synchronize_fields(fields,grid);
@@ -107,7 +107,7 @@
 // initial fields or errors in the source terms or different floating
 // point properties on different nodes cause the shared faces to have
 // different fields).
-//   
+//
 // To advance the fields in a PIC simulation with TCA radation damping
 // and periodic divergence cleaning, the following sequence is
 // suggested:
@@ -118,7 +118,7 @@
 //   if( should_clean_div_e ) {
 //     ... adjust rho_f, rho_b and/or rho_c as necessary
 //     do {
-//       rms_err = clean_div_e( fields, material_coefficients, grid ); 
+//       rms_err = clean_div_e( fields, material_coefficients, grid );
 //     } while( rms_err_too_high );
 //   }
 //   if( should_clean_div_b ) {
@@ -151,12 +151,12 @@
 
 typedef struct field
 {
-  float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
-  float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
-  float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
-  float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
-  material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
-  material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
+    float ex, ey, ez, div_e_err;    // Electric field and div E error
+    float cbx, cby, cbz, div_b_err; // Magnetic field and div B error
+    float tcax, tcay, tcaz, rhob;   // TCA fields and bound charge density
+    float jfx, jfy, jfz, rhof;      // Free current and charge density
+    material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
+    material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
 } field_t;
 
 // field_advance_kernels holds all the function pointers to all the
@@ -169,51 +169,51 @@ struct field_array;
 
 typedef struct field_advance_kernels
 {
-  // FIXME: DUMP.CXX SHOULD BE DECENTRALIZED AND DIAGNOSTIC DUMP
-  // FOR FIELDS SHOULD BE ADDED TO THIS
-  // FIXME: FOR SYSTEMS WITH MAGNETIC CURRENTS (E.G. PML LAYERS)
-  // WOULD INTERFACES FOR xif,kf BE USEFUL?
+    // FIXME: DUMP.CXX SHOULD BE DECENTRALIZED AND DIAGNOSTIC DUMP
+    // FOR FIELDS SHOULD BE ADDED TO THIS
+    // FIXME: FOR SYSTEMS WITH MAGNETIC CURRENTS (E.G. PML LAYERS)
+    // WOULD INTERFACES FOR xif,kf BE USEFUL?
 
-  void (*delete_fa)( struct field_array * RESTRICT fa );
+    void ( *delete_fa )( struct field_array *RESTRICT fa );
 
-  // Time stepping interface
+    // Time stepping interface
 
-  void (*advance_b)( struct field_array * RESTRICT fa, float frac );
-  void (*advance_e)( struct field_array * RESTRICT fa, float frac );
+    void ( *advance_b )( struct field_array *RESTRICT fa, float frac );
+    void ( *advance_e )( struct field_array *RESTRICT fa, float frac );
 
-  // Diagnostic interface
-  // FIXME: MAY NEED MORE CAREFUL THOUGHT FOR CURVILINEAR SYSTEMS
+    // Diagnostic interface
+    // FIXME: MAY NEED MORE CAREFUL THOUGHT FOR CURVILINEAR SYSTEMS
 
-  void (*energy_f)( /**/  double        * RESTRICT en, // 6 elem
-                    const struct field_array * RESTRICT fa );
+    void ( *energy_f )( /**/ double *RESTRICT en, // 6 elem
+                        const struct field_array *RESTRICT fa );
 
-  // Accumulator interface
+    // Accumulator interface
 
-  void (*clear_jf       )( struct field_array * RESTRICT fa );
-  void (*synchronize_jf )( struct field_array * RESTRICT fa );
-  void (*clear_rhof     )( struct field_array * RESTRICT fa );
-  void (*synchronize_rho)( struct field_array * RESTRICT fa );
+    void ( *clear_jf )( struct field_array *RESTRICT fa );
+    void ( *synchronize_jf )( struct field_array *RESTRICT fa );
+    void ( *clear_rhof )( struct field_array *RESTRICT fa );
+    void ( *synchronize_rho )( struct field_array *RESTRICT fa );
 
-  // Initialization interface
+    // Initialization interface
 
-  void (*compute_rhob  )( struct field_array * RESTRICT fa );
-  void (*compute_curl_b)( struct field_array * RESTRICT fa );
+    void ( *compute_rhob )( struct field_array *RESTRICT fa );
+    void ( *compute_curl_b )( struct field_array *RESTRICT fa );
 
-  // Local/remote shared face cleaning
+    // Local/remote shared face cleaning
 
-  double (*synchronize_tang_e_norm_b)( struct field_array * RESTRICT fa );
+    double ( *synchronize_tang_e_norm_b )( struct field_array *RESTRICT fa );
 
-  // Electric field divergence cleaning interface
+    // Electric field divergence cleaning interface
 
-  void   (*compute_div_e_err    )( /**/  struct field_array * RESTRICT fa );
-  double (*compute_rms_div_e_err)( const struct field_array * RESTRICT fa );
-  void   (*clean_div_e          )( /**/  struct field_array * RESTRICT fa );
+    void ( *compute_div_e_err )( /**/ struct field_array *RESTRICT fa );
+    double ( *compute_rms_div_e_err )( const struct field_array *RESTRICT fa );
+    void ( *clean_div_e )( /**/ struct field_array *RESTRICT fa );
 
-  // Magnetic field divergence cleaning interface
+    // Magnetic field divergence cleaning interface
 
-  void   (*compute_div_b_err    )( /**/  struct field_array * RESTRICT fa );
-  double (*compute_rms_div_b_err)( const struct field_array * RESTRICT fa );
-  void   (*clean_div_b          )( /**/  struct field_array * RESTRICT fa );
+    void ( *compute_div_b_err )( /**/ struct field_array *RESTRICT fa );
+    double ( *compute_rms_div_b_err )( const struct field_array *RESTRICT fa );
+    void ( *clean_div_b )( /**/ struct field_array *RESTRICT fa );
 
 } field_advance_kernels_t;
 
@@ -222,21 +222,19 @@ typedef struct field_advance_kernels
 
 typedef struct field_array
 {
-  field_t * ALIGNED(128) f;          // Local field data
-  grid_t  * g;                       // Underlying grid
-  void    * params;                  // Field advance specific parameters
-  field_advance_kernels_t kernel[1]; // Field advance kernels
+    field_t *ALIGNED( 128 ) f;         // Local field data
+    grid_t *g;                         // Underlying grid
+    void *params;                      // Field advance specific parameters
+    field_advance_kernels_t kernel[1]; // Field advance kernels
 } field_array_t;
 
 BEGIN_C_DECLS
 
-field_array_t *
-new_standard_field_array( grid_t           * RESTRICT g,
-                          const material_t * RESTRICT m_list,
-                          float                       damp );
+field_array_t *new_standard_field_array( grid_t *RESTRICT g,
+                                         const material_t *RESTRICT m_list,
+                                         float damp );
 
-void
-delete_field_array( field_array_t * fa );
+void delete_field_array( field_array_t *fa );
 
 END_C_DECLS
 

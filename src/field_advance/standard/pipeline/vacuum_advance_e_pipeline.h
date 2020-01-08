@@ -55,17 +55,17 @@ typedef struct pipeline_args
 
 #define UPDATE_EX()                                                 \
   f0->tcax = ( py_muz * ( f0->cbz - fy->cbz ) -                     \
-	       pz_muy * ( f0->cby - fz->cby ) ) - damp * f0->tcax;  \
+               pz_muy * ( f0->cby - fz->cby ) ) - damp * f0->tcax;  \
   f0->ex   = decayx * f0->ex + drivex * ( f0->tcax - cj * f0->jfx )
 
 #define UPDATE_EY()                                                 \
   f0->tcay = ( pz_mux * ( f0->cbx - fz->cbx ) -                     \
-	       px_muz * ( f0->cbz - fx->cbz ) ) - damp * f0->tcay;  \
+               px_muz * ( f0->cbz - fx->cbz ) ) - damp * f0->tcay;  \
   f0->ey   = decayy * f0->ey + drivey * ( f0->tcay - cj * f0->jfy )
 
 #define UPDATE_EZ()                                                 \
   f0->tcaz = ( px_muy * ( f0->cby - fx->cby ) -                     \
-	       py_mux * ( f0->cbx - fy->cbx ) ) - damp * f0->tcaz;  \
+               py_mux * ( f0->cbx - fy->cbx ) ) - damp * f0->tcaz;  \
   f0->ez   = decayz * f0->ez + drivez * ( f0->tcaz - cj * f0->jfz )
 
 void

@@ -81,7 +81,7 @@ typedef struct interpolator_array
 
 BEGIN_C_DECLS
 
-// In interpolator_array.cxx
+// In interpolator_array.cc
 
 interpolator_array_t *
 new_interpolator_array( grid_t * g );
@@ -132,7 +132,7 @@ typedef struct accumulator_array
 
 BEGIN_C_DECLS
 
-// In sf_structors.c
+// In accumulator_array.cc
 
 accumulator_array_t *
 new_accumulator_array( grid_t * g );
@@ -140,14 +140,14 @@ new_accumulator_array( grid_t * g );
 void
 delete_accumulator_array( accumulator_array_t * a );
 
-// In clear_accumulators.c
+// In clear_array.cc
 
 // This zeros out all the accumulator arrays in a pipelined fashion.
 
 void
 clear_accumulator_array( accumulator_array_t * RESTRICT a );
 
-// In reduce_accumulators.c
+// In reduce_array.cc
 
 // Going into reduce_accumulators, the host cores and the pipeline
 // cores have each accumulated values to their personal
@@ -158,7 +158,7 @@ clear_accumulator_array( accumulator_array_t * RESTRICT a );
 void
 reduce_accumulator_array( accumulator_array_t * RESTRICT a );
 
-// In unload_accumulator.c
+// In unload_accumulator.cc
 
 // Going into unload_accumulator, the accumulator contains 4 times the
 // net amount of charge that crossed the quarter face associated with
@@ -201,7 +201,7 @@ typedef struct hydro_array
 
 BEGIN_C_DECLS
 
-// In hydro_array.c
+// In hydro_array.cc
 
 // Construct a hydro array suitable for the grid
 
@@ -213,11 +213,15 @@ new_hydro_array( grid_t * g );
 void
 delete_hydro_array( hydro_array_t * ha );
 
+// In clear_array.cc
+
 // Zero out the hydro array.  Use before accumulating species to
 // a hydro array.
 
 void
 clear_hydro_array( hydro_array_t * ha );
+
+// In reduce_array.cc
 
 // Reduces all the pipelines to the host array. This is called by
 // synchronize_hydro_array and does not typically need to be otherwise
@@ -225,6 +229,8 @@ clear_hydro_array( hydro_array_t * ha );
 
 void
 reduce_hydro_array( hydro_array_t * ha );
+
+// In hydro_array.cc
 
 // Reduces all the pipelines to the host array and then synchronizes
 // the hydro array with local boundary conditions and neighboring

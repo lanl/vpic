@@ -56,7 +56,7 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
 
   // Have pipelines compute interior of local domain
 
-  pipeline_args_t args[1];  
+  pipeline_args_t args[1];
 
   args->f = fa->f;
   args->p = (sfa_params_t *) fa->params;
@@ -73,14 +73,14 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
   end_remote_ghost_norm_e( fa->f, fa->g );
 
   // z faces, x edges, y edges and all corners
-  for( y=1; y<=ny+1; y++ )
+  for( y = 1; y <= ny+1; y++ )
   {
-    f0 = &f(1,y,  1);
-    fx = &f(0,y,  1);
-    fy = &f(1,y-1,1);
-    fz = &f(1,y,  0);
+    f0 = &f( 1, y,   1 );
+    fx = &f( 0, y,   1 );
+    fy = &f( 1, y-1, 1 );
+    fz = &f( 1, y,   0 );
 
-    for( x=1; x<=nx+1; x++ )
+    for( x = 1; x <= nx+1; x++ )
     {
       UPDATE_DERR_E();
 
@@ -91,14 +91,14 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
     }
   }
 
-  for( y=1; y<=ny+1; y++ )
+  for( y = 1; y <= ny+1; y++ )
   {
-    f0 = &f(1,y,  nz+1);
-    fx = &f(0,y,  nz+1);
-    fy = &f(1,y-1,nz+1);
-    fz = &f(1,y,  nz);
+    f0 = &f( 1, y,   nz+1 );
+    fx = &f( 0, y,   nz+1 );
+    fy = &f( 1, y-1, nz+1 );
+    fz = &f( 1, y,   nz   );
 
-    for( x=1; x<=nx+1; x++ )
+    for( x = 1; x <= nx+1; x++ )
     {
       UPDATE_DERR_E();
 
@@ -110,14 +110,14 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
   }
 
   // y faces, z edges
-  for( z=2; z<=nz; z++ )
+  for( z = 2; z <= nz; z++ )
   {
-    f0 = &f(1,1,z);
-    fx = &f(0,1,z);
-    fy = &f(1,0,z);
-    fz = &f(1,1,z-1);
+    f0 = &f( 1, 1, z   );
+    fx = &f( 0, 1, z   );
+    fy = &f( 1, 0, z   );
+    fz = &f( 1, 1, z-1 );
 
-    for( x=1; x<=nx+1; x++ )
+    for( x = 1; x <= nx+1; x++ )
     {
       UPDATE_DERR_E();
 
@@ -128,16 +128,17 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
     }
   }
 
-  for( z=2; z<=nz; z++ )
+  for( z = 2; z <= nz; z++ )
   {
-    f0 = &f(1,ny+1,z);
-    fx = &f(0,ny+1,z);
-    fy = &f(1,ny,  z);
-    fz = &f(1,ny+1,z-1);
+    f0 = &f( 1, ny+1, z   );
+    fx = &f( 0, ny+1, z   );
+    fy = &f( 1, ny,   z   );
+    fz = &f( 1, ny+1, z-1 );
 
-    for( x=1; x<=nx+1; x++ )
+    for( x = 1; x <= nx+1; x++ )
     {
       UPDATE_DERR_E();
+
       f0++;
       fx++;
       fy++;
@@ -146,21 +147,21 @@ vacuum_compute_rhob_pipeline( field_array_t * RESTRICT fa )
   }
 
   // x faces
-  for( z=2; z<=nz; z++ )
+  for( z = 2; z <= nz; z++ )
   {
-    for( y=2; y<=ny; y++ )
+    for( y = 2; y <= ny; y++ )
     {
-      f0 = &f(1,y,  z);
-      fx = &f(0,y,  z);
-      fy = &f(1,y-1,z);
-      fz = &f(1,y,  z-1);
+      f0 = &f( 1, y,   z   );
+      fx = &f( 0, y,   z   );
+      fy = &f( 1, y-1, z   );
+      fz = &f( 1, y,   z-1 );
 
       UPDATE_DERR_E();
 
-      f0 = &f(nx+1,y,  z);
-      fx = &f(nx,  y,  z);
-      fy = &f(nx+1,y-1,z);
-      fz = &f(nx+1,y,  z-1);
+      f0 = &f( nx+1, y,   z   );
+      fx = &f( nx,   y,   z   );
+      fy = &f( nx+1, y-1, z   );
+      fz = &f( nx+1, y,   z-1 );
 
       UPDATE_DERR_E();
     }

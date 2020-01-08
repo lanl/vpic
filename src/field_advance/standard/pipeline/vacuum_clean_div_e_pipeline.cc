@@ -59,27 +59,28 @@ vacuum_clean_div_e_pipeline( field_array_t * fa )
   // While pipelines are busy, do left overs on the host
 
   DECLARE_STENCIL();
-  
-  // Do left over ex
-  for( y=1; y<=ny+1; y++ )
-  {
-    f0 = &f(1,y,nz+1);
-    fx = &f(2,y,nz+1);
 
-    for( x=1; x<=nx; x++ )
+  // Do left over ex
+  for( y = 1; y <= ny+1; y++ )
+  {
+    f0 = &f( 1, y, nz+1 );
+    fx = &f( 2, y, nz+1 );
+
+    for( x = 1; x <= nx; x++ )
     {
       MARDER_EX();
 
-      f0++; fx++;
+      f0++;
+      fx++;
     }
   }
 
-  for( z=1; z<=nz; z++ )
+  for( z = 1; z <= nz; z++ )
   {
-    f0 = &f(1,ny+1,z);
-    fx = &f(2,ny+1,z);
+    f0 = &f( 1, ny+1, z );
+    fx = &f( 2, ny+1, z );
 
-    for( x=1; x<=nx; x++ )
+    for( x = 1; x <= nx; x++ )
     {
       MARDER_EX();
 
@@ -89,23 +90,23 @@ vacuum_clean_div_e_pipeline( field_array_t * fa )
   }
 
   // Do left over ey
-  for( z=1; z<=nz+1; z++ )
+  for( z = 1; z <= nz+1; z++ )
   {
-    for( y=1; y<=ny; y++ )
+    for( y = 1; y <= ny; y++ )
     {
-      f0 = &f(nx+1,y,  z);
-      fy = &f(nx+1,y+1,z);
+      f0 = &f( nx+1, y,   z );
+      fy = &f( nx+1, y+1, z );
 
       MARDER_EY();
     }
   }
 
-  for( y=1; y<=ny; y++ )
+  for( y = 1; y <= ny; y++ )
   {
-    f0 = &f(1,y,  nz+1);
-    fy = &f(1,y+1,nz+1);
+    f0 = &f( 1, y,   nz+1 );
+    fy = &f( 1, y+1, nz+1 );
 
-    for( x=1; x<=nx; x++ )
+    for( x = 1; x <= nx; x++ )
     {
       MARDER_EY();
 
@@ -115,12 +116,12 @@ vacuum_clean_div_e_pipeline( field_array_t * fa )
   }
 
   // Do left over ez
-  for( z=1; z<=nz; z++ )
+  for( z = 1; z <= nz; z++ )
   {
-    f0 = &f(1,ny+1,z);
-    fz = &f(1,ny+1,z+1);
+    f0 = &f( 1, ny+1, z   );
+    fz = &f( 1, ny+1, z+1 );
 
-    for( x=1; x<=nx+1; x++ )
+    for( x = 1; x <= nx+1; x++ )
     {
       MARDER_EZ();
 
@@ -129,12 +130,12 @@ vacuum_clean_div_e_pipeline( field_array_t * fa )
     }
   }
 
-  for( z=1; z<=nz; z++ )
+  for( z = 1; z <= nz; z++ )
   {
-    for( y=1; y<=ny; y++ )
+    for( y = 1; y <= ny; y++ )
     {
-      f0 = &f(nx+1,y,z);
-      fz = &f(nx+1,y,z+1);
+      f0 = &f( nx+1, y, z   );
+      fz = &f( nx+1, y, z+1 );
 
       MARDER_EZ();
     }

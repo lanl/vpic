@@ -9,11 +9,11 @@
 //----------------------------------------------------------------------------//
 
 void
-accumulate_hydro_p( /**/  hydro_array_t        * RESTRICT ha,
-                    const species_t            * RESTRICT sp,
+accumulate_hydro_p( hydro_array_t * RESTRICT ha,
+                    const species_t * RESTRICT sp,
                     const interpolator_array_t * RESTRICT ia )
 {
   // Once more options are available, this should be conditionally executed
   // based on user choice.
-  accumulate_hydro_p_pipeline(ha, sp, ia);
+  accumulate_hydro_p_pipeline( ha, sp, ia );
 }

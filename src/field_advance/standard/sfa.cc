@@ -241,7 +241,7 @@ clear_rhof( field_array_t * RESTRICT fa ) {
   if( !fa ) ERROR(( "Bad args" )); 
   field_t * RESTRICT ALIGNED(128) f = fa->f;
   const int nv = fa->g->nv;
-  for( int v=0; v<nv; v++ ) f[v].rhof = 0;
+  for( int v=0; v<nv; v++ ) f[v].rhof = 0.0f;
 }
 
 // FIXME: ADD clear_jf_and_rhof CALL AND/OR ELIMINATE SOME OF THE ABOVE

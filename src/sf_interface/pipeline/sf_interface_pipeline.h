@@ -72,6 +72,16 @@ reduce_array_pipeline_v4( reduce_pipeline_args_t * args,
                           int pipeline_rank,
                           int n_pipeline );
 
+void
+reduce_array_pipeline_v8( reduce_pipeline_args_t * args,
+                          int pipeline_rank,
+                          int n_pipeline );
+
+void
+reduce_array_pipeline_v16( reduce_pipeline_args_t * args,
+                           int pipeline_rank,
+                           int n_pipeline );
+
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef struct unload_accumulator_pipeline_args

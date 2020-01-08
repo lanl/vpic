@@ -221,7 +221,7 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
 
   LOAD_STENCIL();
 
-  for( ; n_voxel>3; n_voxel-=8 ) {
+  for( ; n_voxel>7; n_voxel-=8 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
     NEXT_STENCIL(4); NEXT_STENCIL(5); NEXT_STENCIL(6); NEXT_STENCIL(7);
 

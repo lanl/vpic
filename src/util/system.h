@@ -13,69 +13,72 @@
 #ifndef SystemRAM_h
 #define SystemRAM_h
 
-#include <iostream>
+#include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
-#include <cstdlib>
 
 #include "util_base.h"
 
 // String to type conversion
 template <typename T>
-bool from_string(T & t, const std::string & s,
-	std::ios_base & (*f)(std::ios_base&)) {
-	std::istringstream iss(s);
-	return !(iss >> f >> t).fail();
+bool from_string( T& t, const std::string& s,
+                  std::ios_base& ( *f )(std::ios_base&))
+{
+    std::istringstream iss( s );
+    return !( iss >> f >> t ).fail();
 } // from_string
 
-
 /*!
-	\struct SystemRAM SystemRAM.h
-	\brief SystemRAM provides...
+        \struct SystemRAM SystemRAM.h
+        \brief SystemRAM provides...
 */
 struct SystemRAM
-	{
-		static inline void print_available() {
-			MESSAGE(("Available RAM (kilobytes): %ld", available()));
-		} // print_available
+{
+    static inline void print_available()
+    {
+        MESSAGE( ( "Available RAM (kilobytes): %ld", available() ) );
+    } // print_available
 
-		//! Report the available RAM on the system in kilobytes.
-		static inline uint64_t available() {
-			
-			#if !__linux__
-				ERROR(("SystemRAM: Unsupported Operating System!!!"));
-			#endif
+    //! Report the available RAM on the system in kilobytes.
+    static inline uint64_t available()
+    {
 
-			char buffer[81];
-			std::ifstream meminfo("/proc/meminfo", std::ifstream::in);
-			
-			// Make sure that we were able to open the file
-			if(meminfo.fail()) {
-				ERROR(("Failed opening /proc/meminfo file!!!"));
-			} // if
+#if !__linux__
+        ERROR( ( "SystemRAM: Unsupported Operating System!!!" ) );
+#endif
 
-			// Get the MemFree line
-			meminfo.getline(buffer, 81);
-			meminfo.getline(buffer, 81);
+        char buffer[81];
+        std::ifstream meminfo( "/proc/meminfo", std::ifstream::in );
 
-			meminfo.close();
+        // Make sure that we were able to open the file
+        if ( meminfo.fail() )
+        {
+            ERROR( ( "Failed opening /proc/meminfo file!!!" ) );
+        } // if
 
-			// Parse out the free mem in kilobytes
-			std::string memfree = buffer;
-			size_t begin = memfree.find_first_not_of("MemFr: ");
-			size_t end = memfree.find(" ", begin);
+        // Get the MemFree line
+        meminfo.getline( buffer, 81 );
+        meminfo.getline( buffer, 81 );
 
-			// Convert to size_t
-			uint64_t kilobytes;
-			if(!from_string<uint64_t>(kilobytes,
-				memfree.substr(begin, end-begin),
-				std::dec)) {
-				ERROR(("String conversion to size_t failed!!!"));
-			} // if
+        meminfo.close();
 
-			return kilobytes;
-		} // available
-	}; // class SystemRAM
+        // Parse out the free mem in kilobytes
+        std::string memfree = buffer;
+        size_t begin = memfree.find_first_not_of( "MemFr: " );
+        size_t end = memfree.find( " ", begin );
+
+        // Convert to size_t
+        uint64_t kilobytes;
+        if ( !from_string<uint64_t>(
+                 kilobytes, memfree.substr( begin, end - begin ), std::dec ) )
+        {
+            ERROR( ( "String conversion to size_t failed!!!" ) );
+        } // if
+
+        return kilobytes;
+    } // available
+};    // class SystemRAM
 
 #endif // SystemRAM_h

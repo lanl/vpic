@@ -47,19 +47,19 @@ typedef struct pipeline_args
 
 #define UPDATE_EX()                                     \
   f0->tcax = ( py * ( f0->cbz * m[f0->fmatz].rmuz -     \
-		      fy->cbz * m[fy->fmatz].rmuz) -    \
+		      fy->cbz * m[fy->fmatz].rmuz ) -   \
                pz * ( f0->cby * m[f0->fmaty].rmuy -     \
 		      fz->cby * m[fz->fmaty].rmuy ) )
 
 #define UPDATE_EY()                                     \
   f0->tcay = ( pz * ( f0->cbx * m[f0->fmatx].rmux -     \
-		      fz->cbx * m[fz->fmatx].rmux) -    \
+		      fz->cbx * m[fz->fmatx].rmux ) -   \
                px * ( f0->cbz * m[f0->fmatz].rmuz -     \
 		      fx->cbz * m[fx->fmatz].rmuz ) )
 
 #define UPDATE_EZ()                                     \
   f0->tcaz = ( px * ( f0->cby * m[f0->fmaty].rmuy -     \
-		      fx->cby * m[fx->fmaty].rmuy) -    \
+		      fx->cby * m[fx->fmaty].rmuy ) -   \
                py * ( f0->cbx * m[f0->fmatx].rmux -     \
 		      fy->cbx * m[fy->fmatx].rmux ) )
 

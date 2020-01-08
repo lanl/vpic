@@ -85,7 +85,7 @@ clean_div_b_pipeline_scalar( pipeline_args_t * args,
 //----------------------------------------------------------------------------//
 
 void
-clean_div_b_pipeline( field_array_t * fa )
+clean_div_b_pipeline( field_array_t * RESTRICT fa )
 {
   pipeline_args_t args[1];
   
@@ -321,8 +321,8 @@ clean_div_b_pipeline( field_array_t * fa )
   }
 
   // Wait for pipelines to finish up cleaning div_b in interior
-  
+
   WAIT_PIPELINES();
-  
-  local_adjust_norm_b(f,g);
+
+  local_adjust_norm_b( f, g );
 }

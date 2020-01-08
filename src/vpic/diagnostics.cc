@@ -32,8 +32,8 @@
  *----------------------------------------------------------------------------*/
 // FIXME: THIS COULD BE WRITTEN MUCH CLEANER NOW
 double vpic_simulation::poynting_flux(double e0) {
-	double psum = 0.0;
-  double gpsum = 0.0;
+	double  psum = 0.0;
+        double gpsum = 0.0;
 	int stride = (grid->ny-1)*(grid->nz-1);
 
 	float * pvec = new float[stride];

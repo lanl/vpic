@@ -78,7 +78,7 @@ enum profile_internal_use_only_timers
 
 typedef struct profile_internal_use_only_timer
 {
-    const char *name;
+    const char* name;
     double t, t_total;
     int n, n_total;
 } profile_internal_use_only_timer_t;

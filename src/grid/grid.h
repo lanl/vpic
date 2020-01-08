@@ -108,7 +108,7 @@ typedef struct grid
     // (2^31)/6.  BOUNDARY CONDITION HANDLING LIMITS TO 2^28 PER NODE
     // EMITTER COMPONENT ID INDEXING FURTHER LIMITS TO 2^26 PER NODE.
     // THE LIMIT IS 2^63 OVER ALL NODES THOUGH.
-    int64_t *ALIGNED( 16 ) range;
+    int64_t* ALIGNED( 16 ) range;
     // (0:nproc) indexed array giving range of
     // global indexes of voxel owned by each
     // processor.  Replicated on each processor.
@@ -116,7 +116,7 @@ typedef struct grid
     // voxels owned by processor "rank".  Note:
     // range[rank+1]-range[rank] <~ 2^31 / 6
 
-    int64_t *ALIGNED( 128 ) neighbor;
+    int64_t* ALIGNED( 128 ) neighbor;
     // (0:5,0:local_num_voxel-1) FORTRAN indexed
     // array neighbor(0:5,lidx) are the global
     // indexes of neighboring voxels of the
@@ -129,7 +129,7 @@ typedef struct grid
                             // Note: rangeh-rangel <~ 2^26
 
     // Nearest neighbor communications ports
-    mp_t *mp;
+    mp_t* mp;
 
 } grid_t;
 
@@ -175,19 +175,19 @@ BEGIN_C_DECLS
 
 // In grid_structors.c
 
-grid_t *new_grid( void );
+grid_t* new_grid( void );
 
-void delete_grid( grid_t *g );
+void delete_grid( grid_t* g );
 
 // In ops.c
 
-void size_grid( grid_t *g, int lnx, int lny, int lnz );
+void size_grid( grid_t* g, int lnx, int lny, int lnz );
 
-void join_grid( grid_t *g, int bound, int rank );
+void join_grid( grid_t* g, int bound, int rank );
 
-void set_fbc( grid_t *g, int bound, int fbc );
+void set_fbc( grid_t* g, int bound, int fbc );
 
-void set_pbc( grid_t *g, int bound, int pbc );
+void set_pbc( grid_t* g, int bound, int pbc );
 
 // In partition.c
 
@@ -222,16 +222,16 @@ void set_pbc( grid_t *g, int bound, int pbc );
 // global coordinates.  Due to the vagaries of floating point, the
 // inverse process may not be exact.
 
-void partition_periodic_box( grid_t *g, double gx0, double gy0, double gz0,
+void partition_periodic_box( grid_t* g, double gx0, double gy0, double gz0,
                              double gx1, double gy1, double gz1, int gnx,
                              int gny, int gnz, int gpx, int gpy, int gpz );
 
-void partition_absorbing_box( grid_t *g, double gx0, double gy0, double gz0,
+void partition_absorbing_box( grid_t* g, double gx0, double gy0, double gz0,
                               double gx1, double gy1, double gz1, int gnx,
                               int gny, int gnz, int gpx, int gpy, int gpz,
                               int pbc );
 
-void partition_metal_box( grid_t *g, double gx0, double gy0, double gz0,
+void partition_metal_box( grid_t* g, double gx0, double gy0, double gz0,
                           double gx1, double gy1, double gz1, int gnx, int gny,
                           int gnz, int gpx, int gpy, int gpz );
 
@@ -246,18 +246,18 @@ void begin_recv_port( int i,    // x port coord ([-1,0,1])
                       int j,    // y port coord ([-1,0,1])
                       int k,    // z port coord ([-1,0,1])
                       int size, // Expected size in bytes
-                      const grid_t *g );
+                      const grid_t* g );
 
 // Returns pointer to the buffer that begin send will use for the next
 // send on the given port.  The buffer is guaranteed to have enough
 // room for size bytes.  This is only valid to call if no sends on
 // that port are pending.
 
-void *ALIGNED( 128 ) size_send_port( int i,    // x port coord ([-1,0,1])
+void* ALIGNED( 128 ) size_send_port( int i,    // x port coord ([-1,0,1])
                                      int j,    // y port coord ([-1,0,1])
                                      int k,    // z port coord ([-1,0,1])
                                      int size, // Needed send size in bytes
-                                     const grid_t *g );
+                                     const grid_t* g );
 
 // Begin sending size bytes of the buffer out the given port.  Only
 // one message send may be pending at a time on a given port.  (FIXME:
@@ -268,17 +268,17 @@ void begin_send_port( int i,    // x port coord ([-1,0,1])
                       int j,    // y port coord ([-1,0,1])
                       int k,    // z port coord ([-1,0,1])
                       int size, // Number of bytes to send (in bytes)
-                      const grid_t *g );
+                      const grid_t* g );
 
 // Complete the pending recv on the given port.  Only valid to call if
 // there is a pending recv.  Returns pointer to a buffer containing
 // the received data.  (FIXME: WHAT HAPPENS IF EXPECTED RECV SIZE
 // GIVEN IN BEGIN_RECV DOES NOT MATCH END_RECV??)
 
-void *ALIGNED( 128 ) end_recv_port( int i, // x port coord ([-1,0,1])
+void* ALIGNED( 128 ) end_recv_port( int i, // x port coord ([-1,0,1])
                                     int j, // y port coord ([-1,0,1])
                                     int k, // z port coord ([-1,0,1])
-                                    const grid_t *g );
+                                    const grid_t* g );
 
 // Complete the pending send on the given port.  Only valid to call if
 // there is a pending send on the port.  Note that this guarantees
@@ -289,7 +289,7 @@ void *ALIGNED( 128 ) end_recv_port( int i, // x port coord ([-1,0,1])
 void end_send_port( int i, // x port coord ([-1,0,1])
                     int j, // y port coord ([-1,0,1])
                     int k, // z port coord ([-1,0,1])
-                    const grid_t *g );
+                    const grid_t* g );
 
 // In distribute_voxels.c
 

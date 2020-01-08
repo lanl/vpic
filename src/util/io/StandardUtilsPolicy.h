@@ -10,12 +10,12 @@ class StandardUtilsPolicy
     StandardUtilsPolicy() {}
     ~StandardUtilsPolicy() {}
 
-    static int makeDirectory( const char *dirname )
+    static int makeDirectory( const char* dirname )
     {
         return mkdir( dirname, S_IRWXU );
     } // makeDirectory
 
-    static int getCurrentWorkingDirectory( char *dirname, size_t size )
+    static int getCurrentWorkingDirectory( char* dirname, size_t size )
     {
         if ( getcwd( dirname, size ) == NULL )
         {

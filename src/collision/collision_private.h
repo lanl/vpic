@@ -7,31 +7,31 @@
 
 #include "collision.h"
 
-typedef void ( *collision_op_func_t )( void *params );
+typedef void ( *collision_op_func_t )( void* params );
 
-typedef void ( *delete_collision_op_func_t )( struct collision_op *cop );
+typedef void ( *delete_collision_op_func_t )( struct collision_op* cop );
 
 struct collision_op
 {
-    void *params;
+    void* params;
     collision_op_func_t apply;
     delete_collision_op_func_t delete_cop;
-    collision_op_t *next;
+    collision_op_t* next;
 };
 
 BEGIN_C_DECLS
 
-void checkpt_collision_op_internal( const collision_op_t *cop );
+void checkpt_collision_op_internal( const collision_op_t* cop );
 
-collision_op_t *restore_collision_op_internal( void *params );
+collision_op_t* restore_collision_op_internal( void* params );
 
-collision_op_t *
-new_collision_op_internal( void *params, collision_op_func_t apply,
+collision_op_t*
+new_collision_op_internal( void* params, collision_op_func_t apply,
                            delete_collision_op_func_t delete_cop,
                            checkpt_func_t checkpt, restore_func_t restore,
                            reanimate_func_t reanimate );
 
-void delete_collision_op_internal( collision_op_t *cop );
+void delete_collision_op_internal( collision_op_t* cop );
 
 END_C_DECLS
 

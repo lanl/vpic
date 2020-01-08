@@ -24,7 +24,7 @@ typedef struct material_coefficient
 
 typedef struct sfa_params
 {
-    material_coefficient_t *mc;
+    material_coefficient_t* mc;
     int n_mc;
     float damp;
 } sfa_params_t;
@@ -33,20 +33,20 @@ BEGIN_C_DECLS
 
 // In standard_field_advance.c
 
-void delete_standard_field_array( field_array_t *RESTRICT fa );
+void delete_standard_field_array( field_array_t* RESTRICT fa );
 
-void clear_jf( field_array_t *RESTRICT fa );
+void clear_jf( field_array_t* RESTRICT fa );
 
-void clear_rhof( field_array_t *RESTRICT fa );
+void clear_rhof( field_array_t* RESTRICT fa );
 
 // In advance_b.c
 
 // advance_b applies the following difference equation to the fields:
 //   c B_new = c B_old - frac c dt curl E
 
-void advance_b( field_array_t *RESTRICT fa, float frac );
+void advance_b( field_array_t* RESTRICT fa, float frac );
 
-void advance_b_pipeline( field_array_t *RESTRICT fa, float _frac );
+void advance_b_pipeline( field_array_t* RESTRICT fa, float _frac );
 
 // In advance_e.c
 
@@ -67,13 +67,13 @@ void advance_b_pipeline( field_array_t *RESTRICT fa, float _frac );
 //
 // FIXME: Currently, frac must be 1.
 
-void advance_e( field_array_t *RESTRICT fa, float frac );
+void advance_e( field_array_t* RESTRICT fa, float frac );
 
-void advance_e_pipeline( field_array_t *RESTRICT fa, float frac );
+void advance_e_pipeline( field_array_t* RESTRICT fa, float frac );
 
-void vacuum_advance_e( field_array_t *RESTRICT fa, float frac );
+void vacuum_advance_e( field_array_t* RESTRICT fa, float frac );
 
-void vacuum_advance_e_pipeline( field_array_t *RESTRICT fa, float frac );
+void vacuum_advance_e_pipeline( field_array_t* RESTRICT fa, float frac );
 
 // In energy_f.c
 
@@ -90,16 +90,16 @@ void vacuum_advance_e_pipeline( field_array_t *RESTRICT fa, float frac );
 //
 // vacuum_energy_f is the high performance version for uniform regions
 
-void energy_f( double *RESTRICT en, // 6 elem array
-               const field_array_t *RESTRICT fa );
+void energy_f( double* RESTRICT en, // 6 elem array
+               const field_array_t* RESTRICT fa );
 
-void energy_f_pipeline( double *global, const field_array_t *RESTRICT fa );
+void energy_f_pipeline( double* global, const field_array_t* RESTRICT fa );
 
-void vacuum_energy_f( double *RESTRICT en, // 6 elem array
-                      const field_array_t *RESTRICT fa );
+void vacuum_energy_f( double* RESTRICT en, // 6 elem array
+                      const field_array_t* RESTRICT fa );
 
-void vacuum_energy_f_pipeline( double *global,
-                               const field_array_t *RESTRICT fa );
+void vacuum_energy_f_pipeline( double* global,
+                               const field_array_t* RESTRICT fa );
 
 // In compute_curl_b.c
 
@@ -111,13 +111,13 @@ void vacuum_energy_f_pipeline( double *global,
 //
 // vacuum_compute_curl_b is the high performance version for uniform regions
 
-void compute_curl_b( field_array_t *RESTRICT fa );
+void compute_curl_b( field_array_t* RESTRICT fa );
 
-void compute_curl_b_pipeline( field_array_t *RESTRICT fa );
+void compute_curl_b_pipeline( field_array_t* RESTRICT fa );
 
-void vacuum_compute_curl_b( field_array_t *RESTRICT fa );
+void vacuum_compute_curl_b( field_array_t* RESTRICT fa );
 
-void vacuum_compute_curl_b_pipeline( field_array_t *RESTRICT fa );
+void vacuum_compute_curl_b_pipeline( field_array_t* RESTRICT fa );
 
 // The theory behind the Marder correction is that the Ampere and
 // Faraday equations can be modified as follows:
@@ -241,13 +241,13 @@ void vacuum_compute_curl_b_pipeline( field_array_t *RESTRICT fa );
 //
 // vacuum_compute_rhob is the high performance version for uniform regions
 
-void compute_rhob( field_array_t *RESTRICT fa );
+void compute_rhob( field_array_t* RESTRICT fa );
 
-void compute_rhob_pipeline( field_array_t *RESTRICT fa );
+void compute_rhob_pipeline( field_array_t* RESTRICT fa );
 
-void vacuum_compute_rhob( field_array_t *RESTRICT fa );
+void vacuum_compute_rhob( field_array_t* RESTRICT fa );
 
-void vacuum_compute_rhob_pipeline( field_array_t *RESTRICT fa );
+void vacuum_compute_rhob_pipeline( field_array_t* RESTRICT fa );
 
 // In compute_div_e_err.c
 
@@ -258,13 +258,13 @@ void vacuum_compute_rhob_pipeline( field_array_t *RESTRICT fa );
 //
 // vacuum_compute_div_e_err is the high performance version for uniform regions
 
-void compute_div_e_err( field_array_t *RESTRICT fa );
+void compute_div_e_err( field_array_t* RESTRICT fa );
 
-void compute_div_e_err_pipeline( field_array_t *RESTRICT fa );
+void compute_div_e_err_pipeline( field_array_t* RESTRICT fa );
 
-void vacuum_compute_div_e_err( field_array_t *RESTRICT fa );
+void vacuum_compute_div_e_err( field_array_t* RESTRICT fa );
 
-void vacuum_compute_div_e_err_pipeline( field_array_t *RESTRICT fa );
+void vacuum_compute_div_e_err_pipeline( field_array_t* RESTRICT fa );
 
 // In compute_rms_div_e_err.c
 
@@ -275,9 +275,9 @@ void vacuum_compute_div_e_err_pipeline( field_array_t *RESTRICT fa );
 // domains.  Every processor gets the same value.  Note that this
 // function does _not_ update or recompute div_e_err.
 
-double compute_rms_div_e_err( const field_array_t *RESTRICT fa );
+double compute_rms_div_e_err( const field_array_t* RESTRICT fa );
 
-double compute_rms_div_e_err_pipeline( const field_array_t *RESTRICT fa );
+double compute_rms_div_e_err_pipeline( const field_array_t* RESTRICT fa );
 
 // In clean_div_e.c
 
@@ -287,22 +287,22 @@ double compute_rms_div_e_err_pipeline( const field_array_t *RESTRICT fa );
 //
 // vacuum_clean_div_e is the high performance version for uniform regions
 
-void clean_div_e( field_array_t *RESTRICT fa );
+void clean_div_e( field_array_t* RESTRICT fa );
 
-void clean_div_e_pipeline( field_array_t *fa );
+void clean_div_e_pipeline( field_array_t* fa );
 
-void vacuum_clean_div_e( field_array_t *RESTRICT fa );
+void vacuum_clean_div_e( field_array_t* RESTRICT fa );
 
-void vacuum_clean_div_e_pipeline( field_array_t *fa );
+void vacuum_clean_div_e_pipeline( field_array_t* fa );
 
 // In compute_div_b_err.c
 
 // compute_div_b_err applies the following difference equation:
 //   div_b_err = div cB
 
-void compute_div_b_err( field_array_t *RESTRICT fa );
+void compute_div_b_err( field_array_t* RESTRICT fa );
 
-void compute_div_b_err_pipeline( field_array_t *RESTRICT fa );
+void compute_div_b_err_pipeline( field_array_t* RESTRICT fa );
 
 // In compute_rms_div_b_err.c
 
@@ -314,9 +314,9 @@ void compute_div_b_err_pipeline( field_array_t *RESTRICT fa );
 // value.  Uses the value of div_b_err already stored.  It _does_
 // _not_ recompute div_b_err.
 
-double compute_rms_div_b_err( const field_array_t *RESTRICT fa );
+double compute_rms_div_b_err( const field_array_t* RESTRICT fa );
 
-double compute_rms_div_b_err_pipeline( const field_array_t *fa );
+double compute_rms_div_b_err_pipeline( const field_array_t* fa );
 
 // In clean_div_b.c
 
@@ -324,53 +324,53 @@ double compute_rms_div_b_err_pipeline( const field_array_t *fa );
 //   cB_new = cB_old + alpha dt grad div_b_err
 // alpha is picked to rapidly reduce the rms_div_b_err
 
-void clean_div_b( field_array_t *RESTRICT fa );
+void clean_div_b( field_array_t* RESTRICT fa );
 
-void clean_div_b_pipeline( field_array_t *fa );
+void clean_div_b_pipeline( field_array_t* fa );
 
 // Internode functions
 
 // In remote.c
 
-double synchronize_tang_e_norm_b( field_array_t *RESTRICT fa );
+double synchronize_tang_e_norm_b( field_array_t* RESTRICT fa );
 
-void synchronize_jf( field_array_t *RESTRICT fa );
+void synchronize_jf( field_array_t* RESTRICT fa );
 
-void synchronize_rho( field_array_t *RESTRICT fa );
+void synchronize_rho( field_array_t* RESTRICT fa );
 
 // In local.c
 
-void local_ghost_tang_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_ghost_tang_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_ghost_norm_e( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_ghost_norm_e( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_ghost_div_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_ghost_div_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_tang_e( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_tang_e( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_div_e( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_div_e( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_norm_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_norm_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_jf( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_jf( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_rhof( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_rhof( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void local_adjust_rhob( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void local_adjust_rhob( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
 // In remote.c
 
-void begin_remote_ghost_tang_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void begin_remote_ghost_tang_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void end_remote_ghost_tang_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void end_remote_ghost_tang_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void begin_remote_ghost_norm_e( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void begin_remote_ghost_norm_e( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void end_remote_ghost_norm_e( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void end_remote_ghost_norm_e( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void begin_remote_ghost_div_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void begin_remote_ghost_div_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
-void end_remote_ghost_div_b( field_t *ALIGNED( 128 ) f, const grid_t *g );
+void end_remote_ghost_div_b( field_t* ALIGNED( 128 ) f, const grid_t* g );
 
 END_C_DECLS
 

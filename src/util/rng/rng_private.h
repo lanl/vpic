@@ -284,7 +284,7 @@ struct rng
 
 #endif
 
-STATIC_INLINE void sfmt_next( sfmt_128_t *RESTRICT sfmt )
+STATIC_INLINE void sfmt_next( sfmt_128_t* RESTRICT sfmt )
 {
     DECL_SFMT;
     int n;

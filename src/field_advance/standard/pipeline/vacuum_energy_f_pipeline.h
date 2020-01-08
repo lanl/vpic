@@ -10,16 +10,16 @@
 
 typedef struct pipeline_args
 {
-    const field_t *ALIGNED( 128 ) f;
-    const sfa_params_t *p;
-    const grid_t *g;
+    const field_t* ALIGNED( 128 ) f;
+    const sfa_params_t* p;
+    const grid_t* g;
     double en[MAX_PIPELINE + 1][6];
 } pipeline_args_t;
 
 #define DECLARE_STENCIL()                                                      \
-    const field_t *ALIGNED( 128 ) f = args->f;                                 \
-    const material_coefficient_t *ALIGNED( 128 ) m = args->p->mc;              \
-    const grid_t *g = args->g;                                                 \
+    const field_t* ALIGNED( 128 ) f = args->f;                                 \
+    const material_coefficient_t* ALIGNED( 128 ) m = args->p->mc;              \
+    const grid_t* g = args->g;                                                 \
     const int nx = g->nx, ny = g->ny, nz = g->nz;                              \
                                                                                \
     const float qepsx = 0.25 * m->epsx;                                        \
@@ -29,7 +29,7 @@ typedef struct pipeline_args
     const float hrmuy = 0.50 * m->rmuy; /* was previously 0.25 in master */    \
     const float hrmuz = 0.50 * m->rmuz; /* was previously 0.25 in master */    \
                                                                                \
-    const field_t *ALIGNED( 16 ) f0;                                           \
+    const field_t* ALIGNED( 16 ) f0;                                           \
     const field_t *ALIGNED( 16 ) fx, *ALIGNED( 16 ) fy, *ALIGNED( 16 ) fz;     \
     const field_t *ALIGNED( 16 ) fyz, *ALIGNED( 16 ) fzx, *ALIGNED( 16 ) fxy;  \
     double en_ex = 0, en_ey = 0, en_ez = 0, en_bx = 0, en_by = 0, en_bz = 0;   \
@@ -77,7 +77,7 @@ typedef struct pipeline_args
     en_by += hrmuy * ( f0->cby * f0->cby + fy->cby * fy->cby );                \
     en_bz += hrmuz * ( f0->cbz * f0->cbz + fz->cbz * fz->cbz )
 
-void vacuum_energy_f_pipeline_scalar( pipeline_args_t *args, int pipeline_rank,
+void vacuum_energy_f_pipeline_scalar( pipeline_args_t* args, int pipeline_rank,
                                       int n_pipeline );
 
 #endif // _vacuum_energy_f_pipeline_h_

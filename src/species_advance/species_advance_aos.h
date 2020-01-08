@@ -56,21 +56,21 @@ typedef struct particle_injector
 
 typedef struct species
 {
-    char *name; // Species name
+    char* name; // Species name
     float q;    // Species particle charge
     float m;    // Species particle rest mass
 
     int np, max_np;               // Number and max local particles
-    particle_t *ALIGNED( 128 ) p; // Array of particles for the species
+    particle_t* ALIGNED( 128 ) p; // Array of particles for the species
 
     int nm, max_nm;                      // Number and max local movers in use
-    particle_mover_t *ALIGNED( 128 ) pm; // Particle movers
+    particle_mover_t* ALIGNED( 128 ) pm; // Particle movers
 
     int64_t last_sorted;           // Step when the particles were last
                                    // sorted.
     int sort_interval;             // How often to sort the species
     int sort_out_of_place;         // Sort method
-    int *ALIGNED( 128 ) partition; // Static array indexed 0:
+    int* ALIGNED( 128 ) partition; // Static array indexed 0:
     /**/                             // (nx+2)*(ny+2)*(nz+2).  Each value
     /**/                             // corresponds to the associated particle
     /**/                             // array index of the first particle in
@@ -92,9 +92,9 @@ typedef struct species
     /**/                             // Note: SFC NOT IN USE RIGHT NOW THUS
     /**/                             // g->sfc[i]=i ABOVE.
 
-    grid_t *g;            // Underlying grid
+    grid_t* g;            // Underlying grid
     species_id id;        // Unique identifier for a species
-    struct species *next; // Next species in the list
+    struct species* next; // Next species in the list
 } species_t;
 
 #endif // _species_advance_aos_h_

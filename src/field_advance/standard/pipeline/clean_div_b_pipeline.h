@@ -10,8 +10,8 @@
 
 typedef struct pipeline_args
 {
-    field_t *ALIGNED( 128 ) f;
-    const grid_t *g;
+    field_t* ALIGNED( 128 ) f;
+    const grid_t* g;
 } pipeline_args_t;
 
 #define f( x, y, z ) f[VOXEL( x, y, z, nx, ny, nz )]
@@ -20,16 +20,16 @@ typedef struct pipeline_args
 #define MARDER_CBY() f0->cby += py * ( f0->div_b_err - fy->div_b_err )
 #define MARDER_CBZ() f0->cbz += pz * ( f0->div_b_err - fz->div_b_err )
 
-void clean_div_b_pipeline_scalar( pipeline_args_t *args, int pipeline_rank,
+void clean_div_b_pipeline_scalar( pipeline_args_t* args, int pipeline_rank,
                                   int n_pipeline );
 
-void clean_div_b_pipeline_v4( pipeline_args_t *args, int pipeline_rank,
+void clean_div_b_pipeline_v4( pipeline_args_t* args, int pipeline_rank,
                               int n_pipeline );
 
-void clean_div_b_pipeline_v8( pipeline_args_t *args, int pipeline_rank,
+void clean_div_b_pipeline_v8( pipeline_args_t* args, int pipeline_rank,
                               int n_pipeline );
 
-void clean_div_b_pipeline_v16( pipeline_args_t *args, int pipeline_rank,
+void clean_div_b_pipeline_v16( pipeline_args_t* args, int pipeline_rank,
                                int n_pipeline );
 
 #endif // _clean_div_b_pipeline_h_

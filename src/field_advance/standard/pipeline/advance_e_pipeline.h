@@ -9,15 +9,15 @@
 
 typedef struct pipeline_args
 {
-    field_t *ALIGNED( 128 ) f;
-    const sfa_params_t *p;
-    const grid_t *g;
+    field_t* ALIGNED( 128 ) f;
+    const sfa_params_t* p;
+    const grid_t* g;
 } pipeline_args_t;
 
 #define DECLARE_STENCIL()                                                      \
-    field_t *ALIGNED( 128 ) f = args->f;                                       \
-    const material_coefficient_t *ALIGNED( 128 ) m = args->p->mc;              \
-    const grid_t *g = args->g;                                                 \
+    field_t* ALIGNED( 128 ) f = args->f;                                       \
+    const material_coefficient_t* ALIGNED( 128 ) m = args->p->mc;              \
+    const grid_t* g = args->g;                                                 \
     const int nx = g->nx, ny = g->ny, nz = g->nz;                              \
                                                                                \
     const float damp = args->p->damp;                                          \
@@ -26,7 +26,7 @@ typedef struct pipeline_args
     const float pz = ( nz > 1 ) ? ( 1 + damp ) * g->cvac * g->dt * g->rdz : 0; \
     const float cj = g->dt / g->eps0;                                          \
                                                                                \
-    field_t *ALIGNED( 16 ) f0;                                                 \
+    field_t* ALIGNED( 16 ) f0;                                                 \
     field_t *ALIGNED( 16 ) fx, *ALIGNED( 16 ) fy, *ALIGNED( 16 ) fz;           \
     int x, y, z
 
@@ -82,16 +82,16 @@ typedef struct pipeline_args
     f0->ez = m[f0->ematz].decayz * f0->ez +                                    \
              m[f0->ematz].drivez * ( f0->tcaz - cj * f0->jfz )
 
-void advance_e_pipeline_scalar( pipeline_args_t *args, int pipeline_rank,
+void advance_e_pipeline_scalar( pipeline_args_t* args, int pipeline_rank,
                                 int n_pipeline );
 
-void advance_e_pipeline_v4( pipeline_args_t *args, int pipeline_rank,
+void advance_e_pipeline_v4( pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
-void advance_e_pipeline_v8( pipeline_args_t *args, int pipeline_rank,
+void advance_e_pipeline_v8( pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
-void advance_e_pipeline_v16( pipeline_args_t *args, int pipeline_rank,
+void advance_e_pipeline_v16( pipeline_args_t* args, int pipeline_rank,
                              int n_pipeline );
 
 #endif // _advance_e_pipeline_h_

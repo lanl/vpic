@@ -9,19 +9,19 @@
 
 typedef struct pipeline_args
 {
-    const field_t *ALIGNED( 128 ) f;
-    const sfa_params_t *p;
-    const grid_t *g;
+    const field_t* ALIGNED( 128 ) f;
+    const sfa_params_t* p;
+    const grid_t* g;
     double en[MAX_PIPELINE + 1][6];
 } pipeline_args_t;
 
 #define DECLARE_STENCIL()                                                      \
-    const field_t *ALIGNED( 128 ) f = args->f;                                 \
-    const material_coefficient_t *ALIGNED( 128 ) m = args->p->mc;              \
-    const grid_t *g = args->g;                                                 \
+    const field_t* ALIGNED( 128 ) f = args->f;                                 \
+    const material_coefficient_t* ALIGNED( 128 ) m = args->p->mc;              \
+    const grid_t* g = args->g;                                                 \
     const int nx = g->nx, ny = g->ny, nz = g->nz;                              \
                                                                                \
-    const field_t *ALIGNED( 16 ) f0;                                           \
+    const field_t* ALIGNED( 16 ) f0;                                           \
     const field_t *ALIGNED( 16 ) fx, *ALIGNED( 16 ) fy, *ALIGNED( 16 ) fz;     \
     const field_t *ALIGNED( 16 ) fyz, *ALIGNED( 16 ) fzx, *ALIGNED( 16 ) fxy;  \
     double en_ex = 0, en_ey = 0, en_ez = 0, en_bx = 0, en_by = 0, en_bz = 0;   \
@@ -78,7 +78,7 @@ typedef struct pipeline_args
     en_bz += 0.5 * ( m[f0->fmatz].rmuz * f0->cbz * f0->cbz +                   \
                      m[fz->fmatz].rmuz * fz->cbz * fz->cbz )
 
-void energy_f_pipeline_scalar( pipeline_args_t *args, int pipeline_rank,
+void energy_f_pipeline_scalar( pipeline_args_t* args, int pipeline_rank,
                                int n_pipeline );
 
 #endif // _energy_f_pipeline_h_

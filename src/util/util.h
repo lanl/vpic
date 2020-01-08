@@ -17,7 +17,7 @@ BEGIN_C_DECLS
 
 // Boot all util functionality (should be the first thing in the program)
 
-void boot_services( int *pargc, char ***pargv );
+void boot_services( int* pargc, char*** pargv );
 
 // Halt all util functionality (should be the last thing in the program)
 

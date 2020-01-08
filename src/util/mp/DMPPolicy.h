@@ -11,7 +11,7 @@
 
 struct collective
 {
-    collective_t *parent;
+    collective_t* parent;
     int color;
     int key;
     MPI_Comm comm;
@@ -20,20 +20,20 @@ struct collective
 struct mp
 {
     int n_port;
-    char *ALIGNED( 128 ) * rbuf;
-    char *ALIGNED( 128 ) * sbuf;
-    int *rbuf_sz;
-    int *sbuf_sz;
-    int *rreq_sz;
-    int *sreq_sz;
-    MPI_Request *rreq;
-    MPI_Request *sreq;
+    char* ALIGNED( 128 ) * rbuf;
+    char* ALIGNED( 128 ) * sbuf;
+    int* rbuf_sz;
+    int* sbuf_sz;
+    int* rreq_sz;
+    int* sreq_sz;
+    MPI_Request* rreq;
+    MPI_Request* sreq;
 };
 
 /* Create the world collective */
 
 static collective_t __world = {NULL, 0, 0, MPI_COMM_SELF};
-collective_t *_world = &__world;
+collective_t* _world = &__world;
 int _world_rank = 0;
 int _world_size = 1;
 
@@ -41,13 +41,13 @@ int _world_size = 1;
 /* FIXME: SINCE RIGHT NOW, THERE IS ONLY THE WORLD COLLECTIVE AND NO WAY
    TO CREATE CHILDREN COLLECTIVES, THIS IS BASICALLY A PLACEHOLDER. */
 
-void checkpt_collective( const collective_t *comm )
+void checkpt_collective( const collective_t* comm )
 {
     CHECKPT_VAL( int, world_rank );
     CHECKPT_VAL( int, world_size );
 }
 
-collective_t *restore_collective( void )
+collective_t* restore_collective( void )
 {
     int rank, size;
     RESTORE_VAL( int, rank );
@@ -65,7 +65,7 @@ collective_t *restore_collective( void )
 
 /* mp checkpointer */
 
-void checkpt_mp( mp_t *mp )
+void checkpt_mp( mp_t* mp )
 {
     int port;
     CHECKPT( mp, 1 );
@@ -84,9 +84,9 @@ void checkpt_mp( mp_t *mp )
     }
 }
 
-mp_t *restore_mp( void )
+mp_t* restore_mp( void )
 {
-    mp_t *mp;
+    mp_t* mp;
     int port;
     RESTORE( mp );
     RESTORE( mp->rbuf );
@@ -120,7 +120,7 @@ struct DMPPolicy
             ERROR( ( "MPI error %i on " #x, ierr ) );                          \
     } while ( 0 )
 
-    inline void boot_mp( int *pargc, char ***pargv )
+    inline void boot_mp( int* pargc, char*** pargv )
     {
         TRAP( MPI_Init( pargc, pargv ) );
         TRAP( MPI_Comm_dup( MPI_COMM_WORLD, &__world.comm ) );
@@ -146,7 +146,7 @@ struct DMPPolicy
 
     inline void mp_barrier( void ) { TRAP( MPI_Barrier( world->comm ) ); }
 
-    inline void mp_allsum_d( double *local, double *global, int n )
+    inline void mp_allsum_d( double* local, double* global, int n )
     {
         if ( !local || !global || n < 1 || std::abs( local - global ) < n )
         {
@@ -156,7 +156,7 @@ struct DMPPolicy
                              world->comm ) );
     }
 
-    inline void mp_allsum_i( int *local, int *global, int n )
+    inline void mp_allsum_i( int* local, int* global, int n )
     {
         if ( !local || !global || n < 1 || std::abs( local - global ) < n )
         {
@@ -166,7 +166,7 @@ struct DMPPolicy
             MPI_Allreduce( local, global, n, MPI_INT, MPI_SUM, world->comm ) );
     }
 
-    inline void mp_allgather_i( int *sbuf, int *rbuf, int n )
+    inline void mp_allgather_i( int* sbuf, int* rbuf, int n )
     {
         if ( !sbuf || !rbuf || n < 1 )
             ERROR( ( "Bad args" ) );
@@ -174,7 +174,7 @@ struct DMPPolicy
             MPI_Allgather( sbuf, n, MPI_INT, rbuf, n, MPI_INT, world->comm ) );
     }
 
-    inline void mp_allgather_i64( int64_t *sbuf, int64_t *rbuf, int n )
+    inline void mp_allgather_i64( int64_t* sbuf, int64_t* rbuf, int n )
     {
         if ( !sbuf || !rbuf || n < 1 )
             ERROR( ( "Bad args" ) );
@@ -182,7 +182,7 @@ struct DMPPolicy
                              world->comm ) );
     }
 
-    inline void mp_gather_uc( unsigned char *sbuf, unsigned char *rbuf, int n )
+    inline void mp_gather_uc( unsigned char* sbuf, unsigned char* rbuf, int n )
     {
         if ( !sbuf || ( !rbuf && world_rank == 0 ) || n < 1 )
             ERROR( ( "Bad args" ) );
@@ -190,14 +190,14 @@ struct DMPPolicy
                           world->comm ) );
     }
 
-    inline void mp_send_i( int *buf, int n, int dst )
+    inline void mp_send_i( int* buf, int n, int dst )
     {
         if ( !buf || n < 1 || dst < 0 || dst >= world_size )
             ERROR( ( "Bad args" ) );
         TRAP( MPI_Send( buf, n, MPI_INT, dst, 0, world->comm ) );
     }
 
-    inline void mp_recv_i( int *buf, int n, int src )
+    inline void mp_recv_i( int* buf, int n, int src )
     {
         if ( !buf || n < 1 || src < 0 || src >= world_size )
             ERROR( ( "Bad args" ) );
@@ -205,9 +205,9 @@ struct DMPPolicy
                         MPI_STATUS_IGNORE ) );
     }
 
-    inline mp_t *new_mp( int n_port )
+    inline mp_t* new_mp( int n_port )
     {
-        mp_t *mp;
+        mp_t* mp;
         if ( n_port < 1 )
             ERROR( ( "Bad args" ) );
         MALLOC( mp, 1 );
@@ -232,7 +232,7 @@ struct DMPPolicy
         return mp;
     }
 
-    inline void delete_mp( mp_t *mp )
+    inline void delete_mp( mp_t* mp )
     {
         int port;
         if ( !mp )
@@ -254,23 +254,23 @@ struct DMPPolicy
         FREE( mp );
     }
 
-    inline void *ALIGNED( 128 ) mp_recv_buffer( mp_t *mp, int port )
+    inline void* ALIGNED( 128 ) mp_recv_buffer( mp_t* mp, int port )
     {
         if ( !mp || port < 0 || port >= mp->n_port )
             ERROR( ( "Bad args" ) );
         return mp->rbuf[port];
     }
 
-    inline void *ALIGNED( 128 ) mp_send_buffer( mp_t *mp, int port )
+    inline void* ALIGNED( 128 ) mp_send_buffer( mp_t* mp, int port )
     {
         if ( !mp || port < 0 || port >= mp->n_port )
             ERROR( ( "Bad args" ) );
         return mp->sbuf[port];
     }
 
-    inline void mp_size_recv_buffer( mp_t *mp, int port, int sz )
+    inline void mp_size_recv_buffer( mp_t* mp, int port, int sz )
     {
-        char *ALIGNED( 128 ) buf;
+        char* ALIGNED( 128 ) buf;
 
         if ( !mp || port < 0 || port > mp->n_port || sz < 1 )
             ERROR( ( "Bad args" ) );
@@ -299,9 +299,9 @@ struct DMPPolicy
         mp->rbuf_sz[port] = sz;
     }
 
-    inline void mp_size_send_buffer( mp_t *mp, int port, int sz )
+    inline void mp_size_send_buffer( mp_t* mp, int port, int sz )
     {
-        char *ALIGNED( 128 ) buf;
+        char* ALIGNED( 128 ) buf;
 
         // Check input arguments
         if ( !mp || port < 0 || port > mp->n_port || sz < 1 )
@@ -331,7 +331,7 @@ struct DMPPolicy
         mp->sbuf_sz[port] = sz;
     }
 
-    inline void mp_begin_recv( mp_t *mp, int port, int sz, int src, int tag )
+    inline void mp_begin_recv( mp_t* mp, int port, int sz, int src, int tag )
     {
         if ( !mp || port < 0 || port >= mp->n_port || sz < 1 ||
              sz > mp->rbuf_sz[port] || src < 0 || src >= world_size )
@@ -341,7 +341,7 @@ struct DMPPolicy
                          &mp->rreq[port] ) );
     }
 
-    inline void mp_begin_send( mp_t *mp, int port, int sz, int dst, int tag )
+    inline void mp_begin_send( mp_t* mp, int port, int sz, int dst, int tag )
     {
         if ( !mp || port < 0 || port >= mp->n_port || dst < 0 ||
              dst >= world_size || sz < 1 || mp->sbuf_sz[port] < sz )
@@ -351,7 +351,7 @@ struct DMPPolicy
                           &mp->sreq[port] ) );
     }
 
-    inline void mp_end_recv( mp_t *mp, int port )
+    inline void mp_end_recv( mp_t* mp, int port )
     {
         MPI_Status status;
         int sz;
@@ -363,7 +363,7 @@ struct DMPPolicy
             ERROR( ( "Sizes do not match" ) );
     }
 
-    inline void mp_end_send( mp_t *mp, int port )
+    inline void mp_end_send( mp_t* mp, int port )
     {
         if ( !mp || port < 0 || port >= mp->n_port )
             ERROR( ( "Bad args" ) );

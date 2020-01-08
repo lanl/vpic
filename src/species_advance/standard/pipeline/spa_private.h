@@ -48,16 +48,16 @@ typedef struct advance_p_pipeline_args
 
 // PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
 
-void advance_p_pipeline_scalar( advance_p_pipeline_args_t *args,
+void advance_p_pipeline_scalar( advance_p_pipeline_args_t* args,
                                 int pipeline_rank, int n_pipeline );
 
-void advance_p_pipeline_v4( advance_p_pipeline_args_t *args, int pipeline_rank,
+void advance_p_pipeline_v4( advance_p_pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
-void advance_p_pipeline_v8( advance_p_pipeline_args_t *args, int pipeline_rank,
+void advance_p_pipeline_v8( advance_p_pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
-void advance_p_pipeline_v16( advance_p_pipeline_args_t *args, int pipeline_rank,
+void advance_p_pipeline_v16( advance_p_pipeline_args_t* args, int pipeline_rank,
                              int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,29 +76,29 @@ typedef struct center_p_pipeline_args
 
 // PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
 
-void center_p_pipeline_scalar( center_p_pipeline_args_t *args,
+void center_p_pipeline_scalar( center_p_pipeline_args_t* args,
                                int pipeline_rank, int n_pipeline );
 
-void center_p_pipeline_v4( center_p_pipeline_args_t *args, int pipeline_rank,
+void center_p_pipeline_v4( center_p_pipeline_args_t* args, int pipeline_rank,
                            int n_pipeline );
 
-void center_p_pipeline_v8( center_p_pipeline_args_t *args, int pipeline_rank,
+void center_p_pipeline_v8( center_p_pipeline_args_t* args, int pipeline_rank,
                            int n_pipeline );
-void center_p_pipeline_v16( center_p_pipeline_args_t *args, int pipeline_rank,
+void center_p_pipeline_v16( center_p_pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
 // PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
 
-void uncenter_p_pipeline_scalar( center_p_pipeline_args_t *args,
+void uncenter_p_pipeline_scalar( center_p_pipeline_args_t* args,
                                  int pipeline_rank, int n_pipeline );
 
-void uncenter_p_pipeline_v4( center_p_pipeline_args_t *args, int pipeline_rank,
+void uncenter_p_pipeline_v4( center_p_pipeline_args_t* args, int pipeline_rank,
                              int n_pipeline );
 
-void uncenter_p_pipeline_v8( center_p_pipeline_args_t *args, int pipeline_rank,
+void uncenter_p_pipeline_v8( center_p_pipeline_args_t* args, int pipeline_rank,
                              int n_pipeline );
 
-void uncenter_p_pipeline_v16( center_p_pipeline_args_t *args, int pipeline_rank,
+void uncenter_p_pipeline_v16( center_p_pipeline_args_t* args, int pipeline_rank,
                               int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,16 +119,16 @@ typedef struct energy_p_pipeline_args
 
 // PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 
-void energy_p_pipeline_scalar( energy_p_pipeline_args_t *RESTRICT args,
+void energy_p_pipeline_scalar( energy_p_pipeline_args_t* RESTRICT args,
                                int pipeline_rank, int n_pipeline );
 
-void energy_p_pipeline_v4( energy_p_pipeline_args_t *args, int pipeline_rank,
+void energy_p_pipeline_v4( energy_p_pipeline_args_t* args, int pipeline_rank,
                            int n_pipeline );
 
-void energy_p_pipeline_v8( energy_p_pipeline_args_t *args, int pipeline_rank,
+void energy_p_pipeline_v8( energy_p_pipeline_args_t* args, int pipeline_rank,
                            int n_pipeline );
 
-void energy_p_pipeline_v16( energy_p_pipeline_args_t *args, int pipeline_rank,
+void energy_p_pipeline_v16( energy_p_pipeline_args_t* args, int pipeline_rank,
                             int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -184,13 +184,13 @@ typedef struct sort_p_pipeline_args
 // PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
 // PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
 
-void coarse_count_pipeline_scalar( sort_p_pipeline_args_t *args,
+void coarse_count_pipeline_scalar( sort_p_pipeline_args_t* args,
                                    int pipeline_rank, int n_pipeline );
 
-void coarse_sort_pipeline_scalar( sort_p_pipeline_args_t *args,
+void coarse_sort_pipeline_scalar( sort_p_pipeline_args_t* args,
                                   int pipeline_rank, int n_pipeline );
 
-void subsort_pipeline_scalar( sort_p_pipeline_args_t *args, int pipeline_rank,
+void subsort_pipeline_scalar( sort_p_pipeline_args_t* args, int pipeline_rank,
                               int n_pipeline );
 
 #endif // _spa_private_h_

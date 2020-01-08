@@ -28,7 +28,7 @@ struct FileIO_T : public ReadWritePolicy
     //! Destructor
     ~FileIO_T() {}
 
-    FileIOStatus open( const char *filename, FileIOMode mode )
+    FileIOStatus open( const char* filename, FileIOMode mode )
     {
         return ReadWritePolicy::open( filename, mode );
     }
@@ -38,7 +38,7 @@ struct FileIO_T : public ReadWritePolicy
 
     int64_t size() { return ReadWritePolicy::size(); }
 
-    void print( const char *format, ... )
+    void print( const char* format, ... )
     {
         va_list args;
         va_start( args, format );
@@ -46,12 +46,12 @@ struct FileIO_T : public ReadWritePolicy
     }
 
     template <typename T>
-    size_t read( T *data, size_t elements )
+    size_t read( T* data, size_t elements )
     {
         return ReadWritePolicy::read( data, elements );
     }
     template <typename T>
-    size_t write( const T *data, size_t elements )
+    size_t write( const T* data, size_t elements )
     {
         return ReadWritePolicy::write( data, elements );
     }

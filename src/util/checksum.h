@@ -13,8 +13,8 @@ struct CheckSum
 }; // struct CheckSum
 
 template <typename T>
-void checkSumBuffer( T *buffer, size_t elements, CheckSum &sum,
-                     const char *digest = "md5" )
+void checkSumBuffer( T* buffer, size_t elements, CheckSum& sum,
+                     const char* digest = "md5" )
 {
     size_t bytes = elements * sizeof( T );
 
@@ -27,7 +27,7 @@ void checkSumBuffer( T *buffer, size_t elements, CheckSum &sum,
     EVP_MD_CTX_init( &ctx );
 
     // get digest
-    const EVP_MD *md = EVP_get_digestbyname( digest );
+    const EVP_MD* md = EVP_get_digestbyname( digest );
     if ( !md )
     {
         ERROR( ( "Invalid digest!" ) );
@@ -37,7 +37,7 @@ void checkSumBuffer( T *buffer, size_t elements, CheckSum &sum,
     EVP_DigestInit_ex( &ctx, md, NULL );
 
     // update digest with buffer
-    EVP_DigestUpdate( &ctx, reinterpret_cast<void *>( buffer ), bytes );
+    EVP_DigestUpdate( &ctx, reinterpret_cast<void*>( buffer ), bytes );
 
     // finalize
     EVP_DigestFinal_ex( &ctx, sum.value, &sum.length );

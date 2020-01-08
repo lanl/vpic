@@ -114,7 +114,7 @@ typedef struct collective collective_t;
 // both the SPU and PPU with appropriate annotations to necessary
 // write the appropriate DMA transfers.
 
-#define MEM_PTR( type, align ) type *ALIGNED( align )
+#define MEM_PTR( type, align ) type* ALIGNED( align )
 
 // The SIZEOF_MEM_PTR macro gives the number of bytes taken by a MEM_PTR.
 
@@ -139,7 +139,7 @@ typedef struct collective collective_t;
 #if 0 // C99 has (dubious) issues with this
 #define DECLARE_ALIGNED_ARRAY( type, align, name, count )                      \
     char _aa_##name[( count ) * sizeof( type ) + ( align )];                   \
-    type *ALIGNED( align ) const name = ( type * ALIGNED( align ) )(           \
+    type* ALIGNED( align ) const name = ( type * ALIGNED( align ) )(           \
         ( (size_t)_aa_##name + (align)-1 ) & ( ~( (align)-1 ) ) )
 #else // Sigh ... this is technically not portable
 #define DECLARE_ALIGNED_ARRAY( type, align, name, count )                      \
@@ -170,7 +170,7 @@ typedef struct collective collective_t;
 // pointer of type "t".
 
 #define ALIGN_PTR( t, p, a )                                                   \
-    ( (t *)POW2_CEIL( ( size_t )( p ), ( size_t )( a ) ) )
+    ( (t*)POW2_CEIL( ( size_t )( p ), ( size_t )( a ) ) )
 
 // Workload distribution macros
 
@@ -322,8 +322,8 @@ BEGIN_C_DECLS
 // (The macros turn these into rvals that can't be modified
 // by users accidentically).
 
-#define world ( (collective_t *)_world )
-extern collective_t *_world;
+#define world ( (collective_t*)_world )
+extern collective_t* _world;
 
 #define world_size ( (int)_world_size )
 extern int _world_size;
@@ -334,7 +334,7 @@ extern int _world_rank;
 // Strip all instances of key from the command line. Returns the
 // number of times key was found.
 
-int strip_cmdline( int *pargc, char ***pargv, const char *key );
+int strip_cmdline( int* pargc, char*** pargv, const char* key );
 
 // Strip all instances of "key val" from the command line.  Returns
 // val as an int of the last complete "key val" pair (if the last
@@ -342,23 +342,23 @@ int strip_cmdline( int *pargc, char ***pargv, const char *key );
 // otherwise ignored).  If there are no instances of "key val" on
 // the command line, returns default_val.
 
-int strip_cmdline_int( int *pargc, char ***pargv, const char *key,
+int strip_cmdline_int( int* pargc, char*** pargv, const char* key,
                        int default_val );
 
 // Same as strip_cmdline_int, but for doubles
 
-double strip_cmdline_double( int *pargc, char ***pargv, const char *key,
+double strip_cmdline_double( int* pargc, char*** pargv, const char* key,
                              double default_val );
 
 // Same as strip_cmdline_int, but for strings.  The lifetime of the
 // returned '\0'-terminated string is the shorter of the lifetime of
 // default_val or pargv.
 
-const char *strip_cmdline_string( int *pargc, char ***pargv, const char *key,
-                                  const char *default_val );
+const char* strip_cmdline_string( int* pargc, char*** pargv, const char* key,
+                                  const char* default_val );
 
 // In util.c
-void detect_old_style_arguments( int *pargc, char ***pargv );
+void detect_old_style_arguments( int* pargc, char*** pargv );
 
 // MALLOC is guaranteed to succeed from the caller's point of view
 // (thus, _no_ NULL checking the pointer is necessary).  n is the
@@ -371,8 +371,8 @@ void detect_old_style_arguments( int *pargc, char ***pargv );
                  "(" EXPAND_AND_STRINGIFY( __LINE__ ) ") failed",              \
                  &( x ), ( n ) * sizeof( *( x ) ) )
 
-void util_malloc( const char *err_fmt, // Has exactly one %lu in it
-                  void *mem_ref, size_t n );
+void util_malloc( const char* err_fmt, // Has exactly one %lu in it
+                  void* mem_ref, size_t n );
 
 // FREE frees memory allocated via MALLOC above.  It is safe to pass
 // any value returned by MALLOC to FREE (_including_ a null pointer).
@@ -381,7 +381,7 @@ void util_malloc( const char *err_fmt, // Has exactly one %lu in it
 
 #define FREE( x ) util_free( &( x ) )
 
-void util_free( void *mem_ref );
+void util_free( void* mem_ref );
 
 // MALLOC_ALIGNED behaves equivalently to MALLOC.  The alignment must
 // be a power of two.  Alignments smaller than 16 will be rounded up
@@ -393,16 +393,16 @@ void util_free( void *mem_ref );
                          "(" EXPAND_AND_STRINGIFY( __LINE__ ) ") failed",      \
                          &( x ), ( n ) * sizeof( *( x ) ), ( a ) )
 
-void util_malloc_aligned( const char *err_fmt, // Has exactly two %lu in it
-                          void *mem_ref, size_t n, size_t a );
+void util_malloc_aligned( const char* err_fmt, // Has exactly two %lu in it
+                          void* mem_ref, size_t n, size_t a );
 
 // FREE_ALIGNED behaves equivalently to FREE.
 
 #define FREE_ALIGNED( x ) util_free_aligned( &( x ) )
 
-void util_free_aligned( void *mem_ref );
+void util_free_aligned( void* mem_ref );
 
-void log_printf( const char *fmt, ... );
+void log_printf( const char* fmt, ... );
 
 // This function returns a value to prevent the compiler from
 // optimizing it away the function body.  The caller should not use it

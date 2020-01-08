@@ -12,7 +12,7 @@ typedef struct rng rng_t;
 
 typedef struct rng_pool
 {
-    rng_t **rng; /* Random number generators (indexed 0:n_rng-1) */
+    rng_t** rng; /* Random number generators (indexed 0:n_rng-1) */
     int n_rng;   /* Number of random number generators in pool */
 } rng_pool_t;
 
@@ -20,12 +20,12 @@ BEGIN_C_DECLS
 
 /* In rng_pool.c. */
 
-rng_pool_t *              /* New pool (already seeded via seed_rng_pool) */
+rng_pool_t*               /* New pool (already seeded via seed_rng_pool) */
 new_rng_pool( int n_rng,  /* Number of generators for pool */
               int seed,   /* Pool seed (different meaning from seed_rng) */
               int sync ); /* True for synchronized seeding */
 
-void delete_rng_pool( rng_pool_t *RESTRICT rp ); /* Pool to delete */
+void delete_rng_pool( rng_pool_t* RESTRICT rp ); /* Pool to delete */
 
 /* In seed_rng_pool, seeding is done such that:
      local_pool = seed_rng_pool( rp, seed, 0 );
@@ -37,23 +37,23 @@ void delete_rng_pool( rng_pool_t *RESTRICT rp ); /* Pool to delete */
 /* FIXME: WE NEED BIGGER SEEDS.  NOTE THAT THE EFFECT SEED SPACE FOR
    POOLS IS ROUGHLY FLOOR( UINT_MAX / (n_rng*(world_size+1)) )  */
 
-rng_pool_t *                            /* Returns rp */
-seed_rng_pool( rng_pool_t *RESTRICT rp, /* Pool to seed */
+rng_pool_t*                             /* Returns rp */
+seed_rng_pool( rng_pool_t* RESTRICT rp, /* Pool to seed */
                int seed,                /* Pool seed (different meaning from
                                            seed_rng) */
                int sync );              /* True for synchronized seeding */
 
 /* In rng.c */
 
-rng_t *              /* New generator (already seeded via seed_rng) */
+rng_t*               /* New generator (already seeded via seed_rng) */
 new_rng( int seed ); /* Random number generator seed */
 
-void delete_rng( rng_t *RESTRICT r ); /* Generator to delete */
+void delete_rng( rng_t* RESTRICT r ); /* Generator to delete */
 
 /* FIXME: WE NEED TO BIGGER SEEDS.  SEE ABOVE. */
 
-rng_t *                      /* Returns r */
-seed_rng( rng_t *RESTRICT r, /* Generator to seed */
+rng_t*                       /* Returns r */
+seed_rng( rng_t* RESTRICT r, /* Generator to seed */
           int seed );        /* Seed */
 
 /* Integer random generators make uniform rands on [0,INTTYPE_MAX] for
@@ -79,17 +79,18 @@ seed_rng( rng_t *RESTRICT r, /* Generator to seed */
 
 #define _( prefix, type )                                                      \
     type                                   /* Returns sample deviate */        \
-        prefix##rand( rng_t *RESTRICT r ); /* Generator to use */              \
+        prefix##rand( rng_t* RESTRICT r ); /* Generator to use */              \
                                                                                \
-    type *                                    /* Returns x */                  \
-        prefix##rand_fill( rng_t *RESTRICT r, /* Generator to use */           \
-                           type *RESTRICT x,  /* Array to fill */              \
+    type*                                     /* Returns x */                  \
+        prefix##rand_fill( rng_t* RESTRICT r, /* Generator to use */           \
+                           type* RESTRICT x,  /* Array to fill */              \
                            size_t str_ele,    /* Element stride */             \
                            size_t n_ele );    /* Number of elements */
 
 _( c, char )
-_( uc, unsigned char ) _( h, short ) _( uh, unsigned short ) _( i, int )
-    _( ui, unsigned int ) _( l, long ) _( ul, unsigned long )
+_( uc, unsigned char )
+_( h, short ) _( uh, unsigned short ) _( i, int ) _( ui, unsigned int )
+    _( l, long ) _( ul, unsigned long )
 
         _( i8, int8_t ) _( u8, uint8_t ) _( i16, int16_t ) _( u16, uint16_t )
             _( i32, int32_t ) _( u32, uint32_t ) _( i64, int64_t )
@@ -137,12 +138,12 @@ _( uc, unsigned char ) _( h, short ) _( uh, unsigned short ) _( i, int )
 
 #define _( type, prefix, variant )                                             \
     type /* Returns sample deviate */                                          \
-        prefix##rand##variant( rng_t *RESTRICT r ); /* Generator to use */     \
+        prefix##rand##variant( rng_t* RESTRICT r ); /* Generator to use */     \
                                                                                \
-    type * /* Returns x */                                                     \
+    type* /* Returns x */                                                      \
         prefix##rand##variant##_fill(                                          \
-            rng_t *RESTRICT r, /* Generator to use */                          \
-            type *RESTRICT x,  /* Array to fill */                             \
+            rng_t* RESTRICT r, /* Generator to use */                          \
+            type* RESTRICT x,  /* Array to fill */                             \
             size_t str_ele,    /* Element stride */                            \
             size_t n_ele );    /* Number of elements */
 
@@ -158,20 +159,20 @@ _( uc, unsigned char ) _( h, short ) _( uh, unsigned short ) _( i, int )
        on the Ziggurat method under the hood. */
 
     float                        /* Returns sample deviate */
-    frandn( rng_t *RESTRICT r ); /* Generator to use */
+    frandn( rng_t* RESTRICT r ); /* Generator to use */
 
-float *                         /* Returns x */
-frandn_fill( rng_t *RESTRICT r, /* Generator to use */
-             float *RESTRICT x, /* Array to fill */
+float*                          /* Returns x */
+frandn_fill( rng_t* RESTRICT r, /* Generator to use */
+             float* RESTRICT x, /* Array to fill */
              size_t str_ele,    /* Element stride */
              size_t n_ele );    /* Number of elements */
 
 double                       /* Returns sample deviate */
-drandn( rng_t *RESTRICT r ); /* Generator to use */
+drandn( rng_t* RESTRICT r ); /* Generator to use */
 
-double *                         /* Returns x */
-drandn_fill( rng_t *RESTRICT r,  /* Generator to use */
-             double *RESTRICT x, /* Array to fill */
+double*                          /* Returns x */
+drandn_fill( rng_t* RESTRICT r,  /* Generator to use */
+             double* RESTRICT x, /* Array to fill */
              size_t str_ele,     /* Element stride */
              size_t n_ele );     /* Number of elements */
 
@@ -180,36 +181,36 @@ drandn_fill( rng_t *RESTRICT r,  /* Generator to use */
    transformation method under the hood. */
 
 float                        /* Returns sample deviate */
-frande( rng_t *RESTRICT r ); /* Generator to use */
+frande( rng_t* RESTRICT r ); /* Generator to use */
 
-float *                         /* Returns x */
-frande_fill( rng_t *RESTRICT r, /* Generator to use */
-             float *RESTRICT x, /* Array to fill */
+float*                          /* Returns x */
+frande_fill( rng_t* RESTRICT r, /* Generator to use */
+             float* RESTRICT x, /* Array to fill */
              size_t str_ele,    /* Element stride */
              size_t n_ele );    /* Number of elements */
 
 double                       /* Returns sample deviate */
-drande( rng_t *RESTRICT r ); /* Generator to use */
+drande( rng_t* RESTRICT r ); /* Generator to use */
 
-double *                         /* Returns x */
-drande_fill( rng_t *RESTRICT r,  /* Generator to use */
-             double *RESTRICT x, /* Array to fill */
+double*                          /* Returns x */
+drande_fill( rng_t* RESTRICT r,  /* Generator to use */
+             double* RESTRICT x, /* Array to fill */
              size_t str_ele,     /* Element stride */
              size_t n_ele );     /* Number of elements */
 
 /* Specialty generators */
 
-int *                        /* Returns x */
-randperm( rng_t *RESTRICT r, /* Generator to use */
-          int *RESTRICT x,   /* 0:n-1 indexed, holds a random
+int*                         /* Returns x */
+randperm( rng_t* RESTRICT r, /* Generator to use */
+          int* RESTRICT x,   /* 0:n-1 indexed, holds a random
                                 permutation of 0:n-1 on output */
           int n );           /* Permutation size */
 
 /* This function is most efficient when str_ele is a integer multiple
    of sz_ele and sz_ele is either 0, 1, 2, 4 or 8. */
-void *                      /* Returns x */
-shuffle( rng_t *RESTRICT r, /* Generator to use */
-         void *RESTRICT x,  /* Elements to shuffle */
+void*                       /* Returns x */
+shuffle( rng_t* RESTRICT r, /* Generator to use */
+         void* RESTRICT x,  /* Elements to shuffle */
          size_t sz_ele,     /* Element _byte_ size */
          size_t str_ele,    /* Element _byte_ stride */
          size_t n_ele );    /* Number of elements */

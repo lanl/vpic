@@ -9,7 +9,7 @@
    register or unregister any objects.  checkpoint_func_t must part of
    the global symbol table (e.g. not declared as static). */
 
-typedef void ( *checkpt_func_t )( const void *obj );
+typedef void ( *checkpt_func_t )( const void* obj );
 
 /* A restore_func_t deserializes an object from a checkpt.  It returns
    a pointer to the newly restored object.  Objects are restored in
@@ -17,7 +17,7 @@ typedef void ( *checkpt_func_t )( const void *obj );
    not register or unregister any objects.  A restore_func_t must part
    of the global symbol table (e.g. not declared as static). */
 
-typedef void *( *restore_func_t )( void );
+typedef void* ( *restore_func_t )( void );
 
 /* A reanimate_func_t reanimates an object.  It takes a pointer to the
    object to reanimate.  Reanimation is done _after_ all objects in a
@@ -30,13 +30,13 @@ typedef void *( *restore_func_t )( void );
    A reanimate_func_t must part of the global symbol table (e.g. not
    declared as static). */
 
-typedef void ( *reanimate_func_t )( void *obj );
+typedef void ( *reanimate_func_t )( void* obj );
 
 BEGIN_C_DECLS
 
 /* Boot up the checkpt service */
 
-void boot_checkpt( int *pargc, char ***pargv );
+void boot_checkpt( int* pargc, char*** pargv );
 
 /* Halt the checkpt service */
 
@@ -51,14 +51,14 @@ void halt_checkpt( void );
    function on that object).  Objects should be registered once and
    only once. */
 
-void register_object( void *obj, checkpt_func_t checkpt_func,
+void register_object( void* obj, checkpt_func_t checkpt_func,
                       restore_func_t restore_func,
                       reanimate_func_t reanimate_func );
 
 /* When a checkpointed object is destroyed, it should also be
    unregistered from the checkpt service. */
 
-void unregister_object( void *obj );
+void unregister_object( void* obj );
 
 /* Given a pointer to an registered object, return an identifier for
    that object that is stable across a checkpt/restore.  Returns 0 if
@@ -66,7 +66,7 @@ void unregister_object( void *obj );
    is really only needed to reanimate objects that have non-DAG
    dependencies. */
 
-size_t object_id( const void *ptr );
+size_t object_id( const void* ptr );
 
 /* Given the unique identifier of a registered object, return a
    pointer to that object (valid within the current applications
@@ -74,7 +74,7 @@ size_t object_id( const void *ptr );
    function is really only needed to reanimate objects that have
    non-DAG dependencies. */
 
-void *object_ptr( size_t id );
+void* object_ptr( size_t id );
 
 /* Checkpt(restore) all objects to(from) the checkpt with the given
    name (a '\0'-terminated string).  If restore_objects is called
@@ -86,9 +86,9 @@ void *object_ptr( size_t id );
    nominally should be called after boot_services and before
    and before any new objects are registered. */
 
-void checkpt_objects( const char *name );
+void checkpt_objects( const char* name );
 
-void restore_objects( const char *name );
+void restore_objects( const char* name );
 
 /* Call the reanimate functions on all objects.  This is typically
    done after the restore process. */
@@ -100,9 +100,9 @@ void reanimate_objects( void );
 
 /* Checkpt(restore) n bytes from(to) data. */
 
-void checkpt_raw( const void *data, size_t n_byte );
+void checkpt_raw( const void* data, size_t n_byte );
 
-void restore_raw( void *data, size_t n_byte );
+void restore_raw( void* data, size_t n_byte );
 
 /*****************************************************************************/
 /* Composite checkpt / restore / reanimate primitives */
@@ -120,19 +120,19 @@ void restore_raw( void *data, size_t n_byte );
    number of bytes to write is zero (the restored pointer may not
    be NULL if max_ele and str_ele are non-trivial in this case). */
 
-void checkpt_data( const void *data, size_t sz_ele, size_t str_ele,
+void checkpt_data( const void* data, size_t sz_ele, size_t str_ele,
                    size_t n_ele, size_t max_ele, size_t align );
 
-void *restore_data( void );
+void* restore_data( void );
 
 /* Checkpt(restore) a '\0'-terminated string.  The returned pointer of
    restore_str heap_allocated as:
      MALLOC( (char *)string, strlen_string+1 )
    It is okay to checkpoint NULL (it will be restored as NULL). */
 
-void checkpt_str( const char *str );
+void checkpt_str( const char* str );
 
-char *restore_str( void );
+char* restore_str( void );
 
 /* Checkpt, restore and reanimate a "forward" pointer to a registered
    object.  It is okay to checkpt NULL (it will be restored and
@@ -143,11 +143,11 @@ char *restore_str( void );
    a price.  A restore_fptr is not safe to use _until_ it after
    reanimate_fptr called on it in a reanimate function. */
 
-void checkpt_fptr( const void *ptr );
+void checkpt_fptr( const void* ptr );
 
-void *restore_fptr( void );
+void* restore_fptr( void );
 
-void *reanimate_fptr( void * );
+void* reanimate_fptr( void* );
 
 /* Checkpt(restore) a pointer to a registered object.  It is okay
    to checkpt NULL (it will be restored as NULL).  Outside of NULL,
@@ -164,9 +164,9 @@ void *reanimate_fptr( void * );
    restore_ptr is used to restore a pointer to an object that has
    not already been restored, it give an error. */
 
-void checkpt_ptr( const void *ptr );
+void checkpt_ptr( const void* ptr );
 
-void *restore_ptr( void );
+void* restore_ptr( void );
 
 /* Checkpt(restore) a symbol (e.g. a function pointer).  Generally, if
    you do not change your application binary between a checkpt and
@@ -218,9 +218,9 @@ void *restore_ptr( void );
    It is okay to checkpoint a NULL symbol (it will be restored as a
    NULL). */
 
-void checkpt_sym( const void *sym );
+void checkpt_sym( const void* sym );
 
-void *restore_sym( void );
+void* restore_sym( void );
 
 /****************************************************************************/
 
@@ -271,7 +271,7 @@ void *restore_sym( void );
 #define CHECKPT_STR( p ) checkpt_str( ( p ) )
 #define CHECKPT_FPTR( p ) checkpt_fptr( ( p ) )
 #define CHECKPT_PTR( p ) checkpt_ptr( ( p ) )
-#define CHECKPT_SYM( p ) checkpt_sym( (const void *)( size_t )( p ) )
+#define CHECKPT_SYM( p ) checkpt_sym( (const void*)( size_t )( p ) )
 
 #define RESTORE_VAL( T, val )                                                  \
     do                                                                         \
@@ -300,7 +300,7 @@ void *restore_sym( void );
 
 #define CXX_ILLEGAL_PTR_COPY( lv, rv ) _cxx_illegal_ptr_copy( &( lv ), ( rv ) )
 
-void _cxx_illegal_ptr_copy( void *lv_ref, const void *rv );
+void _cxx_illegal_ptr_copy( void* lv_ref, const void* rv );
 
 END_C_DECLS
 

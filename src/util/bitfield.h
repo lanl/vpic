@@ -8,7 +8,7 @@ class BitField
         : bits_( setbits )
     {
     }
-    BitField( const BitField &bf )
+    BitField( const BitField& bf )
         : bits_( bf.bits_ )
     {
     }
@@ -72,7 +72,7 @@ class BitField
     /*!---------------------------------------------------------------------
      * Return the sum of the set bits in the mask.
     ----------------------------------------------------------------------*/
-    size_t bitsum( const size_t *indeces, size_t size ) const
+    size_t bitsum( const size_t* indeces, size_t size ) const
     {
         size_t sum( 0 );
         for ( size_t i( 0 ); i < size; i++ )

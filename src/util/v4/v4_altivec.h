@@ -102,71 +102,71 @@ class v4
 
     // v4 miscellenous friends
 
-    friend inline int any( const v4 &a );
-    friend inline int all( const v4 &a );
+    friend inline int any( const v4& a );
+    friend inline int all( const v4& a );
     template <int n>
-    friend inline v4 splat( const v4 &a );
+    friend inline v4 splat( const v4& a );
     // friend inline v4 splat( const v4 &a, int n );
     template <int i0, int i1, int i2, int i3>
-    friend inline v4 shuffle( const v4 &a );
+    friend inline v4 shuffle( const v4& a );
     // friend inline v4 shuffle( const v4 &a,
     //                           int i0, int i1, int i2, int i3 );
-    friend inline void swap( v4 &a, v4 &b );
-    friend inline void transpose( v4 &a0, v4 &a1, v4 &a2, v4 &a3 );
+    friend inline void swap( v4& a, v4& b );
+    friend inline void transpose( v4& a0, v4& a1, v4& a2, v4& a3 );
 
     // v4int miscellaneous friends
 
-    friend inline v4 czero( const v4int &c, const v4 &a );
-    friend inline v4 notczero( const v4int &c, const v4 &a );
-    friend inline v4 merge( const v4int &c, const v4 &a, const v4 &b );
+    friend inline v4 czero( const v4int& c, const v4& a );
+    friend inline v4 notczero( const v4int& c, const v4& a );
+    friend inline v4 merge( const v4int& c, const v4& a, const v4& b );
 
     // v4 memory manipulation friends
 
-    friend inline void load_4x1( const void *ALIGNED( 16 ) p, v4 &a );
-    friend inline void store_4x1( const v4 &a, void *ALIGNED( 16 ) p );
-    friend inline void stream_4x1( const v4 &a, void *ALIGNED( 16 ) p );
-    friend inline void clear_4x1( void *ALIGNED( 16 ) dst );
-    friend inline void copy_4x1( void *ALIGNED( 16 ) dst,
-                                 const void *ALIGNED( 16 ) src );
-    friend inline void swap_4x1( void *ALIGNED( 16 ) a, void *ALIGNED( 16 ) b );
+    friend inline void load_4x1( const void* ALIGNED( 16 ) p, v4& a );
+    friend inline void store_4x1( const v4& a, void* ALIGNED( 16 ) p );
+    friend inline void stream_4x1( const v4& a, void* ALIGNED( 16 ) p );
+    friend inline void clear_4x1( void* ALIGNED( 16 ) dst );
+    friend inline void copy_4x1( void* ALIGNED( 16 ) dst,
+                                 const void* ALIGNED( 16 ) src );
+    friend inline void swap_4x1( void* ALIGNED( 16 ) a, void* ALIGNED( 16 ) b );
 
     // v4 transposed memory manipulation friends
     // Note: Half aligned values are permissible in the 4x2_tr variants!
 
-    friend inline void load_4x1_tr( const void *a0, const void *a1,
-                                    const void *a2, const void *a3, v4 &a );
-    friend inline void load_4x2_tr( const void *ALIGNED( 8 ) a0,
-                                    const void *ALIGNED( 8 ) a1,
-                                    const void *ALIGNED( 8 ) a2,
-                                    const void *ALIGNED( 8 ) a3, v4 &a, v4 &b );
-    friend inline void load_4x3_tr( const void *ALIGNED( 16 ) a0,
-                                    const void *ALIGNED( 16 ) a1,
-                                    const void *ALIGNED( 16 ) a2,
-                                    const void *ALIGNED( 16 ) a3, v4 &a, v4 &b,
-                                    v4 &c );
-    friend inline void load_4x4_tr( const void *ALIGNED( 16 ) a0,
-                                    const void *ALIGNED( 16 ) a1,
-                                    const void *ALIGNED( 16 ) a2,
-                                    const void *ALIGNED( 16 ) a3, v4 &a, v4 &b,
-                                    v4 &c, v4 &d );
+    friend inline void load_4x1_tr( const void* a0, const void* a1,
+                                    const void* a2, const void* a3, v4& a );
+    friend inline void load_4x2_tr( const void* ALIGNED( 8 ) a0,
+                                    const void* ALIGNED( 8 ) a1,
+                                    const void* ALIGNED( 8 ) a2,
+                                    const void* ALIGNED( 8 ) a3, v4& a, v4& b );
+    friend inline void load_4x3_tr( const void* ALIGNED( 16 ) a0,
+                                    const void* ALIGNED( 16 ) a1,
+                                    const void* ALIGNED( 16 ) a2,
+                                    const void* ALIGNED( 16 ) a3, v4& a, v4& b,
+                                    v4& c );
+    friend inline void load_4x4_tr( const void* ALIGNED( 16 ) a0,
+                                    const void* ALIGNED( 16 ) a1,
+                                    const void* ALIGNED( 16 ) a2,
+                                    const void* ALIGNED( 16 ) a3, v4& a, v4& b,
+                                    v4& c, v4& d );
 
-    friend inline void store_4x1_tr( const v4 &a, void *a0, void *a1, void *a2,
-                                     void *a3 );
-    friend inline void store_4x2_tr( const v4 &a, const v4 &b,
-                                     void *ALIGNED( 8 ) a0,
-                                     void *ALIGNED( 8 ) a1,
-                                     void *ALIGNED( 8 ) a2,
-                                     void *ALIGNED( 8 ) a3 );
-    friend inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                                     void *ALIGNED( 16 ) a0,
-                                     void *ALIGNED( 16 ) a1,
-                                     void *ALIGNED( 16 ) a2,
-                                     void *ALIGNED( 16 ) a3 );
-    friend inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c,
-                                     const v4 &d, void *ALIGNED( 16 ) a0,
-                                     void *ALIGNED( 16 ) a1,
-                                     void *ALIGNED( 16 ) a2,
-                                     void *ALIGNED( 16 ) a3 );
+    friend inline void store_4x1_tr( const v4& a, void* a0, void* a1, void* a2,
+                                     void* a3 );
+    friend inline void store_4x2_tr( const v4& a, const v4& b,
+                                     void* ALIGNED( 8 ) a0,
+                                     void* ALIGNED( 8 ) a1,
+                                     void* ALIGNED( 8 ) a2,
+                                     void* ALIGNED( 8 ) a3 );
+    friend inline void store_4x3_tr( const v4& a, const v4& b, const v4& c,
+                                     void* ALIGNED( 16 ) a0,
+                                     void* ALIGNED( 16 ) a1,
+                                     void* ALIGNED( 16 ) a2,
+                                     void* ALIGNED( 16 ) a3 );
+    friend inline void store_4x4_tr( const v4& a, const v4& b, const v4& c,
+                                     const v4& d, void* ALIGNED( 16 ) a0,
+                                     void* ALIGNED( 16 ) a1,
+                                     void* ALIGNED( 16 ) a2,
+                                     void* ALIGNED( 16 ) a3 );
 
   protected:
   public: // wdn
@@ -174,7 +174,7 @@ class v4
 
   public:
     v4() {} // Default constructor
-    v4( const v4 &a )
+    v4( const v4& a )
     { // Copy constructor
         v = a.v;
     }
@@ -183,12 +183,12 @@ class v4
 
 // v4 miscellaneous functions
 
-inline int any( const v4 &a ) { return vec_any_ne( (_v4_int)a.v, _false ); }
+inline int any( const v4& a ) { return vec_any_ne( (_v4_int)a.v, _false ); }
 
-inline int all( const v4 &a ) { return vec_all_ne( (_v4_int)a.v, _false ); }
+inline int all( const v4& a ) { return vec_all_ne( (_v4_int)a.v, _false ); }
 
 template <int n>
-inline v4 splat( const v4 &a )
+inline v4 splat( const v4& a )
 {
     v4 b;
     b.v = vec_splat( a.v, n );
@@ -196,7 +196,7 @@ inline v4 splat( const v4 &a )
 }
 
 template <int i0, int i1, int i2, int i3>
-inline v4 shuffle( const v4 &a )
+inline v4 shuffle( const v4& a )
 {
     _v4_float a_v = a.v;
     v4 b;
@@ -204,7 +204,7 @@ inline v4 shuffle( const v4 &a )
     return b;
 }
 
-inline void swap( v4 &a, v4 &b )
+inline void swap( v4& a, v4& b )
 {
     _v4_float t;
     t = a.v;
@@ -212,7 +212,7 @@ inline void swap( v4 &a, v4 &b )
     b.v = t;
 }
 
-inline void transpose( v4 &a, v4 &b, v4 &c, v4 &d )
+inline void transpose( v4& a, v4& b, v4& c, v4& d )
 {
     _v4_float a0 = a.v; // a0 =  0  1  2  3
     _v4_float b0 = b.v; // b0 =  4  5  6  7
@@ -236,48 +236,48 @@ inline void transpose( v4 &a, v4 &b, v4 &c, v4 &d )
 
 // v4 memory manipulation functions
 
-inline void load_4x1( const void *ALIGNED( 16 ) p, v4 &a )
+inline void load_4x1( const void* ALIGNED( 16 ) p, v4& a )
 {
-    a.v = vec_ld( 0, (const float *)p );
+    a.v = vec_ld( 0, (const float*)p );
 }
 
-inline void store_4x1( const v4 &a, void *ALIGNED( 16 ) p )
+inline void store_4x1( const v4& a, void* ALIGNED( 16 ) p )
 {
-    vec_st( a.v, 0, (float *)p );
+    vec_st( a.v, 0, (float*)p );
 }
 
-inline void stream_4x1( const v4 &a, void *ALIGNED( 16 ) p )
+inline void stream_4x1( const v4& a, void* ALIGNED( 16 ) p )
 {
-    vec_stl( a.v, 0, (float *)p );
-}
-
-// FIXME: Ordering semantics
-inline void clear_4x1( void *ALIGNED( 16 ) d )
-{
-    vec_st( _zero, 0, (float *)d );
+    vec_stl( a.v, 0, (float*)p );
 }
 
 // FIXME: Ordering semantics
-inline void copy_4x1( void *ALIGNED( 16 ) d, const void *ALIGNED( 16 ) s )
+inline void clear_4x1( void* ALIGNED( 16 ) d )
 {
-    vec_st( vec_ld( 0, (const float *)s ), 0, (float *)d );
+    vec_st( _zero, 0, (float*)d );
 }
 
-inline void swap_4x1( void *ALIGNED( 16 ) a, void *ALIGNED( 16 ) b )
+// FIXME: Ordering semantics
+inline void copy_4x1( void* ALIGNED( 16 ) d, const void* ALIGNED( 16 ) s )
 {
-    _v4_float va = vec_ld( 0, (float *)a );
-    _v4_float vb = vec_ld( 0, (float *)b );
-    vec_st( vb, 0, (float *)a );
-    vec_st( va, 0, (float *)b );
+    vec_st( vec_ld( 0, (const float*)s ), 0, (float*)d );
+}
+
+inline void swap_4x1( void* ALIGNED( 16 ) a, void* ALIGNED( 16 ) b )
+{
+    _v4_float va = vec_ld( 0, (float*)a );
+    _v4_float vb = vec_ld( 0, (float*)b );
+    vec_st( vb, 0, (float*)a );
+    vec_st( va, 0, (float*)b );
 }
 
 // v4 transposed memory manipulation functions
 
-inline void load_4x1_tr( const void *pa, const void *pb, const void *pc,
-                         const void *pd, v4 &a )
+inline void load_4x1_tr( const void* pa, const void* pb, const void* pc,
+                         const void* pd, v4& a )
 {
-    a.v = ( _v4_float ){( (const float *)pa )[0], ( (const float *)pb )[0],
-                        ( (const float *)pc )[0], ( (const float *)pd )[0]};
+    a.v = ( _v4_float ){( (const float*)pa )[0], ( (const float*)pb )[0],
+                        ( (const float*)pc )[0], ( (const float*)pd )[0]};
 }
 
 #if 0
@@ -297,15 +297,15 @@ inline void load_4x1_tr( const void *pa, const void *pb, const void *pc,
   }
 #endif
 
-inline void load_4x2_tr( const void *ALIGNED( 8 ) pa,
-                         const void *ALIGNED( 8 ) pb,
-                         const void *ALIGNED( 8 ) pc,
-                         const void *ALIGNED( 8 ) pd, v4 &a, v4 &b )
+inline void load_4x2_tr( const void* ALIGNED( 8 ) pa,
+                         const void* ALIGNED( 8 ) pb,
+                         const void* ALIGNED( 8 ) pc,
+                         const void* ALIGNED( 8 ) pd, v4& a, v4& b )
 {
-    _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
-    _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
-    _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
-    _v4_float d1 = vec_ld( 0, (const float *)pd ); // d1 = 12 13 14 15
+    _v4_float a0 = vec_ld( 0, (const float*)pa ); // a0 =  0  1  2  3
+    _v4_float b0 = vec_ld( 0, (const float*)pb ); // b0 =  4  5  6  7
+    _v4_float c1 = vec_ld( 0, (const float*)pc ); // c1 =  8  9 10 11
+    _v4_float d1 = vec_ld( 0, (const float*)pd ); // d1 = 12 13 14 15
 
     // Step 1: Interleave top and bottom half
 
@@ -318,15 +318,15 @@ inline void load_4x2_tr( const void *ALIGNED( 8 ) pa,
     b.v = vec_mergel( a1, b1 ); // b  =  1  5  9 13
 }
 
-inline void load_4x3_tr( const void *ALIGNED( 16 ) pa,
-                         const void *ALIGNED( 16 ) pb,
-                         const void *ALIGNED( 16 ) pc,
-                         const void *ALIGNED( 16 ) pd, v4 &a, v4 &b, v4 &c )
+inline void load_4x3_tr( const void* ALIGNED( 16 ) pa,
+                         const void* ALIGNED( 16 ) pb,
+                         const void* ALIGNED( 16 ) pc,
+                         const void* ALIGNED( 16 ) pd, v4& a, v4& b, v4& c )
 {
-    _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  x
-    _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  x
-    _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10  x
-    _v4_float d1 = vec_ld( 0, (const float *)pd ); // d1 = 12 13 14  x
+    _v4_float a0 = vec_ld( 0, (const float*)pa ); // a0 =  0  1  2  x
+    _v4_float b0 = vec_ld( 0, (const float*)pb ); // b0 =  4  5  6  x
+    _v4_float c1 = vec_ld( 0, (const float*)pc ); // c1 =  8  9 10  x
+    _v4_float d1 = vec_ld( 0, (const float*)pd ); // d1 = 12 13 14  x
 
     // Step 1: Interleave top and bottom half
 
@@ -342,16 +342,16 @@ inline void load_4x3_tr( const void *ALIGNED( 16 ) pa,
     c.v = vec_mergeh( c1, d1 ); // c  =  2  6 10 14
 }
 
-inline void load_4x4_tr( const void *ALIGNED( 16 ) pa,
-                         const void *ALIGNED( 16 ) pb,
-                         const void *ALIGNED( 16 ) pc,
-                         const void *ALIGNED( 16 ) pd, v4 &a, v4 &b, v4 &c,
-                         v4 &d )
+inline void load_4x4_tr( const void* ALIGNED( 16 ) pa,
+                         const void* ALIGNED( 16 ) pb,
+                         const void* ALIGNED( 16 ) pc,
+                         const void* ALIGNED( 16 ) pd, v4& a, v4& b, v4& c,
+                         v4& d )
 {
-    _v4_float a0 = vec_ld( 0, (const float *)pa ); // a0 =  0  1  2  3
-    _v4_float b0 = vec_ld( 0, (const float *)pb ); // b0 =  4  5  6  7
-    _v4_float c1 = vec_ld( 0, (const float *)pc ); // c1 =  8  9 10 11
-    _v4_float d1 = vec_ld( 0, (const float *)pd ); // d1 = 12 13 14 15
+    _v4_float a0 = vec_ld( 0, (const float*)pa ); // a0 =  0  1  2  3
+    _v4_float b0 = vec_ld( 0, (const float*)pb ); // b0 =  4  5  6  7
+    _v4_float c1 = vec_ld( 0, (const float*)pc ); // c1 =  8  9 10 11
+    _v4_float d1 = vec_ld( 0, (const float*)pd ); // d1 = 12 13 14 15
 
     // Step 1: Interleave top and bottom half
 
@@ -368,37 +368,37 @@ inline void load_4x4_tr( const void *ALIGNED( 16 ) pa,
     d.v = vec_mergel( c1, d1 ); // d  =  3  7 11 15
 }
 
-inline void store_4x1_tr( const v4 &a, void *pa, void *pb, void *pc, void *pd )
+inline void store_4x1_tr( const v4& a, void* pa, void* pb, void* pc, void* pd )
 {
     _v4_float a_v = a.v;
-    vec_ste( vec_splat( a_v, 0 ), 0, (float *)pa );
-    vec_ste( vec_splat( a_v, 1 ), 0, (float *)pb );
-    vec_ste( vec_splat( a_v, 2 ), 0, (float *)pc );
-    vec_ste( vec_splat( a_v, 3 ), 0, (float *)pd );
+    vec_ste( vec_splat( a_v, 0 ), 0, (float*)pa );
+    vec_ste( vec_splat( a_v, 1 ), 0, (float*)pb );
+    vec_ste( vec_splat( a_v, 2 ), 0, (float*)pc );
+    vec_ste( vec_splat( a_v, 3 ), 0, (float*)pd );
 }
 
-inline void store_4x2_tr( const v4 &a, const v4 &b, void *ALIGNED( 8 ) pa,
-                          void *ALIGNED( 8 ) pb, void *ALIGNED( 8 ) pc,
-                          void *ALIGNED( 8 ) pd )
+inline void store_4x2_tr( const v4& a, const v4& b, void* ALIGNED( 8 ) pa,
+                          void* ALIGNED( 8 ) pb, void* ALIGNED( 8 ) pc,
+                          void* ALIGNED( 8 ) pd )
 {
     _v4_float t, a_v = a.v, b_v = b.v;
     t = vec_perm( a_v, b_v, _PERM( 0, 4, 0, 4 ) );
-    vec_ste( t, 0, (float *)pa );
-    vec_ste( t, 4, (float *)pa );
+    vec_ste( t, 0, (float*)pa );
+    vec_ste( t, 4, (float*)pa );
     t = vec_perm( a_v, b_v, _PERM( 1, 5, 1, 5 ) );
-    vec_ste( t, 0, (float *)pb );
-    vec_ste( t, 4, (float *)pb );
+    vec_ste( t, 0, (float*)pb );
+    vec_ste( t, 4, (float*)pb );
     t = vec_perm( a_v, b_v, _PERM( 2, 6, 2, 6 ) );
-    vec_ste( t, 0, (float *)pc );
-    vec_ste( t, 4, (float *)pc );
+    vec_ste( t, 0, (float*)pc );
+    vec_ste( t, 4, (float*)pc );
     t = vec_perm( a_v, b_v, _PERM( 3, 7, 3, 7 ) );
-    vec_ste( t, 0, (float *)pd );
-    vec_ste( t, 4, (float *)pd );
+    vec_ste( t, 0, (float*)pd );
+    vec_ste( t, 4, (float*)pd );
 }
 
-inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
-                          void *ALIGNED( 16 ) pa, void *ALIGNED( 16 ) pb,
-                          void *ALIGNED( 16 ) pc, void *ALIGNED( 16 ) pd )
+inline void store_4x3_tr( const v4& a, const v4& b, const v4& c,
+                          void* ALIGNED( 16 ) pa, void* ALIGNED( 16 ) pb,
+                          void* ALIGNED( 16 ) pc, void* ALIGNED( 16 ) pd )
 {
     _v4_float a_v = a.v; // a =  0  1  2  3
     _v4_float b_v = b.v; // b =  4  5  6  7
@@ -407,28 +407,28 @@ inline void store_4x3_tr( const v4 &a, const v4 &b, const v4 &c,
     t = vec_mergeh( a_v, c_v ); // t =  0  8  1  9
     u = vec_mergeh( b_v, b_v ); // u =  4  x  5  x
     v = vec_mergeh( t, u );
-    vec_ste( v, 0, (float *)pa );
-    vec_ste( v, 4, (float *)pa );
-    vec_ste( v, 8, (float *)pa );
+    vec_ste( v, 0, (float*)pa );
+    vec_ste( v, 4, (float*)pa );
+    vec_ste( v, 8, (float*)pa );
     v = vec_mergel( t, u );
-    vec_ste( v, 0, (float *)pb );
-    vec_ste( v, 4, (float *)pb );
-    vec_ste( v, 8, (float *)pb );
+    vec_ste( v, 0, (float*)pb );
+    vec_ste( v, 4, (float*)pb );
+    vec_ste( v, 8, (float*)pb );
     t = vec_mergel( a_v, c_v ); // t =  2 10  3 11
     u = vec_mergel( b_v, b_v ); // u =  6  x  7  x
     v = vec_mergeh( t, u );
-    vec_ste( v, 0, (float *)pc );
-    vec_ste( v, 4, (float *)pc );
-    vec_ste( v, 8, (float *)pc );
+    vec_ste( v, 0, (float*)pc );
+    vec_ste( v, 4, (float*)pc );
+    vec_ste( v, 8, (float*)pc );
     v = vec_mergel( t, u );
-    vec_ste( v, 0, (float *)pd );
-    vec_ste( v, 4, (float *)pd );
-    vec_ste( v, 8, (float *)pd );
+    vec_ste( v, 0, (float*)pd );
+    vec_ste( v, 4, (float*)pd );
+    vec_ste( v, 8, (float*)pd );
 }
 
-inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
-                          void *ALIGNED( 16 ) pa, void *ALIGNED( 16 ) pb,
-                          void *ALIGNED( 16 ) pc, void *ALIGNED( 16 ) pd )
+inline void store_4x4_tr( const v4& a, const v4& b, const v4& c, const v4& d,
+                          void* ALIGNED( 16 ) pa, void* ALIGNED( 16 ) pb,
+                          void* ALIGNED( 16 ) pc, void* ALIGNED( 16 ) pd )
 {
     _v4_float a0 = a.v; // a0 =  0  1  2  3
     _v4_float b0 = b.v; // b0 =  4  5  6  7
@@ -444,10 +444,10 @@ inline void store_4x4_tr( const v4 &a, const v4 &b, const v4 &c, const v4 &d,
 
     // Step 2: Interleave even and odd rows
 
-    vec_st( vec_mergeh( a1, b1 ), 0, (float *)pa ); // a  =  0  4  8 12
-    vec_st( vec_mergel( a1, b1 ), 0, (float *)pb ); // b  =  1  5  9 13
-    vec_st( vec_mergeh( c1, d1 ), 0, (float *)pc ); // c  =  2  6 10 14
-    vec_st( vec_mergel( c1, d1 ), 0, (float *)pd ); // d  =  3  7 11 15
+    vec_st( vec_mergeh( a1, b1 ), 0, (float*)pa ); // a  =  0  4  8 12
+    vec_st( vec_mergel( a1, b1 ), 0, (float*)pb ); // b  =  1  5  9 13
+    vec_st( vec_mergeh( c1, d1 ), 0, (float*)pc ); // c  =  2  6 10 14
+    vec_st( vec_mergel( c1, d1 ), 0, (float*)pd ); // d  =  3  7 11 15
 }
 
 //////////////
@@ -458,84 +458,84 @@ class v4int : public v4
 
     // v4int prefix unary operator friends
 
-    friend inline v4int operator+( const v4int &a );
-    friend inline v4int operator-( const v4int &a );
-    friend inline v4int operator~( const v4int &a );
-    friend inline v4int operator!( const v4int &a );
+    friend inline v4int operator+( const v4int& a );
+    friend inline v4int operator-( const v4int& a );
+    friend inline v4int operator~( const v4int& a );
+    friend inline v4int operator!( const v4int& a );
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v4int prefix increment / decrement operator friends
 
-    friend inline v4int operator++( v4int &a );
-    friend inline v4int operator--( v4int &a );
+    friend inline v4int operator++( v4int& a );
+    friend inline v4int operator--( v4int& a );
 
     // v4int postfix increment / decrement operator friends
 
-    friend inline v4int operator++( v4int &a, int );
-    friend inline v4int operator--( v4int &a, int );
+    friend inline v4int operator++( v4int& a, int );
+    friend inline v4int operator--( v4int& a, int );
 
     // v4int binary operator friends
 
-    friend inline v4int operator+( const v4int &a, const v4int &b );
-    friend inline v4int operator-( const v4int &a, const v4int &b );
-    friend inline v4int operator*( const v4int &a, const v4int &b );
-    friend inline v4int operator/( const v4int &a, const v4int &b );
-    friend inline v4int operator%( const v4int &a, const v4int &b );
-    friend inline v4int operator^( const v4int &a, const v4int &b );
-    friend inline v4int operator&( const v4int &a, const v4int &b );
-    friend inline v4int operator|( const v4int &a, const v4int &b );
-    friend inline v4int operator<<( const v4int &a, const v4int &b );
-    friend inline v4int operator>>( const v4int &a, const v4int &b );
+    friend inline v4int operator+( const v4int& a, const v4int& b );
+    friend inline v4int operator-( const v4int& a, const v4int& b );
+    friend inline v4int operator*( const v4int& a, const v4int& b );
+    friend inline v4int operator/( const v4int& a, const v4int& b );
+    friend inline v4int operator%( const v4int& a, const v4int& b );
+    friend inline v4int operator^( const v4int& a, const v4int& b );
+    friend inline v4int operator&( const v4int& a, const v4int& b );
+    friend inline v4int operator|( const v4int& a, const v4int& b );
+    friend inline v4int operator<<( const v4int& a, const v4int& b );
+    friend inline v4int operator>>( const v4int& a, const v4int& b );
 
     // v4int logical operator friends
 
-    friend inline v4int operator<( const v4int &a, const v4int &b );
-    friend inline v4int operator>( const v4int &a, const v4int &b );
-    friend inline v4int operator==( const v4int &a, const v4int &b );
-    friend inline v4int operator!=( const v4int &a, const v4int &b );
-    friend inline v4int operator<=( const v4int &a, const v4int &b );
-    friend inline v4int operator>=( const v4int &a, const v4int &b );
-    friend inline v4int operator&&( const v4int &a, const v4int &b );
-    friend inline v4int operator||( const v4int &a, const v4int &b );
+    friend inline v4int operator<( const v4int& a, const v4int& b );
+    friend inline v4int operator>( const v4int& a, const v4int& b );
+    friend inline v4int operator==( const v4int& a, const v4int& b );
+    friend inline v4int operator!=( const v4int& a, const v4int& b );
+    friend inline v4int operator<=( const v4int& a, const v4int& b );
+    friend inline v4int operator>=( const v4int& a, const v4int& b );
+    friend inline v4int operator&&( const v4int& a, const v4int& b );
+    friend inline v4int operator||( const v4int& a, const v4int& b );
 
     // v4int miscellaneous friends
 
-    friend inline v4int abs( const v4int &a );
-    friend inline v4 czero( const v4int &c, const v4 &a );
-    friend inline v4 notczero( const v4int &c, const v4 &a );
+    friend inline v4int abs( const v4int& a );
+    friend inline v4 czero( const v4int& c, const v4& a );
+    friend inline v4 notczero( const v4int& c, const v4& a );
     // FIXME: cswap, notcswap!
-    friend inline v4 merge( const v4int &c, const v4 &t, const v4 &f );
+    friend inline v4 merge( const v4int& c, const v4& t, const v4& f );
 
     // v4float unary operator friends
 
-    friend inline v4int operator!( const v4float &a );
+    friend inline v4int operator!( const v4float& a );
 
     // v4float logical operator friends
 
-    friend inline v4int operator<( const v4float &a, const v4float &b );
-    friend inline v4int operator>( const v4float &a, const v4float &b );
-    friend inline v4int operator==( const v4float &a, const v4float &b );
-    friend inline v4int operator!=( const v4float &a, const v4float &b );
-    friend inline v4int operator<=( const v4float &a, const v4float &b );
-    friend inline v4int operator>=( const v4float &a, const v4float &b );
-    friend inline v4int operator&&( const v4float &a, const v4float &b );
-    friend inline v4int operator||( const v4float &a, const v4float &b );
+    friend inline v4int operator<( const v4float& a, const v4float& b );
+    friend inline v4int operator>( const v4float& a, const v4float& b );
+    friend inline v4int operator==( const v4float& a, const v4float& b );
+    friend inline v4int operator!=( const v4float& a, const v4float& b );
+    friend inline v4int operator<=( const v4float& a, const v4float& b );
+    friend inline v4int operator>=( const v4float& a, const v4float& b );
+    friend inline v4int operator&&( const v4float& a, const v4float& b );
+    friend inline v4int operator||( const v4float& a, const v4float& b );
 
     // v4float miscellaneous friends
 
-    friend inline v4float clear_bits( const v4int &m, const v4float &a );
-    friend inline v4float set_bits( const v4int &m, const v4float &a );
-    friend inline v4float toggle_bits( const v4int &m, const v4float &a );
+    friend inline v4float clear_bits( const v4int& m, const v4float& a );
+    friend inline v4float set_bits( const v4int& m, const v4float& a );
+    friend inline v4float toggle_bits( const v4int& m, const v4float& a );
 
   public:
     // v4int constructors / destructors
 
     v4int() {} // Default constructor
-    v4int( const v4int &a )
+    v4int( const v4int& a )
     { // Copy constructor
         v = a.v;
     }
-    v4int( const v4 &a )
+    v4int( const v4& a )
     { // Init from mixed
         v = a.v;
     }
@@ -552,7 +552,7 @@ class v4int : public v4
     // v4int assignment operators
 
 #define ASSIGN( op, instr )                                                    \
-    inline v4int &operator op( const v4int &b )                                \
+    inline v4int& operator op( const v4int& b )                                \
     {                                                                          \
         instr;                                                                 \
         return *this;                                                          \
@@ -616,7 +616,7 @@ class v4int : public v4
     // FIXME: [] operation probably breaks the compiler if used to modify
     // a vector!
 
-    inline int &operator[]( int n ) { return ( (int *)&v )[n]; }
+    inline int& operator[]( int n ) { return ( (int*)&v )[n]; }
     inline int operator()( int n )
     {
         union {
@@ -631,7 +631,7 @@ class v4int : public v4
 // v4int prefix unary operators
 
 #define PREFIX_UNARY( op, instr )                                              \
-    inline v4int operator op( const v4int &a )                                 \
+    inline v4int operator op( const v4int& a )                                 \
     {                                                                          \
         v4int b;                                                               \
         instr;                                                                 \
@@ -647,7 +647,7 @@ PREFIX_UNARY( ~, b.v = (_v4_float)vec_xor( _true, (_v4_int)a.v ) )
 
 // v4int prefix increment / decrement operators
 
-inline v4int operator++( v4int &a )
+inline v4int operator++( v4int& a )
 {
     _v4_float a_v = (_v4_float)vec_add( (_v4_int)a.v, _ione );
     v4int b;
@@ -656,7 +656,7 @@ inline v4int operator++( v4int &a )
     return b;
 }
 
-inline v4int operator--( v4int &a )
+inline v4int operator--( v4int& a )
 {
     _v4_float a_v = (_v4_float)vec_sub( (_v4_int)a.v, _ione );
     v4int b;
@@ -667,7 +667,7 @@ inline v4int operator--( v4int &a )
 
 // v4int postfix increment / decrement operators
 
-inline v4int operator++( v4int &a, int )
+inline v4int operator++( v4int& a, int )
 {
     _v4_float a_v = a.v;
     v4int b;
@@ -676,7 +676,7 @@ inline v4int operator++( v4int &a, int )
     return b;
 }
 
-inline v4int operator--( v4int &a, int )
+inline v4int operator--( v4int& a, int )
 {
     _v4_float a_v = a.v;
     v4int b;
@@ -688,7 +688,7 @@ inline v4int operator--( v4int &a, int )
 // v4int binary operators
 
 #define BINARY( op, instr )                                                    \
-    inline v4int operator op( const v4int &a, const v4int &b )                 \
+    inline v4int operator op( const v4int& a, const v4int& b )                 \
     {                                                                          \
         v4int c;                                                               \
         instr;                                                                 \
@@ -748,7 +748,7 @@ BINARY( >>, c.v = (_v4_float)vec_sr( (_v4_int)a.v, (_v4_uint)b.v ) )
 // v4int logical operators
 
 #define LOGICAL( op, instr )                                                   \
-    inline v4int operator op( const v4int &a, const v4int &b )                 \
+    inline v4int operator op( const v4int& a, const v4int& b )                 \
     {                                                                          \
         v4int c;                                                               \
         instr;                                                                 \
@@ -775,28 +775,28 @@ LOGICAL( ||, c.v = (_v4_float)vec_xor(
 
 // v4int miscellaneous functions
 
-inline v4int abs( const v4int &a )
+inline v4int abs( const v4int& a )
 {
     v4int b;
     b.v = (_v4_float)vec_abs( (_v4_int)a.v );
     return b;
 }
 
-inline v4 czero( const v4int &c, const v4 &a )
+inline v4 czero( const v4int& c, const v4& a )
 {
     v4 b;
     b.v = vec_andc( a.v, c.v );
     return b;
 }
 
-inline v4 notczero( const v4int &c, const v4 &a )
+inline v4 notczero( const v4int& c, const v4& a )
 {
     v4 b;
     b.v = vec_and( a.v, c.v );
     return b;
 }
 
-inline v4 merge( const v4int &c, const v4 &t, const v4 &f )
+inline v4 merge( const v4int& c, const v4& t, const v4& f )
 {
     v4 m;
     m.v = vec_sel( f.v, t.v, (_v4_uint)c.v );
@@ -811,28 +811,28 @@ class v4float : public v4
 
     // v4float prefix unary operator friends
 
-    friend inline v4float operator+( const v4float &a );
-    friend inline v4float operator-( const v4float &a );
-    friend inline v4float operator~( const v4float &a );
-    friend inline v4int operator!( const v4float &a );
+    friend inline v4float operator+( const v4float& a );
+    friend inline v4float operator-( const v4float& a );
+    friend inline v4float operator~( const v4float& a );
+    friend inline v4int operator!( const v4float& a );
     // Note: Referencing (*) and dereferencing (&) apply to the whole vector
 
     // v4float prefix increment / decrement operator friends
 
-    friend inline v4float operator++( v4float &a );
-    friend inline v4float operator--( v4float &a );
+    friend inline v4float operator++( v4float& a );
+    friend inline v4float operator--( v4float& a );
 
     // v4float postfix increment / decrement operator friends
 
-    friend inline v4float operator++( v4float &a, int );
-    friend inline v4float operator--( v4float &a, int );
+    friend inline v4float operator++( v4float& a, int );
+    friend inline v4float operator--( v4float& a, int );
 
     // v4float binary operator friends
 
-    friend inline v4float operator+( const v4float &a, const v4float &b );
-    friend inline v4float operator-( const v4float &a, const v4float &b );
-    friend inline v4float operator*( const v4float &a, const v4float &b );
-    friend inline v4float operator/( const v4float &a, const v4float &b );
+    friend inline v4float operator+( const v4float& a, const v4float& b );
+    friend inline v4float operator-( const v4float& a, const v4float& b );
+    friend inline v4float operator*( const v4float& a, const v4float& b );
+    friend inline v4float operator/( const v4float& a, const v4float& b );
 
     // -------------------------------------------------------------------------
     // begin hacks
@@ -842,20 +842,20 @@ class v4float : public v4
 
     // v4float logical operator friends
 
-    friend inline v4int operator<( const v4float &a, const v4float &b );
-    friend inline v4int operator>( const v4float &a, const v4float &b );
-    friend inline v4int operator==( const v4float &a, const v4float &b );
-    friend inline v4int operator!=( const v4float &a, const v4float &b );
-    friend inline v4int operator<=( const v4float &a, const v4float &b );
-    friend inline v4int operator>=( const v4float &a, const v4float &b );
-    friend inline v4int operator&&( const v4float &a, const v4float &b );
-    friend inline v4int operator||( const v4float &a, const v4float &b );
+    friend inline v4int operator<( const v4float& a, const v4float& b );
+    friend inline v4int operator>( const v4float& a, const v4float& b );
+    friend inline v4int operator==( const v4float& a, const v4float& b );
+    friend inline v4int operator!=( const v4float& a, const v4float& b );
+    friend inline v4int operator<=( const v4float& a, const v4float& b );
+    friend inline v4int operator>=( const v4float& a, const v4float& b );
+    friend inline v4int operator&&( const v4float& a, const v4float& b );
+    friend inline v4int operator||( const v4float& a, const v4float& b );
 
     // v4float math library friends
 
-#define CMATH_FR1( fn ) friend inline v4float fn( const v4float &a )
+#define CMATH_FR1( fn ) friend inline v4float fn( const v4float& a )
 #define CMATH_FR2( fn )                                                        \
-    friend inline v4float fn( const v4float &a, const v4float &b )
+    friend inline v4float fn( const v4float& a, const v4float& b )
 
     CMATH_FR1( acos );
     CMATH_FR1( asin );
@@ -884,36 +884,36 @@ class v4float : public v4
 
     // v4float miscellaneous friends
 
-    friend inline v4float rsqrt_approx( const v4float &a );
-    friend inline v4float rsqrt( const v4float &a );
-    friend inline v4float rcp_approx( const v4float &a );
-    friend inline v4float rcp( const v4float &a );
-    friend inline v4float fma( const v4float &a, const v4float &b,
-                               const v4float &c );
-    friend inline v4float fms( const v4float &a, const v4float &b,
-                               const v4float &c );
-    friend inline v4float fnms( const v4float &a, const v4float &b,
-                                const v4float &c );
-    friend inline v4float clear_bits( const v4int &m, const v4float &a );
-    friend inline v4float set_bits( const v4int &m, const v4float &a );
-    friend inline v4float toggle_bits( const v4int &m, const v4float &a );
-    friend inline void increment_4x1( float *ALIGNED( 16 ) p,
-                                      const v4float &a );
-    friend inline void decrement_4x1( float *ALIGNED( 16 ) p,
-                                      const v4float &a );
-    friend inline void scale_4x1( float *ALIGNED( 16 ) p, const v4float &a );
+    friend inline v4float rsqrt_approx( const v4float& a );
+    friend inline v4float rsqrt( const v4float& a );
+    friend inline v4float rcp_approx( const v4float& a );
+    friend inline v4float rcp( const v4float& a );
+    friend inline v4float fma( const v4float& a, const v4float& b,
+                               const v4float& c );
+    friend inline v4float fms( const v4float& a, const v4float& b,
+                               const v4float& c );
+    friend inline v4float fnms( const v4float& a, const v4float& b,
+                                const v4float& c );
+    friend inline v4float clear_bits( const v4int& m, const v4float& a );
+    friend inline v4float set_bits( const v4int& m, const v4float& a );
+    friend inline v4float toggle_bits( const v4int& m, const v4float& a );
+    friend inline void increment_4x1( float* ALIGNED( 16 ) p,
+                                      const v4float& a );
+    friend inline void decrement_4x1( float* ALIGNED( 16 ) p,
+                                      const v4float& a );
+    friend inline void scale_4x1( float* ALIGNED( 16 ) p, const v4float& a );
     // FIXME: crack
-    friend inline void trilinear( v4float &wl, v4float &wh );
+    friend inline void trilinear( v4float& wl, v4float& wh );
 
   public:
     // v4float constructors / destructors
 
     v4float() {} // Default constructor
-    v4float( const v4float &a )
+    v4float( const v4float& a )
     { // Copy constructor
         v = a.v;
     }
-    v4float( const v4 &a )
+    v4float( const v4& a )
     { // Init from mixed
         v = a.v;
     }
@@ -930,7 +930,7 @@ class v4float : public v4
     // v4float assignment operators
 
 #define ASSIGN( op, instr )                                                    \
-    inline v4float &operator op( const v4float &b )                            \
+    inline v4float& operator op( const v4float& b )                            \
     {                                                                          \
         instr;                                                                 \
         return *this;                                                          \
@@ -942,7 +942,7 @@ class v4float : public v4
     ASSIGN( *=, v = vec_madd( v, b.v, _zero ) );
 
     // This does one NR iteration and is supposed to be accurate enough.
-    inline v4float &operator/=( const v4float &a )
+    inline v4float& operator/=( const v4float& a )
     {
         _v4_float a_v = a.v, b_v;
 
@@ -1002,7 +1002,7 @@ class v4float : public v4
     // FIXME: [] operation probably breaks the compiler if used to modify
     // a vector!
 
-    inline float &operator[]( int n ) { return ( (float *)&v )[n]; }
+    inline float& operator[]( int n ) { return ( (float*)&v )[n]; }
     inline float operator()( int n )
     {
         union {
@@ -1016,21 +1016,21 @@ class v4float : public v4
 
 // v4float prefix unary operators
 
-inline v4float operator+( const v4float &a )
+inline v4float operator+( const v4float& a )
 {
     v4float b;
     b.v = a.v;
     return b;
 }
 
-inline v4float operator-( const v4float &a )
+inline v4float operator-( const v4float& a )
 {
     v4float b;
     b.v = vec_sub( _zero, a.v );
     return b;
 }
 
-inline v4int operator!( const v4float &a )
+inline v4int operator!( const v4float& a )
 {
     v4int b;
     b.v = (_v4_float)vec_cmpeq( a.v, _zero );
@@ -1039,7 +1039,7 @@ inline v4int operator!( const v4float &a )
 
 // v4float prefix increment / decrement operators
 
-inline v4float operator++( v4float &a )
+inline v4float operator++( v4float& a )
 {
     _v4_float a_v = vec_add( a.v, _one );
     v4float b;
@@ -1048,7 +1048,7 @@ inline v4float operator++( v4float &a )
     return b;
 }
 
-inline v4float operator--( v4float &a )
+inline v4float operator--( v4float& a )
 {
     _v4_float a_v = vec_sub( a.v, _one );
     v4float b;
@@ -1059,7 +1059,7 @@ inline v4float operator--( v4float &a )
 
 // v4float postfix increment / decrement operators
 
-inline v4float operator++( v4float &a, int )
+inline v4float operator++( v4float& a, int )
 {
     _v4_float a_v = a.v;
     v4float b;
@@ -1068,7 +1068,7 @@ inline v4float operator++( v4float &a, int )
     return b;
 }
 
-inline v4float operator--( v4float &a, int )
+inline v4float operator--( v4float& a, int )
 {
     _v4_float a_v = a.v;
     v4float b;
@@ -1080,7 +1080,7 @@ inline v4float operator--( v4float &a, int )
 // v4float binary operators
 
 #define BINARY( op, instr )                                                    \
-    inline v4float operator op( const v4float &a, const v4float &b )           \
+    inline v4float operator op( const v4float& a, const v4float& b )           \
     {                                                                          \
         v4float c;                                                             \
         instr;                                                                 \
@@ -1091,7 +1091,7 @@ BINARY( +, c.v = vec_add( a.v, b.v ) )
 BINARY( -, c.v = vec_sub( a.v, b.v ) )
 BINARY( *, c.v = vec_madd( a.v, b.v, _zero ) )
 
-inline v4float operator/( const v4float &n, const v4float &a )
+inline v4float operator/( const v4float& n, const v4float& a )
 {
     _v4_float a_v = a.v, b_v;
     v4float c;
@@ -1166,7 +1166,7 @@ inline v4float operator/( const v4float &n, const v4float &a )
 // v4float logical operators
 
 #define LOGICAL( op, instr )                                                   \
-    inline v4int operator op( const v4float &a, const v4float &b )             \
+    inline v4int operator op( const v4float& a, const v4float& b )             \
     {                                                                          \
         v4int c;                                                               \
         instr;                                                                 \
@@ -1191,7 +1191,7 @@ LOGICAL( ||, c.v = (_v4_float)vec_xor( vec_and( vec_cmpeq( a.v, _zero ),
 // v4float math library functions
 
 #define CMATH_FR1( fn )                                                        \
-    inline v4float fn( const v4float &a )                                      \
+    inline v4float fn( const v4float& a )                                      \
     {                                                                          \
         union {                                                                \
             float f[4];                                                        \
@@ -1205,7 +1205,7 @@ LOGICAL( ||, c.v = (_v4_float)vec_xor( vec_and( vec_cmpeq( a.v, _zero ),
     }
 
 #define CMATH_FR2( fn )                                                        \
-    inline v4float fn( const v4float &a, const v4float &b )                    \
+    inline v4float fn( const v4float& a, const v4float& b )                    \
     {                                                                          \
         union {                                                                \
             float f[4];                                                        \
@@ -1225,13 +1225,14 @@ LOGICAL( ||, c.v = (_v4_float)vec_xor( vec_and( vec_cmpeq( a.v, _zero ),
     }
 
 CMATH_FR1( acos )
-CMATH_FR1( asin ) CMATH_FR1( atan ) CMATH_FR2( atan2 ) CMATH_FR1( ceil )
-    CMATH_FR1( cos ) CMATH_FR1( cosh ) CMATH_FR1( exp )
+CMATH_FR1( asin )
+CMATH_FR1( atan ) CMATH_FR2( atan2 ) CMATH_FR1( ceil ) CMATH_FR1( cos )
+    CMATH_FR1( cosh ) CMATH_FR1( exp )
     /*CMATH_FR1(fabs)*/ CMATH_FR1( floor ) CMATH_FR2( fmod ) CMATH_FR1( log )
         CMATH_FR1( log10 ) CMATH_FR2( pow ) CMATH_FR1( sin ) CMATH_FR1( sinh )
     /*CMATH_FR1(sqrt)*/ CMATH_FR1( tan ) CMATH_FR1( tanh )
 
-        inline v4float fabs( const v4float &a )
+        inline v4float fabs( const v4float& a )
 {
     v4float b;
     b.v = vec_andc( a.v, _sign );
@@ -1239,7 +1240,7 @@ CMATH_FR1( asin ) CMATH_FR1( atan ) CMATH_FR2( atan2 ) CMATH_FR1( ceil )
 }
 
 // This version does one NR iteration and is supposed to be accurate enough.
-inline v4float sqrt( const v4float &a )
+inline v4float sqrt( const v4float& a )
 {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1289,7 +1290,7 @@ inline v4float sqrt( const v4float &a )
   }
 #endif
 
-inline v4float copysign( const v4float &a, const v4float &b )
+inline v4float copysign( const v4float& a, const v4float& b )
 {
     v4float c;
     c.v = vec_or( vec_andc( a.v, _sign ), vec_and( b.v, _sign ) );
@@ -1301,7 +1302,7 @@ inline v4float copysign( const v4float &a, const v4float &b )
 
 // v4float miscelleanous functions
 
-inline v4float rsqrt_approx( const v4float &a )
+inline v4float rsqrt_approx( const v4float& a )
 {
     v4float b;
     b.v = vec_rsqrte( a.v );
@@ -1309,7 +1310,7 @@ inline v4float rsqrt_approx( const v4float &a )
 }
 
 // This version does one NR iteration and is supposed to be accurate enough.
-inline v4float rsqrt( const v4float &a )
+inline v4float rsqrt( const v4float& a )
 {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1354,7 +1355,7 @@ inline v4float rsqrt( const v4float &a )
   }
 #endif
 
-inline v4float rcp_approx( const v4float &a )
+inline v4float rcp_approx( const v4float& a )
 {
     v4float b;
     b.v = vec_re( a.v );
@@ -1362,7 +1363,7 @@ inline v4float rcp_approx( const v4float &a )
 }
 
 // This version does one NR iteration and is supposed to be accurate enough.
-inline v4float rcp( const v4float &a )
+inline v4float rcp( const v4float& a )
 {
     _v4_float a_v = a.v, b_v;
     v4float b;
@@ -1410,14 +1411,14 @@ inline v4float rcp( const v4float &a )
   }
 #endif
 
-inline v4float fma( const v4float &a, const v4float &b, const v4float &c )
+inline v4float fma( const v4float& a, const v4float& b, const v4float& c )
 {
     v4float d;
     d.v = vec_madd( a.v, b.v, c.v );
     return d;
 }
 
-inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
+inline v4float fms( const v4float& a, const v4float& b, const v4float& c )
 {
     v4float d;
     //    d.v = vec_sub( _zero, vec_nmsub( a.v, b.v, c.v ) ); // FIXME: Sigh ...
@@ -1425,50 +1426,50 @@ inline v4float fms( const v4float &a, const v4float &b, const v4float &c )
     return d;
 }
 
-inline v4float fnms( const v4float &a, const v4float &b, const v4float &c )
+inline v4float fnms( const v4float& a, const v4float& b, const v4float& c )
 {
     v4float d;
     d.v = vec_nmsub( a.v, b.v, c.v );
     return d;
 }
 
-inline v4float clear_bits( const v4int &m, const v4float &a )
+inline v4float clear_bits( const v4int& m, const v4float& a )
 {
     v4float b;
     b.v = vec_andc( a.v, m.v );
     return b;
 }
 
-inline v4float set_bits( const v4int &m, const v4float &a )
+inline v4float set_bits( const v4int& m, const v4float& a )
 {
     v4float b;
     b.v = vec_or( a.v, m.v );
     return b;
 }
 
-inline v4float toggle_bits( const v4int &m, const v4float &a )
+inline v4float toggle_bits( const v4int& m, const v4float& a )
 {
     v4float b;
     b.v = vec_xor( a.v, m.v );
     return b;
 }
 
-inline void increment_4x1( float *ALIGNED( 16 ) p, const v4float &a )
+inline void increment_4x1( float* ALIGNED( 16 ) p, const v4float& a )
 {
     vec_st( vec_add( vec_ld( 0, p ), a.v ), 0, p );
 }
 
-inline void decrement_4x1( float *ALIGNED( 16 ) p, const v4float &a )
+inline void decrement_4x1( float* ALIGNED( 16 ) p, const v4float& a )
 {
     vec_st( vec_sub( vec_ld( 0, p ), a.v ), 0, p );
 }
 
-inline void scale_4x1( float *ALIGNED( 16 ) p, const v4float &a )
+inline void scale_4x1( float* ALIGNED( 16 ) p, const v4float& a )
 {
     vec_st( vec_madd( vec_ld( 0, p ), a.v, _zero ), 0, p );
 }
 
-inline void trilinear( v4float &wl, v4float &wh )
+inline void trilinear( v4float& wl, v4float& wh )
 {
     _v4_float z = wl.v, xy;
     xy = vec_add( _one, vec_xor( _n02, vec_mergeh( z, z ) ) );

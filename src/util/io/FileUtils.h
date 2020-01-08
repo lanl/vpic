@@ -8,12 +8,12 @@ class FileUtils_T : public Policy
     FileUtils_T() {}
     ~FileUtils_T() {}
 
-    static int makeDirectory( const char *dirname )
+    static int makeDirectory( const char* dirname )
     {
         return Policy::makeDirectory( dirname );
     }
 
-    static int getCurrentWorkingDirectory( char *dirname, size_t size )
+    static int getCurrentWorkingDirectory( char* dirname, size_t size )
     {
         return Policy::getCurrentWorkingDirectory( dirname, size );
     }

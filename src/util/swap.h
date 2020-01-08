@@ -43,15 +43,15 @@ namespace utils
 {
 
 // template<typename T> void inline swap(T & element);
-void inline swap( char &element ) {}
+void inline swap( char& element ) {}
 
-void inline swap( short int &element )
+void inline swap( short int& element )
 {
     element = bswap_16( element );
 } // swap
 
 // template<> void inline swap<double>(double & element) {
-void inline swap( double &element )
+void inline swap( double& element )
 {
 
     union type64 {
@@ -95,13 +95,13 @@ float inline swap_float( float f )
 } // swap_float
 
 // template<> void inline swap<uint64_t>(uint64_t & element) {
-void inline swap( uint64_t &element ) { element = bswap_64( element ); } // swap
+void inline swap( uint64_t& element ) { element = bswap_64( element ); } // swap
 
 // template<> void inline swap<int64_t>(int64_t & element) {
-void inline swap( int64_t &element ) { element = bswap_64( element ); } // swap
+void inline swap( int64_t& element ) { element = bswap_64( element ); } // swap
 
 // template<> void inline swap<float>(float & element) {
-void inline swap( float &element )
+void inline swap( float& element )
 {
 
     union type32 {
@@ -118,15 +118,15 @@ void inline swap( float &element )
     element = t32.f;
 } // swap
 
-void inline swap( uint16_t &element ) { element = bswap_16( element ); } // swap
+void inline swap( uint16_t& element ) { element = bswap_16( element ); } // swap
 
 // template<> void inline swap<uint32_t>(uint32_t & element) {
-void inline swap( uint32_t &element ) { element = bswap_32( element ); } // swap
+void inline swap( uint32_t& element ) { element = bswap_32( element ); } // swap
 
 // template<> void inline swap<int32_t>(int32_t & element) {
-void inline swap( int32_t &element ) { element = bswap_32( element ); } // swap
+void inline swap( int32_t& element ) { element = bswap_32( element ); } // swap
 
-void inline swap( field_t &element )
+void inline swap( field_t& element )
 {
     // electric field
     utils::swap( element.ex );
@@ -165,7 +165,7 @@ void inline swap( field_t &element )
     utils::swap( element.cmat );
 } // swap
 
-void inline swap( hydro_t &element )
+void inline swap( hydro_t& element )
 {
     // current and charge
     utils::swap( element.jx );
@@ -190,7 +190,7 @@ void inline swap( hydro_t &element )
     utils::swap( element.txy );
 } // swap
 
-void inline swap( particle_t &element )
+void inline swap( particle_t& element )
 {
     // position
     utils::swap( element.dx );

@@ -23,10 +23,10 @@ typedef struct load_interpolator_pipeline_args
 
 } load_interpolator_pipeline_args_t;
 
-void load_interpolator_pipeline_scalar( load_interpolator_pipeline_args_t *args,
+void load_interpolator_pipeline_scalar( load_interpolator_pipeline_args_t* args,
                                         int pipeline_rank, int n_pipeline );
 
-void load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t *args,
+void load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t* args,
                                     int pipeline_rank, int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,13 +52,13 @@ typedef struct accumulators_pipeline_args
 
 } accumulators_pipeline_args_t;
 
-void clear_accumulators_pipeline_scalar( accumulators_pipeline_args_t *args,
+void clear_accumulators_pipeline_scalar( accumulators_pipeline_args_t* args,
                                          int pipeline_rank, int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // reduce_accumulators_pipeline interface
 
-void reduce_accumulators_pipeline_scalar( accumulators_pipeline_args_t *args,
+void reduce_accumulators_pipeline_scalar( accumulators_pipeline_args_t* args,
                                           int pipeline_rank, int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ typedef struct unload_accumulator_pipeline_args
 } unload_accumulator_pipeline_args_t;
 
 void unload_accumulator_pipeline_scalar(
-    unload_accumulator_pipeline_args_t *args, int pipeline_rank,
+    unload_accumulator_pipeline_args_t* args, int pipeline_rank,
     int n_pipeline );
 
 #endif // _sf_interface_pipeline_h_

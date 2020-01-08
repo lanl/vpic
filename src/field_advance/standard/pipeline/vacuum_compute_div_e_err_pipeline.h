@@ -10,15 +10,15 @@
 
 typedef struct pipeline_args
 {
-    /**/ field_t *ALIGNED( 128 ) f;
-    const sfa_params_t *p;
-    const grid_t *g;
+    /**/ field_t* ALIGNED( 128 ) f;
+    const sfa_params_t* p;
+    const grid_t* g;
 } pipeline_args_t;
 
 #define DECLARE_STENCIL()                                                      \
-    /**/ field_t *ALIGNED( 128 ) f = args->f;                                    \
-    const material_coefficient_t *ALIGNED( 128 ) m = args->p->mc;              \
-    const grid_t *g = args->g;                                                 \
+    /**/ field_t* ALIGNED( 128 ) f = args->f;                                    \
+    const material_coefficient_t* ALIGNED( 128 ) m = args->p->mc;              \
+    const grid_t* g = args->g;                                                 \
     const int nx = g->nx, ny = g->ny, nz = g->nz;                              \
                                                                                \
     const float nc = m->nonconductive;                                         \
@@ -27,7 +27,7 @@ typedef struct pipeline_args
     const float pz = ( ( nz > 1 ) ? g->rdz : 0 ) * m->epsz;                    \
     const float cj = 1. / g->eps0;                                             \
                                                                                \
-    field_t *ALIGNED( 16 ) f0;                                                 \
+    field_t* ALIGNED( 16 ) f0;                                                 \
     field_t *ALIGNED( 16 ) fx, *ALIGNED( 16 ) fy, *ALIGNED( 16 ) fz;           \
     int x, y, z
 
@@ -61,7 +61,7 @@ typedef struct pipeline_args
         nc * ( px * ( f0->ex - fx->ex ) + py * ( f0->ey - fy->ey ) +           \
                pz * ( f0->ez - fz->ez ) - cj * ( f0->rhof + f0->rhob ) )
 
-void vacuum_compute_div_e_err_pipeline_scalar( pipeline_args_t *args,
+void vacuum_compute_div_e_err_pipeline_scalar( pipeline_args_t* args,
                                                int pipeline_rank,
                                                int n_pipeline );
 

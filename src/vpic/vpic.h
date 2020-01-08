@@ -128,8 +128,8 @@ class vpic_simulation
   public:
     vpic_simulation();
     ~vpic_simulation();
-    void initialize( int argc, char **argv );
-    void modify( const char *fname );
+    void initialize( int argc, char** argv );
+    void modify( const char* fname );
     int advance( void );
     void finalize( void );
 
@@ -186,21 +186,21 @@ class vpic_simulation
        random numbers.  Keeping the synchronous generators in sync is
        the generator users responsibility. */
 
-    rng_pool_t *entropy;                      // Local entropy pool
-    rng_pool_t *sync_entropy;                 // Synchronous entropy pool
-    grid_t *grid;                             // define_*_grid et al
-    material_t *material_list;                // define_material
-    field_array_t *field_array;               // define_field_array
-    interpolator_array_t *interpolator_array; // define_interpolator_array
-    accumulator_array_t *accumulator_array;   // define_accumulator_array
-    hydro_array_t *hydro_array;               // define_hydro_array
-    species_t *species_list;                  // define_species /
+    rng_pool_t* entropy;                      // Local entropy pool
+    rng_pool_t* sync_entropy;                 // Synchronous entropy pool
+    grid_t* grid;                             // define_*_grid et al
+    material_t* material_list;                // define_material
+    field_array_t* field_array;               // define_field_array
+    interpolator_array_t* interpolator_array; // define_interpolator_array
+    accumulator_array_t* accumulator_array;   // define_accumulator_array
+    hydro_array_t* hydro_array;               // define_hydro_array
+    species_t* species_list;                  // define_species /
                                               // species helpers
-    particle_bc_t *particle_bc_list;          // define_particle_bc /
+    particle_bc_t* particle_bc_list;          // define_particle_bc /
                                               // boundary helpers
-    emitter_t *emitter_list;                  // define_emitter /
+    emitter_t* emitter_list;                  // define_emitter /
                                               // emitter helpers
-    collision_op_t *collision_op_list;        // collision helpers
+    collision_op_t* collision_op_list;        // collision helpers
 
     // User defined checkpt preserved variables
     // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
@@ -217,9 +217,9 @@ class vpic_simulation
      ---------------------------------------------------------------------------*/
 #if defined( ENABLE_OPENSSL )
     void output_checksum_fields();
-    void checksum_fields( CheckSum &cs );
-    void output_checksum_species( const char *species );
-    void checksum_species( const char *species, CheckSum &cs );
+    void checksum_fields( CheckSum& cs );
+    void output_checksum_species( const char* species );
+    void checksum_species( const char* species, CheckSum& cs );
 #endif // ENABLE_OPENSSL
 
     void print_available_ram()
@@ -230,36 +230,36 @@ class vpic_simulation
     ///////////////
     // Dump helpers
 
-    int dump_mkdir( const char *dname );
-    int dump_cwd( char *dname, size_t size );
+    int dump_mkdir( const char* dname );
+    int dump_cwd( char* dname, size_t size );
 
     // Text dumps
-    void dump_energies( const char *fname, int append = 1 );
-    void dump_materials( const char *fname );
-    void dump_species( const char *fname );
+    void dump_energies( const char* fname, int append = 1 );
+    void dump_materials( const char* fname );
+    void dump_species( const char* fname );
 
     // Binary dumps
-    void dump_grid( const char *fbase );
-    void dump_fields( const char *fbase, int fname_tag = 1 );
-    void dump_hydro( const char *sp_name, const char *fbase,
+    void dump_grid( const char* fbase );
+    void dump_fields( const char* fbase, int fname_tag = 1 );
+    void dump_hydro( const char* sp_name, const char* fbase,
                      int fname_tag = 1 );
-    void dump_particles( const char *sp_name, const char *fbase,
+    void dump_particles( const char* sp_name, const char* fbase,
                          int fname_tag = 1 );
 
     // convenience functions for simlog output
-    void create_field_list( char *strlist, DumpParameters &dumpParams );
-    void create_hydro_list( char *strlist, DumpParameters &dumpParams );
+    void create_field_list( char* strlist, DumpParameters& dumpParams );
+    void create_hydro_list( char* strlist, DumpParameters& dumpParams );
 
-    void print_hashed_comment( FileIO &fileIO, const char *comment );
-    void global_header( const char *base,
-                        std::vector<DumpParameters *> dumpParams );
+    void print_hashed_comment( FileIO& fileIO, const char* comment );
+    void global_header( const char* base,
+                        std::vector<DumpParameters*> dumpParams );
 
-    void field_header( const char *fbase, DumpParameters &dumpParams );
-    void hydro_header( const char *speciesname, const char *hbase,
-                       DumpParameters &dumpParams );
+    void field_header( const char* fbase, DumpParameters& dumpParams );
+    void hydro_header( const char* speciesname, const char* hbase,
+                       DumpParameters& dumpParams );
 
-    void field_dump( DumpParameters &dumpParams );
-    void hydro_dump( const char *speciesname, DumpParameters &dumpParams );
+    void field_dump( DumpParameters& dumpParams );
+    void hydro_dump( const char* speciesname, DumpParameters& dumpParams );
 
     ///////////////////
     // Useful accessors
@@ -275,41 +275,41 @@ class vpic_simulation
         return grid->t0 + (double)grid->dt * (double)grid->step;
     }
 
-    inline int64_t &step() { return grid->step; }
+    inline int64_t& step() { return grid->step; }
 
-    inline field_t &field( const int v ) { return field_array->f[v]; }
+    inline field_t& field( const int v ) { return field_array->f[v]; }
 
     inline int voxel( const int ix, const int iy, const int iz )
     {
         return ix + grid->sy * iy + grid->sz * iz;
     }
 
-    inline field_t &field( const int ix, const int iy, const int iz )
+    inline field_t& field( const int ix, const int iy, const int iz )
     {
         return field_array->f[voxel( ix, iy, iz )];
     }
 
-    inline interpolator_t &interpolator( const int v )
+    inline interpolator_t& interpolator( const int v )
     {
         return interpolator_array->i[v];
     }
 
-    inline interpolator_t &interpolator( const int ix, const int iy,
+    inline interpolator_t& interpolator( const int ix, const int iy,
                                          const int iz )
     {
         return interpolator_array->i[voxel( ix, iy, iz )];
     }
 
-    inline hydro_t &hydro( const int v ) { return hydro_array->h[v]; }
+    inline hydro_t& hydro( const int v ) { return hydro_array->h[v]; }
 
-    inline hydro_t &hydro( const int ix, const int iy, const int iz )
+    inline hydro_t& hydro( const int ix, const int iy, const int iz )
     {
         return hydro_array->h[voxel( ix, iy, iz )];
     }
 
-    inline rng_t *rng( const int n ) { return entropy->rng[n]; }
+    inline rng_t* rng( const int n ) { return entropy->rng[n]; }
 
-    inline rng_t *sync_rng( const int n ) { return sync_entropy->rng[n]; }
+    inline rng_t* sync_rng( const int n ) { return sync_entropy->rng[n]; }
 
     ///////////////
     // Grid helpers
@@ -398,7 +398,7 @@ class vpic_simulation
     ///////////////////
     // Material helpers
 
-    inline material_t *define_material( const char *name, double eps,
+    inline material_t* define_material( const char* name, double eps,
                                         double mu = 1, double sigma = 0,
                                         double zeta = 0 )
     {
@@ -408,7 +408,7 @@ class vpic_simulation
                                 &material_list );
     }
 
-    inline material_t *define_material( const char *name, double epsx,
+    inline material_t* define_material( const char* name, double epsx,
                                         double epsy, double epsz, double mux,
                                         double muy, double muz, double sigmax,
                                         double sigmay, double sigmaz,
@@ -421,12 +421,12 @@ class vpic_simulation
                                 &material_list );
     }
 
-    inline material_t *lookup_material( const char *name )
+    inline material_t* lookup_material( const char* name )
     {
         return find_material_name( name, material_list );
     }
 
-    inline material_t *lookup_material( material_id id )
+    inline material_t* lookup_material( material_id id )
     {
         return find_material_id( id, material_list );
     }
@@ -438,7 +438,7 @@ class vpic_simulation
     // of the it).  Otherwise the standard field array will be used with the
     // optionally provided radition damping parameter.
 
-    inline void define_field_array( field_array_t *fa = NULL, double damp = 0 )
+    inline void define_field_array( field_array_t* fa = NULL, double damp = 0 )
     {
         int nx1 = grid->nx + 1, ny1 = grid->ny + 1, nz1 = grid->nz + 1;
 
@@ -490,7 +490,7 @@ class vpic_simulation
     // Species helpers
 
     // FIXME: SILLY PROMOTIONS
-    inline species_t *define_species( const char *name, double q, double m,
+    inline species_t* define_species( const char* name, double q, double m,
                                       double max_local_np, double max_local_nm,
                                       double sort_interval,
                                       double sort_out_of_place )
@@ -511,12 +511,12 @@ class vpic_simulation
             &species_list );
     }
 
-    inline species_t *find_species( const char *name )
+    inline species_t* find_species( const char* name )
     {
         return find_species_name( name, species_list );
     }
 
-    inline species_t *find_species( int32_t id )
+    inline species_t* find_species( int32_t id )
     {
         return find_species_id( id, species_list );
     }
@@ -528,7 +528,7 @@ class vpic_simulation
 
     // Defaults in the declaration below enable backwards compatibility.
 
-    void inject_particle( species_t *sp, double x, double y, double z,
+    void inject_particle( species_t* sp, double x, double y, double z,
                           double ux, double uy, double uz, double w,
                           double age = 0, int update_rhob = 1 );
 
@@ -541,11 +541,11 @@ class vpic_simulation
     //   injection with displacement during initialization).
     // This injection is _ultra_ _fast_.
 
-    inline void inject_particle_raw( species_t *RESTRICT sp, float dx, float dy,
+    inline void inject_particle_raw( species_t* RESTRICT sp, float dx, float dy,
                                      float dz, int32_t i, float ux, float uy,
                                      float uz, float w )
     {
-        particle_t *RESTRICT p = sp->p + ( sp->np++ );
+        particle_t* RESTRICT p = sp->p + ( sp->np++ );
         p->dx = dx;
         p->dy = dy;
         p->dz = dz;
@@ -558,13 +558,13 @@ class vpic_simulation
 
     // This variant does a raw inject and moves the particles
 
-    inline void inject_particle_raw( species_t *RESTRICT sp, float dx, float dy,
+    inline void inject_particle_raw( species_t* RESTRICT sp, float dx, float dy,
                                      float dz, int32_t i, float ux, float uy,
                                      float uz, float w, float dispx,
                                      float dispy, float dispz, int update_rhob )
     {
-        particle_t *RESTRICT p = sp->p + ( sp->np++ );
-        particle_mover_t *RESTRICT pm = sp->pm + sp->nm;
+        particle_t* RESTRICT p = sp->p + ( sp->np++ );
+        particle_mover_t* RESTRICT pm = sp->pm + sp->nm;
         p->dx = dx;
         p->dy = dy;
         p->dz = dz;
@@ -604,14 +604,14 @@ class vpic_simulation
     // Uniform random number on (low,high) (open interval)
     // FIXME: IS THE INTERVAL STILL OPEN IN FINITE PRECISION
     //        AND IS THE OPEN INTERVAL REALLY WHAT USERS WANT??
-    inline double uniform( rng_t *rng, double low, double high )
+    inline double uniform( rng_t* rng, double low, double high )
     {
         double dx = drand( rng );
         return low * ( 1 - dx ) + high * dx;
     }
 
     // Normal random number with mean mu and standard deviation sigma
-    inline double normal( rng_t *rng, double mu, double sigma )
+    inline double normal( rng_t* rng, double mu, double sigma )
     {
         return mu + sigma * drandn( rng );
     }
@@ -635,17 +635,17 @@ class vpic_simulation
     // define_surface_emitter works and language limitations of
     // strict C++ prevent this.)
 
-    inline emitter_t *define_emitter( emitter_t *e )
+    inline emitter_t* define_emitter( emitter_t* e )
     {
         return append_emitter( e, &emitter_list );
     }
 
-    inline particle_bc_t *define_particle_bc( particle_bc_t *pbc )
+    inline particle_bc_t* define_particle_bc( particle_bc_t* pbc )
     {
         return append_particle_bc( pbc, &particle_bc_list );
     }
 
-    inline collision_op_t *define_collision_op( collision_op_t *cop )
+    inline collision_op_t* define_collision_op( collision_op_t* cop )
     {
         return append_collision_op( cop, &collision_op_list );
     }
@@ -689,14 +689,14 @@ class vpic_simulation
     //////////////////////////////////////////////////////////
     // These friends are used by the checkpt / restore service
 
-    friend void checkpt_vpic_simulation( const vpic_simulation *vpic );
-    friend vpic_simulation *restore_vpic_simulation( void );
-    friend void reanimate_vpic_simulation( vpic_simulation *vpic );
+    friend void checkpt_vpic_simulation( const vpic_simulation* vpic );
+    friend vpic_simulation* restore_vpic_simulation( void );
+    friend void reanimate_vpic_simulation( vpic_simulation* vpic );
 
     ////////////////////////////////////////////////////////////
     // User input deck provided functions (see deck_wrapper.cxx)
 
-    void user_initialization( int argc, char **argv );
+    void user_initialization( int argc, char** argv );
     void user_particle_injection( void );
     void user_current_injection( void );
     void user_field_injection( void );

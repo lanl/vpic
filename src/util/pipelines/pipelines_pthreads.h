@@ -11,7 +11,7 @@
 // pipelines dispatched.
 //----------------------------------------------------------------------------//
 
-typedef void ( *pipeline_func_t )( void *args, int pipeline_rank,
+typedef void ( *pipeline_func_t )( void* args, int pipeline_rank,
                                    int n_pipeline );
 
 //----------------------------------------------------------------------------//
@@ -35,7 +35,7 @@ typedef struct pipeline_dispatcher
     // using symmetric multiprocessing or the number of pipeline
     // processors if using heterogeneous multiprocessing.
 
-    void ( *boot )( int *pargc, char ***pargv );
+    void ( *boot )( int* pargc, char*** pargv );
 
     // halt destroys all the resources used by the dispatcher created
     // in boot.
@@ -59,7 +59,7 @@ typedef struct pipeline_dispatcher
     // If the pipeline functions do not take arguments, use NULL for
     // args and 0 for sz and str
 
-    void ( *dispatch )( pipeline_func_t pipeline, void *args, int sz, int str );
+    void ( *dispatch )( pipeline_func_t pipeline, void* args, int sz, int str );
 
     // wait waits for the previous dispatch to complete.
 

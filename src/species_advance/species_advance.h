@@ -26,7 +26,7 @@
 
 BEGIN_C_DECLS
 
-// In species_advance.c
+// In species_advance.cc
 
 int
 num_species( const species_t * sp_list );
@@ -60,7 +60,7 @@ species( const char * name,
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS
 // (THESE FUNCTIONS ARE NECESSARY FOR HIGHER LEVEL CODE)
 
-// In sort_p.c
+// In sort_p.cc
 
 void
 sort_p( species_t * RESTRICT sp );
@@ -68,7 +68,7 @@ sort_p( species_t * RESTRICT sp );
 void
 sort_p_pipeline( species_t * sp );
 
-// In advance_p.cxx
+// In advance_p.cc
 
 void
 advance_p( species_t * RESTRICT sp,
@@ -80,7 +80,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
                     accumulator_array_t * RESTRICT aa,
                     const interpolator_array_t * RESTRICT ia );
 
-// In center_p.cxx
+// In center_p.cc
 
 // This does a half advance field advance and a half Boris rotate on
 // the particles.  As such particles with r at the time step and u
@@ -95,7 +95,7 @@ void
 center_p_pipeline( species_t * RESTRICT sp,
                    const interpolator_array_t * RESTRICT ia );
 
-// In uncenter_p.cxx
+// In uncenter_p.cc
 
 // This is the inverse of center_p.  Thus, particles with r and u at
 // the time step are adjusted to have r at the time step and u half a
@@ -109,7 +109,7 @@ void
 uncenter_p_pipeline( species_t * RESTRICT sp,
                      const interpolator_array_t * RESTRICT ia );
 
-// In energy.cxx
+// In energy.cc
 
 // This computes the kinetic energy stored in the particles.  The
 // calculation is done numerically robustly.  All nodes get the same
@@ -123,7 +123,7 @@ double
 energy_p_pipeline( const species_t * RESTRICT sp,
                    const interpolator_array_t * RESTRICT ia );
 
-// In rho_p.cxx
+// In rho_p.cc
 
 void
 accumulate_rho_p( field_array_t * RESTRICT fa,
@@ -135,7 +135,7 @@ accumulate_rhob( field_t * RESTRICT ALIGNED(128) f,
                  const grid_t * RESTRICT g,
                  const float qsp );
 
-// In hydro_p.cxx
+// In hydro_p.cc
 
 void
 accumulate_hydro_p( hydro_array_t * RESTRICT ha,
@@ -147,7 +147,7 @@ accumulate_hydro_p_pipeline( hydro_array_t * RESTRICT ha,
                              const species_t * RESTRICT sp,
                              const interpolator_array_t * RESTRICT ia );
 
-// In move_p.cxx
+// In move_p.cc
 
 int
 move_p( particle_t       * ALIGNED(128) p0,    // Particle array

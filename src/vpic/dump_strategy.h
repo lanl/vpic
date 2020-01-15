@@ -650,9 +650,8 @@ class HDF5Dump : public Dump_Strategy {
             hsize_t memspace_count_temp = numparticles * 8;
             hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
 
-            // Don't need, can just use H5S_ALL
-            //hsize_t linearspace_count_temp = numparticles;
-            //hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
+            hsize_t linearspace_count_temp = numparticles;
+            hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
 
             plist_id = H5Pcreate(H5P_DATASET_XFER);
 
@@ -717,7 +716,7 @@ class HDF5Dump : public Dump_Strategy {
             }
 
             dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, H5S_ALL, filespace, plist_id, global_pi.data());
+            ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
             H5Dclose(dset_id);
 
 #else

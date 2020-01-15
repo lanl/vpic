@@ -37,10 +37,9 @@ class Dump_Strategy {
     public:
     int rank, nproc, num_step;
 
-    Dump_Strategy(int _rank, int _nproc, int total_steps) :
+    Dump_Strategy(int _rank, int _nproc ) :
         rank(_rank),
-        nproc(_nproc),
-        num_step(total_steps) // TODO: remove the need for this
+        nproc(_nproc)
     { } // empty
 
     virtual ~Dump_Strategy() { };
@@ -74,7 +73,7 @@ class Dump_Strategy {
 class BinaryDump : public Dump_Strategy {
     public:
         using Dump_Strategy::Dump_Strategy; // inherit constructor
-        BinaryDump(int _rank, int _nproc, int total_steps) : Dump_Strategy(_rank, _nproc, total_steps){ } // empty
+        //BinaryDump(int _rank, int _nproc ) : Dump_Strategy(_rank, _nproc ){ } // empty
 
         // TODO: now we pass rank and step, ftag has odd semanticds
         void dump_fields(

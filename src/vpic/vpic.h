@@ -141,12 +141,19 @@ public:
   void enable_openpmd_dump();
 #endif
 
+  // TODO: remake these protected
+
+  // Very likely a user will forgot to delete this if they change the strategy,
+  // a smart ptr will save us from the small leak
+  std::unique_ptr<Dump_Strategy> dump_strategy;
+
+  int num_step = 1;             // Number of steps to take
+
 protected:
 
   // Directly initialized by user
 
   int verbose = 1;              // Should system be verbose
-  int num_step = 1;             // Number of steps to take
   int num_comm_round = 3;       // Num comm round
   int status_interval = 0;    // How often to print status messages
 
@@ -265,9 +272,6 @@ protected:
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
-  // Very likely a user will forgot to delete this if they change the strategy,
-  // a smart ptr will save us from the small leak
-  std::unique_ptr<Dump_Strategy> dump_strategy;
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);

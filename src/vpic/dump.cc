@@ -66,20 +66,20 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
  *****************************************************************************/
 
 void vpic_simulation::enable_binary_dump() {
-    dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc(), num_step ));
+    dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
 }
 
 #ifdef VPIC_ENABLE_HDF5
 void vpic_simulation::enable_hdf5_dump() {
     std::cout << "Enabling HDF5 IO backend" << std::endl;
-    dump_strategy = std::unique_ptr<Dump_Strategy>(new HDF5Dump( rank(), nproc(), num_step ));
+    dump_strategy = std::unique_ptr<Dump_Strategy>(new HDF5Dump( rank(), nproc() ));
 }
 #endif
 
 #ifdef VPIC_ENABLE_OPENPMD
 void vpic_simulation::enable_openpmd_dump() {
     std::cout << "Enabling openPMD IO backend" << std::endl;
-    dump_strategy = std::unique_ptr<Dump_Strategy>(new OpenPMDDump( rank(), nproc(), num_step ));
+    dump_strategy = std::unique_ptr<Dump_Strategy>(new OpenPMDDump( rank(), nproc() ));
 }
 #endif
 

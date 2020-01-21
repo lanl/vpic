@@ -1162,9 +1162,9 @@ class OpenPMDDump : public Dump_Strategy {
             auto DivErr = i.meshes["DivErr"];
 
             // record components
-            auto cbx = cB["x"];
-            auto cby = cB["y"];
-            auto cbz = cB["z"];
+            auto Cbx = cB["x"];
+            auto Cby = cB["y"];
+            auto Cbz = cB["z"];
 
             auto Ex = E["x"];
             auto Ey = E["y"];
@@ -1205,9 +1205,9 @@ class OpenPMDDump : public Dump_Strategy {
             openPMD::Datatype datatype = openPMD::determineDatatype<float>();
             openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
 
-            cbx.resetDataset(dataset);
-            cby.resetDataset(dataset);
-            cbz.resetDataset(dataset);
+            Cbx.resetDataset(dataset);
+            Cby.resetDataset(dataset);
+            Cbz.resetDataset(dataset);
 
             Ex.resetDataset(dataset);
             Ey.resetDataset(dataset);
@@ -1235,6 +1235,7 @@ class OpenPMDDump : public Dump_Strategy {
             DivEErr.resetDataset(dataset);
             DivBErr.resetDataset(dataset);
 
+            // TODO: hoist this conversion code, as is it used elsewhere
             // Convert rank to local x/y/z
             int rx, ry, rz;
             UNVOXEL(rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
@@ -1369,9 +1370,9 @@ class OpenPMDDump : public Dump_Strategy {
                 }
             }
 
-            cbx.storeChunk( cbx_data, chunk_offset, chunk_extent);
-            cby.storeChunk( cby_data, chunk_offset, chunk_extent);
-            cbz.storeChunk( cbz_data, chunk_offset, chunk_extent);
+            Cbx.storeChunk( cbx_data, chunk_offset, chunk_extent);
+            Cby.storeChunk( cby_data, chunk_offset, chunk_extent);
+            Cbz.storeChunk( cbz_data, chunk_offset, chunk_extent);
 
             Ex.storeChunk( ex_data, chunk_offset, chunk_extent);
             Ey.storeChunk( ey_data, chunk_offset, chunk_extent);
@@ -1556,6 +1557,208 @@ class OpenPMDDump : public Dump_Strategy {
             int ftag
         )
         {
+            // TODO: move this to class level, and make it user settable, so it
+            // can be used more widely
+            std::string file_type = ".h5";
+            std::string full_file_name = fbase + file_type;
+
+            std::cout << "OpenPMD dumping hydro to " << full_file_name << std::endl;
+
+            //if (series == nullptr) {
+                openPMD::Series series = openPMD::Series(
+                        full_file_name,
+                        openPMD::AccessType::CREATE,
+                        MPI_COMM_WORLD
+                );
+            //}
+
+            auto i = series.iterations[ step ];
+
+            // TODO: set these
+            i.setTime( (float)step );
+            i.setDt(1.0);
+            i.setTimeUnitSI(1.0);
+
+            if( !sp ) ERROR(( "Invalid species \"%s\"", sp->name ));
+
+            // TODO: do we want each backend to have to explicitly call these
+            // manually? Or, as it is common, should we hoist it to the VPIC
+            // call-site
+            clear_hydro_array( hydro_array );
+            accumulate_hydro_p( hydro_array, sp, interpolator_array );
+            synchronize_hydro_array( hydro_array );
+
+            if( !fbase ) ERROR(( "Invalid filename" ));
+
+            if( rank==0 )
+                MESSAGE(("Dumping \"%s\" hydro fields to \"%s\"",sp->name,fbase));
+
+            // Write data
+            //float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
+            //float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+            //float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
+            //float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
+            auto J = i.meshes["J"];
+            auto P = i.meshes["P"];
+            auto T = i.meshes["T"];
+            auto _Ke = i.meshes["Ke"];
+            auto _Rho = i.meshes["Rho"];
+
+            auto Jx = J["x"];
+            auto Jy = J["y"];
+            auto Jz = J["z"];
+
+            auto Px = P["x"];
+            auto Py = P["y"];
+            auto Pz = P["z"];
+
+            auto Txx = T["xx"];
+            auto Tyy = T["yy"];
+            auto Tzz = T["zz"];
+            auto Tyz = T["yz"];
+            auto Tzx = T["zx"];
+            auto Txy = T["xy"];
+
+            auto Rho = _Rho["rho"]; // TODO: bad name..
+            auto Ke = _Ke["ke"]; // TODO: bad name..
+
+            size_t gnx = (grid->nx * grid->gpx);
+            size_t gny = (grid->ny * grid->gpy);
+            size_t gnz = (grid->nz * grid->gpz);
+            openPMD::Extent global_extent = {gnx, gny, gnz};
+
+            openPMD::Datatype datatype = openPMD::determineDatatype<float>();
+            openPMD::Dataset dataset = openPMD::Dataset(datatype, global_extent);
+
+            Jx.resetDataset(dataset);
+            Jy.resetDataset(dataset);
+            Jz.resetDataset(dataset);
+
+            Px.resetDataset(dataset);
+            Py.resetDataset(dataset);
+            Pz.resetDataset(dataset);
+
+            Txx.resetDataset(dataset);
+            Tyy.resetDataset(dataset);
+            Tzz.resetDataset(dataset);
+            Tyz.resetDataset(dataset);
+            Tzx.resetDataset(dataset);
+            Txy.resetDataset(dataset);
+
+            Rho.resetDataset(dataset);
+            Ke.resetDataset(dataset);
+
+            // TODO: hoist this conversion code, as is it used elsewhere
+            // Convert rank to local x/y/z
+            int rx, ry, rz;
+            UNVOXEL(rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+            size_t nx = grid->nx;
+            size_t ny = grid->ny;
+            size_t nz = grid->nz;
+
+            // NOTE: this assumes a static mesh decomposition in nx/ny/nz
+            size_t global_offset_x = (nx) * rx;
+            size_t global_offset_y = (ny) * ry;
+            size_t global_offset_z = (nz) * rz;
+
+            openPMD::Offset chunk_offset = {global_offset_x, global_offset_y, global_offset_z};
+            openPMD::Extent chunk_extent = {nx, ny, nz};
+
+            std::cout << "Local offset " <<
+                " x: " << global_offset_x  <<
+                " y: " << global_offset_y  <<
+                " z: " << global_offset_z  <<
+                std::endl;
+
+            std::vector<float> jx_data;
+            std::vector<float> jy_data;
+            std::vector<float> jz_data;
+
+            std::vector<float> px_data;
+            std::vector<float> py_data;
+            std::vector<float> pz_data;
+
+            std::vector<float> txx_data;
+            std::vector<float> tyy_data;
+            std::vector<float> tzz_data;
+            std::vector<float> tyz_data;
+            std::vector<float> tzx_data;
+            std::vector<float> txy_data;
+
+            std::vector<float> rho_data;
+            std::vector<float> ke_data;
+
+            size_t nv = nx * ny * nz;
+
+            jx_data.reserve(nv);
+            jy_data.reserve(nv);
+            jz_data.reserve(nv);
+
+            px_data.reserve(nv);
+            py_data.reserve(nv);
+            pz_data.reserve(nv);
+
+            txx_data.reserve(nv);
+            tyy_data.reserve(nv);
+            tzz_data.reserve(nv);
+            tyz_data.reserve(nv);
+            tzx_data.reserve(nv);
+            txy_data.reserve(nv);
+
+            rho_data.reserve(nv);
+            ke_data.reserve(nv);
+
+            // Transpose AoS to SoAs
+            for (size_t k = 1; k < grid->nz + 1; k++)
+            {
+                for (size_t j = 1; j < grid->ny + 1; j++)
+                {
+                    for (size_t i = 1; i < grid->nx + 1; i++)
+                    {
+                        int local_index  = VOXEL(i-1, j-1, k-1, grid->nx-2, grid->ny-2, grid->nz-2);
+                        int global_index = VOXEL(i, j, k, grid->nx, grid->ny, grid->nz);
+
+                        jx_data[local_index] = hydro_array->h[global_index].jx;
+                        jy_data[local_index] = hydro_array->h[global_index].jy;
+                        jz_data[local_index] = hydro_array->h[global_index].jz;
+
+                        px_data[local_index] = hydro_array->h[global_index].px;
+                        py_data[local_index] = hydro_array->h[global_index].py;
+                        pz_data[local_index] = hydro_array->h[global_index].pz;
+
+                        txx_data[local_index] = hydro_array->h[global_index].txx;
+                        tyy_data[local_index] = hydro_array->h[global_index].tyy;
+                        tzz_data[local_index] = hydro_array->h[global_index].tzz;
+                        tyz_data[local_index] = hydro_array->h[global_index].tyz;
+                        tzx_data[local_index] = hydro_array->h[global_index].tzx;
+                        txy_data[local_index] = hydro_array->h[global_index].txy;
+
+                        rho_data[local_index] = hydro_array->h[global_index].rho;
+                        ke_data[local_index] = hydro_array->h[global_index].ke;
+                    }
+                }
+            }
+
+            Jx.storeChunk( jx_data, chunk_offset, chunk_extent);
+            Jy.storeChunk( jy_data, chunk_offset, chunk_extent);
+            Jz.storeChunk( jz_data, chunk_offset, chunk_extent);
+
+            Px.storeChunk( px_data, chunk_offset, chunk_extent);
+            Py.storeChunk( py_data, chunk_offset, chunk_extent);
+            Pz.storeChunk( pz_data, chunk_offset, chunk_extent);
+
+            Txx.storeChunk( txx_data, chunk_offset, chunk_extent);
+            Tyy.storeChunk( tyy_data, chunk_offset, chunk_extent);
+            Tzz.storeChunk( tzz_data, chunk_offset, chunk_extent);
+            Tyz.storeChunk( tyz_data, chunk_offset, chunk_extent);
+            Tzx.storeChunk( tzx_data, chunk_offset, chunk_extent);
+            Txy.storeChunk( txy_data, chunk_offset, chunk_extent);
+
+            Rho.storeChunk( rho_data, chunk_offset, chunk_extent);
+            Ke.storeChunk( ke_data, chunk_offset, chunk_extent);
+
+            series.flush();
         }
 };
 #endif

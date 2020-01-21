@@ -682,8 +682,10 @@ class HDF5Dump : public Dump_Strategy {
             ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
             H5Dclose(dset_id);
 
+            // TODO: make this a compile time option
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
+
             // TODO: make a function out of this too, its used in openpmd
             std::vector<int> global_pi;
             global_pi.reserve(numparticles);

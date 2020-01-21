@@ -1363,8 +1363,8 @@ class OpenPMDDump : public Dump_Strategy {
                         rhob_data[local_index] = field_array->f[global_index].rhob;
                         rhof_data[local_index] = field_array->f[global_index].rhof;
 
-                        dive_data[local_index] = field_array->f[global_index].dive;
-                        divb_data[local_index] = field_array->f[global_index].divb;
+                        dive_data[local_index] = field_array->f[global_index].div_e_err;
+                        divb_data[local_index] = field_array->f[global_index].div_b_err;
                     }
                 }
             }
@@ -1394,7 +1394,7 @@ class OpenPMDDump : public Dump_Strategy {
             Fmatz.storeChunk( fmatz_data, chunk_offset, chunk_extent);
 
             RhoB.storeChunk( rhob_data, chunk_offset, chunk_extent);
-            RhoF.storeChunk( rhof, chunk_offset, chunk_extent);
+            RhoF.storeChunk( rhof_data, chunk_offset, chunk_extent);
 
             DivEErr.storeChunk( dive_data, chunk_offset, chunk_extent);
             DivBErr.storeChunk( divb_data, chunk_offset, chunk_extent);
@@ -1445,8 +1445,28 @@ class OpenPMDDump : public Dump_Strategy {
             auto px = p["position"]["x"];
             auto pxo = p["positionOffset"]["x"];
 
+            auto py = p["position"]["y"];
+            auto pyo = p["positionOffset"]["y"];
+
+            auto pz = p["position"]["z"];
+            auto pzo = p["positionOffset"]["z"];
+
+            auto ux = p["velocity"]["x"];
+            auto uy = p["velocity"]["y"];
+            auto uz = p["velocity"]["z"];
+
             px.resetDataset(dataset);
             pxo.resetDataset(dataset);
+
+            py.resetDataset(dataset);
+            pyo.resetDataset(dataset);
+
+            pz.resetDataset(dataset);
+            pzo.resetDataset(dataset);
+
+            ux.resetDataset(dataset);
+            uy.resetDataset(dataset);
+            uz.resetDataset(dataset);
 
             // convert data to SoA, allowing the user to chunk the operation
             const int max_chunk = 32768*8; // 1MB SoA

@@ -1145,7 +1145,7 @@ class OpenPMDDump : public Dump_Strategy {
                 );
             //}
 
-            std::cout << "Writing itration " << step << std::endl;
+            std::cout << "Writing iteration " << step << std::endl;
             auto i = series.iterations[ step ];
             // TODO: it would be nice to set these...
             //series.setAuthor( "Axel Huebl <a.huebl@hzdr.de>");
@@ -1411,13 +1411,19 @@ class OpenPMDDump : public Dump_Strategy {
             int ftag
         )
         {
+            // TODO: move this to class level, and make it user settable, so it
+            // can be used more widely
+            std::string file_type = ".h5";
+            std::string full_file_name = fbase + file_type;
+
+            std::cout << "writing particles to " << full_file_name << std::endl;
+
             //if (series == nullptr) {
-                std::cout << "init series" << std::endl;
                 openPMD::Series series = openPMD::Series(
-                        fbase,
+                        full_file_name,
                         openPMD::AccessType::CREATE,
                         MPI_COMM_WORLD
-                        );
+                );
             //}
 
             auto i = series.iterations[ step ];

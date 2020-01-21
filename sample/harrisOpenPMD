@@ -371,6 +371,8 @@ begin_diagnostics {
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
 
+  // TODO: passing in the field extension as part of the name doesn't work for
+  // the other functions, as they use it to look up species
   std::string openpm_field_name = "fields.h5";
   //std::string openpm_field_name = "fields.bp";
   if( step()==-10 )         dump_fields(openpm_field_name.c_str()); // Get first valid total J

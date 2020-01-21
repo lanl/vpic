@@ -87,7 +87,7 @@ void vpic_simulation::dump_particles( const char *sp_name,
                                  const char *fbase,
                                  int ftag )
 {
-    species_t * sp = find_species_name(sp_name, species_list);
+    species_t* sp = find_species_name(sp_name, species_list);
     dump_strategy->dump_particles(
         fbase,
         sp,

@@ -1153,6 +1153,11 @@ class OpenPMDDump : public Dump_Strategy {
             auto cB = i.meshes["B"];
             auto E = i.meshes["E"];
             auto J = i.meshes["J"];
+            auto Tca = i.meshes["Tca"];
+            auto Emat = i.meshes["Emat"];
+            auto Fmat = i.meshes["Fmat"];
+            auto Rho = i.meshes["Rho"];
+            auto DivErr = i.meshes["DivErr"];
 
             // record components
             auto cbx = cB["x"];
@@ -1167,8 +1172,28 @@ class OpenPMDDump : public Dump_Strategy {
             auto Jy = J["y"];
             auto Jz = J["z"];
 
+            auto Tcax = Tca["x"];
+            auto Tcay = Tca["y"];
+            auto Tcaz = Tca["z"];
+
+            auto Ematx = Emat["x"];
+            auto Ematy = Emat["y"];
+            auto Ematz = Emat["z"];
+
+            auto Fmatx = Fmat["x"];
+            auto Fmaty = Fmat["y"];
+            auto Fmatz = Fmat["z"];
+
+            auto RhoB = Rho["B"];
+            auto RhoF = Rho["F"];
+
+            auto DivEErr = DivErr["E"];
+            auto DivBErr = DivErr["B"];
+
             // TODO: set unitDimension so the anaylsis software knows what fields
             // things are
+            //
+            // // TODO: add timers for the convert and for the write
 
             size_t gnx = (grid->nx * grid->gpx);
             size_t gny = (grid->ny * grid->gpy);
@@ -1189,6 +1214,24 @@ class OpenPMDDump : public Dump_Strategy {
             Jx.resetDataset(dataset);
             Jy.resetDataset(dataset);
             Jz.resetDataset(dataset);
+
+            Tcax.resetDataset(dataset);
+            Tcay.resetDataset(dataset);
+            Tcaz.resetDataset(dataset);
+
+            Ematx.resetDataset(dataset);
+            Ematy.resetDataset(dataset);
+            Ematz.resetDataset(dataset);
+
+            Fmatx.resetDataset(dataset);
+            Fmaty.resetDataset(dataset);
+            Fmatz.resetDataset(dataset);
+
+            RhoB.resetDataset(dataset);
+            RhoF.resetDataset(dataset);
+
+            DivEErr.resetDataset(dataset);
+            DivBErr.resetDataset(dataset);
 
             // Convert rank to local x/y/z
             int rx, ry, rz;
@@ -1225,6 +1268,26 @@ class OpenPMDDump : public Dump_Strategy {
             std::vector<float> jy_data;
             std::vector<float> jz_data;
 
+            std::vector<float> tcax_data;
+            std::vector<float> tcay_data;
+            std::vector<float> tcaz_data;
+
+            // TODO: these are material_id (ints not floats)
+            std::vector<float> ematx_data;
+            std::vector<float> ematy_data;
+            std::vector<float> ematz_data;
+
+            std::vector<float> fmatx_data;
+            std::vector<float> fmaty_data;
+            std::vector<float> fmatz_data;
+            // end todo
+
+            std::vector<float> rhob_data;
+            std::vector<float> rhof_data;
+
+            std::vector<float> divb_data;
+            std::vector<float> dive_data;
+
             size_t nv = nx * ny * nz;
 
             cbx_data.reserve(nv);
@@ -1238,6 +1301,24 @@ class OpenPMDDump : public Dump_Strategy {
             jx_data.reserve(nv);
             jy_data.reserve(nv);
             jz_data.reserve(nv);
+
+            tcax_data.reserve(nv);
+            tcay_data.reserve(nv);
+            tcaz_data.reserve(nv);
+
+            ematx_data.reserve(nv);
+            ematy_data.reserve(nv);
+            ematz_data.reserve(nv);
+
+            fmatx_data.reserve(nv);
+            fmaty_data.reserve(nv);
+            fmatz_data.reserve(nv);
+
+            rhob_data.reserve(nv);
+            rhof_data.reserve(nv);
+
+            divb_data.reserve(nv);
+            dive_data.reserve(nv);
 
             // TODO: make this AoS to SoA conversion a function
 
@@ -1264,6 +1345,24 @@ class OpenPMDDump : public Dump_Strategy {
                         jx_data[local_index] = field_array->f[global_index].jfx;
                         jy_data[local_index] = field_array->f[global_index].jfy;
                         jz_data[local_index] = field_array->f[global_index].jfz;
+
+                        tcax_data[local_index] = field_array->f[global_index].tcax;
+                        tcay_data[local_index] = field_array->f[global_index].tcay;
+                        tcaz_data[local_index] = field_array->f[global_index].tcaz;
+
+                        ematx_data[local_index] = field_array->f[global_index].ematx;
+                        ematy_data[local_index] = field_array->f[global_index].ematy;
+                        ematz_data[local_index] = field_array->f[global_index].ematz;
+
+                        fmatx_data[local_index] = field_array->f[global_index].fmatx;
+                        fmaty_data[local_index] = field_array->f[global_index].fmaty;
+                        fmatz_data[local_index] = field_array->f[global_index].fmatz;
+
+                        rhob_data[local_index] = field_array->f[global_index].rhob;
+                        rhof_data[local_index] = field_array->f[global_index].rhof;
+
+                        dive_data[local_index] = field_array->f[global_index].dive;
+                        divb_data[local_index] = field_array->f[global_index].divb;
                     }
                 }
             }
@@ -1280,8 +1379,27 @@ class OpenPMDDump : public Dump_Strategy {
             Jy.storeChunk( jy_data, chunk_offset, chunk_extent);
             Jz.storeChunk( jz_data, chunk_offset, chunk_extent);
 
+            Tcax.storeChunk( tcax_data, chunk_offset, chunk_extent);
+            Tcay.storeChunk( tcay_data, chunk_offset, chunk_extent);
+            Tcaz.storeChunk( tcaz_data, chunk_offset, chunk_extent);
+
+            Ematx.storeChunk( ematx_data, chunk_offset, chunk_extent);
+            Ematy.storeChunk( ematy_data, chunk_offset, chunk_extent);
+            Ematz.storeChunk( ematz_data, chunk_offset, chunk_extent);
+
+            Fmatx.storeChunk( fmatx_data, chunk_offset, chunk_extent);
+            Fmaty.storeChunk( fmaty_data, chunk_offset, chunk_extent);
+            Fmatz.storeChunk( fmatz_data, chunk_offset, chunk_extent);
+
+            RhoB.storeChunk( rhob_data, chunk_offset, chunk_extent);
+            RhoF.storeChunk( rhof, chunk_offset, chunk_extent);
+
+            DivEErr.storeChunk( dive_data, chunk_offset, chunk_extent);
+            DivBErr.storeChunk( divb_data, chunk_offset, chunk_extent);
+
             series.flush();
         }
+
         void dump_particles(
             const char *fbase,
             species_t* sp,
@@ -1343,13 +1461,42 @@ class OpenPMDDump : public Dump_Strategy {
                 x_pos.reserve(to_write);
                 x_off.reserve(to_write);
 
+                std::vector<float> y_pos;
+                std::vector<float> y_off;
+                y_pos.reserve(to_write);
+                y_off.reserve(to_write);
+
+                std::vector<float> z_pos;
+                std::vector<float> z_off;
+                z_pos.reserve(to_write);
+                z_off.reserve(to_write);
+
+                std::vector<float> ux_pos;
+                ux_pos.reserve(to_write);
+
+                std::vector<float> uy_pos;
+                uy_pos.reserve(to_write);
+
+                std::vector<float> uz_pos;
+                uz_pos.reserve(to_write);
+
                 for (int j = 0; j < to_write; j++)
                 {
                     // TODO: do I need to center the particles?
                     auto& particle = sp->p[i+j];
+
                     x_pos[j] = particle.dx;
+                    y_pos[j] = particle.dy;
+                    z_pos[j] = particle.dz;
+
+                    ux_pos[j] = particle.ux;
+                    uy_pos[j] = particle.uy;
+                    uz_pos[j] = particle.uz;
+
                     std::array<int, 4> gi = global_particle_index(particle.i, grid, rank);
                     x_off[j] = (float)gi[1];
+                    y_off[j] = (float)gi[2];
+                    z_off[j] = (float)gi[3];
                 }
 
                 // Base offset plus i to account for chunks
@@ -1357,8 +1504,17 @@ class OpenPMDDump : public Dump_Strategy {
                 auto e = openPMD::Extent{to_write};
                 px.storeChunk(x_pos, o, e);
                 pxo.storeChunk(x_off, o, e);
-            }
 
+                py.storeChunk(y_pos, o, e);
+                pyo.storeChunk(y_off, o, e);
+
+                pz.storeChunk(z_pos, o, e);
+                pzo.storeChunk(z_off, o, e);
+
+                ux.storeChunk(ux_pos, o, e);
+                uy.storeChunk(uy_pos, o, e);
+                uz.storeChunk(uz_pos, o, e);
+            }
 
             series.flush();
         }

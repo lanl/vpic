@@ -141,54 +141,66 @@ public:
   void enable_openpmd_dump();
 #endif
 
+  // TODO: remake these protected
+
+  // Very likely a user will forgot to delete this if they change the strategy,
+  // a smart ptr will save us from the small leak
+  std::unique_ptr<Dump_Strategy> dump_strategy;
+
+  int num_step = 1;             // Number of steps to take
+
 protected:
 
   // Directly initialized by user
 
-  int verbose;              // Should system be verbose
-  int num_step;             // Number of steps to take
-  int num_comm_round;       // Num comm round
-  int status_interval;      // How often to print status messages
-  int clean_div_e_interval; // How often to clean div e
-  int num_div_e_round;      // How many clean div e rounds per div e interval
-  int clean_div_b_interval; // How often to clean div b
-  int num_div_b_round;      // How many clean div b rounds per div b interval
-  int sync_shared_interval; // How often to synchronize shared faces
+  int verbose = 1;              // Should system be verbose
+  int num_comm_round = 3;       // Num comm round
+  int status_interval = 0;    // How often to print status messages
+
+  int clean_div_e_interval = 0; // How often to clean div e
+  int num_div_e_round = 2;      // How many clean div e rounds per div e interval
+
+  int clean_div_b_interval = 0; // How often to clean div b
+  int num_div_b_round = 2;      // How many clean div b rounds per div b interval
+
+  int sync_shared_interval = 0; // How often to synchronize shared faces
 
   // FIXME: THESE INTERVALS SHOULDN'T BE PART OF vpic_simulation
   // THE BIG LIST FOLLOWING IT SHOULD BE CLEANED UP TOO
 
-  double quota;
-  int checkpt_interval;
-  int hydro_interval;
-  int field_interval;
-  int particle_interval;
+  double quota = 0;
+  int checkpt_interval = 0;
+  int hydro_interval = 0;
+  int field_interval = 0;
+  int particle_interval = 0;
 
   // TODO: these can probably now be removed, as they should only be used by dump?
   // TODO: check if any decks used them
   //size_t nxout, nyout, nzout;
   //float dxout, dyout, dzout;
 
-  size_t px, py, pz;
+  size_t px = 0;
+  size_t py = 0;
+  size_t pz = 0;
 
-  int ndfld;
-  int ndhyd;
-  int ndpar;
-  int ndhis;
-  int ndgrd;
-  int head_option;
-  int istride;
-  int jstride;
-  int kstride;
-  int stride_option;
-  int pstride;
-  int nprobe;
+  int ndfld = 0;
+  int ndhyd = 0;
+  int ndpar = 0;
+  int ndhis = 0;
+  int ndgrd = 0;
+  int head_option = 0;
+  int istride = 0;
+  int jstride = 0;
+  int kstride = 0;
+  int stride_option = 0;
+  int pstride = 0;
+  int nprobe = 0;
   int ijkprobe[NVARHISMX][4];
   float xyzprobe[NVARHISMX][3];
-  int block_dump;
-  int stepdigit;
-  int rankdigit;
-  int ifenergies;
+  int block_dump = 0;
+  int stepdigit = 0;
+  int rankdigit = 0;
+  int ifenergies = 0;
 
   // Helper initialized by user
 
@@ -260,9 +272,6 @@ protected:
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
 
-  // Very likely a user will forgot to delete this if they change the strategy,
-  // a smart ptr will save us from the small leak
-  std::unique_ptr<Dump_Strategy> dump_strategy;
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);

@@ -78,11 +78,12 @@ vpic_simulation::vpic_simulation()
   // Is this just trying to 0 initialize everything?
   // CLEAR( this, 1 );
 
-  /* Set non-zero defaults */
-  verbose = 1;
-  num_comm_round = 3;
-  num_div_e_round = 2;
-  num_div_b_round = 2;
+  // Now done in the class def / header
+  ///* Set non-zero defaults */
+  //verbose = 1;
+  //num_comm_round = 3;
+  //num_div_e_round = 2;
+  //num_div_b_round = 2;
 
 #if defined(VPIC_USE_PTHREADS)                         // Pthreads case.
   int                              n_rng = serial.n_pipeline;

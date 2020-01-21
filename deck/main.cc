@@ -98,6 +98,12 @@ int main(int argc, char** argv)
         }
         simulation = new vpic_simulation();
         simulation->initialize( argc, argv );
+
+        // do post init setup to consume deck values
+        // which includes setting dump starts steps, as we didn't know it sooner
+        // TODO: make this use sane functions
+        simulation->dump_strategy->num_step = simulation->num_step;
+
         REGISTER_OBJECT( &simulation, checkpt_main, restore_main, NULL );
     }
 

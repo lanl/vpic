@@ -686,7 +686,7 @@ class HDF5Dump : public Dump_Strategy {
 
             // TODO: make a function out of this too, its used in openpmd
             std::vector<int> global_pi;
-            global_pi.reserve(numparticles);
+            global_pi.resize(numparticles);
             // TODO: this could be parallel
             for (int i = 0; i < numparticles; i++)
             {
@@ -1293,35 +1293,37 @@ class OpenPMDDump : public Dump_Strategy {
 
             size_t nv = nx * ny * nz;
 
-            cbx_data.reserve(nv);
-            cby_data.reserve(nv);
-            cbz_data.reserve(nv);
+            // TODO: resize here will zero out the data which we don't need, we
+            // could change to a different semantic to avoid this
+            cbx_data.resize(nv);
+            cby_data.resize(nv);
+            cbz_data.resize(nv);
 
-            ex_data.reserve(nv);
-            ey_data.reserve(nv);
-            ez_data.reserve(nv);
+            ex_data.resize(nv);
+            ey_data.resize(nv);
+            ez_data.resize(nv);
 
-            jx_data.reserve(nv);
-            jy_data.reserve(nv);
-            jz_data.reserve(nv);
+            jx_data.resize(nv);
+            jy_data.resize(nv);
+            jz_data.resize(nv);
 
-            tcax_data.reserve(nv);
-            tcay_data.reserve(nv);
-            tcaz_data.reserve(nv);
+            tcax_data.resize(nv);
+            tcay_data.resize(nv);
+            tcaz_data.resize(nv);
 
-            ematx_data.reserve(nv);
-            ematy_data.reserve(nv);
-            ematz_data.reserve(nv);
+            ematx_data.resize(nv);
+            ematy_data.resize(nv);
+            ematz_data.resize(nv);
 
-            fmatx_data.reserve(nv);
-            fmaty_data.reserve(nv);
-            fmatz_data.reserve(nv);
+            fmatx_data.resize(nv);
+            fmaty_data.resize(nv);
+            fmatz_data.resize(nv);
 
-            rhob_data.reserve(nv);
-            rhof_data.reserve(nv);
+            rhob_data.resize(nv);
+            rhof_data.resize(nv);
 
-            divb_data.reserve(nv);
-            dive_data.reserve(nv);
+            divb_data.resize(nv);
+            dive_data.resize(nv);
 
             // TODO: make this AoS to SoA conversion a function
 
@@ -1476,7 +1478,7 @@ class OpenPMDDump : public Dump_Strategy {
             uz.resetDataset(dataset);
 
             // convert data to SoA, allowing the user to chunk the operation
-            const int max_chunk = 32768*8; // 1MB SoA
+            const int max_chunk = 32768*256*8; // 256MB SoA
             // Loop over all particles in chunks
             for (int i = 0; i < np; i += max_chunk)
             {
@@ -1487,27 +1489,27 @@ class OpenPMDDump : public Dump_Strategy {
                 // Convert the chunk ready to write
                 std::vector<float> x_pos;
                 std::vector<float> x_off;
-                x_pos.reserve(to_write);
-                x_off.reserve(to_write);
+                x_pos.resize(to_write);
+                x_off.resize(to_write);
 
                 std::vector<float> y_pos;
                 std::vector<float> y_off;
-                y_pos.reserve(to_write);
-                y_off.reserve(to_write);
+                y_pos.resize(to_write);
+                y_off.resize(to_write);
 
                 std::vector<float> z_pos;
                 std::vector<float> z_off;
-                z_pos.reserve(to_write);
-                z_off.reserve(to_write);
+                z_pos.resize(to_write);
+                z_off.resize(to_write);
 
                 std::vector<float> ux_pos;
-                ux_pos.reserve(to_write);
+                ux_pos.resize(to_write);
 
                 std::vector<float> uy_pos;
-                uy_pos.reserve(to_write);
+                uy_pos.resize(to_write);
 
                 std::vector<float> uz_pos;
-                uz_pos.reserve(to_write);
+                uz_pos.resize(to_write);
 
                 for (int j = 0; j < to_write; j++)
                 {
@@ -1543,9 +1545,9 @@ class OpenPMDDump : public Dump_Strategy {
                 ux.storeChunk(ux_pos, o, e);
                 uy.storeChunk(uy_pos, o, e);
                 uz.storeChunk(uz_pos, o, e);
-            }
 
-            series.flush();
+                series.flush();
+            }
         }
         void dump_hydro(
             const char *fbase,
@@ -1691,23 +1693,23 @@ class OpenPMDDump : public Dump_Strategy {
 
             size_t nv = nx * ny * nz;
 
-            jx_data.reserve(nv);
-            jy_data.reserve(nv);
-            jz_data.reserve(nv);
+            jx_data.resize(nv);
+            jy_data.resize(nv);
+            jz_data.resize(nv);
 
-            px_data.reserve(nv);
-            py_data.reserve(nv);
-            pz_data.reserve(nv);
+            px_data.resize(nv);
+            py_data.resize(nv);
+            pz_data.resize(nv);
 
-            txx_data.reserve(nv);
-            tyy_data.reserve(nv);
-            tzz_data.reserve(nv);
-            tyz_data.reserve(nv);
-            tzx_data.reserve(nv);
-            txy_data.reserve(nv);
+            txx_data.resize(nv);
+            tyy_data.resize(nv);
+            tzz_data.resize(nv);
+            tyz_data.resize(nv);
+            tzx_data.resize(nv);
+            txy_data.resize(nv);
 
-            rho_data.reserve(nv);
-            ke_data.reserve(nv);
+            rho_data.resize(nv);
+            ke_data.resize(nv);
 
             // Transpose AoS to SoAs
             for (size_t k = 1; k < grid->nz + 1; k++)

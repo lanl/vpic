@@ -90,11 +90,14 @@ option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install H
 
 option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you install OpenPM" OFF)
 
+option(OUTPUT_CONVERT_GLOBAL_ID "Convert particle cell id to be global, such that it tells  you  a unique global location instead of a local offset" ON)
+
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
 # TODO: better name for this?
 set(PMD_MAX_IO_CHUNK AUTO CACHE STRING "Select the maxiumum IO write size to use when writing -- applies to particles only, and is specified as number of particles. currently only honored by OpenPMD backend")
+
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -127,6 +130,10 @@ endif(DISABLE_DYNAMIC_RESIZING)
 
 if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
     add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
+endif()
+
+if(NOT PMD_MAX_IO_CHUNK STREQUAL "AUTO")
+    add_definitions(-DPMD_MAX_IO_CHUNK=${PMD_MAX_IO_CHUNK})
 endif()
 
 find_package(Threads REQUIRED)
@@ -378,6 +385,10 @@ if(USE_OPENPMD)
         set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${openPMD_TRANSITIVE_LIBS}")
     endif()
 endif(USE_OPENPMD)
+
+if(OUTPUT_CONVERT_GLOBAL_ID)
+    add_definitions(-DOUTPUT_CONVERT_GLOBAL_ID)
+endif(OUTPUT_CONVERT_GLOBAL_ID)
 
 macro(build_a_vpic name deck)
   if(NOT EXISTS ${deck})

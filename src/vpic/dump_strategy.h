@@ -681,8 +681,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Dclose(dset_id);
 
             // TODO: should we add the ability to chunk the particle write?
-            // TODO: make this a compile time option
-#define OUTPUT_CONVERT_GLOBAL_ID 1
+
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
 
             // TODO: make a function out of this too, its used in openpmd

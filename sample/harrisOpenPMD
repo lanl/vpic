@@ -45,6 +45,10 @@ begin_initialization {
 
   enable_openpmd_dump();
 
+  // TODO: this should be done through a setter once we have a common options
+  // interface
+  dump_strategy->file_type = ".bp";
+
   // At this point, there is an empty grid and the random number generator is
   // seeded with the rank. The grid, materials, species need to be defined.
   // Then the initial non-zero fields need to be loaded at time level 0 and the

@@ -1126,6 +1126,10 @@ class OpenPMDDump : public Dump_Strategy {
     public:
         //openPMD::Series* series;
         using Dump_Strategy::Dump_Strategy; // inherit constructor
+
+        //std::string file_type = ".h5";
+        std::string file_type = ".bp";
+
         void dump_fields(
             const char *fbase,
             int step,
@@ -1414,9 +1418,6 @@ class OpenPMDDump : public Dump_Strategy {
             int ftag
         )
         {
-            // TODO: move this to class level, and make it user settable, so it
-            // can be used more widely
-            std::string file_type = ".h5";
             std::string full_file_name = fbase + file_type;
 
             std::cout << "writing particles to " << full_file_name << std::endl;
@@ -1564,9 +1565,6 @@ class OpenPMDDump : public Dump_Strategy {
             int ftag
         )
         {
-            // TODO: move this to class level, and make it user settable, so it
-            // can be used more widely
-            std::string file_type = ".h5";
             std::string full_file_name = fbase + file_type;
 
             std::cout << "OpenPMD dumping hydro to " << full_file_name << std::endl;

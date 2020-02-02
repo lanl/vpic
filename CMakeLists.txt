@@ -93,6 +93,8 @@ option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you ins
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
+# TODO: better name for this?
+set(PMD_MAX_IO_CHUNK AUTO CACHE STRING "Select the maxiumum IO write size to use when writing -- applies to particles only, and is specified as number of particles. currently only honored by OpenPMD backend")
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates

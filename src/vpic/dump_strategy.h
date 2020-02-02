@@ -680,6 +680,7 @@ class HDF5Dump : public Dump_Strategy {
             ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
             H5Dclose(dset_id);
 
+            // TODO: should we add the ability to chunk the particle write?
             // TODO: make this a compile time option
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
@@ -1476,9 +1477,14 @@ class OpenPMDDump : public Dump_Strategy {
             ux.resetDataset(dataset);
             uy.resetDataset(dataset);
             uz.resetDataset(dataset);
-
             // convert data to SoA, allowing the user to chunk the operation
-            const int max_chunk = 32768*256*8; // 256MB SoA
+
+            // TODO: Add code the convert to global offsets
+#ifndef PMD_MAX_IO_CHUNK // in particles
+#define PMD_MAX_IO_CHUNK 16777216; // 512MB total write
+#endif
+            const int max_chunk = PMD_MAX_IO_CHUNK;
+
             // Loop over all particles in chunks
             for (int i = 0; i < np; i += max_chunk)
             {

@@ -57,6 +57,9 @@ void BinaryDump::dump_particles(
     FileIO fileIO;
     int dim[1], buf_start;
     static particle_t * ALIGNED(128) p_buf = NULL;
+
+    // TODO: reconcile this with MAX_IO_CHUNK, and update Cmake option
+    // description to explain what backends use it
 # define PBUF_SIZE 32768 // 1MB of particles
 
     if( !sp ) ERROR(( "Invalid species name \"%s\".", sp->name ));

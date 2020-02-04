@@ -30,6 +30,16 @@
 #include <openPMD/openPMD.hpp>
 #endif
 
+// TODO: delete this
+#define _LOG_PREFIX \
+  __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ")[" << rank << "]: "
+#define io_log(x) do {                                \
+    if( rank==0 ) {                                  \
+      std::cerr << _LOG_PREFIX << x << std::endl;  \
+      std::cerr.flush();                               \
+    }                                                  \
+  } while(0)
+
 // Runtime inheritance is obviously not very "VPIC like", as we will [probably]
 // incur a penalty for the vtable lookup, but given we're about to do IO this
 // is very negligible.
@@ -321,7 +331,7 @@ class HDF5Dump : public Dump_Strategy {
             hid_t group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
             el1 = uptime() - el1;
-            //sim_log("TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+            io_log("TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
             double el2 = uptime();
 
             /*
@@ -468,7 +478,7 @@ class HDF5Dump : public Dump_Strategy {
                 DUMP_FIELD_TO_HDF5("cmat", cmat, H5T_NATIVE_SHORT);
 
             el2 = uptime() - el2;
-            //sim_log("TimeHDF5Write: " << el2 << " s");
+            io_log("TimeHDF5Write: " << el2 << " s");
 
             double el3 = uptime();
 
@@ -497,7 +507,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Fclose(file_id);
 
             el3 = uptime() - el3;
-            //sim_log("TimeHDF5Close: " << el3 << " s");
+            io_log("TimeHDF5Close: " << el3 << " s");
 
             if (mpi_rank == 0)
             {
@@ -621,7 +631,7 @@ class HDF5Dump : public Dump_Strategy {
             MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
             //std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
-            //sim_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
+            io_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
 
             Pf = (float *)sp->p;
             Pi = (int *)sp->p;
@@ -663,9 +673,9 @@ class HDF5Dump : public Dump_Strategy {
             H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
 
             el1 = uptime() - el1;
-            //sim_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+            io_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
 
-            //double el2 = uptime();
+            double el2 = uptime();
 
             // This point offset is silly, and loses the type safety (pf+1)
             hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -743,8 +753,8 @@ class HDF5Dump : public Dump_Strategy {
             ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
             H5Dclose(dset_id);
 
-            //el2 = uptime() - el2;
-            //sim_log("Particle TimeHDF5Write: " << el2 << " s");
+            el2 = uptime() - el2;
+            io_log("Particle TimeHDF5Write: " << el2 << " s");
 
             double el3 = uptime();
             H5Sclose(memspace);
@@ -753,7 +763,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Gclose(group_id);
             H5Fclose(file_id);
             el3 = uptime() - el3;
-            //sim_log("Particle TimeHDF5Close: " << el3 << " s");
+            io_log("Particle TimeHDF5Close: " << el3 << " s");
 
             sp->p = sp_p;
             sp->np = sp_np;
@@ -785,7 +795,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Pset_dxpl_mpio(meta_plist_id, H5FD_MPIO_COLLECTIVE);
             H5Sselect_hyperslab(meta_filespace, H5S_SELECT_SET, (hsize_t *)&meta_offset, NULL, (hsize_t *)&meta_numparticles, NULL);
             meta_el1 = uptime() - meta_el1;
-            //sim_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
+            io_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
 
             double meta_el2 = uptime();
 
@@ -834,7 +844,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Dclose(meta_dset_id);
 
             meta_el2 = uptime() - meta_el2;
-            //sim_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
+            io_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
             double meta_el3 = uptime();
             H5Sclose(meta_memspace);
             H5Sclose(meta_filespace);
@@ -842,7 +852,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Gclose(meta_group_id);
             H5Fclose(meta_file_id);
             meta_el3 = uptime() - meta_el3;
-            //sim_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
+            io_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
 
         }
 
@@ -913,8 +923,8 @@ class HDF5Dump : public Dump_Strategy {
             hid_t group_id = H5Gcreate(file_id, hname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
             el1 = uptime() - el1;
-            //sim_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
-            //double el2 = uptime();
+            io_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
+            double el2 = uptime();
 
             // Create a variable list of field values to output.
             //size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
@@ -1023,8 +1033,8 @@ class HDF5Dump : public Dump_Strategy {
             if (hydro_dump_flag.txy)
                 DUMP_HYDRO_TO_HDF5("txy", txy, H5T_NATIVE_FLOAT);
 
-            //el2 = uptime() - el2;
-            //sim_log("TimeHDF5Write: " << el2 << " s");
+            el2 = uptime() - el2;
+            io_log("TimeHDF5Write: " << el2 << " s");
 
             double el3 = uptime();
 
@@ -1053,7 +1063,7 @@ class HDF5Dump : public Dump_Strategy {
             H5Fclose(file_id);
 
             el3 = uptime() - el3;
-            //sim_log("TimeHDF5Close: " << el3 << " s");
+            io_log("TimeHDF5Close: " << el3 << " s");
 
             if (mpi_rank == 0)
             {

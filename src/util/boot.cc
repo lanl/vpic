@@ -39,9 +39,12 @@ boot_services( int * pargc,
     boot_mp( pargc, pargv );      // Boot communication layer last.
   #endif
 
+  int num_threads = thread.n_pipeline;
+
 #elif defined(VPIC_USE_OPENMP)
   boot_mp( pargc, pargv );        // Boot communication layer first.
   omp_helper.boot( pargc, pargv );
+  int num_threads = omp_get_num_threads();
 
 #endif
 
@@ -53,7 +56,8 @@ boot_services( int * pargc,
 
   if (_world_rank == 0)
   {
-      printf("Booting with %d threads and %d (MPI) ranks \n", thread.n_pipeline, _world_size);
+      printf("Booting with %d threads (pipelines) and %d (MPI) ranks \n",
+              num_threads, _world_size);
   }
 }
 

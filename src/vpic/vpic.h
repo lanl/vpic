@@ -15,6 +15,9 @@
 
 #include <vector>
 #include <cmath>
+#include <functional>
+#include <cassert>
+#include <algorithm>
 
 #include "../boundary/boundary.h"
 #include "../collision/collision.h"
@@ -24,6 +27,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "dumpmacros.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -117,6 +121,17 @@ struct DumpParameters {
 
 }; // struct DumpParameters
 
+// TODO: should this be an enum?
+namespace dump_type {
+  const int grid_dump = 0;
+  const int field_dump = 1;
+  const int hydro_dump = 2;
+  const int particle_dump = 3;
+  const int restart_dump = 4;
+  const int history_dump = 5;
+} // namespace
+
+
 class vpic_simulation {
 public:
   vpic_simulation();
@@ -125,6 +140,14 @@ public:
   void modify( const char *fname );
   int advance( void );
   void finalize( void );
+
+  // TODO: move these somewhere more sensible
+  int predicate_count(species_t* sp, std::function <bool (int)> f);
+  int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
+
+  // TOOD: those specialized in together should probably be wrapped in a class
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
 
 protected:
 
@@ -238,6 +261,105 @@ protected:
                    int fname_tag = 1 );
   void dump_particles( const char *sp_name, const char *fbase,
                        int fname_tag = 1 );
+
+
+
+// TODO: merge back down to one function
+// TODO: template out the functor type
+// TODO: find a way to specify if we want to predicate on particle array, or
+// particle index
+  template<typename Predicate>
+  void dump_particles_predicate(
+      const char *sp_name,
+      const char *fbase,
+      int ftag,
+      //const std::function <bool (int)>& f = nullptr
+      //const std::function <bool (particle_t)>& f = nullptr
+      const Predicate& f
+  )
+  {
+      species_t *sp;
+      char fname[256];
+      FileIO fileIO;
+      int dim[1], buf_start;
+      static particle_t * ALIGNED(128) p_buf = NULL;
+# define PBUF_SIZE 32768 // 1MB of particles
+
+      sp = find_species_name( sp_name, species_list );
+      if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
+
+      if( !fbase ) ERROR(( "Invalid filename" ));
+
+      if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
+
+      if( rank()==0 )
+          MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
+
+      if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
+      else       sprintf( fname, "%s.%i", fbase, rank() );
+      FileIOStatus status = fileIO.open(fname, io_write);
+      if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
+
+      /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
+      nxout = grid->nx;
+      nyout = grid->ny;
+      nzout = grid->nz;
+      dxout = grid->dx;
+      dyout = grid->dy;
+      dzout = grid->dz;
+
+      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
+
+      int count_true = predicate_count(sp, f);
+      std::cout << "copying " << count_true << " of " << sp->np << std::endl;
+
+      dim[0] = count_true;
+      WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
+
+      // Copy a PBUF_SIZE hunk of the particle list into the particle
+      // buffer, timecenter it and write it out. This is done this way to
+      // guarantee the particle list unchanged while not requiring too
+      // much memory.
+
+      // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
+      // LARGE.
+
+      // Make a second species array, something that can hold the uniq id too
+      particle_t* ALIGNED(128) _p;
+      MALLOC_ALIGNED( _p, count_true, 128 );
+
+      species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
+      _sp.p = _p;
+      _sp.np = count_true;
+
+      // TODO: why do we need to update max_np?
+      _sp.max_np = PBUF_SIZE;
+
+      // Copy the right particles over, that meet the predicate
+      predicate_copy(sp, &_sp, f);
+
+      // Use that instead below
+      for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
+          _sp.np = count_true-buf_start;
+
+          if( sp->np > PBUF_SIZE ) {
+              sp->np = PBUF_SIZE;
+          }
+
+          //COPY( _sp.p, &sp_p[buf_start], _sp.np );
+
+          center_p( &_sp, interpolator_array );
+
+          fileIO.write( _p, _sp.np );
+      }
+
+      // Free the particle array (sp done by scope)
+      FREE_ALIGNED( _p );
+
+      if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
+  }
+
+
 
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);
@@ -671,5 +793,6 @@ protected:
   void user_diagnostics(void);
   void user_particle_collisions(void);
 };
+
 
 #endif // vpic_h

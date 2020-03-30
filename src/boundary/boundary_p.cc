@@ -1,5 +1,6 @@
 #define IN_boundary
 
+#include <iostream> // TODO: delete
 #include "boundary_private.h"
 
 // If this is defined particle and mover buffers will not resize dynamically.
@@ -237,6 +238,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       const int32_t sp_id = sp->id;
 
       particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
+      size_t* RESTRICT ALIGNED(128) p_id = sp->p_id;
+
       int np = sp->np;
 
       particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
@@ -304,6 +307,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           pi->dispz = pm->dispz;
 
           #endif
+
+          // Send global id too
+          pi->global_particle_id = p_id[i];
 
           ( &pi->dx )[ axis[ face ] ] = dir[ face ];
           pi->i                       = nn - range[ face ];
@@ -556,6 +562,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     // Unpack the species list for random acesss.
 
     particle_t       * RESTRICT ALIGNED(32) sp_p [ MAX_SP ];
+    size_t* RESTRICT ALIGNED(32) sp_p_id[ MAX_SP ];
     particle_mover_t * RESTRICT ALIGNED(32) sp_pm[ MAX_SP ];
 
     float sp_q [ MAX_SP ];
@@ -574,7 +581,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     LIST_FOR_EACH( sp, sp_list )
     {
-      sp_p [ sp->id ] = sp->p;
+      sp_p[ sp->id ] = sp->p;
+      sp_p_id[ sp->id ] = sp->p_id;
       sp_pm[ sp->id ] = sp->pm;
       sp_q [ sp->id ] = sp->q;
       sp_np[ sp->id ] = sp->np;
@@ -596,8 +604,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     do
     {
-      /**/  particle_t          * RESTRICT ALIGNED(32) p;
-      /**/  particle_mover_t    * RESTRICT ALIGNED(16) pm;
+      particle_t* RESTRICT ALIGNED(32) p;
+      size_t* RESTRICT ALIGNED(32) p_id;
+      particle_mover_t* RESTRICT ALIGNED(16) pm;
       const particle_injector_t * RESTRICT ALIGNED(16) pi;
 
       int np, nm, n, id;
@@ -646,7 +655,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       {
         id = pi->sp_id;
 
-        p  = sp_p [id];
+        p = sp_p[id];
+        p_id = sp_p_id[id];
         np = sp_np[id];
 
         pm = sp_pm[id];
@@ -679,6 +689,10 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         p[np].w  = pi->w;
 
         #endif
+
+        p_id[np] = pi->global_particle_id;
+
+        std::cout << "Recving particle with global_id " << pi->global_particle_id << " on rank " << _world_rank << std::endl;
 
         sp_np[id] = np + 1;
 

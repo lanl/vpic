@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -18,8 +18,14 @@ checkpt_species( const species_t * sp )
   CHECKPT( sp, 1 );
   CHECKPT_STR( sp->name );
   checkpt_data( sp->p,
-                sp->np    *sizeof(particle_t),
-                sp->max_np*sizeof(particle_t), 1, 1, 128 );
+                sp->np     * sizeof(particle_t),
+                sp->max_np * sizeof(particle_t), 1, 1, 128 );
+
+  // RFB: Add checkpointing of particle list
+  checkpt_data( sp->p_id,
+                sp->np    *sizeof(size_t),
+                sp->max_np*sizeof(size_t), 1, 1, 128 );
+
   checkpt_data( sp->pm,
                 sp->nm    *sizeof(particle_mover_t),
                 sp->max_nm*sizeof(particle_mover_t), 1, 1, 128 );
@@ -34,8 +40,9 @@ restore_species( void )
   species_t * sp;
   RESTORE( sp );
   RESTORE_STR( sp->name );
-  sp->p  = (particle_t *)      restore_data();
-  sp->pm = (particle_mover_t *)restore_data();
+  sp->p  = (particle_t *)        restore_data();
+  sp->p_id  = (size_t*)          restore_data();
+  sp->pm = (particle_mover_t *)  restore_data();
   RESTORE_ALIGNED( sp->partition );
   RESTORE_PTR( sp->g );
   RESTORE_PTR( sp->next );
@@ -49,6 +56,7 @@ delete_species( species_t * sp )
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
+  FREE_ALIGNED( sp->p_id );
   FREE( sp->name );
   FREE( sp );
 }
@@ -136,6 +144,7 @@ species( const char * name,
   sp->m = m;
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
+  MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
   sp->max_np = max_local_np;
 
   MALLOC_ALIGNED( sp->pm, max_local_nm, 128 );
@@ -146,7 +155,7 @@ species( const char * name,
   sp->sort_out_of_place = sort_out_of_place;
   MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 
-  sp->g = g;   
+  sp->g = g;
 
   /* id, next are set by append species */
 

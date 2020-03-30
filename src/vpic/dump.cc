@@ -9,10 +9,7 @@
  * snell - revised to add strided dumps, time history dumps, others  20080404
  */
 
-#include <cassert>
-
 #include "vpic.h"
-#include "dumpmacros.h"
 #include "../util/io/FileUtils.h"
 
 /* -1 means no ranks talk */
@@ -33,6 +30,46 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
 /*****************************************************************************
  * ASCII dump IO
  *****************************************************************************/
+
+int vpic_simulation::predicate_count(species_t* sp, std::function <bool (int)> f)
+{
+    if (f != nullptr) return std::count_if( sp->p_id, sp->p_id + sp->np, f);
+    else return sp->np;
+}
+int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particle_t)> f)
+{
+    if (f != nullptr) return std::count_if( sp->p, sp->p + sp->np, f);
+    else return sp->np;
+}
+
+void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f)
+{
+    if (f != nullptr)
+        std::copy_if( sp_from->p, sp_from->p + sp_from->np, sp_to->p, f);
+}
+void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f)
+{
+    if (f != nullptr)
+    {
+        //std::copy_if( sp->p_id, sp->p_id + sp->np, _sp.p, f);
+        // Manually loop over particles to do the 'cross copy' from p_id->p
+
+        int next = 0; // track where we fill
+        for (int i = 0; i < sp_from->np; i++)
+        {
+            int this_id = sp_from->p_id[i];
+            if ( f(this_id) || f == nullptr)
+            {
+                // copy i (inherently serial..)
+                sp_to->p[next] = sp_from->p[i];
+                next++;
+            }
+
+        }
+        std::cout << "copied " << next << std::endl;
+    }
+}
+
 
 void
 vpic_simulation::dump_energies( const char *fname,
@@ -124,16 +161,6 @@ enum dump_types {
   restart_dump = 4
 };
 */
-
-// TODO: should this be an enum?
-namespace dump_type {
-  const int grid_dump = 0;
-  const int field_dump = 1;
-  const int hydro_dump = 2;
-  const int particle_dump = 3;
-  const int restart_dump = 4;
-  const int history_dump = 5;
-} // namespace
 
 void
 vpic_simulation::dump_grid( const char *fbase ) {

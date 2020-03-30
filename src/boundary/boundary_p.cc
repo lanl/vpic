@@ -376,6 +376,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         p0[i] = p0[np];
 
         #endif
+
+        p_id[i] = p_id[np];    /* keep p_id[] in sync with p[] */
       }
 
       sp->np = np;
@@ -478,6 +480,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     {
       particle_mover_t * new_pm;
       particle_t       * new_p;
+      size_t           * new_p_id;
 
       n = sp->np + max_inj;
 
@@ -499,7 +502,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         FREE_ALIGNED( sp->p );
 
+        /* changes made to p[] must be mirrored in p_id[] */
+        MALLOC_ALIGNED( new_p_id, n, 128 );
+
+        COPY( new_p_id, sp->p_id, sp->np );
+
+        FREE_ALIGNED( sp->p_id );
+
         sp->p      = new_p;
+        sp->p_id   = new_p_id;
         sp->max_np = n;
       }
 
@@ -525,7 +536,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         FREE_ALIGNED( sp->p );
 
+        /* changes made to p[] must be mirrored in p_id[] */
+        MALLOC_ALIGNED( new_p_id, n, 128 );
+
+        COPY( new_p_id, sp->p_id, sp->np );
+
+        FREE_ALIGNED( sp->p_id );
+
         sp->p      = new_p;
+        sp->p_id   = new_p_id;
         sp->max_np = n;
       }
 

@@ -30,6 +30,7 @@ sort_p( species_t * sp )
   sp->last_sorted = sp->g->step;
 
   particle_t * ALIGNED(128) p = sp->p;
+  size_t * ALIGNED(128) p_id = sp->p_id;
 
   const int np                = sp->np;
   const int nc                = sp->g->nv;
@@ -102,8 +103,9 @@ sort_p( species_t * sp )
 
     for( i = 0; i < np; i++ )
     {
-      out_p[ next[ in_p[i].i ]++ ] = in_p[i];
-      out_p_id[ next[ in_p[i].i ]++ ] = in_p_id[i];
+      out_p[ next[ in_p[i].i ] ] = in_p[i];
+      out_p_id[ next[ in_p[i].i ] ] = in_p_id[i];
+      next[ in_p[i].i ]++;  /* advance to next free slot for this cell */
     }
 
     FREE_ALIGNED( sp->p );
@@ -120,6 +122,9 @@ sort_p( species_t * sp )
     particle_t               save_p;
     particle_t * ALIGNED(32) src;
     particle_t * ALIGNED(32) dest;
+    size_t save_pid;
+    size_t * ALIGNED(32) srcid;
+    size_t * ALIGNED(32) destid;
 
     i = 0;
     while( i < nc )
@@ -132,16 +137,22 @@ sort_p( species_t * sp )
       else
       {
         src = &p[ next[i] ];
+        srcid = &p_id[ next[i] ];
 
         for( ; ; )
         {
-          dest = &p[ next[ src->i ]++ ];
+          dest = &p[ next[ src->i ] ];
+          destid = &p_id[ next[ src->i ] ];
+          next[ src->i ]++;  /* advance to next free slot for this cell */
 
           if ( src == dest ) break;
 
           save_p = *dest;
           *dest  = *src;
           *src   = save_p;
+          save_pid = *destid;
+          *destid = *srcid;
+          *srcid = save_pid;
         }
       }
     }

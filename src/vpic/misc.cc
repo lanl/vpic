@@ -25,7 +25,9 @@
  *
  * @return The global particle id
  */
-size_t set_particle_id(int i, int max_np, int this_rank, int scale_factor = 1)
+size_t
+vpic_simulation::set_particle_id(int i, int max_np, int this_rank,
+                                 int scale_factor)
 {
     // For now lets use a scheme for the append processor id to local id,
     // such that if max_np = 128 and we want to generate a local id for

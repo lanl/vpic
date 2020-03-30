@@ -93,6 +93,7 @@ typedef struct species {
   grid_t * g;                         // Underlying grid
   species_id id;                      // Unique identifier for a species
   struct species *next;               // Next species in the list
+  class vpic_simulation *vsim;        // Simulation we belong to
 } species_t;
 
 #endif // _species_advance_aos_h_

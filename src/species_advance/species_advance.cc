@@ -32,6 +32,7 @@ checkpt_species( const species_t * sp )
   CHECKPT_ALIGNED( sp->partition, sp->g->nv+1, 128 );
   CHECKPT_PTR( sp->g );
   CHECKPT_PTR( sp->next );
+  CHECKPT_PTR( sp->vsim );
 }
 
 species_t *
@@ -46,6 +47,7 @@ restore_species( void )
   RESTORE_ALIGNED( sp->partition );
   RESTORE_PTR( sp->g );
   RESTORE_PTR( sp->next );
+  RESTORE_PTR( sp->vsim );
   return sp;
 }
 
@@ -123,7 +125,8 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         grid_t * g )
+         grid_t * g,
+         class vpic_simulation *vsim )
 {
   species_t * sp;
   int len = name ? strlen(name) : 0;
@@ -156,6 +159,7 @@ species( const char * name,
   MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 
   sp->g = g;
+  sp->vsim = vsim;
 
   /* id, next are set by append species */
 

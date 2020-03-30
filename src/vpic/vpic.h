@@ -149,6 +149,11 @@ public:
   void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
   void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
 
+  /* XXX: public interface to set_particle_id() for child_langmuir.cc */
+  int gen_particle_id(int np, int maxnp) {
+       return set_particle_id(np, maxnp, rank());
+  }
+
 protected:
 
   // Directly initialized by user
@@ -624,7 +629,7 @@ protected:
     return append_species( species( name, (float)q, (float)m,
                                     (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
-                                    grid ), &species_list );
+                                    grid, this ), &species_list );
   }
 
   inline species_t *
@@ -639,6 +644,9 @@ protected:
 
   ///////////////////
   // Particle helpers
+
+  size_t set_particle_id( int i, int max_np, int this_rank,
+                          int scale_factor = 1);
 
   // Note: Don't use injection with aging during initialization
 
@@ -664,9 +672,12 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w )
   {
-    particle_t * RESTRICT p = sp->p + (sp->np++);
+    particle_t * RESTRICT p = sp->p + sp->np;
+    size_t * RESTRICT p_id = sp->p_id + sp->np;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+    *p_id = set_particle_id(sp->np, sp->max_np, rank());
+    sp->np++;
   }
 
   // This variant does a raw inject and moves the particles
@@ -678,13 +689,16 @@ protected:
                        float dispx, float dispy, float dispz,
                        int update_rhob )
   {
-    particle_t       * RESTRICT p  = sp->p  + (sp->np++);
+    particle_t       * RESTRICT p  = sp->p  + sp->np;
+    size_t           * RESTRICT p_id = sp->p_id + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+    *p_id = set_particle_id(sp->np, sp->max_np, rank());
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
     if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
+    sp->np++;
   }
 
   //////////////////////////////////

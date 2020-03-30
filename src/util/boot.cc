@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include "stdio.h"
+
 double _boot_timestamp = 0;
 
 double
@@ -37,9 +39,12 @@ boot_services( int * pargc,
     boot_mp( pargc, pargv );      // Boot communication layer last.
   #endif
 
+  int num_threads = thread.n_pipeline;
+
 #elif defined(VPIC_USE_OPENMP)
   boot_mp( pargc, pargv );        // Boot communication layer first.
   omp_helper.boot( pargc, pargv );
+  int num_threads = omp_get_num_threads();
 
 #endif
 
@@ -48,6 +53,12 @@ boot_services( int * pargc,
   mp_barrier();
   _boot_timestamp = 0;
   _boot_timestamp = uptime();
+
+  if (_world_rank == 0)
+  {
+      printf("Booting with %d threads (pipelines) and %d (MPI) ranks \n",
+              num_threads, _world_size);
+  }
 }
 
 // This operates in reverse order from boot_services

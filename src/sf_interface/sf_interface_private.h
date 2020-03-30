@@ -24,6 +24,15 @@ void
 reduce_accumulator_array_pipeline( accumulator_array_t * RESTRICT aa );
 
 ///////////////////////////////////////////////////////////////////////////////
+// clear_hydro_pipeline interface
+
+void
+clear_hydro_array_pipeline( hydro_array_t * RESTRICT ha );
+
+void
+reduce_hydro_array_pipeline( hydro_array_t * RESTRICT ha );
+
+///////////////////////////////////////////////////////////////////////////////
 
 void
 unload_accumulator_array_pipeline( field_array_t * RESTRICT fa,

@@ -1499,10 +1499,11 @@ namespace v4
   {
     v4float d;
 
-    d.v = vaddq_f32( vmulq_f32( a.v, b.v ), c.v );
+    // d.v = vfmaq_f32( c.v, a.v, b.v );
 
-    // This seems broken.
-    // d.v = vfmaq_f32( a.v, b.v, c.v );
+    // This may be faster. The ARM clang compiler is very good at finding fma
+    // instructions and writing the optimal assembly. Have not checked for GNU.
+    d.v = vaddq_f32( vmulq_f32( a.v, b.v ), c.v );
 
     return d;
   }
@@ -1511,10 +1512,9 @@ namespace v4
   {
     v4float d;
 
+    // There does not appear to be a way to write this with a single NEON
+    // intrinsic but ARM clang is good at optimizing this.
     d.v = vsubq_f32( vmulq_f32( a.v, b.v ), c.v );
-
-    // This seems broken.
-    // d.v = vfmsq_f32( a.v, b.v, c.v );
 
     return d;
   }
@@ -1523,6 +1523,11 @@ namespace v4
   {
     v4float d;
 
+    // This is an option but the compiler seems to do a good job with the
+    // chained instruction implementation.
+    // d.v = vfmsq_f32( c.v, a.v, b.v );
+
+    // ARM clang is good at optimizing this.
     d.v = vsubq_f32( c.v, vmulq_f32( a.v, b.v ) );
 
     return d;

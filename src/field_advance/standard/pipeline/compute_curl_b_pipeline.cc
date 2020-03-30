@@ -57,7 +57,7 @@ compute_curl_b_pipeline( field_array_t * RESTRICT fa )
   //--------------------------------------------------------------------------//
   // Begin tangential B ghost setup
   //--------------------------------------------------------------------------//
-  
+
   begin_remote_ghost_tang_b( fa->f, fa->g );
 
   local_ghost_tang_b( fa->f, fa->g );
@@ -74,12 +74,13 @@ compute_curl_b_pipeline( field_array_t * RESTRICT fa )
   // stragglers.
 
   pipeline_args_t args[1];
+
   args->f = fa->f;
   args->p = (sfa_params_t *)fa->params;
   args->g = fa->g;
 
   EXEC_PIPELINES( compute_curl_b, args, 0 );
-  
+
   // While the pipelines are busy, do non-bulk interior fields
 
   DECLARE_STENCIL();
@@ -132,7 +133,7 @@ compute_curl_b_pipeline( field_array_t * RESTRICT fa )
   }
 
   WAIT_PIPELINES();
-  
+
   //--------------------------------------------------------------------------//
   // Finish tangential B ghost setup
   //--------------------------------------------------------------------------//

@@ -141,15 +141,15 @@ public:
   int advance( void );
   void finalize( void );
 
-// TODO: move these somewhere more sensible
-int predicate_count(species_t* sp, std::function <bool (int)> f);
-int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
+  // TODO: move these somewhere more sensible
+  int predicate_count(species_t* sp, std::function <bool (int)> f);
+  int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
 
-// TOOD: those specialized in together should probably be wrapped in a class
-void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
-void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
+  // TOOD: those specialized in together should probably be wrapped in a class
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
 
-private:
+protected:
 
   // Directly initialized by user
 
@@ -221,7 +221,7 @@ private:
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
- 
+
   char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------

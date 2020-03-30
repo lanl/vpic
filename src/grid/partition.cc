@@ -81,9 +81,9 @@ partition_periodic_box( grid_t * g,
   size_grid(g,gnx/gpx,gny/gpy,gnz/gpz);
 
   // Join the grid to neighbors
-  INDEX_TO_RANK(px-1,py,  pz,  rank); join_grid(g,BOUNDARY(-1, 0, 0),rank);
-  INDEX_TO_RANK(px,  py-1,pz,  rank); join_grid(g,BOUNDARY( 0,-1, 0),rank);
-  INDEX_TO_RANK(px,  py,  pz-1,rank); join_grid(g,BOUNDARY( 0, 0,-1),rank);
+  INDEX_TO_RANK(px-1,py,  pz,  rank); join_grid(g,BOUNDARY((-1), 0, 0),rank);
+  INDEX_TO_RANK(px,  py-1,pz,  rank); join_grid(g,BOUNDARY( 0,(-1), 0),rank);
+  INDEX_TO_RANK(px,  py,  pz-1,rank); join_grid(g,BOUNDARY( 0, 0,(-1)),rank);
   INDEX_TO_RANK(px+1,py,  pz,  rank); join_grid(g,BOUNDARY( 1, 0, 0),rank);
   INDEX_TO_RANK(px,  py+1,pz,  rank); join_grid(g,BOUNDARY( 0, 1, 0),rank);
   INDEX_TO_RANK(px,  py,  pz+1,rank); join_grid(g,BOUNDARY( 0, 0, 1),rank);
@@ -109,8 +109,8 @@ partition_absorbing_box( grid_t * g,
   RANK_TO_INDEX( world_rank, px,py,pz );
 
   if( px==0 && gnx>1 ) { 
-    set_fbc(g,BOUNDARY(-1,0,0),absorb_fields);
-    set_pbc(g,BOUNDARY(-1,0,0),pbc);
+    set_fbc(g,BOUNDARY((-1),0,0),absorb_fields);
+    set_pbc(g,BOUNDARY((-1),0,0),pbc);
   } 
 
   if( px==gpx-1 && gnx>1 ) {
@@ -119,8 +119,8 @@ partition_absorbing_box( grid_t * g,
   }
 
   if( py==0 && gny>1 ) { 
-    set_fbc(g,BOUNDARY(0,-1,0),absorb_fields);
-    set_pbc(g,BOUNDARY(0,-1,0),pbc);
+    set_fbc(g,BOUNDARY(0,(-1),0),absorb_fields);
+    set_pbc(g,BOUNDARY(0,(-1),0),pbc);
   } 
 
   if( py==gpy-1 && gny>1 ) {
@@ -129,8 +129,8 @@ partition_absorbing_box( grid_t * g,
   }
 
   if( pz==0 && gnz>1 ) { 
-    set_fbc(g,BOUNDARY(0,0,-1),absorb_fields);
-    set_pbc(g,BOUNDARY(0,0,-1),pbc);
+    set_fbc(g,BOUNDARY(0,0,(-1)),absorb_fields);
+    set_pbc(g,BOUNDARY(0,0,(-1)),pbc);
   } 
 
   if( pz==gpz-1 && gnz>1 ) {
@@ -161,8 +161,8 @@ partition_metal_box( grid_t * g,
   RANK_TO_INDEX( world_rank, px,py,pz );
 
   if( px==0 && gnx>1 ) {
-    set_fbc(g,BOUNDARY(-1,0,0),anti_symmetric_fields);
-    set_pbc(g,BOUNDARY(-1,0,0),reflect_particles);
+    set_fbc(g,BOUNDARY((-1),0,0),anti_symmetric_fields);
+    set_pbc(g,BOUNDARY((-1),0,0),reflect_particles);
   }
 
   if( px==gpx-1 && gnx>1 ) {
@@ -171,8 +171,8 @@ partition_metal_box( grid_t * g,
   }
 
   if( py==0 && gny>1 ) {
-    set_fbc(g,BOUNDARY(0,-1,0),anti_symmetric_fields);
-    set_pbc(g,BOUNDARY(0,-1,0),reflect_particles);
+    set_fbc(g,BOUNDARY(0,(-1),0),anti_symmetric_fields);
+    set_pbc(g,BOUNDARY(0,(-1),0),reflect_particles);
   }
 
   if( py==gpy-1 && gny>1 ) {
@@ -181,8 +181,8 @@ partition_metal_box( grid_t * g,
   }
 
   if( pz==0 && gnz>1 ) {
-    set_fbc(g,BOUNDARY(0,0,-1),anti_symmetric_fields);
-    set_pbc(g,BOUNDARY(0,0,-1),reflect_particles);
+    set_fbc(g,BOUNDARY(0,0,(-1)),anti_symmetric_fields);
+    set_pbc(g,BOUNDARY(0,0,(-1)),reflect_particles);
   }
 
   if( pz==gpz-1 && gnz>1 ) {

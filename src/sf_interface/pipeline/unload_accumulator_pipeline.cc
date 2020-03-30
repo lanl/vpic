@@ -48,27 +48,31 @@ unload_accumulator_pipeline_scalar( unload_accumulator_pipeline_args_t * args,
   DISTRIBUTE_VOXELS( 1, nx+1, 1, ny+1, 1, nz+1, 1,
                      pipeline_rank, n_pipeline, x, y, z, n_voxel );
 
-# define LOAD_STENCIL()                                                 \
-  f0  = &f(x,  y,  z  );                                                \
-  a0  = &a(x,  y,  z  );                                                \
-  ax  = &a(x-1,y,  z  ); ay  = &a(x,  y-1,z  ); az  = &a(x,  y,  z-1);  \
-  ayz = &a(x,  y-1,z-1); azx = &a(x-1,y,  z-1); axy = &a(x-1,y-1,z  )
+# define LOAD_STENCIL()      \
+  f0  = &f( x,   y,   z   ); \
+  a0  = &a( x,   y,   z   ); \
+  ax  = &a( x-1, y,   z   ); \
+  ay  = &a( x,   y-1, z   ); \
+  az  = &a( x,   y,   z-1 ); \
+  ayz = &a( x,   y-1, z-1 ); \
+  azx = &a( x-1, y,   z-1 ); \
+  axy = &a( x-1, y-1, z   )
 
   LOAD_STENCIL();
 
   for( ; n_voxel; n_voxel-- )
   {
-    f0->jfx += cx*( a0->jx[0] + ay->jx[1] + az->jx[2] + ayz->jx[3] );
-    f0->jfy += cy*( a0->jy[0] + az->jy[1] + ax->jy[2] + azx->jy[3] );
-    f0->jfz += cz*( a0->jz[0] + ax->jz[1] + ay->jz[2] + axy->jz[3] );
+    f0->jfx += cx * ( a0->jx[0] + ay->jx[1] + az->jx[2] + ayz->jx[3] );
+    f0->jfy += cy * ( a0->jy[0] + az->jy[1] + ax->jy[2] + azx->jy[3] );
+    f0->jfz += cz * ( a0->jz[0] + ax->jz[1] + ay->jz[2] + axy->jz[3] );
 
     f0++; a0++; ax++; ay++; az++; ayz++; azx++; axy++;
 
     x++;
     if ( x > nx + 1 )
     {
-      x=1, y++;
-      if ( y > ny + 1 ) y=1, z++;
+      x = 1, y++;
+      if ( y > ny + 1 ) y = 1, z++;
       LOAD_STENCIL();
     }
   }
@@ -96,33 +100,36 @@ unload_accumulator_array_pipeline( field_array_t * RESTRICT fa,
     ERROR( ( "Bad args" ) );
   }
 
-# if 0 // Original non-pipelined version
-
-  for( z=1; z<=nz+1; z++ ) {
-    for( y=1; y<=ny+1; y++ ) {
-
+# if 0 // Original non-pipelined version.
+  for( z = 1; z <= nz+1; z++ )
+  {
+    for( y = 1; y <= ny+1; y++ )
+    {
       x   = 1;
-      f0  = &f(x,  y,  z  );
-      a0  = &a(x,  y,  z  );
-      ax  = &a(x-1,y,  z  ); ay  = &a(x,  y-1,z  ); az  = &a(x,  y,  z-1);
-      ayz = &a(x,  y-1,z-1); azx = &a(x-1,y,  z-1); axy = &a(x-1,y-1,z  );
+      f0  = &f( x,   y,   z   );
+      a0  = &a( x,   y,   z   );
+      ax  = &a( x-1, y,   z   );
+      ay  = &a( x,   y-1, z   );
+      az  = &a( x,   y,   z-1 );
+      ayz = &a( x,   y-1, z-1 );
+      azx = &a( x-1, y,   z-1 );
+      axy = &a( x-1, y-1, z   );
 
-      for( x=1; x<=nx+1; x++ ) {
-
-        f0->jfx += cx*( a0->jx[0] + ay->jx[1] + az->jx[2] + ayz->jx[3] );
-        f0->jfy += cy*( a0->jy[0] + az->jy[1] + ax->jy[2] + azx->jy[3] );
-        f0->jfz += cz*( a0->jz[0] + ax->jz[1] + ay->jz[2] + axy->jz[3] );
+      for( x = 1; x <= nx+1; x++ )
+      {
+        f0->jfx += cx * ( a0->jx[0] + ay->jx[1] + az->jx[2] + ayz->jx[3] );
+        f0->jfy += cy * ( a0->jy[0] + az->jy[1] + ax->jy[2] + azx->jy[3] );
+        f0->jfz += cz * ( a0->jz[0] + ax->jz[1] + ay->jz[2] + axy->jz[3] );
 
         f0++; a0++; ax++; ay++; az++; ayz++; azx++; axy++;
-
       }
     }
   }
-
 # endif
 
   args->f  = fa->f;
   args->a  = aa->a;
+
   args->nx = fa->g->nx;
   args->ny = fa->g->ny;
   args->nz = fa->g->nz;

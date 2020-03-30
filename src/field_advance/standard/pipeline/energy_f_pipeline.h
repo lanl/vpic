@@ -12,7 +12,7 @@ typedef struct pipeline_args
   const field_t      * ALIGNED(128) f;
   const sfa_params_t *              p;
   const grid_t       *              g;
-  double en[ MAX_PIPELINE+1 ][ 6 ];
+  double en[ MAX_PIPELINE + 1 ][ 6 ];
 } pipeline_args_t;
 
 #define DECLARE_STENCIL()                                                  \

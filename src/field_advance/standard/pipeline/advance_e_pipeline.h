@@ -67,7 +67,7 @@ typedef struct pipeline_args
 
 #define UPDATE_EZ()                                         \
   f0->tcaz = ( px * ( f0->cby * m[f0->fmaty].rmuy -         \
-		      fx->cby * m[fx->fmaty].rmuy) -        \
+		      fx->cby * m[fx->fmaty].rmuy ) -       \
                py * ( f0->cbx * m[f0->fmatx].rmux -         \
 		      fy->cbx * m[fy->fmatx].rmux ) ) -     \
              damp * f0->tcaz;                               \

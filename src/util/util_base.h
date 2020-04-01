@@ -297,6 +297,8 @@ extern int _world_rank;
 inline int
 rank() { return world_rank; }
 
+inline int
+nproc() { return world_size; }
 
 // Strip all instances of key from the command line. Returns the
 // number of times key was found.

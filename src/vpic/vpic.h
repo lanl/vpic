@@ -379,12 +379,6 @@ protected:
   ///////////////////
   // Useful accessors
 
-  inline int
-  rank() { return world_rank; }
-
-  inline int
-  nproc() { return world_size; }
-
   inline void
   barrier() { mp_barrier(); }
 

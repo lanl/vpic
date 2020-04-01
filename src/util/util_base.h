@@ -294,6 +294,10 @@ extern int _world_size;
 #define world_rank ((int)_world_rank)
 extern int _world_rank;
 
+inline int
+rank() { return world_rank; }
+
+
 // Strip all instances of key from the command line. Returns the
 // number of times key was found.
 

@@ -54,8 +54,8 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         grid_t * g,
-         class vpic_simulation *vsim );
+         grid_t * g
+       );
 
 // FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS

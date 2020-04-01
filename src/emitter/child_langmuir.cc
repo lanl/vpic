@@ -100,7 +100,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         p[np].u##Y = u##Y;                                              \
         p[np].u##Z = u##Z;                                              \
         p[np].w    = w;                                                 \
-        p_id[np] = sp->vsim->gen_particle_id(np, sp->max_np);           \
+        p_id[np] = sp->generate_particle_id(np, sp->max_np);            \
         accumulate_rhob( f, p+np, g, -qsp );                            \
         np++;                                                           \
                                                                         \

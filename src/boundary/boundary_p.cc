@@ -76,7 +76,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
   int n_send[6], n_recv[6], n_ci;
 
-  species_t * sp;
+  species_t* sp;
 
   int face;
 

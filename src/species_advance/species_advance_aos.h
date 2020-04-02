@@ -96,7 +96,6 @@ class species_t {
         grid_t * g;                         // Underlying grid
         species_id id;                      // Unique identifier for a species
         species_t* next;                    // Next species in the list
-        class vpic_simulation *vsim;        // Simulation we belong to
 
         // TODO: this is not technically guaranteed to be unique, but it's good for
         // <how ever many times max_np fits inside the next highest order of

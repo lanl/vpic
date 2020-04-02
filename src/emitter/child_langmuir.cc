@@ -1,5 +1,6 @@
 #define IN_emitter
 #include "emitter_private.h"
+#include "../vpic/vpic.h"
 
 /* Private interface *********************************************************/
 
@@ -42,6 +43,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
   /**/  rng_t            * RESTRICT              rng = cl->rng;
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
+  /**/  size_t           * RESTRICT ALIGNED(128) p_id = sp->p_id;
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
   /**/  grid_t           * RESTRICT              g   = sp->g;
 
@@ -98,6 +100,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         p[np].u##Y = u##Y;                                              \
         p[np].u##Z = u##Z;                                              \
         p[np].w    = w;                                                 \
+        p_id[np] = sp->generate_particle_id(np, sp->max_np);            \
         accumulate_rhob( f, p+np, g, -qsp );                            \
         np++;                                                           \
                                                                         \

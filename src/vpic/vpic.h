@@ -379,12 +379,6 @@ protected:
   ///////////////////
   // Useful accessors
 
-  inline int
-  rank() { return world_rank; }
-
-  inline int
-  nproc() { return world_size; }
-
   inline void
   barrier() { mp_barrier(); }
 
@@ -637,11 +631,7 @@ protected:
      return find_species_id( id, species_list );
   }
 
-  ///////////////////
-  // Particle helpers
-
   // Note: Don't use injection with aging during initialization
-
   // Defaults in the declaration below enable backwards compatibility.
 
   void
@@ -664,9 +654,12 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w )
   {
-    particle_t * RESTRICT p = sp->p + (sp->np++);
+    particle_t * RESTRICT p = sp->p + sp->np;
+    size_t * RESTRICT p_id = sp->p_id + sp->np;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    sp->np++;
   }
 
   // This variant does a raw inject and moves the particles
@@ -678,13 +671,16 @@ protected:
                        float dispx, float dispy, float dispz,
                        int update_rhob )
   {
-    particle_t       * RESTRICT p  = sp->p  + (sp->np++);
+    particle_t       * RESTRICT p  = sp->p  + sp->np;
+    size_t           * RESTRICT p_id = sp->p_id + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
     if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
+    sp->np++;
   }
 
   //////////////////////////////////

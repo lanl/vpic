@@ -85,6 +85,8 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->aux_p;
+  const size_t * RESTRICT ALIGNED(128) p_src_id = args->p_id;
+  /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->aux_p_id;
 
   int i, i1;
   int n_subsort = args->n_subsort;
@@ -132,6 +134,8 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
     p_dst[j] = p_src[i];
 
 #   endif
+
+    p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
   }
 }
 
@@ -146,6 +150,8 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->aux_p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->p;
+  const size_t * RESTRICT ALIGNED(128) p_src_id = args->aux_p_id;
+  /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->p_id;
 
   int i0, i1, v0, v1, i, j, v, sum, count;
 
@@ -209,6 +215,8 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
       p_dst[j] = p_src[i];
 
 #     endif
+
+      p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
     }
   }
 }
@@ -234,6 +242,8 @@ sort_p_pipeline( species_t * sp )
 
   particle_t * RESTRICT ALIGNED(128) p = sp->p;
   particle_t * RESTRICT ALIGNED(128) aux_p;
+  size_t * RESTRICT ALIGNED(128) p_id = sp->p_id;
+  size_t * RESTRICT ALIGNED(128) aux_p_id;
 
   int n_particle = sp->np;
 
@@ -270,6 +280,8 @@ sort_p_pipeline( species_t * sp )
   // Ensure enough scratch space is allocated for the sorting.
   sz_scratch = ( sizeof( *p ) * n_particle      +
 		 128                            +
+                 sizeof( *p_id ) * n_particle   +
+                 128                            +
                  sizeof( *partition ) * n_voxel +
 		 128                            +
                  sizeof( *coarse_partition ) * ( cp_stride * n_pipeline + 1 ) );
@@ -283,13 +295,16 @@ sort_p_pipeline( species_t * sp )
     max_scratch = sz_scratch;
   }
 
-  aux_p            = ALIGN_PTR( particle_t, scratch,            128 );
-  next             = ALIGN_PTR( int,        aux_p + n_particle, 128 );
-  coarse_partition = ALIGN_PTR( int,        next  + n_voxel,    128 );
+  aux_p            = ALIGN_PTR( particle_t, scratch,               128 );
+  aux_p_id         = ALIGN_PTR( size_t,     aux_p + n_particle,    128 );
+  next             = ALIGN_PTR( int,        aux_p_id + n_particle, 128 );
+  coarse_partition = ALIGN_PTR( int,        next  + n_voxel,       128 );
 
   // Setup pipeline arguments.
   args->p                = p;
   args->aux_p            = aux_p;
+  args->p_id             = p_id;
+  args->aux_p_id         = aux_p_id;
   args->coarse_partition = coarse_partition;
   args->next             = next;
   args->partition        = partition;
@@ -350,8 +365,10 @@ sort_p_pipeline( species_t * sp )
     coarse_partition[0] = 0;
     coarse_partition[1] = n_particle;
 
-    args->p     = aux_p;
-    args->aux_p = p;
+    args->p        = aux_p;
+    args->aux_p    = p;
+    args->p_id     = aux_p_id;
+    args->aux_p_id = p_id;
 
     subsort_pipeline_scalar( args, 0, 1 );
 
@@ -367,5 +384,6 @@ sort_p_pipeline( species_t * sp )
     // TO MOVE SP->P AROUND AND DO MORE MALLOCS PER STEP I.E. HEAP
     // FRAGMENTATION, COULD AVOID THIS COPY.
     COPY( p, aux_p, n_particle );
+    COPY( p_id, aux_p_id, n_particle );
   }
 }

@@ -5,41 +5,7 @@
 //   Los Alamos National Lab
 // March/April 2004 - Original version
 
-#include <cassert>
 #include "vpic.h"
-
-// TODO: this is not technically guaranteed to be unique, but it's good for
-// <how ever many times max_np fits inside the next highest order of
-// magnitude> of the initial particle population
-// TODO: this is probably better in binary, but it's nice for it to be human
-// readable (for now), as it's essentially for diagnostics
-/**
- * @brief Determine a particle ID that has a high probably of being globally
- * unique
- *
- * @param i Current local particle id (i.e slot in the particle array)
- * @param max_np Max number of particles
- * @param this_rank Rank to calculate it for (likely origin rank)
- * @param scale_factor How much to space out the id_base, as a twiddle factor
- * to avoid overlapping ids (10 is good if you won't overflow..)
- *
- * @return The global particle id
- */
-size_t set_particle_id(int i, int max_np, int this_rank, int scale_factor = 1)
-{
-    // For now lets use a scheme for the append processor id to local id,
-    // such that if max_np = 128 and we want to generate a local id for
-    // particle 57 we produce:
-    // 1000 + 57 on rank 1 and 2000 + 57 on rank two
-
-    assert(scale_factor > 0);
-
-    // Find max bound by rounding to nearest order of magnitude
-    size_t id_base = ceil( log10(max_np) );
-    size_t global_id = (pow(10,  id_base) * (this_rank*scale_factor) ) + i;
-
-    return global_id;
-}
 
 // FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
 void
@@ -116,7 +82,7 @@ vpic_simulation::inject_particle( species_t * sp,
   p->w  = w;
 
   // Set particle ID.
-  sp->p_id[old_np] = set_particle_id( old_np, sp->max_np, rank() );
+  sp->p_id[old_np] = sp->generate_particle_id( old_np, sp->max_np );
 
   if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
 

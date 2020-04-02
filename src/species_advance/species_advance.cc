@@ -123,7 +123,8 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         grid_t * g )
+         grid_t * g
+         )
 {
   species_t * sp;
   int len = name ? strlen(name) : 0;

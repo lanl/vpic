@@ -273,6 +273,16 @@ if (NOT USE_V4 AND NOT USE_V8 AND NOT USE_V16)
     set(NO_EXPLICIT_VECTOR True)
 endif()
 
+# Detect if the user enabled V8/V16 but not v8/v4. If they're not enabled, tell
+# the user instead of giving them a confusing compile error inside a macro
+if (USE_V16 AND (NOT USE_V8 OR NOT USE_V4))
+    message(FATAL_ERROR
+        "You requested V16 but did not also enable both V4 and V8, aborting.")
+endif()
+if (USE_V8 AND NOT USE_V4)
+    message(FATAL_ERROR "You requested V8 but did not also enable V4, aborting.")
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add options for building with explicit autovec support.

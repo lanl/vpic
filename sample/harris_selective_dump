@@ -390,6 +390,9 @@ begin_diagnostics {
      //};
      //my_predicate = nullptr;
 
+     #ifndef VPIC_GLOBAL_ID
+     #  error "To use predicates based on ID you need to compile VPIC with GLOBAL_ID=ON"
+     #endif
      dump_particles_predicate("electron","eparticle",
              1, //ftag?
              my_predicate );

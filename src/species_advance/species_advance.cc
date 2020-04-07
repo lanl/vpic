@@ -21,14 +21,17 @@ checkpt_species( const species_t * sp )
                 sp->np     * sizeof(particle_t),
                 sp->max_np * sizeof(particle_t), 1, 1, 128 );
 
+  #ifdef VPIC_GLOBAL_ID
+  // REVIEW: Does the ordering of checkpt_data calls matter?
   // RFB: Add checkpointing of particle list
   checkpt_data( sp->p_id,
-                sp->np    *sizeof(size_t),
-                sp->max_np*sizeof(size_t), 1, 1, 128 );
+                sp->np     * sizeof(size_t),
+                sp->max_np * sizeof(size_t), 1, 1, 128 );
+  #endif
 
   checkpt_data( sp->pm,
-                sp->nm    *sizeof(particle_mover_t),
-                sp->max_nm*sizeof(particle_mover_t), 1, 1, 128 );
+                sp->nm     * sizeof(particle_mover_t),
+                sp->max_nm * sizeof(particle_mover_t), 1, 1, 128 );
   CHECKPT_ALIGNED( sp->partition, sp->g->nv+1, 128 );
   CHECKPT_PTR( sp->g );
   CHECKPT_PTR( sp->next );
@@ -41,7 +44,10 @@ restore_species( void )
   RESTORE( sp );
   RESTORE_STR( sp->name );
   sp->p  = (particle_t *)        restore_data();
+  #ifdef VPIC_GLOBAL_ID
+  // REVIEW: Does the ordering of restore_data calls matter? Does it have to match checkpt_data?
   sp->p_id  = (size_t*)          restore_data();
+  #endif
   sp->pm = (particle_mover_t *)  restore_data();
   RESTORE_ALIGNED( sp->partition );
   RESTORE_PTR( sp->g );
@@ -56,7 +62,9 @@ delete_species( species_t * sp )
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
+  #ifdef VPIC_GLOBAL_ID
   FREE_ALIGNED( sp->p_id );
+  #endif
   FREE( sp->name );
   FREE( sp );
 }
@@ -145,7 +153,9 @@ species( const char * name,
   sp->m = m;
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
+  #ifdef VPIC_GLOBAL_ID
   MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
+  #endif
   sp->max_np = max_local_np;
 
   MALLOC_ALIGNED( sp->pm, max_local_nm, 128 );

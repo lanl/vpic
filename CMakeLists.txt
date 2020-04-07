@@ -91,6 +91,7 @@ option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizi
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
+option(GLOBAL_ID "Give particles a global ID that allows reidentifiaction" OFF)
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -296,6 +297,11 @@ if(VPIC_PRINT_MORE_DIGITS)
   add_definitions(-DVPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
 endif(VPIC_PRINT_MORE_DIGITS)
+
+if(GLOBAL_ID)
+  add_definitions(-DVPIC_GLOBAL_ID)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_GLOBAL_ID")
+endif()
 
 #------------------------------------------------------------------------------#
 # Handle vpic compile script last.

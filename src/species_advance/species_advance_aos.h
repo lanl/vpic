@@ -51,7 +51,9 @@ typedef struct particle_injector {
   float w;                   // Particle weight (number of physical particles)
   float dispx, dispy, dispz; // Displacement of particle
   species_id sp_id;          // Species of particle
+#ifdef VPIC_GLOBAL_ID
   size_t global_particle_id;
+#endif
 } particle_injector_t;
 
 class species_t {
@@ -62,7 +64,9 @@ class species_t {
 
         int np, max_np;                     // Number and max local particles
         particle_t * ALIGNED(128) p;        // Array of particles for the species
-        size_t* ALIGNED(128) p_id;          // Array of particles for the species
+        #ifdef VPIC_GLOBAL_ID
+        size_t* ALIGNED(128) p_id;          // Separate array of IDs
+        #endif
 
         int nm, max_nm;                     // Number and max local movers in use
         particle_mover_t * ALIGNED(128) pm; // Particle movers

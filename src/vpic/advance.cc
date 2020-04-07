@@ -89,14 +89,18 @@ int vpic_simulation::advance(void) {
     int nm = sp->nm;
     particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
     particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
+    #ifdef VPIC_GLOBAL_ID
     size_t * RESTRICT ALIGNED(128) p_id0 = sp->p_id;
+    #endif
     for (; nm; nm--, pm--) {
       int i = pm->i; // particle index we are removing
       p0[i].i >>= 3; // shift particle voxel down
       // accumulate the particle's charge to the mesh
       accumulate_rhob( field_array->f, p0+i, sp->g, sp->q );
       p0[i] = p0[sp->np-1];        // put the last particle into position i
+      #ifdef VPIC_GLOBAL_ID
       p_id0[i] = p_id0[sp->np-1];  // move the id up too
+      #endif
       sp->np--; // decrement the number of particles
     }
     sp->nm = 0;

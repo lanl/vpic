@@ -238,7 +238,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       const int32_t sp_id = sp->id;
 
       particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
-      #ifdef VPIC_GLOBAL_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       size_t* RESTRICT ALIGNED(128) p_id = sp->p_id;
       #endif
 
@@ -310,7 +310,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
           #endif
 
-          #ifdef VPIC_GLOBAL_ID
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
           // Send global id too
           pi->global_particle_id = p_id[i];
           #endif
@@ -381,7 +381,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         #endif
 
-        #ifdef VPIC_GLOBAL_ID
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         p_id[i] = p_id[np];    /* keep p_id[] in sync with p[] */
         #endif
       }
@@ -486,7 +486,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     {
       particle_mover_t * new_pm;
       particle_t       * new_p;
-      #ifdef VPIC_GLOBAL_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       size_t           * new_p_id;
       #endif
 
@@ -510,7 +510,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         FREE_ALIGNED( sp->p );
 
-        #ifdef VPIC_GLOBAL_ID
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         /* changes made to p[] must be mirrored in p_id[] */
         MALLOC_ALIGNED( new_p_id, n, 128 );
 
@@ -547,7 +547,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         FREE_ALIGNED( sp->p );
 
-        #ifdef VPIC_GLOBAL_ID
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         /* changes made to p[] must be mirrored in p_id[] */
         MALLOC_ALIGNED( new_p_id, n, 128 );
 
@@ -596,7 +596,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     particle_t       * RESTRICT ALIGNED(32) sp_p [ MAX_SP ];
     particle_mover_t * RESTRICT ALIGNED(32) sp_pm[ MAX_SP ];
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     size_t           * RESTRICT ALIGNED(32) sp_p_id[ MAX_SP ];
     #endif
 
@@ -622,7 +622,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       sp_np[ sp->id ] = sp->np;
       sp_nm[ sp->id ] = sp->nm;
 
-      #ifdef VPIC_GLOBAL_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       sp_p_id[ sp->id ] = sp->p_id;
       #endif
 
@@ -645,7 +645,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       particle_t                * RESTRICT ALIGNED(32) p;
       particle_mover_t          * RESTRICT ALIGNED(16) pm;
       const particle_injector_t * RESTRICT ALIGNED(16) pi;
-      #ifdef VPIC_GLOBAL_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       size_t                    * RESTRICT ALIGNED(32) p_id;
       #endif
 
@@ -697,7 +697,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         p = sp_p[id];
         np = sp_np[id];
-        #ifdef VPIC_GLOBAL_ID
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         p_id = sp_p_id[id];
         #endif
 
@@ -732,7 +732,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         #endif
 
-        #ifdef VPIC_GLOBAL_ID
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         p_id[np] = pi->global_particle_id;
 
         std::cout << "Recving particle with global_id " << pi->global_particle_id << " on rank " << _world_rank << std::endl;

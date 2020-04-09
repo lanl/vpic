@@ -141,7 +141,7 @@ public:
   int advance( void );
   void finalize( void );
 
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // TODO: move these somewhere more sensible
   int predicate_count(species_t* sp, std::function <bool (int)> f);
   int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
@@ -265,7 +265,7 @@ protected:
                        int fname_tag = 1 );
 
 
-#ifdef VPIC_GLOBAL_ID
+#ifdef VPIC_GLOBAL_PARTICLE_ID
 // TODO: merge back down to one function
 // TODO: template out the functor type
 // TODO: find a way to specify if we want to predicate on particle array, or
@@ -658,7 +658,7 @@ protected:
                        float ux, float uy, float uz, float w )
   {
     particle_t * RESTRICT p = sp->p + sp->np;
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     size_t * RESTRICT p_id = sp->p_id + sp->np;
     *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     #endif
@@ -678,7 +678,7 @@ protected:
   {
     particle_t       * RESTRICT p  = sp->p  + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     size_t           * RESTRICT p_id = sp->p_id + sp->np;
     *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     #endif

@@ -43,7 +43,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
   /**/  rng_t            * RESTRICT              rng = cl->rng;
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   /**/  size_t           * RESTRICT ALIGNED(128) p_id = sp->p_id;
   #endif
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
@@ -82,7 +82,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     // FIXME: COULD PROBABLY ACCELERATE BY GETTING RID OF SWITCH (USE
     // MAXWELLIAN_REFLUX TRICKS?)
 
-#ifdef VPIC_GLOBAL_ID
+#ifdef VPIC_GLOBAL_PARTICLE_ID
 #  define EMIT_PARTICLE_SET_ID p_id[np] = sp->generate_particle_id(np, sp->max_np);
 #else
 #  define EMIT_PARTICLE_SET_ID

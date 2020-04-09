@@ -24,7 +24,7 @@
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN.
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -75,7 +75,7 @@ coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -85,7 +85,7 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->aux_p;
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   const size_t * RESTRICT ALIGNED(128) p_src_id = args->p_id;
   /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->aux_p_id;
   #endif
@@ -126,25 +126,25 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
   {
     j = next[ V2P( p_src[i].i, n_subsort, vl, vh ) ]++;
 
-#   if defined( __SSE__ )
+     #if defined( __SSE__ )
 
     _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
     _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
 
-#   else
+    #else
 
     p_dst[j] = p_src[i];
 
-#   endif
+    #endif
 
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
     #endif
   }
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -154,7 +154,7 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->aux_p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->p;
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   const size_t * RESTRICT ALIGNED(128) p_src_id = args->aux_p_id;
   /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->p_id;
   #endif
@@ -211,18 +211,18 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
       v = p_src[i].i;
       j = next[v]++;
 
-#     if defined( __SSE__ )
+      #if defined( __SSE__ )
 
       _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
       _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
 
-#     else
+      #else
 
       p_dst[j] = p_src[i];
 
-#     endif
+      #endif
 
-      #ifdef VPIC_GLOBAL_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
       #endif
     }
@@ -230,7 +230,7 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -250,7 +250,7 @@ sort_p_pipeline( species_t * sp )
 
   particle_t * RESTRICT ALIGNED(128) p = sp->p;
   particle_t * RESTRICT ALIGNED(128) aux_p;
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   size_t * RESTRICT ALIGNED(128) p_id = sp->p_id;
   size_t * RESTRICT ALIGNED(128) aux_p_id;
   #endif
@@ -290,7 +290,7 @@ sort_p_pipeline( species_t * sp )
   // Ensure enough scratch space is allocated for the sorting.
   sz_scratch = ( sizeof( *p ) * n_particle      +
 		 128                            +
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
                  sizeof( *p_id ) * n_particle   +
                  128                            +
   #endif
@@ -310,7 +310,7 @@ sort_p_pipeline( species_t * sp )
   aux_p            = ALIGN_PTR( particle_t, scratch,                          128 );
   next             = ALIGN_PTR( int,        aux_p + n_particle,               128 );
   coarse_partition = ALIGN_PTR( int,        next  + n_voxel,                  128 );
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // REVIEW: is it ok to move aux_p_id to the end of the scratch space?
   aux_p_id         = ALIGN_PTR( size_t,     coarse_partition + n_particle,    128 );
   #endif
@@ -318,7 +318,7 @@ sort_p_pipeline( species_t * sp )
   // Setup pipeline arguments.
   args->p                = p;
   args->aux_p            = aux_p;
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   args->p_id             = p_id;
   args->aux_p_id         = aux_p_id;
   #endif
@@ -384,7 +384,7 @@ sort_p_pipeline( species_t * sp )
 
     args->p        = aux_p;
     args->aux_p    = p;
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     args->p_id     = aux_p_id;
     args->aux_p_id = p_id;
     #endif
@@ -403,7 +403,7 @@ sort_p_pipeline( species_t * sp )
     // TO MOVE SP->P AROUND AND DO MORE MALLOCS PER STEP I.E. HEAP
     // FRAGMENTATION, COULD AVOID THIS COPY.
     COPY( p, aux_p, n_particle );
-    #ifdef VPIC_GLOBAL_ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     COPY( p_id, aux_p_id, n_particle );
     #endif
   }

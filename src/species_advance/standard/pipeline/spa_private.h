@@ -221,7 +221,7 @@ typedef struct sort_p_pipeline_args
 {
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   MEM_PTR( size_t, 128) p_id;                  // Particle ids (0:n-1)
   MEM_PTR( size_t, 128 ) aux_p_id;             // Aux particle ids (0:n-1)
   #endif

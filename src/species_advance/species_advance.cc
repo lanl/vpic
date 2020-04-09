@@ -21,7 +21,7 @@ checkpt_species( const species_t * sp )
                 sp->np     * sizeof(particle_t),
                 sp->max_np * sizeof(particle_t), 1, 1, 128 );
 
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // REVIEW: Does the ordering of checkpt_data calls matter?
   // RFB: Add checkpointing of particle list
   checkpt_data( sp->p_id,
@@ -44,8 +44,7 @@ restore_species( void )
   RESTORE( sp );
   RESTORE_STR( sp->name );
   sp->p  = (particle_t *)        restore_data();
-  #ifdef VPIC_GLOBAL_ID
-  // REVIEW: Does the ordering of restore_data calls matter? Does it have to match checkpt_data?
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   sp->p_id  = (size_t*)          restore_data();
   #endif
   sp->pm = (particle_mover_t *)  restore_data();
@@ -62,7 +61,7 @@ delete_species( species_t * sp )
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   FREE_ALIGNED( sp->p_id );
   #endif
   FREE( sp->name );
@@ -153,7 +152,7 @@ species( const char * name,
   sp->m = m;
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
-  #ifdef VPIC_GLOBAL_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
   #endif
   sp->max_np = max_local_np;

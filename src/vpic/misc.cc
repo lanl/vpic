@@ -81,8 +81,10 @@ vpic_simulation::inject_particle( species_t * sp,
   p->uz = (float)uz;
   p->w  = w;
 
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // Set particle ID.
   sp->p_id[old_np] = sp->generate_particle_id( old_np, sp->max_np );
+  #endif
 
   if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
 

@@ -31,6 +31,8 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
  * ASCII dump IO
  *****************************************************************************/
 
+// Do not even define these functions when there are no IDs so that input decks that rely on them don't compile.
+#ifdef VPIC_GLOBAL_PARTICLE_ID
 int vpic_simulation::predicate_count(species_t* sp, std::function <bool (int)> f)
 {
     if (f != nullptr) return std::count_if( sp->p_id, sp->p_id + sp->np, f);
@@ -69,7 +71,7 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
         std::cout << "copied " << next << std::endl;
     }
 }
-
+#endif
 
 void
 vpic_simulation::dump_energies( const char *fname,

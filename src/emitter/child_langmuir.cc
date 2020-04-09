@@ -43,7 +43,9 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
   /**/  rng_t            * RESTRICT              rng = cl->rng;
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   /**/  size_t           * RESTRICT ALIGNED(128) p_id = sp->p_id;
+  #endif
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
   /**/  grid_t           * RESTRICT              g   = sp->g;
 
@@ -80,6 +82,12 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     // FIXME: COULD PROBABLY ACCELERATE BY GETTING RID OF SWITCH (USE
     // MAXWELLIAN_REFLUX TRICKS?)
 
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+#  define EMIT_PARTICLE_SET_ID p_id[np] = sp->generate_particle_id(np, sp->max_np);
+#else
+#  define EMIT_PARTICLE_SET_ID
+#endif
+
 #   define EMIT_PARTICLES(X,Y,Z,dir)                                    \
     w = fi[i].e##X;                                                     \
     if( dir qsp*w > thresh ) { /* This face can emit */                 \
@@ -100,7 +108,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         p[np].u##Y = u##Y;                                              \
         p[np].u##Z = u##Z;                                              \
         p[np].w    = w;                                                 \
-        p_id[np] = sp->generate_particle_id(np, sp->max_np);            \
+        EMIT_PARTICLE_SET_ID                                            \
         accumulate_rhob( f, p+np, g, -qsp );                            \
         np++;                                                           \
                                                                         \

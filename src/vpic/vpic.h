@@ -141,6 +141,7 @@ public:
   int advance( void );
   void finalize( void );
 
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // TODO: move these somewhere more sensible
   int predicate_count(species_t* sp, std::function <bool (int)> f);
   int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
@@ -148,6 +149,7 @@ public:
   // TOOD: those specialized in together should probably be wrapped in a class
   void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
   void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
+  #endif
 
 protected:
 
@@ -263,7 +265,7 @@ protected:
                        int fname_tag = 1 );
 
 
-
+#ifdef VPIC_GLOBAL_PARTICLE_ID
 // TODO: merge back down to one function
 // TODO: template out the functor type
 // TODO: find a way to specify if we want to predicate on particle array, or
@@ -358,6 +360,7 @@ protected:
 
       if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
   }
+#endif
 
 
 
@@ -655,10 +658,12 @@ protected:
                        float ux, float uy, float uz, float w )
   {
     particle_t * RESTRICT p = sp->p + sp->np;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     size_t * RESTRICT p_id = sp->p_id + sp->np;
+    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     sp->np++;
   }
 
@@ -672,11 +677,13 @@ protected:
                        int update_rhob )
   {
     particle_t       * RESTRICT p  = sp->p  + sp->np;
-    size_t           * RESTRICT p_id = sp->p_id + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    size_t           * RESTRICT p_id = sp->p_id + sp->np;
+    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
     if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );

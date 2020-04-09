@@ -21,6 +21,7 @@
 //
 //----------------------------------------------------------------------------//
 
+
 void
 sort_p( species_t * sp )
 {
@@ -30,7 +31,9 @@ sort_p( species_t * sp )
   sp->last_sorted = sp->g->step;
 
   particle_t * ALIGNED(128) p = sp->p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   size_t * ALIGNED(128) p_id = sp->p_id;
+  #endif
 
   const int np                = sp->np;
   const int nc                = sp->g->nv;
@@ -89,30 +92,36 @@ sort_p( species_t * sp )
     const particle_t * RESTRICT ALIGNED( 32)  in_p;
     /**/  particle_t * RESTRICT ALIGNED( 32) out_p;
 
+    MALLOC_ALIGNED( new_p, sp->max_np, 128 );
+    in_p  = sp->p;
+    out_p = new_p;
+
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    /**/  size_t*          ALIGNED(128) new_p_id;
     const size_t* RESTRICT ALIGNED( 32)  in_p_id;
     /**/  size_t* RESTRICT ALIGNED( 32) out_p_id;
 
-    MALLOC_ALIGNED( new_p, sp->max_np, 128 );
     MALLOC_ALIGNED( new_p_id, sp->max_np, 128 );
-
-    in_p  = sp->p;
     in_p_id  = sp->p_id;
-
-    out_p = new_p;
     out_p_id = new_p_id;
+    #endif
 
     for( i = 0; i < np; i++ )
     {
       out_p[ next[ in_p[i].i ] ] = in_p[i];
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
       out_p_id[ next[ in_p[i].i ] ] = in_p_id[i];
+      #endif
       next[ in_p[i].i ]++;  /* advance to next free slot for this cell */
     }
 
     FREE_ALIGNED( sp->p );
-    FREE_ALIGNED( sp->p_id );
-
     sp->p = new_p;
+
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    FREE_ALIGNED( sp->p_id );
     sp->p_id = new_p_id;
+    #endif
   }
 
   else
@@ -122,9 +131,11 @@ sort_p( species_t * sp )
     particle_t               save_p;
     particle_t * ALIGNED(32) src;
     particle_t * ALIGNED(32) dest;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
     size_t save_pid;
     size_t * ALIGNED(32) srcid;
     size_t * ALIGNED(32) destid;
+    #endif
 
     i = 0;
     while( i < nc )
@@ -137,12 +148,16 @@ sort_p( species_t * sp )
       else
       {
         src = &p[ next[i] ];
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
         srcid = &p_id[ next[i] ];
+        #endif
 
         for( ; ; )
         {
           dest = &p[ next[ src->i ] ];
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
           destid = &p_id[ next[ src->i ] ];
+          #endif
           next[ src->i ]++;  /* advance to next free slot for this cell */
 
           if ( src == dest ) break;
@@ -150,9 +165,11 @@ sort_p( species_t * sp )
           save_p = *dest;
           *dest  = *src;
           *src   = save_p;
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
           save_pid = *destid;
           *destid = *srcid;
           *srcid = save_pid;
+          #endif
         }
       }
     }

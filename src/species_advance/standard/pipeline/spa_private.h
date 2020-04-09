@@ -221,8 +221,10 @@ typedef struct sort_p_pipeline_args
 {
   MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
   MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   MEM_PTR( size_t, 128) p_id;                  // Particle ids (0:n-1)
   MEM_PTR( size_t, 128 ) aux_p_id;             // Aux particle ids (0:n-1)
+  #endif
   MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
   /**/ // (0:max_subsort-1,0:MAX_PIPELINE-1)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)

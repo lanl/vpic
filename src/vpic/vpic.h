@@ -609,7 +609,13 @@ protected:
                   double max_local_np,
                   double max_local_nm,
                   double sort_interval,
-                  double sort_out_of_place ) {
+                  double sort_out_of_place,
+                  int has_ids=0 ) {
+    #ifndef VPIC_GLOBAL_PARTICLE_ID
+    if(has_ids != 0) {
+      ERROR(( "This species can not have particle IDs because you compiled without GLOBAL_PARTICLE_ID" ));
+    }
+    #endif
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
@@ -621,7 +627,7 @@ protected:
     return append_species( species( name, (float)q, (float)m,
                                     (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
-                                    grid ), &species_list );
+                                    has_ids, grid ), &species_list );
   }
 
   inline species_t *
@@ -659,8 +665,10 @@ protected:
   {
     particle_t * RESTRICT p = sp->p + sp->np;
     #ifdef VPIC_GLOBAL_PARTICLE_ID
-    size_t * RESTRICT p_id = sp->p_id + sp->np;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    if(sp->has_ids) {
+      size_t * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
     #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -679,8 +687,10 @@ protected:
     particle_t       * RESTRICT p  = sp->p  + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     #ifdef VPIC_GLOBAL_PARTICLE_ID
-    size_t           * RESTRICT p_id = sp->p_id + sp->np;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    if(sp->has_ids) {
+      size_t           * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
     #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;

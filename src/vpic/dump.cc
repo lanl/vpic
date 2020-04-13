@@ -35,8 +35,11 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
 #ifdef VPIC_GLOBAL_PARTICLE_ID
 int vpic_simulation::predicate_count(species_t* sp, std::function <bool (int)> f)
 {
-    if (f != nullptr) return std::count_if( sp->p_id, sp->p_id + sp->np, f);
-    else return sp->np;
+    if ((f == nullptr) || (!sp->has_ids)) {
+      return sp->np;
+    } else {
+      return std::count_if( sp->p_id, sp->p_id + sp->np, f);
+    }
 }
 int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particle_t)> f)
 {
@@ -51,7 +54,7 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
 }
 void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f)
 {
-    if (f != nullptr)
+    if ((f != nullptr) && (sp_from->has_ids) )
     {
         //std::copy_if( sp->p_id, sp->p_id + sp->np, _sp.p, f);
         // Manually loop over particles to do the 'cross copy' from p_id->p

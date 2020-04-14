@@ -90,6 +90,7 @@ int vpic_simulation::advance(void) {
     particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
     particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
     #ifdef VPIC_GLOBAL_PARTICLE_ID
+    const int sp_has_ids = sp->has_ids;
     size_t * RESTRICT ALIGNED(128) p_id0 = sp->p_id;
     #endif
     for (; nm; nm--, pm--) {
@@ -99,7 +100,9 @@ int vpic_simulation::advance(void) {
       accumulate_rhob( field_array->f, p0+i, sp->g, sp->q );
       p0[i] = p0[sp->np-1];        // put the last particle into position i
       #ifdef VPIC_GLOBAL_PARTICLE_ID
-      p_id0[i] = p_id0[sp->np-1];  // move the id up too
+      if(sp_has_ids) {
+        p_id0[i] = p_id0[sp->np-1];  // move the id up too
+      }
       #endif
       sp->np--; // decrement the number of particles
     }

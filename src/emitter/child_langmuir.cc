@@ -44,6 +44,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
   #ifdef VPIC_GLOBAL_PARTICLE_ID
+  /**/  int                                      sp_has_ids = sp->has_ids;
   /**/  size_t           * RESTRICT ALIGNED(128) p_id = sp->p_id;
   #endif
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
@@ -83,7 +84,7 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     // MAXWELLIAN_REFLUX TRICKS?)
 
 #ifdef VPIC_GLOBAL_PARTICLE_ID
-#  define EMIT_PARTICLE_SET_ID p_id[np] = sp->generate_particle_id(np, sp->max_np);
+#  define EMIT_PARTICLE_SET_ID if(sp_has_ids) {p_id[np] = sp->generate_particle_id(np, sp->max_np);}
 #else
 #  define EMIT_PARTICLE_SET_ID
 #endif

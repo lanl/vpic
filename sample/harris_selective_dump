@@ -178,8 +178,9 @@ begin_initialization {
   // Allow 50% more local_particles in case of non-uniformity
   // VPIC will pick the number of movers to use for each species
   // Both species use out-of-place sorting
-  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1 );
-  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1 );
+  // Only electrons bother with particle_ids
+  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1, 0 );
+  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1, 1 );
 
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation

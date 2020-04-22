@@ -368,6 +368,7 @@ vpic_simulation::dump_particles( const char *sp_name,
   sp->np     = sp_np;
   sp->max_np = sp_max_np;
 
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   // append ID array at the end of the file
   if(sp->has_ids) {
     dim[0] = sp->np;
@@ -375,6 +376,7 @@ vpic_simulation::dump_particles( const char *sp_name,
     // REVIEW: Do we have to do this write in batched of PBUF_SIZE as well?
     fileIO.write(sp->p_id, sp->np);
   }
+#endif
 
   if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }

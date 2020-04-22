@@ -314,12 +314,12 @@ sort_p_pipeline( species_t * sp )
     max_scratch = sz_scratch;
   }
 
-  aux_p            = ALIGN_PTR( particle_t, scratch,                          128 );
-  next             = ALIGN_PTR( int,        aux_p + n_particle,               128 );
-  coarse_partition = ALIGN_PTR( int,        next  + n_voxel,                  128 );
+  aux_p            = ALIGN_PTR( particle_t, scratch,                                     128);
+  next             = ALIGN_PTR( int,        aux_p + n_particle,                          128);
+  coarse_partition = ALIGN_PTR( int,        next  + n_voxel,                             128);
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   if(has_ids) {
-    aux_p_id       = ALIGN_PTR( size_t,     coarse_partition + n_particle,    128 );
+    aux_p_id       = ALIGN_PTR( size_t,     coarse_partition + cp_stride*n_pipeline + 1, 128);
   } else {
     aux_p_id       = NULL;
   }

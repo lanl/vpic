@@ -137,7 +137,7 @@ def read_array_header(inputfile, header):
 
     cur_byte = f.tell()
     unread_byte = header["end_byte"] - cur_byte
-    no_fields = unread_byte / (elements * header["sizeof(float)"])
+    no_fields = unread_byte / (elements * array_header["sizeof(p[0])"])
 
     array_header["no_fields"] = no_fields
 

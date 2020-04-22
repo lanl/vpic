@@ -49,8 +49,26 @@ int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particl
 
 void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f)
 {
-    if (f != nullptr)
-        std::copy_if( sp_from->p, sp_from->p + sp_from->np, sp_to->p, f);
+    if (f != nullptr) {
+        // std::copy_if( sp_from->p,    sp_from->p    + sp_from->np, sp_to->p   , f);
+        // std::copy_if( sp_from->p_id, sp_from->p_id + sp_from->np, sp_to->p_id, f);
+        // Manually loop over particles to do the 'cross copy' of p_id as well
+
+        int next = 0; // track where we fill
+        for (int i = 0; i < sp_from->np; i++)
+        {
+            int this_id = sp_from->p_id[i];
+            if ( f(sp_from->p[i]) )
+            {
+                // copy i (inherently serial..)
+                sp_to->p[next] = sp_from->p[i];
+                sp_to->p_id[next] = sp_from->p_id[i];
+                next++;
+            }
+
+        }
+        std::cout << "copied " << next << std::endl;
+    }
 }
 void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f)
 {
@@ -63,10 +81,11 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
         for (int i = 0; i < sp_from->np; i++)
         {
             int this_id = sp_from->p_id[i];
-            if ( f(this_id) || f == nullptr)
+            if ( f(this_id) )
             {
                 // copy i (inherently serial..)
                 sp_to->p[next] = sp_from->p[i];
+                sp_to->p_id[next] = sp_from->p_id[i];
                 next++;
             }
 
@@ -348,6 +367,14 @@ vpic_simulation::dump_particles( const char *sp_name,
   sp->p      = sp_p;
   sp->np     = sp_np;
   sp->max_np = sp_max_np;
+
+  // append ID array at the end of the file
+  if(sp->has_ids) {
+    dim[0] = sp->np;
+    WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
+    // REVIEW: Do we have to do this write in batched of PBUF_SIZE as well?
+    fileIO.write(sp->p_id, sp->np);
+  }
 
   if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }

@@ -326,13 +326,16 @@ protected:
       // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
       // LARGE.
 
-      // Make a second species array, something that can hold the uniq id too
+      // Make a second species array, and space to hold the IDs too
       particle_t* ALIGNED(128) _p;
-      MALLOC_ALIGNED( _p, count_true, 128 );
+      size_t*     ALIGNED(128) _p_id;
+      MALLOC_ALIGNED( _p,    count_true, 128 );
+      MALLOC_ALIGNED( _p_id, count_true, 128 );
 
       species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
       _sp.p = _p;
       _sp.np = count_true;
+      _sp.p_id = _p_id;
 
       // TODO: why do we need to update max_np?
       _sp.max_np = PBUF_SIZE;
@@ -344,8 +347,8 @@ protected:
       for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
           _sp.np = count_true-buf_start;
 
-          if( sp->np > PBUF_SIZE ) {
-              sp->np = PBUF_SIZE;
+          if( _sp.np > PBUF_SIZE ) {
+              _sp.np = PBUF_SIZE;
           }
 
           //COPY( _sp.p, &sp_p[buf_start], _sp.np );
@@ -355,8 +358,17 @@ protected:
           fileIO.write( _p, _sp.np );
       }
 
-      // Free the particle array (sp done by scope)
+      // append ID array at the end of the file
+      if(sp->has_ids) {
+          dim[0] = count_true;
+          WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
+          // REVIEW: Do we have to do this write in batches of PBUF_SIZE as well
+          fileIO.write(_sp.p_id, count_true);
+      }
+
+      // Free the particle array and ID array (sp done by scope)
       FREE_ALIGNED( _p );
+      FREE_ALIGNED( _p_id );
 
       if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
   }

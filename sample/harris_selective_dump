@@ -394,9 +394,14 @@ begin_diagnostics {
      #ifndef VPIC_GLOBAL_PARTICLE_ID
      #  error "To use predicates based on ID you need to compile VPIC with GLOBAL_ID=ON"
      #endif
-     dump_particles_predicate("electron","eparticle",
+
+     dump_particles_predicate("electron","elucky",
              1, //ftag?
              my_predicate );
+
+     // Do a regular dump too, that will be annotated with IDs for post processing
+     dump_particles("electron","eparticle");
+
   }
   if( should_dump(iparticle) ) dump_particles("ion",     "iparticle");
 

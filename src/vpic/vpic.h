@@ -621,13 +621,7 @@ protected:
                   double max_local_np,
                   double max_local_nm,
                   double sort_interval,
-                  double sort_out_of_place,
-                  int has_ids=0 ) {
-    #ifndef VPIC_GLOBAL_PARTICLE_ID
-    if(has_ids != 0) {
-      ERROR(( "This species can not have particle IDs because you compiled without GLOBAL_PARTICLE_ID" ));
-    }
-    #endif
+                  double sort_out_of_place ) {
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
@@ -639,7 +633,7 @@ protected:
     return append_species( species( name, (float)q, (float)m,
                                     (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
-                                    has_ids, grid ), &species_list );
+                                    grid ), &species_list );
   }
 
   inline species_t *
@@ -651,6 +645,28 @@ protected:
   find_species( int32_t id ) {
      return find_species_id( id, species_list );
   }
+
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  inline species_t * make_tracer_by_percentage(const species_t* parentspecies, const float percentage, const char* tracername) {
+   // Implemented in species_advance.cc
+    //make_tracer_by_percentage(parentspecies, percentage, std::string(tracername), species_list);
+    tracerspecies_by_percentage(parentspecies, percentage, std::string(tracername), species_list, grid);
+  }
+  inline species_t * make_tracer_by_percentage(const species_t* parentspecies, const float percentage) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracer_by_percentage(parentspecies, percentage, name.c_str());
+  }
+
+  #else
+  // REVIEW: make the name a std::string? or match define_species?
+  make_tracer_by_percentage(const species_t* parentspecies, const float percentage, const char* tacername) {
+    ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  make_tracer_by_percentage(const species_t* parentspecies, const float percentage) {
+    ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  #endif
 
   // Note: Don't use injection with aging during initialization
   // Defaults in the declaration below enable backwards compatibility.

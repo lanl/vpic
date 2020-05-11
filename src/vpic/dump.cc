@@ -35,8 +35,11 @@ int vpic_simulation::dump_cwd(char * dname, size_t size) {
 #ifdef VPIC_GLOBAL_PARTICLE_ID
 int vpic_simulation::predicate_count(species_t* sp, std::function <bool (int)> f)
 {
-    if (f != nullptr) return std::count_if( sp->p_id, sp->p_id + sp->np, f);
-    else return sp->np;
+    if ((f == nullptr) || (!sp->has_ids)) {
+      return sp->np;
+    } else {
+      return std::count_if( sp->p_id, sp->p_id + sp->np, f);
+    }
 }
 int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particle_t)> f)
 {
@@ -46,12 +49,30 @@ int vpic_simulation::predicate_count(species_t* sp, std::function <bool (particl
 
 void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f)
 {
-    if (f != nullptr)
-        std::copy_if( sp_from->p, sp_from->p + sp_from->np, sp_to->p, f);
+    if (f != nullptr) {
+        // std::copy_if( sp_from->p,    sp_from->p    + sp_from->np, sp_to->p   , f);
+        // std::copy_if( sp_from->p_id, sp_from->p_id + sp_from->np, sp_to->p_id, f);
+        // Manually loop over particles to do the 'cross copy' of p_id as well
+
+        int next = 0; // track where we fill
+        for (int i = 0; i < sp_from->np; i++)
+        {
+            int this_id = sp_from->p_id[i];
+            if ( f(sp_from->p[i]) )
+            {
+                // copy i (inherently serial..)
+                sp_to->p[next] = sp_from->p[i];
+                sp_to->p_id[next] = sp_from->p_id[i];
+                next++;
+            }
+
+        }
+        std::cout << "copied " << next << std::endl;
+    }
 }
 void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f)
 {
-    if (f != nullptr)
+    if ((f != nullptr) && (sp_from->has_ids) )
     {
         //std::copy_if( sp->p_id, sp->p_id + sp->np, _sp.p, f);
         // Manually loop over particles to do the 'cross copy' from p_id->p
@@ -60,10 +81,11 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
         for (int i = 0; i < sp_from->np; i++)
         {
             int this_id = sp_from->p_id[i];
-            if ( f(this_id) || f == nullptr)
+            if ( f(this_id) )
             {
                 // copy i (inherently serial..)
                 sp_to->p[next] = sp_from->p[i];
+                sp_to->p_id[next] = sp_from->p_id[i];
                 next++;
             }
 
@@ -345,6 +367,16 @@ vpic_simulation::dump_particles( const char *sp_name,
   sp->p      = sp_p;
   sp->np     = sp_np;
   sp->max_np = sp_max_np;
+
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  // append ID array at the end of the file
+  if(sp->has_ids) {
+    dim[0] = sp->np;
+    WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
+    // Maybe do this write in batched of PBUF_SIZE as well?
+    fileIO.write(sp->p_id, sp->np);
+  }
+#endif
 
   if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }

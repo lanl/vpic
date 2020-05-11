@@ -80,6 +80,15 @@ elif header["dump_type"] == 2: # hydro
 
 elif header["dump_type"] == 3: #particles
     sys.stderr.write("Dealing with a particle file\n")
+
+    cur_byte = f.tell()
+    file_bytes = header["end_byte"] - cur_byte
+    particle_bytes = array_header["sizeof(p[0])"] * array_header["dim"][0]
+    print str(file_bytes)+" bytes unread"
+    print str(particle_bytes)+" bytes of that are particle buffer"
+    if file_bytes > particle_bytes:
+        print "There is "+str(file_bytes-particle_bytes)+" additional bytes at the end" 
+
     x,y,z, ux,uy,uz, w, voxel, ix,iy,iz, frac_x,frac_y,frac_z = get_next_particle(f, header)
     print "cell: "+str(ix)+" "+str(iy)+" "+str(iz)
     print "frac: "+str(frac_x)+" "+str(frac_y)+" "+str(frac_z)
@@ -87,10 +96,21 @@ elif header["dump_type"] == 3: #particles
     print "u:    "+str(ux)+" "+str(uy)+" "+str(uz)
     print "w:    "+str(w)
     print "voxel:"+str(voxel)
+    print ""
 
     # exhaust the file
     #for i in range(numpy.prod(array_header["dim"])-1):
     #    x,y,z, ux,uy,uz, w, voxel, ix,iy,iz, frac_x,frac_y,frac_z = get_next_particle(f, header)
+
+    if file_bytes > particle_bytes:
+        f.seek(cur_byte+particle_bytes, 0) # skip to end of particle buffer
+
+        id_array_header = read_array_header(f, header)
+        print "ID ARRAY HEADER: "
+        for k,v in sorted(id_array_header.items()):
+            print str(k)+": "+str(v)
+        print ""
+
 
 f.close()
 print ""

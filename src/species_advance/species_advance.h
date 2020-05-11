@@ -54,6 +54,7 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
+         int has_ids,
          grid_t * g
        );
 

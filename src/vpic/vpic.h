@@ -326,13 +326,16 @@ protected:
       // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
       // LARGE.
 
-      // Make a second species array, something that can hold the uniq id too
+      // Make a second species array, and space to hold the IDs too
       particle_t* ALIGNED(128) _p;
-      MALLOC_ALIGNED( _p, count_true, 128 );
+      size_t*     ALIGNED(128) _p_id;
+      MALLOC_ALIGNED( _p,    count_true, 128 );
+      MALLOC_ALIGNED( _p_id, count_true, 128 );
 
       species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
       _sp.p = _p;
       _sp.np = count_true;
+      _sp.p_id = _p_id;
 
       // TODO: why do we need to update max_np?
       _sp.max_np = PBUF_SIZE;
@@ -344,8 +347,8 @@ protected:
       for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
           _sp.np = count_true-buf_start;
 
-          if( sp->np > PBUF_SIZE ) {
-              sp->np = PBUF_SIZE;
+          if( _sp.np > PBUF_SIZE ) {
+              _sp.np = PBUF_SIZE;
           }
 
           //COPY( _sp.p, &sp_p[buf_start], _sp.np );
@@ -355,8 +358,17 @@ protected:
           fileIO.write( _p, _sp.np );
       }
 
-      // Free the particle array (sp done by scope)
+      // append ID array at the end of the file
+      if(sp->has_ids) {
+          dim[0] = count_true;
+          WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
+          // Maybe do this write in batches of PBUF_SIZE as well
+          fileIO.write(_sp.p_id, count_true);
+      }
+
+      // Free the particle array and ID array (sp done by scope)
       FREE_ALIGNED( _p );
+      FREE_ALIGNED( _p_id );
 
       if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
   }
@@ -609,7 +621,13 @@ protected:
                   double max_local_np,
                   double max_local_nm,
                   double sort_interval,
-                  double sort_out_of_place ) {
+                  double sort_out_of_place,
+                  int has_ids=0 ) {
+    #ifndef VPIC_GLOBAL_PARTICLE_ID
+    if(has_ids != 0) {
+      ERROR(( "This species can not have particle IDs because you compiled without GLOBAL_PARTICLE_ID" ));
+    }
+    #endif
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
@@ -621,7 +639,7 @@ protected:
     return append_species( species( name, (float)q, (float)m,
                                     (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
-                                    grid ), &species_list );
+                                    has_ids, grid ), &species_list );
   }
 
   inline species_t *
@@ -659,8 +677,10 @@ protected:
   {
     particle_t * RESTRICT p = sp->p + sp->np;
     #ifdef VPIC_GLOBAL_PARTICLE_ID
-    size_t * RESTRICT p_id = sp->p_id + sp->np;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    if(sp->has_ids) {
+      size_t * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
     #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -679,8 +699,10 @@ protected:
     particle_t       * RESTRICT p  = sp->p  + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     #ifdef VPIC_GLOBAL_PARTICLE_ID
-    size_t           * RESTRICT p_id = sp->p_id + sp->np;
-    *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    if(sp->has_ids) {
+      size_t           * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
     #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;

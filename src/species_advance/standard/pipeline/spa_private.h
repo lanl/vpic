@@ -233,8 +233,11 @@ typedef struct sort_p_pipeline_args
   int n_subsort; // Number of pipelines to be used for subsorts
   int vl, vh;    // Particles may be contained in voxels [vl,vh].
   int n_voxel;   // Number of voxels total (including ghosts)
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  int has_ids; // Are IDs present that need to be shuffled as well
+  #endif
 
-  PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
+  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 6*sizeof(int) )
 } sort_p_pipeline_args_t;
 
 void

@@ -239,7 +239,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
       particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
       #ifdef VPIC_GLOBAL_PARTICLE_ID
-      size_t* RESTRICT ALIGNED(128) p_id = sp->p_id;
+      int sp_has_ids = sp->has_ids;
+      size_t* RESTRICT ALIGNED(128) p_id = sp->p_id; // May be NULL if sp_has_ids if false
       #endif
 
       int np = sp->np;
@@ -312,7 +313,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
           #ifdef VPIC_GLOBAL_PARTICLE_ID
           // Send global id too
-          pi->global_particle_id = p_id[i];
+          if(sp_has_ids) {
+            pi->global_particle_id = p_id[i];
+          }
           #endif
 
           ( &pi->dx )[ axis[ face ] ] = dir[ face ];
@@ -382,7 +385,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         #endif
 
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        p_id[i] = p_id[np];    /* keep p_id[] in sync with p[] */
+        if(sp_has_ids) {
+          p_id[i] = p_id[np];    /* keep p_id[] in sync with p[] */
+        }
         #endif
       }
 
@@ -487,6 +492,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       particle_mover_t * new_pm;
       particle_t       * new_p;
       #ifdef VPIC_GLOBAL_PARTICLE_ID
+      int sp_has_ids   = sp->has_ids;
       size_t           * new_p_id;
       #endif
 
@@ -512,13 +518,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         #ifdef VPIC_GLOBAL_PARTICLE_ID
         /* changes made to p[] must be mirrored in p_id[] */
-        MALLOC_ALIGNED( new_p_id, n, 128 );
+        if(sp_has_ids) {
+          MALLOC_ALIGNED( new_p_id, n, 128 );
 
-        COPY( new_p_id, sp->p_id, sp->np );
+          COPY( new_p_id, sp->p_id, sp->np );
 
-        FREE_ALIGNED( sp->p_id );
+          FREE_ALIGNED( sp->p_id );
 
-        sp->p_id   = new_p_id;
+          sp->p_id   = new_p_id;
+        }
         #endif
 
         sp->p      = new_p;
@@ -549,13 +557,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         #ifdef VPIC_GLOBAL_PARTICLE_ID
         /* changes made to p[] must be mirrored in p_id[] */
-        MALLOC_ALIGNED( new_p_id, n, 128 );
+        if(sp_has_ids) {
+          MALLOC_ALIGNED( new_p_id, n, 128 );
 
-        COPY( new_p_id, sp->p_id, sp->np );
+          COPY( new_p_id, sp->p_id, sp->np );
 
-        FREE_ALIGNED( sp->p_id );
+          FREE_ALIGNED( sp->p_id );
 
-        sp->p_id   = new_p_id;
+          sp->p_id   = new_p_id;
+        }
         #endif
 
         sp->p      = new_p;
@@ -597,6 +607,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     particle_t       * RESTRICT ALIGNED(32) sp_p [ MAX_SP ];
     particle_mover_t * RESTRICT ALIGNED(32) sp_pm[ MAX_SP ];
     #ifdef VPIC_GLOBAL_PARTICLE_ID
+    int sp_has_ids[ MAX_SP ];
     size_t           * RESTRICT ALIGNED(32) sp_p_id[ MAX_SP ];
     #endif
 
@@ -623,7 +634,10 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       sp_nm[ sp->id ] = sp->nm;
 
       #ifdef VPIC_GLOBAL_PARTICLE_ID
-      sp_p_id[ sp->id ] = sp->p_id;
+      sp_has_ids[ sp->id ] = sp->has_ids;
+      if(sp_has_ids[sp->id]) {
+        sp_p_id[ sp->id ] = sp->p_id;
+      }
       #endif
 
       #ifdef DISABLE_DYNAMIC_RESIZING
@@ -698,7 +712,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         p = sp_p[id];
         np = sp_np[id];
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        p_id = sp_p_id[id];
+        if(sp_has_ids[id]) {
+          p_id = sp_p_id[id];
+        }
         #endif
 
         pm = sp_pm[id];
@@ -733,9 +749,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         #endif
 
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        p_id[np] = pi->global_particle_id;
+        if(sp_has_ids) {
+          p_id[np] = pi->global_particle_id;
 
-        std::cout << "Recving particle with global_id " << pi->global_particle_id << " on rank " << _world_rank << std::endl;
+          std::cout << "Recving particle with global_id " << pi->global_particle_id << " on rank " << _world_rank << std::endl;
+        }
         #endif
 
         sp_np[id] = np + 1;

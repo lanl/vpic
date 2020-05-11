@@ -32,6 +32,7 @@ sort_p( species_t * sp )
 
   particle_t * ALIGNED(128) p = sp->p;
   #ifdef VPIC_GLOBAL_PARTICLE_ID
+  const int sp_has_ids       = sp->has_ids;
   size_t * ALIGNED(128) p_id = sp->p_id;
   #endif
 
@@ -101,16 +102,20 @@ sort_p( species_t * sp )
     const size_t* RESTRICT ALIGNED( 32)  in_p_id;
     /**/  size_t* RESTRICT ALIGNED( 32) out_p_id;
 
-    MALLOC_ALIGNED( new_p_id, sp->max_np, 128 );
-    in_p_id  = sp->p_id;
-    out_p_id = new_p_id;
+    if(sp_has_ids) {
+      MALLOC_ALIGNED( new_p_id, sp->max_np, 128 );
+      in_p_id  = sp->p_id;
+      out_p_id = new_p_id;
+    }
     #endif
 
     for( i = 0; i < np; i++ )
     {
       out_p[ next[ in_p[i].i ] ] = in_p[i];
       #ifdef VPIC_GLOBAL_PARTICLE_ID
-      out_p_id[ next[ in_p[i].i ] ] = in_p_id[i];
+      if(sp_has_ids) {
+        out_p_id[ next[ in_p[i].i ] ] = in_p_id[i];
+      }
       #endif
       next[ in_p[i].i ]++;  /* advance to next free slot for this cell */
     }
@@ -119,8 +124,10 @@ sort_p( species_t * sp )
     sp->p = new_p;
 
     #ifdef VPIC_GLOBAL_PARTICLE_ID
-    FREE_ALIGNED( sp->p_id );
-    sp->p_id = new_p_id;
+    if(sp_has_ids) {
+      FREE_ALIGNED( sp->p_id );
+      sp->p_id = new_p_id;
+    }
     #endif
   }
 
@@ -149,14 +156,18 @@ sort_p( species_t * sp )
       {
         src = &p[ next[i] ];
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        srcid = &p_id[ next[i] ];
+        if(sp_has_ids) {
+          srcid = &p_id[ next[i] ];
+        }
         #endif
 
         for( ; ; )
         {
           dest = &p[ next[ src->i ] ];
           #ifdef VPIC_GLOBAL_PARTICLE_ID
-          destid = &p_id[ next[ src->i ] ];
+          if(sp_has_ids) {
+            destid = &p_id[ next[ src->i ] ];
+          }
           #endif
           next[ src->i ]++;  /* advance to next free slot for this cell */
 
@@ -166,9 +177,11 @@ sort_p( species_t * sp )
           *dest  = *src;
           *src   = save_p;
           #ifdef VPIC_GLOBAL_PARTICLE_ID
-          save_pid = *destid;
-          *destid = *srcid;
-          *srcid = save_pid;
+          if(sp_has_ids) {
+            save_pid = *destid;
+            *destid = *srcid;
+            *srcid = save_pid;
+          }
           #endif
         }
       }

@@ -20,21 +20,22 @@ checkpt_species( const species_t * sp )
   checkpt_data( sp->p,
                 sp->np     * sizeof(particle_t),
                 sp->max_np * sizeof(particle_t), 1, 1, 128 );
-
-  #ifdef VPIC_GLOBAL_PARTICLE_ID
-  // REVIEW: Does the ordering of checkpt_data calls matter?
-  // RFB: Add checkpointing of particle list
-  checkpt_data( sp->p_id,
-                sp->np     * sizeof(size_t),
-                sp->max_np * sizeof(size_t), 1, 1, 128 );
-  #endif
-
   checkpt_data( sp->pm,
                 sp->nm     * sizeof(particle_mover_t),
                 sp->max_nm * sizeof(particle_mover_t), 1, 1, 128 );
   CHECKPT_ALIGNED( sp->partition, sp->g->nv+1, 128 );
   CHECKPT_PTR( sp->g );
   CHECKPT_PTR( sp->next );
+
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  // RFB: Add checkpointing of particle list
+  if(sp->has_ids) {
+    checkpt_data( sp->p_id,
+                  sp->np     * sizeof(size_t),
+                  sp->max_np * sizeof(size_t), 1, 1, 128 );
+  }
+  #endif
+
 }
 
 species_t *
@@ -44,13 +45,17 @@ restore_species( void )
   RESTORE( sp );
   RESTORE_STR( sp->name );
   sp->p  = (particle_t *)        restore_data();
-  #ifdef VPIC_GLOBAL_PARTICLE_ID
-  sp->p_id  = (size_t*)          restore_data();
-  #endif
   sp->pm = (particle_mover_t *)  restore_data();
   RESTORE_ALIGNED( sp->partition );
   RESTORE_PTR( sp->g );
   RESTORE_PTR( sp->next );
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(sp->has_ids) {
+    sp->p_id  = (size_t*)        restore_data();
+  } else {
+    sp->p_id  = (size_t*)        nullptr;
+  }
+  #endif
   return sp;
 }
 
@@ -62,7 +67,9 @@ delete_species( species_t * sp )
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  FREE_ALIGNED( sp->p_id );
+  if(sp->has_ids) {
+    FREE_ALIGNED( sp->p_id );
+  }
   #endif
   FREE( sp->name );
   FREE( sp );
@@ -130,6 +137,7 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
+         int has_ids,
          grid_t * g
          )
 {
@@ -153,7 +161,12 @@ species( const char * name,
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
+  sp->has_ids = has_ids;
+  if(has_ids) {
+    MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
+  } else {
+    sp->p_id = nullptr; // if we ever dereference this NULL pointer, I screwed up
+  }
   #endif
   sp->max_np = max_local_np;
 

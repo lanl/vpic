@@ -65,7 +65,6 @@ class species_t {
         int np, max_np;                     // Number and max local particles
         particle_t * ALIGNED(128) p;        // Array of particles for the species
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        // REVIEW: Should we duplicate np and max_np as ni and max_ni instead of a flag?
         int has_ids;                        // Does this species care about IDs?
         size_t* ALIGNED(128) p_id;          // Separate array of IDs
         #endif

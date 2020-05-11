@@ -373,7 +373,7 @@ vpic_simulation::dump_particles( const char *sp_name,
   if(sp->has_ids) {
     dim[0] = sp->np;
     WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
-    // REVIEW: Do we have to do this write in batched of PBUF_SIZE as well?
+    // Maybe do this write in batched of PBUF_SIZE as well?
     fileIO.write(sp->p_id, sp->np);
   }
 #endif

@@ -237,8 +237,7 @@ typedef struct sort_p_pipeline_args
   int has_ids; // Are IDs present that need to be shuffled as well
   #endif
 
-  // REVIEW: should we increase that to 7 SIZEOF_MEM_PTR and 6 ints?
-  PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
+  PAD_STRUCT( 7*SIZEOF_MEM_PTR + 6*sizeof(int) )
 } sort_p_pipeline_args_t;
 
 void

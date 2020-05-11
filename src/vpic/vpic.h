@@ -362,7 +362,7 @@ protected:
       if(sp->has_ids) {
           dim[0] = count_true;
           WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
-          // REVIEW: Do we have to do this write in batches of PBUF_SIZE as well
+          // Maybe do this write in batches of PBUF_SIZE as well
           fileIO.write(_sp.p_id, count_true);
       }
 

@@ -53,7 +53,7 @@ restore_species( void )
   if(sp->has_ids) {
     sp->p_id  = (size_t*)        restore_data();
   } else {
-    sp->p_id  = (size_t*)        NULL;
+    sp->p_id  = (size_t*)        nullptr;
   }
   #endif
   return sp;
@@ -165,7 +165,7 @@ species( const char * name,
   if(has_ids) {
     MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
   } else {
-    sp->p_id = NULL; // if we ever dereference this NULL pointer, I screwed up
+    sp->p_id = nullptr; // if we ever dereference this NULL pointer, I screwed up
   }
   #endif
   sp->max_np = max_local_np;

@@ -75,6 +75,25 @@ delete_species( species_t * sp )
   FREE( sp );
 }
 
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+  std::string make_tracer_name_unique(const std::string prefix, species_t* sp_list) {
+    // check if a species with that name exists in that species_list
+    species_t * sp = find_species_name(prefix.c_str(), sp_list);
+    if(!sp) { // No species with that name found
+      return prefix; // We can just use that name
+    } else {
+     // We have to append things to try and make the name unique
+     int postfix = 2;
+     std::string name = prefix;
+     while(sp) {
+       name = prefix + std::to_string(postfix);
+       sp = find_species_name(name.c_str(), sp_list);
+     }
+     return name;
+    }
+  }
+#endif
+
 /* Public interface **********************************************************/
 
 int
@@ -137,7 +156,6 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         int has_ids,
          grid_t * g
          )
 {
@@ -161,12 +179,9 @@ species( const char * name,
 
   MALLOC_ALIGNED( sp->p, max_local_np, 128 );
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  sp->has_ids = has_ids;
-  if(has_ids) {
-    MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
-  } else {
-    sp->p_id = nullptr; // if we ever dereference this NULL pointer, I screwed up
-  }
+  sp->has_ids = 0;    // By default a newly created species will not have IDs.
+  sp->p_id = nullptr; // if we ever dereference this nullptr, I screwed up
+  //  MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
   #endif
   sp->max_np = max_local_np;
 
@@ -184,4 +199,32 @@ species( const char * name,
 
   REGISTER_OBJECT( sp, checkpt_species, restore_species, NULL );
   return sp;
+}
+
+species_t * tracerspecies_by_percentage(const species_t* parentspecies,
+                                        const float percentage,
+                                        std::string name,
+                                        species_t* sp_list,
+                                        grid_t* grid) {
+
+  // REVIEW change the provided name if need be and surprise the user, or fail loudly?
+  //std::string name = make_tracer_name_unique(tracername, sp_list);
+  if(find_species_name(name.c_str(), sp_list)) {
+    ERROR(( "Species with name %d already exists", name.c_str() ));
+  }
+  const float q = parentspecies->q;
+  const float m = parentspecies->m;
+  const size_t max_local_np = ceil(percentage/100.0 * parentspecies->max_np) + 1;
+  const size_t max_local_nm = ceil(percentage/100.0 * parentspecies->max_nm) + 1;
+  const int sort_interval = parentspecies->sort_interval;
+  const int sort_out_of_place = parentspecies->sort_out_of_place;
+
+  species_t* tracerspecies = species(name.c_str(), q, m, max_local_np, max_local_nm, sort_interval, sort_out_of_place, grid);
+  if(!tracerspecies) ERROR(( "Creation of tracerspecies failed" ));
+  // Grab into the species and make it have IDs
+  tracerspecies->has_ids = 1;
+  MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
+
+  // Move the desired percentage of particles from the parent species to the tracer species
+  // REVIEW: Should that be copy instead of move?
 }

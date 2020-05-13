@@ -12,6 +12,8 @@
 #ifndef _species_advance_h_
 #define _species_advance_h_
 
+#include <string>
+
 #include "../sf_interface/sf_interface.h"
 
 //----------------------------------------------------------------------------//
@@ -42,6 +44,11 @@ species_t *
 find_species_name( const char * name,
                    species_t * sp_list );
 
+
+std::string
+make_tracer_name_unique( const std::string prefix,
+                         species_t* sp_list );
+
 species_t *
 append_species( species_t * sp,
                 species_t ** sp_list );
@@ -54,9 +61,16 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         int has_ids,
          grid_t * g
        );
+
+species_t *
+tracerspecies_by_percentage( const species_t* parentspecies,
+                             const float percentage,
+                             std::string tracername,
+                             species_t* sp_list,
+                             grid_t* grid
+                           );
 
 // FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS

@@ -86,7 +86,7 @@ load_interpolator_array( interpolator_array_t * RESTRICT ia,
         pi->dexdy    = 0.25*( -w0 + w1 - w2 + w3 );
         pi->dexdz    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2exdydz = 0.25*(  w0 - w1 - w2 + w3 );
-        
+
         // ey interpolation coefficients
         w0 = pf0->ey;
         w1 = pfz->ey;
@@ -96,7 +96,7 @@ load_interpolator_array( interpolator_array_t * RESTRICT ia,
         pi->deydz    = 0.25*( -w0 + w1 - w2 + w3 );
         pi->deydx    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2eydzdx = 0.25*(  w0 - w1 - w2 + w3 );
-        
+
         // ez interpolation coefficients
         w0 = pf0->ez;
         w1 = pfx->ez;
@@ -106,19 +106,19 @@ load_interpolator_array( interpolator_array_t * RESTRICT ia,
         pi->dezdx    = 0.25*( -w0 + w1 - w2 + w3 );
         pi->dezdy    = 0.25*( -w0 - w1 + w2 + w3 );
         pi->d2ezdxdy = 0.25*(  w0 - w1 - w2 + w3 );
-        
+
         // bx interpolation coefficients
         w0 = pf0->cbx;
         w1 = pfx->cbx;
         pi->cbx    = 0.5*(  w0 + w1 );
         pi->dcbxdx = 0.5*( -w0 + w1 );
-        
+
         // by interpolation coefficients
         w0 = pf0->cby;
         w1 = pfy->cby;
         pi->cby    = 0.5*(  w0 + w1 );
         pi->dcbydy = 0.5*( -w0 + w1 );
-        
+
         // bz interpolation coefficients
         w0 = pf0->cbz;
         w1 = pfz->cbz;

@@ -27,6 +27,12 @@ E = 0.5*1  # 0.5*me*vdre^2/Te
 nuei = mu(E)*np.power(E, -1.5) / np.sqrt(2)
 
 jx = load_slice(datafile)
+
+# Check the read in array is not 0, else it can spuriously pass
+if np.all(jx==0):
+    # Fail to avoid div by zero
+    print("=> Fail")
+    sys.exit(1)
 jx = jx/jx[0]
 
 numsteps = 80  # hard coded to match deck
@@ -51,16 +57,19 @@ for i in range(numsteps):
     rel = (1.0 - (a/b)) * 100.0
     ab = a-b
 
-    if rel > max_rel:
+    if abs(rel) > max_rel:
         max_rel = rel
 
-    if ab > max_ab:
+    if abs(ab) > max_ab:
         max_ab = ab
     # print("{} vs {} diff rel {} abs {}".format(a, b, rel, ab) )
-print("max errors -- relative {}% absolute {}".format(max_rel, max_ab))
 
-rel_tol = 1.0  # 1%
-if max_rel > rel_tol:
+rel_tol = 1.2  # 1.2%
+ab_tol = 0.015
+
+print("max errors -- relative {}% absolute {} (rel tol {} abs tol {})".format(max_rel, max_ab, rel_tol, ab_tol))
+
+if max_rel > rel_tol or max_ab > ab_tol:
     # Error out
     print("=> Fail")
     sys.exit(1)

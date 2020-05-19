@@ -69,6 +69,9 @@ load_interpolator_pipeline_scalar( load_interpolator_pipeline_args_t * args,
     w2 = pfz ->ex;
     w3 = pfyz->ex;
 
+    // The fourth (divsion by 1/4) is the combination of two divisions by 2:
+    // 1) The average when doing the FD calculation across the cell
+    // 2) The cell size where dx/y/z = 2 (fixed cell size of -1..1)
     pi->ex       = fourth * ( ( w3 + w0 ) + ( w1 + w2 ) );
     pi->dexdy    = fourth * ( ( w3 - w0 ) + ( w1 - w2 ) );
     pi->dexdz    = fourth * ( ( w3 - w0 ) - ( w1 - w2 ) );
@@ -187,7 +190,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 
   for( ; n_voxel; n_voxel-- )
   {
-    // ex interpolation coefficients 
+    // ex interpolation coefficients
     w0 = toggle_bits( sgn_1_2, v4float(  pf0->ex ) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float(  pfy->ex );   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float(  pfz->ex ) ); // [ w2 -w2 -w2 w2 ]
@@ -196,7 +199,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     store_4x1( fourth * ( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ex );
 
-    // ey interpolation coefficients 
+    // ey interpolation coefficients
     w0 = toggle_bits( sgn_1_2, v4float(  pf0->ey ) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float(  pfz->ey );   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float(  pfx->ey ) ); // [ w2 -w2 -w2 w2 ]
@@ -205,7 +208,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     store_4x1( fourth * ( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ey );
 
-    // ez interpolation coefficients 
+    // ez interpolation coefficients
     w0 = toggle_bits( sgn_1_2, v4float(  pf0->ez ) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float(  pfx->ez );   // [ w1  w1  w1 w1 ]
     w2 = toggle_bits( sgn_1_2, v4float(  pfy->ez ) ); // [ w2 -w2 -w2 w2 ]
@@ -214,7 +217,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
     store_4x1( fourth * ( ( w3 + w0 ) + toggle_bits( sgn_2_3, w1 + w2 ) ),
                &pi->ez );
 
-    // bx and by interpolation coefficients 
+    // bx and by interpolation coefficients
     w0  = toggle_bits( sgn_1_3,
                        merge( sel_0_1,
                               v4float( pf0->cbx ),
@@ -226,7 +229,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 
     store_4x1( half * ( w1 + w0 ), &pi->cbx );
 
-    // bz interpolation coefficients 
+    // bz interpolation coefficients
     w0  = toggle_bits( sgn_1_3, v4float( pf0->cbz ) ); // [ w0 -w0 d/c d/c ]
 
     w1  =                       v4float( pfz->cbz );   // [ w1 -w1 d/c d/c ]

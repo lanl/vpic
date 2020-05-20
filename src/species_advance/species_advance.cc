@@ -223,9 +223,17 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
 
   species_t* tracerspecies = species(name.c_str(), q, m, max_local_np, max_local_nm, sort_interval, sort_out_of_place, grid);
   if(!tracerspecies) ERROR(( "Creation of tracerspecies failed" ));
-  // Grab into the species and make it have IDs
-  tracerspecies->has_ids = 1;
-  MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
+
+  // If we do compile without global_particle_IDs the resulting species will
+  // not actually be a good tracer species. But this function might be useful
+  // to peel of a fration of particles into a new species for other uses and
+  // the function in vpic.h that are using facing will catch the missing
+  // compile time setting.
+  #ifdef GLOBAL_PARTICLE_IDS
+    // Grab into the species and make it have IDs
+    tracerspecies->has_ids = 1;
+    MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
+  #endif
 
   // Select the desired fraction of particles from the parent species and add to the tracer species
   int step = 0;
@@ -235,8 +243,10 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
       // Copy that particle over
       tracerspecies->p[step] = parentspecies->p[i];
       tracerspecies->np++;
-      // Create an ID
-      tracerspecies->p_id[step] = tracerspecies->generate_particle_id(i, tracerspecies->max_np);
+      #ifdef GLOBAL_PARTICLE_ID
+        // Create an ID
+        tracerspecies->p_id[step] = tracerspecies->generate_particle_id(i, tracerspecies->max_np);
+      #endif
       if(copyormove == Tracertype::Move) {
         // Remove from parent species
         parentspecies->p[i] = parentspecies->p[parentspecies->np-1];

@@ -646,24 +646,24 @@ protected:
      return find_species_id( id, species_list );
   }
 
+  // enum class Tracertype { Copy, Move };
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  inline species_t * make_tracer_by_percentage(const species_t* parentspecies, const float percentage, const char* tracername) {
-   // Implemented in species_advance.cc
-    //make_tracer_by_percentage(parentspecies, percentage, std::string(tracername), species_list);
-    tracerspecies_by_percentage(parentspecies, percentage, std::string(tracername), species_list, grid);
+  // REVIEW: make the name a std::string? or match define_species?
+  inline species_t * make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tracername) {
+    // Implemented in species_advance.cc
+    species_t* tracerspecies =  tracerspecies_by_percentage(parentspecies, percentage, copyormove, std::string(tracername), species_list, grid);
+    return append_species(tracerspecies, &species_list);
   }
-  inline species_t * make_tracer_by_percentage(const species_t* parentspecies, const float percentage) {
+  inline species_t * make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
     if(!parentspecies) ERROR(( "Invalid parent species" ));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
-    return make_tracer_by_percentage(parentspecies, percentage, name.c_str());
+    return make_tracer_by_percentage(parentspecies, percentage, copyormove, name.c_str());
   }
-
   #else
-  // REVIEW: make the name a std::string? or match define_species?
-  make_tracer_by_percentage(const species_t* parentspecies, const float percentage, const char* tacername) {
+  make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
     ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_tracer_by_percentage(const species_t* parentspecies, const float percentage) {
+  make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
     ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
   #endif

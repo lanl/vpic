@@ -178,9 +178,8 @@ begin_initialization {
   // Allow 50% more local_particles in case of non-uniformity
   // VPIC will pick the number of movers to use for each species
   // Both species use out-of-place sorting
-  // Only electrons bother with particle_ids
-  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1, 0 );
-  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1, 1 );
+  species_t * ion      = define_species( "ion",       ec, mi, 1.5*Ni/nproc(), -1, 40, 1 );
+  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1 );
 
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
@@ -285,6 +284,11 @@ begin_initialization {
     uz = d0*sn + uz*cs;
     inject_particle( electron, x, y, z, ux, uy, uz, we, 0, 0 );
   }
+
+  // create electron tracers. This has to happen after particle creation
+  species_t * elec_tracer = make_tracer_by_percentage(electron, 1.0, Tracertype::Move);
+
+  sim_log("We have " <<  ion->np << " ions and " << electron->np << " regular electrons, as well as " << elec_tracer->np << " electron tracers");
 
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains

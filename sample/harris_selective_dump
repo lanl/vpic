@@ -286,9 +286,15 @@ begin_initialization {
   }
 
   // create electron tracers. This has to happen after particle creation
-  species_t * elec_tracer = make_tracer_by_percentage(electron, 1.0, Tracertype::Move);
+  sim_log("We have " <<  ion->np << " ions and " << electron->np << " regular electrons");
 
-  sim_log("We have " <<  ion->np << " ions and " << electron->np << " regular electrons, as well as " << elec_tracer->np << " electron tracers");
+  species_t * elec_tracer  = make_tracers_by_percentage(electron, 1.0, Tracertype::Copy); // one percent
+  sim_log("We have " << elec_tracer->np  << " tracer in species " << elec_tracer->name);
+  species_t * elec_tracer2 = make_tracers_by_nth(electron, 100, Tracertype::Copy); // every 100th particle
+  sim_log("We have " << elec_tracer2->np << " tracer in species " << elec_tracer2->name);
+  species_t * elec_tracer3 = make_n_tracers(electron, 1310, Tracertype::Copy); // 1310 tracers as target
+  sim_log("We have " << elec_tracer3->np << " tracer in species " << elec_tracer3->name);
+
 
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains

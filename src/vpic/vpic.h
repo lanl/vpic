@@ -649,22 +649,64 @@ protected:
   // enum class Tracertype { Copy, Move };
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   // REVIEW: make the name a std::string? or match define_species?
-  inline species_t * make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tracername) {
+  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tracername) {
+    if((percentage <= 0.) || (percentage > 100.)) {
+      ERROR(( "%f is a bad percentage to select tracers", percentage ));
+    }
     // Implemented in species_advance.cc
-    species_t* tracerspecies =  tracerspecies_by_percentage(parentspecies, percentage, copyormove, std::string(tracername), species_list, grid);
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, 100./percentage, copyormove, std::string(tracername), species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
-  inline species_t * make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
+  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tracername) {
+    if(nth < 1.) {
+      ERROR(( "%f is a bad stride to select every nth particle as tracers", nth ));
+    }
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, nth, copyormove, std::string(tracername), species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tracername) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    if((n < 1.) || (n > parentspecies->np)) {
+      ERROR(( "%f is a bad number of tracers", n ));
+    }
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, parentspecies->np/n, copyormove, std::string(tracername), species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+
+  // versions without user supplied name
+  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
     if(!parentspecies) ERROR(( "Invalid parent species" ));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
-    return make_tracer_by_percentage(parentspecies, percentage, copyormove, name.c_str());
+    return make_tracers_by_percentage(parentspecies, percentage, copyormove, name.c_str());
+  }
+  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracers_by_nth(parentspecies, nth, copyormove, name.c_str());
+  }
+  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_n_tracers(parentspecies, n, copyormove, name.c_str());
   }
   #else
-  make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
-    ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
+  make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
+    ERROR(( "If you want to use make_tracers_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_tracer_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
-    ERROR(( "If you want to use make_tracer_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
+  make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tacername) {
+    ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tacername) {
+    ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
+    ERROR(( "If you want to use make_tracers_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
+    ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
+    ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));
   }
   #endif
 

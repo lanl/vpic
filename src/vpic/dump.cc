@@ -57,12 +57,13 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
         int next = 0; // track where we fill
         for (int i = 0; i < sp_from->np; i++)
         {
-            int this_id = sp_from->p_id[i];
             if ( f(sp_from->p[i]) )
             {
                 // copy i (inherently serial..)
                 sp_to->p[next] = sp_from->p[i];
-                sp_to->p_id[next] = sp_from->p_id[i];
+                if(sp_from->has_ids && sp_to->has_ids) {
+                  sp_to->p_id[next] = sp_from->p_id[i];
+                }
                 next++;
             }
 

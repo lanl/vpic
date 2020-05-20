@@ -12,6 +12,8 @@
 #ifndef _species_advance_h_
 #define _species_advance_h_
 
+#include <algorithm>
+#include <functional>
 #include <string>
 
 #include "../sf_interface/sf_interface.h"
@@ -68,6 +70,14 @@ enum class Tracertype { Copy, Move };
 species_t *
 tracerspecies_by_skip( species_t* parentspecies,
                        const float skip,
+                       const Tracertype copyormove,
+                       std::string tracername,
+                       species_t* sp_list,
+                       grid_t* grid
+                     );
+species_t *
+tracerspecies_by_predicate( species_t* parentspecies,
+                       std::function <bool (particle_t)> f,
                        const Tracertype copyormove,
                        std::string tracername,
                        species_t* sp_list,

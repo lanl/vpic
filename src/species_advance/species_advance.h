@@ -64,9 +64,11 @@ species( const char * name,
          grid_t * g
        );
 
+enum class Tracertype { Copy, Move };
 species_t *
-tracerspecies_by_percentage( const species_t* parentspecies,
+tracerspecies_by_percentage( species_t* parentspecies,
                              const float percentage,
+                             const Tracertype copyormove,
                              std::string tracername,
                              species_t* sp_list,
                              grid_t* grid

@@ -201,8 +201,9 @@ species( const char * name,
   return sp;
 }
 
-species_t * tracerspecies_by_percentage(const species_t* parentspecies,
+species_t * tracerspecies_by_percentage(species_t* parentspecies,
                                         const float percentage,
+                                        const Tracertype copyormove,
                                         std::string name,
                                         species_t* sp_list,
                                         grid_t* grid) {
@@ -227,4 +228,29 @@ species_t * tracerspecies_by_percentage(const species_t* parentspecies,
 
   // Move the desired percentage of particles from the parent species to the tracer species
   // REVIEW: Should that be copy instead of move?
+  int step = 0;
+  const int np = parentspecies->np;
+  for(int i = np-1; i>= 0; i--) {
+    if(np-i >= (step+1) * 100. / percentage) {
+      // Copy that particle over
+      tracerspecies->p[step] = parentspecies->p[i];
+      tracerspecies->np++;
+      // Create an ID
+      tracerspecies->p_id[step] = tracerspecies->generate_particle_id(i, tracerspecies->max_np);
+      if(copyormove == Tracertype::Move) {
+        // Remove from parent species
+        parentspecies->p[i] = parentspecies->p[parentspecies->np-1];
+        parentspecies->np--;
+      } else if (copyormove == Tracertype::Copy) {
+        // Copied tracers should have zero statistical weight
+        tracerspecies->p[step].w = 0.;
+      } else {
+        ERROR(( "Invalid enum value for copyormove" ));
+      }
+      // Increment step
+      step++;
+    }
+  }
+
+  return tracerspecies;
 }

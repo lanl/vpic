@@ -664,6 +664,11 @@ protected:
     species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, nth, copyormove, std::string(tracername), species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
+  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove, const char* tracername) {
+    // Implemented in species_advance.cc
+    species_t* tracerspecies =  tracerspecies_by_predicate(parentspecies, f, copyormove, std::string(tracername), species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
   inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tracername) {
     if(!parentspecies) ERROR(( "Invalid parent species" ));
     if((n < 1.) || (n > parentspecies->np)) {
@@ -684,19 +689,27 @@ protected:
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_tracers_by_nth(parentspecies, nth, copyormove, name.c_str());
   }
+  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracers_by_predicate(parentspecies, f, copyormove, name.c_str());
+  }
   inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
     if(!parentspecies) ERROR(( "Invalid parent species" ));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_n_tracers(parentspecies, n, copyormove, name.c_str());
   }
   #else
-  species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
+  species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tracername) {
     ERROR(( "If you want to use make_tracers_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tacername) {
+  species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tracername) {
     ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tacername) {
+  species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove, const char* tracername) {
+    ERROR(( "If you want to use make_tracers_by_predicate you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tracername) {
     ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));
   }
   species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
@@ -704,6 +717,9 @@ protected:
   }
   species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
     ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
+  }
+  species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove) {
+    ERROR(( "If you want to use make_tracers_by_predicate you need to compile with GLOBAL_PARTICLE_ID" ));
   }
   species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
     ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));

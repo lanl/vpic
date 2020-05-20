@@ -690,22 +690,22 @@ protected:
     return make_n_tracers(parentspecies, n, copyormove, name.c_str());
   }
   #else
-  make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
+  species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, const char* tacername) {
     ERROR(( "If you want to use make_tracers_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tacername) {
+  species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, const char* tacername) {
     ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tacername) {
+  species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, const char* tacername) {
     ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
+  species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
     ERROR(( "If you want to use make_tracers_by_percentage you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
+  species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
     ERROR(( "If you want to use make_tracers_by_nth you need to compile with GLOBAL_PARTICLE_ID" ));
   }
-  make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
+  species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
     ERROR(( "If you want to use make_n_tracers you need to compile with GLOBAL_PARTICLE_ID" ));
   }
   #endif

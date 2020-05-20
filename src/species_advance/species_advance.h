@@ -66,13 +66,13 @@ species( const char * name,
 
 enum class Tracertype { Copy, Move };
 species_t *
-tracerspecies_by_percentage( species_t* parentspecies,
-                             const float percentage,
-                             const Tracertype copyormove,
-                             std::string tracername,
-                             species_t* sp_list,
-                             grid_t* grid
-                           );
+tracerspecies_by_skip( species_t* parentspecies,
+                       const float skip,
+                       const Tracertype copyormove,
+                       std::string tracername,
+                       species_t* sp_list,
+                       grid_t* grid
+                     );
 
 // FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS

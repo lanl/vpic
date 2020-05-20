@@ -88,6 +88,7 @@ delete_species( species_t * sp )
      while(sp) {
        name = prefix + std::to_string(postfix);
        sp = find_species_name(name.c_str(), sp_list);
+       postfix++;
      }
      return name;
     }
@@ -201,12 +202,12 @@ species( const char * name,
   return sp;
 }
 
-species_t * tracerspecies_by_percentage(species_t* parentspecies,
-                                        const float percentage,
-                                        const Tracertype copyormove,
-                                        std::string name,
-                                        species_t* sp_list,
-                                        grid_t* grid) {
+species_t * tracerspecies_by_skip(species_t* parentspecies,
+                                  const float skip,
+                                  const Tracertype copyormove,
+                                  std::string name,
+                                  species_t* sp_list,
+                                  grid_t* grid) {
 
   // REVIEW change the provided name if need be and surprise the user, or fail loudly?
   //std::string name = make_tracer_name_unique(tracername, sp_list);
@@ -215,8 +216,8 @@ species_t * tracerspecies_by_percentage(species_t* parentspecies,
   }
   const float q = parentspecies->q;
   const float m = parentspecies->m;
-  const size_t max_local_np = ceil(percentage/100.0 * parentspecies->max_np) + 1;
-  const size_t max_local_nm = ceil(percentage/100.0 * parentspecies->max_nm) + 1;
+  const size_t max_local_np = ceil(parentspecies->max_np/skip) + 1;
+  const size_t max_local_nm = ceil(parentspecies->max_nm/skip) + 1;
   const int sort_interval = parentspecies->sort_interval;
   const int sort_out_of_place = parentspecies->sort_out_of_place;
 
@@ -226,12 +227,11 @@ species_t * tracerspecies_by_percentage(species_t* parentspecies,
   tracerspecies->has_ids = 1;
   MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
 
-  // Move the desired percentage of particles from the parent species to the tracer species
-  // REVIEW: Should that be copy instead of move?
+  // Select the desired fraction of particles from the parent species and add to the tracer species
   int step = 0;
   const int np = parentspecies->np;
   for(int i = np-1; i>= 0; i--) {
-    if(np-i >= (step+1) * 100. / percentage) {
+    if(np-i >= (step+1) * skip) {
       // Copy that particle over
       tracerspecies->p[step] = parentspecies->p[i];
       tracerspecies->np++;

@@ -75,25 +75,31 @@ delete_species( species_t * sp )
   FREE( sp );
 }
 
-#ifdef VPIC_GLOBAL_PARTICLE_ID
-  std::string make_tracer_name_unique(const std::string prefix, species_t* sp_list) {
-    // check if a species with that name exists in that species_list
-    species_t * sp = find_species_name(prefix.c_str(), sp_list);
-    if(!sp) { // No species with that name found
-      return prefix; // We can just use that name
-    } else {
-     // We have to append things to try and make the name unique
-     int postfix = 2;
-     std::string name = prefix;
-     while(sp) {
-       name = prefix + std::to_string(postfix);
-       sp = find_species_name(name.c_str(), sp_list);
-       postfix++;
-     }
-     return name;
-    }
+/**
+ * @brief Modify a species name to make sure if does not exist yet in a species list
+ *
+ * @param prefix This is the name suggestion to start with. The final name will start with this string
+ * @param sp_list The species list to check for name collisions
+ *
+ * @return A name that starts with prefix and has a suitable (possibly empty) suffix append to make sure it is unqiue with the species list
+ */
+std::string make_tracer_name_unique(const std::string prefix, species_t* sp_list) {
+  // check if a species with that name exists in that species_list
+  species_t * sp = find_species_name(prefix.c_str(), sp_list);
+  if(!sp) { // No species with that name found
+    return prefix; // We can just use that name
+  } else {
+   // We have to append things to try and make the name unique
+   int postfix = 2;
+   std::string name = prefix;
+   while(sp) {
+     name = prefix + std::to_string(postfix);
+     sp = find_species_name(name.c_str(), sp_list);
+     postfix++;
   }
-#endif
+  return name;
+ }
+}
 
 /* Public interface **********************************************************/
 
@@ -202,6 +208,20 @@ species( const char * name,
   return sp;
 }
 
+/**
+ * @brief Create a separate species by copying/moving some particles from a parent species
+ *
+ * @note These tracerspecies functions might still get renamed before we hand them to users
+ *
+ * @param parentspecies The species from which we source particles. When using "move" it will be modified.
+ * @param skip Grab on particle, skip the next skip-1. Can be non-integer.
+ * @param copyormove An enum that can be Tracertype::Copy in which case the particle stays in the parrent species and a zero-weight copy is added to the new species or Tracertype::Move in which case the particle is removed from the parent species (and keeps it's statistical weight)
+ * @param name The name for the newly created species
+ * @param sp_list The list of species we intend to add the newly created species to. Allow to check that param nbame will not clash with any existing species in that list
+ * @param grid The global simulation grid. A reference to it will be stored inside the newly created tracer species
+ *
+ * @return The newly created tracer species
+ */
 species_t * tracerspecies_by_skip(species_t* parentspecies,
                                   const float skip,
                                   const Tracertype copyormove,
@@ -209,8 +229,6 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
                                   species_t* sp_list,
                                   grid_t* grid) {
 
-  // REVIEW change the provided name if need be and surprise the user, or fail loudly?
-  //std::string name = make_tracer_name_unique(tracername, sp_list);
   if(find_species_name(name.c_str(), sp_list)) {
     ERROR(( "Species with name %d already exists", name.c_str() ));
   }
@@ -226,9 +244,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
 
   // If we do compile without global_particle_IDs the resulting species will
   // not actually be a good tracer species. But this function might be useful
-  // to peel of a fration of particles into a new species for other uses and
-  // the function in vpic.h that are using facing will catch the missing
-  // compile time setting.
+  // to peel of a fration of particles into a new species for other uses.
   #ifdef GLOBAL_PARTICLE_IDS
     // Grab into the species and make it have IDs
     tracerspecies->has_ids = 1;
@@ -265,6 +281,21 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
   return tracerspecies;
 }
 
+/**
+ * @brief Create a separate species by copying/moving some particles from a parent species
+ *
+ * @note These tracerspecies functions might still get renamed before we hand them to users
+ * @note A predicate(particle_t -> bool) might map badly to GPU. maybe offer predicate(dx,dy.dz,i,ux,uy,uz,w,id->bool there)
+ *
+ * @param parentspecies The species from which we source particles. When using "move" it will be modified.
+ * @param f The user supplied predicate function that takes a particle_t and returns true if the particle should be used in the tracer species
+ * @param copyormove An enum that can be Tracertype::Copy in which case the particle stays in the parrent species and a zero-weight copy is added to the new species or Tracertype::Move in which case the particle is removed from the parent species (and keeps it's statistical weight)
+ * @param name The name for the newly created species
+ * @param sp_list The list of species we intend to add the newly created species to. Allow to check that param nbame will not clash with any existing species in that list
+ * @param grid The global simulation grid. A reference to it will be stored inside the newly created tracer species
+ *
+ * @return The newly created tracer species
+ */
 species_t * tracerspecies_by_predicate(species_t* parentspecies,
                                        std::function <bool (particle_t)> f,
                                        const Tracertype copyormove,
@@ -272,8 +303,6 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
                                        species_t* sp_list,
                                        grid_t* grid) {
 
-  // REVIEW change the provided name if need be and surprise the user, or fail loudly?
-  //std::string name = make_tracer_name_unique(tracername, sp_list);
   if(find_species_name(name.c_str(), sp_list)) {
     ERROR(( "Species with name %d already exists", name.c_str() ));
   }
@@ -290,9 +319,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
 
   // If we do compile without global_particle_IDs the resulting species will
   // not actually be a good tracer species. But this function might be useful
-  // to peel of a fration of particles into a new species for other uses and
-  // the function in vpic.h that are using facing will catch the missing
-  // compile time setting.
+  // to peel of a fration of particles into a new species for other uses.
   #ifdef GLOBAL_PARTICLE_IDS
     // Grab into the species and make it have IDs
     tracerspecies->has_ids = 1;
@@ -302,9 +329,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
   // Select the desired fraction of particles from the parent species and add to the tracer species
   int step = 0;
   for(int i = 0; i < parentspecies->np; i++) {
-    if(!f(parentspecies->p[i])) {
-      continue;
-    } else { // This particle was picked by the user provided predicate
+    if(f(parentspecies->p[i])) { // This particle was picked by the user provided predicate
       // Copy that particle over
       tracerspecies->p[step] = parentspecies->p[i];
       tracerspecies->np++;

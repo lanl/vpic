@@ -293,7 +293,7 @@ begin_initialization {
     else { return false; }
   };
 
-  species_t * elec_tracer  = make_tracers_by_percentage(electron, 1.0, Tracertype::Copy); // one percent
+  species_t * elec_tracer  = make_tracers_by_percentage(electron, 1.0, Tracertype::Copy, "sillyname"); // one percent
   sim_log("We have " << elec_tracer->np  << " tracer in species " << elec_tracer->name);
   species_t * elec_tracer2 = make_tracers_by_nth(electron, 100, Tracertype::Copy); // every 100th particle
   sim_log("We have " << elec_tracer2->np << " tracer in species " << elec_tracer2->name);

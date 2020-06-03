@@ -14,6 +14,6 @@ if (NO_EXPLICIT_VECTOR)
 
     # Add test
     foreach(test ${TESTS})
-        add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
+        add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
     endforeach()
 endif(NO_EXPLICIT_VECTOR)

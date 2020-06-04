@@ -245,7 +245,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
   // If we do compile without global_particle_IDs the resulting species will
   // not actually be a good tracer species. But this function might be useful
   // to peel of a fration of particles into a new species for other uses.
-  #ifdef GLOBAL_PARTICLE_IDS
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
     // Grab into the species and make it have IDs
     tracerspecies->has_ids = 1;
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
@@ -259,7 +259,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
       // Copy that particle over
       tracerspecies->p[step] = parentspecies->p[i];
       tracerspecies->np++;
-      #ifdef GLOBAL_PARTICLE_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
         // Create an ID
         tracerspecies->p_id[step] = tracerspecies->generate_particle_id(step, tracerspecies->max_np);
       #endif
@@ -320,7 +320,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
   // If we do compile without global_particle_IDs the resulting species will
   // not actually be a good tracer species. But this function might be useful
   // to peel of a fration of particles into a new species for other uses.
-  #ifdef GLOBAL_PARTICLE_IDS
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
     // Grab into the species and make it have IDs
     tracerspecies->has_ids = 1;
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
@@ -333,7 +333,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
       // Copy that particle over
       tracerspecies->p[step] = parentspecies->p[i];
       tracerspecies->np++;
-      #ifdef GLOBAL_PARTICLE_ID
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
         // Create an ID
         tracerspecies->p_id[step] = tracerspecies->generate_particle_id(step, tracerspecies->max_np);
       #endif

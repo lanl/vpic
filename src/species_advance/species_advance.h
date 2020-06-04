@@ -47,10 +47,6 @@ find_species_name( const char * name,
                    species_t * sp_list );
 
 
-std::string
-make_tracer_name_unique( const std::string prefix,
-                         species_t* sp_list );
-
 species_t *
 append_species( species_t * sp,
                 species_t ** sp_list );
@@ -185,5 +181,10 @@ move_p( particle_t       * ALIGNED(128) p0,    // Particle array
         const float                     qsp ); // Species particle charge
 
 END_C_DECLS
+
+// In species_advance.cc
+std::string
+make_tracer_name_unique( const std::string prefix,
+                         species_t* sp_list );
 
 #endif // _species_advance_h_

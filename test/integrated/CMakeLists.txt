@@ -1,4 +1,5 @@
 add_subdirectory(particle_push)
+add_subdirectory(tracer_species)
 add_subdirectory(legacy)
 add_subdirectory(to_completion)
 add_subdirectory(collision)

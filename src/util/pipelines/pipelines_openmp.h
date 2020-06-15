@@ -23,17 +23,15 @@
 
 typedef struct omp_container
 {
-  int n_pipeline;
-  int dispatch_to_host;
+    int n_pipeline;
+    int dispatch_to_host;
 
-  //const char * f_dump;
-  //const char * e_dump;
+    // const char * f_dump;
+    // const char * e_dump;
 
-  //boot gets the number of pipelines from the cmd line
-  //and passes it on to the EXEC_PIPELINS macro eventually
-  void
-  (*boot)( int * pargc,
-	   char *** pargv );
+    // boot gets the number of pipelines from the cmd line
+    // and passes it on to the EXEC_PIPELINS macro eventually
+    void ( *boot )( int* pargc, char*** pargv );
 } omp_container_t;
 
 BEGIN_C_DECLS
@@ -42,4 +40,4 @@ extern omp_container_t omp_helper;
 
 END_C_DECLS
 
-#endif // _pipelines_openmp_h_ 
+#endif // _pipelines_openmp_h_

@@ -4,48 +4,46 @@
 #include "P2PConnection.h"
 
 class P2PUtilsPolicy
-	{
-	public:
+{
+  public:
+    P2PUtilsPolicy() {}
+    ~P2PUtilsPolicy() {}
 
-		P2PUtilsPolicy() {}
-		~P2PUtilsPolicy() {}
+    static int makeDirectory( const char* dirname );
+    static int getCurrentWorkingDirectory( char* dirname, size_t size );
 
-		static int makeDirectory(const char * dirname);
-		static int getCurrentWorkingDirectory(char * dirname, size_t size);
+  private:
+}; // class P2PUtilsPolicy
 
-	private:
+inline int P2PUtilsPolicy::makeDirectory( const char* dirname )
+{
+    P2PConnection& p2p = P2PConnection::instance();
 
-	}; // class P2PUtilsPolicy
+    size_t msg_size = strlen( dirname ) + 1;
+    int retval;
+    MPRequest request( P2PTag::utils_mkdir, P2PTag::data, msg_size );
 
-inline int P2PUtilsPolicy::makeDirectory(const char * dirname)
-	{
-		P2PConnection & p2p = P2PConnection::instance();
+    p2p.post( request );
+    p2p.send( const_cast<char*>( dirname ), request.count, request.tag );
+    p2p.recv( &retval, 1, request.tag, request.id );
 
-		size_t msg_size = strlen(dirname)+1;
-		int retval;
-		MPRequest request(P2PTag::utils_mkdir, P2PTag::data, msg_size);
+    return retval;
+} // P2PUtilsPolicy::makeDirectory
 
-		p2p.post(request);
-		p2p.send(const_cast<char *>(dirname), request.count, request.tag);
-		p2p.recv(&retval, 1, request.tag, request.id);
+inline int P2PUtilsPolicy::getCurrentWorkingDirectory( char* dirname,
+                                                       size_t size )
+{
+    P2PConnection& p2p = P2PConnection::instance();
 
-		return retval;
-	} // P2PUtilsPolicy::makeDirectory
+    size_t msg_size = size;
+    int retval;
+    MPRequest request( P2PTag::utils_mkdir, P2PTag::data, msg_size );
 
-inline int P2PUtilsPolicy::getCurrentWorkingDirectory(char * dirname,
-	size_t size)
-	{
-		P2PConnection & p2p = P2PConnection::instance();
+    p2p.post( request );
+    p2p.recv( dirname, size, request.count, request.tag );
+    p2p.recv( &retval, 1, request.tag, request.id );
 
-		size_t msg_size = size;
-		int retval;
-		MPRequest request(P2PTag::utils_mkdir, P2PTag::data, msg_size);
-
-		p2p.post(request);
-		p2p.recv(dirname, size, request.count, request.tag);
-		p2p.recv(&retval, 1, request.tag, request.id);
-
-		return retval;
-	} // P2PUtilsPolicy::getCurrentWorkingDirectory
+    return retval;
+} // P2PUtilsPolicy::getCurrentWorkingDirectory
 
 #endif // P2PUtilsPolicy_h

@@ -3,8 +3,10 @@
 
 #include "src/vpic/vpic.h"
 
-void vpic_simulation::user_initialization(int num_cmdline_arguments,
-	char ** cmdline_arguments) {}
+void vpic_simulation::user_initialization( int num_cmdline_arguments,
+                                           char** cmdline_arguments )
+{
+}
 
 void vpic_simulation::user_diagnostics() {}
 

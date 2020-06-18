@@ -64,6 +64,8 @@ The stable release of vpic exists on `master`, the default branch.
 
 For more cutting edge features, consider using the `devel` branch.
 
+User contributions should target the `devel` branch.
+
 # Requirements
 
 The primary requirement to build VPIC is a C++11 capable compiler and

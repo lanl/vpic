@@ -20,14 +20,14 @@ endforeach()
 
 foreach(test ${DEFAULT_ARG_TESTS})
     add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_NUMPROC}
-        ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
+        ${MPIEXEC_PREFLAGS} ./${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
 endforeach()
 
 # Try a parallel run
 set (PARALLEL_TEST parallel)
 build_a_vpic(${PARALLEL_TEST} ${CMAKE_CURRENT_SOURCE_DIR}/simple.deck)
 add_test(${PARALLEL_TEST} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
-    ${MPIEXEC_NUMPROC_PARALLEL} ${MPIEXEC_PREFLAGS} ${PARALLEL_TEST}
+    ${MPIEXEC_NUMPROC_PARALLEL} ${MPIEXEC_PREFLAGS} ./${PARALLEL_TEST}
     ${MPIEXEC_POSTFLAGS} ${ARGS})
 
 # Try a threaded run
@@ -36,7 +36,7 @@ list(APPEND THREADED_ARGS --tpp ${MPIEXEC_NUMPROC_PARALLEL})
 
 build_a_vpic(${THREADED_TEST} ${CMAKE_CURRENT_SOURCE_DIR}/simple.deck)
 add_test(${THREADED_TEST} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_NUMPROC}
-    ${MPIEXEC_PREFLAGS} ${THREADED_TEST} ${MPIEXEC_POSTFLAGS} ${THREADED_ARGS})
+    ${MPIEXEC_PREFLAGS} ./${THREADED_TEST} ${MPIEXEC_POSTFLAGS} ${THREADED_ARGS})
 
 # TODO: Do we want to try an MPI + Threaded runs
 
@@ -53,7 +53,7 @@ list(APPEND RESTART_DECK dump) # Reuse existing deck and start half way
 set(generate_restore "generate_${RESTART_BINARY}")
 build_a_vpic(${generate_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
 add_test(${generate_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
-    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${generate_restore}
+    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ./${generate_restore}
     ${MPIEXEC_POSTFLAGS})
 
 # Run using the restore file
@@ -61,7 +61,7 @@ add_test(${generate_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
 set(perform_restore "perform_${RESTART_BINARY}")
 build_a_vpic(${perform_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
 add_test(${perform_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
-    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${perform_restore}
+    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ./${perform_restore}
     ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
 
 # TODO: re-enable modify test

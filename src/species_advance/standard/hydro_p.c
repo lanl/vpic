@@ -1,7 +1,7 @@
 // FIXME: THREAD THIS! HYDRO MEM SEMANTICS WILL NEED UPDATING.
 // FIXME: V4 ACCELERATE THIS.  COULD BE BASED OFF ENERGY_P.
 
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -69,7 +69,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
     uy = p[n].uy;
     uz = p[n].uz;
     w  = p[n].w;
-    
+
     // Half advance E
     ux += qdt_2mc*((f[i].ex+dy*f[i].dexdy) + dz*(f[i].dexdz+dy*f[i].d2exdydz));
     uy += qdt_2mc*((f[i].ey+dz*f[i].deydz) + dx*(f[i].deydx+dz*f[i].d2eydzdx));
@@ -88,7 +88,7 @@ accumulate_hydro_p( hydro_array_t              * RESTRICT ha,
     ke_mc *= c/(vz+1);             // ke_mc = c|u|^2/(gamma+1) = c*(gamma-1)
 
 #ifdef ENABLE_NON_RELATIVSTIC
-    vz = 1.0f;
+    vz = c;
 #else
     vz = c/vz;                     // vz = c/gamma
 #endif

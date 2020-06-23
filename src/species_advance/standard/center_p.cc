@@ -54,7 +54,7 @@ center_p_pipeline( center_p_pipeline_args_t * args,
 
     // TODO: This is 4mc not 2mc, does this change the unity value?
 #ifdef ENABLE_NON_RELATIVSTIC
-    v0 = 1.0f;
+    v0   = qdt_4mc;
 #else
     v0   = qdt_4mc/(float)sqrt(one + (ux*ux + (uy*uy + uz*uz)));
 #endif

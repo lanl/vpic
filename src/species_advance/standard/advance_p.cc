@@ -33,7 +33,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
   float v0, v1, v2, v3, v4, v5;
 
   int itmp, ii, n, nm, max_nm;
-  
+
   DECLARE_ALIGNED_ARRAY( particle_mover_t, 16, local_pm, 1 );
 
   // Determine which quads of particles quads this pipeline processes
@@ -89,7 +89,7 @@ advance_p_pipeline( advance_p_pipeline_args_t * args,
     uz  += haz;
 
 #ifdef ENABLE_NON_RELATIVSTIC
-    v0 = 1.0f;
+    v0   = qdt_2mc;
 #else
     v0   = qdt_2mc/sqrtf(one + (ux*ux + (uy*uy + uz*uz)));
 #endif
@@ -209,7 +209,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
   const grid_t         *              g  = args->g;
 
   particle_t           * ALIGNED(128) p;
-  particle_mover_t     * ALIGNED(16)  pm; 
+  particle_mover_t     * ALIGNED(16)  pm;
   float                * ALIGNED(16)  vp0;
   float                * ALIGNED(16)  vp1;
   float                * ALIGNED(16)  vp2;
@@ -292,7 +292,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     uz += haz;
 
 #ifdef ENABLE_NON_RELATIVSTIC
-    v0 = 1.0f;
+    v0  = qdt_2mc;
 #else
     v0  = qdt_2mc*rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
 #endif
@@ -312,7 +312,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     uy += hay;
     uz += haz;
     store_4x4_tr(ux,uy,uz,q,&p[0].ux,&p[1].ux,&p[2].ux,&p[3].ux);
-    
+
     // Update the position of inbnd particles
     v0  = rsqrt( one + fma( ux,ux, fma( uy,uy, uz*uz ) ) );
     ux *= cdt_dx;
@@ -334,7 +334,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
     v4  = merge(outbnd,dy,v4);
     v5  = merge(outbnd,dz,v5);
     store_4x4_tr(v3,v4,v5,ii,&p[0].dx,&p[1].dx,&p[2].dx,&p[3].dx);
-    
+
     // Accumulate current of inbnd particles
     // Note: accumulator values are 4 times the total physical charge that
     // passed through the appropriate current quadrant in a time-step
@@ -405,7 +405,7 @@ advance_p_pipeline_v4( advance_p_pipeline_args_t * args,
 }
 
 #endif
-          
+
 void
 advance_p( /**/  species_t            * RESTRICT sp,
            /**/  accumulator_array_t  * RESTRICT aa,

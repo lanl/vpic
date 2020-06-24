@@ -257,10 +257,12 @@ protected:
     DumpParameters & dumpParams);
 
   void field_dump( DumpParameters & dumpParams,
-		   field_t *f = NULL );
+		   field_t *f = NULL,
+                   int64_t userStep = -1 );
   void hydro_dump( const char *speciesname,
 		   DumpParameters & dumpParams,
-		   hydro_t *h = NULL );
+		   hydro_t *h = NULL,
+                   int64_t userStep = -1 );
 
   ///////////////////
   // Useful accessors

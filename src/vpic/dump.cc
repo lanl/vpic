@@ -156,7 +156,7 @@ vpic_simulation::dump_grid( const char *fbase ) {
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, step(), fileIO );
 
   dim[0] = 3;
   dim[1] = 3;
@@ -208,7 +208,7 @@ vpic_simulation::dump_fields( const char *fbase,
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::field_dump, -1, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::field_dump, -1, 0, step(), fileIO );
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
@@ -260,7 +260,7 @@ vpic_simulation::dump_hydro( const char *sp_name,
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::hydro_dump,sp->id,sp->q/sp->m,fileIO);
+  WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q / sp->m, step(), fileIO );
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
@@ -305,7 +305,7 @@ vpic_simulation::dump_particles( const char *sp_name,
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
+  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q / sp->m, step(), fileIO );
 
   dim[0] = sp->np;
   WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
@@ -532,17 +532,31 @@ vpic_simulation::global_header( const char * base,
 
 void
 vpic_simulation::field_dump( DumpParameters & dumpParams,
-			     field_t *f )
+			     field_t *f,
+                             int64_t userStep )
 {
+  long dumpStep = ( userStep == -1 ) ? (long) step() : userStep;
+
   // Create directory for this time step
   char timeDir[256];
-  sprintf(timeDir, "%s/T.%ld", dumpParams.baseDir, (long)step());
-  dump_mkdir(timeDir);
+
+  sprintf( timeDir,
+           "%s/T.%ld",
+           dumpParams.baseDir,
+           dumpStep );
+
+  dump_mkdir( timeDir );
 
   // Open the file for output
   char filename[256];
-  sprintf(filename, "%s/T.%ld/%s.%ld.%d", dumpParams.baseDir, (long)step(),
-          dumpParams.baseFileName, (long)step(), rank());
+
+  sprintf( filename,
+           "%s/T.%ld/%s.%ld.%d",
+           dumpParams.baseDir,
+           dumpStep,
+           dumpParams.baseFileName,
+           dumpStep,
+           rank() );
 
   FileIO fileIO;
   FileIOStatus status;
@@ -589,7 +603,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
 
   if ( dumpParams.format == band )
   {
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+    WRITE_HEADER_V0( dump_type::field_dump, -1, 0, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -659,7 +673,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
   // band_interleave
   else
   {
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+    WRITE_HEADER_V0( dump_type::field_dump, -1, 0, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -694,17 +708,31 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
 void
 vpic_simulation::hydro_dump( const char * speciesname,
                              DumpParameters & dumpParams,
-                             hydro_t *h )
+                             hydro_t *h,
+                             int64_t userStep )
 {
+  long dumpStep = ( userStep == -1 ) ? (long) step() : userStep;
+
   // Create directory for this time step
   char timeDir[256];
-  sprintf(timeDir, "%s/T.%ld", dumpParams.baseDir, (long)step());
-  dump_mkdir(timeDir);
+
+  sprintf( timeDir,
+           "%s/T.%ld",
+           dumpParams.baseDir,
+           dumpStep );
+
+  dump_mkdir( timeDir );
 
   // Open the file for output
   char filename[256];
-  sprintf( filename, "%s/T.%ld/%s.%ld.%d", dumpParams.baseDir, (long)step(),
-           dumpParams.baseFileName, (long)step(), rank() );
+
+  sprintf( filename,
+           "%s/T.%ld/%s.%ld.%d",
+           dumpParams.baseDir,
+           dumpStep,
+           dumpParams.baseFileName,
+           dumpStep,
+           rank() );
 
   FileIO fileIO;
   FileIOStatus status;
@@ -760,7 +788,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
    */
   if ( dumpParams.format == band )
   {
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+    WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q/sp->m, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
@@ -807,7 +835,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
   // band_interleave
   else
   {
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+    WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q/sp->m, dumpStep, fileIO );
 
     dim[0] = nxout;
     dim[1] = nyout;

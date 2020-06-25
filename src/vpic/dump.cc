@@ -23,11 +23,11 @@
 // IN THE LONG RUN, THIS EXTERNAL SOFTWARE WILL NEED TO BE UPDATED.
 
 int vpic_simulation::dump_mkdir(const char * dname) {
-	return FileUtils::makeDirectory(dname);
+        return FileUtils::makeDirectory(dname);
 } // dump_mkdir
 
 int vpic_simulation::dump_cwd(char * dname, size_t size) {
-	return FileUtils::getCurrentWorkingDirectory(dname, size);
+        return FileUtils::getCurrentWorkingDirectory(dname, size);
 } // dump_mkdir
 
 /*****************************************************************************
@@ -156,7 +156,7 @@ vpic_simulation::dump_grid( const char *fbase ) {
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::grid_dump, -1, 0, step(), fileIO );
 
   dim[0] = 3;
   dim[1] = 3;
@@ -179,7 +179,10 @@ vpic_simulation::dump_grid( const char *fbase ) {
 }
 
 void
-vpic_simulation::dump_fields( const char *fbase, int ftag ) {
+vpic_simulation::dump_fields( const char *fbase,
+                              int ftag,
+                              field_t *f )
+{
   char fname[256];
   FileIO fileIO;
   int dim[3];
@@ -194,6 +197,9 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   FileIOStatus status = fileIO.open(fname, io_write);
   if( status==fail ) ERROR(( "Could not open \"%s\".", fname ));
 
+  // default is to use VPIC native field data
+  if ( f == NULL ) f = field_array->f;
+
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
   nxout = grid->nx;
   nyout = grid->ny;
@@ -202,20 +208,22 @@ vpic_simulation::dump_fields( const char *fbase, int ftag ) {
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::field_dump, -1, 0, fileIO );
+  WRITE_HEADER_V0( dump_type::field_dump, -1, 0, step(), fileIO );
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
   dim[2] = grid->nz+2;
-  WRITE_ARRAY_HEADER( field_array->f, 3, dim, fileIO );
-  fileIO.write( field_array->f, dim[0]*dim[1]*dim[2] );
-  if( fileIO.close() ) ERROR(( "File close failed on dump fields!!!" ));
+  WRITE_ARRAY_HEADER( f, 3, dim, fileIO );
+  fileIO.write( f, dim[0]*dim[1]*dim[2] );
+  if( fileIO.close() ) ERROR(( "File close failed on dump fields." ));
 }
 
 void
 vpic_simulation::dump_hydro( const char *sp_name,
                              const char *fbase,
-                             int ftag ) {
+                             int ftag,
+                             hydro_t *h )
+{
   species_t *sp;
   char fname[256];
   FileIO fileIO;
@@ -224,9 +232,15 @@ vpic_simulation::dump_hydro( const char *sp_name,
   sp = find_species_name( sp_name, species_list );
   if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
 
-  clear_hydro_array( hydro_array );
-  accumulate_hydro_p( hydro_array, sp, interpolator_array );
-  synchronize_hydro_array( hydro_array );
+  // default behavior - do regular VPIC hydro dump
+
+  if ( h == NULL)
+  {
+    h = hydro_array->h;
+    clear_hydro_array( hydro_array );
+    accumulate_hydro_p( hydro_array, sp, interpolator_array );
+    synchronize_hydro_array( hydro_array );
+  }
 
   if( !fbase ) ERROR(( "Invalid filename" ));
 
@@ -246,14 +260,14 @@ vpic_simulation::dump_hydro( const char *sp_name,
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::hydro_dump,sp->id,sp->q/sp->m,fileIO);
+  WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q / sp->m, step(), fileIO );
 
   dim[0] = grid->nx+2;
   dim[1] = grid->ny+2;
   dim[2] = grid->nz+2;
-  WRITE_ARRAY_HEADER( hydro_array->h, 3, dim, fileIO );
-  fileIO.write( hydro_array->h, dim[0]*dim[1]*dim[2] );
-  if( fileIO.close() ) ERROR(( "File close failed on dump hydro!!!" ));
+  WRITE_ARRAY_HEADER( h, 3, dim, fileIO );
+  fileIO.write( h, dim[0]*dim[1]*dim[2] );
+  if( fileIO.close() ) ERROR(( "File close failed on dump hydro." ));
 }
 
 void
@@ -291,7 +305,7 @@ vpic_simulation::dump_particles( const char *sp_name,
   dyout = grid->dy;
   dzout = grid->dz;
 
-  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
+  WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q / sp->m, step(), fileIO );
 
   dim[0] = sp->np;
   WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
@@ -327,33 +341,33 @@ vpic_simulation::dump_particles( const char *sp_name,
 #include <iostream>
 
 static FieldInfo fieldInfo[12] = {
-	{ "Electric Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Electric Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
-		sizeof(float) },
-	{ "Magnetic Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Magnetic Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
-		sizeof(float) },
-	{ "TCA Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Bound Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
-	{ "Free Current Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
-	{ "Edge Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
-	{ "Node Material", "SCALAR", "1", "INTEGER", sizeof(material_id) },
-	{ "Face Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
-	{ "Cell Material", "SCALAR", "1", "INTEGER", sizeof(material_id) }
+        { "Electric Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Electric Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
+                sizeof(float) },
+        { "Magnetic Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Magnetic Field Divergence Error", "SCALAR", "1", "FLOATING_POINT",
+                sizeof(float) },
+        { "TCA Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Bound Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+        { "Free Current Field", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+        { "Edge Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
+        { "Node Material", "SCALAR", "1", "INTEGER", sizeof(material_id) },
+        { "Face Material", "VECTOR", "3", "INTEGER", sizeof(material_id) },
+        { "Cell Material", "SCALAR", "1", "INTEGER", sizeof(material_id) }
 }; // fieldInfo
 
 static HydroInfo hydroInfo[5] = {
-	{ "Current Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
-	{ "Momentum Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
-	{ "Kinetic Energy Density", "SCALAR", "1", "FLOATING_POINT",
-		sizeof(float) },
-	{ "Stress Tensor", "TENSOR", "6", "FLOATING_POINT", sizeof(float) }
-	/*
-	{ "STRESS_DIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
-	{ "STRESS_OFFDIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
-	*/
+        { "Current Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Charge Density", "SCALAR", "1", "FLOATING_POINT", sizeof(float) },
+        { "Momentum Density", "VECTOR", "3", "FLOATING_POINT", sizeof(float) },
+        { "Kinetic Energy Density", "SCALAR", "1", "FLOATING_POINT",
+                sizeof(float) },
+        { "Stress Tensor", "TENSOR", "6", "FLOATING_POINT", sizeof(float) }
+        /*
+        { "STRESS_DIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
+        { "STRESS_OFFDIAGONAL", "VECTOR", "3", "FLOATING_POINT", sizeof(float) }
+        */
 }; // hydroInfo
 
 void
@@ -517,23 +531,41 @@ vpic_simulation::global_header( const char * base,
 }
 
 void
-vpic_simulation::field_dump( DumpParameters & dumpParams ) {
+vpic_simulation::field_dump( DumpParameters & dumpParams,
+			     field_t *f,
+                             int64_t userStep )
+{
+  long dumpStep = ( userStep == -1 ) ? (long) step() : userStep;
 
   // Create directory for this time step
   char timeDir[256];
-  sprintf(timeDir, "%s/T.%ld", dumpParams.baseDir, (long)step());
-  dump_mkdir(timeDir);
+
+  sprintf( timeDir,
+           "%s/T.%ld",
+           dumpParams.baseDir,
+           dumpStep );
+
+  dump_mkdir( timeDir );
 
   // Open the file for output
   char filename[256];
-  sprintf(filename, "%s/T.%ld/%s.%ld.%d", dumpParams.baseDir, (long)step(),
-          dumpParams.baseFileName, (long)step(), rank());
+
+  sprintf( filename,
+           "%s/T.%ld/%s.%ld.%d",
+           dumpParams.baseDir,
+           dumpStep,
+           dumpParams.baseFileName,
+           dumpStep,
+           rank() );
 
   FileIO fileIO;
   FileIOStatus status;
 
   status = fileIO.open(filename, io_write);
   if( status==fail ) ERROR(( "Failed opening file: %s", filename ));
+
+  // default is to write field_array->f
+  if ( f==NULL ) f = field_array->f;
 
   // convenience
   const size_t istride(dumpParams.stride_x);
@@ -569,15 +601,16 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
    * specified for a particular dimension, VPIC will write the boundary
    * plus every "stride" elements in that dimension. */
 
-  if(dumpParams.format == band) {
-
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+  if ( dumpParams.format == band )
+  {
+    WRITE_HEADER_V0( dump_type::field_dump, -1, 0, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
     dim[2] = nzout+2;
 
-    if( rank()==VERBOSE_rank ) {
+    if ( rank() == VERBOSE_rank )
+    {
       std::cerr << "nxout: " << nxout << std::endl;
       std::cerr << "nyout: " << nyout << std::endl;
       std::cerr << "nzout: " << nzout << std::endl;
@@ -586,7 +619,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
       std::cerr << "nz: " << grid->nz << std::endl;
     }
 
-    WRITE_ARRAY_HEADER(field_array->f, 3, dim, fileIO);
+    WRITE_ARRAY_HEADER(f, 3, dim, fileIO);
 
     // Create a variable list of field values to output.
     size_t numvars = std::min(dumpParams.output_vars.bitsum(),
@@ -599,77 +632,107 @@ vpic_simulation::field_dump( DumpParameters & dumpParams ) {
     if( rank()==VERBOSE_rank ) printf("\nBEGIN_OUTPUT\n");
 
     // more efficient for standard case
-    if(istride == 1 && jstride == 1 && kstride == 1)
+    if ( istride == 1 &&
+	 jstride == 1 &&
+	 kstride == 1 )
+    {
       for(size_t v(0); v<numvars; v++) {
       for(size_t k(0); k<nzout+2; k++) {
       for(size_t j(0); j<nyout+2; j++) {
       for(size_t i(0); i<nxout+2; i++) {
-              const uint32_t * fref = reinterpret_cast<uint32_t *>(&field_array->f(i,j,k));
+              const uint32_t * fref = reinterpret_cast<uint32_t *>(&f(i,j,k));
               fileIO.write(&fref[varlist[v]], 1);
-              if(rank()==VERBOSE_rank) printf("%f ", field_array->f(i,j,k).ex);
+              if(rank()==VERBOSE_rank) printf("%f ", f(i,j,k).ex);
               if(rank()==VERBOSE_rank) std::cout << "(" << i << " " << j << " " << k << ")" << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "ROW_BREAK " << j << " " << k << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "PLANE_BREAK " << k << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "BLOCK_BREAK" << std::endl;
       }
+    }
 
     else
-
+    {
       for(size_t v(0); v<numvars; v++) {
       for(size_t k(0); k<nzout+2; k++) { const size_t koff = (k == 0) ? 0 : (k == nzout+1) ? grid->nz+1 : k*kstride-1;
       for(size_t j(0); j<nyout+2; j++) { const size_t joff = (j == 0) ? 0 : (j == nyout+1) ? grid->ny+1 : j*jstride-1;
       for(size_t i(0); i<nxout+2; i++) { const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ? grid->nx+1 : i*istride-1;
-              const uint32_t * fref = reinterpret_cast<uint32_t *>(&field_array->f(ioff,joff,koff));
+              const uint32_t * fref = reinterpret_cast<uint32_t *>(&f(ioff,joff,koff));
               fileIO.write(&fref[varlist[v]], 1);
-              if(rank()==VERBOSE_rank) printf("%f ", field_array->f(ioff,joff,koff).ex);
+              if(rank()==VERBOSE_rank) printf("%f ", f(ioff,joff,koff).ex);
               if(rank()==VERBOSE_rank) std::cout << "(" << ioff << " " << joff << " " << koff << ")" << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "ROW_BREAK " << joff << " " << koff << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "PLANE_BREAK " << koff << std::endl;
       } if(rank()==VERBOSE_rank) std::cout << std::endl << "BLOCK_BREAK" << std::endl;
       }
+    }
 
     delete[] varlist;
 
-  } else { // band_interleave
+  }
 
-    WRITE_HEADER_V0(dump_type::field_dump, -1, 0, fileIO);
+  // band_interleave
+  else
+  {
+    WRITE_HEADER_V0( dump_type::field_dump, -1, 0, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
     dim[2] = nzout+2;
 
-    WRITE_ARRAY_HEADER(field_array->f, 3, dim, fileIO);
+    WRITE_ARRAY_HEADER(f, 3, dim, fileIO);
 
-    if(istride == 1 && jstride == 1 && kstride == 1)
-      fileIO.write(field_array->f, dim[0]*dim[1]*dim[2]);
+    if ( istride == 1 &&
+	 jstride == 1 &&
+	 kstride == 1 )
+    {
+      fileIO.write( f, dim[0] * dim[1] * dim[2] );
+    }
+
     else
+    {
       for(size_t k(0); k<nzout+2; k++) { const size_t koff = (k == 0) ? 0 : (k == nzout+1) ? grid->nz+1 : k*kstride-1;
       for(size_t j(0); j<nyout+2; j++) { const size_t joff = (j == 0) ? 0 : (j == nyout+1) ? grid->ny+1 : j*jstride-1;
       for(size_t i(0); i<nxout+2; i++) { const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ? grid->nx+1 : i*istride-1;
-            fileIO.write(&field_array->f(ioff,joff,koff), 1);
+            fileIO.write( &f( ioff, joff, koff ), 1 );
       }
       }
       }
+    }
   }
 
 # undef f
 
-  if( fileIO.close() ) ERROR(( "File close failed on field dump!!!" ));
+  if ( fileIO.close() ) ERROR(( "File close failed on field dump." ));
 }
 
 void
 vpic_simulation::hydro_dump( const char * speciesname,
-                             DumpParameters & dumpParams ) {
+                             DumpParameters & dumpParams,
+                             hydro_t *h,
+                             int64_t userStep )
+{
+  long dumpStep = ( userStep == -1 ) ? (long) step() : userStep;
 
   // Create directory for this time step
   char timeDir[256];
-  sprintf(timeDir, "%s/T.%ld", dumpParams.baseDir, (long)step());
-  dump_mkdir(timeDir);
+
+  sprintf( timeDir,
+           "%s/T.%ld",
+           dumpParams.baseDir,
+           dumpStep );
+
+  dump_mkdir( timeDir );
 
   // Open the file for output
   char filename[256];
-  sprintf( filename, "%s/T.%ld/%s.%ld.%d", dumpParams.baseDir, (long)step(),
-           dumpParams.baseFileName, (long)step(), rank() );
+
+  sprintf( filename,
+           "%s/T.%ld/%s.%ld.%d",
+           dumpParams.baseDir,
+           dumpStep,
+           dumpParams.baseFileName,
+           dumpStep,
+           rank() );
 
   FileIO fileIO;
   FileIOStatus status;
@@ -680,9 +743,14 @@ vpic_simulation::hydro_dump( const char * speciesname,
   species_t * sp = find_species_name(speciesname, species_list);
   if( !sp ) ERROR(( "Invalid species name: %s", speciesname ));
 
-  clear_hydro_array( hydro_array );
-  accumulate_hydro_p( hydro_array, sp, interpolator_array );
-  synchronize_hydro_array( hydro_array );
+  // default behavior is to accumulate hydro array and then write
+  if ( h == NULL )
+  {
+    h = hydro_array->h;
+    clear_hydro_array( hydro_array );
+    accumulate_hydro_p( hydro_array, sp, interpolator_array );
+    synchronize_hydro_array( hydro_array );
+  }
 
   // convenience
   const size_t istride(dumpParams.stride_x);
@@ -700,7 +768,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
   int dim[3];
 
   /* define to do C-style indexing */
-# define hydro(x,y,z) hydro_array->h[VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)]
+# define hydro(x,y,z) h[VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)]
 
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
   nxout = (grid->nx)/istride;
@@ -718,15 +786,15 @@ vpic_simulation::hydro_dump( const char * speciesname,
    * specified for a particular dimension, VPIC will write the boundary
    * plus every "stride" elements in that dimension.
    */
-  if(dumpParams.format == band) {
-
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+  if ( dumpParams.format == band )
+  {
+    WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q/sp->m, dumpStep, fileIO );
 
     dim[0] = nxout+2;
     dim[1] = nyout+2;
     dim[2] = nzout+2;
 
-    WRITE_ARRAY_HEADER(hydro_array->h, 3, dim, fileIO);
+    WRITE_ARRAY_HEADER(h, 3, dim, fileIO);
 
     /*
      * Create a variable list of hydro values to output.
@@ -762,29 +830,36 @@ vpic_simulation::hydro_dump( const char * speciesname,
 
     delete[] varlist;
 
-  } else { // band_interleave
+  }
 
-    WRITE_HEADER_V0(dump_type::hydro_dump, sp->id, sp->q/sp->m, fileIO);
+  // band_interleave
+  else
+  {
+    WRITE_HEADER_V0( dump_type::hydro_dump, sp->id, sp->q/sp->m, dumpStep, fileIO );
 
     dim[0] = nxout;
     dim[1] = nyout;
     dim[2] = nzout;
 
-    WRITE_ARRAY_HEADER(hydro_array->h, 3, dim, fileIO);
+    WRITE_ARRAY_HEADER(h, 3, dim, fileIO);
 
-    if(istride == 1 && jstride == 1 && kstride == 1)
-
-      fileIO.write(hydro_array->h, dim[0]*dim[1]*dim[2]);
+    if ( istride == 1 &&
+	 jstride == 1 &&
+	 kstride == 1 )
+    {
+      fileIO.write( h, dim[0] * dim[1] * dim[2] );
+    }
 
     else
-
+    {
       for(size_t k(0); k<nzout; k++) { const size_t koff = (k == 0) ? 0 : (k == nzout+1) ? grid->nz+1 : k*kstride-1;
       for(size_t j(0); j<nyout; j++) { const size_t joff = (j == 0) ? 0 : (j == nyout+1) ? grid->ny+1 : j*jstride-1;
       for(size_t i(0); i<nxout; i++) { const size_t ioff = (i == 0) ? 0 : (i == nxout+1) ? grid->nx+1 : i*istride-1;
-            fileIO.write(&hydro(ioff,joff,koff), 1);
+            fileIO.write( &hydro( ioff, joff, koff ), 1 );
       }
       }
       }
+    }
   }
 
 # undef hydro

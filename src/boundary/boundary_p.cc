@@ -749,7 +749,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         #endif
 
         #ifdef VPIC_GLOBAL_PARTICLE_ID
-        if(sp_has_ids) {
+        if(sp_has_ids[id]) {
           p_id[np] = pi->global_particle_id;
 
           std::cout << "Recving particle with global_id " << pi->global_particle_id << " on rank " << _world_rank << std::endl;

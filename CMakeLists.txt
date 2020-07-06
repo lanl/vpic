@@ -93,6 +93,8 @@ set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles 
 
 option(GLOBAL_PARTICLE_ID "Give particles a global ID that allows reidentifiaction" OFF)
 
+option(PARTICLE_ANNOTATION "Reserve buffer to store extra information per particle for user defined annotations" OFF)
+
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #
@@ -301,6 +303,11 @@ endif(VPIC_PRINT_MORE_DIGITS)
 if(GLOBAL_PARTICLE_ID)
   add_definitions(-DVPIC_GLOBAL_PARTICLE_ID)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_GLOBAL_PARTICLE_ID")
+endif()
+
+if(PARTICLE_ANNOTATION)
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION")
 endif()
 
 #------------------------------------------------------------------------------#

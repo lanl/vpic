@@ -1,6 +1,8 @@
 /*#define VERBOSE_CHECKPOINTING*/
 #ifndef NO_REVERSE_SYMBOL_TABLE_LOOKUP_SUPPORT
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #if defined(__APPLE__)
 #define _DARWIN_C_SOURCE

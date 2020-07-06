@@ -54,4 +54,16 @@ tracerspecies_*.
 
 ## Annotate tracers
 
+If the code is compiled with _-DVPIC_PARTICLE_ANNOTATION_ then the use can
+requests extra buffer space per particle for custom annotations. A call to
+
+    elec_tracer->allocate_annotation_buffer(17)
+
+will request enough space for 17 float variables per particle that are
+initalized to 0. Calls to elec_tracer->get_annotation(i, j) will get the
+annotation of particle i (between 0 and elec_tracer->np) in slot j (beween 0
+and 17). Calls to elec_tracer->set_annotation(i, j, v) will set that variable
+to the value in v. elec_tracer->increment_annotation(i, j, a) will increment
+the value by a.
+
 ## Output tracers

@@ -35,7 +35,13 @@ checkpt_species( const species_t * sp )
                   sp->max_np * sizeof(size_t), 1, 1, 128 );
   }
   #endif
-
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(sp->has_annotation) {
+    checkpt_data( sp->p_annotation,
+                  sp->np     * sp->has_annotation * sizeof(float),
+                  sp->max_np * sp->has_annotation * sizeof(float), 1, 1, 128);
+  }
+  #endif
 }
 
 species_t *
@@ -56,6 +62,13 @@ restore_species( void )
     sp->p_id  = (size_t*)        nullptr;
   }
   #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(sp->has_annotation) {
+    sp->p_annotation  = (float*) restore_data();
+  } else {
+    sp->p_annotation  = (float*) nullptr;
+  }
+  #endif
   return sp;
 }
 
@@ -69,6 +82,11 @@ delete_species( species_t * sp )
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   if(sp->has_ids) {
     FREE_ALIGNED( sp->p_id );
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(sp->has_annotation) {
+    FREE_ALIGNED( sp->p_annotation );
   }
   #endif
   FREE( sp->name );
@@ -188,7 +206,10 @@ species( const char * name,
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   sp->has_ids = 0;    // By default a newly created species will not have IDs.
   sp->p_id = nullptr; // if we ever dereference this nullptr, I screwed up
-  //  MALLOC_ALIGNED( sp->p_id, max_local_np, 128 );
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  sp->has_annotation = 0;    // By default a newly created species will not have annotation buffers
+  sp->p_annotation = nullptr; // if we ever dereference this nullptr, I screwed up
   #endif
   sp->max_np = max_local_np;
 

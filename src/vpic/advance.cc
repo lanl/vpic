@@ -104,6 +104,9 @@ int vpic_simulation::advance(void) {
         p_id0[i] = p_id0[sp->np-1];  // move the id up too
       }
       #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+       #warning copy annotation somewhere, but not the particle mover
+      #endif
       sp->np--; // decrement the number of particles
     }
     sp->nm = 0;

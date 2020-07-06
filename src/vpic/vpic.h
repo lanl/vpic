@@ -283,7 +283,7 @@ protected:
       species_t *sp;
       char fname[256];
       FileIO fileIO;
-      int dim[1], buf_start;
+      int dim[2], buf_start;
       static particle_t * ALIGNED(128) p_buf = NULL;
 # define PBUF_SIZE 32768 // 1MB of particles
 
@@ -331,11 +331,21 @@ protected:
       size_t*     ALIGNED(128) _p_id;
       MALLOC_ALIGNED( _p,    count_true, 128 );
       MALLOC_ALIGNED( _p_id, count_true, 128 );
+      #ifdef VPIC_PARTICLE_ANNOTATION
+        float*    ALIGNED(128) _p_annotation = nullptr;
+        if(sp->has_annotation) {
+          MALLOC_ALIGNED( _p_annotation, count_true*sp->has_annotation, 128);
+        }
+      #endif
 
       species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
       _sp.p = _p;
       _sp.np = count_true;
       _sp.p_id = _p_id;
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      _sp.has_annotation = sp->has_annotation;
+      _sp.p_annotation = _p_annotation;
+      #endif
 
       // TODO: why do we need to update max_np?
       _sp.max_np = PBUF_SIZE;
@@ -365,10 +375,23 @@ protected:
           // Maybe do this write in batches of PBUF_SIZE as well
           fileIO.write(_sp.p_id, count_true);
       }
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      // append annotation buffer at the end of the file
+      if(sp->has_annotation) {
+          dim[0] = count_true;
+          dim[1] = sp->has_annotation;
+          WRITE_ARRAY_HEADER( sp->p_annotation, 2, dim, fileIO );
+          // Maybe do this write in batches of PBUF_SIZE as well
+          fileIO.write(_sp.p_annotation, count_true*sp->has_annotation);
+      }
+      #endif
 
       // Free the particle array and ID array (sp done by scope)
       FREE_ALIGNED( _p );
       FREE_ALIGNED( _p_id );
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      FREE_ALIGNED( _p_annotation );
+      #endif
 
       if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
   }
@@ -728,6 +751,13 @@ protected:
       *p_id = sp->generate_particle_id( sp->np, sp->max_np );
     }
     #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int j = 0; j < sp->has_annotation; j++) {
+        sp->set_annotation(sp->np, j, 0.);
+      }
+    }
+    #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
     sp->np++;
@@ -748,6 +778,13 @@ protected:
     if(sp->has_ids) {
       size_t           * RESTRICT p_id = sp->p_id + sp->np;
       *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int j = 0; j < sp->has_annotation; j++) {
+        sp->set_annotation(sp->np, j, 0.);
+      }
     }
     #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;

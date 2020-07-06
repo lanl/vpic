@@ -225,6 +225,10 @@ typedef struct sort_p_pipeline_args
   MEM_PTR( size_t, 128) p_id;                  // Particle ids (0:n-1)
   MEM_PTR( size_t, 128 ) aux_p_id;             // Aux particle ids (0:n-1)
   #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  MEM_PTR( float, 128) p_annotation;          // Particle annotation buffer (0:n-1)*(0:has_annotation)
+  MEM_PTR( float, 128 ) aux_p_annotation;     // Aux buffer (0:n-1)*(0:has_annotation)
+  #endif
   MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
   /**/ // (0:max_subsort-1,0:MAX_PIPELINE-1)
   MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
@@ -235,6 +239,9 @@ typedef struct sort_p_pipeline_args
   int n_voxel;   // Number of voxels total (including ghosts)
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   int has_ids; // Are IDs present that need to be shuffled as well
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  int has_annotation; // Number of slots per particle. 0: no annotation buffer allocated
   #endif
 
   PAD_STRUCT( 7*SIZEOF_MEM_PTR + 6*sizeof(int) )

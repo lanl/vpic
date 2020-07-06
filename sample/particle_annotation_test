@@ -1,0 +1,92 @@
+begin_globals {
+};
+
+begin_initialization {
+
+
+  num_step = 1;                      // Run for one step so we can do output once
+  status_interval = 100;             // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  define_units(1, 1);                // speed of light and eps0
+  define_timestep( 0.95/sqrt(3.0) ); // This implies dx=dy=dz = 1
+
+  int gnx = 8;
+  int gny = 4;
+  int gnz = 4;
+
+  int topox = 2;
+  int topoy = 1;
+  int topoz = 1;
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       gnx,gny,gnz,        // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Create species
+  species_t* sp = define_species("electron",  // name
+                                        -1.,  // charge
+                                         1.,  // mass
+                                          1,  // maximum number of local particles
+                                         -1,  // automatic numbner of particle movers
+                                          0,  // sort never
+                                          1); // sort mode out-of-place
+
+  // create annotation buffer
+#ifdef VPIC_PARTICLE_ANNOTATION
+  sp->allocate_annotation_buffer(2);
+#else
+#warning "No annotation buffer. compile with PARTICLE_ANNOTATE=ON"
+#endif
+
+  // Set field values
+  set_region_field(everywhere, 0.,0.,0., 0.,0.,0.); // Should we set random field values so they don't compress too well?
+
+  // Generate particles
+  seed_entropy(rank()); // different random numbers on different ranks
+
+  if(rank() == 0) {
+    double x = 3.9;
+    double y = 2.1;
+    double z = 2.2;
+
+    double ux = 0.999; // nearly c
+    double uy = 0.;
+    double uz = 0.;
+
+    inject_particle(sp, x,y,z, ux,uy,uz, 1., 0, 0);
+#ifdef VPIC_PARTICLE_ANNOTATION
+    sp->set_annotation(0, 0, 1.); // slot 1
+    sp->set_annotation(0, 1, 2.); // slot 2
+#endif
+  }
+
+  sim_log("Done with setup");
+  fflush(NULL);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

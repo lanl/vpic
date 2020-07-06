@@ -68,6 +68,10 @@ class species_t {
         int has_ids;                        // Does this species care about IDs?
         size_t* ALIGNED(128) p_id;          // Separate array of IDs
         #endif
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        int has_annotation;                 // How many annotations are supported on this species?
+        float* ALIGNED(128) p_annotation;   // Buffer for user defined annotation data
+        #endif
 
         int nm, max_nm;                     // Number and max local movers in use
         particle_mover_t * ALIGNED(128) pm; // Particle movers
@@ -135,6 +139,80 @@ class species_t {
 
             return global_id;
         }
+
+#ifdef VPIC_PARTICLE_ANNOTATION
+        /**
+         * @brief This allocates memory for user defined annotations on each particle
+         *
+         * @param slot_count how many float annotations per particle
+         *
+         * @ return No return value, dies if the allocation fails
+         */
+        void allocate_annotation_buffer(const int slot_count) {
+            if(slot_count <= 0) {
+                this->has_annotation = 0;
+                return;
+            }
+            this->has_annotation = slot_count;
+            MALLOC_ALIGNED(this->p_annotation, this->max_np * this->has_annotation * sizeof(float), 128);
+        }
+        /**
+         * @brief Retrieve as float value from an annotation slot
+         *
+         * @param particle_index index of particle 0 <= i < np
+         * @param slot_index of annotation within that particle 0 <= slot_index < has_annotation
+         *
+         * @return the stored annotation value
+         */
+        float get_annotation(const int particle_index, const int slot_index) {
+            if((particle_index < 0) || (particle_index >= this->np)) {
+                // Invalid particle index
+                return NAN;
+            }
+            if((slot_index < 0) || (slot_index >= this->has_annotation)) {
+                // Invalid slot index
+                return NAN;
+            }
+            return this->p_annotation[particle_index*this->has_annotation + slot_index];
+        }
+        /**
+         * @brief Write a value to an annotation slot
+         *
+         * @param particle_index index of particle 0 <= i < np
+         * @param slot_index of annotation within that particle 0 <= slot_index < has_annotation
+         * @param v value to write
+         */
+        void set_annotation(const int particle_index, const int slot_index, const float v) {
+            if((particle_index < 0) || (particle_index >= this->np)) {
+                // Invalid particle index
+                return;
+            }
+            if((slot_index < 0) || (slot_index >= this->has_annotation)) {
+                // Invalid slot index
+                return;
+            }
+            this->p_annotation[particle_index*this->has_annotation + slot_index] = v;
+        }
+        /**
+         * @brief Increment the value in an annotation slot
+         *
+         * @param particle_index index of particle 0 <= i < np
+         * @param slot_index of annotation within that particle 0 <= slot_index < has_annotation
+         * @param a increment to add to the stored value
+         */
+        void increment_annotation(const int particle_index, const int slot_index, const float a) {
+            if((particle_index < 0) || (particle_index >= this->np)) {
+                // Invalid particle index
+                return;
+            }
+            if((slot_index < 0) || (slot_index >= this->has_annotation)) {
+                // Invalid slot index
+                return;
+            }
+            this->p_annotation[particle_index*this->has_annotation + slot_index] += a;
+        }
+#endif
+
 };
 
 #endif // _species_advance_aos_h_

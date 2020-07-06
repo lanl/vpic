@@ -87,6 +87,14 @@ vpic_simulation::inject_particle( species_t * sp,
     sp->p_id[old_np] = sp->generate_particle_id( old_np, sp->max_np );
   }
   #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // Clear annotation buffer
+  if(sp->has_annotation) {
+    for(int a = 0; a < sp->has_annotation; a++) {
+      sp->p_annotation[old_np*sp->has_annotation + a] = 0.;
+    }
+  }
+  #endif
 
   if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
 

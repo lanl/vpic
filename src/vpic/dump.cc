@@ -64,6 +64,13 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
                 if(sp_from->has_ids && sp_to->has_ids) {
                   sp_to->p_id[next] = sp_from->p_id[i];
                 }
+                #ifdef VPIC_PARTICLE_ANNOTATION
+                if(sp_from->has_annotation && sp_to->has_annotation) {
+                  for(int a = 0; a < sp_from->has_annotation && a < sp_to->has_annotation; a++) {
+                    sp_to->p_annotation[next*sp_to->has_annotation + a] = sp_from->p_annotation[next*sp_from->has_annotation + a];
+                  }
+                }
+                #endif
                 next++;
             }
 
@@ -87,6 +94,13 @@ void vpic_simulation::predicate_copy(species_t* sp_from, species_t* sp_to, std::
                 // copy i (inherently serial..)
                 sp_to->p[next] = sp_from->p[i];
                 sp_to->p_id[next] = sp_from->p_id[i];
+                #ifdef VPIC_PARTICLE_ANNOTATION
+                if(sp_from->has_annotation && sp_to->has_annotation) {
+                  for(int a = 0; a < sp_from->has_annotation && a < sp_to->has_annotation; a++) {
+                    sp_to->p_annotation[next*sp_to->has_annotation + a] = sp_from->p_annotation[next*sp_from->has_annotation + a];
+                  }
+                }
+                #endif
                 next++;
             }
 
@@ -316,7 +330,7 @@ vpic_simulation::dump_particles( const char *sp_name,
   species_t *sp;
   char fname[256];
   FileIO fileIO;
-  int dim[1], buf_start;
+  int dim[2], buf_start;
   static particle_t * ALIGNED(128) p_buf = NULL;
 # define PBUF_SIZE 32768 // 1MB of particles
 
@@ -377,7 +391,18 @@ vpic_simulation::dump_particles( const char *sp_name,
     // Maybe do this write in batched of PBUF_SIZE as well?
     fileIO.write(sp->p_id, sp->np);
   }
-#endif
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // append annotation buffer at the end of the file
+  if(sp->has_annotation) {
+    dim[0] = sp->np;
+    dim[1] = sp->has_annotation;
+    WRITE_ARRAY_HEADER( sp->p_annotation, 2, dim, fileIO );
+    // Maybe do this write in batched of PBUF_SIZE as well?
+    fileIO.write(sp->p_annotation, sp->np*sp->has_annotation);
+  }
+  #endif
+
 
   if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
 }

@@ -1,0 +1,77 @@
+\documentclass[twocolumn,10pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{geometry}
+
+\geometry{left=2cm,right=2cm,top=3cm,bottom=2.5cm}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\title{Units in VPIC}
+\author{A. Seaton}
+\begin{document}
+	\maketitle
+
+	Internally, the code uses the SI form for Maxwell's equations and the Lorentz force (i.e. not the Guassian form). However, the code allows the user to specify various constants, and these determine the unit system. In particular, the user implicitly defines a length scale $l_{\mathrm{deck}}$ for the spatial grid, and explicitly sets values for the speed of light ($c_{\mathrm{deck}}$), vacuum permittivity ($\varepsilon_{0,\mathrm{deck}}$) and charge/mass ratio of each species $\alpha$ ($r_{\alpha,\mathrm{deck}} \equiv (q_{\alpha}/m_{\alpha})_{\mathrm{deck}}$). Together these define the unit system used by the code.
+
+	One reason for this flexibility (versus having a fixed unit system) is that VPIC uses single-precision floating point numbers. This means that all values, including at intermediate steps in calculations, must have absolute value $|x|$ between $\sim 10^{-38}$ and $\sim 10^{38}$. Depending on the problem, a unit system such as SI may require values smaller or larger than these.
+
+	\section{Unit Conversions}
+
+	Given an input deck and simulation data, we want to convert the output to a familiar unit system. The quantities we are typically interested in are length, time, and the electromagnetic fields. Taking our base units as length, time, mass, and charge, we define normalisation factors $L$, $T$, $M$, and $Q$ so that a code quantity $f_{c}$ is converted to a value $f$ in our preferred unit system using $f = Ff_c$. To determine what our base unit normalisation factors are, we write out the constraints specified in the deck:
+
+	\begin{align}
+		l_{\mathrm{deck}} &= L, \\
+		c_{\mathrm{deck}} &= c\frac{T}{L}, \\
+		\varepsilon_{0,\mathrm{deck}} &= \varepsilon_0\frac{ML^3}{Q^2T^2}, \\
+		r_{\alpha,\mathrm{deck}} &= r_{\alpha}\frac{M}{Q}.
+	\end{align}
+
+	\noindent Solving this system for $L$, $T$, $M$, and $Q$, we find:
+
+	\begin{align}
+		L &= l_{\mathrm{deck}}, \\
+		T &= l_{\mathrm{deck}}\frac{c_{\mathrm{deck}}}{c}, \\
+		M &= l_{\mathrm{deck}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2\frac{\varepsilon_0}{\varepsilon_{0,\mathrm{deck}}}\left(\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\right)^2, \\
+		Q &= l_{\mathrm{deck}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2\frac{\varepsilon_0}{\varepsilon_{0,\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}.
+	\end{align}
+
+	\noindent The electric and magnetic field conversion factors $E$ and $B$ are therefore given by
+
+	\begin{align}
+		E &= \frac{ML}{QT^2} = \frac{1}{l_{\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2 \\
+		B &= E\frac{T}{L} = \frac{1}{l_{\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\frac{c}{c_{\mathrm{deck}}}
+	\end{align}
+
+	As an example of how this might work, one possible choice of units is $l_{\mathrm{deck}} = c/\omega_{\mathrm{pe}}$, $c_{\mathrm{deck}} = 1$, $\varepsilon_{0,\mathrm{deck}} = 1$ and $(q_e/m_e)_{\mathrm{deck}} = -1$. This gives us
+
+	\begin{align}
+		L &= \frac{c}{\omega_{\mathrm{pe}}}, \\
+		T &= \frac{1}{\omega_{\mathrm{pe}}}, \\
+		M &= \varepsilon_0\frac{c^3}{\omega_{\mathrm{pe}}}\frac{m_e^2}{e^2}, \\
+		Q &= \varepsilon_0\frac{c^3}{\omega_{\mathrm{pe}}}\frac{m_e}{e}, \\
+		E &= \frac{m_e\omega_{\mathrm{pe}}c}{e}, \\
+		B &= \frac{m_e\omega_{\mathrm{pe}}}{e}
+	\end{align}
+
+	\noindent Note here that the system of units will depend on the electron density used to calculate $\omega_{\mathrm{pe}}$. A more practical alternative for problems involving lasers is to choose $l_{\mathrm{deck}}=c/\omega_0$ where $\omega_0$ is the laser frequency, since it is more common to need to change density than the laser frequency.
+
+	\section{Particle Weighting}
+
+	To define a species, the user specifies the macroparticle mass, charge, and weighting factor. These must be consistent with the above unit system to ensure the desired behaviour. To understand this, the role of the particle weight factor needs to be understood. In particular, a particle's motion in the EM fields only has explicit dependence on the charge-mass ratio, and so the weighting factor does not appear in the particle push. Instead, it is used when the code accumulates current from the particles onto the grid. This means that the correct particle weighting is determined by
+
+	\begin{equation}
+		w = \frac{\rho_{\alpha}}{\rho_{\alpha,\mathrm{MP}}},
+	\end{equation}
+
+	\noindent where $\rho_{\alpha}$ and $\rho_{\alpha,\mathrm{MP}}$ are the charge densities of the physical particles and macroparticles respectively. Users unfamiliar with VPIC might otherwise expect that $w=n_{\alpha}/n_{\alpha,\mathrm{MP}}$ or $w=q_{\alpha}/q_{\alpha,\mathrm{MP}}$.
+
+	\section{Particle Momenta}
+
+	Particle momenta are the only user-facing exception to the unit system defined above. The momenta are normalised to produce a dimensionless momentum
+	
+	\begin{equation}
+		u \equiv \frac{p}{mc}.
+	\end{equation}
+\end{document}

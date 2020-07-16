@@ -35,6 +35,10 @@ sort_p( species_t * sp )
   const int sp_has_ids       = sp->has_ids;
   size_t * ALIGNED(128) p_id = sp->p_id;
   #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  const int sp_has_annotation = sp->has_annotation;
+  float * ALIGNED(128) p_annotation = sp->p_annotation;
+  #endif
 
   const int np                = sp->np;
   const int nc                = sp->g->nv;
@@ -108,6 +112,17 @@ sort_p( species_t * sp )
       out_p_id = new_p_id;
     }
     #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    /**/  float*          ALIGNED(128) new_p_annotation;
+    const float* RESTRICT ALIGNED( 32)  in_p_annotation;
+    /**/  float* RESTRICT ALIGNED( 32) out_p_annotation;
+
+    if(sp_has_annotation) {
+      MALLOC_ALIGNED( new_p_annotation, sp->max_np*sp_has_annotation, 128 );
+      in_p_annotation  = sp->p_annotation;
+      out_p_annotation = new_p_annotation;
+    }
+    #endif
 
     for( i = 0; i < np; i++ )
     {
@@ -115,6 +130,13 @@ sort_p( species_t * sp )
       #ifdef VPIC_GLOBAL_PARTICLE_ID
       if(sp_has_ids) {
         out_p_id[ next[ in_p[i].i ] ] = in_p_id[i];
+      }
+      #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      if(sp_has_annotation) {
+        for(int a = 0; a < sp_has_annotation; a++) {
+         out_p_annotation[ next[ in_p[i].i ]*sp_has_annotation + a ] = in_p_annotation[i*sp_has_annotation+a];
+        }
       }
       #endif
       next[ in_p[i].i ]++;  /* advance to next free slot for this cell */
@@ -127,6 +149,12 @@ sort_p( species_t * sp )
     if(sp_has_ids) {
       FREE_ALIGNED( sp->p_id );
       sp->p_id = new_p_id;
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp_has_annotation) {
+      FREE_ALIGNED( sp->p_annotation );
+      sp->p_annotation  = new_p_annotation;
     }
     #endif
   }
@@ -142,6 +170,11 @@ sort_p( species_t * sp )
     size_t save_pid;
     size_t * ALIGNED(32) srcid;
     size_t * ALIGNED(32) destid;
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    float save_p_annotation;
+    float * ALIGNED(32) src_annotation;
+    float * ALIGNED(32) dest_annotation;
     #endif
 
     i = 0;
@@ -160,6 +193,11 @@ sort_p( species_t * sp )
           srcid = &p_id[ next[i] ];
         }
         #endif
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        if(sp_has_annotation) {
+          src_annotation = & (p_annotation[ next[i]*sp_has_annotation] );
+        }
+        #endif
 
         for( ; ; )
         {
@@ -167,6 +205,13 @@ sort_p( species_t * sp )
           #ifdef VPIC_GLOBAL_PARTICLE_ID
           if(sp_has_ids) {
             destid = &p_id[ next[ src->i ] ];
+          }
+          #endif
+          #ifdef VPIC_PARTICLE_ANNOTATION
+          if(sp_has_annotation) {
+            for(int a = 0; a < sp_has_annotation; a++) {
+              dest_annotation = & (p_annotation[ next[ src->i ]*sp_has_annotation] );
+           }
           }
           #endif
           next[ src->i ]++;  /* advance to next free slot for this cell */
@@ -181,6 +226,15 @@ sort_p( species_t * sp )
             save_pid = *destid;
             *destid = *srcid;
             *srcid = save_pid;
+          }
+          #endif
+          #ifdef VPIC_PARTICLE_ANNOTATION
+          if(sp_has_annotation) {
+            for(int a = 0; a < sp_has_annotation; a++) {
+              save_p_annotation  = dest_annotation[a];
+              dest_annotation[a] = src_annotation[a];
+              src_annotation[a]  = save_p_annotation;
+           }
           }
           #endif
         }

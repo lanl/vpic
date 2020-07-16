@@ -272,6 +272,13 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
   #endif
 
+  // If the parentspecies has annotations we should have themon the tracers as well
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(parentspecies->has_annotation){
+    tracerspecies->allocate_annotation_buffer(parentspecies->has_annotation);
+  }
+  #endif
+
   // Select the desired fraction of particles from the parent species and add to the tracer species
   int step = 0;
   const int np = parentspecies->np;
@@ -284,6 +291,16 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
         // Create an ID
         tracerspecies->p_id[step] = tracerspecies->generate_particle_id(step, tracerspecies->max_np);
       #endif
+
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      if(parentspecies->has_annotation){
+        for(int j=0; j<parentspecies->has_annotation; j++) {
+          const float v = parentspecies->get_annotation(i,j);
+          tracerspecies->set_annotation(step, j, v);
+        }
+      }
+      #endif
+
       if(copyormove == Tracertype::Move) {
         // Remove from parent species
         parentspecies->p[i] = parentspecies->p[parentspecies->np-1];
@@ -347,6 +364,13 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
   #endif
 
+  // If the parentspecies has annotations we should have themon the tracers as well
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(parentspecies->has_annotation){
+    tracerspecies->allocate_annotation_buffer(parentspecies->has_annotation);
+  }
+  #endif
+
   // Select the desired fraction of particles from the parent species and add to the tracer species
   int step = 0;
   for(int i = 0; i < parentspecies->np; i++) {
@@ -358,6 +382,16 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
         // Create an ID
         tracerspecies->p_id[step] = tracerspecies->generate_particle_id(step, tracerspecies->max_np);
       #endif
+
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      if(parentspecies->has_annotation){
+        for(int j=0; j<parentspecies->has_annotation; j++) {
+          const float v = parentspecies->get_annotation(i,j);
+          tracerspecies->set_annotation(step, j, v);
+        }
+      }
+      #endif
+
       if(copyormove == Tracertype::Move) {
         // Remove from parent species
         parentspecies->p[i] = parentspecies->p[parentspecies->np-1];

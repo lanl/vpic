@@ -93,6 +93,10 @@ int vpic_simulation::advance(void) {
     const int sp_has_ids = sp->has_ids;
     size_t * RESTRICT ALIGNED(128) p_id0 = sp->p_id;
     #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    const int sp_has_annotation = sp->has_annotation;
+    float * RESTRICT ALIGNED(128) p_annotation0 = sp->p_annotation;
+    #endif
     for (; nm; nm--, pm--) {
       int i = pm->i; // particle index we are removing
       p0[i].i >>= 3; // shift particle voxel down
@@ -101,11 +105,17 @@ int vpic_simulation::advance(void) {
       p0[i] = p0[sp->np-1];        // put the last particle into position i
       #ifdef VPIC_GLOBAL_PARTICLE_ID
       if(sp_has_ids) {
+        // shift id to position i as well
         p_id0[i] = p_id0[sp->np-1];  // move the id up too
       }
       #endif
       #ifdef VPIC_PARTICLE_ANNOTATION
-       #warning copy annotation somewhere, but not the particle mover
+      if(sp_has_annotation) {
+        // shift all the annotation in position
+        for(int a=0; a < sp_has_annotation; a++) {
+          p_annotation0[i*sp_has_annotation+a] = p_annotation0[(sp->np-1)*sp_has_annotation + a];
+        }
+      }
       #endif
       sp->np--; // decrement the number of particles
     }

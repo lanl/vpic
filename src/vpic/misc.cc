@@ -91,6 +91,7 @@ vpic_simulation::inject_particle( species_t * sp,
   // Clear annotation buffer
   if(sp->has_annotation) {
     for(int a = 0; a < sp->has_annotation; a++) {
+      // Default value of annotations is 0.0
       sp->p_annotation[old_np*sp->has_annotation + a] = 0.;
     }
   }

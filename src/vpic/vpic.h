@@ -754,6 +754,7 @@ protected:
     #ifdef VPIC_PARTICLE_ANNOTATION
     if(sp->has_annotation) {
       for(int j = 0; j < sp->has_annotation; j++) {
+        // Default for annotations is 0.0
         sp->set_annotation(sp->np, j, 0.);
       }
     }
@@ -783,6 +784,7 @@ protected:
     #ifdef VPIC_PARTICLE_ANNOTATION
     if(sp->has_annotation) {
       for(int j = 0; j < sp->has_annotation; j++) {
+        // Default for annotations is 0.0
         sp->set_annotation(sp->np, j, 0.);
       }
     }

@@ -54,6 +54,7 @@ typedef struct particle_injector {
 #ifdef VPIC_GLOBAL_PARTICLE_ID
   size_t global_particle_id;
 #endif
+  // particle annotations are moved separately
 } particle_injector_t;
 
 class species_t {

@@ -293,6 +293,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
       #endif
 
       #ifdef VPIC_PARTICLE_ANNOTATION
+      // Copy over annotation
       if(parentspecies->has_annotation){
         for(int j=0; j<parentspecies->has_annotation; j++) {
           const float v = parentspecies->get_annotation(i,j);
@@ -364,7 +365,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
   #endif
 
-  // If the parentspecies has annotations we should have themon the tracers as well
+  // If the parentspecies has annotations we should have them on the tracers as well
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(parentspecies->has_annotation){
     tracerspecies->allocate_annotation_buffer(parentspecies->has_annotation);

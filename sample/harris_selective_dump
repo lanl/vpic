@@ -33,6 +33,8 @@ begin_globals {
   double eparticle_interval;
   double iparticle_interval;
   double restart_interval;
+
+  species_t* elec_tracer;
 };
 
 begin_initialization {
@@ -303,6 +305,12 @@ begin_initialization {
   sim_log("We have " << elec_tracer4->np << " tracer in species " << elec_tracer4->name);
 
 
+  // Allocate extra buffer space for annotations, in this case electric and magnetic field at the tracer location
+  global->elec_tracer = elec_tracer;
+#ifdef VPIC_PARTICLE_ANNOTATION
+  elec_tracer->allocate_annotation_buffer(6);
+#endif
+
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains
   //   and tang E / norm B are synchronized by averaging where discrepancies
@@ -332,6 +340,38 @@ begin_initialization {
 }
 
 begin_diagnostics {
+
+  // First thing we do in diagnostics (before writing output) is to set the
+  // annotation on each tracer particle to the electric and magnetic field at
+  // the tracer location. This allows diagnostics on the local fields without
+  // writing field output every time step and interpoltating in postprocessing.
+#ifdef VPIC_PARTICLE_ANNOTATION
+  species_t* sp = global->elec_tracer; // Could also find by name
+  particle_t* p;
+  int n;
+
+  for (p = sp->p, n = 0; n < sp->np; n++, p++ ) {
+      const double dx0 = p->dx;
+      const double dy0 = p->dy;
+      const double dz0 = p->dz;
+      const int i  = p->i;
+      const interpolator_t* f = interpolator_array->i + i;
+
+      const double ex  = f->ex + dy0*f->dexdy + dz0*(f->dexdz+dy0*f->d2exdydz);
+      const double ey  = f->ey + dz0*f->deydz + dx0*(f->deydx+dz0*f->d2eydzdx);
+      const double ez  = f->ez + dx0*f->dezdx + dy0*(f->dezdy+dx0*f->d2ezdxdy);
+      const double bx  = f->cbx + dx0*f->dcbxdx;
+      const double by  = f->cby + dy0*f->dcbydy;
+      const double bz  = f->cbz + dz0*f->dcbzdz;
+
+      sp->set_annotation(n, 0, ex);
+      sp->set_annotation(n, 1, ey);
+      sp->set_annotation(n, 2, ez);
+      sp->set_annotation(n, 3, bx);
+      sp->set_annotation(n, 4, by);
+      sp->set_annotation(n, 5, bz);
+  }
+#endif
 
 # define should_dump(x) (global->x##_interval>0 && remainder(step(),global->x##_interval)==0)
 
@@ -409,7 +449,7 @@ begin_diagnostics {
      //my_predicate = nullptr;
 
      #ifndef VPIC_GLOBAL_PARTICLE_ID
-     #  error "To use predicates based on ID you need to compile VPIC with GLOBAL_ID=ON"
+     #  error "To use predicates based on ID you need to compile VPIC with GLOBAL_PARTICLE_ID=ON"
      #endif
 
      dump_particles_predicate("electron","elucky",

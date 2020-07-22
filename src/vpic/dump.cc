@@ -340,8 +340,6 @@ vpic_simulation::dump_hydro( const char *sp_name,
 void
 vpic_simulation::dump_fields_hdf5( const char *fbase, int ftag )
 {
-    size_t step_for_viou = step();
-
     int mpi_size, mpi_rank;
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
@@ -385,17 +383,17 @@ vpic_simulation::dump_fields_hdf5( const char *fbase, int ftag )
 
     sprintf(field_scratch, DUMP_DIR_FORMAT, "field_hdf5");
     dump_mkdir(field_scratch);
-    sprintf(subfield_scratch, "%s/T.%zu/", field_scratch, step_for_viou);
+    sprintf(subfield_scratch, "%s/T.%zu/", field_scratch, step());
     dump_mkdir(subfield_scratch);
 
-    sprintf(fname, "%s/%s_%zu.h5", subfield_scratch, "fields", step_for_viou);
+    sprintf(fname, "%s/%s_%zu.h5", subfield_scratch, "fields", step());
     double el1 = uptime();
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
-    sprintf(fname, "Timestep_%zu", step_for_viou);
+    sprintf(fname, "Timestep_%zu", step());
     hid_t group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     el1 = uptime() - el1;
@@ -608,9 +606,7 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
         printf("             dxdydz: %s \n", dxdydz);
         printf("            nframes: %d \n", nframes);
         printf("    field_interval: %d \n", field_interval);
-        printf("       current step: %lld \n", step_for_viou);
-                printf("       current step: %lld \n", step_for_viou);
-
+        printf("       current step: %lld \n", step());
         //printf("    Simulation time: %f \n", grid->t0);
         printf("             tframe: %d \n", field_tframe);
 #endif
@@ -621,11 +617,11 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
         {
             if (field_tframe == (nframes - 1))
             {
-                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
+                invert_field_xml_item(output_xml_file, "fields", step(), dimensions_4d, dimensions_3d, 1);
             }
             else
             {
-                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
+                invert_field_xml_item(output_xml_file, "fields", step(), dimensions_4d, dimensions_3d, 0);
             }
         }
         else
@@ -633,11 +629,11 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
             create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, field_interval);
             if (field_tframe == (nframes - 1))
             {
-                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
+                invert_field_xml_item(output_xml_file, "fields", step(), dimensions_4d, dimensions_3d, 1);
             }
             else
             {
-                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
+                invert_field_xml_item(output_xml_file, "fields", step(), dimensions_4d, dimensions_3d, 0);
             }
         }
         field_tframe++;
@@ -650,8 +646,6 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
                              const char *fbase,
                              int ftag )
 {
-    size_t step_for_viou = step();
-
 #define DUMP_HYDRO_TO_HDF5(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)                                               \
     {                                                                                                             \
         dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); \
@@ -692,17 +686,17 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
 
     sprintf(hydro_scratch, "./%s", "hydro_hdf5");
     dump_mkdir(hydro_scratch);
-    sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step_for_viou);
+    sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step());
     dump_mkdir(subhydro_scratch);
 
-    sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, speciesname, step_for_viou);
+    sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, speciesname, step());
     double el1 = uptime();
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t file_id = H5Fcreate(hname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
-    sprintf(hname, "Timestep_%zu", step_for_viou);
+    sprintf(hname, "Timestep_%zu", step());
     hid_t group_id = H5Gcreate(file_id, hname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     el1 = uptime() - el1;
@@ -873,7 +867,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
         printf("             dxdydz: %s \n", dxdydz);
         printf("            nframes: %d \n", nframes);
         printf("    hydro_fields_interval: %d \n", hydro_interval);
-        printf("       current step: %lld \n", step_for_viou);
+        printf("       current step: %lld \n", step());
         printf("    Simulation time: %f \n", grid->t0);
         printf("             tframe: %d \n", tframe);
 #endif
@@ -884,11 +878,11 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
         {
             if (tframe == (nframes - 1))
             {
-                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step(), dimensions_4d, dimensions_3d, 1);
             }
             else
             {
-                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step(), dimensions_4d, dimensions_3d, 0);
             }
         }
         else
@@ -896,48 +890,37 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
             create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, hydro_interval);
             if (tframe == (nframes - 1))
             {
-                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step(), dimensions_4d, dimensions_3d, 1);
             }
             else
             {
-                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step(), dimensions_4d, dimensions_3d, 0);
             }
         }
         tframe_map[sp->id]++;
     }
 }
 
-// TODO": make the sp_name and speciesname varailbe naming consistent
+// TODO: make the sp_name and speciesname variable naming consistent
 void
 vpic_simulation::dump_particles_hdf5( const char *sp_name,
-                                 const char *fbase,
-                                 int ftag )
+                                      const char *fbase,
+                                      int ftag )
 {
-    size_t step_for_viou = step();
     char fname[256];
     char group_name[256];
     char particle_scratch[128];
     char subparticle_scratch[128];
 
-    int np_local;
-    species_t *sp;
-
-    float *Pf;
-    int *Pi;
-
-    // get the total number of particles. in this example, output only electrons
-    sp = species_list;
-    sprintf(particle_scratch, DUMP_DIR_FORMAT, "particle_hdf5");
-    dump_mkdir(particle_scratch);
-    sprintf(subparticle_scratch, "%s/T.%ld/", particle_scratch, step_for_viou);
-    dump_mkdir(subparticle_scratch);
+    species_t * sp = find_species_name( sp_name, species_list );
+    if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
 
     // TODO: Allow the user to set this
+    const int stride_particle_dump = 1;
+    const long long np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
 
-    int stride_particle_dump = 1;
-    //while (sp)
-    //{
-    np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
+    // TODO: Allow the user to toggle the timing output
+    const int print_timing = 0;
 
     // make a copy of the part of particle data to be dumped
     double ec1 = uptime();
@@ -960,19 +943,21 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
     center_p(sp, interpolator_array);
 
     ec1 = uptime() - ec1;
-    int mpi_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    if(print_timing) MESSAGE(("time in copying particle data: %fs, np_local = %lld", ec1, np_local));
 
-    //std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
-    //sim_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
+    //extract float and int data out of particle struct. This is a bit silly and looses type safety
+    float * Pf = (float *)sp->p;
+    int *   Pi = (int *)sp->p;
 
-    Pf = (float *)sp->p;
-    Pi = (int *)sp->p;
+    // Create target directory and subdirectory for the timestep
+    sprintf(particle_scratch, DUMP_DIR_FORMAT, "particle_hdf5");
+    dump_mkdir(particle_scratch);
+    sprintf(subparticle_scratch, "%s/T.%ld/", particle_scratch, step());
+    dump_mkdir(subparticle_scratch);
 
-    // open HDF5 file in "particle/T.<step>/" subdirectory
-    // filename: eparticle.h5p
-    sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
-    sprintf(group_name, "/Timestep_%ld", step_for_viou);
+    // open HDF5 file for species
+    sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step());
+    sprintf(group_name, "/Timestep_%ld", step());
     double el1 = uptime();
 
     hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -999,7 +984,6 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
 
     plist_id = H5Pcreate(H5P_DATASET_XFER);
 
-    //Comment out for test only
     H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *)&offset, NULL, (hsize_t *)&numparticles, NULL);
 
@@ -1007,11 +991,10 @@ vpic_simulation::dump_particles_hdf5( const char *sp_name,
     H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
 
     el1 = uptime() - el1;
-    //sim_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+    if(print_timing) MESSAGE(("Particle TimeHDF5Open: %fs", el1));
 
-    //double el2 = uptime();
+    double el2 = uptime();
 
-    // This point offset is silly, and loses the type safety (pf+1)
     hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     int ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf);
     H5Dclose(dset_id);
@@ -1040,6 +1023,8 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
 
     std::vector<int> global_pi;
     global_pi.reserve(numparticles);
+    const int mpi_rank = rank();
+
     // TODO: this could be parallel
     for (int i = 0; i < numparticles; i++)
     {
@@ -1047,7 +1032,7 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
 
         int ix, iy, iz, rx, ry, rz;
         // Convert rank to local x/y/z
-        UNVOXEL(rank(), rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+        UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
 
         // Calculate local ix/iy/iz
         UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
@@ -1058,9 +1043,9 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
         iz = iz - 1;
 
         // Convert ix/iy/iz to global
-        int gix = ix + (grid->nx * (rx));
-        int giy = iy + (grid->ny * (ry));
-        int giz = iz + (grid->nz * (rz));
+        int gix = ix + (grid->nx * rx);
+        int giy = iy + (grid->ny * ry);
+        int giz = iz + (grid->nz * rz);
 
         // calculate global grid sizes
         int gnx = grid->nx * grid->gpx;
@@ -1070,11 +1055,11 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
         // TODO: find a better way to account for the hard coded ghosts in VOXEL
         int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
 
-        //std::cout << rank() << " local i " << local_i << " becomes " << global_i << std::endl;
+        //std::cout << mpi_rank << " local i " << local_i << " becomes " << global_i << std::endl;
         global_pi[i] = global_i;
     }
-
 #undef UNVOXEL
+
     dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
     H5Dclose(dset_id);
@@ -1101,8 +1086,8 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
     H5Dclose(dset_id);
 
-    //el2 = uptime() - el2;
-    //sim_log("Particle TimeHDF5Write: " << el2 << " s");
+    el2 = uptime() - el2;
+    if(print_timing) MESSAGE(("Particle TimeHDF5Write: %fs", el2));
 
     double el3 = uptime();
     H5Sclose(memspace);
@@ -1111,17 +1096,24 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     H5Gclose(group_id);
     H5Fclose(file_id);
     el3 = uptime() - el3;
-    //sim_log("Particle TimeHDF5Close: " << el3 << " s");
+    if(print_timing) MESSAGE(("Particle TimeHDF5Close: %fs", el3));
 
     sp->p = sp_p;
     sp->np = sp_np;
     sp->max_np = sp_max_np;
     FREE_ALIGNED(p_buf);
 
-    // Write metadata if step() == 0
+    // Write metadata
+    // Note that these are all "local" metadata for each rank. Global metadata
+    // such as total number of cells per dimension or box size still need to be
+    // computed. For now that is left to postprocessing, but it could be done
+    // inside the code using a bunch of MPI calls or by making the assumption
+    // of equal sized local domains (which is currently satisfied by
+    // partition_periodic_box and friends).
+
     char meta_fname[256];
 
-    sprintf(meta_fname, "%s/grid_metadata_%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
+    sprintf(meta_fname, "%s/grid_metadata_%s_%ld.h5", subparticle_scratch, sp->name, step());
 
     double meta_el1 = uptime();
 
@@ -1143,29 +1135,25 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     H5Pset_dxpl_mpio(meta_plist_id, H5FD_MPIO_COLLECTIVE);
     H5Sselect_hyperslab(meta_filespace, H5S_SELECT_SET, (hsize_t *)&meta_offset, NULL, (hsize_t *)&meta_numparticles, NULL);
     meta_el1 = uptime() - meta_el1;
-    //sim_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
+    if(print_timing) MESSAGE(("Metafile TimeHDF5Open: %fs", meta_el1));
 
     double meta_el2 = uptime();
 
     hid_t meta_dset_id = H5Dcreate(meta_group_id, "np_local", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, (int32_t *)&np_local);
     H5Dclose(meta_dset_id);
-    //if (rank == 0) printf ("Written variable dX \n");
 
     meta_dset_id = H5Dcreate(meta_group_id, "nx", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nx);
     H5Dclose(meta_dset_id);
-    //if (rank == 0) printf ("Written variable dY \n");
 
     meta_dset_id = H5Dcreate(meta_group_id, "ny", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->ny);
     H5Dclose(meta_dset_id);
-    //if (rank == 0) printf ("Written variable dZ \n");
 
     meta_dset_id = H5Dcreate(meta_group_id, "nz", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nz);
     H5Dclose(meta_dset_id);
-    //if (rank == 0) printf ("Written variable i \n");
 
     meta_dset_id = H5Dcreate(meta_group_id, "x0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->x0);
@@ -1192,7 +1180,7 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     H5Dclose(meta_dset_id);
 
     meta_el2 = uptime() - meta_el2;
-    //sim_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
+    if(print_timing) MESSAGE(("Metafile TimeHDF5Write: %fs", meta_el2));
     double meta_el3 = uptime();
     H5Sclose(meta_memspace);
     H5Sclose(meta_filespace);
@@ -1200,10 +1188,7 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     H5Gclose(meta_group_id);
     H5Fclose(meta_file_id);
     meta_el3 = uptime() - meta_el3;
-    //sim_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
-
-    sp = sp->next;
-    //}
+    if(print_timing) MESSAGE(("Metafile TimeHDF5Close: %fs", meta_el3));
 }
 #endif
 

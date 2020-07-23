@@ -378,15 +378,21 @@ file(GLOB_RECURSE VPIC_NOT_SRC
   src/util/rng/test/rng.cc)
 list(REMOVE_ITEM VPIC_SRC ${VPIC_NOT_SRC})
 option(NO_LIBVPIC "Don't build a libvpic, but all in one" OFF)
-if(NO_LIBVPIC)
-  set(VPIC_EXPOSE "INTERFACE")
-  add_library(vpic INTERFACE)
-else()
+#if(NO_LIBVPIC)
+    #set(VPIC_EXPOSE "INTERFACE")
+  #add_library(vpic INTERFACE)
+  #else()
+
   set(VPIC_EXPOSE "PRIVATE")
-  add_library(vpic ${VPIC_SRC})
+  add_library(vpic OBJECT ${VPIC_SRC})
+  #target_include_directories(FC_Derived_type_obj
+  #PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}> )
+
   set(VPIC_SRC)
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-endif()
+  install(TARGETS vpic EXPORT VPIC_SRC OBJECTS DESTINATION lib )
+
+  #endif()
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
@@ -451,3 +457,11 @@ endif(ENABLE_PERFORMANCE_TESTS)
 #~---------------------------------------------------------------------------~-#
 # vim: set tabstop=2 shiftwidth=2 expandtab :
 #~---------------------------------------------------------------------------~-#
+
+
+add_executable(my_vpic  ${CMAKE_SOURCE_DIR}/deck/main.cc ${CMAKE_SOURCE_DIR}/deck/wrapper.cc ${VPIC_SRC})
+target_link_libraries( my_vpic ${MPI_CXX_LIBRARIES} vpic) #$<TARGET_OBJECTS:vpic>)
+target_include_directories(my_vpic PUBLIC ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR})
+target_compile_definitions(my_vpic PUBLIC INPUT_DECK=./sample/harris)
+#target_link_libraries(my_vpic ...)
+#install(TARGETS foo EXPORT ....)

@@ -161,13 +161,13 @@
 	\begin{align*}
 		L &= \frac{1}{k_0}, &
 		T &= \frac{1}{\omega_0}, \\
-		M &= n_ek_0^3m_e, &
-		Q &= n_ek_0^3e, \\
+		M &= \ncrit k_0^3m_e, &
+		Q &= \ncrit k_0^3e, \\
 		E &= \frac{m_e}{e}\omega_0 c, &
 		B &= \frac{m_e}{e}\omega_0.
 	\end{align*}
 
-	In this unit system the simulation cell size and time step should satisfy $\Delta x \ll 1$ and $\Delta t \ll 1$ in order for the field solver to accurately model the laser. It is also necessary to verify that the cell size resolves the Debye length, which is often a more restrictive condition. Additionally, the normalised electric (or magnetic) field is the parameter $a_0$. For $a_0 \ll 1$ this is the electron quiver velocity divided by the speed of light, while $a_0 \gtrsim 1$ indicates a relativistic field intensity which will lead to effects such as relativistically induced transparency and relativistic self-focusing.
+	\noindent where $\ncrit$ is the critical density $\ncrit \equiv m_e\varepsilon_0\omega_0^2/e^2$ In this unit system the simulation cell size and time step should satisfy $\Delta x \ll 1$ and $\Delta t \ll 1$ in order for the field solver to accurately model the laser. It is also necessary to verify that the cell size resolves the Debye length, which is often a more restrictive condition. Additionally, the normalised electric (or magnetic) field is the parameter $a_0$. For $a_0 \ll 1$ this is the electron quiver velocity divided by the speed of light, while $a_0 \gtrsim 1$ indicates a relativistic field intensity which will lead to effects such as relativistically induced transparency and relativistic self-focusing.
 
 	\section{Species \& Particle Weighting}
 
@@ -201,12 +201,6 @@
 
 	\subsection{Consequences of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$}
 
-	Choosing $q_{\mathrm{s}} \neq q_{\mathrm{p}}$ means that the particle weight can no longer be described intuitively as the ``number of physical particles per macro-particle''. This means that without additional information, the code has no way of calculating numbers of physical particles. This can be seen by rearranging the above equation:
-
-	\begin{align}
-		n_{\mathrm{p}} = wn_{\mathrm{MP}}\frac{q_{\mathrm{s}}}{q_{\mathrm{p}}}.
-	\end{align}
-
-	\noindent In order to calculate the number of physical particles, the value of the physical particle charge is required. VPIC has been carefully designed to produce valid output despite this, and for example is why the code outputs charge density rather than number density. The number density of phyical particles is often more useful, but the code has no way of calculating it in general.
+	The possibility of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$ means that the code has no way of calculating numbers of physical particles since it doesn't know the true particle charge. VPIC has been carefully designed to produce valid output despite this, which for example is why the hydro dumps contain charge density rather than number density. Users should therefore also ensure that any custom diagnostics do not assume $q_{\mathrm{s}} = q_{\mathrm{p}}$.
 
 \end{document}

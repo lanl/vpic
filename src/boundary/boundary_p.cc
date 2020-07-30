@@ -17,10 +17,9 @@
 // here.  Both arrays will now resize down as well.
 // 12/20/18: The mover array is no longer resized with the particle array, as
 // this actually uses more RAM than having static mover arrays.  The mover will
-// still size up if there are too many incoming particles, but I have not
-// encountered this.  Some hard-to-understand bit shifts have been replaced with
-// cleaner code that the compiler should have no trouble optimizing.
-// Spits out lots of warnings. TODO: Remove warnings after testing.
+// still size up if there are too many incoming particles, but this is rare.
+// Some hard-to-understand bit shifts have been replaced with cleaner code that
+// the compiler should have no trouble optimizing.
 
 #ifdef V4_ACCELERATION
 using namespace v4;
@@ -523,8 +522,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         sp->max_np = n;
       }
 
-      // Feasibly, a vacuum-filled rank may receive a shock and need more movers
-      // than available from MIN_NP.
+      // Mover arrays are resized up only.
+      // The mover arrays can also run out of space in advance_p, so the user
+      // still needs to think about how big to make the mover arrays.
 
       nm = sp->nm + max_inj;
 
@@ -532,11 +532,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       {
         nm += 0.3125 * nm; // See note above
 
-        WARNING( ( "This happened.  Resizing local %s mover storage from "
-                   "%i to %i based on not enough movers",
-                   sp->name,
-                   sp->max_nm,
-                   nm ) );
+        //WARNING( ( "Resizing local %s mover storage from %i to %i based on "
+        //           "not enough movers for all the incoming particles",
+        //           sp->name,
+        //           sp->max_nm,
+        //           nm ) );
 
         MALLOC_ALIGNED( new_pm, nm, 128 );
 

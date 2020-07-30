@@ -482,10 +482,10 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         /**/             // rate that avoids excessive heap
         /**/             // fragmentation)
 
-        WARNING( ( "Resizing local %s particle storage from %i to %i",
-                   sp->name,
-                   sp->max_np,
-                   n ) );
+        //WARNING( ( "Resizing local %s particle storage from %i to %i",
+                   //sp->name,
+                   //sp->max_np,
+                   //n ) );
 
         MALLOC_ALIGNED( new_p, n, 128 );
 
@@ -507,11 +507,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           n = MIN_NP;
         }
 
-        WARNING( ( "Resizing (shrinking) local %s particle storage from "
-                   "%i to %i",
-                   sp->name,
-                   sp->max_np,
-                   n ) );
+        //WARNING( ( "Resizing (shrinking) local %s particle storage from "
+                   //"%i to %i",
+                   //sp->name,
+                   //sp->max_np,
+                   //n ) );
 
         MALLOC_ALIGNED( new_p, n, 128 );
 

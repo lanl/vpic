@@ -71,9 +71,15 @@ int vpic_simulation::advance(void) {
   // local accumulation).
 
   TIC
-    for( int round=0; round<num_comm_round; round++ )
+    for( int round=0; round<num_comm_round; round++ ) {
+      // if(rank() == 0) printf("round %d/%d of boundary_p\n", round, num_comm_round);
+      // fflush(NULL);
+      // mp_barrier();
       boundary_p( particle_bc_list, species_list,
                   field_array, accumulator_array );
+      // fflush(NULL);
+      // mp_barrier();
+      }
   TOC( boundary_p, num_comm_round );
   LIST_FOR_EACH( sp, species_list ) {
     if( sp->nm && verbose )

@@ -77,6 +77,7 @@ begin_initialization {
   sim_log("Making all eletrons tracers");
   species_t * sp2 = make_tracers_by_percentage(sp, 100.0, Tracertype::Move);
   global->sp = sp2;
+  sp2->p_id[0] = 42;
 #endif
 
   sim_log("Done with setup");
@@ -114,7 +115,7 @@ begin_diagnostics {
         float giy = grid->y0 + iy*grid->dy + 0.5*(global->sp->p[i].dy+1.)*grid->dy;
         float giz = grid->z0 + iz*grid->dz + 0.5*(global->sp->p[i].dz+1.)*grid->dz;
 
-        printf("<%d> particle %d: local_i=%d ix=%d global_x=%f", rank(), i, ix, local_i, gix);
+        printf("<%d> sp->id %d, particle %d: local_i=%d ix=%d global_x=%f", rank(), global->sp->id, i, ix, local_i, gix);
 #ifdef VPIC_GLOBAL_PARTICLE_ID
         if(global->sp->has_ids) {
           printf(" id=%d", global->sp->p_id[i]);

@@ -272,7 +272,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
     MALLOC_ALIGNED( tracerspecies->p_id, max_local_np, 128 );
   #endif
 
-  // If the parentspecies has annotations we should have themon the tracers as well
+  // If the parentspecies has annotations we should have them on the tracers as well
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(parentspecies->has_annotation){
     tracerspecies->allocate_annotation_buffer(parentspecies->has_annotation);
@@ -305,6 +305,19 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
       if(copyormove == Tracertype::Move) {
         // Remove from parent species
         parentspecies->p[i] = parentspecies->p[parentspecies->np-1];
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        if(parentspecies->has_ids) {
+          parentspecies->p_id[i] = parentspecies->p_id[parentspecies->np-1];
+        }
+        #endif
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        if(parentspecies->has_annotation) {
+          for(int j=0; j<parentspecies->has_annotation; j++) {
+            const float v = parentspecies->get_annotation(parentspecies->np-1, j);
+            parentspecies->set_annotation(i,j,v);
+          }
+        }
+        #endif
         parentspecies->np--;
       } else if (copyormove == Tracertype::Copy) {
         // Copied tracers should have zero statistical weight

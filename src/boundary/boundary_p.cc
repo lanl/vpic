@@ -997,12 +997,13 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   }
 
   #ifdef VPIC_PARTICLE_ANNOTATION
+  /*
   // Dump buffers for debugging
   for(face = 0; face < 6; face++) {
     if ( shared[ face ] ) {
      // printf("<%d> n_send[%d] = %d\n", rank(), face, n_send[face]);
      // printf("<%d> n_recv[%d] = %d\n", rank(), face, n_recv[face]);
-     // printf("<%d> cab[%d] = [", rank(), face);
+     printf("<%d> cab[%d] = [", rank(), face);
 
      for(int i = 0; i<n_send[face]; i++) {
        // Begininng of particle
@@ -1011,14 +1012,14 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
        // Print species ID
        int* print_cab_int = (int*) print_cab;
-       // printf("%d ", *print_cab_int);
+       printf("%d ", *print_cab_int);
        print_cab_int++;
        j += sizeof(int);
 
        // Print ID if applicable
        #ifdef VPIC_GLOBAL_PARTICLE_ID
        size_t* print_cab_sizet = (size_t*) (print_cab +j);
-       // printf("%ld", *print_cab_sizet);
+       printf("%ld", *print_cab_sizet);
        print_cab_sizet++;
        j += sizeof(size_t);
        #endif
@@ -1026,14 +1027,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
        //Print annotation
        for(; j<max_cas; j+=sizeof(float)) {
          float* print_cab_float = (float*) (print_cab + j);
-         // printf(" %f", *print_cab_float);
+         printf(" %f", *print_cab_float);
        }
 
-       // printf(", ");
+       printf(", ");
      }
-     // printf("]\n");
+     printf("]\n");
     }
   }
+  */
 
   // Ensure sufficent buffer size and repost recv
   for( face = 0; face < 6; face++ ) {
@@ -1068,8 +1070,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       if(n_recv[face] > 0) {
         mp_end_recv( mp, f2b[face] );
 
+        /*
         // Print for debugging purposes
-        // printf("<%d> recv_buffer[%d] = [", rank(), face);
+        printf("<%d> recv_buffer[%d] = [", rank(), face);
         for(int i = 0; i<n_recv[face]; i++) {
           char* recv_buffer = (char*) mp_recv_buffer(mp,f2b[face]);
           // Begininng of particle
@@ -1078,14 +1081,14 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
           //Print species ID
           int* print_cab_int = (int*) print_cab;
-          // printf("%d ", *print_cab_int);
+          printf("%d ", *print_cab_int);
           print_cab_int++;
           j += sizeof(int);
 
           // Print ID if applicable
           #ifdef VPIC_GLOBAL_PARTICLE_ID
           size_t* print_cab_sizet = (size_t*) (print_cab +j);
-          // printf("%ld", *print_cab_sizet);
+          printf("%ld", *print_cab_sizet);
           print_cab_sizet++;
           j += sizeof(size_t);
           #endif
@@ -1093,16 +1096,17 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           //Print annotation
           for(; j<max_cas; j+=sizeof(float)) {
             float* print_cab_float = (float*) (print_cab + j);
-            // printf(" %f", *print_cab_float);
+            printf(" %f", *print_cab_float);
           }
 
-          // printf(", ");
+          printf(", ");
         }
-        // printf("]\n");
+        printf("]\n");
+        */
 
         // Unpack buffer and store attributes
-        for(int i = 0; i<n_recv[face]; i++) {
-          char* recv_buffer = (char*) mp_recv_buffer(mp,f2b[face]);
+        for(int i = n_recv[face]-1; i>=0; i--) {
+          char* recv_buffer = ((char*) mp_recv_buffer(mp,f2b[face])) + i*max_cas ;
           // Get species ID
           const int sp_id = *( (int*) recv_buffer );
           recv_buffer += sizeof(int);

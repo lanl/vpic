@@ -16,13 +16,14 @@ hydro_p_pipeline_v4( hydro_p_pipeline_args_t * args,
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
+  const bool               charge_weight = args->charge_weight;
 
   /**/  float          * ALIGNED(16)  vp00;
   /**/  float          * ALIGNED(16)  vp01;
   /**/  float          * ALIGNED(16)  vp02;
   /**/  float          * ALIGNED(16)  vp03;
 
-  const v4float qsp(sp->q);
+  const v4float qsp( charge_weight ? sp->q : sp->m );
   const v4float qdt_2mc(args->qdt_2mc);
   const v4float qdt_4mc2(args->qdt_2mc / (2*g->cvac));
   const v4float mspc(args->msp*g->cvac);
@@ -192,6 +193,7 @@ hydro_p_pipeline_v4( hydro_p_pipeline_args_t * args,
     v02 = t*vz;       /* w vz */                            \
     v03 = t;          /* w */                               \
     INCREMENT(0);                                           \
+    if(charge_weight) {                                     \
     t   = mspc*w;                                           \
     dx  = t*ux;                                             \
     dy  = t*uy;                                             \
@@ -210,7 +212,8 @@ hydro_p_pipeline_v4( hydro_p_pipeline_args_t * args,
     v01 = dx*vy;      /* m c w ux vy */                     \
     v02 = zero;       /* pad[0] */                          \
     v03 = zero;       /* pad[1] */                          \
-    INCREMENT(12)
+    INCREMENT(12);                                          \
+    }
 
     /**/             ACCUM_HYDRO(w0); // Cell i,j,k
     ii += stride_10; ACCUM_HYDRO(w1); // Cell i+1,j,k

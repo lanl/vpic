@@ -33,12 +33,17 @@ hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
+  const bool               charge_weight = args->charge_weight;
 
   // Determine which particles this pipeline processes.
   DISTRIBUTE( args->np, 16, pipeline_rank, n_pipeline, n0, n1 ); n1 += n0;
 
   c        = sp->g->cvac;
-  qsp      = sp->q;
+  if(charge_weight) {
+    qsp      = sp->q;
+  } else {
+    qsp      = sp->q;
+  }
   mspc     = args->msp*c;
   qdt_2mc  = args->qdt_2mc;
   qdt_4mc2 = qdt_2mc / (2*c);
@@ -130,6 +135,7 @@ hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
     h[i].jy  += t*vy;                                   \
     h[i].jz  += t*vz;                                   \
     h[i].rho += t;                                      \
+    if(charge_weight) {                                 \
     t  = mspc*wn;       /* t = (msp c w/V) trilin_n */  \
     dx = t*ux;          /* dx = (px w/V) trilin_n */    \
     dy = t*uy;                                          \
@@ -143,7 +149,8 @@ hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
     h[i].tzz += dz*vz;                                  \
     h[i].tyz += dy*vz;                                  \
     h[i].tzx += dz*vx;                                  \
-    h[i].txy += dx*vy
+    h[i].txy += dx*vy;                                  \
+    }
 
     /**/            ACCUM_HYDRO(w0); // Cell i,j,k
     i += stride_10; ACCUM_HYDRO(w1); // Cell i+1,j,k
@@ -161,20 +168,22 @@ hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
 void
 accumulate_hydro_p_pipeline( /**/  hydro_array_t        * RESTRICT ha,
                              const species_t            * RESTRICT sp,
-                             const interpolator_array_t * RESTRICT ia ) {
+                             const interpolator_array_t * RESTRICT ia,
+                             const bool                            charge_weight ) {
 
   if( !ha || !sp || !ia || ha->g!=sp->g || ha->g!=ia->g )
     ERROR(( "Bad args" ));
 
   DECLARE_ALIGNED_ARRAY(hydro_p_pipeline_args_t, 128, args, 1);
 
-  args->sp      = sp;
-  args->f       = ia->i;
-  args->h       = ha->h;
-  args->h_size  = ha->stride;
-  args->qdt_2mc = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
-  args->msp     = sp->m;
-  args->np      = sp->np;
+  args->sp            = sp;
+  args->f             = ia->i;
+  args->h             = ha->h;
+  args->h_size        = ha->stride;
+  args->qdt_2mc       = (sp->q*sp->g->dt)/(2*sp->m*sp->g->cvac);
+  args->msp           = sp->m;
+  args->np            = sp->np;
+  args->charge_weight = charge_weight;
 
   EXEC_PIPELINES(hydro_p, args, 0);
   WAIT_PIPELINES();

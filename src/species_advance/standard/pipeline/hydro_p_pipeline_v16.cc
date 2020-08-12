@@ -16,6 +16,7 @@ hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
+  const bool              charge_weight  = args->charge_weight;
 
   /**/  float          * ALIGNED(64)  vp00;
   /**/  float          * ALIGNED(64)  vp01;
@@ -34,7 +35,7 @@ hydro_p_pipeline_v16( hydro_p_pipeline_args_t * args,
   /**/  float          * ALIGNED(64)  vp14;
   /**/  float          * ALIGNED(64)  vp15;
 
-  const v16float qsp(sp->q);
+  const v16float qsp(charge_weight ? sp->q : sp->m);
   const v16float qdt_2mc(args->qdt_2mc);
   const v16float qdt_4mc2(args->qdt_2mc / (2*g->cvac));
   const v16float mspc(args->msp*g->cvac);

@@ -16,6 +16,7 @@ accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank * args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
+  const bool              charge_weight  = args->charge_weight;
 
   // Constants.
 

@@ -140,12 +140,14 @@ accumulate_rhob( field_t * RESTRICT ALIGNED(128) f,
 void
 accumulate_hydro_p( hydro_array_t * RESTRICT ha,
                     const species_t * RESTRICT sp,
-                    const interpolator_array_t * RESTRICT ia );
+                    const interpolator_array_t * RESTRICT ia,
+                    const bool charge_weight=true );
 
 void
 accumulate_hydro_p_pipeline( hydro_array_t * RESTRICT ha,
                              const species_t * RESTRICT sp,
-                             const interpolator_array_t * RESTRICT ia );
+                             const interpolator_array_t * RESTRICT ia,
+                             const bool charge_weight=true );
 
 // In move_p.cc
 

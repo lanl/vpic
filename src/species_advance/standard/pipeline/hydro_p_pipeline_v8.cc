@@ -16,6 +16,7 @@ hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank*args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
+  const bool              charge_weight  = args->charge_weight;
 
   /**/  float          * ALIGNED(32)  vp00;
   /**/  float          * ALIGNED(32)  vp01;
@@ -26,7 +27,7 @@ hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
   /**/  float          * ALIGNED(32)  vp06;
   /**/  float          * ALIGNED(32)  vp07;
 
-  const v8float qsp(sp->q);
+  const v8float qsp(charge_weight ? sp->q : sp->m);
   const v8float qdt_2mc(args->qdt_2mc);
   const v8float qdt_4mc2(args->qdt_2mc / (2*g->cvac));
   const v8float mspc(args->msp*g->cvac);
@@ -208,7 +209,8 @@ hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
     v00 = t*vx;       /* w vx */                            \
     v01 = t*vy;       /* w vy */                            \
     v02 = t*vz;       /* w vz */                            \
-    v03 = t;          /* w */                               \
+    v03 = t;          /* w */                              \
+    if(charge_weight) {                                    \
     t   = mspc*w;                                           \
     dx  = t*ux;                                             \
     dy  = t*uy;                                             \
@@ -226,7 +228,12 @@ hydro_p_pipeline_v8( hydro_p_pipeline_args_t * args,
     v05 = dx*vy;      /* m c w ux vy */                     \
     v06 = zero;       /* pad[0] */                          \
     v07 = zero;       /* pad[1] */                          \
-    INCREMENT(8)
+    INCREMENT(8);                                           \
+    } else {INCREMENT(0); }
+
+    // when charge_weight is false and we are doing mass weighting we could use
+    // v04..v07 for properties of the next particles, but that would require a
+    // lot more surgery
 
     /**/             ACCUM_HYDRO(w0); // Cell i,j,k
     ii += stride_10; ACCUM_HYDRO(w1); // Cell i+1,j,k

@@ -165,15 +165,16 @@ energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
 
 typedef struct hydro_p_pipeline_args {
 
-  MEM_PTR( const species_t,      128 ) sp;      // Species array
-  MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
-  MEM_PTR( /**/  hydro_t,        128 ) h;       // Hydro values
-  int                                  h_size;  // Size of each hydro array
-  float                                qdt_2mc; // Particle/field coupling
-  float                                msp;     // Species particle rest mass
-  int                                  np;      // Number of particles
+  MEM_PTR( const species_t,      128 ) sp;            // Species array
+  MEM_PTR( const interpolator_t, 128 ) f;             // Interpolator array
+  MEM_PTR( /**/  hydro_t,        128 ) h;             // Hydro values
+  int                                  h_size;        // Size of each hydro array
+  float                                qdt_2mc;       // Particle/field coupling
+  float                                msp;           // Species particle rest mass
+  int                                  np;            // Number of particles
+  bool                                 charge_weight; // Use sp->q if true (default), use sp->m if not
 
-  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
+  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) + sizeof(bool))
 
 } hydro_p_pipeline_args_t;
 

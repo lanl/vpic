@@ -42,7 +42,7 @@ hydro_p_pipeline_scalar( hydro_p_pipeline_args_t * args,
   if(charge_weight) {
     qsp      = sp->q;
   } else {
-    qsp      = sp->q;
+    qsp      = sp->m;
   }
   mspc     = args->msp*c;
   qdt_2mc  = args->qdt_2mc;

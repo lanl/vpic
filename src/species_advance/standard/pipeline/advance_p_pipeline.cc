@@ -184,7 +184,7 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
       a  = (float *)( a0 + ii );              // Get accumulator
 
       #define ACCUMULATE_J(X,Y,Z,offset)                                \
-      v4  = q*u##X;   /* v2 = q ux                            */        \
+      v4  = q*u##X;   /* v4 = q ux                            */        \
       v1  = v4*d##Y;  /* v1 = q ux dy                         */        \
       v0  = v4-v1;    /* v0 = q ux (1-dy)                     */        \
       v1 += v4;       /* v1 = q ux (1+dy)                     */        \

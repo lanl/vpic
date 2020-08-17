@@ -43,10 +43,7 @@ typedef struct advance_p_pipeline_args
   int                                  nz;       // z-mesh resolution
  
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
-
 } advance_p_pipeline_args_t;
-
-// PROTOTYPE_PIPELINE( advance_p, advance_p_pipeline_args_t );
 
 void
 advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
@@ -79,10 +76,7 @@ typedef struct center_p_pipeline_args
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 2*SIZEOF_MEM_PTR + sizeof(float) + sizeof(int) )
-
 } center_p_pipeline_args_t;
-
-// PROTOTYPE_PIPELINE( center_p,   center_p_pipeline_args_t );
 
 void
 center_p_pipeline_scalar( center_p_pipeline_args_t * args,
@@ -102,8 +96,6 @@ void
 center_p_pipeline_v16( center_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline );
-
-// PROTOTYPE_PIPELINE( uncenter_p, center_p_pipeline_args_t );
 
 void
 uncenter_p_pipeline_scalar( center_p_pipeline_args_t * args,
@@ -138,10 +130,7 @@ typedef struct energy_p_pipeline_args
   int                                  np;      // Number of particles
 
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + sizeof(int) )
-
 } energy_p_pipeline_args_t;
-
-// PROTOTYPE_PIPELINE( energy_p, energy_p_pipeline_args_t );
 
 void
 energy_p_pipeline_scalar( energy_p_pipeline_args_t * RESTRICT args,
@@ -162,6 +151,42 @@ void
 energy_p_pipeline_v16( energy_p_pipeline_args_t * args,
                        int pipeline_rank,
                        int n_pipeline );
+
+///////////////////////////////////////////////////////////////////////////////
+// accumulate_hydro_p_pipeline interface
+
+typedef struct accumulate_hydro_p_pipeline_args
+{
+  MEM_PTR( const species_t,      128 ) sp;      // Species array
+  MEM_PTR( const interpolator_t, 128 ) f;       // Interpolator array
+  MEM_PTR( /**/  hydro_t,        128 ) h;       // Hydro values
+  int                                  h_size;  // Size of each hydro array
+  float                                qdt_2mc; // Particle/field coupling
+  float                                msp;     // Species particle rest mass
+  int                                  np;      // Number of particles
+
+  PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
+} accumulate_hydro_p_pipeline_args_t;
+
+void
+accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
+                                    int pipeline_rank,
+                                    int n_pipeline );
+
+void
+accumulate_hydro_p_pipeline_v4( accumulate_hydro_p_pipeline_args_t * args,
+                                int pipeline_rank,
+                                int n_pipeline );
+
+void
+accumulate_hydro_p_pipeline_v8( accumulate_hydro_p_pipeline_args_t * args,
+                                int pipeline_rank,
+                                int n_pipeline );
+
+void
+accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
+                                 int pipeline_rank,
+                                 int n_pipeline );
 
 ///////////////////////////////////////////////////////////////////////////////
 // sort_p_pipeline interface
@@ -206,12 +231,7 @@ typedef struct sort_p_pipeline_args
   int n_voxel;   // Number of voxels total (including ghosts)
 
   PAD_STRUCT( 5*SIZEOF_MEM_PTR + 5*sizeof(int) )
-
 } sort_p_pipeline_args_t;
-
-// PROTOTYPE_PIPELINE( coarse_count, sort_p_pipeline_args_t );
-// PROTOTYPE_PIPELINE( coarse_sort,  sort_p_pipeline_args_t );
-// PROTOTYPE_PIPELINE( subsort,      sort_p_pipeline_args_t );
 
 void
 coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,

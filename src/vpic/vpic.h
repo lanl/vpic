@@ -36,19 +36,19 @@
 
 typedef FileIO FILETYPE;
 
-const uint32_t all			(0xffffffff);
-const uint32_t electric		(1<<0 | 1<<1 | 1<<2);
-const uint32_t div_e_err	(1<<3);
-const uint32_t magnetic		(1<<4 | 1<<5 | 1<<6);
-const uint32_t div_b_err	(1<<7);
-const uint32_t tca			(1<<8 | 1<<9 | 1<<10);
-const uint32_t rhob			(1<<11);
-const uint32_t current		(1<<12 | 1<<13 | 1<<14);
-const uint32_t rhof			(1<<15);
-const uint32_t emat			(1<<16 | 1<<17 | 1<<18);
-const uint32_t nmat			(1<<19);
-const uint32_t fmat			(1<<20 | 1<<21 | 1<<22);
-const uint32_t cmat			(1<<23);
+const uint32_t all                      (0xffffffff);
+const uint32_t electric         (1<<0 | 1<<1 | 1<<2);
+const uint32_t div_e_err        (1<<3);
+const uint32_t magnetic         (1<<4 | 1<<5 | 1<<6);
+const uint32_t div_b_err        (1<<7);
+const uint32_t tca                      (1<<8 | 1<<9 | 1<<10);
+const uint32_t rhob                     (1<<11);
+const uint32_t current          (1<<12 | 1<<13 | 1<<14);
+const uint32_t rhof                     (1<<15);
+const uint32_t emat                     (1<<16 | 1<<17 | 1<<18);
+const uint32_t nmat                     (1<<19);
+const uint32_t fmat                     (1<<20 | 1<<21 | 1<<22);
+const uint32_t cmat                     (1<<23);
 
 const size_t total_field_variables(24);
 const size_t total_field_groups(12); // this counts vectors, tensors etc...
@@ -56,21 +56,21 @@ const size_t total_field_groups(12); // this counts vectors, tensors etc...
 const size_t field_indeces[12] = { 0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23 };
 
 struct FieldInfo {
-	char name[128];
-	char degree[128];
-	char elements[128];
-	char type[128];
-	size_t size;
+        char name[128];
+        char degree[128];
+        char elements[128];
+        char type[128];
+        size_t size;
 }; // struct FieldInfo
 
-const uint32_t current_density	(1<<0 | 1<<1 | 1<<2);
-const uint32_t charge_density	(1<<3);
-const uint32_t momentum_density	(1<<4 | 1<<5 | 1<<6);
-const uint32_t ke_density		(1<<7);
-const uint32_t stress_tensor	(1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
+const uint32_t current_density  (1<<0 | 1<<1 | 1<<2);
+const uint32_t charge_density   (1<<3);
+const uint32_t momentum_density (1<<4 | 1<<5 | 1<<6);
+const uint32_t ke_density               (1<<7);
+const uint32_t stress_tensor    (1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
 /* May want to use these instead
-const uint32_t stress_diagonal 		(1<<8 | 1<<9 | 1<<10);
-const uint32_t stress_offdiagonal	(1<<11 | 1<<12 | 1<<13);
+const uint32_t stress_diagonal          (1<<8 | 1<<9 | 1<<10);
+const uint32_t stress_offdiagonal       (1<<11 | 1<<12 | 1<<13);
 */
 
 const size_t total_hydro_variables(14);
@@ -79,11 +79,11 @@ const size_t total_hydro_groups(5); // this counts vectors, tensors etc...
 const size_t hydro_indeces[5] = { 0, 3, 4, 7, 8 };
 
 struct HydroInfo {
-	char name[128];
-	char degree[128];
-	char elements[128];
-	char type[128];
-	size_t size;
+        char name[128];
+        char degree[128];
+        char elements[128];
+        char type[128];
+        size_t size;
 }; // struct FieldInfo
 
 /*----------------------------------------------------------------------------
@@ -198,7 +198,7 @@ protected:
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
- 
+
   char user_global[USER_GLOBAL_SIZE];
 
   /*----------------------------------------------------------------------------
@@ -233,10 +233,15 @@ protected:
 
   // Binary dumps
   void dump_grid( const char *fbase );
-  void dump_fields( const char *fbase, int fname_tag = 1 );
-  void dump_hydro( const char *sp_name, const char *fbase,
-                   int fname_tag = 1 );
-  void dump_particles( const char *sp_name, const char *fbase,
+  void dump_fields( const char *fbase,
+		    int fname_tag = 1,
+		    field_t *f = NULL );
+  void dump_hydro( const char *sp_name,
+		   const char *fbase,
+                   int fname_tag = 1,
+		   hydro_t *h = NULL );
+  void dump_particles( const char *sp_name,
+		       const char *fbase,
                        int fname_tag = 1 );
 
   // convenience functions for simlog output
@@ -245,14 +250,19 @@ protected:
 
   void print_hashed_comment(FileIO & fileIO, const char * comment);
   void global_header(const char * base,
-  	std::vector<DumpParameters *> dumpParams);
+        std::vector<DumpParameters *> dumpParams);
 
   void field_header(const char * fbase, DumpParameters & dumpParams);
   void hydro_header(const char * speciesname, const char * hbase,
     DumpParameters & dumpParams);
 
-  void field_dump(DumpParameters & dumpParams);
-  void hydro_dump(const char * speciesname, DumpParameters & dumpParams);
+  void field_dump( DumpParameters & dumpParams,
+		   field_t *f = NULL,
+                   int64_t userStep = -1 );
+  void hydro_dump( const char *speciesname,
+		   DumpParameters & dumpParams,
+		   hydro_t *h = NULL,
+                   int64_t userStep = -1 );
 
   ///////////////////
   // Useful accessors
@@ -346,7 +356,7 @@ protected:
                         double xh,  double yh,  double zh,
                         double gnx, double gny, double gnz,
                         double gpx, double gpy, double gpz ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
                             (int)gnx, (int)gny, (int)gnz,
                             (int)gpx, (int)gpy, (int)gpz );
@@ -357,7 +367,7 @@ protected:
                          double xh,  double yh,  double zh,
                          double gnx, double gny, double gnz,
                          double gpx, double gpy, double gpz, int pbc ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
                              (int)gnx, (int)gny, (int)gnz,
                              (int)gpx, (int)gpy, (int)gpz,
@@ -369,7 +379,7 @@ protected:
                           double xh,  double yh,  double zh,
                           double gnx, double gny, double gnz,
                           double gpx, double gpy, double gpz ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_metal_box( grid, xl, yl, zl, xh, yh, zh,
                          (int)gnx, (int)gny, (int)gnz,
                          (int)gpx, (int)gpy, (int)gpz );
@@ -419,7 +429,7 @@ protected:
                    double epsx,        double epsy,       double epsz,
                    double mux,         double muy,        double muz,
                    double sigmax,      double sigmay,     double sigmaz,
-		   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
+                   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
     return append_material( material( name,
                                       epsx,   epsy,   epsz,
                                       mux,    muy,    muz,
@@ -540,7 +550,8 @@ protected:
   inline void
   inject_particle_raw( species_t * RESTRICT sp,
                        float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w ) {
+                       float ux, float uy, float uz, float w )
+  {
     particle_t * RESTRICT p = sp->p + (sp->np++);
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
@@ -553,7 +564,8 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w,
                        float dispx, float dispy, float dispz,
-                       int update_rhob ) {
+                       int update_rhob )
+  {
     particle_t       * RESTRICT p  = sp->p  + (sp->np++);
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
@@ -644,7 +656,7 @@ protected:
 
   // Compute the Courant length on a regular mesh
   inline double courant_length( double lx, double ly, double lz,
-				double nx, double ny, double nz ) {
+                                double nx, double ny, double nz ) {
     double w0, w1 = 0;
     if( nx>1 ) w0 = nx/lx, w1 += w0*w0;
     if( ny>1 ) w0 = ny/ly, w1 += w0*w0;

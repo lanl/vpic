@@ -523,31 +523,33 @@ namespace v16
 
   // v16 memory manipulation functions
 
+  // Portable version.
   inline void load_16x1( const void * ALIGNED(64) p,
 			 v16 &a )
   {
     for( int j = 0; j < 16; j++ )
-      a.i[j] = ((const int * ALIGNED(64))p)[j];
+      a.i[j] = ( ( const int * ALIGNED(64) ) p )[j];
   }
 
+  // Portable version.
   inline void store_16x1( const v16 &a,
 			  void * ALIGNED(64) p )
   {
     for( int j = 0; j < 16; j++ )
-      ((int * ALIGNED(64))p)[j] = a.i[j];
+      ( ( int * ALIGNED(64) ) p )[j] = a.i[j];
   }
 
   inline void stream_16x1( const v16 &a,
 			   void * ALIGNED(64) p )
   {
     for( int j = 0; j < 16; j++ )
-      ((int * ALIGNED(64))p)[j] = a.i[j];
+      ( ( int * ALIGNED(64) ) p )[j] = a.i[j];
   }
 
   inline void clear_16x1( void * ALIGNED(64) p )
   {
     for( int j = 0; j < 16; j++ )
-      ((int * ALIGNED(64))p)[j] = 0;
+      ( ( int * ALIGNED(64) ) p )[j] = 0;
   }
 
   // FIXME: Ordering semantics
@@ -555,7 +557,7 @@ namespace v16
 			 const void * ALIGNED(64) src )
   {
     for( int j = 0; j < 16; j++ )
-      ((int * ALIGNED(64))dst)[j] = ((const int * ALIGNED(64))src)[j];
+      ( ( int * ALIGNED(64) ) dst )[j] = ( ( const int * ALIGNED(64) ) src )[j];
   }
 
   inline void swap_16x1( void * ALIGNED(64) a,
@@ -565,9 +567,9 @@ namespace v16
 
     for( int j = 0; j < 16; j++ )
     {
-      t = ((int * ALIGNED(64))a)[j];
-      ((int * ALIGNED(64))a)[j] = ((int * ALIGNED(64))b)[j];
-      ((int * ALIGNED(64))b)[j] = t;
+      t = ( ( int * ALIGNED(64) ) a )[j];
+      ( ( int * ALIGNED(64) ) a )[j] = ( ( int * ALIGNED(64) ) b )[j];
+      ( ( int * ALIGNED(64) ) b )[j] = t;
     }
   }
 

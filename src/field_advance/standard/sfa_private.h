@@ -331,7 +331,7 @@ void
 vacuum_clean_div_e( field_array_t * RESTRICT fa );
 
 void
-vacuum_clean_div_e_pipeline( field_array_t * fa );
+vacuum_clean_div_e_pipeline( field_array_t * RESTRICT fa );
 
 // In compute_div_b_err.c
 
@@ -358,7 +358,7 @@ double
 compute_rms_div_b_err( const field_array_t * RESTRICT fa );
 
 double
-compute_rms_div_b_err_pipeline( const field_array_t * fa );
+compute_rms_div_b_err_pipeline( const field_array_t * RESTRICT fa );
 
 // In clean_div_b.c
 
@@ -370,7 +370,7 @@ void
 clean_div_b( field_array_t * RESTRICT fa );
 
 void
-clean_div_b_pipeline( field_array_t * fa );
+clean_div_b_pipeline( field_array_t * RESTRICT fa );
 
 // Internode functions
 

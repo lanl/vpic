@@ -228,6 +228,11 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
         else
         {
           itmp++;                               // Unlikely
+
+          // Also undo the shift that move_p did, to keep p->i in a valid range
+          // If we got here, we're running the risk of ruining the physics of
+          // the simulation. Take the mover warning very seriously.
+          p->i = p->i >> 3;
         }
       }
     }
@@ -307,10 +312,13 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
-      WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers.",
-                 rank,
-                 sp->name,
-                 args->seg[rank].n_ignored ) );
+        // If you see this warning, particles are essentially being held at the
+        // boundary instead of finishing their move. They are now in the wrong
+        // place and have not deposited correct currents....
+        WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers.  This is an extremely serious problem that affects the physics of your run.",
+                    rank,
+                    sp->name,
+                    args->seg[rank].n_ignored ) );
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )

@@ -377,25 +377,7 @@ advance_p_pipeline_v16( advance_p_pipeline_args_t * args,
     // particles.
     //--------------------------------------------------------------------------
 
-    #define MOVE_OUTBND(N)                                              \
-    if ( outbnd(N) )                                /* Unlikely */      \
-    {                                                                   \
-      local_pm->dispx = ux(N);                                          \
-      local_pm->dispy = uy(N);                                          \
-      local_pm->dispz = uz(N);                                          \
-      local_pm->i     = ( p - p0 ) + N;                                 \
-      if ( move_p( p0, local_pm, a0, g, _qsp ) )    /* Unlikely */      \
-      {                                                                 \
-        if ( nm < max_nm )                                              \
-        {                                                               \
-          v4::copy_4x1( &pm[nm++], local_pm );                          \
-        }                                                               \
-        else                                        /* Unlikely */      \
-        {                                                               \
-          itmp++;                                                       \
-        }                                                               \
-      }                                                                 \
-    }
+    #include "move_outbnd_v4.inc"
 
     MOVE_OUTBND( 0);
     MOVE_OUTBND( 1);

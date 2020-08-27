@@ -312,6 +312,12 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
+#ifdef EXIT_ON_LOST_MOVER
+        ERROR( ( "Pipeline %i (species = %s) ran out of storage for %i movers.  This is an extremely serious problem that affects the physics of your run.",
+                    rank,
+                    sp->name,
+                    args->seg[rank].n_ignored ) );
+#else
         // If you see this warning, particles are essentially being held at the
         // boundary instead of finishing their move. They are now in the wrong
         // place and have not deposited correct currents....
@@ -319,6 +325,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
                     rank,
                     sp->name,
                     args->seg[rank].n_ignored ) );
+#endif
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )

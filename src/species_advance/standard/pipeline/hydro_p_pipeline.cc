@@ -221,7 +221,9 @@ accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
 void
 accumulate_hydro_p_pipeline( hydro_array_t * RESTRICT ha,
                              const species_t * RESTRICT sp,
-                             const interpolator_array_t * RESTRICT ia )
+                             const interpolator_array_t * RESTRICT ia,
+                             const bool charge_weight
+                             )
 {
   DECLARE_ALIGNED_ARRAY( accumulate_hydro_p_pipeline_args_t, 128, args, 1 );
 
@@ -241,6 +243,7 @@ accumulate_hydro_p_pipeline( hydro_array_t * RESTRICT ha,
   args->qdt_2mc = ( sp->q * sp->g->dt ) / ( 2 * sp->m * sp->g->cvac );
   args->msp     = sp->m;
   args->np      = sp->np;
+  args->charge_weight = charge_weight;
 
   EXEC_PIPELINES( accumulate_hydro_p, args, 0 );
 

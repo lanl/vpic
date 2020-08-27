@@ -290,6 +290,18 @@ if(VPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
 endif(VPIC_PRINT_MORE_DIGITS)
 
+if(USE_HDF5)
+    # Enable HDF5, and the relevant defines
+    find_package(HDF5 REQUIRED)
+    if (NOT HDF5_IS_PARALLEL)
+        message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
+    endif()
+    add_definitions(-DVPIC_ENABLE_HDF5)
+    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    include_directories(${HDF5_INCLUDE_DIRS})
+endif(USE_HDF5)
+
 #------------------------------------------------------------------------------#
 # Handle vpic compile script last.
 #------------------------------------------------------------------------------#
@@ -359,17 +371,6 @@ else()
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 
-if(USE_HDF5)
-    # Enable HDF5, and the relevant defines
-    find_package(HDF5 REQUIRED)
-    if (NOT HDF5_IS_PARALLEL)
-        message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
-    endif()
-    add_definitions(-DVPIC_ENABLE_HDF5)
-    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
-    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
-    include_directories(${HDF5_INCLUDE_DIRS})
-endif(USE_HDF5)
 
 # Configure local script to generate bin/vpic
 configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in

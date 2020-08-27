@@ -41,7 +41,7 @@ typedef struct advance_p_pipeline_args
   int                                  nx;       // x-mesh resolution
   int                                  ny;       // y-mesh resolution
   int                                  nz;       // z-mesh resolution
- 
+
   PAD_STRUCT( 6*SIZEOF_MEM_PTR + 5*sizeof(float) + 5*sizeof(int) )
 } advance_p_pipeline_args_t;
 
@@ -164,6 +164,7 @@ typedef struct accumulate_hydro_p_pipeline_args
   float                                qdt_2mc; // Particle/field coupling
   float                                msp;     // Species particle rest mass
   int                                  np;      // Number of particles
+  bool                                 charge_weight; // Use sp->q if true (default), use sp->m if not
 
   PAD_STRUCT( 3*SIZEOF_MEM_PTR + 2*sizeof(float) + 2*sizeof(int) )
 } accumulate_hydro_p_pipeline_args_t;

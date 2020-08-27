@@ -1690,7 +1690,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
   int dim[3];
 
   /* define to do C-style indexing */
-# define hydro(x,y,z) h[VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)]
+  //# define hydro(x,y,z) h[VOXEL(x,y,z, grid->nx,grid->ny,grid->nz)]
 
   /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
   nxout = (grid->nx)/istride;

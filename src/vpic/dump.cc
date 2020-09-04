@@ -12,6 +12,13 @@
 #include "vpic.h"
 #include "../util/io/FileUtils.h"
 
+#ifdef VPIC_ENABLE_HDF5
+#include "hdf5.h" // from the lib
+#endif
+
+/* 1 means convert cell index to global */
+#define OUTPUT_CONVERT_GLOBAL_ID 1
+
 /* -1 means no ranks talk */
 #define VERBOSE_rank -1
 
@@ -877,4 +884,233 @@ vpic_simulation::hydro_dump( const char * speciesname,
 # undef hydro
 
   if( fileIO.close() ) ERROR(( "File close failed on hydro dump!!!" ));
+}
+
+
+void
+vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_timesteps, const double safety_factor) {
+
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+
+  if(sp->output_buffer) { // From a previous init
+    FREE_ALIGNED(sp->output_buffer);
+    sp->output_buffer = nullptr;
+    sp->buf_size = 0;
+  }
+
+  // How many annotations per particles
+  #ifdef VPIC_PARTICLE_ANNOTATION
+    sp->buf_n_annotation = sp->has_annotation;
+  #else
+    sp->buf_n_annotation = 0;
+  #endif
+
+  // How many frames are we expected to store?
+  sp->buf_n_frames = N_timesteps;
+
+  // How many particles are we expected to store?
+  sp->buf_n_particles = ceil(safety_factor * sp->max_np);
+
+  // How large is a particle
+  sp->buf_particle_size = 7*sizeof(float)+sizeof(int);           // Particle itself
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(sp->has_ids) {
+    sp->buf_particle_size += sizeof(size_t);                     // Particle ID
+  }
+  #endif
+  sp->buf_particle_size += sp->buf_n_annotation * sizeof(float); // Annotations
+  sp->buf_particle_size += sizeof(int64_t);                      // Timestep
+
+  // Buffer size
+  sp->buf_size = sp->buf_n_frames * sp->buf_n_particles * sp->buf_particle_size;
+
+  // Allocate buffer
+  fprintf(stderr, "<%d> Allocating %ld bytes to store up to %ld particles of %ld bytes in %ld timesteps\n", rank(), sp->buf_size, sp->buf_n_particles, sp->buf_particle_size, sp->buf_n_frames);
+  MALLOC_ALIGNED(sp->output_buffer, sp->buf_size, 128);
+
+  // Done
+}
+
+#ifdef OUTPUT_CONVERT_GLOBAL_ID
+# define UNVOXEL(rank, ix, iy, iz, nx, ny, nz) BEGIN_PRIMITIVE {        \
+int _ix, _iy, _iz;                                                  \
+_ix  = (rank);        /* ix = ix+gpx*( iy+gpy*iz ) */       \
+_iy  = _ix/int(nx);   /* iy = iy+gpy*iz */                  \
+_ix -= _iy*int(nx);   /* ix = ix */                         \
+_iz  = _iy/int(ny);   /* iz = iz */                         \
+_iy -= _iz*int(ny);   /* iy = iy */                         \
+(ix) = _ix;                                                         \
+(iy) = _iy;                                                         \
+(iz) = _iz;                                                         \
+} END_PRIMITIVE
+#endif
+
+void
+vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const int frame) {
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+
+  if(!sp->output_buffer || !sp->buf_size) ERROR(( "No buffer setup on species \"%s\"", sp_name));
+
+  if(frame < 0 || frame >= sp->buf_n_frames) ERROR(( "Invalid frame %ld (has to be in (0;%ld( on species \"%s\"", frame, sp->buf_n_frames, sp_name ));
+
+  if(sp->np > sp->buf_n_particles) WARNING(( "We have %d particles but buffer space for only %ld in species \"%s\". You will loose information. Chose a larger safety_factor next time.", sp->np, sp->buf_n_particles, sp_name));
+
+  char* start = sp->output_buffer + frame * sp->buf_n_particles * sp->buf_particle_size;
+  const int mpi_rank = rank();
+
+  // Loop over particles
+  for(int64_t n = 0; n < sp->np && n < sp->buf_n_particles; n++) {
+    char* mem = start + n * sp->buf_particle_size;
+
+    #ifdef OUTPUT_CONVERT_GLOBAL_ID
+    // Convert Cell ID to global
+    int local_i = sp->p[n].i;
+
+    int ix, iy, iz, rx, ry, rz;
+    // Convert rank to local x/y/z
+    UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+    // Calculate local ix/iy/iz
+    UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
+
+    // Account for the "first" ghost cell
+    ix = ix - 1;
+    iy = iy - 1;
+    iz = iz - 1;
+
+    // Convert ix/iy/iz to global
+    int gix = ix + (grid->nx * rx);
+    int giy = iy + (grid->ny * ry);
+    int giz = iz + (grid->nz * rz);
+
+    // calculate global grid sizes
+    int gnx = grid->nx * grid->gpx;
+    int gny = grid->ny * grid->gpy;
+    int gnz = grid->nz * grid->gpz;
+
+    // TODO: find a better way to account for the hard coded ghosts in VOXEL
+    int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
+    #endif
+
+    // Particle Properties
+    float* fp = (float*) mem;
+    *fp++ = sp->p[n].dx;            // Offset x
+    *fp++ = sp->p[n].dy;            // Offset y
+    *fp++ = sp->p[n].dz;            // Offset z
+
+    int* ip = (int*) fp;
+    #ifdef OUTPUT_CONVERT_GLOBAL_ID
+    *ip++ = global_i;               // Cell Index
+    #else
+    *ip++ = sp->p[n].i;             // Cell Index
+    #endif
+
+    fp = (float*) ip;
+    *fp++ = sp->p[n].ux;            // Velocity x
+    *fp++ = sp->p[n].uy;            // Velocity y
+    *fp++ = sp->p[n].uz;            // Velocity z
+    *fp++ = sp->p[n].w;             // Statistical Weight
+
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(sp->has_ids) {
+      size_t* stp = (size_t*) fp;
+      *stp++ = sp->p_id[n];         // Particle ID
+      fp = (float*) stp;
+    }
+    #endif
+
+    // Annotations
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int a = 0; a < sp->has_annotation; a++) {
+       *fp++ = sp->p_annotation[n*sp->has_annotation + a];
+      }
+    }
+    #endif
+
+    // Timestep
+    int64_t* i64p = (int64_t*) fp;
+    *i64p = step();
+
+  }
+}
+
+#undef UNVOXEL
+
+void
+vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+
+#ifdef VPIC_ENABLE_HDF5
+  char strbuf[4096];
+
+  sprintf(strbuf, "%s", "tracer_hdf5");
+  dump_mkdir(strbuf);
+
+  sprintf(strbuf, "%s/T.%ld", "tracer_hdf5", step());
+  dump_mkdir(strbuf);
+
+  sprintf(strbuf, "%s/T.%ld/%s_%d.h5", "tracer_hdf5", step(), sp->name, rank());
+  hid_t file = H5Fcreate(strbuf, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+  hid_t particletype = H5Tcreate(H5T_COMPOUND, sp->buf_particle_size);
+  size_t offset = 0;
+  H5Tinsert(particletype, "dx", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "dy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "dz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "i",  offset, H5T_NATIVE_INT);   offset += sizeof(int);
+  H5Tinsert(particletype, "ux", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "uy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "uz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  H5Tinsert(particletype, "w",  offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(sp->has_ids) {
+    H5Tinsert(particletype, "id", offset, H5T_NATIVE_HSIZE); offset += sizeof(size_t);
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(sp->has_annotation) {
+    for(int a = 0; a < sp->has_annotation; a++) {
+     sprintf(strbuf, "annotation_%d", a);
+     H5Tinsert(particletype, strbuf, offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+    }
+  }
+  #endif
+  H5Tinsert(particletype, "timestep", offset, H5T_NATIVE_INT64); offset += sizeof(int64_t);
+
+  if(offset != sp->buf_particle_size) ERROR(("Missmatch defining particle layout"));
+
+  hsize_t count = sp->buf_n_frames * sp->buf_n_particles;
+  hid_t space = H5Screate_simple(1, &count, NULL);
+
+  hid_t dset = H5Dcreate(file, "tracers", particletype, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+  H5Dwrite(dset, particletype, H5S_ALL, H5S_ALL, H5P_DEFAULT, sp->output_buffer);
+
+  H5Dclose(dset);
+  H5Sclose(space);
+  H5Tclose(particletype);
+  H5Fclose(file);
+#else
+  ERROR(("Only HDF5 format is current supported for buffered output of (annotated) particles\n"));
+#endif
+}
+
+void
+vpic_simulation::clear_buffered_particle_dump(const char * sp_name) {
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+
+  if(!sp->output_buffer || !sp->buf_size) { return; }
+  memset(sp->output_buffer, 0, sp->buf_size);
+
+  // Set all timesteps to -1
+  for(int64_t n = 0; n < sp->buf_n_frames * sp->buf_n_particles; n++) {
+    char*    mem  = sp->output_buffer + (n+1) * sp->buf_particle_size - sizeof(int64_t);
+    int64_t* step = (int64_t*) mem;
+    *step = -1;
+  }
 }

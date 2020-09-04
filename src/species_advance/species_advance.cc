@@ -42,6 +42,8 @@ checkpt_species( const species_t * sp )
                   sp->max_np * sp->has_annotation * sizeof(float), 1, 1, 128);
   }
   #endif
+
+  checkpt_data(sp->output_buffer, sp->buf_size, sp->buf_size, 1, 1, 128);
 }
 
 species_t *
@@ -70,12 +72,15 @@ restore_species( void )
   }
   #endif
   return sp;
+
+  sp->output_buffer = (char*) restore_data();
 }
 
 void
 delete_species( species_t * sp )
 {
   UNREGISTER_OBJECT( sp );
+  FREE_ALIGNED( sp->output_buffer );
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
@@ -219,6 +224,13 @@ species( const char * name,
   sp->last_sorted       = INT64_MIN;
   sp->sort_interval     = sort_interval;
   sp->sort_out_of_place = sort_out_of_place;
+
+  sp->output_buffer = nullptr;
+  sp->buf_size = 0;
+  sp->buf_n_frames = 0;
+  sp->buf_n_annotation = 0;
+  sp->buf_particle_size = 0;
+
   MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 
   sp->g = g;

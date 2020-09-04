@@ -1,0 +1,124 @@
+begin_globals {
+  species_t* sp;
+};
+
+begin_initialization {
+
+  num_step = 100;
+  status_interval = 1000;                 // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  define_units(1, 1);                // speed of light and eps0
+  define_timestep( 0.95/sqrt(3.0) ); // This implies dx=dy=dz = 1
+
+  int gnx = 32;
+  int gny = 32;
+  int gnz = 1;
+
+  int topox = 2;
+  int topoy = 1;
+  int topoz = 1;
+
+  int nppc = 100;
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       gnx,gny,gnz,        // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Create species
+  species_t* elec = define_species("electron",  // name
+                                          -1.,  // charge
+                                           1.,  // mass
+                 1.5*nppc*gnx*gny*gnz/nproc(),  // maximum number of local particles
+                                        //   -1,  // automatic numbner of particle movers
+                                       150000,  // automatic numbner of particle movers
+                                            0,  // sort never
+                                            1); // sort mode out-of-place
+
+  //species_t* pos = define_species("positrons", 1., 1., elec->max_np, -1, 0, 1);
+  species_t* pos = define_species("positrons", 1., 1., elec->max_np, elec->max_nm, 0, 1);
+
+
+  // Set field values
+  set_region_field(everywhere, 0.,0.,0., cos(2.*M_PI*y/(float)gny),0.,0.);
+
+  // Generate particles
+  seed_entropy(rank()); // different random numbers on different ranks
+
+  for(int n=0; n<nppc*gnx*gny*gnz/nproc(); n++) {
+    // Pick a uniform random location in the local domain
+    const float x = uniform( rng(0), grid->x0, grid->x1 );
+    const float y = uniform( rng(0), grid->y0, grid->y1 );
+    const float z = uniform( rng(0), grid->z0, grid->z1 );
+
+    // Pick random velocity
+    const float ux = normal( rng(0), 0., 0.5 );
+    const float uy = normal( rng(0), 0., 0.5 );
+    const float uz = normal( rng(0), 0., 0.5 );
+    inject_particle(elec, x,y,z, ux,uy,uz, 1., 0, 0);
+    inject_particle(pos,  x,y,z, ux,uy,uz, 1., 0, 0);
+  }
+
+  // Add global IDs by moving to a tracer species;
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+  sim_log("Creating electrons tracers");
+  species_t * sp2 = make_tracers_by_percentage(elec, 1.0, Tracertype::Move);
+  sim_log("Done. We have "<<sp2->name);
+  global->sp = sp2;
+#else
+  global->sp = elec;
+#endif
+
+  // create annotation buffer
+#ifdef VPIC_PARTICLE_ANNOTATION
+  global->sp->allocate_annotation_buffer(3);
+#else
+#warning "No annotation buffer. compile with PARTICLE_ANNOTATE=ON"
+#endif
+
+  sim_log("Done with setup");
+  fflush(NULL);
+}
+
+begin_diagnostics {
+  // Initalize buffered particle output
+  if(step() == 0) {
+    sim_log("Setup buffer for particles");
+    init_buffered_particle_dump("electron_tracer", num_step+1, 3.0);
+    clear_buffered_particle_dump("electron_tracer");
+  }
+  // Accumulate into buffer
+  if(step() % 1 == 0) {
+    // sim_log("Accumulate particles to buffer "<<step());
+    accumulate_buffered_particle_dump("electron_tracer", step());
+  }
+  // Dump buffer
+  if(step() == num_step) {
+    sim_log("Dump particle buffer");
+    write_buffered_particle_dump("electron_tracer");
+    clear_buffered_particle_dump("electron_tracer");
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

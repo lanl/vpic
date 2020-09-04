@@ -88,6 +88,8 @@ option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
 
 option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
 
+option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install HDF5" OFF)
+
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
@@ -300,6 +302,18 @@ if(VPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
 endif(VPIC_PRINT_MORE_DIGITS)
 
+if(USE_HDF5)
+    # Enable HDF5, and the relevant defines
+    find_package(HDF5 REQUIRED)
+    if (NOT HDF5_IS_PARALLEL)
+        message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
+    endif()
+    add_definitions(-DVPIC_ENABLE_HDF5)
+    string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    include_directories(${HDF5_INCLUDE_DIRS})
+endif(USE_HDF5)
+
 if(GLOBAL_PARTICLE_ID)
   add_definitions(-DVPIC_GLOBAL_PARTICLE_ID)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_GLOBAL_PARTICLE_ID")
@@ -391,7 +405,7 @@ else()
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
 
 macro(build_a_vpic name deck)

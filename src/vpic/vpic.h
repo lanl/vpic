@@ -414,6 +414,11 @@ protected:
   void field_dump(DumpParameters & dumpParams);
   void hydro_dump(const char * speciesname, DumpParameters & dumpParams);
 
+  void init_buffered_particle_dump(const char * speciesname, const int N_timesteps, const double safety_factor = 2.0);
+  void accumulate_buffered_particle_dump(const char * speciesname, const int frame);
+  void write_buffered_particle_dump(const char * speciesname);
+  void clear_buffered_particle_dump(const char * speciesname);
+
   ///////////////////
   // Useful accessors
 

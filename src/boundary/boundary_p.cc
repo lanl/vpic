@@ -379,7 +379,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         if ( ( ( nn >= 0      ) & ( nn <  rangel ) ) |
              ( ( nn >  rangeh ) & ( nn <= rangem ) ) )
         {
-          pi = &pi_send[ face ] [ n_send[ face ]++ ];
+          pi = &pi_send[ face ] [ n_send[ face ] ];
 
           #ifdef V4_ACCELERATION
 
@@ -412,8 +412,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           #endif
 
           #ifdef VPIC_PARTICLE_ANNOTATION
-          int n_send_face = n_send[ face ] - 1; // Minus one because it was already incremented above
-          float* RESTRICT ALIGNED(128) p_annotation = (float*) &(cab[face][n_send_face * max_cas]);
+          float* RESTRICT ALIGNED(128) p_annotation = (float*) &(cab[face][n_send[face] * max_cas]);
 
           //printf("<%d> %dth particle of species %s has %d annotation that need to go into the buffer starting at %p\n", rank(), i, sp->name, sp_has_annotation, p_annotation);
 
@@ -454,6 +453,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           ( &pi->dx )[ axis[ face ] ] = dir[ face ];
           pi->i                       = nn - range[ face ];
           pi->sp_id                   = sp_id;
+
+          n_send[ face ]++;
 
           goto backfill;
         }

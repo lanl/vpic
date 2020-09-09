@@ -43,7 +43,22 @@ checkpt_species( const species_t * sp )
   }
   #endif
 
-  checkpt_data(sp->output_buffer, sp->buf_size, sp->buf_size, 1, 1, 128);
+  checkpt_data(sp->output_buffer_dx, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_dy, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_dz, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_i,  sp->buf_size*sizeof(int64_t), sp->buf_size*sizeof(int64_t), 1, 1, 128);
+  checkpt_data(sp->output_buffer_ux, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_uy, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_uz, sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  checkpt_data(sp->output_buffer_w,  sp->buf_size*sizeof(float),   sp->buf_size*sizeof(float),   1, 1, 128);
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  checkpt_data(sp->output_buffer_id, sp->buf_size*sizeof(size_t),  sp->buf_size*sizeof(size_t),  1, 1, 128);
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  checkpt_data(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(float), sp->buf_size*sp->buf_n_annotation*sizeof(float), 1, 1, 128);
+#endif
+  checkpt_data(sp->output_buffer_ts, sp->buf_size*sizeof(int64_t), sp->buf_size*sizeof(int64_t),  1, 1, 128);
+  checkpt_data(sp->buf_n_valid,sp->buf_n_frames*sizeof(int64_t), sp->buf_n_frames*sizeof(int64_t), 1, 1, 128);
 }
 
 species_t *
@@ -71,16 +86,49 @@ restore_species( void )
     sp->p_annotation  = (float*) nullptr;
   }
   #endif
-  return sp;
 
-  sp->output_buffer = (char*) restore_data();
+  sp->output_buffer_dx = (float*)   restore_data();
+  sp->output_buffer_dy = (float*)   restore_data();
+  sp->output_buffer_dz = (float*)   restore_data();
+  sp->output_buffer_i  = (int64_t*) restore_data();
+  sp->output_buffer_ux = (float*)   restore_data();
+  sp->output_buffer_uy = (float*)   restore_data();
+  sp->output_buffer_uz = (float*)   restore_data();
+  sp->output_buffer_w  = (float*)   restore_data();
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  sp->output_buffer_id = (size_t*)  restore_data();
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  sp->output_buffer_an = (float*)   restore_data();
+  #endif
+  sp->output_buffer_ts = (int64_t*) restore_data();
+  sp->buf_n_valid      = (int64_t*) restore_data();
+
+  return sp;
 }
 
 void
 delete_species( species_t * sp )
 {
   UNREGISTER_OBJECT( sp );
-  FREE_ALIGNED( sp->output_buffer );
+
+  FREE_ALIGNED( sp->output_buffer_dx );
+  FREE_ALIGNED( sp->output_buffer_dy );
+  FREE_ALIGNED( sp->output_buffer_dz );
+  FREE_ALIGNED( sp->output_buffer_i  );
+  FREE_ALIGNED( sp->output_buffer_ux );
+  FREE_ALIGNED( sp->output_buffer_uy );
+  FREE_ALIGNED( sp->output_buffer_uz );
+  FREE_ALIGNED( sp->output_buffer_w  );
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  FREE_ALIGNED( sp->output_buffer_id );
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  FREE_ALIGNED( sp->output_buffer_an );
+  #endif
+  FREE_ALIGNED( sp->output_buffer_ts );
+  FREE_ALIGNED( sp->buf_n_valid );
+
   FREE_ALIGNED( sp->partition );
   FREE_ALIGNED( sp->pm );
   FREE_ALIGNED( sp->p );
@@ -225,11 +273,25 @@ species( const char * name,
   sp->sort_interval     = sort_interval;
   sp->sort_out_of_place = sort_out_of_place;
 
-  sp->output_buffer = nullptr;
+  sp->output_buffer_dx = nullptr;
+  sp->output_buffer_dy = nullptr;
+  sp->output_buffer_dz = nullptr;
+  sp->output_buffer_i  = nullptr;
+  sp->output_buffer_ux = nullptr;
+  sp->output_buffer_uy = nullptr;
+  sp->output_buffer_uz = nullptr;
+  sp->output_buffer_w  = nullptr;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  sp->output_buffer_id = nullptr;
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  sp->output_buffer_an = nullptr;
+  #endif
+  sp->output_buffer_ts = nullptr;
+  sp->buf_n_valid = nullptr;
   sp->buf_size = 0;
   sp->buf_n_frames = 0;
   sp->buf_n_annotation = 0;
-  sp->buf_particle_size = 0;
 
   MALLOC_ALIGNED( sp->partition, g->nv+1, 128 );
 

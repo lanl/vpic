@@ -889,15 +889,24 @@ vpic_simulation::hydro_dump( const char * speciesname,
 
 void
 vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_timesteps, const double safety_factor) {
-
   species_t *sp = find_species_name( sp_name, species_list );
   if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
 
-  if(sp->output_buffer) { // From a previous init
-    FREE_ALIGNED(sp->output_buffer);
-    sp->output_buffer = nullptr;
-    sp->buf_size = 0;
-  }
+  // If any of those are still around from a previous init
+  if(sp->output_buffer_dx) { FREE_ALIGNED(sp->output_buffer_dx); sp->output_buffer_dx = nullptr; }
+  if(sp->output_buffer_dy) { FREE_ALIGNED(sp->output_buffer_dy); sp->output_buffer_dy = nullptr; }
+  if(sp->output_buffer_dz) { FREE_ALIGNED(sp->output_buffer_dz); sp->output_buffer_dz = nullptr; }
+  if(sp->output_buffer_i)  { FREE_ALIGNED(sp->output_buffer_i);  sp->output_buffer_i  = nullptr; }
+  if(sp->output_buffer_ux) { FREE_ALIGNED(sp->output_buffer_ux); sp->output_buffer_ux = nullptr; }
+  if(sp->output_buffer_uy) { FREE_ALIGNED(sp->output_buffer_uy); sp->output_buffer_uy = nullptr; }
+  if(sp->output_buffer_uz) { FREE_ALIGNED(sp->output_buffer_uz); sp->output_buffer_uz = nullptr; }
+  if(sp->output_buffer_w)  { FREE_ALIGNED(sp->output_buffer_w);  sp->output_buffer_w  = nullptr; }
+  if(sp->output_buffer_id) { FREE_ALIGNED(sp->output_buffer_id); sp->output_buffer_id = nullptr; }
+  if(sp->output_buffer_an) { FREE_ALIGNED(sp->output_buffer_an); sp->output_buffer_an = nullptr; }
+  if(sp->output_buffer_ts) { FREE_ALIGNED(sp->output_buffer_ts); sp->output_buffer_ts = nullptr; }
+  if(sp->buf_n_valid)      { FREE_ALIGNED(sp->buf_n_valid);      sp->buf_n_valid      = nullptr; }
+
+  sp->buf_size = 0;
 
   // How many annotations per particles
   #ifdef VPIC_PARTICLE_ANNOTATION
@@ -912,22 +921,32 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   // How many particles are we expected to store?
   sp->buf_n_particles = ceil(safety_factor * sp->max_np);
 
-  // How large is a particle
-  sp->buf_particle_size = 7*sizeof(float)+sizeof(int64_t);       // Particle itself
-  #ifdef VPIC_GLOBAL_PARTICLE_ID
-  if(sp->has_ids) {
-    sp->buf_particle_size += sizeof(size_t);                     // Particle ID
-  }
-  #endif
-  sp->buf_particle_size += sp->buf_n_annotation * sizeof(float); // Annotations
-  sp->buf_particle_size += sizeof(int64_t);                      // Timestep
-
   // Buffer size
-  sp->buf_size = sp->buf_n_frames * sp->buf_n_particles * sp->buf_particle_size;
+  sp->buf_size = sp->buf_n_frames * sp->buf_n_particles;
 
   // Allocate buffer
-  fprintf(stderr, "<%d> Allocating %ld bytes to store up to %ld particles of %ld bytes in %ld timesteps\n", rank(), sp->buf_size, sp->buf_n_particles, sp->buf_particle_size, sp->buf_n_frames);
-  MALLOC_ALIGNED(sp->output_buffer, sp->buf_size, 128);
+  fprintf(stderr, "<%d> Allocating buffers store up to %ld particles each in %ld timesteps\n", rank(), sp->buf_n_particles, sp->buf_n_frames);
+
+  MALLOC_ALIGNED(sp->output_buffer_dx, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_dy, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_dz, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_i,  sp->buf_size*sizeof(int64_t), 128);
+  MALLOC_ALIGNED(sp->output_buffer_ux, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_uy, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_uz, sp->buf_size*sizeof(float), 128);
+  MALLOC_ALIGNED(sp->output_buffer_w,  sp->buf_size*sizeof(float), 128);
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(sp->has_ids) {
+    MALLOC_ALIGNED(sp->output_buffer_id, sp->buf_size*sizeof(size_t), 128);
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(sp->has_annotation) {
+    MALLOC_ALIGNED(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(float), 128);
+  }
+  #endif
+  MALLOC_ALIGNED(sp->output_buffer_ts, sp->buf_size*sizeof(size_t), 128);
+  MALLOC_ALIGNED(sp->buf_n_valid,      sp->buf_n_frames*sizeof(int64_t), 128);
 
   // Done
 }
@@ -951,19 +970,17 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
   species_t *sp = find_species_name( sp_name, species_list );
   if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
 
-  if(!sp->output_buffer || !sp->buf_size) ERROR(( "No buffer setup on species \"%s\"", sp_name));
+  if( !sp->buf_size ) ERROR(( "No buffer setup on species \"%s\"", sp_name));
 
   if(frame < 0 || frame >= sp->buf_n_frames) ERROR(( "Invalid frame %ld (has to be in (0;%ld( on species \"%s\"", frame, sp->buf_n_frames, sp_name ));
 
   if(sp->np > sp->buf_n_particles) WARNING(( "We have %d particles but buffer space for only %ld in species \"%s\". You will loose information. Chose a larger safety_factor next time.", sp->np, sp->buf_n_particles, sp_name));
 
-  char* start = sp->output_buffer + frame * sp->buf_n_particles * sp->buf_particle_size;
   const int mpi_rank = rank();
+  sp->buf_n_valid[frame] = 0;
 
   // Loop over particles
   for(int64_t n = 0; n < sp->np && n < sp->buf_n_particles; n++) {
-    char* mem = start + n * sp->buf_particle_size;
-
     #ifdef OUTPUT_CONVERT_GLOBAL_ID
     // Convert Cell ID to global
     int64_t local_i = sp->p[n].i;
@@ -994,30 +1011,27 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     int64_t global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
     #endif
 
-    // Particle Properties
-    float* fp = (float*) mem;
-    *fp++ = sp->p[n].dx;            // Offset x
-    *fp++ = sp->p[n].dy;            // Offset y
-    *fp++ = sp->p[n].dz;            // Offset z
+    const size_t index = frame*sp->buf_n_particles + n;
 
-    int64_t* i64p = (int64_t*) fp;
+    // Particle Properties
+    sp->output_buffer_dx[index] = sp->p[n].dx;
+    sp->output_buffer_dy[index] = sp->p[n].dy;
+    sp->output_buffer_dz[index] = sp->p[n].dz;
+
     #ifdef OUTPUT_CONVERT_GLOBAL_ID
-    *i64p++ = global_i;             // Cell Index
+    sp->output_buffer_i[index]  = global_i;
     #else
-    *i64p++ = sp->p[n].i;           // Cell Index
+    sp->output_buffer_i[index]  = sp->p[n].i;
     #endif
 
-    fp = (float*) i64p;
-    *fp++ = sp->p[n].ux;            // Velocity x
-    *fp++ = sp->p[n].uy;            // Velocity y
-    *fp++ = sp->p[n].uz;            // Velocity z
-    *fp++ = sp->p[n].w;             // Statistical Weight
+    sp->output_buffer_ux[index] = sp->p[n].ux;
+    sp->output_buffer_uy[index] = sp->p[n].uy;
+    sp->output_buffer_uz[index] = sp->p[n].uz;
+    sp->output_buffer_w[index]  = sp->p[n].w;
 
     #ifdef VPIC_GLOBAL_PARTICLE_ID
     if(sp->has_ids) {
-      size_t* stp = (size_t*) fp;
-      *stp++ = sp->p_id[n];         // Particle ID
-      fp = (float*) stp;
+      sp->output_buffer_id[index] = sp->p_id[n];
     }
     #endif
 
@@ -1025,15 +1039,15 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     #ifdef VPIC_PARTICLE_ANNOTATION
     if(sp->has_annotation) {
       for(int a = 0; a < sp->has_annotation; a++) {
-       *fp++ = sp->p_annotation[n*sp->has_annotation + a];
+       const size_t out_index = sp->buf_n_particles * sp->buf_n_frames * a + n;
+       const size_t in_index  = sp->has_annotation * n + a;
+       sp->output_buffer_an[out_index] = sp->p_annotation[in_index];
       }
     }
     #endif
 
-    // Timestep
-    i64p = (int64_t*) fp;
-    *i64p = step();
-
+    sp->output_buffer_ts[index] = step();
+    sp->buf_n_valid[frame]++;
   }
 }
 
@@ -1047,61 +1061,137 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
 #ifdef VPIC_ENABLE_HDF5
   char strbuf[4096];
 
-  sprintf(strbuf, "%s", "tracer_hdf5");
+  // MPI-Info object. necessary to create the property list for parallel file
+  // open and to set IO hints
+  MPI_Info info;
+  MPI_Info_create(&info);
+  MPI_Info_set(info, "romio_cb_read", "automatic");
+  MPI_Info_set(info, "romio_cb_write", "automatic");
+  hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+  MPI_Info_free(&info);
+
+  // Open file
+  dump_mkdir("tracer");
+  dump_mkdir("tracer/tracer1");
+  sprintf(strbuf, "tracer/tracer1/T.%ld", step());
   dump_mkdir(strbuf);
+  sprintf(strbuf, "tracer/tracer1/T.%ld/tracers.h5p", step());
+  hid_t file = H5Fcreate(strbuf, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id); // FIXME: This limits us to a single species for now
 
-  sprintf(strbuf, "%s/T.%ld", "tracer_hdf5", step());
-  dump_mkdir(strbuf);
+  H5Pclose(plist_id);
 
-  sprintf(strbuf, "%s/T.%ld/%s_%d.h5", "tracer_hdf5", step(), sp->name, rank());
-  hid_t file = H5Fcreate(strbuf, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  // Create group for the timestep
+  sprintf(strbuf, "Step#%ld", step());
+  hid_t group = H5Gcreate(file, strbuf, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t subgroup = H5Gcreate(group, sp->name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-  hid_t particletype = H5Tcreate(H5T_COMPOUND, sp->buf_particle_size);
-  size_t offset = 0;
-  H5Tinsert(particletype, "dx", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "dy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "dz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "i",  offset, H5T_NATIVE_INT64); offset += sizeof(int64_t);
-  H5Tinsert(particletype, "ux", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "uy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "uz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "w",  offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  #ifdef VPIC_GLOBAL_PARTICLE_ID
-  if(sp->has_ids) {
-    H5Tinsert(particletype, "id", offset, H5T_NATIVE_HSIZE); offset += sizeof(size_t);
-  }
-  #endif
-  #ifdef VPIC_PARTICLE_ANNOTATION
-  if(sp->has_annotation) {
-    for(int a = 0; a < sp->has_annotation; a++) {
-     sprintf(strbuf, "annotation_%d", a);
-     H5Tinsert(particletype, strbuf, offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
+  // Find out which part of the global output falls to us
+  int64_t total_entries, offset;
+  int64_t local_entries = sp->buf_size;
+  MPI_Allreduce(&local_entries, &total_entries, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Scan(&local_entries, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+  offset -= local_entries;
+
+  plist_id = H5Pcreate(H5P_DATASET_XFER);
+  if(total_entries > 0) {
+    hid_t filespace, memspace, dset;
+    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+    /* H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT); */
+    filespace = H5Screate_simple(1, (hsize_t*) &total_entries, NULL);
+    memspace =  H5Screate_simple(1, (hsize_t*) &local_entries, NULL);
+
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t*)&offset, NULL, (hsize_t*)&local_entries, NULL);
+
+    // dX
+    dset = H5Dcreate(subgroup, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dx);
+    H5Dclose(dset);
+    // dY
+    dset = H5Dcreate(subgroup, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dy);
+    H5Dclose(dset);
+    // dZ
+    dset = H5Dcreate(subgroup, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dz);
+    H5Dclose(dset);
+    // i
+    dset = H5Dcreate(subgroup, "i", H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->output_buffer_i);
+    H5Dclose(dset);
+    // Ux
+    dset = H5Dcreate(subgroup, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_ux);
+    H5Dclose(dset);
+    // Uy
+    dset = H5Dcreate(subgroup, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_uy);
+    H5Dclose(dset);
+    // Uz
+    dset = H5Dcreate(subgroup, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_uz);
+    H5Dclose(dset);
+    // w
+    dset = H5Dcreate(subgroup, "w", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_w);
+    H5Dclose(dset);
+    // ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(sp->has_ids) {
+      dset = H5Dcreate(subgroup, "q", H5T_NATIVE_HSIZE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      H5Dwrite(dset, H5T_NATIVE_HSIZE, memspace, filespace, plist_id, sp->output_buffer_id);
+      H5Dclose(dset);
     }
+    #endif
+    // dX
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int a = 0; a < sp->has_annotation; a++) {
+        sprintf(strbuf, "Annotation_%d", a);
+        float* data = &(sp->output_buffer_an[sp->buf_n_frames * sp->buf_n_particles * a]);
+        dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
+        H5Dclose(dset);
+      }
+    }
+    #endif
+    // timestep
+    dset = H5Dcreate(subgroup, "timestep", H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->output_buffer_ts);
+    H5Dclose(dset);
+
+    H5Sclose(memspace);
+    H5Sclose(filespace);
   }
-  #endif
-  H5Tinsert(particletype, "timestep", offset, H5T_NATIVE_INT64); offset += sizeof(int64_t);
 
-  if(offset != sp->buf_particle_size) ERROR(("Missmatch defining particle layout"));
+  H5Gclose(subgroup);
 
-  hsize_t count = sp->buf_n_frames * sp->buf_n_particles;
-  hid_t space = H5Screate_simple(1, &count, NULL);
+  // Meta data
+  hsize_t dcount[2], doffset[2], dset_dims[2];
+  dcount[0] = sp->buf_n_frames;
+  dcount[1] = 1;
+  doffset[0] = 0;
+  doffset[1] = rank();
+  dset_dims[0] = dcount[0];
+  dset_dims[1] = nproc();
 
-  hid_t dset = H5Dcreate(file, "tracers", particletype, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t filespace = H5Screate_simple(2, dset_dims, NULL);
+  hid_t memspace =  H5Screate_simple(2, dcount, NULL);
+  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, doffset, NULL, dcount, NULL);
 
-  H5Dwrite(dset, particletype, H5S_ALL, H5S_ALL, H5P_DEFAULT, sp->output_buffer);
-
+  subgroup = H5Gcreate(group, "grid_meta_data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  sprintf(strbuf, "np_local_%s", sp->name);
+  hid_t dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->buf_n_valid);
   H5Dclose(dset);
-  H5Sclose(space);
-  H5Tclose(particletype);
 
-  count = 3;
-  int global_dims[3] = {grid->nx * grid->gpx, grid->ny * grid->gpy, grid->nz * grid->gpz};
-  space = H5Screate_simple(1, &count, NULL);
-  dset - H5Dcreate(file, "domain", H5T_NATIVE_INT, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, global_dims);
-  H5Dclose(dset);
-  H5Sclose(space);
+  H5Sclose(memspace);
+  H5Sclose(filespace);
+  H5Gclose(subgroup);
 
+  // Cleanup
+  H5Pclose(plist_id);
+  H5Gclose(group);
   H5Fclose(file);
 #else
   ERROR(("Only HDF5 format is current supported for buffered output of (annotated) particles\n"));
@@ -1113,13 +1203,34 @@ vpic_simulation::clear_buffered_particle_dump(const char * sp_name) {
   species_t *sp = find_species_name( sp_name, species_list );
   if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
 
-  if(!sp->output_buffer || !sp->buf_size) { return; }
-  memset(sp->output_buffer, 0, sp->buf_size);
+  if(sp->buf_size) {
+    memset(sp->output_buffer_dx, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_dy, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_dz, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_i,  0, sp->buf_size*sizeof(int64_t));
+    memset(sp->output_buffer_ux, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_uy, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_uz, 0, sp->buf_size*sizeof(float));
+    memset(sp->output_buffer_w,  0, sp->buf_size*sizeof(float));
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(sp->has_ids) {
+      memset(sp->output_buffer_id, 0, sp->buf_size*sizeof(size_t));
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      memset(sp->output_buffer_an, 0, sp->buf_size*sp->buf_n_annotation*sizeof(float));
+    }
+    #endif
 
-  // Set all timesteps to -1
-  for(int64_t n = 0; n < sp->buf_n_frames * sp->buf_n_particles; n++) {
-    char*    mem  = sp->output_buffer + (n+1) * sp->buf_particle_size - sizeof(int64_t);
-    int64_t* step = (int64_t*) mem;
-    *step = -1;
+    // Set all timesteps to -1
+    for(int64_t n = 0; n < sp->buf_n_frames * sp->buf_n_particles; n++) {
+      sp->output_buffer_ts[n] = -1;
+    }
+
+    // No valid particles yet
+    for(int n = 0; n < sp->buf_n_frames; n++) {
+      sp->buf_n_valid[n] = 0;
+    }
   }
 }

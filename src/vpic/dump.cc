@@ -913,7 +913,7 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   sp->buf_n_particles = ceil(safety_factor * sp->max_np);
 
   // How large is a particle
-  sp->buf_particle_size = 7*sizeof(float)+sizeof(int);           // Particle itself
+  sp->buf_particle_size = 7*sizeof(float)+sizeof(int64_t);       // Particle itself
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   if(sp->has_ids) {
     sp->buf_particle_size += sizeof(size_t);                     // Particle ID
@@ -966,7 +966,7 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
 
     #ifdef OUTPUT_CONVERT_GLOBAL_ID
     // Convert Cell ID to global
-    int local_i = sp->p[n].i;
+    int64_t local_i = sp->p[n].i;
 
     int ix, iy, iz, rx, ry, rz;
     // Convert rank to local x/y/z
@@ -991,7 +991,7 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     int gnz = grid->nz * grid->gpz;
 
     // TODO: find a better way to account for the hard coded ghosts in VOXEL
-    int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
+    int64_t global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
     #endif
 
     // Particle Properties
@@ -1000,14 +1000,14 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     *fp++ = sp->p[n].dy;            // Offset y
     *fp++ = sp->p[n].dz;            // Offset z
 
-    int* ip = (int*) fp;
+    int64_t* i64p = (int64_t*) fp;
     #ifdef OUTPUT_CONVERT_GLOBAL_ID
-    *ip++ = global_i;               // Cell Index
+    *i64p++ = global_i;             // Cell Index
     #else
-    *ip++ = sp->p[n].i;             // Cell Index
+    *i64p++ = sp->p[n].i;           // Cell Index
     #endif
 
-    fp = (float*) ip;
+    fp = (float*) i64p;
     *fp++ = sp->p[n].ux;            // Velocity x
     *fp++ = sp->p[n].uy;            // Velocity y
     *fp++ = sp->p[n].uz;            // Velocity z
@@ -1031,7 +1031,7 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     #endif
 
     // Timestep
-    int64_t* i64p = (int64_t*) fp;
+    i64p = (int64_t*) fp;
     *i64p = step();
 
   }
@@ -1061,7 +1061,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   H5Tinsert(particletype, "dx", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
   H5Tinsert(particletype, "dy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
   H5Tinsert(particletype, "dz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
-  H5Tinsert(particletype, "i",  offset, H5T_NATIVE_INT);   offset += sizeof(int);
+  H5Tinsert(particletype, "i",  offset, H5T_NATIVE_INT64); offset += sizeof(int64_t);
   H5Tinsert(particletype, "ux", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
   H5Tinsert(particletype, "uy", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
   H5Tinsert(particletype, "uz", offset, H5T_NATIVE_FLOAT); offset += sizeof(float);
@@ -1093,6 +1093,15 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   H5Dclose(dset);
   H5Sclose(space);
   H5Tclose(particletype);
+
+  count = 3;
+  int global_dims[3] = {grid->nx * grid->gpx, grid->ny * grid->gpy, grid->nz * grid->gpz};
+  space = H5Screate_simple(1, &count, NULL);
+  dset - H5Dcreate(file, "domain", H5T_NATIVE_INT, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, global_dims);
+  H5Dclose(dset);
+  H5Sclose(space);
+
   H5Fclose(file);
 #else
   ERROR(("Only HDF5 format is current supported for buffered output of (annotated) particles\n"));

@@ -103,14 +103,30 @@ class species_t {
         /**/                                // Note: SFC NOT IN USE RIGHT NOW THUS
         /**/                                // g->sfc[i]=i ABOVE.
 
-        char* output_buffer;                // For buffered output (of particles and annotations)
-        int64_t buf_size;                   // In bytes
+        // For buffered output
+        float*   output_buffer_dx;
+        float*   output_buffer_dy;
+        float*   output_buffer_dz;
+        int64_t* output_buffer_i;
+        float*   output_buffer_ux;
+        float*   output_buffer_uy;
+        float*   output_buffer_uz;
+        float*   output_buffer_w;
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+          size_t* output_buffer_id;
+        #endif
+        #ifdef VPIC_PARTICLE_ANNOTATION
+          float* output_buffer_an;
+        #endif
+        int64_t* output_buffer_ts;
+
+        int64_t* buf_n_valid;               // How many entries are valid per timestep
+        int64_t buf_size;                   // In entries
         int64_t buf_n_frames;               // how many timesteps fit into the buffer
         int64_t buf_n_annotation;           // for how many annotation per particles is room?(should be equal to
                                             // has_annotation if compiled in and the use hasn't messed with the number
                                             // of annotation since the allocation of the buffer.
         int64_t buf_n_particles;            // How many particles we expect per timestep. Based on max_np and safety_factor
-        int64_t buf_particle_size;          // Size of a particle with all properties, annotations and ID in bytes
 
         grid_t * g;                         // Underlying grid
         species_id id;                      // Unique identifier for a species

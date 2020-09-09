@@ -334,4 +334,4 @@ perform publicly and display publicly, and to permit others to do so.
 
 # License
 
-VPIC is distributed under a [BSD license](LICENSE).
+VPIC is distributed under a [BSD license](LICENSE.md).

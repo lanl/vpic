@@ -901,8 +901,12 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   if(sp->output_buffer_uy) { FREE_ALIGNED(sp->output_buffer_uy); sp->output_buffer_uy = nullptr; }
   if(sp->output_buffer_uz) { FREE_ALIGNED(sp->output_buffer_uz); sp->output_buffer_uz = nullptr; }
   if(sp->output_buffer_w)  { FREE_ALIGNED(sp->output_buffer_w);  sp->output_buffer_w  = nullptr; }
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
   if(sp->output_buffer_id) { FREE_ALIGNED(sp->output_buffer_id); sp->output_buffer_id = nullptr; }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
   if(sp->output_buffer_an) { FREE_ALIGNED(sp->output_buffer_an); sp->output_buffer_an = nullptr; }
+  #endif
   if(sp->output_buffer_ts) { FREE_ALIGNED(sp->output_buffer_ts); sp->output_buffer_ts = nullptr; }
   if(sp->buf_n_valid)      { FREE_ALIGNED(sp->buf_n_valid);      sp->buf_n_valid      = nullptr; }
 

@@ -1197,6 +1197,54 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   H5Pclose(plist_id);
   H5Gclose(group);
   H5Fclose(file);
+
+  float x0, y0, z0;
+  MPI_Allreduce(&grid->x0, &x0, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Allreduce(&grid->y0, &y0, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Allreduce(&grid->z0, &z0, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+
+  if(rank() == 0 ) {
+    sprintf(strbuf, "tracer/tracer1/T.%ld/tracers.h5p", step());
+    file = H5Fopen(strbuf, H5F_ACC_RDWR, H5P_DEFAULT);
+    sprintf(strbuf, "Step#%ld", step());
+    hid_t group = H5Gopen(file, strbuf, H5P_DEFAULT);
+    subgroup = H5Gopen(group, "grid_meta_data", H5P_DEFAULT);
+
+    hsize_t count = 3;
+    int intdata[3];
+    float floatdata[3];
+    memspace = H5Screate_simple(1, &count, NULL);
+
+    // Number of grid cells
+    intdata[0] = grid->gpx*grid->nx;
+    intdata[1] = grid->gpy*grid->ny;
+    intdata[2] = grid->gpz*grid->nz;
+    dset = H5Dcreate(subgroup, "cells", H5T_NATIVE_INT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, intdata);
+    H5Dclose(dset);
+
+    // Coordinates of start corner
+    floatdata[0] = x0;
+    floatdata[1] = y0;
+    floatdata[2] = z0;
+    dset = H5Dcreate(subgroup, "offset", H5T_NATIVE_FLOAT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, floatdata);
+    H5Dclose(dset);
+
+    // Coordinates of start corner
+    floatdata[0] = grid->dx;
+    floatdata[1] = grid->dy;
+    floatdata[2] = grid->dz;
+    dset = H5Dcreate(subgroup, "resolution", H5T_NATIVE_FLOAT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, floatdata);
+    H5Dclose(dset);
+
+    H5Sclose(memspace);
+    H5Gclose(subgroup);
+    H5Gclose(group);
+    H5Fclose(file);
+  }
+
 #else
   ERROR(("Only HDF5 format is current supported for buffered output of (annotated) particles\n"));
 #endif

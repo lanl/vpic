@@ -218,6 +218,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     }
     max_cab = max_cas * n_cab;
   } else {
+    // Technically we don't need the memset. But it makes debugging easier and
+    // is much cheaper than the communication that will happen shortly.
     for( face = 0; face < 6; face++ ) {
       memset(cab[face], 0, max_cas*n_cab);
     }

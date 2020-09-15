@@ -1071,8 +1071,9 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   MPI_Info_create(&info);
   MPI_Info_set(info, "romio_cb_read", "automatic");
   MPI_Info_set(info, "romio_cb_write", "automatic");
-  hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, info);
+  hid_t pl_file = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(pl_file, MPI_COMM_WORLD, info);
+  hid_t pl_link = H5Pcreate(H5P_LINK_ACCESS);
   MPI_Info_free(&info);
 
   // Open file
@@ -1081,14 +1082,66 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   sprintf(strbuf, "tracer/tracer1/T.%ld", step());
   dump_mkdir(strbuf);
   sprintf(strbuf, "tracer/tracer1/T.%ld/tracers.h5p", step());
-  hid_t file = H5Fcreate(strbuf, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id); // FIXME: This limits us to a single species for now
 
-  H5Pclose(plist_id);
+  // Make sure that all rank check before other ranks start acting on it. That
+  // could lead to a split between H5Fcreate and H5Fopen and total chaos.
+  // Unfortunately H5is_hdf5 throws wild (but harmless) errors on none-existing
+  // files, which requires the following little chicken dance.
+  hid_t file;
+  mp_barrier();
+  H5E_auto2_t func;
+  void* data;
+  H5Eget_auto2(H5E_DEFAULT, &func, &data);
+  H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
+  hid_t state = H5Fis_hdf5(strbuf);
+  H5Eset_auto2(H5E_DEFAULT, func, data);
+  mp_barrier();
+  if(state > 0) {
+    // state  > 0: valid HDF5 file
+    file = H5Fopen(strbuf, H5F_ACC_RDWR, pl_file);
+  } else {
+    // state == 0: not an HDF5 file
+    // state  < 0: some error, e.g. because the file doesn't exist
+    file = H5Fcreate(strbuf, H5F_ACC_TRUNC, H5P_DEFAULT, pl_file);
+  }
+  if(file<0) {
+    ERROR(("Failed to open HDF5 file %s. state was %d", strbuf, state));
+  }
 
-  // Create group for the timestep
+  H5Pclose(pl_file);
+
+  // Timestep group
+  hid_t group;
   sprintf(strbuf, "Step#%ld", step());
-  hid_t group = H5Gcreate(file, strbuf, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  hid_t subgroup = H5Gcreate(group, sp->name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  mp_barrier();
+  state = H5Lexists(file, strbuf, pl_link);
+  mp_barrier();
+  if(state > 0) {
+    // state  > 0: link name exists. let's hope it's a valid group
+    group = H5Gopen(file, strbuf, H5P_DEFAULT);
+  } else {
+    // state == 0: link does not exists
+    // state  < 0: some error
+    group = H5Gcreate(file, strbuf, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  }
+  if(group<0) {
+    ERROR(("Failed to open group %s. state was %d", strbuf, state));
+  }
+
+  // Species subgroup.
+  hid_t subgroup;
+  sprintf(strbuf, "%s", sp->name);
+  mp_barrier();
+  state = H5Lexists(group, strbuf, pl_link);
+  mp_barrier();
+  if(state > 0) {
+    subgroup = H5Gopen(group, strbuf, H5P_DEFAULT);
+  } else {
+    subgroup = H5Gcreate(group, strbuf, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  }
+  if(subgroup<0) {
+    ERROR(("Failed to open group %s. state was %d", strbuf, state));
+  }
 
   // Find out which part of the global output falls to us
   int64_t total_entries, offset;
@@ -1097,53 +1150,61 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   MPI_Scan(&local_entries, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
   offset -= local_entries;
 
-  plist_id = H5Pcreate(H5P_DATASET_XFER);
+  hid_t pl_xfer = H5Pcreate(H5P_DATASET_XFER);
   if(total_entries > 0) {
     hid_t filespace, memspace, dset;
-    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-    /* H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT); */
+    H5Pset_dxpl_mpio(pl_xfer, H5FD_MPIO_COLLECTIVE);
     filespace = H5Screate_simple(1, (hsize_t*) &total_entries, NULL);
     memspace =  H5Screate_simple(1, (hsize_t*) &local_entries, NULL);
 
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t*)&offset, NULL, (hsize_t*)&local_entries, NULL);
 
     // dX
+    if(H5Lexists(subgroup, "dX", pl_link)) { H5Ldelete(subgroup, "dX", pl_link); }
     dset = H5Dcreate(subgroup, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dx);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_dx);
     H5Dclose(dset);
     // dY
+    if(H5Lexists(subgroup, "dY", pl_link)) { H5Ldelete(subgroup, "dY", pl_link); }
     dset = H5Dcreate(subgroup, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dy);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_dy);
     H5Dclose(dset);
     // dZ
+    if(H5Lexists(subgroup, "dZ", pl_link)) { H5Ldelete(subgroup, "dZ", pl_link); }
     dset = H5Dcreate(subgroup, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_dz);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_dz);
     H5Dclose(dset);
     // i
+    if(H5Lexists(subgroup, "i", pl_link)) { H5Ldelete(subgroup, "i", pl_link); }
     dset = H5Dcreate(subgroup, "i", H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->output_buffer_i);
+    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, pl_xfer, sp->output_buffer_i);
     H5Dclose(dset);
     // Ux
+    if(H5Lexists(subgroup, "Ux", pl_link)) { H5Ldelete(subgroup, "Ux", pl_link); }
     dset = H5Dcreate(subgroup, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_ux);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_ux);
     H5Dclose(dset);
     // Uy
+    if(H5Lexists(subgroup, "Uy", pl_link)) { H5Ldelete(subgroup, "Uy", pl_link); }
     dset = H5Dcreate(subgroup, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_uy);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_uy);
     H5Dclose(dset);
     // Uz
+    if(H5Lexists(subgroup, "Uz", pl_link)) { H5Ldelete(subgroup, "Uz", pl_link); }
     dset = H5Dcreate(subgroup, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_uz);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_uz);
     H5Dclose(dset);
     // w
+    if(H5Lexists(subgroup, "w", pl_link)) { H5Ldelete(subgroup, "w", pl_link); }
     dset = H5Dcreate(subgroup, "w", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, sp->output_buffer_w);
+    H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, sp->output_buffer_w);
     H5Dclose(dset);
     // ID
     #ifdef VPIC_GLOBAL_PARTICLE_ID
     if(sp->has_ids) {
+      if(H5Lexists(subgroup, "q", pl_link)) { H5Ldelete(subgroup, "q", pl_link); }
       dset = H5Dcreate(subgroup, "q", H5T_NATIVE_HSIZE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      H5Dwrite(dset, H5T_NATIVE_HSIZE, memspace, filespace, plist_id, sp->output_buffer_id);
+      H5Dwrite(dset, H5T_NATIVE_HSIZE, memspace, filespace, pl_xfer, sp->output_buffer_id);
       H5Dclose(dset);
     }
     #endif
@@ -1152,16 +1213,18 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
     if(sp->has_annotation) {
       for(int a = 0; a < sp->has_annotation; a++) {
         sprintf(strbuf, "Annotation_%d", a);
+        if(H5Lexists(subgroup, strbuf, pl_link)) { H5Ldelete(subgroup, strbuf, pl_link); }
         float* data = &(sp->output_buffer_an[sp->buf_n_frames * sp->buf_n_particles * a]);
         dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, data);
+        H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, data);
         H5Dclose(dset);
       }
     }
     #endif
     // timestep
+    if(H5Lexists(subgroup, "timestep", pl_link)) { H5Ldelete(subgroup, "timestep", pl_link); }
     dset = H5Dcreate(subgroup, "timestep", H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->output_buffer_ts);
+    H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, pl_xfer, sp->output_buffer_ts);
     H5Dclose(dset);
 
     H5Sclose(memspace);
@@ -1183,10 +1246,23 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   hid_t memspace =  H5Screate_simple(2, dcount, NULL);
   H5Sselect_hyperslab(filespace, H5S_SELECT_SET, doffset, NULL, dcount, NULL);
 
-  subgroup = H5Gcreate(group, "grid_meta_data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  sprintf(strbuf, "%s", "grid_meta_data");
+  mp_barrier();
+  state = H5Lexists(group, strbuf, pl_link);
+  mp_barrier();
+  if(state > 0) {
+    subgroup = H5Gopen(group, strbuf, H5P_DEFAULT);
+  } else {
+    subgroup = H5Gcreate(group, strbuf, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  }
+  if(subgroup<0) {
+    ERROR(("Failed to open group %s. state was %d", strbuf, state));
+  }
+
   sprintf(strbuf, "np_local_%s", sp->name);
+  if(H5Lexists(subgroup, strbuf, pl_link)) { H5Ldelete(subgroup, strbuf, pl_link); }
   hid_t dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_INT64, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, plist_id, sp->buf_n_valid);
+  H5Dwrite(dset, H5T_NATIVE_INT64, memspace, filespace, pl_xfer, sp->buf_n_valid);
   H5Dclose(dset);
 
   H5Sclose(memspace);
@@ -1194,7 +1270,8 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   H5Gclose(subgroup);
 
   // Cleanup
-  H5Pclose(plist_id);
+  H5Pclose(pl_xfer);
+  H5Pclose(pl_link);
   H5Gclose(group);
   H5Fclose(file);
 
@@ -1219,6 +1296,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
     intdata[0] = grid->gpx*grid->nx;
     intdata[1] = grid->gpy*grid->ny;
     intdata[2] = grid->gpz*grid->nz;
+    if(H5Lexists(subgroup, "cells", H5P_DEFAULT)) { H5Ldelete(subgroup, "cells", H5P_DEFAULT); }
     dset = H5Dcreate(subgroup, "cells", H5T_NATIVE_INT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, intdata);
     H5Dclose(dset);
@@ -1227,6 +1305,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
     floatdata[0] = x0;
     floatdata[1] = y0;
     floatdata[2] = z0;
+    if(H5Lexists(subgroup, "offset", H5P_DEFAULT)) { H5Ldelete(subgroup, "offset", H5P_DEFAULT); }
     dset = H5Dcreate(subgroup, "offset", H5T_NATIVE_FLOAT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, floatdata);
     H5Dclose(dset);
@@ -1235,6 +1314,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
     floatdata[0] = grid->dx;
     floatdata[1] = grid->dy;
     floatdata[2] = grid->dz;
+    if(H5Lexists(subgroup, "resolution", H5P_DEFAULT)) { H5Ldelete(subgroup, "resolution", H5P_DEFAULT); }
     dset = H5Dcreate(subgroup, "resolution", H5T_NATIVE_FLOAT, memspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, floatdata);
     H5Dclose(dset);

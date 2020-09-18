@@ -17,10 +17,11 @@
 
 void
 size_grid( grid_t * g,
-           int lnx, int lny, int lnz ) {
+           int lnx, int lny, int lnz )
+{
   int64_t x,y,z;
   int i, j, k;
-  int64_t ii, jj, kk; 
+  int64_t ii, jj, kk;
 
   if( !g || lnx<1 || lny<1 || lnz<1 ) ERROR(( "Bad args" ));
 

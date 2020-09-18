@@ -355,11 +355,38 @@ protected:
   define_periodic_grid( double xl,  double yl,  double zl,
                         double xh,  double yh,  double zh,
                         double gnx, double gny, double gnz,
-                        double gpx, double gpy, double gpz ) {
-        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
-    partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
-                            (int)gnx, (int)gny, (int)gnz,
-                            (int)gpx, (int)gpy, (int)gpz );
+                        double gpx, double gpy, double gpz )
+  {
+      px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+      partition_periodic_box(
+              grid,
+              xl, yl, zl,
+              xh, yh, zh,
+              (int)gnx, (int)gny, (int)gnz,
+              (int)gpx, (int)gpy, (int)gpz
+      );
+  }
+
+  inline void
+  define_periodic_grid( double xl,  double yl,  double zl,
+                        double xh,  double yh,  double zh,
+                        double gnx, double gny, double gnz,
+                        double gpx, double gpy, double gpz,
+                        std::vector<int> gnx_array,
+                        std::vector<int> gny_array,
+                        std::vector<int> gnz_array
+
+                     )
+  {
+      px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+      partition_periodic_box(
+              grid,
+              xl, yl, zl,
+              xh, yh, zh,
+              gnx, gny, gnz,
+              (int)gpx, (int)gpy, (int)gpz,
+              gnx_array, gny_array, gnz_array
+      );
   }
 
   inline void

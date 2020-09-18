@@ -1,4 +1,4 @@
-/* 
+/*
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -26,7 +26,7 @@ int vpic_simulation::advance(void) {
     if( (sp->sort_interval>0) && ((step() % sp->sort_interval)==0) ) {
       if( rank()==0 ) MESSAGE(( "Performance sorting \"%s\"", sp->name ));
       TIC sort_p( sp ); TOC( sort_p, 1 );
-    } 
+    }
 
   // At this point, fields are at E_0 and B_0 and the particle positions
   // are at r_0 and u_{-1/2}.  Further the mover lists for the particles should

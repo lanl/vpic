@@ -11,6 +11,7 @@
 #ifndef _grid_h_
 #define _grid_h_
 
+#include <vector>
 #include "../util/util.h"
 
 #define BOUNDARY(i,j,k) (13+(i)+3*(j)+9*(k)) /* FORTRAN -1:1,-1:1,-1:1 */
@@ -218,12 +219,13 @@ set_pbc( grid_t *g, int bound, int pbc );
 // global coordinates.  Due to the vagaries of floating point, the
 // inverse process may not be exact.
 
+
 void
 partition_periodic_box( grid_t *g,
-			double gx0, double gy0, double gz0,
-			double gx1, double gy1, double gz1,
-                        int gnx, int gny, int gnz,
-                        int gpx, int gpy, int gpz );
+        double gx0, double gy0, double gz0,
+        double gx1, double gy1, double gz1,
+        int gnx, int gny, int gnz,
+        int gpx, int gpy, int gpz );
 
 void
 partition_absorbing_box( grid_t *g,
@@ -333,5 +335,17 @@ end_send_port( int i, // x port coord ([-1,0,1])
   } while(0)
 
 END_C_DECLS
+
+
+void
+partition_periodic_box( grid_t * g,
+                        double gx0, double gy0, double gz0,
+                        double gx1, double gy1, double gz1,
+                        int gnx, int gny, int gnz,
+                        int gpx, int gpy, int gpz,
+                        std::vector<int> gnx_array,
+                        std::vector<int> gny_array,
+                        std::vector<int> gnz_array
+        );
 
 #endif

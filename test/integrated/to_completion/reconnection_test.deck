@@ -596,15 +596,15 @@ begin_diagnostics {
     char subdir[36];
     if(should_dump(particle))
     {
-        sprintf(subdir,"particle/T.%lld",step());
+        sprintf(subdir,"particle/T.%lld",(long long)step());
         dump_mkdir(subdir);
-        sprintf(subdir,"particle/T.%lld/eparticle1",step());
+        sprintf(subdir,"particle/T.%lld/eparticle1",(long long)step());
         dump_particles("electron1",subdir);
-        sprintf(subdir,"particle/T.%lld/eparticle2",step());
+        sprintf(subdir,"particle/T.%lld/eparticle2",(long long)step());
         dump_particles("electron2",subdir);
-        sprintf(subdir,"particle/T.%lld/Hparticle1",step());
+        sprintf(subdir,"particle/T.%lld/Hparticle1",(long long)step());
         dump_particles("ion1",subdir);
-        sprintf(subdir,"particle/T.%lld/Hparticle2",step());
+        sprintf(subdir,"particle/T.%lld/Hparticle2",(long long)step());
         dump_particles("ion2",subdir);
     }
 

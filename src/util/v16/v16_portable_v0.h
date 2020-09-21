@@ -3039,13 +3039,7 @@ namespace v16
 
     v16int() {}                                  // Default constructor
 
-    v16int( const v16int &a )                    // Copy constructor
-    {
-      i[ 0] = a.i[ 0]; i[ 1] = a.i[ 1]; i[ 2] = a.i[ 2]; i[ 3] = a.i[ 3];
-      i[ 4] = a.i[ 4]; i[ 5] = a.i[ 5]; i[ 6] = a.i[ 6]; i[ 7] = a.i[ 7];
-      i[ 8] = a.i[ 8]; i[ 9] = a.i[ 9]; i[10] = a.i[10]; i[11] = a.i[11];
-      i[12] = a.i[12]; i[13] = a.i[13]; i[14] = a.i[14]; i[15] = a.i[15];
-    }
+    v16int( const v16int &a ) : v16(a) {}        // Copy constructor from v16
 
     v16int( const v16 &a )                       // Init from mixed
     {
@@ -3493,7 +3487,7 @@ namespace v16
 
     v16float() {}                                          // Default constructor
 
-    v16float( const v16float &a )                          // Copy constructor
+    v16float( const v16float &a ) : v16()                  // Copy constructor
     {
       f[ 0] = a.f[ 0]; f[ 1] = a.f[ 1]; f[ 2] = a.f[ 2]; f[ 3] = a.f[ 3];
       f[ 4] = a.f[ 4]; f[ 5] = a.f[ 5]; f[ 6] = a.f[ 6]; f[ 7] = a.f[ 7];

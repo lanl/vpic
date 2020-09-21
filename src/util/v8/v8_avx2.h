@@ -1000,10 +1000,7 @@ namespace v8
 
     v8int() {}                                // Default constructor
 
-    v8int( const v8int &a )                   // Copy constructor
-    {
-      v = a.v;
-    }
+    v8int( const v8int &a ) : v8(a) {}        // Copy constructor from v8
 
     v8int( const v8 &a )                      // Init from mixed
     {
@@ -1421,10 +1418,7 @@ namespace v8
 
     v8float() {}                                        // Default constructor
 
-    v8float( const v8float &a )                         // Copy constructor
-    {
-      v = a.v;
-    }
+    v8float( const v8float &a ) : v8(a) {}              // Copy constructor from v8
 
     v8float( const v8 &a )                              // Init from mixed
     {

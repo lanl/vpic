@@ -2046,10 +2046,7 @@ namespace v16
 
     v16int() {}                                  // Default constructor
 
-    v16int( const v16int &a )                    // Copy constructor
-    {
-      v = a.v;
-    }
+    v16int( const v16int &a ) : v16(a) {}        // Copy constructor from v16
 
     v16int( const v16 &a )                       // Init from mixed
     {
@@ -2449,10 +2446,7 @@ namespace v16
 
     v16float() {}                                          // Default constructor
 
-    v16float( const v16float &a )                          // Copy constructor
-    {
-      v = a.v;
-    }
+    v16float( const v16float &a ) : v16(a) {}              // Copy constructor from v16
 
     v16float( const v16 &a )                               // Init from mixed
     {

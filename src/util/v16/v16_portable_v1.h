@@ -2903,12 +2903,7 @@ namespace v16
 
     v16int() {}                                  // Default constructor
 
-    v16int( const v16int &a )                    // Copy constructor
-    {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 16; j++ )
-	i[j] = a.i[j];
-    }
+    v16int( const v16int &a ) : v16(a) {}        // Copy constructor from v16
 
     v16int( const v16 &a )                       // Init from mixed
     {
@@ -3213,7 +3208,7 @@ namespace v16
 
     v16float() {}                                          // Default constructor
 
-    v16float( const v16float &a )                          // Copy constructor
+    v16float( const v16float &a ) : v16()                  // Copy constructor
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 16; j++ )

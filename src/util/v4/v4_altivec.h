@@ -582,10 +582,7 @@ namespace v4
 
     v4int() {}                                // Default constructor
 
-    v4int( const v4int &a )                   // Copy constructor
-    {
-      v = a.v;
-    }
+    v4int( const v4int &a ) : v4(a) {}        // Copy constructor from v4
 
     v4int( const v4 &a )                      // Init from mixed
     {
@@ -927,10 +924,7 @@ namespace v4
 
     v4float() {}                                        // Default constructor
 
-    v4float( const v4float &a )                         // Copy constructor
-    {
-      v = a.v;
-    }
+    v4float( const v4float &a ) : v4(a) {}              // Copy constructor from v4
 
     v4float( const v4 &a )                              // Init from mixed
     {

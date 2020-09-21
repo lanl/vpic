@@ -517,12 +517,7 @@ namespace v4
 
     v4int() {}                                // Default constructor
 
-    v4int( const v4int &a )                   // Copy constructor
-    {
-      ALWAYS_VECTORIZE
-      for( int j = 0; j < 4; j++ )
-        i[j] = a.i[j];
-    }
+    v4int( const v4int &a ) : v4(a) {}        // Copy constructor from v4
 
     v4int( const v4 &a )                      // Init from mixed
     {
@@ -825,7 +820,7 @@ namespace v4
 
     v4float() {}                                        // Default constructor
 
-    v4float( const v4float &a )                         // Copy constructor
+    v4float( const v4float &a ) : v4()                  // Copy constructor
     {
       ALWAYS_VECTORIZE
       for( int j = 0; j < 4; j++ )

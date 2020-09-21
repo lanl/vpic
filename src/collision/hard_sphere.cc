@@ -303,7 +303,7 @@ hard_sphere_fluid_collision( const hard_sphere_t * RESTRICT hs,
     urz -= w*frandn(rng);
   }
   
-  COMPUTE_MOMENTUM_TRANSFER(urx,urz,urz,ax,ay,az,rng);
+  COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   w = hs->twomu_mi;
   pi->ux -= w*ax;

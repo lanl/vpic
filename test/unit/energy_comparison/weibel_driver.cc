@@ -325,9 +325,9 @@ TEST_CASE( "Check if Weibel gives correct energy (within tol)", "[energy]" )
         energy_gold_file_name << std::endl;
 
     // Compare energies to make sure everything worked out OK (within 1%)
-    const unsigned short e_mask = 0b0000001110;
-    const unsigned short b_mask = 0b0001110000;
-    const unsigned short particle_mask = 0b011000000;
+    const unsigned short e_mask = 0x000E; // = 0b0000001110; <- Non-standard C++11
+    const unsigned short b_mask = 0x0070; // = 0b0001110000;    Requires C++14/GNU extensions
+    const unsigned short particle_mask = 0x00C0; // = 0b011000000;
 
     // Test the sum of the e_field
     REQUIRE(

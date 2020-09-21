@@ -101,8 +101,8 @@ takizuka_abe_pipeline_scalar( takizuka_abe_t * RESTRICT cm,
   const double cvar = cm->cvar0 * (spi->q*spi->q*spj->q*spj->q) / (mu*mu);
 
   particle_t ptemp;
-  float var, std, density_k, density_l;
-  int i, j, ii, rn, v, v1, k, k0, k1, nk, l, l0, nl, size_k, size_l;
+  float std, density_k, density_l;
+  int i, j, ii, rn, v, v1, k0, k1, nk, l0, nl;
 
   /* Stripe the (mostly non-ghost) voxels over threads for load balance */
 

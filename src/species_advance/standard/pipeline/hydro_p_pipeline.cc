@@ -22,7 +22,6 @@ accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
                                     int n_pipeline )
 {
   const species_t      *              sp = args->sp;
-  const grid_t         *              g  = sp->g;
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank * args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;
@@ -36,14 +35,12 @@ accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
   const float c        = sp->g->cvac;
   const float r8V      = sp->g->r8V;
 
-  const float zero           = 0.0;
   const float one            = 1.0;
   const float one_third      = 1.0 / 3.0;
-  const float two_fifteenths = 2.0 / 15.0;
 
   float dx, dy, dz, ux, uy, uz, w, vx, vy, vz, ke_mc;
   float t, w0, w1, w2, w3, w4, w5, w6, w7;
-  int   i, n, n1, n0, np;
+  int   i, n, n1, n0;
 
   int   stride_10;
   int   stride_21;

@@ -548,7 +548,7 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
   dump_mkdir( timeDir );
 
   // Open the file for output
-  char filename[256];
+  char filename[300];
 
   sprintf( filename,
            "%s/T.%ld/%s.%ld.%d",
@@ -724,7 +724,7 @@ vpic_simulation::hydro_dump( const char * speciesname,
   dump_mkdir( timeDir );
 
   // Open the file for output
-  char filename[256];
+  char filename[300];
 
   sprintf( filename,
            "%s/T.%ld/%s.%ld.%d",

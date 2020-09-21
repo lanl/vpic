@@ -58,9 +58,6 @@ int string_starts_with(const char *str, const char *pre)
 
 int string_contains(const char *str, const char *substr)
 {
-    const char *output = NULL;
-    output = strstr(str,substr);
-
     const char* pos = strstr(str, substr);
 
     if (pos) {
@@ -110,11 +107,11 @@ void detect_old_style_arguments(int* pargc, char *** pargv)
           // Search for tpp
           if (string_starts_with(arg,prefix_keys[j]))
           {
-              char output_message[64];
+              char output_message[128];
 
               sprintf(output_message,
-                  "Aborting. Single dashed flag %1$s is invalid (needs '-%1$s').",
-                  prefix_keys[j]
+                  "Aborting. Single dashed flag %s is invalid (needs '-%s').",
+                  prefix_keys[j],prefix_keys[j]
               );
 
               WARNING(( "Input Flags Look Like They Are Using Legacy Style."));

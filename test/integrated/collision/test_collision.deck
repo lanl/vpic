@@ -193,9 +193,11 @@ begin_initialization {
 
   // Define resistive layer surrounding boundary --> set thickness=0
   // to eliminate this feature
-  //double thickness = 2;
-  //#define resistive_layer (x < hx*thickness || x > Lx-hx*thickness	\
-  //                     || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
+  /*
+  double thickness = 2;
+  #define resistive_layer (x < hx*thickness || x > Lx-hx*thickness	\
+                       || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
+  */
 
   //if (thickness > 0)
   // set_region_material(resistive_layer, resistive, resistive);

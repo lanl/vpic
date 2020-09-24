@@ -886,7 +886,17 @@ vpic_simulation::hydro_dump( const char * speciesname,
   if( fileIO.close() ) ERROR(( "File close failed on hydro dump!!!" ));
 }
 
-
+/**
+ * @brief Allocate memory inside the species to allow for buffering and later output
+ *
+ * @note This is meant for species with few particles and attributes, but could be used in other cirumstances as well.
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ * @param N_timesteps how many timesteps need to be buffered before output
+ * @param safety_factor how many more particles might we have in one of the buffered time steps compared to max_np now.
+ *
+ * @return Nothing, but allocates buffers internally.
+ */
 void
 vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_timesteps, const double safety_factor) {
   species_t *sp = find_species_name( sp_name, species_list );
@@ -969,6 +979,14 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
 } END_PRIMITIVE
 #endif
 
+/**
+ * @brief Copy the current state into the buffer for later output
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ * @param frame should satisfy 0 <= frame < N_timesteps
+ *
+ * @return Nothing, but fills internal buffers
+ */
 void
 vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const int frame) {
   species_t *sp = find_species_name( sp_name, species_list );
@@ -1057,6 +1075,13 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
 
 #undef UNVOXEL
 
+/**
+ * @brief Writes the accumulated buffer to disk
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ *
+ * @return Nothing, but performs IO
+ */
 void
 vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   species_t *sp = find_species_name( sp_name, species_list );
@@ -1330,6 +1355,13 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
 #endif
 }
 
+/**
+ * @brief Clears the internal buffer
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ *
+ * @return Nothing
+ */
 void
 vpic_simulation::clear_buffered_particle_dump(const char * sp_name) {
   species_t *sp = find_species_name( sp_name, species_list );
@@ -1366,3 +1398,257 @@ vpic_simulation::clear_buffered_particle_dump(const char * sp_name) {
     }
   }
 }
+
+#ifdef VPIC_PARTICLE_ANNOTATION
+
+/**
+ * @brief Set attributes of particles to the local electromagnetic field
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ * @param ia a percomputed interpolator array
+ * @param where_ex Which attribute should be set to the local electric field in the x direction. Should either be in the range 0 <= where_ex < has_annotation or can be -1 if E_x should not be stored.
+ * @param where_ey Which attribute should be set to the local electric field in the y direction.
+ * @param where_ez Which attribute should be set to the local electric field in the z direction.
+ * @param where_bx Which attribute should be set to the local magnetic field in the x direction.
+ * @param where_by Which attribute should be set to the local magnetic field in the y direction.
+ * @param where_bz Which attribute should be set to the local magnetic field in the z direction.
+ *
+ * @return Nothing
+ */
+void
+vpic_simulation::interpolate_fields_annotation(const char * sp_name, const interpolator_array_t * ia,
+                                               int where_ex, int where_ey, int where_ez,
+                                               int where_bx, int where_by, int where_bz) {
+
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+  if( !ia ) ERROR(( "Invalid interpolator array" ));
+  if(where_ex >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip Ex", where_ex, sp_name));
+    where_ex = -1;
+  }
+  if(where_ey >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip Ey", where_ey, sp_name));
+    where_ey = -1;
+  }
+  if(where_ez >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip Ez", where_ez, sp_name));
+    where_ez = -1;
+  }
+  if(where_bx >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip Bx", where_bx, sp_name));
+    where_bx = -1;
+  }
+  if(where_by >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip By", where_by, sp_name));
+    where_by = -1;
+  }
+  if(where_bz >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip Bz", where_bz, sp_name));
+    where_bz = -1;
+  }
+  if(where_ex<0 && where_ey<0 && where_ez<0 && where_bx<0 && where_by<0 && where_bz<0) return;
+
+  const particle_t* p;
+  int j;
+  for(p=sp->p, j=0; j<sp->np; j++, p++ ) {
+    // Interpolator for this cell
+    const int i = p->i;
+    const interpolator_t f = ia->i[i];
+    // Load displacement in the cell
+    const float dx0 = p->dx;
+    const float dy0 = p->dy;
+    const float dz0 = p->dz;
+    // Interpolate field values
+    const float ex = f.ex + dy0*f.dexdy + dz0*(f.dexdz+dy0*f.d2exdydz);
+    const float ey = f.ey + dz0*f.deydz + dx0*(f.deydx+dz0*f.d2eydzdx);
+    const float ez = f.ez + dx0*f.dezdx + dy0*(f.dezdy+dx0*f.d2ezdxdy);
+    const float bx = f.cbx + dx0*f.dcbxdx;
+    const float by = f.cby + dy0*f.dcbydy;
+    const float bz = f.cbz + dz0*f.dcbzdz;
+    // Store
+    if(where_ex>=0) sp->set_annotation(j, where_ex, ex);
+    if(where_ey>=0) sp->set_annotation(j, where_ey, ey);
+    if(where_ez>=0) sp->set_annotation(j, where_ez, ez);
+    if(where_bx>=0) sp->set_annotation(j, where_bx, bx);
+    if(where_by>=0) sp->set_annotation(j, where_by, by);
+    if(where_bz>=0) sp->set_annotation(j, where_bz, bz);
+  }
+}
+
+/**
+ * @brief Set attributes of particles to the local hydro conditions
+ *
+ * @param sp_name Name of the species. Should be uniq and should exist
+ * @param ha a hydro array
+ * @param where_jx Which attribute should be set to the local current density in the x direction. Should either be in the range 0 <= where_jx < has_annotation or can be -1 if j_x should not be stored.
+ *
+ * @return Nothing
+ */
+void
+vpic_simulation::interpolate_hydro_annotation(const char * sp_name, const hydro_array_t * ha,
+                                              int where_jx,  int where_jy,  int where_jz,  int where_rho,
+                                              int where_px,  int where_py,  int where_pz,  int where_ke,
+                                              int where_txx, int where_tyy, int where_tzz,
+                                              int where_tyz, int where_tzx, int where_txy) {
+
+  species_t *sp = find_species_name( sp_name, species_list );
+  if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
+  if( !ha ) ERROR(( "Invalid hydro array" ));
+  if(where_jx >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip jx", where_jx, sp_name));
+    where_jx = -1;
+  }
+  if(where_jy >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip jy", where_jy, sp_name));
+    where_jy = -1;
+  }
+  if(where_jz >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip jz", where_jz, sp_name));
+    where_jz = -1;
+  }
+  if(where_rho >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip rho", where_rho, sp_name));
+    where_rho = -1;
+  }
+  if(where_px >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip px", where_px, sp_name));
+    where_px = -1;
+  }
+  if(where_py >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip py", where_py, sp_name));
+    where_py = -1;
+  }
+  if(where_pz >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip pz", where_pz, sp_name));
+    where_pz = -1;
+  }
+  if(where_ke >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip ke", where_ke, sp_name));
+    where_ke = -1;
+  }
+  if(where_txx >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip txx", where_txx, sp_name));
+    where_txx = -1;
+  }
+  if(where_tyy >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip tyy", where_tyy, sp_name));
+    where_tyy = -1;
+  }
+  if(where_tzz >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip tzz", where_tzz, sp_name));
+    where_tzz = -1;
+  }
+  if(where_tyz >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip tyz", where_tyz, sp_name));
+    where_tyz = -1;
+  }
+  if(where_tzx >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip tzx", where_tzx, sp_name));
+    where_tzx = -1;
+  }
+  if(where_txy >= sp->has_annotation) {
+    WARNING(("Attribute %d is invalid for species %s, will skip txy", where_txy, sp_name));
+    where_txy = -1;
+  }
+  if(where_jx<0 && where_jy<0 && where_jz<0 && where_rho<0 && where_px<0 && where_py<0 && where_pz<0 && where_ke<0 &&
+     where_txx<0 && where_tyy<0 && where_tzz<0 && where_tyz<0 && where_tzx<0 && where_txy<0 ) return;
+
+  const particle_t* p;
+  int j;
+  for(p=sp->p, j=0; j<sp->np; j++, p++ ) {
+    // Interpolator for this cell
+    const int i = p->i;
+    // Load displacement in the cell
+    float dx = p->dx;
+    float dy = p->dy;
+    float dz = p->dz;
+
+    // Compute the trilinear coefficients
+    float w0, w1, w2, w3, w4, w5, w6, w7, w8;
+    w0  = 0.125;    /* w0 = 1/(8V) = w/8               */
+    dx *= w0;       /* dx = wx                         */
+    w1  = w0+dx;    /* w1 = w/8 + wx/8 = (w/8)(1+x)    */
+    w0 -= dx;       /* w0 = w/8 - wx/8 = (w/8)(1-x)    */
+    w3  = 1+dy;     /* w3 = 1+y                        */
+    w2  = w0*w3;    /* w2 = (w/8)(1-x)(1+y)            */
+    w3 *= w1;       /* w3 = (w/8)(1+x)(1+y)            */
+    dy  = 1-dy;     /* dy = 1-y                        */
+    w0 *= dy;       /* w0 = (w/8)(1-x)(1-y)            */
+    w1 *= dy;       /* w1 = (w/8)(1+x)(1-y)            */
+    w7  = 1+dz;     /* w7 = 1+z                        */
+    w4  = w0*w7;    /* w4 = (w/8)(1-x)(1-y)(1+z) *Done */
+    w5  = w1*w7;    /* w5 = (w/8)(1+x)(1-y)(1+z) *Done */
+    w6  = w2*w7;    /* w6 = (w/8)(1-x)(1+y)(1+z) *Done */
+    w7 *= w3;       /* w7 = (w/8)(1+x)(1+y)(1+z) *Done */
+    dz  = 1-dz;     /* dz = 1-z                        */
+    w0 *= dz;       /* w0 = (w/8)(1-x)(1-y)(1-z) *Done */
+    w1 *= dz;       /* w1 = (w/8)(1+x)(1-y)(1-z) *Done */
+    w2 *= dz;       /* w2 = (w/8)(1-x)(1+y)(1-z) *Done */
+    w3 *= dz;       /* w3 = (w/8)(1+x)(1+y)(1-z) *Done */
+
+    // Split cell index into components
+    // FIXME: should that use UNVOXEL instead?
+    const int nx2 = grid->nx + 2;
+    const int nx2ny2 = (grid->ny+2) * nx2;
+    const int iz = i / nx2ny2;
+    const int iy = (i % nx2ny2) / nx2;
+    const int ix = i % nx2;
+
+    // Values at particle location
+    float jx=0., jy=0., jz=0., rho=0., px=0., py=0., pz=0., ke=0., txx=0., tyy=0., tzz=0., tyz=0., tzx=0., txy=0.;
+    hydro_t hy;
+
+#ifndef VELS_RHOS
+#define DEFAULT_VELS_RHOS
+#define VELS_RHOS(wn, i, j, k)                            \
+    hy = ha->h[VOXEL(i,j,k, grid->nx,grid->ny,grid->nz)]; \
+    jx  += wn*hy.jx;                                      \
+    jy  += wn*hy.jy;                                      \
+    jz  += wn*hy.jz;                                      \
+    rho += wn*hy.rho;                                     \
+    px  += wn*hy.px;                                      \
+    py  += wn*hy.py;                                      \
+    pz  += wn*hy.pz;                                      \
+    ke  += wn*hy.ke;                                      \
+    txx += wn*hy.txx;                                     \
+    tyy += wn*hy.tyy;                                     \
+    tzz += wn*hy.tzz;                                     \
+    tyz += wn*hy.tyz;                                     \
+    tzx += wn*hy.tzx;                                     \
+    txy += wn*hy.txy;
+#endif
+    // Do the interpolation
+    VELS_RHOS(w0, ix,   iy,   iz);
+    VELS_RHOS(w1, ix+1, iy,   iz);
+    VELS_RHOS(w2, ix,   iy+1, iz);
+    VELS_RHOS(w3, ix+1, iy+1, iz);
+    VELS_RHOS(w4, ix,   iy,   iz+1);
+    VELS_RHOS(w5, ix+1, iy,   iz+1);
+    VELS_RHOS(w6, ix,   iy+1, iz+1);
+    VELS_RHOS(w7, ix+1, iy+1, iz+1);
+#ifdef DEFAULT_VELS_RHOS
+#undef VELS_RHOS
+#endif
+
+    // Store
+    if(where_jx>=0)  sp->set_annotation(j, where_jx,  jx);
+    if(where_jy>=0)  sp->set_annotation(j, where_jy,  jy);
+    if(where_jz>=0)  sp->set_annotation(j, where_jz,  jz);
+    if(where_rho>=0) sp->set_annotation(j, where_rho, rho);
+    if(where_px>=0)  sp->set_annotation(j, where_px,  px);
+    if(where_py>=0)  sp->set_annotation(j, where_py,  py);
+    if(where_pz>=0)  sp->set_annotation(j, where_pz,  pz);
+    if(where_ke>=0)  sp->set_annotation(j, where_ke,  ke);
+    if(where_txx>=0) sp->set_annotation(j, where_txx, txx);
+    if(where_tyy>=0) sp->set_annotation(j, where_tyy, tyy);
+    if(where_tzz>=0) sp->set_annotation(j, where_tzz, tzz);
+    if(where_tyz>=0) sp->set_annotation(j, where_tyz, tyz);
+    if(where_tzx>=0) sp->set_annotation(j, where_tzx, tzx);
+    if(where_txy>=0) sp->set_annotation(j, where_txy, txy);
+
+  }
+}
+#endif
+
+

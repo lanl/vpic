@@ -419,6 +419,15 @@ protected:
   void write_buffered_particle_dump(const char * speciesname);
   void clear_buffered_particle_dump(const char * speciesname);
 
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  void interpolate_fields_annotation(const char * sp_name, const interpolator_array_t * ia, int where_ex, int where_ey, int where_ez, int where_bx, int where_by, int where_bz);
+  void interpolate_hydro_annotation(const char * sp_name, const hydro_array_t * ha,
+                                    int where_jx,  int where_jy,  int where_jz,  int where_rho,
+                                    int where_px,  int where_py,  int where_pz,  int where_ke,
+                                    int where_txx, int where_tyy, int where_tzz,
+                                    int where_tyz, int where_tzx, int where_txy);
+  #endif
+
   ///////////////////
   // Useful accessors
 

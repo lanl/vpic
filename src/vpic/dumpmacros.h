@@ -6,38 +6,38 @@
 
 #define WRITE_HEADER_V0(dump_type,sp_id,q_m,cstep,fileIO) do { \
     /* Binary compatibility information */                     \
-    WRITE( char,      CHAR_BIT,               fileIO );        \
-    WRITE( char,      sizeof(short int),      fileIO );        \
-    WRITE( char,      sizeof(int),            fileIO );        \
-    WRITE( char,      sizeof(float),          fileIO );        \
-    WRITE( char,      sizeof(double),         fileIO );        \
-    WRITE( short int, 0xcafe,                 fileIO );        \
-    WRITE( int,       0xdeadbeef,             fileIO );        \
-    WRITE( float,     1.0,                    fileIO );        \
-    WRITE( double,    1.0,                    fileIO );        \
+    WRITE( char,           CHAR_BIT,               fileIO );   \
+    WRITE( char,           sizeof(short int),      fileIO );   \
+    WRITE( char,           sizeof(int),            fileIO );   \
+    WRITE( char,           sizeof(float),          fileIO );   \
+    WRITE( char,           sizeof(double),         fileIO );   \
+    WRITE( unsigned short, 0xcafe,                 fileIO );   \
+    WRITE( unsigned int,   0xdeadbeef,             fileIO );   \
+    WRITE( float,          1.0,                    fileIO );   \
+    WRITE( double,         1.0,                    fileIO );   \
     /* Dump type and header format version */                  \
-    WRITE( int,       0 /* Version */,        fileIO );        \
-    WRITE( int,       dump_type,              fileIO );        \
+    WRITE( int,            0 /* Version */,        fileIO );   \
+    WRITE( int,            dump_type,              fileIO );   \
     /* High level information */                               \
-    WRITE( int,       cstep,                  fileIO );        \
-    WRITE( int,       nxout,                  fileIO );        \
-    WRITE( int,       nyout,                  fileIO );        \
-    WRITE( int,       nzout,                  fileIO );        \
-    WRITE( float,     grid->dt,               fileIO );        \
-    WRITE( float,     dxout,                  fileIO );        \
-    WRITE( float,     dyout,                  fileIO );        \
-    WRITE( float,     dzout,                  fileIO );        \
-    WRITE( float,     grid->x0,               fileIO );        \
-    WRITE( float,     grid->y0,               fileIO );        \
-    WRITE( float,     grid->z0,               fileIO );        \
-    WRITE( float,     grid->cvac,             fileIO );        \
-    WRITE( float,     grid->eps0,             fileIO );        \
-    WRITE( float,     0 /* damp */,           fileIO );        \
-    WRITE( int,       rank(),                 fileIO );        \
-    WRITE( int,       nproc(),                fileIO );        \
+    WRITE( int,            cstep,                  fileIO );   \
+    WRITE( int,            nxout,                  fileIO );   \
+    WRITE( int,            nyout,                  fileIO );   \
+    WRITE( int,            nzout,                  fileIO );   \
+    WRITE( float,          grid->dt,               fileIO );   \
+    WRITE( float,          dxout,                  fileIO );   \
+    WRITE( float,          dyout,                  fileIO );   \
+    WRITE( float,          dzout,                  fileIO );   \
+    WRITE( float,          grid->x0,               fileIO );   \
+    WRITE( float,          grid->y0,               fileIO );   \
+    WRITE( float,          grid->z0,               fileIO );   \
+    WRITE( float,          grid->cvac,             fileIO );   \
+    WRITE( float,          grid->eps0,             fileIO );   \
+    WRITE( float,          0 /* damp */,           fileIO );   \
+    WRITE( int,            rank(),                 fileIO );   \
+    WRITE( int,            nproc(),                fileIO );   \
     /* Species parameters */                                   \
-    WRITE( int,       sp_id,                  fileIO );        \
-    WRITE( float,     q_m,                    fileIO );        \
+    WRITE( int,            sp_id,                  fileIO );   \
+    WRITE( float,          q_m,                    fileIO );   \
   } while(0)
  
 // Note dim _MUST_ be a pointer to an int

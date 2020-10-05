@@ -14,15 +14,16 @@
 \newcommand{\ldebye}{\lambda_{\mathrm{D}}}
 
 \title{Units in VPIC}
-\author{A.~Seaton, Modified by S.~V.~Luedtke}
+\author{A.~G.~Seaton \& S.~V.~Luedtke}
 \begin{document}
-	\maketitle
+\maketitle
+
 
 
 Units in \textsc{vpic} can be confusing.
-Units are user-defined, and there is a lot of flexibility in how they are defined, meaning that inheriting a deck can be very difficult for a new user who does not understand why it is written the way it is.
-Common unit systems, such as SI, are not suitable for use in \textsc{vpic} because of its use of IEEE 754 single precision floating point numbers.
-The smallest number representable with full precision is $2^{-126} \approx 1.175\times 10^{-38}$.
+They are user-defined, which can make inheriting a deck confusing for new users.
+The reason for this flexibility is that common unit systems, such as SI, are not suitable for use in \textsc{vpic} because of its use of IEEE 754 single precision floating point numbers.
+In single precision, the smallest number representable with full precision is $2^{-126} \approx 1.2\times 10^{-38}$.
 As an example, the SI value for $\hbar$, $1.05\times 10^{-34}$, is only four orders of magnitude away from losing precision.  Multiply it by the electron mass, and you are hopelessly lost.
 %
 %	\begin{itemize}
@@ -32,206 +33,227 @@ As an example, the SI value for $\hbar$, $1.05\times 10^{-34}$, is only four ord
 %		\item $r_{\alpha,\mathrm{deck}} \equiv (q_{\alpha}/m_{\alpha})_{\mathrm{deck}}$: The charge/mass ratio of species $\alpha$.
 %	\end{itemize}
 
-\textsc{Vpic} itself has no defined units.
-The user must specify the units that the code uses in the deck.
-The user does so by setting the time step, cell dimensions, speed of light in a vacuum, and vacuum permittivity members of the grid struct.
-This does not constitute a complete system of units.
-This allows for great flexibility in what \textsc{vpic} can simulate, but also means that the user needs to be very careful to get a physically meaningful result from \textsc{vpic}.
 
-There are a few important considerations for how a user sets up the system of units.
-The equations in \textsc{vpic} are written in SI style, and so values given to \textsc{vpic} must reflect that (e.g., no Gaussian units).
-The deck itself, however, is typically double precision and can be written in any units, as long as the user can keep track of them.
-It is common, for example, to use intensity in W/cm$^2$ and temperature in eV.
-This can lead to additional confusion about which conversion factor to use where, especially if there are user-defined diagnostics in the deck.
-The constraints of single precision typically mean setting a relevant length or time scale, e.g., the plasma frequency, to unity.
+To set up a simulation, the user provides \textsc{vpic} with values for the time step, cell dimensions, speed of light in vacuum, and vacuum permittivity.
+This is either done by directly assigning to the \texttt{grid} struct or by using the functions \texttt{define\_units}, \texttt{define\_timestep}, and (for example) \texttt{define\_periodic\_grid}.
+Usually one or more species are defined too, which each require values for the species mass and charge.
+These are normally set using the \texttt{define\_species} function.
+It is important to understand that \textsc{vpic} solves the same equations regardless of which values it is given and the chosen unit system.
 
-We will give recommendations on common unit systems later in this document, but for now, the primary concerns for choosing a system of units are twofold:
+
+We will assume here that two unit systems are in use.
+The first of these we will refer to as the `user' unit system, and is the user's preferred unit system.
+This is often used initially to define parameters of interest to the user, such as the temperature and density of the plasma.
+The second we will refer to as the `code' unit system, which is used for values passed to \textsc{vpic} itself.
+This document is concerned primarily with the code unit system.
+
+
+We will list some common unit systems for values supplied to \textsc{vpic} later, but for now the primary concerns for choosing a system of units are twofold:
 \begin{enumerate}
-    \item The units must be compatible with the SI equations in \textsc{vpic}.
-    \item The code values (including within calculations, not just stored values) should never be bigger than $\pm1.701\times 10^{38}$, and a value $\pm1.175\times 10^{-38}$ should not be meaningfully different from zero.
+	\item The units must be compatible with the SI \emph{equation form} that is solved by \textsc{vpic}, meaning that Gaussian units cannot be used.
+    \item Values used by the code (including within calculations) should never exceed $\pm1.7\times 10^{38}$, and a value smaller than $\pm1.2\times 10^{-38}$ should not be meaningfully different from zero.
 \end{enumerate}
 
 
-	\section{Setting up a System of Units}
 
-	%Given an input deck and simulation data, we want to convert the output to a familiar unit system. The quantities we are typically interested in are length, time, and the electromagnetic fields. Taking our base units as length, time, mass, and charge, we define normalisation factors $L$, $T$, $M$, and $Q$ so that a code quantity $f_{c}$ is converted to a value $f$ in our preferred unit system using $f = Ff_c$. To determine what our base unit normalisation factors are, we write out the constraints specified in the deck:
-    As mentioned above, \textsc{vpic} takes a time step, cell dimensions, the speed of light, and vacuum permittivity to form an incomplete system of units.
-    It is better to think of these instead as a time scale, length scale, wave speed, and field coupling strength.
-    \textsc{vpic} solves equations for whatever values it is given.
-    That \text{vpic} represents physical systems requires that the \emph{numerical} values for the wave speed and field coupling reflect the \emph{physical} constants $c$ and $\varepsilon_0$.
+\section{Unit Conversions}
 
-    Setting the cell dimensions in the grid struct immediately gives a conversion factor for length:
-    \begin{equation}
-        L = \frac{l_{\textrm{user}}}{l_{\textrm{code}}},
-    \end{equation}
-    where $L$ is the conversion factor from code units to user units, and $l$ is the numerical value for a given length, e.g., $dx$, in user or code units.
-    Similarly for the timestep:
-    \begin{equation}
-        T = \frac{t_\textrm{user}}{t_\textrm{code}}.
-    \end{equation}
-    With those set, the wave speed can be set:
-    \begin{equation}
-        c_\textrm{code} = \frac{T}{L}c_\textrm{user}.
-    \end{equation}
-    Typically, this would correspond to the physical constant the speed of light in a vacuum, but \textsc{vpic} is quite capable of simulating whatever wave speed you wish.
+In order to calculate values in the code unit system to supply to \textsc{vpic}, we need to know the unit conversions.
+Taking the base units as length, time, mass, and charge, we define conversion factors $L$, $T$, $M$, and $Q$ so that a quantity $f_c$ in the code unit system is converted to a value $f_u$ in the user unit system using $f_u = Ff_c$.
 
-    The vacuum permittivity---in SI---has units
-    \begin{equation}
-        \left[\varepsilon_0\right] = \frac{t^2q^2}{ml^3}.
-    \end{equation}
-    Values for time and length are already set by the other values in the grid struct.
-    This leaves an ambiguity for the values of charge and mass.
-    Charge and mass, by themselves, do not play a roll in particle motion or, therefore, current deposition or field evolution.
-    Only the ratio of the two plays a roll, and therefore \textsc{vpic} considers only the ratio in its (incomplete) system of units.
-    Getting physically relevant results requires a bit of additional care by the user when setting up the species mass and charge.
-    Generally, the user will want to set a charge and mass conversion in their decks to ensure the simulation particles reflect the physical particles the user intends.
+Each value supplied to \textsc{vpic} can be used to constrain the unit system by writing an equation for its conversion from the user unit system to code units in terms of the base unit conversion factors.
+Therefore by picking a subset of these values, we can fully determine the unit system.
 
-    In the remainder of this document, we will construct systems of units by considering a length, wave speed, coupling strength, and charge-to-mass ratio, even though these do not directly correspond to the members of the grid struct:
-	\begin{align*}
-		l_{\mathrm{deck}} &= L, &
-        c_{\mathrm{deck}} &= c_{\textrm{user}}\frac{T}{L}, \\
-        \varepsilon_{0,\mathrm{deck}} &= \varepsilon_{0,\textrm{user}}\frac{ML^3}{Q^2T^2}, &
-        r_{\alpha,\mathrm{deck}} &= r_{\alpha,\textrm{user}}\frac{M}{Q}.
-	\end{align*}
-    The charge-to-mass ratio $r$ is for one species, $\alpha$, commonly electrons.
+To determine what the four base unit conversion factors are, we need four constraining equations.
+There are multiple sets of values we could choose.
+Given the base units, a straightforward choice would be the timestep, cell size, and species mass and charge.
+Here instead we pick the cell size $h$, speed of light $c$, vacuum permittivity $\varepsilon_0$, and the charge-mass ratio $r_{\alpha}$ of some species $\alpha$.
+This is motivated by many common unit systems setting $\varepsilon_{0,\mathrm{c}} = 1$ or $c_{\mathrm{c}} = 1$, as will be seen later.
 
-	We can solve the above system for the conversion factors $L$, $T$, $M$, and $Q$:
-	\begin{align}
-		L &= l_{\mathrm{deck}}, \\
-		T &= l_{\mathrm{deck}}\frac{c_{\mathrm{deck}}}{c}, \\
-		M &= l_{\mathrm{deck}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2\frac{\varepsilon_0}{\varepsilon_{0,\mathrm{deck}}}\left(\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\right)^2, \\
-		Q &= l_{\mathrm{deck}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2\frac{\varepsilon_0}{\varepsilon_{0,\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}.
-	\end{align}
-    These conversion factors can be combined into factors for other quantities.
-	For example, the electric and magnetic field conversion factors $E$ and $B$ are given by
-	\begin{align}
-		E &= \frac{ML}{QT^2} = \frac{1}{l_{\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\left(\frac{c}{c_{\mathrm{deck}}}\right)^2 \\
-		B &= E\frac{T}{L} = \frac{1}{l_{\mathrm{deck}}}\frac{r_{\alpha,\mathrm{deck}}}{r_{\alpha}}\frac{c}{c_{\mathrm{deck}}}
-	\end{align}
+The constraining equations are then:
 
-	\section{Species \& Particle Weighting}
+\begin{align*}
+	h_{\mathrm{c}}L                               &= h_{\mathrm{u}},             &
+	c_{\mathrm{c}}\frac{L}{T}                     &= c_{\textrm{u}},             \\
+    \varepsilon_{0,\mathrm{c}}\frac{Q^2T^2}{ML^3} &= \varepsilon_{0,\textrm{u}}, &
+    r_{\alpha,\mathrm{c}}\frac{Q}{M}              &= r_{\alpha,\textrm{u}}.
+\end{align*}
 
-	To define a particle species in VPIC, the user specifies the species mass $m_{\mathrm{s}}$ and charge $q_{\mathrm{s}}$. Additionally, each particle is individually assigned a weighting factor $w$. These must be consistent with each other and the above unit system to produce the desired behavior.
+\noindent Solving for the conversion factors we find:
+\begin{align}
+	L &= \frac{h_{\mathrm{u}}}{h_{\mathrm{c}}}, \\
+	T &= \frac{h_{\mathrm{u}}}{h_{\mathrm{c}}}\frac{c_{\mathrm{c}}}{c_{\mathrm{u}}}, \\
+	M &= \frac{h_{\mathrm{u}}}{h_{\mathrm{c}}}\left(\frac{c_{\mathrm{u}}}{c_{\mathrm{c}}}\right)^2\frac{\varepsilon_{0,\mathrm{u}}}{\varepsilon_{0,\mathrm{c}}}\left(\frac{r_{\alpha,\mathrm{c}}}{r_{\alpha,\mathrm{u}}}\right)^2, \\
+	Q &= \frac{h_{\mathrm{u}}}{h_{\mathrm{c}}}\left(\frac{c_{\mathrm{u}}}{c_{\mathrm{c}}}\right)^2\frac{\varepsilon_{0,\mathrm{u}}}{\varepsilon_{0,\mathrm{c}}}\frac{r_{\alpha,\mathrm{c}}}{r_{\alpha,\mathrm{u}}}.
+\end{align}
 
-	\subsection{Choosing Charge Mass Ratio}
+\noindent These can then be combined into factors for other quantities.
+For example, the electric and magnetic field conversion factors $E$ and $B$ are given by
+\begin{align}
+	E &= \frac{ML}{QT^2} = \frac{h_{\mathrm{c}}}{h_{\mathrm{u}}}\frac{r_{\alpha,\mathrm{c}}}{r_{\alpha}}\left(\frac{c_{\mathrm{u}}}{c_{\mathrm{c}}}\right)^2, \\
+	B &= E\frac{T}{L} = \frac{h_{\mathrm{c}}}{h_{\mathrm{u}}}\frac{r_{\alpha,\mathrm{c}}}{r_{\alpha,\mathrm{u}}}\frac{c_{\mathrm{u}}}{c_{\mathrm{c}}}.
+\end{align}
 
-	The motion of a physical particle with charge $q_{\mathrm{p}}$ and mass $m_{\mathrm{p}}$ in the EM fields only has explicit dependence on the charge-to-mass ratio $r \equiv q_{\mathrm{p}}/m_{\mathrm{p}}$. This is also the case for macroparticles in VPIC's particle push. Therefore the corresponding macroparticle species must be defined such that its charge $q_{\mathrm{s}}$ and mass $m_{\mathrm{s}}$ satisfy $q_{\mathrm{s}}/m_{\mathrm{s}}=r$.
 
-	\subsection{Choosing Macroparticle Weight}
-	When calculating the fields generated by a macroparticle, the code uses the species charge and macroparticle weight to calculate a total charge for the macroparticle:
-	\begin{equation}
-		q_{\mathrm{MP}} = wq_{\mathrm{s}}.
-	\end{equation}
-	For this to result in an amount of current deposition consistent with the desired physical particle density, the macroparticle weight should be defined such that the charge contained in volume $V$ is the same for the macroparticles as for physical particles, i.e.
-	\begin{align*}
-		q_{\mathrm{p}}n_{\mathrm{p}}V &= q_{\mathrm{MP}}n_{\mathrm{MP}}V \\
-			&= wq_{\mathrm{s}}n_{\mathrm{MP}}V,
-	\end{align*}
-	where $n_{\mathrm{p}}$ and $n_{\mathrm{MP}}$ are the physical particle and macroparticle number densities (macroparticles per unit volume) respectively. So, the particle weight must satisfy
-	\begin{align}
-		w = \frac{q_{\mathrm{p}}n_{\mathrm{p}}}{q_{\mathrm{s}}n_{\mathrm{MP}}} = \frac{\rho_{\mathrm{p}}}{\rho_{\mathrm{s}}}.
-	\end{align}
-	This illustrates that there is a degree of freedom available in that the species charge defined in the deck does not have to be the same as the physical species charge.
 
-	\subsection{Consequences of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$}
+\subsection{Exceptions}
 
-	The possibility of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$ means that the code has no way of calculating numbers of physical particles since it doesn't know the true particle charge. % VPIC has been carefully designed to produce valid output despite this, which for example is why the hydro dumps contain charge density rather than number density. Users should therefore also ensure that any custom diagnostics do not assume $q_{\mathrm{s}} = q_{\mathrm{p}}$.
-    The number density plays no roll in evolving the Maxwell-Boltzmann system, so \textsc{vpic} does not track the number density.
-    It us up to the user to convert charge or macroparticle density to number density if that quantity is desired.
+In addition to calculating the above conversion factors, the user should be aware of how \textsc{vpic} normalises variables internally.
 
-	\subsection{Particle Momenta}
-    \textsc{Vpic} does not store particle velocity (which would cause numerical issues) or momentum, but instead particle normalized momentum
+\subsubsection{Particle Momenta}
+
+\textsc{vpic} stores relativistic momentum rather than velocity (which would cause numerical issues) for each particle.
+The momentum is stored in dimensionless form given by
 \begin{equation}
     p_{\textrm{norm}} = \frac{p}{m_\alpha c},
 \end{equation}
-where $m_\alpha$ is the mass of the particle species and $c$ is the speed of light in a vacuum.
-As this is a unitless quantity, it does not matter what system of units you use on the right-hand side, though you must use the right formula.
-(In this case, the formula is valid in SI and Gaussian units but different in natural units.)
-If you calculate the momentum stored in the fields, however, according to the usual SI formula and using values stored in the code, you will get an answer in units of code momentum, not normalized momentum.
+where $m_\alpha$ is the mass assigned to species $\alpha$ and $c$ is the speed of light in a vacuum.
+This is what must be supplied by the user when performing the particle load.
 
-	\section{Examples of Common Unit Systems}
+\subsubsection{Magnetic Fields}
 
-	Various common choices are made for the unit system, and we discuss a few of them here. In general, aside from ensuring that values do not exceed the limits for single-precision floating point numbers, it is often desirable to choose a unit system that eases interpretation of simulation results.
+For performance reasons, and due to the use of single-precision floating point numbers, \textsc{vpic} stores the scaled magnetic field $c\vec{B}$ rather than $\vec{B}$.
 
-	\subsubsection{Electrostatic Plasma Units}
+\section{Species \& Particle Weighting}
 
-	In an electrostatic problem simulating an electron plasma, the natural length and time-scales are the Debye length $\ldebye$ and inverse plasma frequency $\omegap^{-1}$. These are also the typical scales for the grid and time-step. Then choosing the electron charge/mass ratio so that $e/m_e$ becomes unity reduces the equation of motion of an electron to
-	\begin{equation*}
-		\ddot{\vec{r}} = \vec{E}.
-	\end{equation*}
-	Finally setting $\varepsilon_0=1$ means that Gauss' law is also simplified
-	\begin{equation*}
-		\nabla \cdot \vec{E} = \rho.
-	\end{equation*}
-    (This will not change the calculations that \textsc{vpic} actually does.)
-	The deck constants are therefore
-	\begin{align*}
-		l_{\mathrm{deck}} &= \ldebye, &
-		c_{\mathrm{deck}} &= \frac{c}{\vth}, \\
-		\varepsilon_{0,\mathrm{deck}} &= 1, &
-		r_{e,\mathrm{deck}} &= -1,
-	\end{align*}
-	giving the unit conversions as
-	\begin{align*}
-		L &= \ldebye, &
-		T &= \omegap^{-1}, &
-		M &= N_{\mathrm{D}}m_e, \\
-		Q &= N_{\mathrm{D}}e, &
-		E &= \frac{m_e}{e}\vth\omegap, &
-		B &= \frac{m_e}{e}\omegap,
-	\end{align*}
-	where $N_{\mathrm{D}} \equiv n_e\ldebye^3$ is the number of electrons in a `Debye cube'.
+To define a particle species in \textsc{vpic}, the user specifies the species mass $m_{\mathrm{s}}$ and charge $q_{\mathrm{s}}$. Additionally, each particle is individually assigned a weighting factor $w$. These must be consistent with each other and the above unit system to produce the desired behavior.
 
-	This unit system allows for some convenient sanity checks. As mentioned above, the cell size and time-step must be around $1$. Additionally, if the electron mass in these units is not significantly smaller than 1, then the plasma is not ideal, and simulating it with VPIC is not appropriate. Interpretation of simulation results may also be more convenient. For example, the normalized electric field $E_c$ is the electron quiver velocity in a plasma wave divided by the thermal velocity---an important parameter for determining whether wavebreaking will occur. Similarly, the wavenumber of a plasma wave is normalised such that $k_c = k\ldebye$, which determines the Landau damping rate.
+\subsection{Choosing Charge Mass Ratio}
 
-	\subsection{Electromagnetic Plasma Units}
+The motion of a physical particle with charge $q_{\mathrm{p}}$ and mass $m_{\mathrm{p}}$ in the EM fields only has explicit dependence on the charge-to-mass ratio $r \equiv q_{\mathrm{p}}/m_{\mathrm{p}}$. This is also the case for macroparticles in \textsc{vpic}'s particle push. Therefore the corresponding macroparticle species must be defined such that its charge $q_{\mathrm{s}}$ and mass $m_{\mathrm{s}}$ satisfy $q_{\mathrm{s}}/m_{\mathrm{s}}=r$.
 
-	For an electromagnetic problem, the electrostatic units above might be modified so that the length scale becomes the electron skin depth $l_e=c/\omegap$. The Lorentz force and Maxwell's equations become
-	\begin{equation*}
-		\ddot{\vec{r}} = \vec{E} + \vec{v} \times \vec{B},
-	\end{equation*}
-	and
-	\begin{align*}
-		\nabla \times \vec{E} &= -\partial_t \vec{B}, \\
-		\nabla \times \vec{B} &= \left(\vec{J} + \partial_t \vec{E}\right).
-	\end{align*}
-    (Again, \textsc{vpic} will still solve the full equations.)
-	The deck constants are then
-	\begin{align*}
-		l_{\mathrm{deck}} &= \frac{c}{\omegap}, &
-		c_{\mathrm{deck}} &= 1, \\
-		\varepsilon_{0,\mathrm{deck}} &= 1, &
-		r_{e,\mathrm{deck}} &= -1,
-	\end{align*}
-	so that the conversion factors are now
-	\begin{align*}
-		L &= \frac{c}{\omega_{\mathrm{pe}}}, &
-		T &= \frac{1}{\omega_{\mathrm{pe}}}, \\
-		M &= n_e\frac{c^3}{\omegap^3}m_e, &
-		Q &= n_e\frac{c^3}{\omegap^3}e, \\
-		E &= \frac{m_e}{e}\omegap c, &
-		B &= \frac{m_e}{e}\omegap.
-	\end{align*}
-	%Note that there is no longer any dependence on temperature.
+\subsection{Choosing Macroparticle Weight}
+When calculating the fields generated by a macroparticle, the code uses the species charge and macroparticle weight to calculate a total charge for the macroparticle:
+\begin{equation}
+	q_{\mathrm{MP}} = wq_{\mathrm{s}}.
+\end{equation}
+For this to result in an amount of current deposition consistent with the desired physical particle density, the macroparticle weight should be defined such that the charge contained in volume $V$ is the same for the macroparticles as for physical particles, i.e.
+\begin{align*}
+	q_{\mathrm{p}}n_{\mathrm{p}}V &= q_{\mathrm{MP}}n_{\mathrm{MP}}V \\
+		&= wq_{\mathrm{s}}n_{\mathrm{MP}}V,
+\end{align*}
+where $n_{\mathrm{p}}$ and $n_{\mathrm{MP}}$ are the physical particle and macroparticle number densities (macroparticles per unit volume) respectively. So, the particle weight must satisfy
+\begin{align}
+	w = \frac{q_{\mathrm{p}}n_{\mathrm{p}}}{q_{\mathrm{s}}n_{\mathrm{MP}}} = \frac{\rho_{\mathrm{p}}}{\rho_{\mathrm{s}}}.
+\end{align}
+This illustrates that there is a degree of freedom available in that the species charge defined in the deck does not have to be the same as the physical species charge.
 
-	\subsection{Laser-Plasma Units}
+\subsection{Consequences of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$}
 
-	For laser-plasma interaction problems, the unit system can again be modified by replacing the time-scale with the inverse laser frequency, so that the unit system no longer depends on the electron density used to calculate $\omega_{\mathrm{pe}}$. The deck constants are then
-	\begin{align*}
-		l_{\mathrm{deck}} &= \frac{1}{k_0}, &
-		c_{\mathrm{deck}} &= 1, \\
-		\varepsilon_{0,\mathrm{deck}} &= 1, &
-		r_{e,\mathrm{deck}} &= -1,
-	\end{align*}
-	where $k_0 \equiv \omega_0/c$ is the vacuum laser wavenumber. The conversion factors then become
-	\begin{align*}
-		L &= \frac{1}{k_0}, &
-		T &= \frac{1}{\omega_0}, \\
-		M &= \ncrit k_0^3m_e, &
-		Q &= \ncrit k_0^3e, \\
-		E &= \frac{m_e}{e}\omega_0 c, &
-		B &= \frac{m_e}{e}\omega_0.
-	\end{align*}
-	where $\ncrit \equiv m_e\varepsilon_0\omega_0^2/e^2$ is the critical density.  In this unit system the simulation cell size and time step should satisfy $\Delta x \ll 1$ and $\Delta t \ll 1$ in order for the field solver to accurately model the laser. It is also necessary to verify that the cell size resolves the Debye length, which is often a more restrictive condition. Additionally, the normalized electric (or magnetic) field is the parameter $a_0$. For $a_0 \ll 1$, this is the electron quiver velocity divided by the speed of light, while $a_0 \gtrsim 1$ indicates a relativistic field intensity which will lead to effects such as relativistically induced transparency and relativistic self-focusing.
+The possibility of $q_{\mathrm{s}} \neq q_{\mathrm{p}}$ means that the code has no way of calculating numbers of physical particles since it doesn't store the true particle charge.
+This for example is why the hydro dumps contain charge density rather than number density.
+Users should therefore also ensure that any custom diagnostics do not assume $q_{\mathrm{s}} = q_{\mathrm{p}}$.
+
+
+
+\section{Examples of Common Unit Systems}
+
+Various choices are often made for the unit system, and we discuss a few of them here.
+In general, aside from ensuring that values do not exceed the limits for single-precision floating point numbers, it is often desirable to choose a unit system that eases interpretation of simulation results.
+Many of these unit systems allow the governing equations to be written in simpler form, which are convenient in theoretical analysis, and we will illustrate some of these cases here.
+As discussed above, the unit system has no bearing on the calculations performed by \textsc{vpic} -- it always solves the full system of equations.
+
+\subsection{Electrostatic Plasma Units}
+
+In an electrostatic problem simulating an electron plasma, the natural length and time-scales are the Debye length $\ldebye$ and inverse plasma frequency $\omegap^{-1}$.
+These are also the typical scales for the grid and time-step.
+Then choosing the electron charge/mass ratio so that $e/m_e$ becomes unity reduces the equation of motion of an electron to
+\begin{equation*}
+	\ddot{\vec{r}} = \vec{E}.
+\end{equation*}
+Finally setting $\varepsilon_0=1$ means that Gauss' law is also simplified
+\begin{equation*}
+	\nabla \cdot \vec{E} = \rho.
+\end{equation*}
+
+\noindent In the deck we would specify
+\begin{align*}
+	h_{\mathrm{c}}             &= \frac{h_{\mathrm{u}}}{\ldebye}, &
+	c_{\mathrm{c}}             &= \frac{c}{\vth},    \\
+	\varepsilon_{0,\mathrm{c}} &= 1,                              &
+	r_{e,\mathrm{c}}           &= -1,
+\end{align*}
+
+\noindent giving the unit conversions as
+\begin{align*}
+	L &= \ldebye,                  &
+	T &= \omegap^{-1},             &
+	M &= N_{\mathrm{D}}m_e,        \\
+	Q &= N_{\mathrm{D}}e,          &
+	E &= \frac{m_e}{e}\vth\omegap, &
+	B &= \frac{m_e}{e}\omegap,
+\end{align*}
+
+\noindent where $N_{\mathrm{D}} \equiv n_e\ldebye^3$ is the number of electrons in a `Debye cube'.
+
+This unit system allows for some convenient sanity checks.
+As mentioned above, the cell size and time-step must be around $1$.
+Additionally, if the electron mass in these units is not significantly smaller than 1, then the plasma is not ideal, and simulating it with \textsc{vpic} is not appropriate.
+Interpretation of simulation results may also be more convenient.
+For example, the normalized electric field $E_c$ is the electron quiver velocity in a plasma wave divided by the thermal velocity -- an important parameter for determining whether wavebreaking will occur.
+Similarly, the wavenumber of a plasma wave is normalised such that $k_c = k\ldebye$, which determines the Landau damping rate.
+
+\subsection{Electromagnetic Plasma Units}
+
+For an electromagnetic problem, the electrostatic units above might be modified so that the length scale becomes the electron skin depth $l_e=c/\omegap$.
+The Lorentz force and Maxwell's equations become
+\begin{equation*}
+	\ddot{\vec{r}} = \vec{E} + \vec{v} \times \vec{B},
+\end{equation*}
+
+\noindent and
+\begin{align*}
+	\nabla \times \vec{E} &= -\partial_t \vec{B}, \\
+	\nabla \times \vec{B} &= \left(\vec{J} + \partial_t \vec{E}\right).
+\end{align*}
+
+\noindent The deck assignments become:
+\begin{align*}
+	h_{\mathrm{c}}             &= h_{\mathrm{u}}\frac{\omegap}{c}, &
+	c_{\mathrm{c}}             &= 1, \\
+	\varepsilon_{0,\mathrm{c}} &= 1, &
+	r_{e,\mathrm{c}}           &= -1,
+\end{align*}
+
+\noindent so that the conversion factors are now
+\begin{align*}
+	L &= \frac{c}{\omega_{\mathrm{pe}}}, &
+	T &= \frac{1}{\omega_{\mathrm{pe}}}, \\
+	M &= n_e\frac{c^3}{\omegap^3}m_e,    &
+	Q &= n_e\frac{c^3}{\omegap^3}e,      \\
+	E &= \frac{m_e}{e}\omegap c,         &
+	B &= \frac{m_e}{e}\omegap.
+\end{align*}
+
+\noindent Note that by removing $\ldebye$ from the unit system, there is no longer any dependence on the electron temperature used to calculate it.
+
+\subsection{Laser-Plasma Units}
+
+For laser-plasma interaction problems, the unit system can again be modified by replacing the time-scale with the inverse laser frequency, so that the unit system no longer depends on the electron density used to calculate $\omega_{\mathrm{pe}}$ and is instead dependent purely on the laser frequency.
+In the deck the assignments are
+\begin{align*}
+	h_{\mathrm{c}}             &= h_{\mathrm{u}}k_0, &
+	c_{\mathrm{c}}             &= 1,             \\
+	\varepsilon_{0,\mathrm{c}} &= 1,             &
+	r_{e,\mathrm{c}}           &= -1,
+\end{align*}
+
+\noindent where $k_0 \equiv \omega_0/c$ is the vacuum laser wavenumber.
+
+The conversion factors then become
+\begin{align*}
+	L &= \frac{1}{k_0},           &
+	T &= \frac{1}{\omega_0},      \\
+	M &= \frac{\ncrit}{k_0^3}m_e, &
+	Q &= \frac{\ncrit}{k_0^3}e,   \\
+	E &= \frac{m_e}{e}\omega_0 c, &
+	B &= \frac{m_e}{e}\omega_0,
+\end{align*}
+
+where $\ncrit \equiv m_e\varepsilon_0\omega_0^2/e^2$ is the critical density.
+In this unit system the simulation cell size and time step should satisfy $\Delta x \ll 1$ and $\Delta t \ll 1$ in order for the field solver to accurately model the laser.
+It is also necessary to verify that the cell size resolves the Debye length, which is often a more restrictive condition.
+Additionally, the normalized electric (or magnetic) field is the parameter $a_0$.
+For $a_0 \ll 1$, this is the electron quiver velocity divided by the speed of light, while $a_0 \gtrsim 1$ indicates a relativistic field intensity which will lead to effects such as relativistically induced transparency and relativistic self-focusing.
 
 \end{document}

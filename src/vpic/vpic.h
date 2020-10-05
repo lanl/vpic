@@ -509,7 +509,7 @@ protected:
       if( max_local_nm<16*(MAX_PIPELINE+1) )
         max_local_nm = 16*(MAX_PIPELINE+1);
     }
-    return append_species( species( name, (float)q, (float)m,
+    return append_species( new species_t( name, (float)q, (float)m,
                                     (size_t)max_local_np, (size_t)max_local_nm,
                                     (int)sort_interval, (int)sort_out_of_place,
                                     grid ), &species_list );

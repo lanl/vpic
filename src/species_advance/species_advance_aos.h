@@ -91,6 +91,10 @@ typedef struct species {
   grid_t * g;                         // Underlying grid
   species_id id;                      // Unique identifier for a species
   struct species *next;               // Next species in the list
+
+  species( const char * name, float q, float m, size_t max_local_np, size_t
+          max_local_nm, int sort_interval, int sort_out_of_place, grid_t * g );
+
 } species_t;
 
 #endif // _species_advance_aos_h_

@@ -346,6 +346,8 @@ begin_diagnostics {
   // the tracer location. This allows diagnostics on the local fields without
   // writing field output every time step and interpoltating in postprocessing.
 #ifdef VPIC_PARTICLE_ANNOTATION
+  // this can also be performed by interpolate_fields_annotation
+
   species_t* sp = global->elec_tracer; // Could also find by name
   particle_t* p;
   int n;

@@ -36,8 +36,9 @@ sort_p( species_t * sp )
   size_t * ALIGNED(128) p_id = sp->p_id;
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
+  typedef VPIC_PARTICLE_ANNOTATION annotation_t;
   const int sp_has_annotation = sp->has_annotation;
-  float * ALIGNED(128) p_annotation = sp->p_annotation;
+  annotation_t* ALIGNED(128) p_annotation = sp->p_annotation;
   #endif
 
   const int np                = sp->np;
@@ -113,9 +114,9 @@ sort_p( species_t * sp )
     }
     #endif
     #ifdef VPIC_PARTICLE_ANNOTATION
-    /**/  float*          ALIGNED(128) new_p_annotation;
-    const float* RESTRICT ALIGNED( 32)  in_p_annotation;
-    /**/  float* RESTRICT ALIGNED( 32) out_p_annotation;
+    /**/  annotation_t*          ALIGNED(128) new_p_annotation;
+    const annotation_t* RESTRICT ALIGNED( 32)  in_p_annotation;
+    /**/  annotation_t* RESTRICT ALIGNED( 32) out_p_annotation;
 
     if(sp_has_annotation) {
       MALLOC_ALIGNED( new_p_annotation, sp->max_np*sp_has_annotation, 128 );
@@ -172,9 +173,9 @@ sort_p( species_t * sp )
     size_t * ALIGNED(32) destid;
     #endif
     #ifdef VPIC_PARTICLE_ANNOTATION
-    float save_p_annotation;
-    float * ALIGNED(32) src_annotation;
-    float * ALIGNED(32) dest_annotation;
+    annotation_t save_p_annotation;
+    annotation_t* ALIGNED(32) src_annotation;
+    annotation_t* ALIGNED(32) dest_annotation;
     #endif
 
     i = 0;

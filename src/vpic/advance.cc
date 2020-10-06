@@ -100,8 +100,9 @@ int vpic_simulation::advance(void) {
     size_t * RESTRICT ALIGNED(128) p_id0 = sp->p_id;
     #endif
     #ifdef VPIC_PARTICLE_ANNOTATION
+    typedef VPIC_PARTICLE_ANNOTATION annotation_t;
     const int sp_has_annotation = sp->has_annotation;
-    float * RESTRICT ALIGNED(128) p_annotation0 = sp->p_annotation;
+    annotation_t* RESTRICT ALIGNED(128) p_annotation0 = sp->p_annotation;
     #endif
     for (; nm; nm--, pm--) {
       int i = pm->i; // particle index we are removing

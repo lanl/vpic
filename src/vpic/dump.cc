@@ -22,6 +22,10 @@
 /* -1 means no ranks talk */
 #define VERBOSE_rank -1
 
+#ifdef VPIC_PARTICLE_ANNOTATION
+typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+#endif
+
 // FIXME: NEW FIELDS IN THE GRID READ/WRITE WAS HACKED UP TO BE BACKWARD
 // COMPATIBLE WITH EXISTING EXTERNAL 3RD PARTY VISUALIZATION SOFTWARE.
 // IN THE LONG RUN, THIS EXTERNAL SOFTWARE WILL NEED TO BE UPDATED.
@@ -956,7 +960,7 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(sp->has_annotation) {
-    MALLOC_ALIGNED(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(float), 128);
+    MALLOC_ALIGNED(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(annotation_t), 128);
   }
   #endif
   MALLOC_ALIGNED(sp->output_buffer_ts, sp->buf_size*sizeof(size_t), 128);
@@ -1239,9 +1243,14 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
       for(int a = 0; a < sp->has_annotation; a++) {
         sprintf(strbuf, "Annotation_%d", a);
         if(H5Lexists(subgroup, strbuf, pl_link)) { H5Ldelete(subgroup, strbuf, pl_link); }
-        float* data = &(sp->output_buffer_an[sp->buf_n_particles * sp->buf_n_frames * a]);
-        dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, data);
+        annotation_t* data = &(sp->output_buffer_an[sp->buf_n_particles * sp->buf_n_frames * a]);
+        if(sizeof(VPIC_PARTICLE_ANNOTATION)==4) {
+            dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, data);
+        } else {
+            dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(dset, H5T_NATIVE_DOUBLE, memspace, filespace, pl_xfer, data);
+        }
         H5Dclose(dset);
       }
     }
@@ -1383,7 +1392,7 @@ vpic_simulation::clear_buffered_particle_dump(const char * sp_name) {
     #endif
     #ifdef VPIC_PARTICLE_ANNOTATION
     if(sp->has_annotation) {
-      memset(sp->output_buffer_an, 0, sp->buf_size*sp->buf_n_annotation*sizeof(float));
+      memset(sp->output_buffer_an, 0, sp->buf_size*sp->buf_n_annotation*sizeof(annotation_t));
     }
     #endif
 
@@ -1596,7 +1605,7 @@ vpic_simulation::interpolate_hydro_annotation(const char * sp_name, const hydro_
     const int ix = i % nx2;
 
     // Values at particle location
-    float jx=0., jy=0., jz=0., rho=0., px=0., py=0., pz=0., ke=0., txx=0., tyy=0., tzz=0., tyz=0., tzx=0., txy=0.;
+    annotation_t jx=0., jy=0., jz=0., rho=0., px=0., py=0., pz=0., ke=0., txx=0., tyy=0., tzz=0., tyz=0., tzx=0., txy=0.;
     hydro_t hy;
 
 #ifndef VELS_RHOS

@@ -70,8 +70,9 @@ class species_t {
         size_t* ALIGNED(128) p_id;          // Separate array of IDs
         #endif
         #ifdef VPIC_PARTICLE_ANNOTATION
+        typedef VPIC_PARTICLE_ANNOTATION annotation_t;
         int has_annotation;                 // How many annotations are supported on this species?
-        float* ALIGNED(128) p_annotation;   // Buffer for user defined annotation data
+        annotation_t* ALIGNED(128) p_annotation;   // Buffer for user defined annotation data
         #endif
 
         int nm, max_nm;                     // Number and max local movers in use
@@ -116,7 +117,7 @@ class species_t {
           size_t* output_buffer_id;
         #endif
         #ifdef VPIC_PARTICLE_ANNOTATION
-          float* output_buffer_an;
+          annotation_t* output_buffer_an;
         #endif
         int64_t* output_buffer_ts;
 
@@ -180,7 +181,7 @@ class species_t {
                 return;
             }
             this->has_annotation = slot_count;
-            MALLOC_ALIGNED(this->p_annotation, this->max_np * this->has_annotation * sizeof(float), 128);
+            MALLOC_ALIGNED(this->p_annotation, this->max_np * this->has_annotation * sizeof(annotation_t), 128);
         }
         /**
          * @brief Retrieve as float value from an annotation slot

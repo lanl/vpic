@@ -79,6 +79,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   // We need 6 of them for the 6 faces of the local domain through which
   // communication can happen. The sizing is for the maximum of all six.
   // cab: Communcation of Annotations Buffer
+  typedef VPIC_PARTICLE_ANNOTATION annotation_t;
   static char * RESTRICT ALIGNED(16) cab[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
   static int max_cab = 0; // Size of the buffer (in bytes)
   int max_cas = 0; //Maximum size that might be needed for a particle (in byte)
@@ -174,7 +175,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     cas += sizeof(sp->id);
     // Space for the annotations
     if(sp->has_annotation) {
-       cas += sp->has_annotation*sizeof(float);
+       cas += sp->has_annotation*sizeof(annotation_t);
     }
     // Space for the particle ID
     #ifdef VPIC_GLOBAL_PARTICLE_ID
@@ -186,7 +187,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       if(rank() == 0) {
         printf("sp->id of size %d", sizeof(sp->id));
         if(sp->has_annotation) {
-          printf(" + %d annotations of size %d", sp->has_annotation, sizeof(float));
+          printf(" + %d annotations of size %d", sp->has_annotation, sizeof(annotation_t));
         }
         #ifdef VPIC_GLOBAL_PARTICLE_ID
           printf(" and particle ID of size %d", sizeof(sp->p_id[0]));
@@ -335,7 +336,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       #endif
       #ifdef VPIC_PARTICLE_ANNOTATION
       int sp_has_annotation = sp->has_annotation;
-      float* RESTRICT ALIGNED(128) sp_p_annotation = sp->p_annotation;
+      annotation_t* RESTRICT ALIGNED(128) sp_p_annotation = sp->p_annotation;
       #endif
 
       int np = sp->np;
@@ -414,7 +415,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           #endif
 
           #ifdef VPIC_PARTICLE_ANNOTATION
-          float* RESTRICT ALIGNED(128) p_annotation = (float*) &(cab[face][n_send[face] * max_cas]);
+          annotation_t* RESTRICT ALIGNED(128) p_annotation = (annotation_t*) &(cab[face][n_send[face] * max_cas]);
 
           //printf("<%d> %dth particle of species %s has %d annotation that need to go into the buffer starting at %p\n", rank(), i, sp->name, sp_has_annotation, p_annotation);
 
@@ -425,7 +426,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
             *p_annotation_int = sp_id;
             // printf("<%d> %p set to %d\n", rank(), p_annotation_int, *p_annotation_int);
             p_annotation_int++;
-            p_annotation = (float*) p_annotation_int;
+            p_annotation = (annotation_t*) p_annotation_int;
           }
 
           // Store particle ID if needed
@@ -439,7 +440,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           }
           // printf("<%d> %p set to %dl\n", rank(), p_annotation_sizet, *p_annotation_sizet);
           p_annotation_sizet++;
-          p_annotation = (float*) p_annotation_sizet;
+          p_annotation = (annotation_t*) p_annotation_sizet;
           #endif
 
           if(sp_has_annotation) {
@@ -656,7 +657,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       #endif
       #ifdef VPIC_PARTICLE_ANNOTATION
       int sp_has_annotation = sp->has_annotation;
-      float                 * new_p_annotation;
+      annotation_t* new_p_annotation;
       #endif
 
       n = sp->np + max_inj;
@@ -1048,9 +1049,9 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
          #endif
 
          //Print annotation
-         for(; j<max_cas; j+=sizeof(float)) {
-           float* print_cab_float = (float*) (print_cab + j);
-           printf(" %f", *print_cab_float);
+         for(; j<max_cas; j+=sizeof(annotation_t)) {
+           annotation_t* print_cab_float = (annotation_t*) (print_cab + j);
+           printf(" %f", *print_cab_annotation_t);
          }
 
          printf(", ");
@@ -1078,7 +1079,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
   for( face = 0; face < 6; face++ ) {
     if ( shared[ face ] ) {
       if(n_send[face] > 0) {
-        float* send_buf = (float *) mp_send_buffer( mp, f2b[ face ] );
+        annotation_t* send_buf = (annotation_t*) mp_send_buffer( mp, f2b[ face ] );
 
         memcpy(send_buf, cab[face], max_cas*n_send[face]);
 
@@ -1117,8 +1118,8 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
             #endif
 
             //Print annotation
-            for(; j<max_cas; j+=sizeof(float)) {
-              float* print_cab_float = (float*) (print_cab + j);
+            for(; j<max_cas; j+=sizeof(annotation_t)) {
+              annotation_t* print_cab_float = (annotation_t*) (print_cab + j);
               printf(" %f", *print_cab_float);
             }
 
@@ -1139,7 +1140,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           recv_buffer += sizeof(size_t);
           #endif
           // The rest of the buffer must be annotations
-          const float* p_annotation = (float*) recv_buffer;
+          const annotation_t* p_annotation = (annotation_t*) recv_buffer;
 
           species_t * sp = find_species_id(sp_id,sp_list); // We should probably do that once for all possible MAX_SP ids
           if(!sp) {

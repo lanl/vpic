@@ -332,7 +332,8 @@ protected:
       MALLOC_ALIGNED( _p,    count_true, 128 );
       MALLOC_ALIGNED( _p_id, count_true, 128 );
       #ifdef VPIC_PARTICLE_ANNOTATION
-        float*    ALIGNED(128) _p_annotation = nullptr;
+        typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+        annotation_t*    ALIGNED(128) _p_annotation = nullptr;
         if(sp->has_annotation) {
           MALLOC_ALIGNED( _p_annotation, count_true*sp->has_annotation, 128);
         }

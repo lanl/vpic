@@ -10,6 +10,10 @@
 
 #include "species_advance.h"
 
+#ifdef VPIC_PARTICLE_ANNOTATION
+typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+#endif
+
 /* Private interface *********************************************************/
 
 void
@@ -38,8 +42,8 @@ checkpt_species( const species_t * sp )
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(sp->has_annotation) {
     checkpt_data( sp->p_annotation,
-                  sp->np     * sp->has_annotation * sizeof(float),
-                  sp->max_np * sp->has_annotation * sizeof(float), 1, 1, 128);
+                  sp->np     * sp->has_annotation * sizeof(annotation_t),
+                  sp->max_np * sp->has_annotation * sizeof(annotation_t), 1, 1, 128);
   }
   #endif
 
@@ -55,7 +59,7 @@ checkpt_species( const species_t * sp )
   checkpt_data(sp->output_buffer_id, sp->buf_size*sizeof(size_t),  sp->buf_size*sizeof(size_t),  1, 1, 128);
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
-  checkpt_data(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(float), sp->buf_size*sp->buf_n_annotation*sizeof(float), 1, 1, 128);
+  checkpt_data(sp->output_buffer_an, sp->buf_size*sp->buf_n_annotation*sizeof(annotation_t), sp->buf_size*sp->buf_n_annotation*sizeof(annotation_t), 1, 1, 128);
 #endif
   checkpt_data(sp->output_buffer_ts, sp->buf_size*sizeof(int64_t), sp->buf_size*sizeof(int64_t),  1, 1, 128);
   checkpt_data(sp->buf_n_valid,sp->buf_n_frames*sizeof(int64_t), sp->buf_n_frames*sizeof(int64_t), 1, 1, 128);
@@ -81,9 +85,9 @@ restore_species( void )
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(sp->has_annotation) {
-    sp->p_annotation  = (float*) restore_data();
+    sp->p_annotation  = (annotation_t*) restore_data();
   } else {
-    sp->p_annotation  = (float*) nullptr;
+    sp->p_annotation  = (annotation_t*) nullptr;
   }
   #endif
 
@@ -99,7 +103,7 @@ restore_species( void )
   sp->output_buffer_id = (size_t*)  restore_data();
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
-  sp->output_buffer_an = (float*)   restore_data();
+  sp->output_buffer_an = (annotation_t*)   restore_data();
   #endif
   sp->output_buffer_ts = (int64_t*) restore_data();
   sp->buf_n_valid      = (int64_t*) restore_data();
@@ -370,7 +374,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
       // Copy over annotation
       if(parentspecies->has_annotation){
         for(int j=0; j<parentspecies->has_annotation; j++) {
-          const float v = parentspecies->get_annotation(i,j);
+          const annotation_t v = parentspecies->get_annotation(i,j);
           tracerspecies->set_annotation(step, j, v);
         }
       }
@@ -387,7 +391,7 @@ species_t * tracerspecies_by_skip(species_t* parentspecies,
         #ifdef VPIC_PARTICLE_ANNOTATION
         if(parentspecies->has_annotation) {
           for(int j=0; j<parentspecies->has_annotation; j++) {
-            const float v = parentspecies->get_annotation(parentspecies->np-1, j);
+            const annotation_t v = parentspecies->get_annotation(parentspecies->np-1, j);
             parentspecies->set_annotation(i,j,v);
           }
         }
@@ -474,7 +478,7 @@ species_t * tracerspecies_by_predicate(species_t* parentspecies,
       #ifdef VPIC_PARTICLE_ANNOTATION
       if(parentspecies->has_annotation){
         for(int j=0; j<parentspecies->has_annotation; j++) {
-          const float v = parentspecies->get_annotation(i,j);
+          const annotation_t v = parentspecies->get_annotation(i,j);
           tracerspecies->set_annotation(step, j, v);
         }
       }

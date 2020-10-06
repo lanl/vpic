@@ -217,22 +217,26 @@ accumulate_hydro_p_pipeline_v16( accumulate_hydro_p_pipeline_args_t * args,
 
 // FIXME: safe to remove? enum { max_subsort_voxel = 26624 };
 
+#ifdef VPIC_PARTICLE_ANNOTATION
+typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+#endif
+
 typedef struct sort_p_pipeline_args
 {
-  MEM_PTR( particle_t, 128 ) p;                // Particles (0:n-1)
-  MEM_PTR( particle_t, 128 ) aux_p;            // Aux particle atorage (0:n-1)
+  MEM_PTR( particle_t, 128 ) p;                  // Particles (0:n-1)
+  MEM_PTR( particle_t, 128 ) aux_p;              // Aux particle atorage (0:n-1)
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  MEM_PTR( size_t, 128) p_id;                  // Particle ids (0:n-1)
-  MEM_PTR( size_t, 128 ) aux_p_id;             // Aux particle ids (0:n-1)
+  MEM_PTR( size_t, 128) p_id;                    // Particle ids (0:n-1)
+  MEM_PTR( size_t, 128 ) aux_p_id;               // Aux particle ids (0:n-1)
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
-  MEM_PTR( float, 128) p_annotation;          // Particle annotation buffer (0:n-1)*(0:has_annotation)
-  MEM_PTR( float, 128 ) aux_p_annotation;     // Aux buffer (0:n-1)*(0:has_annotation)
+  MEM_PTR( annotation_t, 128) p_annotation;      // Particle annotation buffer (0:n-1)*(0:has_annotation)
+  MEM_PTR( annotation_t, 128 ) aux_p_annotation; // Aux buffer (0:n-1)*(0:has_annotation)
   #endif
-  MEM_PTR( int,        128 ) coarse_partition; // Coarse partition storage
+  MEM_PTR( int,        128 ) coarse_partition;   // Coarse partition storage
   /**/ // (0:max_subsort-1,0:MAX_PIPELINE-1)
-  MEM_PTR( int,        128 ) partition;        // Partitioning (0:n_voxel)
-  MEM_PTR( int,        128 ) next;             // Aux partitioning (0:n_voxel)
+  MEM_PTR( int,        128 ) partition;          // Partitioning (0:n_voxel)
+  MEM_PTR( int,        128 ) next;               // Aux partitioning (0:n_voxel)
   int n;         // Number of particles
   int n_subsort; // Number of pipelines to be used for subsorts
   int vl, vh;    // Particles may be contained in voxels [vl,vh].

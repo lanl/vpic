@@ -95,7 +95,8 @@ set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles 
 
 option(GLOBAL_PARTICLE_ID "Give particles a global ID that allows reidentifiaction" OFF)
 
-option(PARTICLE_ANNOTATION "Reserve buffer to store extra information per particle for user defined annotations" OFF)
+set(PARTICLE_ANNOTATION "OFF" CACHE STRING "Reserve buffer to store extra information per particle for user defined annotations")
+set_property(CACHE PARTICLE_ANNOTATION PROPERTY STRINGS OFF ON float double)
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -319,9 +320,20 @@ if(GLOBAL_PARTICLE_ID)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_GLOBAL_PARTICLE_ID")
 endif()
 
-if(PARTICLE_ANNOTATION)
-  add_definitions(-DVPIC_PARTICLE_ANNOTATION)
-  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION")
+if( PARTICLE_ANNOTATION STREQUAL "OFF" )
+  # this is the default, nothing to do
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "ON")
+  # if annotation are request without specific type we use float
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=float)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=float")
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "float")
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=float)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=float")
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "double")
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=double)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=double")
+else()
+  message( FATAL_ERROR "PARTICLE_ANNOTATION can only be OFF, float or double" )
 endif()
 
 #------------------------------------------------------------------------------#

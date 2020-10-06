@@ -92,8 +92,8 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   const int has_annotation = args->has_annotation;
-  const float * RESTRICT ALIGNED(128) p_src_annotation = args->p_annotation;
-  /**/  float * RESTRICT ALIGNED(128) p_dst_annotation = args->aux_p_annotation;
+  const annotation_t* RESTRICT ALIGNED(128) p_src_annotation = args->p_annotation;
+  /**/  annotation_t* RESTRICT ALIGNED(128) p_dst_annotation = args->aux_p_annotation;
   #endif
 
   int i, i1;
@@ -177,8 +177,8 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   const int has_annotation                             = args->has_annotation;
-  const float * RESTRICT ALIGNED(128) p_src_annotation = args->aux_p_annotation;
-  /**/  float * RESTRICT ALIGNED(128) p_dst_annotation = args->p_annotation;
+  const annotation_t* RESTRICT ALIGNED(128) p_src_annotation = args->aux_p_annotation;
+  /**/  annotation_t* RESTRICT ALIGNED(128) p_dst_annotation = args->p_annotation;
   #endif
 
   int i0, i1, v0, v1, i, j, v, sum, count;
@@ -289,8 +289,8 @@ sort_p_pipeline( species_t * sp )
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   const int has_annotation = sp->has_annotation;
-  float * RESTRICT ALIGNED(128) p_annotation = sp->p_annotation;
-  float * RESTRICT ALIGNED(128) aux_p_annotation;
+  annotation_t* RESTRICT ALIGNED(128) p_annotation = sp->p_annotation;
+  annotation_t* RESTRICT ALIGNED(128) aux_p_annotation;
   #endif
 
   int n_particle = sp->np;
@@ -337,7 +337,7 @@ sort_p_pipeline( species_t * sp )
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(has_annotation) {
-    sz_scratch += sizeof( float ) * has_annotation * n_particle + 128;
+    sz_scratch += sizeof( annotation_t ) * has_annotation * n_particle + 128;
   }
   #endif
 
@@ -366,8 +366,8 @@ sort_p_pipeline( species_t * sp )
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(has_annotation) {
-    aux_p_annotation = ALIGN_PTR(float, start_of_free,            128);
-    start_of_free    = aux_p_annotation + sizeof(float)*has_annotation * n_particle;
+    aux_p_annotation = ALIGN_PTR(annotation_t, start_of_free,            128);
+    start_of_free    = aux_p_annotation + sizeof(annotation_t)*has_annotation * n_particle;
   } else {
     aux_p_annotation = NULL;
   }
@@ -464,8 +464,8 @@ sort_p_pipeline( species_t * sp )
       args->p_annotation     = aux_p_annotation;
       args->aux_p_annotation = p_annotation;
     } else {
-      args->p_annotation     = NULL;
-      args->aux_p_annotation = NULL;
+      args->p_annotation     = nullptr;
+      args->aux_p_annotation = nullptr;
     }
     #endif
 

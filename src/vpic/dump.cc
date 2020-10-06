@@ -936,7 +936,7 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   sp->buf_n_particles = ceil(safety_factor * sp->max_np);
 
   // Buffer size
-  sp->buf_size = sp->buf_n_frames * sp->buf_n_particles;
+  sp->buf_size = sp->buf_n_particles * sp->buf_n_frames;
 
   // Allocate buffer
   fprintf(stderr, "<%d> Allocating buffers store up to %ld particles each in %ld timesteps\n", rank(), sp->buf_n_particles, sp->buf_n_frames);
@@ -1061,7 +1061,7 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
     #ifdef VPIC_PARTICLE_ANNOTATION
     if(sp->has_annotation) {
       for(int a = 0; a < sp->has_annotation; a++) {
-       const size_t out_index = sp->buf_n_particles * sp->buf_n_frames * a + n;
+       const size_t out_index = sp->buf_n_particles * sp->buf_n_frames * a + sp->buf_n_particles * frame + n;
        const size_t in_index  = sp->has_annotation * n + a;
        sp->output_buffer_an[out_index] = sp->p_annotation[in_index];
       }
@@ -1239,7 +1239,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
       for(int a = 0; a < sp->has_annotation; a++) {
         sprintf(strbuf, "Annotation_%d", a);
         if(H5Lexists(subgroup, strbuf, pl_link)) { H5Ldelete(subgroup, strbuf, pl_link); }
-        float* data = &(sp->output_buffer_an[sp->buf_n_frames * sp->buf_n_particles * a]);
+        float* data = &(sp->output_buffer_an[sp->buf_n_particles * sp->buf_n_frames * a]);
         dset = H5Dcreate(subgroup, strbuf, H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, pl_xfer, data);
         H5Dclose(dset);
@@ -1557,7 +1557,7 @@ vpic_simulation::interpolate_hydro_annotation(const char * sp_name, const hydro_
   const particle_t* p;
   int j;
   for(p=sp->p, j=0; j<sp->np; j++, p++ ) {
-    // Interpolator for this cell
+    // Cell index for this cell
     const int i = p->i;
     // Load displacement in the cell
     float dx = p->dx;

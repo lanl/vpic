@@ -943,8 +943,6 @@ vpic_simulation::init_buffered_particle_dump(const char * sp_name, const int N_t
   sp->buf_size = sp->buf_n_particles * sp->buf_n_frames;
 
   // Allocate buffer
-  fprintf(stderr, "<%d> Allocating buffers store up to %ld particles each in %ld timesteps\n", rank(), sp->buf_n_particles, sp->buf_n_frames);
-
   MALLOC_ALIGNED(sp->output_buffer_dx, sp->buf_size*sizeof(float), 128);
   MALLOC_ALIGNED(sp->output_buffer_dy, sp->buf_size*sizeof(float), 128);
   MALLOC_ALIGNED(sp->output_buffer_dz, sp->buf_size*sizeof(float), 128);

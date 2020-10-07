@@ -305,6 +305,13 @@ A mailing list for open collaboration can also be found [here](https://groups.go
 
 Version release summary: 
 
+## V1.2 (October 2020)
+
+- Improved Neon intrinsics support
+- Added Takizuka-Abe collision operator
+- Threaded hydro_p pipelines
+- Added unit documentation
+
 ## V1.1 (March 2019)
 
 - Added V8 and V16 functionality

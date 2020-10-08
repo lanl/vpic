@@ -65,11 +65,11 @@ begin_initialization {
                                            me,  // mass
                  1.5*nppc*gnx*gny*gnz/nproc(),  // maximum number of local particles
                                        150000,  // number of particle movers
-                                            0,  // sort never
-                                            1); // sort mode out-of-place
+                                           10,  // sort every 10 time steps
+                                            0); // sort mode in-of-place
 
   // And positrons for charge neutrality
-  species_t* pos = define_species("positron", ec, me, elec->max_np, elec->max_nm, 0, 1);
+  species_t* pos = define_species("positron", ec, me, elec->max_np, elec->max_nm, 10, 1); // sort mode out-of-place
 
 
   // Set field values

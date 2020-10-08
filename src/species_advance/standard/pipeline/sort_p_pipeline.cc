@@ -176,7 +176,7 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
   /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->p_id;
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
-  const int has_annotation                             = args->has_annotation;
+  const int has_annotation                                   = args->has_annotation;
   const annotation_t* RESTRICT ALIGNED(128) p_src_annotation = args->aux_p_annotation;
   /**/  annotation_t* RESTRICT ALIGNED(128) p_dst_annotation = args->p_annotation;
   #endif
@@ -361,39 +361,49 @@ sort_p_pipeline( species_t * sp )
     aux_p_id       = ALIGN_PTR( size_t,       start_of_free,      128);
     start_of_free  = aux_p_id + sizeof(size_t) * n_particle;
   } else {
-    aux_p_id       = NULL;
+    aux_p_id       = nullptr;
   }
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(has_annotation) {
-    aux_p_annotation = ALIGN_PTR(annotation_t, start_of_free,            128);
+    aux_p_annotation = ALIGN_PTR(annotation_t, start_of_free,     128);
     start_of_free    = aux_p_annotation + sizeof(annotation_t)*has_annotation * n_particle;
   } else {
-    aux_p_annotation = NULL;
+    aux_p_annotation = nullptr;
   }
   #endif
 
   // Setup pipeline arguments.
-  args->p                = p;
-  args->aux_p            = aux_p;
+  args->p                  = p;
+  args->aux_p              = aux_p;
   #ifdef VPIC_GLOBAL_PARTICLE_ID
-  args->has_ids        = has_ids;
+  args->has_ids            = has_ids;
   if(has_ids) {
-    args->p_id           = p_id;
-    args->aux_p_id       = aux_p_id;
+    args->p_id             = p_id;
+    args->aux_p_id         = aux_p_id;
   } else {
-    args->p_id           = NULL;
-    args->aux_p_id       = NULL;
+    args->p_id             = nullptr;
+    args->aux_p_id         = nullptr;
   }
   #endif
-  args->coarse_partition = coarse_partition;
-  args->next             = next;
-  args->partition        = partition;
-  args->n                = n_particle;
-  args->n_subsort        = n_subsort;
-  args->vl               = vl;
-  args->vh               = vh;
-  args->n_voxel          = n_voxel;
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  args->has_annotation     = has_annotation;
+  if(has_annotation) {
+    args->p_annotation     = p_annotation;
+    args->aux_p_annotation = aux_p_annotation;
+  } else {
+    args->p_annotation     = nullptr;
+    args->aux_p_annotation = nullptr;
+  }
+  #endif
+  args->coarse_partition   = coarse_partition;
+  args->next               = next;
+  args->partition          = partition;
+  args->n                  = n_particle;
+  args->n_subsort          = n_subsort;
+  args->vl                 = vl;
+  args->vh                 = vh;
+  args->n_voxel            = n_voxel;
 
   if ( n_subsort != 1 )
   {
@@ -454,11 +464,11 @@ sort_p_pipeline( species_t * sp )
       args->p_id     = aux_p_id;
       args->aux_p_id = p_id;
     } else {
-      args->p_id     = NULL;
-      args->aux_p_id = NULL;
+      args->p_id     = nullptr;
+      args->aux_p_id = nullptr;
     }
     #endif
-    #ifdef VPIC_PARTICLE_ANNOTATE
+    #ifdef VPIC_PARTICLE_ANNOTATION
     args->has_annotation = has_annotation;
     if(has_annotation) {
       args->p_annotation     = aux_p_annotation;
@@ -488,7 +498,7 @@ sort_p_pipeline( species_t * sp )
       COPY( p_id, aux_p_id, n_particle );
     }
     #endif
-    #ifdef VPIC_PARTICLE_ANNOTATE
+    #ifdef VPIC_PARTICLE_ANNOTATION
     if(has_annotation) {
       COPY( p_annotation, aux_p_annotation, n_particle*has_annotation );
     }

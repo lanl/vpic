@@ -2,7 +2,7 @@ if (NO_EXPLICIT_VECTOR)
     # add the tests
     set(MPI_NUM_RANKS 1)
 
-    set(TESTS "tracer_species")
+    set(TESTS "particle_IDs")
 
     # Build
     # TODO: This method of doing the tests is really bad at rebuilding them properly

@@ -98,6 +98,8 @@ option(GLOBAL_PARTICLE_ID "Give particles a global ID that allows reidentifiacti
 set(PARTICLE_ANNOTATION "OFF" CACHE STRING "Reserve buffer to store extra information per particle for user defined annotations")
 set_property(CACHE PARTICLE_ANNOTATION PROPERTY STRINGS OFF ON float double)
 
+option(GCC_NO_STRICT_ALIASING "Enalbe -fno-strict-aliasing" OFF)
+
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
 #
@@ -130,6 +132,10 @@ endif(DISABLE_DYNAMIC_RESIZING)
 if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
     add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
 endif()
+
+if (GCC_NO_STRICT_ALIASING)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+endif(GCC_NO_STRICT_ALIASING)
 
 #------------------------------------------------------------------------------#
 # OpenSSL
@@ -335,6 +341,7 @@ elseif("${PARTICLE_ANNOTATION}" STREQUAL "double")
 else()
   message( FATAL_ERROR "PARTICLE_ANNOTATION can only be OFF, float or double" )
 endif()
+
 
 #------------------------------------------------------------------------------#
 # Handle vpic compile script last.

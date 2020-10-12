@@ -15,6 +15,7 @@ addons:
       - libhdf5-openmpi-dev
       - python-numpy
       - python-scipy
+      - python-h5py
 before_install:
  - mkdir -p "$HOME/bin"
  - if [[ ${CMAKE_VERSION} ]]; then wget --no-check-certificate -qO- http://www.cmake.org/files/v${CMAKE_VERSION:0:3}/cmake-${CMAKE_VERSION}.tar.gz | tar -xz && ln -s $PWD/cmake-${CMAKE_VERSION}/bin/cmake "$HOME/bin/cmake"; fi

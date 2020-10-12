@@ -122,7 +122,6 @@ begin_diagnostics {
       checkpt_objects(fname);
       sim_log("Restart dump restart completed.");
       mp_barrier();
-      exit(0);
   }
 
   // Dump buffer

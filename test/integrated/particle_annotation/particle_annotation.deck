@@ -205,14 +205,12 @@ begin_diagnostics {
 
   // Force a restart after step 5 to make sure that dump/restart works too
   if(step() == 5) {
-      sim_log("Force restart");
       dump_mkdir("restart0");
       char fname[256];
       sprintf(fname, "%s/restore.0.%i", "restart0", world_rank );
       checkpt_objects(fname);
       sim_log("Restart dump restart completed.");
       mp_barrier();
-      exit(0);
   }
 
   // If we reach this in the last step without any fails we probably did well enough

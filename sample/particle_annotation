@@ -275,7 +275,7 @@ begin_diagnostics {
   // Dump buffer
   if(step() == num_step) {
     sim_log("Dump particle buffer");
-    write_buffered_particle_dump("electron_tracer");
+    write_buffered_particle_dump("tracer2", "electron_tracer");
     clear_buffered_particle_dump("electron_tracer");
   }
 }

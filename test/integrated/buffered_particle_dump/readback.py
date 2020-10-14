@@ -9,7 +9,7 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 rundir=sys.argv[1]
-filename=rundir+"/tracer/tracer1/T.2/tracers.h5p"
+filename=rundir+"/tracers/T.2/tracers.h5p"
 
 if not os.path.isfile(filename):
     print("FAIL: "+filename+" is missing")

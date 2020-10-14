@@ -417,7 +417,7 @@ protected:
 
   void init_buffered_particle_dump(const char * speciesname, const int N_timesteps, const double safety_factor = 2.0);
   void accumulate_buffered_particle_dump(const char * speciesname, const int frame);
-  void write_buffered_particle_dump(const char * speciesname);
+  void write_buffered_particle_dump(const char * dname, const char * speciesname);
   void clear_buffered_particle_dump(const char * speciesname);
 
   #ifdef VPIC_PARTICLE_ANNOTATION

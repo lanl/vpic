@@ -1088,7 +1088,7 @@ vpic_simulation::accumulate_buffered_particle_dump(const char * sp_name, const i
  * @return Nothing, but performs IO
  */
 void
-vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
+vpic_simulation::write_buffered_particle_dump(const char * dname, const char * sp_name) {
   species_t *sp = find_species_name( sp_name, species_list );
   if( !sp ) ERROR(( "Invalid species \"%s\"", sp_name ));
 
@@ -1107,11 +1107,10 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   MPI_Info_free(&info);
 
   // Open file
-  dump_mkdir("tracer");
-  dump_mkdir("tracer/tracer1");
-  sprintf(strbuf, "tracer/tracer1/T.%ld", step());
+  dump_mkdir(dname);
+  sprintf(strbuf, "%s/T.%ld", dname, step());
   dump_mkdir(strbuf);
-  sprintf(strbuf, "tracer/tracer1/T.%ld/tracers.h5p", step());
+  sprintf(strbuf, "%s/T.%ld/tracers.h5p", dname, step());
 
   // Make sure that all rank check before other ranks start acting on it. That
   // could lead to a split between H5Fcreate and H5Fopen and total chaos.
@@ -1316,7 +1315,7 @@ vpic_simulation::write_buffered_particle_dump(const char * sp_name) {
   MPI_Allreduce(&grid->z0, &z0, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
 
   if(rank() == 0 ) {
-    sprintf(strbuf, "tracer/tracer1/T.%ld/tracers.h5p", step());
+    sprintf(strbuf, "%s/T.%ld/tracers.h5p", dname, step());
     file = H5Fopen(strbuf, H5F_ACC_RDWR, H5P_DEFAULT);
     sprintf(strbuf, "Step#%ld", step());
     hid_t group = H5Gopen(file, strbuf, H5P_DEFAULT);

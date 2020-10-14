@@ -12,10 +12,13 @@
 #include "vpic.h"
 #include "../util/io/FileUtils.h"
 
+// FIXME: This implies we want to be merged into a branch that supports HDF5
 #ifdef VPIC_ENABLE_HDF5
-#include "hdf5.h" // from the lib
+#include "hdf5.h"
 #endif
 
+// FIXME: Should this be user facing? At run time or cmake? Or do we just make
+// a decision in a meeting at some point?
 /* 1 means convert cell index to global */
 #define OUTPUT_CONVERT_GLOBAL_ID 1
 

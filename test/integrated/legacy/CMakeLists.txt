@@ -10,7 +10,7 @@ foreach(test ${ALL_TESTS})
 endforeach()
 
 foreach(test ${DEFAULT_ARG_TESTS})
-  add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
+  add_test(${test} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1 ${MPIEXEC_PREFLAGS} ./${test} ${MPIEXEC_POSTFLAGS} ${ARGS})
 endforeach()
 
-add_test(pcomm ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} pcomm ${MPIEXEC_POSTFLAGS} ${ARGS})
+add_test(pcomm ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 8 ${MPIEXEC_PREFLAGS} ./pcomm ${MPIEXEC_POSTFLAGS} ${ARGS})

@@ -135,8 +135,9 @@ bool compare_energies(
         const std::string file_a,
         const std::string file_b,
         const double relative_tolerance,
-        const unsigned short field_mask = 0b1111111111111111, /// short has 16 bytes, assume all are true
-        const FIELD_ENUM field_enum = FIELD_ENUM::Individual, /// short has 16 bytes, assume all are true
+     /* const unsigned short field_mask = 0b1111111111111111, // Strictly, this requires C++14 or GNU extensions */
+        const unsigned short field_mask = 0xFFFF,             // short has 16 bits, assume all are true
+        const FIELD_ENUM field_enum = FIELD_ENUM::Individual, // short has 16 bits, assume all are true
         const int write_err_ouput = 0, // If the run should dump the errors to disk
         const std::string err_file_base_name =  "err.out", // File name to write errors to
         const int num_lines_to_skip = 0 // Most energy files have 3 lines of padding

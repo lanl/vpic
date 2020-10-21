@@ -38,19 +38,19 @@
 
 typedef FileIO FILETYPE;
 
-const uint32_t all			(0xffffffff);
-const uint32_t electric		(1<<0 | 1<<1 | 1<<2);
-const uint32_t div_e_err	(1<<3);
-const uint32_t magnetic		(1<<4 | 1<<5 | 1<<6);
-const uint32_t div_b_err	(1<<7);
-const uint32_t tca			(1<<8 | 1<<9 | 1<<10);
-const uint32_t rhob			(1<<11);
-const uint32_t current		(1<<12 | 1<<13 | 1<<14);
-const uint32_t rhof			(1<<15);
-const uint32_t emat			(1<<16 | 1<<17 | 1<<18);
-const uint32_t nmat			(1<<19);
-const uint32_t fmat			(1<<20 | 1<<21 | 1<<22);
-const uint32_t cmat			(1<<23);
+const uint32_t all                      (0xffffffff);
+const uint32_t electric         (1<<0 | 1<<1 | 1<<2);
+const uint32_t div_e_err        (1<<3);
+const uint32_t magnetic         (1<<4 | 1<<5 | 1<<6);
+const uint32_t div_b_err        (1<<7);
+const uint32_t tca                      (1<<8 | 1<<9 | 1<<10);
+const uint32_t rhob                     (1<<11);
+const uint32_t current          (1<<12 | 1<<13 | 1<<14);
+const uint32_t rhof                     (1<<15);
+const uint32_t emat                     (1<<16 | 1<<17 | 1<<18);
+const uint32_t nmat                     (1<<19);
+const uint32_t fmat                     (1<<20 | 1<<21 | 1<<22);
+const uint32_t cmat                     (1<<23);
 
 const size_t total_field_variables(24);
 const size_t total_field_groups(12); // this counts vectors, tensors etc...
@@ -58,21 +58,21 @@ const size_t total_field_groups(12); // this counts vectors, tensors etc...
 const size_t field_indeces[12] = { 0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23 };
 
 struct FieldInfo {
-	char name[128];
-	char degree[128];
-	char elements[128];
-	char type[128];
-	size_t size;
+        char name[128];
+        char degree[128];
+        char elements[128];
+        char type[128];
+        size_t size;
 }; // struct FieldInfo
 
-const uint32_t current_density	(1<<0 | 1<<1 | 1<<2);
-const uint32_t charge_density	(1<<3);
-const uint32_t momentum_density	(1<<4 | 1<<5 | 1<<6);
-const uint32_t ke_density		(1<<7);
-const uint32_t stress_tensor	(1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
+const uint32_t current_density  (1<<0 | 1<<1 | 1<<2);
+const uint32_t charge_density   (1<<3);
+const uint32_t momentum_density (1<<4 | 1<<5 | 1<<6);
+const uint32_t ke_density               (1<<7);
+const uint32_t stress_tensor    (1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
 /* May want to use these instead
-const uint32_t stress_diagonal 		(1<<8 | 1<<9 | 1<<10);
-const uint32_t stress_offdiagonal	(1<<11 | 1<<12 | 1<<13);
+const uint32_t stress_diagonal          (1<<8 | 1<<9 | 1<<10);
+const uint32_t stress_offdiagonal       (1<<11 | 1<<12 | 1<<13);
 */
 
 const size_t total_hydro_variables(14);
@@ -81,11 +81,11 @@ const size_t total_hydro_groups(5); // this counts vectors, tensors etc...
 const size_t hydro_indeces[5] = { 0, 3, 4, 7, 8 };
 
 struct HydroInfo {
-	char name[128];
-	char degree[128];
-	char elements[128];
-	char type[128];
-	size_t size;
+        char name[128];
+        char degree[128];
+        char elements[128];
+        char type[128];
+        size_t size;
 }; // struct FieldInfo
 
 /*----------------------------------------------------------------------------
@@ -218,13 +218,13 @@ protected:
   interpolator_array_t * interpolator_array; // define_interpolator_array
   accumulator_array_t  * accumulator_array;  // define_accumulator_array
   hydro_array_t        * hydro_array;        // define_hydro_array
-  species_t            * species_list;       // define_species /
+  species_t            * species_list=NULL;       // define_species /
                                              // species helpers
-  particle_bc_t        * particle_bc_list;   // define_particle_bc /
+  particle_bc_t        * particle_bc_list=NULL;   // define_particle_bc /
                                              // boundary helpers
-  emitter_t            * emitter_list;       // define_emitter /
+  emitter_t            * emitter_list=NULL;       // define_emitter /
                                              // emitter helpers
-  collision_op_t       * collision_op_list;  // collision helpers
+  collision_op_t       * collision_op_list=NULL;  // collision helpers
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
@@ -279,7 +279,7 @@ protected:
 
   void print_hashed_comment(FileIO & fileIO, const char * comment);
   void global_header(const char * base,
-  	std::vector<DumpParameters *> dumpParams);
+        std::vector<DumpParameters *> dumpParams);
 
   void field_header(const char * fbase, DumpParameters & dumpParams);
   void hydro_header(const char * speciesname, const char * hbase,
@@ -380,7 +380,7 @@ protected:
                         double xh,  double yh,  double zh,
                         double gnx, double gny, double gnz,
                         double gpx, double gpy, double gpz ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
                             (int)gnx, (int)gny, (int)gnz,
                             (int)gpx, (int)gpy, (int)gpz );
@@ -391,7 +391,7 @@ protected:
                          double xh,  double yh,  double zh,
                          double gnx, double gny, double gnz,
                          double gpx, double gpy, double gpz, int pbc ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
                              (int)gnx, (int)gny, (int)gnz,
                              (int)gpx, (int)gpy, (int)gpz,
@@ -403,7 +403,7 @@ protected:
                           double xh,  double yh,  double zh,
                           double gnx, double gny, double gnz,
                           double gpx, double gpy, double gpz ) {
-	px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
     partition_metal_box( grid, xl, yl, zl, xh, yh, zh,
                          (int)gnx, (int)gny, (int)gnz,
                          (int)gpx, (int)gpy, (int)gpz );
@@ -453,7 +453,7 @@ protected:
                    double epsx,        double epsy,       double epsz,
                    double mux,         double muy,        double muz,
                    double sigmax,      double sigmay,     double sigmaz,
-		   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
+                   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
     return append_material( material( name,
                                       epsx,   epsy,   epsz,
                                       mux,    muy,    muz,
@@ -680,7 +680,7 @@ protected:
 
   // Compute the Courant length on a regular mesh
   inline double courant_length( double lx, double ly, double lz,
-				double nx, double ny, double nz ) {
+                                double nx, double ny, double nz ) {
     double w0, w1 = 0;
     if( nx>1 ) w0 = nx/lx, w1 += w0*w0;
     if( ny>1 ) w0 = ny/ly, w1 += w0*w0;

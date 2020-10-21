@@ -28,7 +28,7 @@ compute_div_b_err_pipeline_scalar( pipeline_args_t * args,
   const float pz = (nz>1) ? g->rdz : 0;
 
   // Process the voxels assigned to this pipeline
-  
+
   DISTRIBUTE_VOXELS( 1,nx, 1,ny, 1,nz, 16,
                      pipeline_rank, n_pipeline,
                      x, y, z, n_voxel );
@@ -221,7 +221,7 @@ compute_div_b_err_pipeline_v8( pipeline_args_t * args,
 
   LOAD_STENCIL();
 
-  for( ; n_voxel>3; n_voxel-=8 ) {
+  for( ; n_voxel>7; n_voxel-=8 ) {
     NEXT_STENCIL(0); NEXT_STENCIL(1); NEXT_STENCIL(2); NEXT_STENCIL(3);
     NEXT_STENCIL(4); NEXT_STENCIL(5); NEXT_STENCIL(6); NEXT_STENCIL(7);
 
@@ -261,7 +261,7 @@ compute_div_b_err_pipeline( field_array_t * RESTRICT fa )
   {
     ERROR( ( "Bad args" ) );
   }
-  
+
 # if 0 // Original non-pipelined version
   for( z = 1; z <= nz; z++ )
   {

@@ -1,0 +1,721 @@
+//////////////////////////////////////////////////////
+//
+//   Electron slowing down
+//
+//////////////////////////////////////////////////////
+
+begin_globals {
+
+  int restart_interval;
+  int velocity_interval;
+  int fields_interval;
+  int ehydro_interval;
+  int Hhydro_interval;
+  int eparticle_interval;
+  int Hparticle_interval;
+  int quota_check_interval;  // How frequently to check if quota exceeded
+
+  int rtoggle;               // enables save of last 2 restart dumps for safety
+  double quota_sec;          // Run quota in seconds
+
+   // Output variables
+  DumpParameters fdParams;
+  DumpParameters hedParams;
+  DumpParameters hHdParams;
+  std::vector<DumpParameters *> outputParams;
+
+
+  //Vadim: modified restart machinary
+  int write_restart;     // global flag for all to write restart files
+  int write_end_restart; // global flag for all to write restart files
+};
+
+begin_initialization {
+  // use natural PIC units
+  double ec   = 1;         // Charge normalization
+  double me   = 1;         // Mass normalization
+  double c    = 1;         // Speed of light
+  double de   = 1;         // Length normalization (electron inertial length)
+  double eps0 = 1;         // Permittivity of space
+
+  //double cfl_req   = 0.99;  // How close to Courant should we try to run
+  //double wpedt_max = 0.36;  // Max dt allowed if Courant not too restrictive
+  //double damp      = 0.0;   // Level of radiation damping
+  //int rng_seed     = 1;     // Random number seed increment
+
+  // Physics parameters
+  double mi_me   = 1836.0;   // Ion mass / electron mass
+  double Te      = 0.001;     // Electron temperature in m_ec^2
+  double Ti_Te   = 1.0;      // Ion temperature / electron temperature
+  double n0      = 1.0;      // Density
+  //double Z       = 1.0;      // Ion charge
+  double vdre_vthe =  1.0;   // 1 gives Fig. 8a in Takizuka & Abe (1977)
+  //double taue    = 1.0*sqrt(2.0);      // simulation tau_e's to run
+
+  double quota   = 0.1;   // run quota in hours
+  double quota_sec = quota*3600;  // Run quota in seconds
+
+  //derived qunatities
+  double mi = me*mi_me;            // Ion mass
+  double Ti = Te*Ti_Te;            // Ion temperature
+  double vthe = sqrt(Te/me);       // Electron thermal velocity
+  double vdre = vdre_vthe*vthe;
+  double vthi = sqrt(Ti/mi);       // Ion thermal velocity
+  double wpe  = 1.0;               // electron plasma frequency
+
+  double sort_interval = 1; // Injector moments also updated
+
+   // Numerical parameters
+  double nppc  = 1000; // number of macro particle per cell per species
+
+  double Lx    = 1.0*de*vthe;    // size of box in x dimension
+  double Ly    = 1.0*de*vthe;    // size of box in y dimension
+  double Lz    = 1.0*de*vthe;    // size of box in z dimension
+
+  double topology_x = 1;  // Number of domains in x, y, and z
+  double topology_y = 1;
+  double topology_z = 1;  // For load balance, keep "1" or "2" for Harris sheet
+
+  double nx = 2;
+  double ny = 1;
+  double nz = 1;
+
+  double hx = Lx/nx;
+  double hy = Ly/ny;
+  double hz = Lz/nz;
+
+  double Npe       = n0*Lx*Ly*Lz;        // N physical e's
+  double Ne        = nppc*nx*ny*nz;      // total macro electrons in box
+  Ne  = trunc_granular(Ne,nproc());      // Make it divisible by nproc
+  double weight = ec*Npe/Ne;             // Charge per macro electron
+
+  // Determine the time step
+  double dg = courant_length(Lx,Ly,Lz,nx,ny,nz);  // courant length
+  double dt = 1e-3*sqrt(2)*pow(Te,1.5);                               //
+
+  // Intervals for output
+  int restart_interval = 8000;
+  int velocity_interval = 5;
+  int interval = int(1000);
+  int fields_interval = interval;
+  int ehydro_interval = interval;
+  int Hhydro_interval = interval;
+  int eparticle_interval = 8*interval;
+  int Hparticle_interval = 8*interval;
+  int quota_check_interval     = 100;
+
+  // Collision parameters
+  // In CGS, variance of tan theta =
+  // 2 pi e^4 n_e dt_coll loglambda / (m_ab^2 u^3)
+
+  int tstep_coll = (int) sort_interval;  // How frequently to do collisions
+  double dt_coll = dt*(tstep_coll);      //
+  double cvar0 = 1.0;       //in SI: (e^4*n0*Lambda)/(8*pi*eps0^2*m_e^2*c^3) --> internal operator multiplies by dt!
+
+  // Determine which domains area along the boundaries - Use macro from
+  // grid/partition.c.
+
+# define RANK_TO_INDEX(rank,ix,iy,iz) BEGIN_PRIMITIVE {                 \
+    int _ix, _iy, _iz;                                                  \
+    _ix  = (rank);                /* ix = ix+gpx*( iy+gpy*iz ) */       \
+    _iy  = _ix/int(topology_x);   /* iy = iy+gpy*iz */                  \
+    _ix -= _iy*int(topology_x);   /* ix = ix */                         \
+    _iz  = _iy/int(topology_y);   /* iz = iz */                         \
+    _iy -= _iz*int(topology_y);   /* iy = iy */                         \
+    (ix) = _ix;                                                         \
+    (iy) = _iy;                                                         \
+    (iz) = _iz;                                                         \
+  } END_PRIMITIVE
+
+  //int ix, iy, iz, left=0,right=0,top=0,bottom=0;
+  //RANK_TO_INDEX( int(rank()), ix, iy, iz );
+  //if ( ix ==0 ) left=1;
+  //if ( ix ==topology_x-1 ) right=1;
+  //if ( iz ==0 ) bottom=1;
+  //if ( iz ==topology_z-1 ) top=1;
+
+  ///////////////////////////////////////////////
+  // Setup high level simulation parameters
+  num_step             = int(400);
+  status_interval      = 200;
+  sync_shared_interval = 0*status_interval/2;
+  clean_div_e_interval = 0*status_interval/2;
+  clean_div_b_interval = 0*status_interval/2;
+
+  global->restart_interval     = restart_interval;
+  global->velocity_interval    = velocity_interval;
+  global->fields_interval      = fields_interval;
+  global->ehydro_interval      = ehydro_interval;
+  global->Hhydro_interval      = Hhydro_interval;
+  global->eparticle_interval   = eparticle_interval;
+  global->Hparticle_interval   = Hparticle_interval;
+  global->quota_check_interval = quota_check_interval;
+  global->quota_sec            = quota_sec;
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Setup the grid
+
+  // Setup basic grid parameters
+  grid->dx = hx;
+  grid->dy = hy;
+  grid->dz = hz;
+  grid->dt = dt;
+  grid->cvac = c;
+  grid->eps0 = eps0;
+  //grid->damp = damp;
+
+  // Define the grid
+  define_periodic_grid(  -0.5*Lx, -0.5*Ly, -0.5*Lz,    // Low corner
+                          0.5*Lx,  0.5*Ly,  0.5*Lz,     // High corner
+                         nx, ny, nz,             // Resolution
+                         topology_x, topology_y, topology_z); // Topology
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Setup materials
+
+  sim_log("Setting up materials. ");
+
+  define_material( "vacuum", 1 );
+  //material_t * resistive = define_material( "resistive",1,1,1 );
+
+  define_field_array(NULL); // second argument is damp, default to 0
+
+  // Note: define_material defaults to isotropic materials with mu=1,sigma=0
+  // Tensor electronic, magnetic and conductive materials are supported
+  // though. See "shapes" for how to define them and assign them to regions.
+  // Also, space is initially filled with the first material defined.
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Finalize Field Advance
+
+  sim_log("Finalizing Field Advance");
+
+  // Define resistive layer surrounding boundary --> set thickness=0
+  // to eliminate this feature
+  /*
+  double thickness = 2;
+  #define resistive_layer (x < hx*thickness || x > Lx-hx*thickness	\
+                       || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
+  */
+
+  //if (thickness > 0)
+  // set_region_material(resistive_layer, resistive, resistive);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Setup the species
+
+  sim_log("Setting up species. ");
+  double nmax = 2.0*Ne/nproc();
+  double nmovers = 0.1*nmax;
+  double sort_method = 1;   // 0=in place and 1=out of place
+  species_t *electron = define_species("electron", -ec, me, nmax, nmovers,
+    sort_interval, sort_method);
+  species_t *ion = define_species("ion", ec, mi, nmax, nmovers,
+    sort_interval, sort_method);
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Collisions
+
+  int ncoll = tstep_coll; //number of time steps (grid->dt) between calls
+  define_collision_op(takizuka_abe("e_i_bulk", electron, ion, entropy, cvar0, ncoll));
+
+  ///////////////////////////////////////////////////
+  // Log diagnostic information about this simulation
+
+  sim_log( "***********************************************" );
+  sim_log("* Topology:                       " << topology_x
+    << " " << topology_y << " " << topology_z);
+   sim_log ( "Ti/Te = " << Ti_Te ) ;
+  sim_log ( "mi/me = " << mi_me );
+   sim_log ( "num_step = " << num_step );
+  sim_log ( "courant = " << c*dt/dg );
+  sim_log ( "nproc = " << nproc ()  );
+  sim_log ( "nppc = " << nppc );
+  sim_log ( "Ne = " << Ne );
+  sim_log ( "total # of particles = " << 2*Ne );
+  sim_log ( "dt*wpe = " << wpe*dt );
+  sim_log ( "vthe/c = " << vthe/c );
+  sim_log ( "vdre/c = " << vdre/c );
+  sim_log ( "cvar0 = " << cvar0 );
+  sim_log ( "nu_0*dt_jx = " << 1/sqrt(2)/vthe/vthe/vthe*velocity_interval*dt_coll);
+
+
+  // Dump simulation information to file "info"
+  if (rank() == 0 ) {
+    FileIO fp_info;
+    if ( ! (fp_info.open("info", io_write)==ok) ) ERROR(("Cannot open file."));
+    fp_info.print("           ***** Simulation parameters ***** \n");
+    fp_info.print("              Ti/Te  =               %e\n", Ti_Te );
+    fp_info.print("              mi/me =                %e\n", mi_me );
+    fp_info.print("              num_step =             %i\n", num_step );
+    fp_info.print("              nx =                   %e\n", nx );
+    fp_info.print("              ny =                   %e\n", ny );
+    fp_info.print("              nz =                   %e\n", nz );
+    fp_info.print("              nproc =                %i\n", nproc() );
+    fp_info.print("              nppc =                 %e\n", nppc );
+    fp_info.print("              Ne =                   %e\n", Ne );
+    fp_info.print("              total # of particles = %e\n", 2*Ne );
+    fp_info.print("              vthi/c =               %e\n", vthi/c );
+    fp_info.print("              vthe/c =               %e\n", vthe/c );
+    fp_info.print("              vdre/c =               %e\n", vdre/c );
+    fp_info.print("              tstep_coll:            %i\n", tstep_coll);
+    fp_info.print("              cvar0 =         %e\n", cvar0 );
+    fp_info.print("              nu_0*dt_jx =           %e\n", 1/sqrt(2)/vthe/vthe/vthe*velocity_interval*dt_coll );
+    fp_info.print("              ***************************\n");
+    fp_info.close();
+  }
+
+  ////////////////////////////
+  // Load fields
+
+  sim_log( "Loading fields" );
+  set_region_field( everywhere, 0, 0, 0,                    // Electric field
+		    0 ,0 ,0 );
+
+  // Note: everywhere is a region that encompasses the entire simulation
+  // In general, regions are specied as logical equations (i.e. x>0 && x+y<2)
+
+  // LOAD PARTICLES
+
+  sim_log( "Loading particles" );
+
+  // Do a fast load of the particles
+
+  seed_entropy( rank() );  //Generators desynchronized
+  double xmin = grid->x0 , xmax = grid->x0+(grid->dx)*(grid->nx);
+  double ymin = grid->y0 , ymax = grid->y0+(grid->dy)*(grid->ny);
+  double zmin = grid->z0 , zmax = grid->z0+(grid->dz)*(grid->nz);
+
+
+  sim_log( "-> Background Population" );
+
+  repeat ( Ne/nproc() ) {
+
+    double x = uniform( rng(0), xmin, xmax );
+    double y = uniform( rng(0), ymin, ymax );
+    double z = uniform( rng(0), zmin, zmax );
+
+    inject_particle( electron, x, y, z,
+                     normal( rng(0), 0, vthe) - vdre,
+                     normal( rng(0), 0, vthe),
+                     normal( rng(0), 0, vthe),
+                     weight, 0, 0);
+
+    inject_particle( ion, x, y, z,
+                     normal( rng(0), 0, vthi),
+                     normal( rng(0), 0, vthi),
+                     normal( rng(0), 0, vthi),
+                     weight, 0 ,0 );
+  }
+
+  sim_log( "Finished loading particles" );
+
+  /*--------------------------------------------------------------------------
+   * New dump definition
+   *------------------------------------------------------------------------*/
+
+  /*--------------------------------------------------------------------------
+   * Set data output format
+   *
+   * This option allows the user to specify the data format for an output
+   * dump.  Legal settings are 'band' and 'band_interleave'.  Band-interleave
+   * format is the native storage format for data in VPIC.  For field data,
+   * this looks something like:
+   *
+   *   ex0 ey0 ez0 div_e_err0 cbx0 ... ex1 ey1 ez1 div_e_err1 cbx1 ...
+   *
+   * Banded data format stores all data of a particular state variable as a
+   * contiguous array, and is easier for ParaView to process efficiently.
+   * Banded data looks like:
+   *
+   *   ex0 ex1 ex2 ... exN ey0 ey1 ey2 ...
+   *
+   *------------------------------------------------------------------------*/
+
+  global->fdParams.format = band;
+  sim_log ( "Fields output format = band" );
+
+  global->hedParams.format = band;
+  sim_log ( "Electron species output format = band" );
+
+  global->hHdParams.format = band;
+  sim_log ( "Ion species output format = band" );
+
+  /*--------------------------------------------------------------------------
+   * Set stride
+   *
+   * This option allows data down-sampling at output.  Data are down-sampled
+   * in each dimension by the stride specified for that dimension.  For
+   * example, to down-sample the x-dimension of the field data by a factor
+   * of 2, i.e., half as many data will be output, select:
+   *
+   *   global->fdParams.stride_x = 2;
+   *
+   * The following 2-D example shows down-sampling of a 7x7 grid (nx = 7,
+   * ny = 7.  With ghost-cell padding the actual extents of the grid are 9x9.
+   * Setting the strides in x and y to equal 2 results in an output grid of
+   * nx = 4, ny = 4, with actual extents 6x6.
+   *
+   * G G G G G G G G G
+   * G X X X X X X X G
+   * G X X X X X X X G         G G G G G G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G   ==>   G X X X X G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G         G X X X X G
+   * G X X X X X X X G         G G G G G G
+   * G G G G G G G G G
+   *
+   * Note that grid extents in each dimension must be evenly divisible by
+   * the stride for that dimension:
+   *
+   *   nx = 150;
+   *   global->fdParams.stride_x = 10; // legal -> 150/10 = 15
+   *
+   *   global->fdParams.stride_x = 8; // illegal!!! -> 150/8 = 18.75
+   *------------------------------------------------------------------------*/
+
+  // relative path to fields data from global header
+  sprintf(global->fdParams.baseDir, "fields");
+
+  // base file name for fields output
+  sprintf(global->fdParams.baseFileName, "fields");
+
+  global->fdParams.stride_x = 1;
+  global->fdParams.stride_y = 1;
+  global->fdParams.stride_z = 1;
+
+  // add field parameters to list
+  global->outputParams.push_back(&global->fdParams);
+
+  sim_log ( "Fields x-stride " << global->fdParams.stride_x );
+  sim_log ( "Fields y-stride " << global->fdParams.stride_y );
+  sim_log ( "Fields z-stride " << global->fdParams.stride_z );
+
+  // relative path to electron species data from global header
+  sprintf(global->hedParams.baseDir, "hydro");
+
+  // base file name for fields output
+  sprintf(global->hedParams.baseFileName, "ehydro");
+
+  global->hedParams.stride_x = 1;
+  global->hedParams.stride_y = 1;
+  global->hedParams.stride_z = 1;
+
+  // add electron species parameters to list
+  global->outputParams.push_back(&global->hedParams);
+
+  sim_log ( "Electron species x-stride " << global->hedParams.stride_x );
+  sim_log ( "Electron species y-stride " << global->hedParams.stride_y );
+  sim_log ( "Electron species z-stride " << global->hedParams.stride_z );
+
+  // relative path to electron species data from global header
+  sprintf(global->hHdParams.baseDir, "hydro");
+
+  // base file name for fields output
+  sprintf(global->hHdParams.baseFileName, "Hhydro");
+
+  global->hHdParams.stride_x = 1;
+  global->hHdParams.stride_y = 1;
+  global->hHdParams.stride_z = 1;
+
+  sim_log ( "Ion species x-stride " << global->hHdParams.stride_x );
+  sim_log ( "Ion species y-stride " << global->hHdParams.stride_y );
+  sim_log ( "Ion species z-stride " << global->hHdParams.stride_z );
+
+  // add electron species parameters to list
+  global->outputParams.push_back(&global->hHdParams);
+
+  /*--------------------------------------------------------------------------
+   * Set output fields
+   *
+   * It is now possible to select which state-variables are output on a
+   * per-dump basis.  Variables are selected by passing an or-list of
+   * state-variables by name.  For example, to only output the x-component
+   * of the electric field and the y-component of the magnetic field, the
+   * user would call output_variables like:
+   *
+   *   global->fdParams.output_variables( ex | cby );
+   *
+   * NOTE: OUTPUT VARIABLES ARE ONLY USED FOR THE BANDED FORMAT.  IF THE
+   * FORMAT IS BAND-INTERLEAVE, ALL VARIABLES ARE OUTPUT AND CALLS TO
+   * 'output_variables' WILL HAVE NO EFFECT.
+   *
+   * ALSO: DEFAULT OUTPUT IS NONE!  THIS IS DUE TO THE WAY THAT VPIC
+   * HANDLES GLOBAL VARIABLES IN THE INPUT DECK AND IS UNAVOIDABLE.
+   *
+   * For convenience, the output variable 'all' is defined:
+   *
+   *   global->fdParams.output_variables( all );
+   *------------------------------------------------------------------------*/
+  /* CUT AND PASTE AS A STARTING POINT
+   * REMEMBER TO ADD APPROPRIATE GLOBAL DUMPPARAMETERS VARIABLE
+
+   output_variables( all );
+
+   output_variables( electric | div_e_err | magnetic | div_b_err |
+                     tca      | rhob      | current  | rhof |
+                     emat     | nmat      | fmat     | cmat );
+
+   output_variables( current_density  | charge_density |
+                     momentum_density | ke_density     | stress_tensor );
+   */
+
+  //global->fdParams.output_variables( electric | magnetic );
+  //global->hedParams.output_variables( current_density | charge_density
+  //                                    | stress_tensor );
+  //global->hHdParams.output_variables( current_density | charge_density );
+  //                                    | stress_tensor );
+
+  global->fdParams.output_variables( all );
+  global->hedParams.output_variables( all );
+  global->hHdParams.output_variables( all );
+
+  /*--------------------------------------------------------------------------
+   * Convenience functions for simlog output
+   *------------------------------------------------------------------------*/
+
+  char varlist[512];
+  create_field_list(varlist, global->fdParams);
+
+  sim_log ( "Fields variable list: " << varlist );
+
+  create_hydro_list(varlist, global->hedParams);
+
+  sim_log ( "Electron species variable list: " << varlist );
+
+  create_hydro_list(varlist, global->hHdParams);
+
+  sim_log ( "Ion species variable list: " << varlist );
+
+  /* ---------------------------------------------
+     Add parameters for the energy diagnostics
+     --------------------------------------------- */
+
+  sim_log("*** Finished with user-specified initialization ***");
+
+  // Upon completion of the initialization, the following occurs:
+  // - The synchronization error (tang E, norm B) is computed between domains
+  //   and tang E / norm B are synchronized by averaging where discrepancies
+  //   are encountered.
+  // - The initial divergence error of the magnetic field is computed and
+  //   one pass of cleaning is done (for good measure)
+  // - The bound charge density necessary to give the simulation an initially
+  //   clean divergence e is computed.
+  // - The particle momentum is uncentered from u_0 to u_{-1/2}
+  // - The user diagnostics are called on the initial state
+  // - The physics loop is started
+  //
+  // The physics loop consists of:
+  // - Advance particles from x_0,u_{-1/2} to x_1,u_{1/2}
+  // - User particle injection at x_{1-age}, u_{1/2} (use inject_particles)
+  // - User current injection (adjust field(x,y,z).jfx, jfy, jfz)
+  // - Advance B from B_0 to B_{1/2}
+  // - Advance E from E_0 to E_1
+  // - User field injection to E_1 (adjust field(x,y,z).ex,ey,ez,cbx,cby,cbz)
+  // - Advance B from B_{1/2} to B_1
+  // - (periodically) Divergence clean electric field
+  // - (periodically) Divergence clean magnetic field
+  // - (periodically) Synchronize shared tang e and norm b
+  // - Increment the time step
+  // - Call user diagnostics
+  // - (periodically) Print a status message
+
+} //begin_initialization
+
+#define should_dump(x)                                                  \
+  (global->x##_interval>0 && remainder(step(), global->x##_interval) == 0)
+
+begin_diagnostics {
+
+  /*--------------------------------------------------------------------------
+   * NOTE: YOU CANNOT DIRECTLY USE C FILE DESCRIPTORS OR SYSTEM CALLS ANYMORE
+   *
+   * To create a new directory, use:
+   *
+   *   dump_mkdir("full-path-to-directory/directoryname")
+   *
+   * To open a file, use: FileIO class
+   *
+   * Example for file creation and use:
+   *
+   *   // declare file and open for writing
+   *   // possible modes are: io_write, io_read, io_append,
+   *   // io_read_write, io_write_read, io_append_read
+   *   FileIO fileIO;
+   *   FileIOStatus status;
+   *   status= fileIO.open("full-path-to-file/filename", io_write);
+   *
+   *   // formatted ASCII  output
+   *   fileIO.print("format string", varg1, varg2, ...);
+   *
+   *   // binary output
+   *   // Write n elements from array data to file.
+   *   // T is the type, e.g., if T=double
+   *   // fileIO.write(double * data, size_t n);
+   *   // All basic types are supported.
+   *   fileIO.write(T * data, size_t n);
+   *
+   *   // close file
+   *   fileIO.close();
+   *------------------------------------------------------------------------*/
+
+  /*--------------------------------------------------------------------------
+   * Data output directories
+   * WARNING: The directory list passed to "global_header" must be
+   * consistent with the actual directories where fields and species are
+   * output using "field_dump" and "hydro_dump".
+   *
+   * DIRECTORY PATHES SHOULD BE RELATIVE TO
+   * THE LOCATION OF THE GLOBAL HEADER!!!
+   *------------------------------------------------------------------------*/
+
+  /*--------------------------------------------------------------------------
+   * Normal rundata dump
+   *------------------------------------------------------------------------*/
+  if(step()==0) {
+    dump_mkdir("fields");
+    dump_mkdir("hydro");
+    dump_mkdir("rundata");
+    dump_mkdir("injectors");
+    dump_mkdir("restart1");  // 1st backup
+    dump_mkdir("restart2");  // 2nd backup
+    dump_mkdir("particle");
+
+    dump_grid("rundata/grid");
+    dump_materials("rundata/materials");
+    dump_species("rundata/species");
+    global_header("global", global->outputParams);
+  } // if
+
+  /*--------------------------------------------------------------------------
+   * Normal rundata energies dump
+   *------------------------------------------------------------------------*/
+  if(should_dump(velocity)) {
+    dump_energies("rundata/energies", step() == 0 ? 0 : 1);
+  } // if
+
+  /*--------------------------------------------------------------------------
+   * Field data output
+   *------------------------------------------------------------------------*/
+
+  if(step() == 1 || should_dump(fields)) field_dump(global->fdParams);
+
+  /*--------------------------------------------------------------------------
+   * Electron species output
+   *------------------------------------------------------------------------*/
+
+  if(should_dump(ehydro)) hydro_dump("electron", global->hedParams);
+
+  /*--------------------------------------------------------------------------
+   * Ion species output
+   *------------------------------------------------------------------------*/
+
+  if(should_dump(Hhydro)) hydro_dump("ion", global->hHdParams);
+
+  /*--------------------------------------------------------------------------
+   * Restart dump
+   *------------------------------------------------------------------------*/
+
+  if(step() && !(step()%global->restart_interval)) {
+    if(!global->rtoggle) {
+      global->rtoggle = 1;
+      checkpt("restart1/restart", 0);
+        }
+    else {
+      global->rtoggle = 0;
+      checkpt("restart2/restart", 0);
+       } // if
+  } // if
+
+  // Dump particle data
+
+  char subdir[36];
+  if ( should_dump(eparticle) && step() !=0
+       && step() > 56*(global->fields_interval)  ) {
+    // if ( should_dump(eparticle) && step() !=0 ) {
+    sprintf(subdir,"particle/T.%lld",(long long)step());
+    dump_mkdir(subdir);
+    sprintf(subdir,"particle/T.%lld/eparticle",(long long)step());
+    dump_particles("electron", subdir);
+  }
+
+  if ( should_dump(Hparticle) && step() !=0
+       && step() > 56*(global->fields_interval)  ) {
+    sprintf(subdir,"particle/T.%lld/Hparticle",(long long)step());
+    dump_particles("ion", subdir);
+  }
+
+  // Shut down simulation when wall clock time exceeds global->quota_sec.
+  // Note that the mp_elapsed() is guaranteed to return the same value for all
+  // processors (i.e., elapsed time on proc #0), and therefore the abort will
+  // be synchronized across processors. Note that this is only checked every
+  // few timesteps to eliminate the expensive mp_elapsed call from every
+  // timestep. mp_elapsed has an ALL_REDUCE in it!
+
+  if (( step()>0 && global->quota_check_interval>0
+        && (step()&global->quota_check_interval)==0)
+      || (global->write_end_restart) ) {
+    if ( (global->write_end_restart) ) {
+
+      global->write_end_restart = 0; // reset restart flag
+
+      sim_log( "Allowed runtime exceeded for this job.  Terminating....\n");
+      double dumpstart = uptime();
+
+      checkpt("restart0/restart",0);
+
+      mp_barrier(  ); // Just to be safe
+      sim_log( "Restart dump restart completed." );
+      double dumpelapsed = uptime() - dumpstart;
+      sim_log("Restart duration "<< dumpelapsed);
+      exit(0); // Exit or abort?
+    }
+    if( uptime() > global->quota_sec ) global->write_end_restart = 1;
+  }
+
+} // end diagnostics
+
+//******************* PARTICLE INJECTION ********************
+begin_particle_injection { } // end particle injection
+
+//*******************  CURRENT INJECTION ***************************
+begin_current_injection { }
+
+//*******************  FIELD INJECTION ***************************
+begin_field_injection {
+    //set all to 0
+    for( int iz=0; iz<=grid->nz+1; iz++) {
+        for( int iy=0; iy<=grid->ny+1; iy++) {
+            for( int ix=0; ix<=grid->nx+1; ix++) {
+                field(ix,iy,iz).ex=0;
+                field(ix,iy,iz).ey=0;
+                field(ix,iy,iz).ez=0;
+                field(ix,iy,iz).cbx=0;
+                field(ix,iy,iz).cby=0;
+                field(ix,iy,iz).cbz=0;
+            }
+        }
+    }
+}
+
+//****************** COLLISIONS *********************************
+begin_particle_collisions{
+    /* use internal collisions but dump diagnostic info here */
+    if ( (should_dump(velocity) || step()==1) && step()>0 ) {
+        FileIO        fileIO;
+        FileIOStatus  status;
+        static char   fname[] = "JX_data" ;
+        status=fileIO.open( fname, step()==1 ? io_write : io_append );
+        if ( status==fail ) ERROR(("Could not open JX data file."));
+        fileIO.seek( uint64_t( sizeof(double)* ( step()/global->velocity_interval ) ),
+                SEEK_SET );
+        double jx = 0.5*(field(1,1,1).jfx+field(2,1,1).jfx);
+        //fileIO.print( "%f \n" , jx );
+        fileIO.write(&jx,1);
+        fileIO.close();
+    } // if
+
+}

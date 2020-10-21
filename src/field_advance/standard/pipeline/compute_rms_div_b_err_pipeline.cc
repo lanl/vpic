@@ -51,7 +51,7 @@ compute_rms_div_b_err_pipeline_scalar( pipeline_args_t * args,
 }
 
 double
-compute_rms_div_b_err_pipeline( const field_array_t * fa )
+compute_rms_div_b_err_pipeline( const field_array_t * RESTRICT fa )
 {
   pipeline_args_t args[1];
   int p;

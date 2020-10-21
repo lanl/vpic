@@ -337,7 +337,7 @@ move_p( particle_t       * ALIGNED(128) p0,
 
     face = axis;
 
-    if ( v0 > 0 )
+    if ( v0 > 0.0f )
     {
       face += 3;
     }

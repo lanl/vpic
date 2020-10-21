@@ -11,17 +11,15 @@
 // COEXIST ON THE SAME FACE!  THIS MEANS THAT CUSTOM BOUNDARYS MUST
 // REINJECT ALL ABSORBED PARTICLES IN THE SAME DOMAIN!
 
-
 // Updated by Scott V. Luedtke, XCP-6, December 6, 2018.
 // The mover array is now resized along with the particle array.  The mover
 // array is filled during advance_p and is most likely to overflow there, not
 // here.  Both arrays will now resize down as well.
 // 12/20/18: The mover array is no longer resized with the particle array, as
 // this actually uses more RAM than having static mover arrays.  The mover will
-// still size up if there are too many incoming particles, but I have not
-// encountered this.  Some hard-to-understand bit shifts have been replaced with
-// cleaner code that the compiler should have no trouble optimizing.
-// Spits out lots of warnings. TODO: Remove warnings after testing.
+// still size up if there are too many incoming particles, but this is rare.
+// Some hard-to-understand bit shifts have been replaced with cleaner code that
+// the compiler should have no trouble optimizing.
 
 #ifdef V4_ACCELERATION
 using namespace v4;
@@ -35,7 +33,6 @@ using namespace v8;
 #define MIN_NP 128 // Default to 4kb (~1 page worth of memory)
 //#define MIN_NP 32768 // 32768 particles is 1 MiB of memory.
 #endif
-
 
 enum { MAX_PBC = 32, MAX_SP = 32 };
 
@@ -484,12 +481,10 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         /**/             // rate that avoids excessive heap
         /**/             // fragmentation)
 
-        // float resize_ratio = (float)n/sp->max_np;
-
-        WARNING( ( "Resizing local %s particle storage from %i to %i",
-                   sp->name,
-                   sp->max_np,
-                   n ) );
+        //WARNING( ( "Resizing local %s particle storage from %i to %i",
+                   //sp->name,
+                   //sp->max_np,
+                   //n ) );
 
         MALLOC_ALIGNED( new_p, n, 128 );
 
@@ -499,17 +494,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         sp->p      = new_p;
         sp->max_np = n;
-
-        /*
-        nm = sp->max_nm * resize_ratio;
-        WARNING(( "Resizing local %s mover storage from %i to %i",
-                  sp->name, sp->max_nm, nm ));
-        MALLOC_ALIGNED( new_pm, nm, 128 );
-        COPY( new_pm, sp->pm, sp->nm );
-        FREE_ALIGNED( sp->pm );
-        sp->pm = new_pm;
-        sp->max_nm = nm;
-        */
       }
 
       else if( sp->max_np > MIN_NP          &&
@@ -522,13 +506,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
           n = MIN_NP;
         }
 
-        // float resize_ratio = (float)n/sp->max_np;
-
-        WARNING( ( "Resizing (shrinking) local %s particle storage from "
-                   "%i to %i",
-                   sp->name,
-                   sp->max_np,
-                   n ) );
+        //WARNING( ( "Resizing (shrinking) local %s particle storage from "
+                   //"%i to %i",
+                   //sp->name,
+                   //sp->max_np,
+                   //n ) );
 
         MALLOC_ALIGNED( new_p, n, 128 );
 
@@ -538,21 +520,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         sp->p      = new_p;
         sp->max_np = n;
-
-        /*
-        nm = sp->max_nm * resize_ratio;
-
-        WARNING(( "Resizing (shrinking) local %s mover storage from "
-                    "%i to %i", sp->name, sp->max_nm, nm));
-        MALLOC_ALIGNED( new_pm, nm, 128 );
-        COPY( new_pm, sp->pm, sp->nm );
-        FREE_ALIGNED( sp->pm );
-        sp->pm = new_pm, sp->max_nm = nm;
-        */
       }
 
-      // Feasibly, a vacuum-filled rank may receive a shock and need more movers
-      // than available from MIN_NP.
+      // Mover arrays are resized up only.
+      // The mover arrays can also run out of space in advance_p, so the user
+      // still needs to think about how big to make the mover arrays.
 
       nm = sp->nm + max_inj;
 
@@ -560,13 +532,11 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       {
         nm += 0.3125 * nm; // See note above
 
-        // float resize_ratio = (float)nm/sp->max_nm;
-
-        WARNING( ( "This happened.  Resizing local %s mover storage from "
-                   "%i to %i based on not enough movers",
-                   sp->name,
-                   sp->max_nm,
-                   nm ) );
+        //WARNING( ( "Resizing local %s mover storage from %i to %i based on "
+        //           "not enough movers for all the incoming particles",
+        //           sp->name,
+        //           sp->max_nm,
+        //           nm ) );
 
         MALLOC_ALIGNED( new_pm, nm, 128 );
 
@@ -576,16 +546,6 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
         sp->pm     = new_pm;
         sp->max_nm = nm;
-
-        /*
-        n = sp->max_np * resize_ratio;
-        WARNING(( "Resizing local %s particle storage from %i to %i",
-                  sp->name, sp->max_np, n ));
-        MALLOC_ALIGNED( new_p, n, 128 );
-        COPY( new_p, sp->p, sp->np );
-        FREE_ALIGNED( sp->p );
-        sp->p = new_p, sp->max_np = n;
-        */
       }
     }
   } while(0);

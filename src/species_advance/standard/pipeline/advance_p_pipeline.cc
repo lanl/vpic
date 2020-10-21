@@ -75,7 +75,7 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
   nm   = 0;
   itmp = 0;
 
-  // Determine which accumulator array to use
+  // Determine which accumulator array to use.
   // The host gets the first accumulator array.
 
   if ( pipeline_rank != n_pipeline )
@@ -184,7 +184,7 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
       a  = (float *)( a0 + ii );              // Get accumulator
 
       #define ACCUMULATE_J(X,Y,Z,offset)                                \
-      v4  = q*u##X;   /* v2 = q ux                            */        \
+      v4  = q*u##X;   /* v4 = q ux                            */        \
       v1  = v4*d##Y;  /* v1 = q ux dy                         */        \
       v0  = v4-v1;    /* v0 = q ux (1-dy)                     */        \
       v1 += v4;       /* v1 = q ux (1+dy)                     */        \
@@ -228,15 +228,20 @@ advance_p_pipeline_scalar( advance_p_pipeline_args_t * args,
         else
         {
           itmp++;                               // Unlikely
+
+          // Also undo the shift that move_p did, to keep p->i in a valid range
+          // If we got here, we're running the risk of ruining the physics of
+          // the simulation. Take the mover warning very seriously.
+          p->i = p->i >> 3;
         }
       }
     }
   }
 
-  args->seg[pipeline_rank].pm        = pm;
-  args->seg[pipeline_rank].max_nm    = max_nm;
-  args->seg[pipeline_rank].nm        = nm;
-  args->seg[pipeline_rank].n_ignored = itmp;
+  args->seg[ pipeline_rank ].pm        = pm;
+  args->seg[ pipeline_rank ].max_nm    = max_nm;
+  args->seg[ pipeline_rank ].nm        = nm;
+  args->seg[ pipeline_rank ].n_ignored = itmp;
 }
 
 //----------------------------------------------------------------------------//
@@ -307,13 +312,27 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
-      WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers",
-                 rank, sp->name, args->seg[rank].n_ignored ) );
+#ifdef EXIT_ON_LOST_MOVER
+        ERROR( ( "Pipeline %i (species = %s) ran out of storage for %i movers.  This is an extremely serious problem that affects the physics of your run.",
+                    rank,
+                    sp->name,
+                    args->seg[rank].n_ignored ) );
+#else
+        // If you see this warning, particles are essentially being held at the
+        // boundary instead of finishing their move. They are now in the wrong
+        // place and have not deposited correct currents....
+        WARNING( ( "Pipeline %i (species = %s) ran out of storage for %i movers.  This is an extremely serious problem that affects the physics of your run.",
+                    rank,
+                    sp->name,
+                    args->seg[rank].n_ignored ) );
+#endif
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )
     {
-      MOVE( sp->pm + sp->nm, args->seg[rank].pm, args->seg[rank].nm );
+      MOVE( sp->pm + sp->nm,
+            args->seg[rank].pm,
+            args->seg[rank].nm );
     }
 
     sp->nm += args->seg[rank].nm;

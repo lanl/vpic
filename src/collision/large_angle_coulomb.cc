@@ -150,7 +150,7 @@ large_angle_coulomb_fluid_collision(
     urz -= w*frandn(rng);
   }
   
-  COMPUTE_MOMENTUM_TRANSFER(urx,urz,urz,ax,ay,az,rng);
+  COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   w = lac->twomu_mi;
   pi->ux -= w*ax;

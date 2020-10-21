@@ -90,7 +90,9 @@ option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install H
 
 option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you install OpenPM" OFF)
 
-option(OUTPUT_CONVERT_GLOBAL_ID "Convert particle cell id to be global, such that it tells  you  a unique global location instead of a local offset" ON)
+#option(OUTPUT_CONVERT_GLOBAL_ID "Convert particle cell id to be global, such that it tells  you  a unique global location instead of a local offset" ON)
+
+option(EXIT_ON_LOST_MOVER "EXIT if we run out of mover space during the particle push (the default is WARN)" OFF)
 
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
@@ -123,6 +125,10 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
 
 string(REPLACE ";" " " string_libraries "${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES}")
 set(VPIC_CXX_LIBRARIES "${string_libraries}")
+
+if(EXIT_ON_LOST_MOVER)
+    add_definitions(-DEXIT_ON_LOST_MOVER)
+endif(EXIT_ON_LOST_MOVER)
 
 if(DISABLE_DYNAMIC_RESIZING)
   add_definitions(-DDISABLE_DYNAMIC_RESIZING)
@@ -271,6 +277,16 @@ if (NOT USE_V4 AND NOT USE_V8 AND NOT USE_V16)
     set(NO_EXPLICIT_VECTOR True)
 endif()
 
+# Detect if the user enabled V8/V16 but not v8/v4. If they're not enabled, tell
+# the user instead of giving them a confusing compile error inside a macro
+if (USE_V16 AND (NOT USE_V8 OR NOT USE_V4))
+    message(FATAL_ERROR
+        "You requested V16 but did not also enable both V4 and V8, aborting.")
+endif()
+if (USE_V8 AND NOT USE_V4)
+    message(FATAL_ERROR "You requested V8 but did not also enable V4, aborting.")
+endif()
+
 
 #------------------------------------------------------------------------------#
 # Add options for building with explicit autovec support.
@@ -298,8 +314,9 @@ if(USE_HDF5)
         message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
     endif()
     add_definitions(-DVPIC_ENABLE_HDF5)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_ENABLE_HDF5")
     string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
-    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} -I${HDF5_INCLUDE_DIRS} ${string_libraries}")
     include_directories(${HDF5_INCLUDE_DIRS})
 endif(USE_HDF5)
 

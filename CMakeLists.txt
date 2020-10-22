@@ -90,8 +90,6 @@ option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install H
 
 option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you install OpenPM" OFF)
 
-#option(OUTPUT_CONVERT_GLOBAL_ID "Convert particle cell id to be global, such that it tells  you  a unique global location instead of a local offset" ON)
-
 option(EXIT_ON_LOST_MOVER "EXIT if we run out of mover space during the particle push (the default is WARN)" OFF)
 
 # option to set minimum number of particles
@@ -402,10 +400,6 @@ if(USE_OPENPMD)
         set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${openPMD_TRANSITIVE_LIBS}")
     endif()
 endif(USE_OPENPMD)
-
-if(OUTPUT_CONVERT_GLOBAL_ID)
-    add_definitions(-DOUTPUT_CONVERT_GLOBAL_ID)
-endif(OUTPUT_CONVERT_GLOBAL_ID)
 
 macro(build_a_vpic name deck)
   if(NOT EXISTS ${deck})

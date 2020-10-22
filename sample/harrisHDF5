@@ -141,16 +141,16 @@ begin_initialization {
 
   num_step             = int(0.2*taui/(wci*dt));
   status_interval      = int(1./(wci*dt));
-  field_interval = 1; //status_interval;
-  hydro_interval = 1; //status_interval;
+  field_interval = status_interval;
+  hydro_interval = status_interval;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
   clean_div_b_interval = status_interval;
 
   global->energies_interval  = status_interval;
-  global->fields_interval    = 1; //status_interval;
-  global->ehydro_interval    = 1; //status_interval;
-  global->ihydro_interval    = 1; //status_interval;
+  global->fields_interval    = status_interval;
+  global->ehydro_interval    = status_interval;
+  global->ihydro_interval    = status_interval;
   global->eparticle_interval = status_interval;
   global->iparticle_interval = status_interval;
   global->restart_interval   = status_interval;
@@ -362,7 +362,7 @@ begin_diagnostics {
   // immediately following a restart dump. Energies dumps are in a text
   // format and the layout is documented at the top of the file. Only rank 0
   // makes makes an energies dump.
-  if( should_dump(energies) ) dump_energies( "energies", step()==0 ? 0 : 1 );
+  //MSB if( should_dump(energies) ) dump_energies( "energies", step()==0 ? 0 : 1 );
 
   // Field dumps store the raw electromagnetic fields, sources and material
   // placement and a number of auxilliary fields. E, B and RHOB are
@@ -374,9 +374,20 @@ begin_diagnostics {
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
-  if( step()==-10 )         dump_fields("fields"); // Get first valid total J
-  if( should_dump(fields) ) dump_fields("fields");
-
+#if 1
+  if( step()==-10 ) {
+      double el1 = uptime();
+      dump_fields("fields"); // Get first valid total J
+      el1 = uptime() - el1;
+      sim_log("\033[1;35m dump_fields: " << el1 << " s\033[0m");
+  }
+  if( should_dump(fields) ) {
+      double el1 = uptime();
+      dump_fields("fields");
+      el1 = uptime() - el1;
+      sim_log("\033[1;35m dump_fields: " << el1 << " s\033[0m");
+  }
+#endif
   // Hydro dumps store particle charge density, current density and
   // stress-energy tensor. All these quantities are known at the time
   // t = time().  All these quantities are accumulated trilinear
@@ -386,16 +397,41 @@ begin_diagnostics {
   // purely diagnostic. It is not used by the simulation and it is not
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
   // are in a binary format. Each rank makes a hydro dump.
-  if(should_dump(ehydro) ) dump_hydro("electron","ehydro");
-  if( should_dump(ihydro) ) dump_hydro("ion",     "ihydro");
-
+#if 1
+  if(should_dump(ehydro) ) {
+     double el1 = uptime();
+     dump_hydro("electron","ehydro");
+     el1 = uptime() - el1;
+     sim_log("\033[1;31m dump_ehydro: " << el1 << " s\033[0m");
+  }
+  if(should_dump(ihydro) ) {
+     double el1 = uptime();
+     dump_hydro("ion",     "ihydro");
+     el1 = uptime() - el1;
+     sim_log("\033[1;31m dump_ihydro: " << el1 << " s\033[0m");
+  }
+#endif
   // Particle dumps store the particle data for a given species. The data
   // written is known at the time t = time().  By default, particle dumps
   // are tagged with step(). However, if a "0" is added to the call, the
   // filename will not be tagged. Particle dumps are in a binary format.
   // Each rank makes a particle dump.
-  if( should_dump(eparticle) ) dump_particles("electron","eparticle");
-  if( should_dump(iparticle) ) dump_particles("ion",     "iparticle");
+#if 1
+  if( should_dump(eparticle) ) {
+     double el1 = uptime();
+     dump_particles("electron","eparticle");
+     el1 = uptime() - el1;
+     sim_log("\033[1;33m dump_eparticle: " << el1 << " s\033[0m");
+  }
+#endif
+#if 1
+  if( should_dump(iparticle) ){
+     double el1 = uptime();
+     dump_particles("ion", "iparticle");
+     el1 = uptime() - el1; 
+     sim_log("\033[1;33m dump_iparticle: " << el1 << " s\033[0m");
+  }
+#endif
 
   // A checkpt is made by calling checkpt( fbase, tag ) where fname is a string
   // and tag is an integer.  A typical usage is:
@@ -410,7 +446,7 @@ begin_diagnostics {
   // the checkpt but before the next timestep will be missed on restore.
   // Restart dumps are in a binary format unique to the each simulation.
 
-  if( should_dump(restart) ) checkpt( "checkpt", step() );
+   //MSB if( should_dump(restart) ) checkpt( "checkpt", step() );
 
   // If you want to write a checkpt after a certain amount of simulation time,
   // use uptime() in conjunction with checkpt.  For example, this will cause

@@ -443,7 +443,6 @@ class HDF5Dump : public Dump_Strategy {
             global_count[0] = (grid->nx);
             global_count[1] = (grid->ny);
             global_count[2] = (grid->nz);
-
 #ifdef DUMP_INFO_DEBUG
             if(mpi_rank < 4){
             printf("grid nx, ny nz  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);

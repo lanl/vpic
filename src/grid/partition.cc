@@ -55,6 +55,11 @@ partition_periodic_box( grid_t * g,
   // Setup basic variables
   RANK_TO_INDEX( world_rank, px,py,pz );
 
+  // Capture global processor decomposition
+  g->gpx = gpx;
+  g->gpy = gpy;
+  g->gpz = gpz;
+
   g->dx = (gx1-gx0)/(double)gnx;
   g->dy = (gy1-gy0)/(double)gny;
   g->dz = (gz1-gz0)/(double)gnz;

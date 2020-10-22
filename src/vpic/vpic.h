@@ -213,16 +213,16 @@ protected:
   rng_pool_t           * entropy;            // Local entropy pool
   rng_pool_t           * sync_entropy;       // Synchronous entropy pool
   grid_t               * grid;               // define_*_grid et al
-  material_t           * material_list;      // define_material
+  material_t           * material_list=NULL; // define_material
   field_array_t        * field_array;        // define_field_array
   interpolator_array_t * interpolator_array; // define_interpolator_array
   accumulator_array_t  * accumulator_array;  // define_accumulator_array
   hydro_array_t        * hydro_array;        // define_hydro_array
-  species_t            * species_list=NULL;       // define_species /
+  species_t            * species_list=NULL;  // define_species /
                                              // species helpers
   particle_bc_t        * particle_bc_list=NULL;   // define_particle_bc /
                                              // boundary helpers
-  emitter_t            * emitter_list=NULL;       // define_emitter /
+  emitter_t            * emitter_list=NULL;  // define_emitter /
                                              // emitter helpers
   collision_op_t       * collision_op_list=NULL;  // collision helpers
 

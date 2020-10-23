@@ -71,14 +71,14 @@ void vpic_simulation::enable_binary_dump() {
 
 #ifdef VPIC_ENABLE_HDF5
 void vpic_simulation::enable_hdf5_dump() {
-    std::cout << "Enabling HDF5 IO backend" << std::endl;
+    if( rank()==0 ) std::cout << "Enabling HDF5 IO backend" << std::endl;
     dump_strategy = std::unique_ptr<Dump_Strategy>(new HDF5Dump( rank(), nproc() ));
 }
 #endif
 
 #ifdef VPIC_ENABLE_OPENPMD
 void vpic_simulation::enable_openpmd_dump() {
-    std::cout << "Enabling openPMD IO backend" << std::endl;
+    if( rank()==0 ) std::cout << "Enabling openPMD IO backend" << std::endl;
     dump_strategy = std::unique_ptr<Dump_Strategy>(new OpenPMDDump( rank(), nproc() ));
 }
 #endif

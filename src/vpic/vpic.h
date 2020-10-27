@@ -210,21 +210,21 @@ protected:
      random numbers.  Keeping the synchronous generators in sync is
      the generator users responsibility. */
 
-  rng_pool_t           * entropy;            // Local entropy pool
-  rng_pool_t           * sync_entropy;       // Synchronous entropy pool
-  grid_t               * grid;               // define_*_grid et al
-  material_t           * material_list;      // define_material
-  field_array_t        * field_array;        // define_field_array
-  interpolator_array_t * interpolator_array; // define_interpolator_array
-  accumulator_array_t  * accumulator_array;  // define_accumulator_array
-  hydro_array_t        * hydro_array;        // define_hydro_array
-  species_t            * species_list;       // define_species /
-                                             // species helpers
-  particle_bc_t        * particle_bc_list;   // define_particle_bc /
-                                             // boundary helpers
-  emitter_t            * emitter_list;       // define_emitter /
-                                             // emitter helpers
-  collision_op_t       * collision_op_list;  // collision helpers
+  rng_pool_t           * entropy = nullptr;            // Local entropy pool
+  rng_pool_t           * sync_entropy = nullptr;       // Synchronous entropy pool
+  grid_t               * grid = nullptr;               // define_*_grid et al
+  material_t           * material_list = nullptr;      // define_material
+  field_array_t        * field_array = nullptr;        // define_field_array
+  interpolator_array_t * interpolator_array = nullptr; // define_interpolator_array
+  accumulator_array_t  * accumulator_array = nullptr;  // define_accumulator_array
+  hydro_array_t        * hydro_array = nullptr;        // define_hydro_array
+  species_t            * species_list = nullptr;       // define_species /
+                                                       // species helpers
+  particle_bc_t        * particle_bc_list = nullptr;   // define_particle_bc /
+                                                       // boundary helpers
+  emitter_t            * emitter_list = nullptr;       // define_emitter /
+                                                       // emitter helpers
+  collision_op_t       * collision_op_list = nullptr;  // collision helpers
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)

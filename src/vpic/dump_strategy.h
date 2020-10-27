@@ -1320,7 +1320,6 @@ class HDF5Dump : public Dump_Strategy {
             H5Sclose(dataspace_id);
             H5Dclose(dset_id);
             H5Tclose(hydro_comp_type_it);
-            free(temp_buf);
 #else
             float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
 

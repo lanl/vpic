@@ -91,7 +91,8 @@ binary_collision_model( const char * RESTRICT name,
                         species_t * RESTRICT spj,
                         rng_pool_t * RESTRICT rp,
                         double sample,
-                        int interval )
+                        int interval,
+                        int sample_strategy )
 {
   binary_collision_model_t * cm;
 
@@ -119,10 +120,16 @@ binary_collision_model( const char * RESTRICT name,
     ERROR( ( "collision model parameters must be checkpoint registered" ) );
   }
 
+  if ( sample_strategy != per_particle ||
+       sample_strategy != mass_action )
+  {
+    ERROR( ( "Bad sampling strategy." ) );
+  }
+
   MALLOC( cm, 1 );
   MALLOC( cm->name, len+1 );
 
-  strcpy( cm->name, name ); 
+  strcpy( cm->name, name );
 
   cm->rate_constant = rate_constant;
   cm->collision     = collision;
@@ -132,6 +139,7 @@ binary_collision_model( const char * RESTRICT name,
   cm->rp            = rp;
   cm->sample        = sample;
   cm->interval      = interval;
+  cm->strategy      = sample_strategy;
 
   return new_collision_op_internal( cm,
                                     ( collision_op_func_t ) apply_binary_collision_model,

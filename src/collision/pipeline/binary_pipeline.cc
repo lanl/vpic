@@ -37,8 +37,11 @@ binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
   /**/  particle_t * RESTRICT spj_p         = spj->p;
   const int        * RESTRICT spj_partition = spj->partition;
 
-  const double sample        = (spi_p==spj_p ? 0.5 : 1)*cm->sample;
   const float  dtinterval_dV = ( g->dt * (float)cm->interval ) / g->dV;
+
+  double sample = cm->sample;
+  const int strategy = cm->strategy;
+  if( strategy == per_particle && spi == spj ) sample *= 0.5;
 
   float pr_norm, pr_coll, wk, wl, w_max, w_min;
   int v, v1, k, k0, nk, rk, l, l0, nl, rl, np, nc, type, n_large_pr = 0;
@@ -81,7 +84,13 @@ binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
       nl = nk;
       rl = rk;
       np = nk*(nk+1) >> 1;
-      nc = (int)( 0.5 + sample*(double)nk );
+
+      switch(strategy) {
+        case per_particle: nc = (int)( 0.5 + sample*(double)nk ) ; break ;
+        case mass_action:  nc = (int)( 0.5 + sample*(double)np ) ; break ;
+        default: nc = 0;
+      }
+
     }
 
     else
@@ -98,7 +107,13 @@ binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
       if( !nl ) continue; /* Nothing to do */
       rl = UINT_MAX / (unsigned)nl;
       np = nk*nl;
-      nc = (int)( 0.5 + sample*(double)(nk>nl ? nk : nl) );
+
+      switch(strategy) {
+        case per_particle: nc = (int)( 0.5 + sample*(double)(nk>nl ? nk : nl) ) ; break ;
+        case mass_action:  nc = (int)( 0.5 + sample*(double)np )                ; break ;
+        default: nc = 0;
+      }
+
     }
 
     /* Determine the collision rate to probability normalization:
@@ -113,13 +128,13 @@ binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
       /* Pick a pair of computational particles uniformly at random
          from all pairs of particles in the voxel.  Note that the
          while test virtually always fails (this manner of
-         splitting up the nk, nl guarantees a uniform prob 
+         splitting up the nk, nl guarantees a uniform prob
          of getting k on 0:nk-1 and l on 0:nl-1 and uses the
          preferred high order randgen bits). */
-  
+
       do { k = (int)(uirand(rng)/rk); } while( k==nk ); k += k0;
       do { l = (int)(uirand(rng)/rl); } while( l==nl ); l += l0;
-     
+
       /* Compute the probability that a physical particle in the
          species whose candidate computational particle has the least
          weight (and comoving with this computational particle) will
@@ -145,7 +160,7 @@ binary_pipeline_scalar( binary_collision_model_t * RESTRICT cm,
          The other particle should be updated with probability of
          w_min / w_max, such that, on average, detailed balance is
          preserved. */
-    
+
       w_min = (wk>wl) ? wl : wk;
       type = 1; if( wl==w_min ) type++;
       if( w_max==w_min || w_max*frand_c0(rng)<w_min ) type = 3;

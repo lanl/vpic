@@ -26,7 +26,7 @@ typedef struct hard_sphere
    and parallel, vjp, to vr.  This yields:
      K = { [ nj pi R^2 ] / [ vtj^3 (2 pi)^(3/2) ] }
        integral ( vr^2 - 2|vr|vjp + vjp^2 + vjP^2 )^(1/2)
-                exp( -vjp^2 / ( 2 vtj^2 ) ) 
+                exp( -vjp^2 / ( 2 vtj^2 ) )
                 exp( -vjP^2 / ( 2 vtj^2 ) )
                 2 pi vjP dvjP dvjp
    where the vjP integration is from 0 to infinity and the vjp is
@@ -34,7 +34,7 @@ typedef struct hard_sphere
    we have:
      K = { [ nj pi^2 R^2 ] / [ vtj^3 (2 pi)^(3/2) ] }
        integral ( vr^2 - 2|vr|vjp + vjp^2 + z )^(1/2)
-                exp( -vjp^2 / ( 2 vtj^2 ) ) 
+                exp( -vjp^2 / ( 2 vtj^2 ) )
                 exp( -z / ( 2 vtj^2 ) ) dz dvjp
 
    Performing the z integral, with the help of Mathematica, we get:
@@ -189,7 +189,7 @@ hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
    Yielding:
 
      dvr = -2 [ 1 - (b/R)^2 ] vr0 + |vr0| 2 (b/R) [ 1 - (b/R)^2 ]^(1/2) T
-     
+
    To convert the scattering angle above into T, we need to determine
    to two vectors perpendicular to the incident velocity, vr0.  Given
    the desire to not introduce any preferred directions in the
@@ -204,14 +204,14 @@ hard_sphere_rate_constant( const hard_sphere_t * RESTRICT hs,
    formed as the cross product of VR and T1 (and normalizing).  This
    given:
 
-     dvr = -2 [ 1 - (b/R)^2 ] vr0 + 
+     dvr = -2 [ 1 - (b/R)^2 ] vr0 +
        |vr0| 2 (b/R) [ 1 - (b/R)^2 ]^(1/2) ( cs T1 + sn T2 )
 
    Noting that (b/R) cs and (b/R) sn are just the coordinates of the
    point picked in the unit circle originally and that
    T2 = vr0 x T1 / |vr0|, we can simplify the above:
 
-     dvr = -2 [ 1 - (b/R)^2 ] vr0 + 
+     dvr = -2 [ 1 - (b/R)^2 ] vr0 +
        2 [ 1 - (b/R)^2 ]^(1/2) [ |vr0| bcs_R T1 + bsn_R ( vr0 x T1 ) ]
 
    Requiring conservation of momentum (which implies
@@ -302,7 +302,7 @@ hard_sphere_fluid_collision( const hard_sphere_t * RESTRICT hs,
     ury -= w*frandn(rng);
     urz -= w*frandn(rng);
   }
-  
+
   COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   w = hs->twomu_mi;
@@ -329,14 +329,14 @@ hard_sphere_collision( const hard_sphere_t * RESTRICT hs,
   COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   if( type & 1 ) {
-    w = hs->twomu_mi; 
+    w = hs->twomu_mi;
     pi->ux -= w*ax;
     pi->uy -= w*ay;
     pi->uz -= w*az;
   }
 
   if( type & 2 ) {
-    w = hs->twomu_mj; 
+    w = hs->twomu_mj;
     pj->ux += w*ax;
     pj->uy += w*ay;
     pj->uz += w*az;
@@ -410,7 +410,8 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const float rj,             /* Species-j p. radius (LENGTH) */
              rng_pool_t * RESTRICT rp,   /* Entropy pool */
              const double sample,        /* Sampling density */
-             const int interval )        /* How often to apply this */
+             const int interval,         /* How often to apply this */
+             const int strategy )        /* Sampling strategy */
 {
   hard_sphere_t * hs;
 
@@ -427,5 +428,5 @@ hard_sphere( const char * RESTRICT name, /* Model name */
   return binary_collision_model( name,
                         (binary_rate_constant_func_t)hard_sphere_rate_constant,
                         (binary_collision_func_t)    hard_sphere_collision,
-                                 hs, spi, spj, rp, sample, interval );
+                                 hs, spi, spj, rp, sample, interval, strategy );
 }

@@ -58,11 +58,11 @@ add_test(${generate_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
 
 # Run using the restore file
 # TODO: caps?
-set(perform_restore "perform_${RESTART_BINARY}")
-build_a_vpic(${perform_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
-add_test(${perform_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
-    ${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${perform_restore}
-    ${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
+#set(perform_restore "perform_${RESTART_BINARY}")
+#build_a_vpic(${perform_restore} ${CMAKE_CURRENT_SOURCE_DIR}/${RESTART_DECK}.deck)
+#add_test(${perform_restore} ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG}
+#${MPIEXEC_NUMPROC} ${MPIEXEC_PREFLAGS} ${perform_restore}
+#${MPIEXEC_POSTFLAGS} ${RESTART_ARGS})
 
 # TODO: re-enable modify test
 #list(APPEND MODIFY_BINARY restore-modify)

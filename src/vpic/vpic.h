@@ -145,6 +145,7 @@ public:
 
   // Very likely a user will forgot to delete this if they change the strategy,
   // a smart ptr will save us from the small leak
+  // TODO: this does not survive the dump right now
   std::unique_ptr<Dump_Strategy> dump_strategy;
 
   int num_step = 1;             // Number of steps to take

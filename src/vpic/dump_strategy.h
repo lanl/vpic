@@ -1150,10 +1150,12 @@ class OpenPMDDump : public Dump_Strategy {
         {
             std::cout << "Writing openPMD data" << std::endl;
 
+            std::string full_file_name = fbase + file_type;
+
             //if (series == nullptr) {
                 std::cout << "init series" << std::endl;
                 openPMD::Series series = openPMD::Series(
-                        fbase,
+                        full_file_name,
                         openPMD::AccessType::CREATE,
                         MPI_COMM_WORLD
                 );

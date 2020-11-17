@@ -14,6 +14,7 @@ reduce_array_pipeline_v4( reduce_pipeline_args_t * args,
                           int n_pipeline )
 {
   int i, i1, j, r0;
+
   int nr = args->n_array - 1;
   int sr = args->s_array;
 

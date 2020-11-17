@@ -69,9 +69,11 @@ load_interpolator_pipeline_scalar( load_interpolator_pipeline_args_t * args,
     w2 = pfz ->ex;
     w3 = pfyz->ex;
 
+
     // The fourth (divsion by 1/4) is the combination of two divisions by 2:
     // 1) The average when doing the FD calculation across the cell
     // 2) The cell size where dx/y/z = 2 (fixed cell size of -1..1)
+
     pi->ex       = fourth * ( ( w3 + w0 ) + ( w1 + w2 ) );
     pi->dexdy    = fourth * ( ( w3 - w0 ) + ( w1 - w2 ) );
     pi->dexdz    = fourth * ( ( w3 - w0 ) - ( w1 - w2 ) );
@@ -190,6 +192,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
 
   for( ; n_voxel; n_voxel-- )
   {
+
     // ex interpolation coefficients
     w0 = toggle_bits( sgn_1_2, v4float(  pf0->ex ) ); // [ w0 -w0 -w0 w0 ]
     w1 =                       v4float(  pfy->ex );   // [ w1  w1  w1 w1 ]
@@ -228,7 +231,7 @@ load_interpolator_pipeline_v4( load_interpolator_pipeline_args_t * args,
                               v4float( pfy->cby ) );   // [ w1x  w1x w1y  w1y ]
 
     store_4x1( half * ( w1 + w0 ), &pi->cbx );
-
+    
     // bz interpolation coefficients
     w0  = toggle_bits( sgn_1_3, v4float( pf0->cbz ) ); // [ w0 -w0 d/c d/c ]
 

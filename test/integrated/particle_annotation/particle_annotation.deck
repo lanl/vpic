@@ -1,0 +1,234 @@
+begin_globals {
+  int annotation_count;
+};
+
+begin_initialization {
+  // Numerical settings
+  num_step = 7;
+  status_interval = 1000;                 // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  int gnx = nproc();
+  int gny = 2; // Would love to make this 1 as well, but then I get weird NaNs...
+  int gnz = 1;
+
+  int topox = nproc();
+  int topoy = 1;
+  int topoz = 1;
+
+  int nppc = 100;
+
+  // use natural PIC units
+  float ec   = 1;        // Charge normalization
+  float me   = 1;        // Mass normalization
+  float c    = 1;        // Speed of light
+  float de   = 1;        // Length normalization (electron inertial length)
+  float eps0 = 1;        // Permittivity of space
+
+  // physics settings
+  float dx     = 0.1; // d_e
+  float dt     = dx * 0.95/sqrt(3.0)/c;
+  float Lx     = dx * gnx;
+  float Ly     = dx * gny;
+  float Lz     = dx * gnz;
+
+  // Setup stuff in vpic
+  define_units(c, eps0);
+  define_timestep(dt);
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       Lx,Ly,Lz,           // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Create electron species
+  species_t* elec = define_species("electron",  // name
+                                          -ec,  // charge
+                                           me,  // mass
+                 1.5*nppc*gnx*gny*gnz/nproc(),  // maximum number of local particles
+                                          150,  // number of particle movers
+                                            0,  // don't sort
+                                            0); // sort mode in-of-place
+
+  // Set field values
+  set_region_field(everywhere, 0.,0.,0., 1.,0.,0.);
+
+  // Generate particles
+  seed_entropy(rank()); // different random numbers on different ranks
+
+  for(int n=0; n<nppc*gnx*gny*gnz/(float)nproc(); n++) {
+    // Pick a uniform random location in the local domain
+    const float x = uniform( rng(0), grid->x0, grid->x1 );
+    const float y = uniform( rng(0), grid->y0, grid->y1 );
+    const float z = uniform( rng(0), grid->z0, grid->z1 );
+
+    // Pick random velocity
+    float ux = normal( rng(0), 0., 0.1 );
+    float uy = normal( rng(0), 0., 0.1 );
+    float uz = normal( rng(0), 0., 0.1 );
+    inject_particle(elec, x,y,z, ux,uy,uz, 0., 0, 0); // zero weight, we don't actually care about fields
+  }
+
+  // This is the species with frequent output with per-particle user-defined annotations
+  species_t* sp = make_n_tracers(elec, 2.0, Tracertype::Copy, "electron_tracer");
+
+  if(sp->np != 2) { sim_log("FAIL: wrong number of tracer particles"); exit(1); }
+
+  // create annotation buffer
+  global->annotation_count = 8; // 6 components of the electromagnetic field, counter and ID
+  sp->allocate_annotation_buffer(global->annotation_count);
+
+  if(sp->has_annotation != global->annotation_count) { sim_log("FAIL: wrong number of annotations per particle"); exit(1); }
+
+  for(int n = 0; n<sp->np; n++) {
+    for(int a=0; a<global->annotation_count; a++) {
+      if(sp->get_annotation(n,a) != 0.) {
+        sim_log("FAIL: Initial value of annotation "<<a<<" is non-zero");
+        exit(1);
+      }
+    }
+  }
+
+  for(int n = 0; n<sp->np; n++) {
+    for(int a=0; a<global->annotation_count; a++) {
+      sp->increment_annotation(n,a,1.);
+      if(sp->get_annotation(n,a) != 1.) {
+        sim_log("FAIL: Increment of annotation "<<a<<" failed");
+        exit(1);
+      }
+    }
+  }
+
+  for(int n = 0; n<sp->np; n++) {
+    for(int a=0; a<global->annotation_count; a++) {
+      sp->set_annotation(n,a,0.);
+      if(sp->get_annotation(n,a) != 0.) {
+        sim_log("FAIL: Set of annotation "<<a<<" failed");
+        exit(1);
+      }
+    }
+  }
+
+  // Fudge location and speed of annotated particles
+  for(int n = 0; n<sp->np; n++) {
+    sp->p[n].dx = 0.0;
+    sp->p[n].dy = (n+1.)/(sp->np+1.);
+    sp->p[n].dz = (rank()+1.)/(nproc()+1.);
+    sp->p[n].ux = 0.5;
+    sp->p[n].uy = 0.0;
+    sp->p[n].uz = 0.0;
+  }
+
+  // Store ID in last annotation slot
+  for(int n = 0; n<sp->np; n++) {
+    size_t id = 100*rank() + n;
+    sp->set_annotation(n, global->annotation_count-1, id);
+  }
+
+}
+
+
+begin_diagnostics {
+
+  species_t* sp = find_species_name("electron_tracer", species_list);
+  if(!sp) { sim_log("FAIL: can't find tracer species"); exit(1); }
+
+  // Check that particles involve sane and that annotations stay with the right particle
+  if(rank() == 0) {
+    for(int n=0; n<sp->np; n++) {
+      sim_log(step()<<" "<<n<<" "<<sp->p[n].dx<<" "<<sp->p[n].dy<<" "<<sp->p[n].dz<<" "<<sp->get_annotation(n,global->annotation_count-1));
+
+      if(step() < 3) { // Before first cell crossing and communication
+        if(sp->p[n].dz > 0.5) { sim_log("FAIL: z coordinate indicates particle came from wrong rank"); exit(1); }
+
+        if(sp->get_annotation(n,global->annotation_count-1) == 0) {
+         if(sp->p[n].dy > 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 0"); exit(1); }
+        } else if(sp->get_annotation(n,global->annotation_count-1) == 1) {
+         if(sp->p[n].dy < 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 1"); exit(1); }
+        } else {
+         sim_log("FAIL: unexpected ID"); exit(1);
+        }
+
+      } else if (step() < 7) { // Before second cell crossing and communication
+        if(sp->p[n].dz < 0.5) { sim_log("FAIL: z coordinate indicates particle came from wrong rank"); exit(1); }
+
+        if(sp->get_annotation(n,global->annotation_count-1) == 100) {
+         if(sp->p[n].dy > 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 100"); exit(1); }
+        } else if(sp->get_annotation(n,global->annotation_count-1) == 101) {
+         if(sp->p[n].dy < 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 101"); exit(1); }
+        } else {
+         sim_log("FAIL: unexpected ID"); exit(1);
+        }
+
+      } else { // After
+        if(sp->p[n].dz > 0.5) { sim_log("FAIL: z coordinate indicates particle came from wrong rank"); exit(1); }
+
+        if(sp->get_annotation(n,global->annotation_count-1) == 0) {
+         if(sp->p[n].dy > 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 0"); exit(1); }
+        } else if(sp->get_annotation(n,global->annotation_count-1) == 1) {
+         if(sp->p[n].dy < 0.5) { sim_log("FAIL: y coordinate indicates that the wroing particle has ID 1"); exit(1); }
+        } else {
+         sim_log("FAIL: unexpected ID"); exit(1);
+        }
+
+      }
+    }
+  }
+
+
+  // Check field interpolation
+  interpolate_fields_annotation("electron_tracer", interpolator_array, 0, 1, 2, 3, 4, 5);
+
+  for(int n=0; n<sp->np; n++) {
+    if(sp->get_annotation(n,0) != 0.) { sim_log("FAIL: unexpected E_x on particle "<<n<<" of rank "<<rank()); exit(1); }
+    if(sp->get_annotation(n,1) != 0.) { sim_log("FAIL: unexpected E_y on particle "<<n<<" of rank "<<rank()); exit(1); }
+    if(sp->get_annotation(n,2) != 0.) { sim_log("FAIL: unexpected E_z on particle "<<n<<" of rank "<<rank()); exit(1); }
+    if(sp->get_annotation(n,3) != 1.) { sim_log("FAIL: unexpected B_x on particle "<<n<<" of rank "<<rank()); exit(1); }
+    if(sp->get_annotation(n,4) != 0.) { sim_log("FAIL: unexpected B_y on particle "<<n<<" of rank "<<rank()); exit(1); }
+    if(sp->get_annotation(n,5) != 0.) { sim_log("FAIL: unexpected B_z on particle "<<n<<" of rank "<<rank()); exit(1); }
+  }
+
+
+  // Check that accumulation works
+  for(int n=0; n<sp->np; n++) {
+    if(sp->get_annotation(n,global->annotation_count-2) != step() ) { sim_log("FAIL: counter does not match time step on particle "<<n<<" of rank "<<rank()); exit(1); }
+    sp->increment_annotation(n,global->annotation_count-2, 1.);
+  }
+
+  // Force a restart after step 5 to make sure that dump/restart works too
+  if(step() == 5) {
+      dump_mkdir("restart0");
+      char fname[256];
+      sprintf(fname, "%s/restore.0.%i", "restart0", world_rank );
+      checkpt_objects(fname);
+      sim_log("Restart dump restart completed.");
+      mp_barrier();
+  }
+
+  // If we reach this in the last step without any fails we probably did well enough
+  if(step() == num_step) {
+    sim_log("passed");
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

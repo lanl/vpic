@@ -24,7 +24,7 @@
 // FIXME: HOOK UP IN-PLACE / OUT-PLACE OPTIONS AGAIN.
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -75,7 +75,7 @@ coarse_count_pipeline_scalar( sort_p_pipeline_args_t * args,
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -85,6 +85,16 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->aux_p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  const int has_ids = args->has_ids;
+  const size_t * RESTRICT ALIGNED(128) p_src_id = args->p_id;
+  /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->aux_p_id;
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  const int has_annotation = args->has_annotation;
+  const annotation_t* RESTRICT ALIGNED(128) p_src_annotation = args->p_annotation;
+  /**/  annotation_t* RESTRICT ALIGNED(128) p_dst_annotation = args->aux_p_annotation;
+  #endif
 
   int i, i1;
   int n_subsort = args->n_subsort;
@@ -122,21 +132,35 @@ coarse_sort_pipeline_scalar( sort_p_pipeline_args_t * args,
   {
     j = next[ V2P( p_src[i].i, n_subsort, vl, vh ) ]++;
 
-#   if defined( __SSE__ )
+     #if defined( __SSE__ )
 
     _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
     _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
 
-#   else
+    #else
 
     p_dst[j] = p_src[i];
 
-#   endif
+    #endif
+
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(has_ids) {
+      p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(has_annotation) {
+      /* move entries in annotation buffer in sync with particles */
+      for(int a = 0; a<has_annotation; a++) {
+        p_dst_annotation[j*has_annotation+a] = p_src_annotation[i*has_annotation+a];
+      }
+    }
+    #endif
   }
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -146,6 +170,16 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
 {
   const particle_t * RESTRICT ALIGNED(128) p_src = args->aux_p;
   /**/  particle_t * RESTRICT ALIGNED(128) p_dst = args->p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  const int has_ids                             = args->has_ids;
+  const size_t * RESTRICT ALIGNED(128) p_src_id = args->aux_p_id;
+  /**/  size_t * RESTRICT ALIGNED(128) p_dst_id = args->p_id;
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  const int has_annotation                                   = args->has_annotation;
+  const annotation_t* RESTRICT ALIGNED(128) p_src_annotation = args->aux_p_annotation;
+  /**/  annotation_t* RESTRICT ALIGNED(128) p_dst_annotation = args->p_annotation;
+  #endif
 
   int i0, i1, v0, v1, i, j, v, sum, count;
 
@@ -199,22 +233,36 @@ subsort_pipeline_scalar( sort_p_pipeline_args_t * args,
       v = p_src[i].i;
       j = next[v]++;
 
-#     if defined( __SSE__ )
+      #if defined( __SSE__ )
 
       _mm_store_ps( &p_dst[j].dx, _mm_load_ps( &p_src[i].dx ) );
       _mm_store_ps( &p_dst[j].ux, _mm_load_ps( &p_src[i].ux ) );
 
-#     else
+      #else
 
       p_dst[j] = p_src[i];
 
-#     endif
+      #endif
+
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      if(has_ids) {
+        p_dst_id[j] = p_src_id[i]; /* keep ids in sync with particles */
+      }
+      #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      if(has_annotation) {
+        /* move entries in annotation buffer in sync with particles */
+        for(int a = 0; a<has_annotation; a++) {
+          p_dst_annotation[j*has_annotation+a] = p_src_annotation[i*has_annotation+a];
+        }
+      }
+      #endif
     }
   }
 }
 
 //----------------------------------------------------------------------------//
-// 
+//
 //----------------------------------------------------------------------------//
 
 void
@@ -234,6 +282,16 @@ sort_p_pipeline( species_t * sp )
 
   particle_t * RESTRICT ALIGNED(128) p = sp->p;
   particle_t * RESTRICT ALIGNED(128) aux_p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  const int has_ids = sp->has_ids;
+  size_t * RESTRICT ALIGNED(128) p_id = sp->p_id;
+  size_t * RESTRICT ALIGNED(128) aux_p_id;
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  const int has_annotation = sp->has_annotation;
+  annotation_t* RESTRICT ALIGNED(128) p_annotation = sp->p_annotation;
+  annotation_t* RESTRICT ALIGNED(128) aux_p_annotation;
+  #endif
 
   int n_particle = sp->np;
 
@@ -268,11 +326,20 @@ sort_p_pipeline( species_t * sp )
   DECLARE_ALIGNED_ARRAY( sort_p_pipeline_args_t, 128, args, 1 );
 
   // Ensure enough scratch space is allocated for the sorting.
-  sz_scratch = ( sizeof( *p ) * n_particle      +
-		 128                            +
-                 sizeof( *partition ) * n_voxel +
-		 128                            +
-                 sizeof( *coarse_partition ) * ( cp_stride * n_pipeline + 1 ) );
+  sz_scratch = 0;
+  sz_scratch += sizeof( *p )         * n_particle + 128;
+  sz_scratch += sizeof( *partition ) * n_voxel    + 128;
+  sz_scratch += sizeof( *coarse_partition ) * ( cp_stride * n_pipeline + 1 );
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(has_ids) {
+    sz_scratch += sizeof( *p_id ) * n_particle + 128;
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(has_annotation) {
+    sz_scratch += sizeof( annotation_t ) * has_annotation * n_particle + 128;
+  }
+  #endif
 
   if ( sz_scratch > max_scratch )
   {
@@ -283,21 +350,60 @@ sort_p_pipeline( species_t * sp )
     max_scratch = sz_scratch;
   }
 
-  aux_p            = ALIGN_PTR( particle_t, scratch,            128 );
-  next             = ALIGN_PTR( int,        aux_p + n_particle, 128 );
-  coarse_partition = ALIGN_PTR( int,        next  + n_voxel,    128 );
+  void* start_of_free;
+  aux_p            = ALIGN_PTR( particle_t,   scratch,            128);
+  next             = ALIGN_PTR( int,          aux_p + n_particle, 128);
+  coarse_partition = ALIGN_PTR( int,          next  + n_voxel,    128);
+
+  start_of_free = coarse_partition + sizeof(int)*cp_stride*n_pipeline + 1;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  if(has_ids) {
+    aux_p_id       = ALIGN_PTR( size_t,       start_of_free,      128);
+    start_of_free  = aux_p_id + sizeof(size_t) * n_particle;
+  } else {
+    aux_p_id       = nullptr;
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  if(has_annotation) {
+    aux_p_annotation = ALIGN_PTR(annotation_t, start_of_free,     128);
+    start_of_free    = aux_p_annotation + sizeof(annotation_t)*has_annotation * n_particle;
+  } else {
+    aux_p_annotation = nullptr;
+  }
+  #endif
 
   // Setup pipeline arguments.
-  args->p                = p;
-  args->aux_p            = aux_p;
-  args->coarse_partition = coarse_partition;
-  args->next             = next;
-  args->partition        = partition;
-  args->n                = n_particle;
-  args->n_subsort        = n_subsort;
-  args->vl               = vl;
-  args->vh               = vh;
-  args->n_voxel          = n_voxel;
+  args->p                  = p;
+  args->aux_p              = aux_p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  args->has_ids            = has_ids;
+  if(has_ids) {
+    args->p_id             = p_id;
+    args->aux_p_id         = aux_p_id;
+  } else {
+    args->p_id             = nullptr;
+    args->aux_p_id         = nullptr;
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  args->has_annotation     = has_annotation;
+  if(has_annotation) {
+    args->p_annotation     = p_annotation;
+    args->aux_p_annotation = aux_p_annotation;
+  } else {
+    args->p_annotation     = nullptr;
+    args->aux_p_annotation = nullptr;
+  }
+  #endif
+  args->coarse_partition   = coarse_partition;
+  args->next               = next;
+  args->partition          = partition;
+  args->n                  = n_particle;
+  args->n_subsort          = n_subsort;
+  args->vl                 = vl;
+  args->vh                 = vh;
+  args->n_voxel            = n_voxel;
 
   if ( n_subsort != 1 )
   {
@@ -350,8 +456,28 @@ sort_p_pipeline( species_t * sp )
     coarse_partition[0] = 0;
     coarse_partition[1] = n_particle;
 
-    args->p     = aux_p;
-    args->aux_p = p;
+    args->p        = aux_p;
+    args->aux_p    = p;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    args->has_ids = has_ids;
+    if(has_ids) {
+      args->p_id     = aux_p_id;
+      args->aux_p_id = p_id;
+    } else {
+      args->p_id     = nullptr;
+      args->aux_p_id = nullptr;
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    args->has_annotation = has_annotation;
+    if(has_annotation) {
+      args->p_annotation     = aux_p_annotation;
+      args->aux_p_annotation = p_annotation;
+    } else {
+      args->p_annotation     = nullptr;
+      args->aux_p_annotation = nullptr;
+    }
+    #endif
 
     subsort_pipeline_scalar( args, 0, 1 );
 
@@ -367,5 +493,15 @@ sort_p_pipeline( species_t * sp )
     // TO MOVE SP->P AROUND AND DO MORE MALLOCS PER STEP I.E. HEAP
     // FRAGMENTATION, COULD AVOID THIS COPY.
     COPY( p, aux_p, n_particle );
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(has_ids) {
+      COPY( p_id, aux_p_id, n_particle );
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(has_annotation) {
+      COPY( p_annotation, aux_p_annotation, n_particle*has_annotation );
+    }
+    #endif
   }
 }

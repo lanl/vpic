@@ -1,0 +1,295 @@
+begin_globals {
+  // Step length in inverse plasma frequencies
+  float dtwpe;
+};
+
+begin_initialization {
+  // Numerical settings
+  num_step = 99;
+  status_interval = 1000;                 // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  int gnx = 32;
+  int gny = 32;
+  int gnz = 1;
+
+  int topox = nproc();
+  int topoy = 1;
+  int topoz = 1;
+
+  int nppc = 100;
+
+  // use natural PIC units
+  float ec   = 1;        // Charge normalization
+  float me   = 1;        // Mass normalization
+  float c    = 1;        // Speed of light
+  float de   = 1;        // Length normalization (electron inertial length)
+  float eps0 = 1;        // Permittivity of space
+
+  // physics settings
+  float vthe   = 0.1*c;
+  float wpe    = 1.;
+  float lD     = vthe / wpe;
+  float dx     = lD;
+  float dt     = dx * 0.95/sqrt(3.0)/c;
+  float Lx     = dx * gnx;
+  float Ly     = dx * gny;
+  float Lz     = dx * gnz;
+  float n0     = me*eps0*wpe*wpe/(ec*ec);
+  float Ne     = nppc*gnx*gny*gnz; // total macro electrons in box
+  float Np     = n0*Lx*Ly*Lz;   // total number of physical electrons
+  float weight = Np/Ne;         // statistical weight of macro particle
+  sim_log("weight = "<<weight);
+
+  // Setup stuff in vpic
+  define_units(c, eps0);
+  define_timestep(dt);
+  global->dtwpe = dt * wpe;
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       Lx,Ly,Lz,           // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Create electron species
+  species_t* elec = define_species("electron",  // name
+                                          -ec,  // charge
+                                           me,  // mass
+                 1.5*nppc*gnx*gny*gnz/nproc(),  // maximum number of local particles
+                                       150000,  // number of particle movers
+                                           10,  // sort every 10 time steps
+                                            0); // sort mode in-of-place
+
+  // And positrons for charge neutrality
+  species_t* pos = define_species("positron", ec, me, elec->max_np, elec->max_nm, 10, 1); // sort mode out-of-place
+
+
+  // Set field values
+  // Not in pressure equilibrium and particle motion does not carry the
+  // matching current. So don't trust any of the physics.
+  set_region_field(everywhere, 0.,0.,0., cos(2.*M_PI*y/Ly),0.,0.);
+
+  // Generate particles
+  seed_entropy(rank()); // different random numbers on different ranks
+
+  for(int n=0; n<nppc*gnx*gny*gnz/(float)nproc(); n++) {
+    // Pick a uniform random location in the local domain
+    const float x = uniform( rng(0), grid->x0, grid->x1 );
+    const float y = uniform( rng(0), grid->y0, grid->y1 );
+    const float z = uniform( rng(0), grid->z0, grid->z1 );
+
+    // Pick random velocity
+    float ux = normal( rng(0), 0., 0.1 ) + 0.1;
+    float uy = normal( rng(0), 0., 0.1 );
+    float uz = normal( rng(0), 0., 0.1 );
+    inject_particle(elec, x,y,z, ux,uy,uz, weight, 0, 0);
+
+    // Pick different random velocity
+    ux = normal( rng(0), 0., 0.1 ) + 0.1;
+    uy = normal( rng(0), 0., 0.1 );
+    uz = normal( rng(0), 0., 0.1 );
+    inject_particle(pos,  x,y,z, ux,uy,uz, weight, 0, 0);
+  }
+
+  // This is the species with frequent output
+  // possibily a tracer species with a global particle ID (if compiled into VPIC)
+  // and possibily per-particle user-defined annotations (if compiled into VPIC)
+  sim_log("Creating electrons tracers");
+  species_t* sp = make_tracers_by_percentage(elec, 1.0, Tracertype::Move);
+  sim_log("Done. We have " << sp->name);
+
+  // create annotation buffer
+#ifdef VPIC_PARTICLE_ANNOTATION
+  int annotation_count = 0;
+  annotation_count += 6;   // Electromagnetic field
+  annotation_count += 4;   // Four hydro quantities
+  annotation_count += 1;   // Time integral of v dot E
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    annotation_count += 1; // Copy of the particle ID
+  #endif
+
+  sp->allocate_annotation_buffer(annotation_count);
+
+  // Set second last annotation to zero as starting value for integration
+  for(int n = 0; n<sp->np; n++) {
+    sp->set_annotation(n, annotation_count-2, 0.);
+  }
+
+  // Store ID in last annotation slot
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  for(int n = 0; n<sp->np; n++) {
+    size_t id = sp->p_id[n];
+    sp->set_annotation(n, annotation_count-1, id);
+  }
+  #endif
+#else
+#warning "No annotation buffer. Compile with PARTICLE_ANNOTATE=ON"
+#endif
+
+  sim_log("Done with setup");
+  fflush(NULL);
+}
+
+begin_diagnostics {
+  // Memory managment for hydro quantities
+  static hydro_array_t * hydro_elec_array = nullptr;
+  static hydro_array_t * hydro_pos_array = nullptr;
+  static hydro_array_t * hydro_tot_array = nullptr;
+  if(hydro_elec_array == nullptr) {
+    sim_log("Allocating memory for electron hydro quantities");
+    hydro_elec_array = new_hydro_array(grid);
+    UNREGISTER_OBJECT(hydro_elec_array);
+  }
+  if(hydro_pos_array == nullptr) {
+    sim_log("Allocating memory for positron hydro quantities");
+    hydro_pos_array = new_hydro_array(grid);
+    UNREGISTER_OBJECT(hydro_pos_array);
+  }
+  if(hydro_tot_array == nullptr) {
+    sim_log("Allocating memory for single-fluid hydro quantities");
+    hydro_tot_array = new_hydro_array(grid);
+    UNREGISTER_OBJECT(hydro_tot_array);
+  }
+
+  // Find species
+  species_t* elec = find_species_name("electron", species_list);
+  species_t* pos  = find_species_name("positron", species_list);
+  species_t* sp   = find_species_name("electron_tracer", species_list);
+
+  // Initalize buffered particle output
+  if(step() == 0) {
+    sim_log("Setup buffer for particles");
+    init_buffered_particle_dump("electron_tracer", num_step+1, 3.0);
+    clear_buffered_particle_dump("electron_tracer");
+  }
+
+  // Accumulate into buffer
+  if(step() % 1 == 0) {
+    // Hydro deposit
+    clear_hydro_array(hydro_elec_array);
+    accumulate_hydro_p(hydro_elec_array, elec, interpolator_array);
+    synchronize_hydro_array(hydro_elec_array);
+    clear_hydro_array(hydro_pos_array);
+    accumulate_hydro_p(hydro_pos_array, pos, interpolator_array);
+    synchronize_hydro_array(hydro_pos_array);
+
+    // Compute bulk flow speed and net charge density in htot
+    const int nx = grid->nx;
+    const int ny = grid->ny;
+    const int nz = grid->nz;
+    const float me = elec->m; // Electron mass
+    const float qe = elec->q; // Electron charge
+    const float mi = pos->m;  // Positron mass
+    const float qi = pos->q;  // Positron charge
+    for(int x = 0; x <= nx+1; x++) {
+      for(int y = 0; y <= ny+1; y++) {
+        for(int z = 0; z <= nz+1; z++) {
+                hydro_t* htot  = &(hydro_tot_array->h[VOXEL(x,y,z,nx,ny,nz)]);
+          const hydro_t* helec = &(hydro_elec_array->h[VOXEL(x,y,z,nx,ny,nz)]);
+          const hydro_t* hpos  = &(hydro_pos_array->h[VOXEL(x,y,z,nx,ny,nz)]);
+
+          htot->rho = helec->rho + hpos->rho;             // Net charge density
+          htot->ke  = me*helec->rho/qe + mi*hpos->rho/qi; // Mass density stashed in->ke
+          htot->jx  = me*helec->jx/qe  + mi*hpos->jx/qi;  // Mass weighted flux
+          htot->jy  = me*helec->jy/qe  + mi*hpos->jy/qi;
+          htot->jz  = me*helec->jz/qe  + mi*hpos->jz/qi;
+          if(htot->ke > 0.) {
+            htot->jx /= htot->ke;                        // Flow speed
+            htot->jy /= htot->ke;
+            htot->jz /= htot->ke;
+          } else {
+            htot->jx = 0.; // No density no speed. Also no division by zero.
+            htot->jy = 0.;
+            htot->jz = 0.;
+          }
+        }
+      }
+    }
+
+    // sim_log("Accumulate particles to buffer "<<step());
+    #ifdef VPIC_PARTICLE_ANNOTATION
+      // Stick Ex,Ey,Ex and Bx,By,Bz at the particle location into annotations 0-5
+      interpolate_fields_annotation("electron_tracer", interpolator_array, 0, 1, 2, 3, 4, 5);
+
+      // Stick net charge density and bulk flow speed into annotations 6-9.
+      // Don't interpolate or store rest of htot, because it doesn't contain
+      // anything useful
+      interpolate_hydro_annotation("electron_tracer", hydro_tot_array, 7, 8, 9, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+
+      // Compute work done by the electric field at the particle location and
+      // integrate over time and put it into annotation 10
+      particle_t* p;
+      int n;
+      for(p=sp->p, n=0; n < sp->np; p++, n++) {
+        // Particle properties
+        const float dx = p->dx;
+        const float dy = p->dy;
+        const float dz = p->dz;
+        const int ii   = p->i;
+        const float ux = p->ux;
+        const float uy = p->uy;
+        const float uz = p->uz;
+        // field in that cell
+        interpolator_t f = interpolator_array->i[ii];
+        // field at the particle location
+        const float ex = f.ex + dy*f.dexdy + dz*(f.dexdz+dy*f.d2exdydz);
+        const float ey = f.ey + dz*f.deydz + dx*(f.deydx+dz*f.d2eydzdx);
+        const float ez = f.ez + dx*f.dezdx + dy*(f.dezdy+dx*f.d2ezdxdy);
+        const float bx = f.cbx + dx*f.dcbxdx;
+        const float by = f.cby + dy*f.dcbydy;
+        const float bz = f.cbz + dz*f.dcbzdz;
+        // diagnostics
+        const float gamma = sqrt(1. + ux*ux + uy*uy + uz*uz);
+        const float vx = ux / gamma;
+        const float vy = uy / gamma;
+        const float vz = uz / gamma;
+        const float work = (vx*ex + vy*ey + vz*ez)*global->dtwpe;
+        // Write back as annotation
+        sp->increment_annotation(n,10,work);
+      }
+    #endif
+
+    accumulate_buffered_particle_dump("electron_tracer", step());
+  }
+
+  // Force restart halfway through
+  if(step() == num_step/2) {
+      sim_log("Force restart");
+      dump_mkdir("restart0");
+      char fname[256];
+      sprintf(fname, "%s/restore.0.%i", "restart0", world_rank );
+      checkpt_objects(fname);
+      sim_log("Restart dump restart completed.");
+      mp_barrier();
+      exit(0);
+  }
+
+  // Dump buffer
+  if(step() == num_step) {
+    sim_log("Dump particle buffer");
+    write_buffered_particle_dump("tracer2", "electron_tracer");
+    clear_buffered_particle_dump("electron_tracer");
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

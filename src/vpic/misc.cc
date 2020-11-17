@@ -8,7 +8,6 @@
 #include "vpic.h"
 
 // FIXME: MOVE THIS INTO VPIC.HXX TO BE TRULY INLINE
-
 void
 vpic_simulation::inject_particle( species_t * sp,
                                   double x,  double y,  double z,
@@ -71,6 +70,7 @@ vpic_simulation::inject_particle( species_t * sp,
   if( iz==nz ) iz = nz-1;             // On far wall ... conditional move
   iz++;                               // Adjust for mesh indexing
 
+  int old_np = sp->np;
   particle_t * p = sp->p + (sp->np++);
   p->dx = (float)x; // Note: Might be rounded to be on [-1,1]
   p->dy = (float)y; // Note: Might be rounded to be on [-1,1]
@@ -80,6 +80,22 @@ vpic_simulation::inject_particle( species_t * sp,
   p->uy = (float)uy;
   p->uz = (float)uz;
   p->w  = w;
+
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  // Set particle ID.
+  if(sp->has_ids) {
+    sp->p_id[old_np] = sp->generate_particle_id( old_np, sp->max_np );
+  }
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // Clear annotation buffer
+  if(sp->has_annotation) {
+    for(int a = 0; a < sp->has_annotation; a++) {
+      // Default value of annotations is 0.0
+      sp->p_annotation[old_np*sp->has_annotation + a] = 0.;
+    }
+  }
+  #endif
 
   if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
 

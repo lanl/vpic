@@ -12,6 +12,10 @@
 #ifndef _species_advance_h_
 #define _species_advance_h_
 
+#include <algorithm>
+#include <functional>
+#include <string>
+
 #include "../sf_interface/sf_interface.h"
 
 //----------------------------------------------------------------------------//
@@ -42,6 +46,7 @@ species_t *
 find_species_name( const char * name,
                    species_t * sp_list );
 
+
 species_t *
 append_species( species_t * sp,
                 species_t ** sp_list );
@@ -54,7 +59,26 @@ species( const char * name,
          size_t max_local_nm,
          int sort_interval,
          int sort_out_of_place,
-         grid_t * g );
+         grid_t * g
+       );
+
+enum class Tracertype { Copy, Move };
+species_t *
+tracerspecies_by_skip( species_t* parentspecies,
+                       const float skip,
+                       const Tracertype copyormove,
+                       std::string tracername,
+                       species_t* sp_list,
+                       grid_t* grid
+                     );
+species_t *
+tracerspecies_by_predicate( species_t* parentspecies,
+                       std::function <bool (particle_t)> f,
+                       const Tracertype copyormove,
+                       std::string tracername,
+                       species_t* sp_list,
+                       grid_t* grid
+                     );
 
 // FIXME: TEMPORARY HACK UNTIL THIS SPECIES_ADVANCE KERNELS
 // CAN BE CONSTRUCTED ANALOGOUS TO THE FIELD_ADVANCE KERNELS
@@ -157,5 +181,10 @@ move_p( particle_t       * ALIGNED(128) p0,    // Particle array
         const float                     qsp ); // Species particle charge
 
 END_C_DECLS
+
+// In species_advance.cc
+std::string
+make_tracer_name_unique( const std::string prefix,
+                         species_t* sp_list );
 
 #endif // _species_advance_h_

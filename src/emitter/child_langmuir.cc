@@ -1,5 +1,6 @@
 #define IN_emitter
 #include "emitter_private.h"
+#include "../vpic/vpic.h"
 
 /* Private interface *********************************************************/
 
@@ -42,6 +43,13 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
   /**/  rng_t            * RESTRICT              rng = cl->rng;
 
   /**/  particle_t       * RESTRICT ALIGNED(128) p   = sp->p;
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  /**/  int                                      sp_has_ids = sp->has_ids;
+  /**/  size_t           * RESTRICT ALIGNED(128) p_id = sp->p_id;
+  #endif
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  /**/  int                                      sp_has_annotation = sp->has_annotation;
+  #endif
   /**/  particle_mover_t * RESTRICT ALIGNED(128) pm  = sp->pm;
   /**/  grid_t           * RESTRICT              g   = sp->g;
 
@@ -78,6 +86,18 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
     // FIXME: COULD PROBABLY ACCELERATE BY GETTING RID OF SWITCH (USE
     // MAXWELLIAN_REFLUX TRICKS?)
 
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+#  define EMIT_PARTICLE_SET_ID if(sp_has_ids) {p_id[np] = sp->generate_particle_id(np, sp->max_np);}
+#else
+#  define EMIT_PARTICLE_SET_ID
+#endif
+
+#ifdef VPIC_PARTICLE_ANNOTATION
+#  define EMIT_PARTICLE_SET_ANNOTATION if(sp_has_annotation) { for(int a = 0; a < sp_has_annotation; a++) {sp->set_annotation(np, a, 0.);}}
+#else
+#  define EMIT_PARTICLE_SET_ANNOTATION
+#endif
+
 #   define EMIT_PARTICLES(X,Y,Z,dir)                                    \
     w = fi[i].e##X;                                                     \
     if( dir qsp*w > thresh ) { /* This face can emit */                 \
@@ -98,6 +118,8 @@ emit_child_langmuir( child_langmuir_t * RESTRICT              cl,
         p[np].u##Y = u##Y;                                              \
         p[np].u##Z = u##Z;                                              \
         p[np].w    = w;                                                 \
+        EMIT_PARTICLE_SET_ID                                            \
+        EMIT_PARTICLE_SET_ANNOTATION                                    \
         accumulate_rhob( f, p+np, g, -qsp );                            \
         np++;                                                           \
                                                                         \

@@ -15,6 +15,9 @@
 
 #include <vector>
 #include <cmath>
+#include <functional>
+#include <cassert>
+#include <algorithm>
 
 #include "../boundary/boundary.h"
 #include "../collision/collision.h"
@@ -24,6 +27,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "dumpmacros.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -117,6 +121,17 @@ struct DumpParameters {
 
 }; // struct DumpParameters
 
+// TODO: should this be an enum?
+namespace dump_type {
+  const int grid_dump = 0;
+  const int field_dump = 1;
+  const int hydro_dump = 2;
+  const int particle_dump = 3;
+  const int restart_dump = 4;
+  const int history_dump = 5;
+} // namespace
+
+
 class vpic_simulation {
 public:
   vpic_simulation();
@@ -125,6 +140,16 @@ public:
   void modify( const char *fname );
   int advance( void );
   void finalize( void );
+
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  // TODO: move these somewhere more sensible
+  int predicate_count(species_t* sp, std::function <bool (int)> f);
+  int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
+
+  // TOOD: those specialized in together should probably be wrapped in a class
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
+  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
+  #endif
 
 protected:
 
@@ -244,6 +269,142 @@ protected:
 		       const char *fbase,
                        int fname_tag = 1 );
 
+
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+// TODO: merge back down to one function
+// TODO: template out the functor type
+// TODO: find a way to specify if we want to predicate on particle array, or
+// particle index
+  template<typename Predicate>
+  void dump_particles_predicate(
+      const char *sp_name,
+      const char *fbase,
+      int ftag,
+      //const std::function <bool (int)>& f = nullptr
+      //const std::function <bool (particle_t)>& f = nullptr
+      const Predicate& f
+  )
+  {
+      species_t *sp;
+      char fname[256];
+      FileIO fileIO;
+      int dim[2], buf_start;
+      static particle_t * ALIGNED(128) p_buf = NULL;
+# define PBUF_SIZE 32768 // 1MB of particles
+
+      sp = find_species_name( sp_name, species_list );
+      if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
+
+      if( !fbase ) ERROR(( "Invalid filename" ));
+
+      if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
+
+      if( rank()==0 )
+          MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
+
+      if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
+      else       sprintf( fname, "%s.%i", fbase, rank() );
+      FileIOStatus status = fileIO.open(fname, io_write);
+      if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
+
+      /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
+      nxout = grid->nx;
+      nyout = grid->ny;
+      nzout = grid->nz;
+      dxout = grid->dx;
+      dyout = grid->dy;
+      dzout = grid->dz;
+
+      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
+
+      int count_true = predicate_count(sp, f);
+      std::cout << "copying " << count_true << " of " << sp->np << std::endl;
+
+      dim[0] = count_true;
+      WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
+
+      // Copy a PBUF_SIZE hunk of the particle list into the particle
+      // buffer, timecenter it and write it out. This is done this way to
+      // guarantee the particle list unchanged while not requiring too
+      // much memory.
+
+      // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
+      // LARGE.
+
+      // Make a second species array, and space to hold the IDs too
+      particle_t* ALIGNED(128) _p;
+      size_t*     ALIGNED(128) _p_id;
+      MALLOC_ALIGNED( _p,    count_true, 128 );
+      MALLOC_ALIGNED( _p_id, count_true, 128 );
+      #ifdef VPIC_PARTICLE_ANNOTATION
+        typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+        annotation_t*    ALIGNED(128) _p_annotation = nullptr;
+        if(sp->has_annotation) {
+          MALLOC_ALIGNED( _p_annotation, count_true*sp->has_annotation, 128);
+        }
+      #endif
+
+      species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
+      _sp.p = _p;
+      _sp.np = count_true;
+      _sp.p_id = _p_id;
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      _sp.has_annotation = sp->has_annotation;
+      _sp.p_annotation = _p_annotation;
+      #endif
+
+      // TODO: why do we need to update max_np?
+      _sp.max_np = PBUF_SIZE;
+
+      // Copy the right particles over, that meet the predicate
+      predicate_copy(sp, &_sp, f);
+
+      // Use that instead below
+      for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
+          _sp.np = count_true-buf_start;
+
+          if( _sp.np > PBUF_SIZE ) {
+              _sp.np = PBUF_SIZE;
+          }
+
+          //COPY( _sp.p, &sp_p[buf_start], _sp.np );
+
+          center_p( &_sp, interpolator_array );
+
+          fileIO.write( _p, _sp.np );
+      }
+
+      // append ID array at the end of the file
+      if(sp->has_ids) {
+          dim[0] = count_true;
+          WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
+          // Maybe do this write in batches of PBUF_SIZE as well
+          fileIO.write(_sp.p_id, count_true);
+      }
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      // append annotation buffer at the end of the file
+      if(sp->has_annotation) {
+          dim[0] = count_true;
+          dim[1] = sp->has_annotation;
+          WRITE_ARRAY_HEADER( sp->p_annotation, 2, dim, fileIO );
+          // Maybe do this write in batches of PBUF_SIZE as well
+          fileIO.write(_sp.p_annotation, count_true*sp->has_annotation);
+      }
+      #endif
+
+      // Free the particle array and ID array (sp done by scope)
+      FREE_ALIGNED( _p );
+      FREE_ALIGNED( _p_id );
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      FREE_ALIGNED( _p_annotation );
+      #endif
+
+      if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
+  }
+#endif
+
+
+
   // convenience functions for simlog output
   void create_field_list(char * strlist, DumpParameters & dumpParams);
   void create_hydro_list(char * strlist, DumpParameters & dumpParams);
@@ -264,14 +425,22 @@ protected:
 		   hydro_t *h = NULL,
                    int64_t userStep = -1 );
 
+  void init_buffered_particle_dump(const char * speciesname, const int N_timesteps, const double safety_factor = 2.0);
+  void accumulate_buffered_particle_dump(const char * speciesname, const int frame);
+  void write_buffered_particle_dump(const char * dname, const char * speciesname);
+  void clear_buffered_particle_dump(const char * speciesname);
+
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  void interpolate_fields_annotation(const char * sp_name, const interpolator_array_t * ia, int where_ex, int where_ey, int where_ez, int where_bx, int where_by, int where_bz);
+  void interpolate_hydro_annotation(const char * sp_name, const hydro_array_t * ha,
+                                    int where_jx,  int where_jy,  int where_jz,  int where_rho,
+                                    int where_px,  int where_py,  int where_pz,  int where_ke,
+                                    int where_txx, int where_tyy, int where_tzz,
+                                    int where_tyz, int where_tzx, int where_txy);
+  #endif
+
   ///////////////////
   // Useful accessors
-
-  inline int
-  rank() { return world_rank; }
-
-  inline int
-  nproc() { return world_size; }
 
   inline void
   barrier() { mp_barrier(); }
@@ -525,11 +694,59 @@ protected:
      return find_species_id( id, species_list );
   }
 
-  ///////////////////
-  // Particle helpers
+  // These might need renaming before handing this to users. But it works for now.
+  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, std::string tracername) {
+    if((percentage <= 0.) || (percentage > 100.)) {
+      ERROR(( "%f is a bad percentage to select tracers", percentage ));
+    }
+    // Implemented in species_advance.cc
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, 100./percentage, copyormove, tracername, species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, std::string tracername) {
+    if(nth < 1.) {
+      ERROR(( "%f is a bad stride to select every nth particle as tracers", nth ));
+    }
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, nth, copyormove, tracername, species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove, std::string tracername) {
+    // Implemented in species_advance.cc
+    species_t* tracerspecies =  tracerspecies_by_predicate(parentspecies, f, copyormove, tracername, species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, std::string tracername) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    if((n < 1.) || (n > parentspecies->np)) {
+      ERROR(( "%f is a bad number of tracers", n ));
+    }
+    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, parentspecies->np/n, copyormove, tracername, species_list, grid);
+    return append_species(tracerspecies, &species_list);
+  }
+
+  // versions without user supplied name
+  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracers_by_percentage(parentspecies, percentage, copyormove, name);
+  }
+  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracers_by_nth(parentspecies, nth, copyormove, name);
+  }
+  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_tracers_by_predicate(parentspecies, f, copyormove, name);
+  }
+  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
+    if(!parentspecies) ERROR(( "Invalid parent species" ));
+    std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
+    return make_n_tracers(parentspecies, n, copyormove, name);
+  }
 
   // Note: Don't use injection with aging during initialization
-
   // Defaults in the declaration below enable backwards compatibility.
 
   void
@@ -552,9 +769,24 @@ protected:
                        float dx, float dy, float dz, int32_t i,
                        float ux, float uy, float uz, float w )
   {
-    particle_t * RESTRICT p = sp->p + (sp->np++);
+    particle_t * RESTRICT p = sp->p + sp->np;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(sp->has_ids) {
+      size_t * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int j = 0; j < sp->has_annotation; j++) {
+        // Default for annotations is 0.0
+        sp->set_annotation(sp->np, j, 0.);
+      }
+    }
+    #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+    sp->np++;
   }
 
   // This variant does a raw inject and moves the particles
@@ -566,13 +798,28 @@ protected:
                        float dispx, float dispy, float dispz,
                        int update_rhob )
   {
-    particle_t       * RESTRICT p  = sp->p  + (sp->np++);
+    particle_t       * RESTRICT p  = sp->p  + sp->np;
     particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    if(sp->has_ids) {
+      size_t           * RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    }
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    if(sp->has_annotation) {
+      for(int j = 0; j < sp->has_annotation; j++) {
+        // Default for annotations is 0.0
+        sp->set_annotation(sp->np, j, 0.);
+      }
+    }
+    #endif
     p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
     p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
     pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
     if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
     sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
+    sp->np++;
   }
 
   //////////////////////////////////
@@ -681,5 +928,6 @@ protected:
   void user_diagnostics(void);
   void user_particle_collisions(void);
 };
+
 
 #endif // vpic_h

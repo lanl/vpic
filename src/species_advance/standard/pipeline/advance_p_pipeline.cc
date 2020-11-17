@@ -312,6 +312,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
   {
     if ( args->seg[rank].n_ignored )
     {
+
 #ifdef EXIT_ON_LOST_MOVER
         ERROR( ( "Pipeline %i (species = %s) ran out of storage for %i movers.  This is an extremely serious problem that affects the physics of your run.",
                     rank,
@@ -325,7 +326,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
                     rank,
                     sp->name,
                     args->seg[rank].n_ignored ) );
-#endif
+
     }
 
     if ( sp->pm + sp->nm != args->seg[rank].pm )

@@ -5,9 +5,27 @@
 #include <vector>
 #include <iostream>
 
-#include <mpi.h> // TODO: it would be good if this didn't have to know about MPI
+//#define DUMP_INFO_DEBUG 1
+//#define H5_ASYNC 1
+#ifdef H5_ASYNC
+#include "h5_vol_external_async_native.h"
+#endif
+//#define CHUNK_FLAG 1
 
-#define DUMP_INFO_DEBUG 1
+
+//#define METADATA_COLL_WRITE 1
+//#define TRUE 1
+
+
+#define HAS_FIELD_COMP 1
+#define HAS_PARTICLE_COMP 1
+#define HAS_HYDRO_COMP 1
+
+//#define HAS_INDEPENDENT_IO 1
+
+#include <mpi.h> // TODO: it would be good if this didn't have to know about MPI
+#include <cassert>
+
 
 // TODO: should I drop the ./src here?
 #include "../util/io/FileIO.h"
@@ -30,54 +48,63 @@
 #include <openPMD/openPMD.hpp>
 #endif
 
+
+//#define N_FILE_N_PROCESS 1
+//#define TEST_MPIIO 1
+
 // TODO: delete this
 #define _LOG_PREFIX \
-  __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ")[" << rank << "]: "
+    __FILE__ "(" EXPAND_AND_STRINGIFY(__LINE__) ")[" << rank << "]: "
+
+/*
 #define io_log(x) do {                                \
-    if( rank==0 ) {                                  \
-      std::cerr << _LOG_PREFIX << x << std::endl;  \
-      std::cerr.flush();                               \
-    }                                                  \
-  } while(0)
+if( rank==0 ) {                                  \
+std::cerr << _LOG_PREFIX << x << std::endl;  \
+std::cerr.flush();                               \
+}                                                  \
+} while(0)
+*/
+
+
 
 // Runtime inheritance is obviously not very "VPIC like", as we will [probably]
 // incur a penalty for the vtable lookup, but given we're about to do IO this
 // is very negligible.
 class Dump_Strategy {
     public:
-    int rank, nproc, num_step;
+        int rank, nproc, num_step;
 
-    Dump_Strategy(int _rank, int _nproc ) :
-        rank(_rank),
-        nproc(_nproc)
+        Dump_Strategy(int _rank, int _nproc ) :
+            rank(_rank),
+            nproc(_nproc)
     { } // empty
 
-    virtual ~Dump_Strategy() { };
+        virtual ~Dump_Strategy() { };
 
-    virtual void dump_fields(
-        const char *fbase,
-        int step,
-        grid_t* grid,
-        field_array_t* field_array,
-        int ftag
-    ) = 0;
-    virtual void dump_hydro(
-        const char *fbase,
-        int step,
-        hydro_array_t* hydro_array,
-        species_t* sp,
-        interpolator_array_t* interpolator_array,
-        grid_t* grid,
-        int ftag
-    ) = 0;
-    virtual void dump_particles(
-        const char *fbase,
-        species_t* sp,
-        grid_t* grid,
-        int step,
-        interpolator_array_t* interpolator_array,
-        int ftag
-    ) = 0;
+        virtual void dump_fields(
+                const char *fbase,
+                int step,
+                grid_t* grid,
+                field_array_t* field_array,
+                int ftag
+                ) = 0;
+        virtual void dump_hydro(
+                const char *fbase,
+                int step,
+                hydro_array_t* hydro_array,
+                species_t* sp,
+                interpolator_array_t* interpolator_array,
+                grid_t* grid,
+                int ftag
+                ) = 0;
+        virtual void dump_particles(
+                const char *fbase,
+                species_t* sp,
+                grid_t* grid,
+                int step,
+                interpolator_array_t* interpolator_array,
+                int ftag
+                ) = 0;
 };
 
 class BinaryDump : public Dump_Strategy {
@@ -92,7 +119,7 @@ class BinaryDump : public Dump_Strategy {
                 grid_t* grid,
                 field_array_t* field_array,
                 int ftag
-        );
+                );
         void dump_hydro(
                 const char *fbase,
                 int step,
@@ -101,7 +128,7 @@ class BinaryDump : public Dump_Strategy {
                 interpolator_array_t* interpolator_array,
                 grid_t* grid,
                 int ftag
-        );
+                );
         void dump_particles(
                 const char *fbase,
                 species_t* sp,
@@ -109,1025 +136,1326 @@ class BinaryDump : public Dump_Strategy {
                 int step,
                 interpolator_array_t* interpolator_array,
                 int ftag
-        );
+                );
 };
 
 #ifdef VPIC_ENABLE_HDF5
 
 struct field_dump_flag_t
 {
-  bool ex = true, ey = true, ez = true, div_e_err = true;
-  bool cbx = true, cby = true, cbz = true, div_b_err = true;
-  bool tcax = true, tcay = true, tcaz = true, rhob = true;
-  bool jfx = true, jfy = true, jfz = true, rhof = true;
-  bool ematx = true, ematy = true, ematz = true, nmat = true;
-  bool fmatx = true, fmaty = true, fmatz = true, cmat = true;
-  void disableE()
-  {
-    ex = false, ey = false, ez = false, div_e_err = false;
-  }
+    bool ex = true, ey = true, ez = true, div_e_err = true;
+    bool cbx = true, cby = true, cbz = true, div_b_err = true;
+    bool tcax = true, tcay = true, tcaz = true, rhob = true;
+    bool jfx = true, jfy = true, jfz = true, rhof = true;
+    bool ematx = true, ematy = true, ematz = true, nmat = true;
+    bool fmatx = true, fmaty = true, fmatz = true, cmat = true;
+    void disableE()
+    {
+        ex = false, ey = false, ez = false, div_e_err = false;
+    }
 
-  void disableCB()
-  {
-    cbx = false, cby = false, cbz = false, div_b_err = false;
-  }
+    void disableCB()
+    {
+        cbx = false, cby = false, cbz = false, div_b_err = false;
+    }
 
-  void disableTCA()
-  {
-    tcax = false, tcay = false, tcaz = false, rhob = false;
-  }
+    void disableTCA()
+    {
+        tcax = false, tcay = false, tcaz = false, rhob = false;
+    }
 
-  void disableJF()
-  {
-    jfx = false, jfy = false, jfz = false, rhof = false;
-  }
+    void disableJF()
+    {
+        jfx = false, jfy = false, jfz = false, rhof = false;
+    }
 
-  void disableEMAT()
-  {
-    ematx = false, ematy = false, ematz = false, nmat = false;
-  }
+    void disableEMAT()
+    {
+        ematx = false, ematy = false, ematz = false, nmat = false;
+    }
 
-  void disableFMAT()
-  {
-    fmatx = false, fmaty = false, fmatz = false, cmat = false;
-  }
+    void disableFMAT()
+    {
+        fmatx = false, fmaty = false, fmatz = false, cmat = false;
+    }
 
-  void resetToDefaults()
-  {
-    ex = true, ey = true, ez = true, div_e_err = true;
-    cbx = true, cby = true, cbz = true, div_b_err = true;
-    tcax = true, tcay = true, tcaz = true, rhob = true;
-    jfx = true, jfy = true, jfz = true, rhof = true;
-    ematx = true, ematy = true, ematz = true, nmat = true;
-    fmatx = true, fmaty = true, fmatz = true, cmat = true;
-  }
+    void resetToDefaults()
+    {
+        ex = true, ey = true, ez = true, div_e_err = true;
+        cbx = true, cby = true, cbz = true, div_b_err = true;
+        tcax = true, tcay = true, tcaz = true, rhob = true;
+        jfx = true, jfy = true, jfz = true, rhof = true;
+        ematx = true, ematy = true, ematz = true, nmat = true;
+        fmatx = true, fmaty = true, fmatz = true, cmat = true;
+    }
 
-  bool enabledE()
-  {
-    return ex && ey && ez;
-  }
+    bool enabledE()
+    {
+        return ex && ey && ez;
+    }
 
-  bool enabledCB()
-  {
-    return cbx && cby && cbz;
-  }
+    bool enabledCB()
+    {
+        return cbx && cby && cbz;
+    }
 
-  bool enabledTCA()
-  {
-    return tcax && tcay && tcaz;
-  }
+    bool enabledTCA()
+    {
+        return tcax && tcay && tcaz;
+    }
 
-  bool enabledJF()
-  {
-    return jfx && jfy && jfz;
-  }
+    bool enabledJF()
+    {
+        return jfx && jfy && jfz;
+    }
 
-  bool enabledEMAT()
-  {
-    return ematx && ematy && ematz;
-  }
+    bool enabledEMAT()
+    {
+        return ematx && ematy && ematz;
+    }
 
-  bool enabledFMAT()
-  {
-    return fmatx && fmaty && fmatz;
-  }
+    bool enabledFMAT()
+    {
+        return fmatx && fmaty && fmatz;
+    }
 };
 
 struct hydro_dump_flag_t
 {
-  bool jx = true, jy = true, jz = true, rho = true;
-  bool px = true, py = true, pz = true, ke = true;
-  bool txx = true, tyy = true, tzz = true;
-  bool tyz = true, tzx = true, txy = true;
+    bool jx = true, jy = true, jz = true, rho = true;
+    bool px = true, py = true, pz = true, ke = true;
+    bool txx = true, tyy = true, tzz = true;
+    bool tyz = true, tzx = true, txy = true;
 
-  void disableJ()
-  {
-    jx = false, jy = false, jz = false, rho = false;
-  }
+    void disableJ()
+    {
+        jx = false, jy = false, jz = false, rho = false;
+    }
 
-  void disableP()
-  {
-    px = false, py = false, pz = false, ke = false;
-  }
+    void disableP()
+    {
+        px = false, py = false, pz = false, ke = false;
+    }
 
-  void disableTD() //Stress diagonal
-  {
-    txx = false, tyy = false, tzz = false;
-  }
+    void disableTD() //Stress diagonal
+    {
+        txx = false, tyy = false, tzz = false;
+    }
 
-  void disableTOD() //Stress off-diagonal
-  {
-    tyz = false, tzx = false, txy = false;
-  }
-  void resetToDefaults()
-  {
-    jx = true, jy = true, jz = true, rho = true;
-    px = true, py = true, pz = true, ke = true;
-    txx = true, tyy = true, tzz = true;
-    tyz = true, tzx = true, txy = true;
-  }
+    void disableTOD() //Stress off-diagonal
+    {
+        tyz = false, tzx = false, txy = false;
+    }
+    void resetToDefaults()
+    {
+        jx = true, jy = true, jz = true, rho = true;
+        px = true, py = true, pz = true, ke = true;
+        txx = true, tyy = true, tzz = true;
+        tyz = true, tzx = true, txy = true;
+    }
 
-  bool enabledJ()
-  {
-    return jx && jy && jz;
-  }
+    bool enabledJ()
+    {
+        return jx && jy && jz;
+    }
 
-  bool enabledP()
-  {
-    return px && py && pz;
-  }
+    bool enabledP()
+    {
+        return px && py && pz;
+    }
 
-  bool enabledTD()
-  {
-    return txx && tyy && tzz;
-  }
+    bool enabledTD()
+    {
+        return txx && tyy && tzz;
+    }
 
-  bool enabledTOD()
-  {
-    return tyz && tzx && txy;
-  }
+    bool enabledTOD()
+    {
+        return tyz && tzx && txy;
+    }
 };
 class HDF5Dump : public Dump_Strategy {
     std::unordered_map<species_id, size_t> tframe_map;
     public:
-        using Dump_Strategy::Dump_Strategy; // inherit constructor
+    using Dump_Strategy::Dump_Strategy; // inherit constructor
 
-        // TODO: replace these with a common dump interface
-        // Declare vars to use
-        hydro_dump_flag_t hydro_dump_flag;
-        field_dump_flag_t field_dump_flag;
+    // TODO: replace these with a common dump interface
+    // Declare vars to use
+    hydro_dump_flag_t hydro_dump_flag;
+    field_dump_flag_t field_dump_flag;
 
 #define DUMP_DIR_FORMAT "./%s"
 
-// TODO: naming a macro so close to existing functions AND data is not a good
-// define to do C-style indexing
+    // TODO: naming a macro so close to existing functions AND data is not a good
+    // define to do C-style indexing
 #define _hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
 
-        // TODO: make function?
-        void dump_fields(
+
+    /**
+     * @brief Dump field data to the HDf5 file
+     *         Author: Bin Dong  dbin@lbl.gov
+     *         https://crd.lbl.gov/bin-dong
+     *         Nov 2020
+     * @param fbase
+     * @param step
+     * @param grid
+     * @param field_array
+     * @param ftag
+     */
+    void dump_fields(
             const char *fbase,
             int step,
             grid_t* grid,
             field_array_t* field_array,
             int ftag
-        )
-        {
-            size_t step_for_viou = step;
+            )
+    {
+        size_t step_for_viou = step;
 
-            int mpi_size, mpi_rank;
-            MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-            MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        int mpi_size, mpi_rank;
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
 
 #ifdef DUMP_INFO_DEBUG
-            printf("MPI rank = %d, size = %d \n", mpi_rank, mpi_size);
-            //printf("base dir for field: %s \n", fdParams.baseDir);
-            //printf("stride x y z  = (%ld, %ld, %ld)\n", fdParams.stride_x, fdParams.stride_y, fdParams.stride_z);
-            printf("grid x, y z  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);
-            printf("domain loc (x0, y0, z0) -> (x1, y1, z1) = (%f, %f, %f) -> (%f, %f, %f) \n", grid->x0, grid->y0, grid->z0, grid->x1, grid->y1, grid->z1);
-            //printf("global->topology_x, y, z =  %f, %f, %f \n ", global->topology_x, global->topology_y, global->topology_z);
-            printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid->sz, grid->nv);
+        printf("MPI rank = %d, size = %d \n", mpi_rank, mpi_size);
+        //printf("base dir for field: %s \n", fdParams.baseDir);
+        //printf("stride x y z  = (%ld, %ld, %ld)\n", fdParams.stride_x, fdParams.stride_y, fdParams.stride_z);
+        printf("grid x, y z  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);
+        printf("domain loc (x0, y0, z0) -> (x1, y1, z1) = (%f, %f, %f) -> (%f, %f, %f) \n", grid->x0, grid->y0, grid->z0, grid->x1, grid->y1, grid->z1);
+        //printf("global->topology_x, y, z =  %f, %f, %f \n ", global->topology_x, global->topology_y, global->topology_z);
+        printf("grid -> sx, sy, sz =  (%d, %d, %d), nv=%d \n", grid->sx, grid->sy, grid->sz, grid->nv);
 #endif
 
-#define DUMP_FIELD_TO_HDF5(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)                                               \
-            {                                                                                                             \
-                dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); \
-                temp_buf_index = 0;                                                                                       \
-                for (size_t i(1); i < grid->nx + 1; i++)                                                                  \
-                {                                                                                                         \
-                    for (size_t j(1); j < grid->ny + 1; j++)                                                              \
-                    {                                                                                                     \
-                        for (size_t k(1); k < grid->nz + 1; k++)                                                          \
-                        {                                                                                                 \
-                            temp_buf[temp_buf_index] = FIELD_ARRAY_NAME->fpp(i, j, k).ATTRIBUTE_NAME;                     \
-                            temp_buf_index = temp_buf_index + 1;                                                          \
-                        }                                                                                                 \
-                    }                                                                                                     \
-                }                                                                                                         \
-                dataspace_id = H5Dget_space(dset_id);                                                                     \
-                H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);               \
-                H5Dwrite(dset_id, ELEMENT_TYPE, memspace, dataspace_id, plist_id, temp_buf);                              \
-                H5Sclose(dataspace_id);                                                                                   \
-                H5Dclose(dset_id);                                                                                        \
-            }
 
-            char fname[256];
-            char field_scratch[128];
-            char subfield_scratch[128];
 
-            sprintf(field_scratch, DUMP_DIR_FORMAT, "field_hdf5");
-            FileUtils::makeDirectory(field_scratch);
-            sprintf(subfield_scratch, "%s/T.%zu/", field_scratch, step_for_viou);
-            FileUtils::makeDirectory(subfield_scratch);
+        char fname[256];
+        char field_scratch[128];
+        char subfield_scratch[128];
 
-            sprintf(fname, "%s/%s_%zu.h5", subfield_scratch, "fields", step_for_viou);
-            double el1 = uptime();
-            hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-            H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-            hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-            H5Pclose(plist_id);
+        sprintf(field_scratch, DUMP_DIR_FORMAT, "field_hdf5");
+        FileUtils::makeDirectory(field_scratch);
+        sprintf(subfield_scratch, "%s/T.%zu/", field_scratch, step_for_viou);
+        FileUtils::makeDirectory(subfield_scratch);
 
-            sprintf(fname, "Timestep_%zu", step_for_viou);
-            hid_t group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        sprintf(fname, "%s/%s_%zu.h5", subfield_scratch, "fields", step_for_viou);
+        double el1 = uptime();
 
-            el1 = uptime() - el1;
-            io_log("TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
-            double el2 = uptime();
+        //    int file_exist(const char *filename)
+        //{
+        //    struct stat buffer;
+        //    return (stat(filename, &buffer) == 0);
+        //}
 
-            /*
-            // Create a variable list of field values to output.
-            size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
-            size_t * varlist = new size_t[numvars];
+        //https://support.hdfgroup.org/ftp/HDF5/current/src/unpacked/examples/h5_compound.c
+#ifdef  HAS_FIELD_COMP
+        if(!mpi_rank)
+            printf("Using Field Compund type !\n");
+        hid_t  field_comp_type_it = H5Tcreate (H5T_COMPOUND, sizeof(field_t));
+        H5Tinsert(field_comp_type_it, "ex", HOFFSET(field_t, ex), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "ey", HOFFSET(field_t, ey), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "ez", HOFFSET(field_t, ez), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "div_e_err", HOFFSET(field_t, div_e_err), H5T_NATIVE_FLOAT);
 
-            for(size_t i(0), c(0); i<total_field_variables; i++)
-            if(global->fdParams.output_vars.bitset(i)) varlist[c++] = i;
+        H5Tinsert(field_comp_type_it, "cbx", HOFFSET(field_t, cbx), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "cby", HOFFSET(field_t, cby), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "cbz", HOFFSET(field_t, cbz), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "div_b_err", HOFFSET(field_t, div_b_err), H5T_NATIVE_FLOAT);
 
-            printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
+        H5Tinsert(field_comp_type_it, "tcax", HOFFSET(field_t, tcax), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "tcay", HOFFSET(field_t, tcay), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "tcaz", HOFFSET(field_t, tcaz), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "rhob", HOFFSET(field_t, rhob), H5T_NATIVE_FLOAT);
+
+        H5Tinsert(field_comp_type_it, "jfx", HOFFSET(field_t, jfx), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "jfy", HOFFSET(field_t, jfy), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "jfz", HOFFSET(field_t, jfz), H5T_NATIVE_FLOAT);
+        H5Tinsert(field_comp_type_it, "rhof", HOFFSET(field_t, rhof), H5T_NATIVE_FLOAT);
+
+        H5Tinsert(field_comp_type_it, "ematx", HOFFSET(field_t, ematx), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "ematy", HOFFSET(field_t, ematy), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "ematz", HOFFSET(field_t, ematz), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "nmat", HOFFSET(field_t, nmat), H5T_NATIVE_SHORT);
+
+        H5Tinsert(field_comp_type_it, "fmatx", HOFFSET(field_t, fmatx), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "fmaty", HOFFSET(field_t, fmaty), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "fmatz", HOFFSET(field_t, fmatz), H5T_NATIVE_SHORT);
+        H5Tinsert(field_comp_type_it, "cmat", HOFFSET(field_t, cmat), H5T_NATIVE_SHORT);
+#endif
+
+
+        //struct stat buffer;
+        //if((stat(fname, &buffer) == 0)){
+        //    file_exist_flag  = 1;
+        //    if(!mpi_rank)
+        //        printf("Write original files /w HDF5! \n");
+        // }
+        // file_exist_flag = 0;
+
+        hid_t plist_id;
+        hid_t file_id;
+        plist_id = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+        //H5Pset_alignment(plist_id, 4194304, 4194304);
+        /*if(H5Pset_libver_bounds(plist_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+          exit(-1);
+          }*/
+
+#ifdef METADATA_COLL_WRITE
+        if(!mpi_rank) printf("Enable collective metadata write !\n");
+        H5Pset_coll_metadata_write(plist_id, TRUE);
+#endif
+        file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        H5Pclose(plist_id);
+
+
+
+        sprintf(fname, "Timestep_%zu", step_for_viou);
+        hid_t group_id;
+        group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+        el1 = uptime() - el1;
+        //io_log("TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+        double el2 = uptime();
+
+        /*
+        // Create a variable list of field values to output.
+        size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
+        size_t * varlist = new size_t[numvars];
+
+        for(size_t i(0), c(0); i<total_field_variables; i++)
+        if(global->fdParams.output_vars.bitset(i)) varlist[c++] = i;
+
+        printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
 
 #define fpp(x, y, z) f[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
-            /*
-               typedef struct field {
-               float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
-               float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
-               float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
-               float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
-               material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
-               material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
-               } field_t;*/
-            // Local voxel mesh resolution.  Voxels are
-            // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
-            // with voxels 1:nx,1:ny,1:nz being non-ghost
-            // voxels.
+        /*
+           typedef struct field {
+           float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
+           float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
+           float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
+           float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
+           material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
+           material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
+           } field_t;*/
+        // Local voxel mesh resolution.  Voxels are
+        // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
+        // with voxels 1:nx,1:ny,1:nz being non-ghost
+        // voxels.
 
-            float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
-            hsize_t temp_buf_index;
-            hid_t dset_id;
-            //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
-            plist_id = H5Pcreate(H5P_DATASET_XFER);
-            //Comment out for test only
-            H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-            //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
+        float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
+        hsize_t temp_buf_index;
+        hid_t dset_id;
+        //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
+        //Comment out for test only
 
-            //global->topology_x
+        plist_id = H5Pcreate(H5P_DATASET_XFER);
+#ifdef HAS_INDEPENDENT_IO
+        if(!mpi_rank) printf("\n ###\n VPIC Independent I/O! \n ###\n");
+        H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_INDEPENDENT);
+#else
+        H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+#endif
 
-            hsize_t field_global_size[3], field_local_size[3], global_offset[3], global_count[3];
-            field_global_size[0] = (grid->nx * grid->gpx);
-            field_global_size[1] = (grid->ny * grid->gpy);
-            field_global_size[2] = (grid->nz * grid->gpz);
 
-            field_local_size[0] = grid->nx;
-            field_local_size[1] = grid->ny;
-            field_local_size[2] = grid->nz;
 
-            int gpx = grid->gpx;
-            int gpy = grid->gpy;
-            int gpz = grid->gpz;
 
-            // Convert rank to local decomposition
-            int rx, ry, rz;
-            UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+        //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
 
-            int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-            mpi_rank_x = rx;
-            mpi_rank_y = ry;
-            mpi_rank_z = rz;
+        //global->topology_x
 
-            global_offset[0] = (grid->nx) * mpi_rank_x;
-            global_offset[1] = (grid->ny) * mpi_rank_y;
-            global_offset[2] = (grid->nz) * mpi_rank_z;
+        hsize_t field_global_size[3], field_local_size[3], global_offset[3], global_count[3];
+        field_global_size[0] = (grid->nx * grid->gpx);
+        field_global_size[1] = (grid->ny * grid->gpy);
+        field_global_size[2] = (grid->nz * grid->gpz);
 
-            global_count[0] = (grid->nx);
-            global_count[1] = (grid->ny);
-            global_count[2] = (grid->nz);
+        field_local_size[0] = grid->nx;
+        field_local_size[1] = grid->ny;
+        field_local_size[2] = grid->nz;
+
+        int gpx = grid->gpx;
+        int gpy = grid->gpy;
+        int gpz = grid->gpz;
+
+        // Convert rank to local decomposition
+        int rx, ry, rz;
+        UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
+
+        int mpi_rank_x, mpi_rank_y, mpi_rank_z;
+        mpi_rank_x = rx;
+        mpi_rank_y = ry;
+        mpi_rank_z = rz;
+
+        global_offset[0] = (grid->nx) * mpi_rank_x;
+        global_offset[1] = (grid->ny) * mpi_rank_y;
+        global_offset[2] = (grid->nz) * mpi_rank_z;
+
+        global_count[0] = (grid->nx);
+        global_count[1] = (grid->ny);
+        global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
+        if(mpi_rank < 4){
+            printf("grid nx, ny nz  = (%d, %d, %d) \n", grid->nx, grid->ny, grid->nz);
+            printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
             printf("global size   = %llu  %llu %llu \n", field_global_size[0], field_global_size[1], field_global_size[2]);
             printf("global_offset = %llu %llu %llu \n", global_offset[0], global_offset[1], global_offset[2]);
             printf("global_count  = %llu  %llu %llu \n", global_count[0], global_count[1], global_count[2]);
-            printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
             fflush(stdout);
+        }
 #endif
 
-            hid_t filespace = H5Screate_simple(3, field_global_size, NULL);
-            hid_t memspace = H5Screate_simple(3, field_local_size, NULL);
-            hid_t dataspace_id;
+        hid_t filespace;   //= H5Screate_simple(3, field_global_size, NULL);
+        hid_t memspace; // = H5Screate_simple(3, field_local_size, NULL);
+        //if(!file_exist_flag){
+        filespace = H5Screate_simple(3, field_global_size, NULL);
+        //}
+        memspace = H5Screate_simple(3, field_local_size, NULL);
 
-            /*
-               typedef struct field {
-               float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
-               float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
-               float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
-               float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
-               material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
-               material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
-               } field_t;*/
-
-            if (field_dump_flag.ex)
-                DUMP_FIELD_TO_HDF5("ex", ex, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.ey)
-                DUMP_FIELD_TO_HDF5("ey", ey, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.ez)
-                DUMP_FIELD_TO_HDF5("ez", ez, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.div_e_err)
-                DUMP_FIELD_TO_HDF5("div_e_err", div_e_err, H5T_NATIVE_FLOAT);
-
-            if (field_dump_flag.cbx)
-                DUMP_FIELD_TO_HDF5("cbx", cbx, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.cby)
-                DUMP_FIELD_TO_HDF5("cby", cby, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.cbz)
-                DUMP_FIELD_TO_HDF5("cbz", cbz, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.div_b_err)
-                DUMP_FIELD_TO_HDF5("div_b_err", div_b_err, H5T_NATIVE_FLOAT);
-
-            if (field_dump_flag.tcax)
-                DUMP_FIELD_TO_HDF5("tcax", tcax, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.tcay)
-                DUMP_FIELD_TO_HDF5("tcay", tcay, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.tcaz)
-                DUMP_FIELD_TO_HDF5("tcaz", tcaz, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.rhob)
-                DUMP_FIELD_TO_HDF5("rhob", rhob, H5T_NATIVE_FLOAT);
-
-            if (field_dump_flag.jfx)
-                DUMP_FIELD_TO_HDF5("jfx", jfx, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.jfy)
-                DUMP_FIELD_TO_HDF5("jfy", jfy, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.jfz)
-                DUMP_FIELD_TO_HDF5("jfz", jfz, H5T_NATIVE_FLOAT);
-            if (field_dump_flag.rhof)
-                DUMP_FIELD_TO_HDF5("rhof", rhof, H5T_NATIVE_FLOAT);
-
-            //H5T_NATIVE_SHORT  for material_id (typedef int16_t material_id)
-            if (field_dump_flag.ematx)
-                DUMP_FIELD_TO_HDF5("ematx", ematx, H5T_NATIVE_SHORT);
-            if (field_dump_flag.ematy)
-                DUMP_FIELD_TO_HDF5("ematy", ematy, H5T_NATIVE_SHORT);
-            if (field_dump_flag.ematz)
-                DUMP_FIELD_TO_HDF5("ematz", ematz, H5T_NATIVE_SHORT);
-            if (field_dump_flag.nmat)
-                DUMP_FIELD_TO_HDF5("nmat", nmat, H5T_NATIVE_SHORT);
-
-            if (field_dump_flag.fmatx)
-                DUMP_FIELD_TO_HDF5("fmatx", fmatx, H5T_NATIVE_SHORT);
-            if (field_dump_flag.fmaty)
-                DUMP_FIELD_TO_HDF5("fmaty", fmaty, H5T_NATIVE_SHORT);
-            if (field_dump_flag.fmatz)
-                DUMP_FIELD_TO_HDF5("fmatz", fmatz, H5T_NATIVE_SHORT);
-            if (field_dump_flag.cmat)
-                DUMP_FIELD_TO_HDF5("cmat", cmat, H5T_NATIVE_SHORT);
-
-            el2 = uptime() - el2;
-            io_log("TimeHDF5Write: " << el2 << " s");
-
-            double el3 = uptime();
-
-            //Write metadata (geo original and geo dx/dy/dz) for ArrayUDF
-            float attr_data[2][3];
-            attr_data[0][0] = grid->x0;
-            attr_data[0][1] = grid->y0;
-            attr_data[0][2] = grid->z0;
-            attr_data[1][0] = grid->dx;
-            attr_data[1][1] = grid->dy;
-            attr_data[1][2] = grid->dz;
-            hsize_t dims[2];
-            dims[0] = 2;
-            dims[1] = 3;
-            hid_t va_geo_dataspace_id = H5Screate_simple(2, dims, NULL);
-            hid_t va_geo_attribute_id = H5Acreate2(file_id, "VPIC-ArrayUDF-GEO", H5T_IEEE_F32BE, va_geo_dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(va_geo_attribute_id, H5T_NATIVE_FLOAT, attr_data);
-            H5Sclose(va_geo_dataspace_id);
-            H5Aclose(va_geo_attribute_id);
-
-            free(temp_buf);
-            H5Sclose(filespace);
-            H5Sclose(memspace);
-            H5Pclose(plist_id);
-            H5Gclose(group_id);
-            H5Fclose(file_id);
-
-            el3 = uptime() - el3;
-            io_log("TimeHDF5Close: " << el3 << " s");
-
-            if (mpi_rank == 0)
-            {
-                char const *output_xml_file = "./field_hdf5/hdf5_field.xdmf";
-                char dimensions_3d[128];
-                sprintf(dimensions_3d, "%lld %lld %lld", field_global_size[0], field_global_size[1], field_global_size[2]);
-                char dimensions_4d[128];
-                sprintf(dimensions_4d, "%lld %lld %lld %d", field_global_size[0], field_global_size[1], field_global_size[2], 3);
-                char orignal[128];
-                sprintf(orignal, "%f %f %f", grid->x0, grid->y0, grid->z0);
-                char dxdydz[128];
-                sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
+        hsize_t chunk_dims[3];
+        chunk_dims[0] = 288; //grid->nx;  //8 x 8 x 8
+        chunk_dims[1] = 24;  //grid->ny; //
+        chunk_dims[2] = 24;  //grid->nz;
 
 
-                // TODO: remove or let the user set
-                int field_interval = 1;
 
-                // TODO: remove this dependence on number of steps
-                std::cout << "num_step " << num_step << std::endl;
+        hid_t dataspace_id;
+        hid_t dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+#ifdef CHUNK_FLAG
+        H5Pset_chunk(dcpl_id, 3, chunk_dims);
+        if(!mpi_rank)   printf("Enable chunking !\n");
+#endif
 
-                int nframes = num_step / field_interval + 1;
-                static int field_tframe = 0;
+#define DUMP_FIELD_TO_HDF5(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)                                               \
+        {                                                                                                          \
+            dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT); \
+            temp_buf_index = 0;                                                                                       \
+            for (size_t i(1); i < grid->nx + 1; i++)                                                                  \
+            {                                                                                                         \
+                for (size_t j(1); j < grid->ny + 1; j++)                                                              \
+                {                                                                                                     \
+                    for (size_t k(1); k < grid->nz + 1; k++)                                                          \
+                    {                                                                                                 \
+                        temp_buf[temp_buf_index] = FIELD_ARRAY_NAME->fpp(i, j, k).ATTRIBUTE_NAME;                     \
+                        temp_buf_index = temp_buf_index + 1;                                                          \
+                    }                                                                                                 \
+                }                                                                                                     \
+            }                                                                                                         \
+            dataspace_id = H5Dget_space(dset_id);                                                                     \
+            H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);               \
+            H5Dwrite(dset_id, ELEMENT_TYPE, memspace, dataspace_id, plist_id, temp_buf);                              \
+            H5Sclose(dataspace_id);                                                                                   \
+            H5Dclose(dset_id);                                                                                        \
+        }
+        /*
+           typedef struct field {
+           float ex,   ey,   ez,   div_e_err;     // Electric field and div E error
+           float cbx,  cby,  cbz,  div_b_err;     // Magnetic field and div B error
+           float tcax, tcay, tcaz, rhob;          // TCA fields and bound charge density
+           float jfx,  jfy,  jfz,  rhof;          // Free current and charge density
+           material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
+           material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
+           } field_t;*/
+
+
+#ifdef HAS_FIELD_COMP
+        field_t * field_buf;
+        temp_buf_index = 0;
+        int global_index;
+        field_buf = (field_t *)malloc(sizeof(field_t) * (grid->nx) * (grid->ny) * (grid->nz));
+        for (size_t i(1); i < grid->nx + 1; i++){
+            for (size_t j(1); j < grid->ny + 1; j++){
+                for (size_t k(1); k < grid->nz + 1; k++){
+                    field_buf[temp_buf_index] = FIELD_ARRAY_NAME->fpp(i, j, k);
+                    temp_buf_index++;
+                }
+            }
+        }
+        dset_id = H5Dcreate(group_id, "field", field_comp_type_it, filespace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
+        dataspace_id = H5Dget_space(dset_id);
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);
+        H5Dwrite(dset_id, field_comp_type_it, memspace, dataspace_id, plist_id, field_buf);
+        free(field_buf);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_id);
+        H5Tclose(field_comp_type_it);
+#else
+
+        if (field_dump_flag.ex)
+            DUMP_FIELD_TO_HDF5("ex", ex, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.ey)
+            DUMP_FIELD_TO_HDF5("ey", ey, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.ez)
+            DUMP_FIELD_TO_HDF5("ez", ez, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.div_e_err)
+            DUMP_FIELD_TO_HDF5("div_e_err", div_e_err, H5T_NATIVE_FLOAT);
+
+        if (field_dump_flag.cbx)
+            DUMP_FIELD_TO_HDF5("cbx", cbx, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.cby)
+            DUMP_FIELD_TO_HDF5("cby", cby, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.cbz)
+            DUMP_FIELD_TO_HDF5("cbz", cbz, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.div_b_err)
+            DUMP_FIELD_TO_HDF5("div_b_err", div_b_err, H5T_NATIVE_FLOAT);
+
+        if (field_dump_flag.tcax)
+            DUMP_FIELD_TO_HDF5("tcax", tcax, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.tcay)
+            DUMP_FIELD_TO_HDF5("tcay", tcay, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.tcaz)
+            DUMP_FIELD_TO_HDF5("tcaz", tcaz, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.rhob)
+            DUMP_FIELD_TO_HDF5("rhob", rhob, H5T_NATIVE_FLOAT);
+
+        if (field_dump_flag.jfx)
+            DUMP_FIELD_TO_HDF5("jfx", jfx, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.jfy)
+            DUMP_FIELD_TO_HDF5("jfy", jfy, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.jfz)
+            DUMP_FIELD_TO_HDF5("jfz", jfz, H5T_NATIVE_FLOAT);
+        if (field_dump_flag.rhof)
+            DUMP_FIELD_TO_HDF5("rhof", rhof, H5T_NATIVE_FLOAT);
+
+        //H5T_NATIVE_SHORT  for material_id (typedef int16_t material_id)
+        if (field_dump_flag.ematx)
+            DUMP_FIELD_TO_HDF5("ematx", ematx, H5T_NATIVE_SHORT);
+        if (field_dump_flag.ematy)
+            DUMP_FIELD_TO_HDF5("ematy", ematy, H5T_NATIVE_SHORT);
+        if (field_dump_flag.ematz)
+            DUMP_FIELD_TO_HDF5("ematz", ematz, H5T_NATIVE_SHORT);
+        if (field_dump_flag.nmat)
+            DUMP_FIELD_TO_HDF5("nmat", nmat, H5T_NATIVE_SHORT);
+
+        if (field_dump_flag.fmatx)
+            DUMP_FIELD_TO_HDF5("fmatx", fmatx, H5T_NATIVE_SHORT);
+        if (field_dump_flag.fmaty)
+            DUMP_FIELD_TO_HDF5("fmaty", fmaty, H5T_NATIVE_SHORT);
+        if (field_dump_flag.fmatz)
+            DUMP_FIELD_TO_HDF5("fmatz", fmatz, H5T_NATIVE_SHORT);
+        if (field_dump_flag.cmat)
+            DUMP_FIELD_TO_HDF5("cmat", cmat, H5T_NATIVE_SHORT);
+
+#endif
+
+
+        H5D_mpio_actual_io_mode_t actual_io_mode;
+        H5Pget_mpio_actual_io_mode(plist_id,  &actual_io_mode);
+        /*
+
+           switch(actual_io_mode){
+           case H5D_MPIO_NO_COLLECTIVE:
+           io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_NO_COLLECTIVE: ");
+           break;
+           case H5D_MPIO_CHUNK_INDEPENDENT:
+           io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_INDEPENDENT: ");
+           break;
+           case H5D_MPIO_CHUNK_COLLECTIVE:
+           io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_COLLECTIVE: ");
+           break;
+           case H5D_MPIO_CHUNK_MIXED:
+           io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_MIXED: ");
+           break;
+           case H5D_MPIO_CONTIGUOUS_COLLECTIVE:
+           io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CONTIGUOUS_COLLECTIVE: ");
+           break;
+           default :
+           io_log("H5Pget_mpio_actual_io_mode: None returend: ");
+           break;
+           }
+
+           H5D_mpio_actual_chunk_opt_mode_t actual_chunk_opt_mode;
+           H5Pget_mpio_actual_chunk_opt_mode(plist_id, &actual_chunk_opt_mode);
+           switch(actual_chunk_opt_mode){
+           case H5D_MPIO_NO_CHUNK_OPTIMIZATION:
+           io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_NO_CHUNK_OPTIMIZATION: ");
+           break;
+           case H5D_MPIO_MULTI_CHUNK:
+           io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK: ");
+           break;
+        //  case H5D_MPIO_MULTI_CHUNK_NO_OPT:
+        //      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK_NO_OPT: ");
+        //     break;
+        case H5D_MPIO_LINK_CHUNK:
+        io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_LINK_CHUNK: ");
+        break;
+        default :
+        io_log("H5Pget_mpio_actual_chunk_opt_mode: None returend: ");
+        break;
+        }
+
+        uint32_t local_no_collective_cause,  global_no_collective_cause;
+        H5Pget_mpio_no_collective_cause(plist_id, &local_no_collective_cause, &global_no_collective_cause);
+
+        switch(local_no_collective_cause){
+        case H5D_MPIO_COLLECTIVE:
+        io_log("local_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
+        break;
+        case H5D_MPIO_SET_INDEPENDENT:
+        io_log("local_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
+        break;
+        case H5D_MPIO_DATA_TRANSFORMS:
+        io_log("local_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
+        break;
+        //case H5D_MPIO_SET_MPIPOSIX:
+        //    io_log("local_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
+        //    break;
+        case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
+        io_log("local_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
+        break;
+        //case H5D_MPIO_POINT_SELECTIONS:
+        //    io_log("local_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
+        //    break;
+        // case H5D_MPIO_FILTERS:
+        //    io_log("local_no_collective_cause: H5D_MPIO_FILTERS: ");
+        //    break;
+        default :
+        io_log("local_no_collective_cause: None returend: ");
+        break;
+    }
+
+
+    switch(global_no_collective_cause){
+        case H5D_MPIO_COLLECTIVE:
+            io_log("global_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
+            break;
+        case H5D_MPIO_SET_INDEPENDENT:
+            io_log("global_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
+            break;
+        case H5D_MPIO_DATA_TRANSFORMS:
+            io_log("global_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
+            break;
+            //case H5D_MPIO_SET_MPIPOSIX:
+            //    io_log("global_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
+            //    break;
+        case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
+            io_log("global_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
+            break;
+            //case H5D_MPIO_POINT_SELECTIONS:
+            //    io_log("global_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
+            //    break;
+            // case H5D_MPIO_FILTERS:
+            //   io_log("global_no_collective_cause: H5D_MPIO_FILTERS: ");
+            //   break;
+        default :
+            io_log("global_no_collective_cause: None returend: ");
+            break;
+    }
+    */
+
+    el2 = uptime() - el2;
+    //io_log("TimeHDF5Write: " << el2 << " s");
+
+    double el3 = uptime();
+
+    /*
+    //Write metadata (geo original and geo dx/dy/dz) for ArrayUDF
+    float attr_data[2][3];
+    attr_data[0][0] = grid->x0;
+    attr_data[0][1] = grid->y0;
+    attr_data[0][2] = grid->z0;
+    attr_data[1][0] = grid->dx;
+    attr_data[1][1] = grid->dy;
+    attr_data[1][2] = grid->dz;
+    hsize_t dims[2];
+    dims[0] = 2;
+    dims[1] = 3;
+    if(!file_exist_flag){
+    hid_t va_geo_dataspace_id = H5Screate_simple(2, dims, NULL);
+    hid_t va_geo_attribute_id = H5Acreate2(file_id, "VPIC-ArrayUDF-GEO", H5T_IEEE_F32BE, va_geo_dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(va_geo_attribute_id, H5T_NATIVE_FLOAT, attr_data);
+    H5Sclose(va_geo_dataspace_id);
+    H5Aclose(va_geo_attribute_id);
+    }
+    */
+    free(temp_buf);
+    //if(!file_exist_flag)
+    H5Sclose(filespace);
+    H5Sclose(memspace);
+    H5Pclose(plist_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+
+    el3 = uptime() - el3;
+    //io_log("TimeHDF5Close: " << el3 << " s");
+
+    if (mpi_rank == 0)
+    {
+        char const *output_xml_file = "./field_hdf5/hdf5_field.xdmf";
+        char dimensions_3d[128];
+        sprintf(dimensions_3d, "%lld %lld %lld", field_global_size[0], field_global_size[1], field_global_size[2]);
+        char dimensions_4d[128];
+        sprintf(dimensions_4d, "%lld %lld %lld %d", field_global_size[0], field_global_size[1], field_global_size[2], 3);
+        char orignal[128];
+        sprintf(orignal, "%f %f %f", grid->x0, grid->y0, grid->z0);
+        char dxdydz[128];
+        sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
+
+
+        // TODO: remove or let the user set
+        int field_interval = 1;
+
+        // TODO: remove this dependence on number of steps
+        //std::cout << "num_step " << num_step << std::endl;
+
+        int nframes = num_step / field_interval + 1;
+        static int field_tframe = 0;
 
 #ifdef DUMP_INFO_DEBUG
-                printf("         meta file : %s \n", output_xml_file);
-                printf(" array dims per var: %s \n", dimensions_3d);
-                printf("array dims all vars: %s \n", dimensions_4d);
-                printf("            orignal: %s \n", orignal);
-                printf("             dxdydz: %s \n", dxdydz);
-                printf("            nframes: %d \n", nframes);
-                printf("    field_interval: %d \n", field_interval);
-                printf("       current step: %zd \n", step_for_viou);
-                printf("       current step: %zd \n", step_for_viou);
+        printf("         meta file : %s \n", output_xml_file);
+        printf(" array dims per var: %s \n", dimensions_3d);
+        printf("array dims all vars: %s \n", dimensions_4d);
+        printf("            orignal: %s \n", orignal);
+        printf("             dxdydz: %s \n", dxdydz);
+        printf("            nframes: %d \n", nframes);
+        printf("    field_interval: %d \n", field_interval);
+        printf("       current step: %zd \n", step_for_viou);
+        printf("       current step: %zd \n", step_for_viou);
 
-                //printf("    Simulation time: %f \n", grid->t0);
-                printf("             tframe: %d \n", field_tframe);
+        //printf("    Simulation time: %f \n", grid->t0);
+        printf("             tframe: %d \n", field_tframe);
 #endif
 
-                // TODO: this footer dumping is more likely better done in a
-                // destructor, rather than hoping a multiple division works out
-                if (field_tframe >= 1)
-                {
-                    if (field_tframe == (nframes - 1))
-                    {
-                        invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
-                    }
-                    else
-                    {
-                        invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
-                    }
-                }
-                else
-                {
-                    create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, field_interval);
-                    if (field_tframe == (nframes - 1))
-                    {
-                        invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
-                    }
-                    else
-                    {
-                        invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
-                    }
-                }
-                field_tframe++;
+        // TODO: this footer dumping is more likely better done in a
+        // destructor, rather than hoping a multiple division works out
+        if (field_tframe >= 1)
+        {
+            if (field_tframe == (nframes - 1))
+            {
+                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
+            }
+            else
+            {
+                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
             }
         }
-        void dump_particles(
+        else
+        {
+            create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, field_interval);
+            if (field_tframe == (nframes - 1))
+            {
+                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 1);
+            }
+            else
+            {
+                invert_field_xml_item(output_xml_file, "fields", step_for_viou, dimensions_4d, dimensions_3d, 0);
+            }
+        }
+        field_tframe++;
+    }
+    }
+    /**
+     * @brief dump_particles to the HDF5 file
+     *         Author: Bin Dong  dbin@lbl.gov
+     *            https://crd.lbl.gov/bin-dong
+     *         Nov 2020
+     * @param fbase
+     * @param sp
+     * @param grid
+     * @param step
+     * @param interpolator_array
+     * @param ftag
+     */
+    void dump_particles(
             const char *fbase,
             species_t* sp,
             grid_t* grid,
             int step,
             interpolator_array_t* interpolator_array,
             int ftag
-        )
+            )
+    {
+        static int file_index = 0;
+        file_index ++;
+        int mpi_rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        double dump_particles_uptime = uptime();
+        time_t seconds = time(NULL);
+        // printf("Atrank = %d, file_index = %d, dump_particles_uptime = %f, epoch_seconds = %ld  \n ", mpi_rank, file_index, dump_particles_uptime, seconds);
+
+
+        size_t step_for_viou = step;
+        char fname[256];
+        char group_name[256];
+        char particle_scratch[128];
+        char subparticle_scratch[128];
+
+        int np_local;
+
+        float *Pf;
+        int *Pi;
+
+        // get the total number of particles. in this example, output only electrons
+        //sp = species_list;
+        sprintf(particle_scratch, DUMP_DIR_FORMAT, "particle_hdf5");
+        FileUtils::makeDirectory(particle_scratch);
+        sprintf(subparticle_scratch, "%s/T.%ld/", particle_scratch, step_for_viou);
+        FileUtils::makeDirectory(subparticle_scratch);
+
+        // TODO: Allow the user to set this
+        int stride_particle_dump = 1;
+
+        np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
+
+        // make a copy of the part of particle data to be dumped
+        double ec1 = uptime();
+
+        int sp_np = sp->np;
+        int sp_max_np = sp->max_np;
+        particle_t *ALIGNED(128) p_buf = NULL;
+        if (!p_buf)
+            MALLOC_ALIGNED(p_buf, np_local, 128);
+        particle_t *sp_p = sp->p;
+        sp->p = p_buf;
+        sp->np = np_local;
+        sp->max_np = np_local;
+
+        for (long long iptl = 0, i = 0; iptl < sp_np; iptl += stride_particle_dump, ++i)
         {
-            size_t step_for_viou = step;
-            char fname[256];
-            char group_name[256];
-            char particle_scratch[128];
-            char subparticle_scratch[128];
+            COPY(&sp->p[i], &sp_p[iptl], 1);
+        }
 
-            int np_local;
+        center_p(sp, interpolator_array);
 
-            float *Pf;
-            int *Pi;
+        ec1 = uptime() - ec1;
 
-            // get the total number of particles. in this example, output only electrons
-            //sp = species_list;
-            sprintf(particle_scratch, DUMP_DIR_FORMAT, "particle_hdf5");
-            FileUtils::makeDirectory(particle_scratch);
-            sprintf(subparticle_scratch, "%s/T.%ld/", particle_scratch, step_for_viou);
-            FileUtils::makeDirectory(subparticle_scratch);
 
-            // TODO: Allow the user to set this
-            int stride_particle_dump = 1;
+        //if(!mpi_rank || mpi_rank == 2047 )
+        //    std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
 
-            np_local = (sp->np + stride_particle_dump - 1) / stride_particle_dump;
+#ifndef N_FILE_N_PROCESS
+        int np_local_max, np_local_min;
+        MPI_Reduce(&np_local, &np_local_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&np_local, &np_local_min, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        //io_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << ",np_local_max = " << np_local_max << ", local_min = "<< np_local_min);
+#endif
 
-            // make a copy of the part of particle data to be dumped
-            double ec1 = uptime();
+        Pf = (float *)sp->p;
+        Pi = (int *)sp->p;
 
-            int sp_np = sp->np;
-            int sp_max_np = sp->max_np;
-            particle_t *ALIGNED(128) p_buf = NULL;
-            if (!p_buf)
-                MALLOC_ALIGNED(p_buf, np_local, 128);
-            particle_t *sp_p = sp->p;
-            sp->p = p_buf;
-            sp->np = np_local;
-            sp->max_np = np_local;
-
-            for (long long iptl = 0, i = 0; iptl < sp_np; iptl += stride_particle_dump, ++i)
-            {
-                COPY(&sp->p[i], &sp_p[iptl], 1);
-            }
-
-            center_p(sp, interpolator_array);
-
-            ec1 = uptime() - ec1;
-            int mpi_rank;
-            MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-
-            //std::cout << "on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local << std::endl;
-            io_log("on mpi_rank: " << mpi_rank << ", time in copying particle data: " << ec1 << " s" << ", np_local = " << np_local);
-
-            Pf = (float *)sp->p;
-            Pi = (int *)sp->p;
-
-            // open HDF5 file in "particle/T.<step>/" subdirectory
-            // filename: eparticle.h5p
-            sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
-            sprintf(group_name, "/Timestep_%ld", step_for_viou);
-            double el1 = uptime();
-
-            hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-            H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-            hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-            hid_t group_id = H5Gcreate(file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-            H5Pclose(plist_id);
-
-            long long total_particles, offset;
-            long long numparticles = np_local;
-            MPI_Allreduce(&numparticles, &total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Scan(&numparticles, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-            offset -= numparticles;
-
-            hid_t filespace = H5Screate_simple(1, (hsize_t *)&total_particles, NULL);
-
-            hsize_t memspace_count_temp = numparticles * 8;
-            hid_t memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
-
-            hsize_t linearspace_count_temp = numparticles;
-            hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
-
-            plist_id = H5Pcreate(H5P_DATASET_XFER);
-
-            //Comment out for test only
-            H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-            H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *)&offset, NULL, (hsize_t *)&numparticles, NULL);
-
-            hsize_t memspace_start = 0, memspace_stride = 8, memspace_count = np_local;
-            H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
-
-            el1 = uptime() - el1;
-            io_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
-
-            double el2 = uptime();
-
-            // This point offset is silly, and loses the type safety (pf+1)
-            hid_t dset_id = H5Dcreate(group_id, "dX", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            int ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf);
-            H5Dclose(dset_id);
-
-            dset_id = H5Dcreate(group_id, "dY", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 1);
-            H5Dclose(dset_id);
-
-            dset_id = H5Dcreate(group_id, "dZ", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 2);
-            H5Dclose(dset_id);
-
-            // TODO: should we add the ability to chunk the particle write?
-
-#ifdef OUTPUT_CONVERT_GLOBAL_ID
-
-            // TODO: make a function out of this too, its used in openpmd
-            std::vector<int> global_pi;
-            global_pi.resize(numparticles);
-            // TODO: this could be parallel
-            for (int i = 0; i < numparticles; i++)
-            {
-                int local_i = sp->p[i].i;
-
-                int ix, iy, iz, rx, ry, rz;
-
-                // Convert rank to local x/y/z
-                UNVOXEL(rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
-
-                // Calculate local ix/iy/iz
-                UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
-
-                // Convert ix/iy/iz to global
-                int gix = ix + (grid->nx * (rx));
-                int giy = iy + (grid->ny * (ry));
-                int giz = iz + (grid->nz * (rz));
-
-                // calculate global grid sizes
-                int gnx = grid->nx * grid->gpx;
-                int gny = grid->ny * grid->gpy;
-                int gnz = grid->nz * grid->gpz;
-
-                // TODO: find a better way to account for the hard coded ghosts in VOXEL
-                int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
-
-                //std::cout << rank << " local i " << local_i << " becomes " << global_i << std::endl;
-                global_pi[i] = global_i;
-            }
-
-            dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, global_pi.data());
-            H5Dclose(dset_id);
-
+        // open HDF5 file in "particle/T.<step>/" subdirectory
+        // filename: eparticle.h5p
+#ifndef N_FILE_N_PROCESS
+        sprintf(fname, "%s/%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
 #else
-            dset_id = H5Dcreate(group_id, "i", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, memspace, filespace, plist_id, Pi + 3);
-            H5Dclose(dset_id);
+        sprintf(fname, "%s/%s_%ld_p%d.h5", subparticle_scratch, sp->name, step_for_viou, mpi_rank);
 #endif
 
-            dset_id = H5Dcreate(group_id, "Ux", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 4);
-            H5Dclose(dset_id);
+        sprintf(group_name, "/Timestep_%ld", step_for_viou);
+        double el1 = uptime();
 
-            dset_id = H5Dcreate(group_id, "Uy", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 5);
-            H5Dclose(dset_id);
 
-            dset_id = H5Dcreate(group_id, "Uz", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 6);
-            H5Dclose(dset_id);
 
-            dset_id = H5Dcreate(group_id, "q", H5T_NATIVE_FLOAT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(dset_id, H5T_NATIVE_FLOAT, memspace, filespace, plist_id, Pf + 7);
-            H5Dclose(dset_id);
+        long long total_particles, offset;
+        long long numparticles = np_local;
 
-            el2 = uptime() - el2;
-            io_log("Particle TimeHDF5Write: " << el2 << " s");
+#ifndef N_FILE_N_PROCESS
+        MPI_Allreduce(&numparticles, &total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Scan(&numparticles, &offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+        offset -= numparticles;
+#else
+        total_particles = np_local;
+        offset = 0;
+#endif
 
-            double el3 = uptime();
-            H5Sclose(memspace);
-            H5Sclose(filespace);
-            H5Pclose(plist_id);
-            H5Gclose(group_id);
-            H5Fclose(file_id);
-            el3 = uptime() - el3;
-            io_log("Particle TimeHDF5Close: " << el3 << " s");
 
-            sp->p = sp_p;
-            sp->np = sp_np;
-            sp->max_np = sp_max_np;
-            FREE_ALIGNED(p_buf);
+        hid_t file_plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
-            // Write metadata if step() == 0
-            char meta_fname[256];
+#ifndef N_FILE_N_PROCESS
+        H5Pset_fapl_mpio(file_plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+#endif
 
-            sprintf(meta_fname, "%s/grid_metadata_%s_%ld.h5", subparticle_scratch, sp->name, step_for_viou);
+#ifdef H5_ASYNC
+        if(!mpi_rank) printf("Enable async on particle data");
 
-            double meta_el1 = uptime();
+        assert(H5Pset_vol_async(file_plist_id));
+#endif
 
-            hid_t meta_plist_id = H5Pcreate(H5P_FILE_ACCESS);
-            H5Pset_fapl_mpio(meta_plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-            hid_t meta_file_id = H5Fcreate(meta_fname, H5F_ACC_TRUNC, H5P_DEFAULT, meta_plist_id);
-            hid_t meta_group_id = H5Gcreate(meta_file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            H5Pclose(meta_plist_id);
+        hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id);
+        //if(!mpi_rank )
+        //io_log("++Particle H5Fcreate) ");
 
-            long long meta_total_particles, meta_offset;
-            long long meta_numparticles = 1;
-            MPI_Allreduce(&meta_numparticles, &meta_total_particles, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Scan(&meta_numparticles, &meta_offset, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-            meta_offset -= meta_numparticles;
 
-            hid_t meta_filespace = H5Screate_simple(1, (hsize_t *)&meta_total_particles, NULL);
-            hid_t meta_memspace = H5Screate_simple(1, (hsize_t *)&meta_numparticles, NULL);
-            meta_plist_id = H5Pcreate(H5P_DATASET_XFER);
-            H5Pset_dxpl_mpio(meta_plist_id, H5FD_MPIO_COLLECTIVE);
-            H5Sselect_hyperslab(meta_filespace, H5S_SELECT_SET, (hsize_t *)&meta_offset, NULL, (hsize_t *)&meta_numparticles, NULL);
-            meta_el1 = uptime() - meta_el1;
-            io_log("Metafile TimeHDF5Open): " << meta_el1 << " s"); //Easy to handle results for scripts
+        hid_t group_id = H5Gcreate(file_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        //if(!mpi_rank )
+        //io_log("++Particle H5Gcreate) ");
 
-            double meta_el2 = uptime();
+#ifdef  HAS_PARTICLE_COMP
+        if(!mpi_rank)
+            printf("Using Partilce Compund type !\n");
+        hid_t  particle_comp_type_it = H5Tcreate(H5T_COMPOUND, sizeof(particle_t));
+        H5Tinsert(particle_comp_type_it, "dx", HOFFSET(particle_t, dx), H5T_NATIVE_FLOAT);
+        H5Tinsert(particle_comp_type_it, "dy", HOFFSET(particle_t, dy), H5T_NATIVE_FLOAT);
+        H5Tinsert(particle_comp_type_it, "dz", HOFFSET(particle_t, dz), H5T_NATIVE_FLOAT);
 
-            hid_t meta_dset_id = H5Dcreate(meta_group_id, "np_local", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, (int32_t *)&np_local);
-            H5Dclose(meta_dset_id);
-            //if (rank == 0) printf ("Written variable dX \n");
+        H5Tinsert(particle_comp_type_it, "i", HOFFSET(particle_t, i), H5T_NATIVE_INT);
 
-            meta_dset_id = H5Dcreate(meta_group_id, "nx", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nx);
-            H5Dclose(meta_dset_id);
-            //if (rank == 0) printf ("Written variable dY \n");
+        H5Tinsert(particle_comp_type_it, "ux", HOFFSET(particle_t, ux), H5T_NATIVE_FLOAT);
+        H5Tinsert(particle_comp_type_it, "uy", HOFFSET(particle_t, uy), H5T_NATIVE_FLOAT);
+        H5Tinsert(particle_comp_type_it, "uz", HOFFSET(particle_t, uz), H5T_NATIVE_FLOAT);
+        H5Tinsert(particle_comp_type_it, "w",  HOFFSET(particle_t, w), H5T_NATIVE_FLOAT);
+#endif
 
-            meta_dset_id = H5Dcreate(meta_group_id, "ny", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->ny);
-            H5Dclose(meta_dset_id);
-            //if (rank == 0) printf ("Written variable dZ \n");
+        hid_t filespace = H5Screate_simple(1, (hsize_t *)&total_particles, NULL);
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *)&offset, NULL, (hsize_t *)&numparticles, NULL);
 
-            meta_dset_id = H5Dcreate(meta_group_id, "nz", H5T_NATIVE_INT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_INT, meta_memspace, meta_filespace, meta_plist_id, &grid->nz);
-            H5Dclose(meta_dset_id);
-            //if (rank == 0) printf ("Written variable i \n");
+        //if(!mpi_rank )
+        //io_log("++Particle H5Sselect_hyperslab) ");
 
-            meta_dset_id = H5Dcreate(meta_group_id, "x0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->x0);
-            H5Dclose(meta_dset_id);
+        //plist_id = H5P_DEFAULT;
+        hid_t io_plist_id = H5Pcreate(H5P_DATASET_XFER);
 
-            meta_dset_id = H5Dcreate(meta_group_id, "y0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->y0);
-            H5Dclose(meta_dset_id);
+#ifndef N_FILE_N_PROCESS
+#ifdef HAS_INDEPENDENT_IO
+        if(!mpi_rank) {
+            printf("\n ###\n VPIC Independent I/O! \n ###\n");
+        }
+        H5Pset_dxpl_mpio(io_plist_id, H5FD_MPIO_INDEPENDENT);
+#else
+        H5Pset_dxpl_mpio(io_plist_id, H5FD_MPIO_COLLECTIVE);
+#endif
+#endif
 
-            meta_dset_id = H5Dcreate(meta_group_id, "z0", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->z0);
-            H5Dclose(meta_dset_id);
+#ifdef H5_ASYNC
+        H5Pset_dxpl_async(io_plist_id, true);
+#endif
+        hsize_t linearspace_count_temp = numparticles;
+        hid_t linearspace = H5Screate_simple(1, &linearspace_count_temp, NULL);
 
-            meta_dset_id = H5Dcreate(meta_group_id, "dx", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dx);
-            H5Dclose(meta_dset_id);
+        hsize_t memspace_count_temp;
+        hid_t memspace;
+#ifdef HAS_PARTICLE_COMP
+        memspace_count_temp = numparticles ;
+        memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
+#else
+        memspace_count_temp = numparticles * 8;
+        memspace = H5Screate_simple(1, &memspace_count_temp, NULL);
+        hsize_t memspace_start = 0, memspace_stride = 8, memspace_count = np_local;
+        H5Sselect_hyperslab(memspace, H5S_SELECT_SET, &memspace_start, &memspace_stride, &memspace_count, NULL);
+#endif
+        el1 = uptime() - el1;
+        //if(!mpi_rank || mpi_rank == 2047 )
+        //io_log("Particle TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
+        double el2 = uptime();
+        int ierr;
 
-            meta_dset_id = H5Dcreate(meta_group_id, "dy", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dy);
-            H5Dclose(meta_dset_id);
+#define WRITE_H5_FILE(group_id_p, data_buf_p, type_p, dname_p){\
+    hid_t dset_id = H5Dcreate(group_id_p, dname_p, type_p, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); \
+    H5Dwrite(dset_id, type_p, memspace, filespace, io_plist_id, data_buf_p);\
+    H5Dclose(dset_id);\
+}
 
-            meta_dset_id = H5Dcreate(meta_group_id, "dz", H5T_NATIVE_FLOAT, meta_filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            ierr = H5Dwrite(meta_dset_id, H5T_NATIVE_FLOAT, meta_memspace, meta_filespace, meta_plist_id, &grid->dz);
-            H5Dclose(meta_dset_id);
 
-            meta_el2 = uptime() - meta_el2;
-            io_log("Metafile TimeHDF5Write: " << meta_el2 << " s");
-            double meta_el3 = uptime();
-            H5Sclose(meta_memspace);
-            H5Sclose(meta_filespace);
-            H5Pclose(meta_plist_id);
-            H5Gclose(meta_group_id);
-            H5Fclose(meta_file_id);
-            meta_el3 = uptime() - meta_el3;
-            io_log("Metafile TimeHDF5Close: " << meta_el3 << " s");
+        //MPI_Info_set(info, "romio_cb_write", "disable");
+#define WRITE_MPI_FILE(dname_p, offset_p, data_buf_p, count_p, type_p){\
+    MPI_File fh;\
+    MPI_Status status;\
+    sprintf(fname, "%s/%s_%ld_%s.h5", subparticle_scratch, sp->name, step_for_viou, dname_p);\
+    if(mpi_rank == 0) printf("fname= %s \n", fname);\
+    MPI_Info info;\
+    MPI_Info_create(&info);\
+    MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_WRONLY | MPI_MODE_CREATE, info, &fh);\
+    MPI_File_write_at(fh, offset_p, data_buf_p, count_p,type_p, &status);\
+    MPI_Info_free(&info);\
+    MPI_File_close(&fh);\
+}
+
+#ifdef HAS_PARTICLE_COMP
+        hid_t dset_id = H5Dcreate(group_id, "particle", particle_comp_type_it, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dset_id, particle_comp_type_it, memspace, filespace, io_plist_id, sp->p);
+        H5Dclose(dset_id);
+#else
+#ifdef TEST_MPIIO
+        //Here we don't use the stripe but just for performance test
+        if(!mpi_rank) printf("Test MPI-IO\n");
+        WRITE_MPI_FILE("dX", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("dY", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("dZ", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("i",  offset * sizeof(int),   Pf, numparticles,  MPI_INT);
+        WRITE_MPI_FILE("ux", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("uy", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("uz", offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+        WRITE_MPI_FILE("q",  offset * sizeof(float), Pf, numparticles,  MPI_FLOAT);
+#else
+#ifndef N_FILE_N_PROCESS
+        if(!mpi_rank) printf("Test HDF5-IO Single \n");
+#else
+        if(!mpi_rank) printf("Test HDF5-IO N Files N Process\n");
+#endif
+        //if(!mpi_rank )
+        //io_log("++Particle Starting to write ) ");
+        WRITE_H5_FILE(group_id,  Pf, H5T_NATIVE_FLOAT, "dX")
+        WRITE_H5_FILE(group_id,  Pf+1, H5T_NATIVE_FLOAT, "dY")
+        WRITE_H5_FILE(group_id,  Pf+2, H5T_NATIVE_FLOAT, "dZ")
+        WRITE_H5_FILE(group_id,  Pi+3, H5T_NATIVE_INT, "i")
+        WRITE_H5_FILE(group_id,  Pf+4, H5T_NATIVE_FLOAT, "ux")
+        WRITE_H5_FILE(group_id,  Pf+5, H5T_NATIVE_FLOAT, "uy")
+        WRITE_H5_FILE(group_id,  Pf+6, H5T_NATIVE_FLOAT, "uz")
+        WRITE_H5_FILE(group_id,  Pf+7, H5T_NATIVE_FLOAT, "q")
+#endif
+#endif
+        el2 = uptime() - el2;
+        //io_log("Particle TimeHDF5Write: " << el2 << " s");
+
+        double el3 = uptime();
+        H5Sclose(memspace);
+        H5Sclose(filespace);
+        H5Pclose(file_plist_id);
+        H5Pclose(io_plist_id);
+        H5Gclose(group_id);
+
+
+
+        H5Fclose(file_id);
+
+#ifdef H5_ASYNC
+        H5VLasync_finalize();
+#endif
+        el3 = uptime() - el3;
+        //io_log("Particle TimeHDF5Close: " << el3 << " s");
 
         }
 
-        void dump_hydro(
-            const char *fbase,
-            int step,
-            hydro_array_t* hydro_array,
-            species_t* sp,
-            interpolator_array_t* interpolator_array,
-            grid_t* grid,
-            int ftag
+/**
+ * @brief Dump hydro data to the HDf5 file
+ *         Author: Bin Dong  dbin@lbl.gov
+ *           https://crd.lbl.gov/bin-dong
+ *         Nov 2020
+ * @param fbase
+ * @param step
+ * @param hydro_array
+ * @param sp
+ * @param interpolator_array
+ * @param grid
+ * @param ftag
+ */
+void dump_hydro(
+        const char *fbase,
+        int step,
+        hydro_array_t* hydro_array,
+        species_t* sp,
+        interpolator_array_t* interpolator_array,
+        grid_t* grid,
+        int ftag
         )
-        {
-            size_t step_for_viou = step;
+{
+    size_t step_for_viou = step;
 
 #define DUMP_HYDRO_TO_HDF5(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)                                               \
-            {                                                                                                             \
-                dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); \
-                temp_buf_index = 0;                                                                                       \
-                for (size_t i(1); i < grid->nx + 1; i++)                                                                  \
-                {                                                                                                         \
-                    for (size_t j(1); j < grid->ny + 1; j++)                                                              \
-                    {                                                                                                     \
-                        for (size_t k(1); k < grid->nz + 1; k++)                                                          \
-                        {                                                                                                 \
-                            temp_buf[temp_buf_index] = _hydro(i, j, k).ATTRIBUTE_NAME;                                     \
-                            temp_buf_index = temp_buf_index + 1;                                                          \
-                        }                                                                                                 \
-                    }                                                                                                     \
-                }                                                                                                         \
-                dataspace_id = H5Dget_space(dset_id);                                                                     \
-                H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);               \
-                H5Dwrite(dset_id, ELEMENT_TYPE, memspace, dataspace_id, plist_id, temp_buf);                              \
-                H5Sclose(dataspace_id);                                                                                   \
-                H5Dclose(dset_id);                                                                                        \
-            }
-            //#define DUMP_INFO_DEBUG 1
-            int mpi_size, mpi_rank;
-            MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-            MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    {                                                                                                             \
+        dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); \
+        temp_buf_index = 0;                                                                                       \
+        for (size_t i(1); i < grid->nx + 1; i++)                                                                  \
+        {                                                                                                         \
+            for (size_t j(1); j < grid->ny + 1; j++)                                                              \
+            {                                                                                                     \
+                for (size_t k(1); k < grid->nz + 1; k++)                                                          \
+                {                                                                                                 \
+                    temp_buf[temp_buf_index] = _hydro(i, j, k).ATTRIBUTE_NAME;                                     \
+                    temp_buf_index = temp_buf_index + 1;                                                          \
+                }                                                                                                 \
+            }                                                                                                     \
+        }                                                                                                         \
+        dataspace_id = H5Dget_space(dset_id);                                                                     \
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);               \
+        H5Dwrite(dset_id, ELEMENT_TYPE, memspace, dataspace_id, plist_id, temp_buf);                              \
+        H5Sclose(dataspace_id);                                                                                   \
+        H5Dclose(dset_id);                                                                                        \
+    }
+    //#define DUMP_INFO_DEBUG 1
+    int mpi_size, mpi_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
-            if (!sp)
-            {
-                ERROR(("Invalid species"));
-            }
+    if (!sp)
+    {
+        ERROR(("Invalid species"));
+    }
 
-            clear_hydro_array(hydro_array);
-            accumulate_hydro_p(hydro_array, sp, interpolator_array);
-            synchronize_hydro_array(hydro_array);
+    clear_hydro_array(hydro_array);
+    accumulate_hydro_p(hydro_array, sp, interpolator_array);
+    synchronize_hydro_array(hydro_array);
 
-            char hname[256];
-            char hydro_scratch[128];
-            char subhydro_scratch[128];
+    char hname[256];
+    char hydro_scratch[128];
+    char subhydro_scratch[128];
 
-            sprintf(hydro_scratch, "./%s", "hydro_hdf5");
-            FileUtils::makeDirectory(hydro_scratch);
-            sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step_for_viou);
-            FileUtils::makeDirectory(subhydro_scratch);
+    sprintf(hydro_scratch, "./%s", "hydro_hdf5");
+    FileUtils::makeDirectory(hydro_scratch);
+    sprintf(subhydro_scratch, "%s/T.%zu/", hydro_scratch, step_for_viou);
+    FileUtils::makeDirectory(subhydro_scratch);
 
-            sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, sp->name, step_for_viou);
-            double el1 = uptime();
-            hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
-            H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-            hid_t file_id = H5Fcreate(hname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-            H5Pclose(plist_id);
+    sprintf(hname, "%s/hydro_%s_%zu.h5", subhydro_scratch, sp->name, step_for_viou);
+    double el1 = uptime();
+    hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
-            sprintf(hname, "Timestep_%zu", step_for_viou);
-            hid_t group_id = H5Gcreate(file_id, hname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    /*
+       if(H5Pset_libver_bounds(plist_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+       exit(-1);
+       }*/
+    //if((fid = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id)) < 0)
+    //    ERROR_RETURN;
 
-            el1 = uptime() - el1;
-            io_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
-            double el2 = uptime();
+    H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+    hid_t file_id = H5Fcreate(hname, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    H5Pclose(plist_id);
 
-            // Create a variable list of field values to output.
-            //size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
-            //size_t *varlist = new size_t[numvars];
+    sprintf(hname, "Timestep_%zu", step_for_viou);
+    hid_t group_id = H5Gcreate(file_id, hname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-            //for (size_t i(0), c(0); i < total_field_variables; i++)
-            //    if (global->fdParams.output_vars.bitset(i))
-            //        varlist[c++] = i;
+    el1 = uptime() - el1;
+    //io_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
+    double el2 = uptime();
 
-            //printf("\nBEGIN_OUTPUT: numvars = %zu \n", numvars);
+    // Create a variable list of field values to output.
+    //size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
+    //size_t *varlist = new size_t[numvars];
+
+    //for (size_t i(0), c(0); i < total_field_variables; i++)
+    //    if (global->fdParams.output_vars.bitset(i))
+    //        varlist[c++] = i;
+
+    //printf("\nBEGIN_OUTPUT: numvars = %zu \n", numvars);
 
 
-            //typedef struct hydro {
-            //  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
-            //  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
-            //  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
-            //  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
-            //  float _pad[2];         // 16-byte align
-            //} hydro_t;
+    //typedef struct hydro {
+    //  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
+    //  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+    //  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
+    //  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
+    //  float _pad[2];         // 16-byte align
+    //} hydro_t;
+#ifdef HAS_HYDRO_COMP
+    //if(!mpi_rank)
+    //printf("Using Field Compund type !\n");
+    hid_t  hydro_comp_type_it = H5Tcreate (H5T_COMPOUND, sizeof(hydro_t));
+    H5Tinsert(hydro_comp_type_it, "jx", HOFFSET(hydro_t, jx), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "jy", HOFFSET(hydro_t, jy), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "jz", HOFFSET(hydro_t, jz), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "rho", HOFFSET(hydro_t, rho), H5T_NATIVE_FLOAT);
 
-            //typedef struct hydro_array {
-            //  hydro_t * ALIGNED(128) h;
-            //  grid_t * g;
-            //} hydro_array_t;
+    H5Tinsert(hydro_comp_type_it, "px", HOFFSET(hydro_t, px), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "py", HOFFSET(hydro_t, py), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "pz", HOFFSET(hydro_t, pz), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "ke", HOFFSET(hydro_t, ke), H5T_NATIVE_FLOAT);
 
-            float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
-            hsize_t temp_buf_index;
-            hid_t dset_id;
-            //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
-            plist_id = H5Pcreate(H5P_DATASET_XFER);
-            //Comment out for test only
-            H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-            //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
+    H5Tinsert(hydro_comp_type_it, "txx", HOFFSET(hydro_t, txx), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "tyy", HOFFSET(hydro_t, tyy), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "tzz", HOFFSET(hydro_t, tzz), H5T_NATIVE_FLOAT);
 
-            //global->topology_x
+    H5Tinsert(hydro_comp_type_it, "tyz", HOFFSET(hydro_t, tyz), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "tzx", HOFFSET(hydro_t, tzx), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "txy", HOFFSET(hydro_t, txy), H5T_NATIVE_FLOAT);
+    H5Tinsert(hydro_comp_type_it, "pad", HOFFSET(hydro_t, _pad), H5T_NATIVE_DOUBLE);
+#endif
+    //typedef struct hydro_array {
+    //  hydro_t * ALIGNED(128) h;
+    //  grid_t * g;
+    //} hydro_array_t;
 
-            hsize_t hydro_global_size[3], hydro_local_size[3], global_offset[3], global_count[3];
-            hydro_global_size[0] = (grid->nx * grid->gpx);
-            hydro_global_size[1] = (grid->ny * grid->gpy);
-            hydro_global_size[2] = (grid->nz * grid->gpz);
+    float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
+    hsize_t temp_buf_index;
+    hid_t dset_id;
+    //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
+    plist_id = H5Pcreate(H5P_DATASET_XFER);
+    //Comment out for test only
+    H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+    //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
 
-            hydro_local_size[0] = grid->nx;
-            hydro_local_size[1] = grid->ny;
-            hydro_local_size[2] = grid->nz;
+    //global->topology_x
 
-            int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-            UNVOXEL(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z, grid->gpx, grid->gpy, grid->gpz);
+    hsize_t hydro_global_size[3], hydro_local_size[3], global_offset[3], global_count[3];
+    hydro_global_size[0] = (grid->nx * grid->gpx);
+    hydro_global_size[1] = (grid->ny * grid->gpy);
+    hydro_global_size[2] = (grid->nz * grid->gpz);
 
-            global_offset[0] = (grid->nx) * mpi_rank_x;
-            global_offset[1] = (grid->ny) * mpi_rank_y;
-            global_offset[2] = (grid->nz) * mpi_rank_z;
+    hydro_local_size[0] = grid->nx;
+    hydro_local_size[1] = grid->ny;
+    hydro_local_size[2] = grid->nz;
 
-            global_count[0] = (grid->nx);
-            global_count[1] = (grid->ny);
-            global_count[2] = (grid->nz);
+    int mpi_rank_x, mpi_rank_y, mpi_rank_z;
+    UNVOXEL(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z, grid->gpx, grid->gpy, grid->gpz);
+
+    global_offset[0] = (grid->nx) * mpi_rank_x;
+    global_offset[1] = (grid->ny) * mpi_rank_y;
+    global_offset[2] = (grid->nz) * mpi_rank_z;
+
+    global_count[0] = (grid->nx);
+    global_count[1] = (grid->ny);
+    global_count[2] = (grid->nz);
 
 #ifdef DUMP_INFO_DEBUG
-            printf("global size   = %llu %llu %llu \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
-            printf("global_offset = %llu %llu %llu \n", global_offset[0], global_offset[1], global_offset[2]);
-            printf("global_count  = %llu %llu %llu \n", global_count[0], global_count[1], global_count[2]);
-            printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
-            fflush(stdout);
+    printf("global size   = %llu %llu %llu \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
+    printf("global_offset = %llu %llu %llu \n", global_offset[0], global_offset[1], global_offset[2]);
+    printf("global_count  = %llu %llu %llu \n", global_count[0], global_count[1], global_count[2]);
+    printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    fflush(stdout);
 #endif
 
-            hid_t filespace = H5Screate_simple(3, hydro_global_size, NULL);
-            hid_t memspace = H5Screate_simple(3, hydro_local_size, NULL);
-            hid_t dataspace_id;
+    hid_t filespace = H5Screate_simple(3, hydro_global_size, NULL);
+    hid_t memspace = H5Screate_simple(3, hydro_local_size, NULL);
+    hid_t dataspace_id;
 
-            //typedef struct hydro {
-            //  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
-            //  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
-            //  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
-            //  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
-            //  float _pad[2];         // 16-byte align
-            //} hydro_t;
+    //typedef struct hydro {
+    //  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
+    //  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+    //  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
+    //  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
+    //  float _pad[2];         // 16-byte align
+    //} hydro_t;
 
-            if (hydro_dump_flag.jx)
-                DUMP_HYDRO_TO_HDF5("jx", jx, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.jy)
-                DUMP_HYDRO_TO_HDF5("jy", jy, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.jz)
-                DUMP_HYDRO_TO_HDF5("jz", jz, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.rho)
-                DUMP_HYDRO_TO_HDF5("rho", rho, H5T_NATIVE_FLOAT);
 
-            if (hydro_dump_flag.px)
-                DUMP_HYDRO_TO_HDF5("px", px, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.py)
-                DUMP_HYDRO_TO_HDF5("py", py, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.pz)
-                DUMP_HYDRO_TO_HDF5("pz", pz, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.ke)
-                DUMP_HYDRO_TO_HDF5("ke", ke, H5T_NATIVE_FLOAT);
-
-            if (hydro_dump_flag.txx)
-                DUMP_HYDRO_TO_HDF5("txx", txx, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.tyy)
-                DUMP_HYDRO_TO_HDF5("tyy", tyy, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.tzz)
-                DUMP_HYDRO_TO_HDF5("tzz", tzz, H5T_NATIVE_FLOAT);
-
-            if (hydro_dump_flag.tyz)
-                DUMP_HYDRO_TO_HDF5("tyz", tyz, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.tzx)
-                DUMP_HYDRO_TO_HDF5("tzx", tzx, H5T_NATIVE_FLOAT);
-            if (hydro_dump_flag.txy)
-                DUMP_HYDRO_TO_HDF5("txy", txy, H5T_NATIVE_FLOAT);
-
-            el2 = uptime() - el2;
-            io_log("TimeHDF5Write: " << el2 << " s");
-
-            double el3 = uptime();
-
-            //Write metadata (geo original and geo dx/dy/dz) for ArrayUDF
-            float attr_data[2][3];
-            attr_data[0][0] = grid->x0;
-            attr_data[0][1] = grid->y0;
-            attr_data[0][2] = grid->z0;
-            attr_data[1][0] = grid->dx;
-            attr_data[1][1] = grid->dy;
-            attr_data[1][2] = grid->dz;
-            hsize_t dims[2];
-            dims[0] = 2;
-            dims[1] = 3;
-            hid_t va_geo_dataspace_id = H5Screate_simple(2, dims, NULL);
-            hid_t va_geo_attribute_id = H5Acreate2(file_id, "VPIC-ArrayUDF-GEO", H5T_IEEE_F32BE, va_geo_dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-            H5Awrite(va_geo_attribute_id, H5T_NATIVE_FLOAT, attr_data);
-            H5Sclose(va_geo_dataspace_id);
-            H5Aclose(va_geo_attribute_id);
-
-            free(temp_buf);
-            H5Sclose(filespace);
-            H5Sclose(memspace);
-            H5Pclose(plist_id);
-            H5Gclose(group_id);
-            H5Fclose(file_id);
-
-            el3 = uptime() - el3;
-            io_log("TimeHDF5Close: " << el3 << " s");
-
-            if (mpi_rank == 0)
-            {
-                char output_xml_file[128];
-                sprintf(output_xml_file, "./%s/%s%s%s", "hydro_hdf5", "hydro-", sp->name, ".xdmf");
-                char dimensions_3d[128];
-                sprintf(dimensions_3d, "%lld %lld %lld", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
-                char dimensions_4d[128];
-                sprintf(dimensions_4d, "%lld %lld %lld %d", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2], 3);
-                char orignal[128];
-                sprintf(orignal, "%f %f %f", grid->x0, grid->y0, grid->z0);
-                char dxdydz[128];
-                sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
-
-                // TODO: remove or let user set
-                int hydro_interval = 1;
-
-                // TODO: remove this dependence on number of steps
-                int nframes = num_step / hydro_interval + 1;
-
-                const int tframe = tframe_map[sp->id];
-
-#ifdef DUMP_INFO_DEBUG
-                printf("         meta file : %s \n", output_xml_file);
-                printf(" array dims per var: %s \n", dimensions_3d);
-                printf("array dims all vars: %s \n", dimensions_4d);
-                printf("            orignal: %s \n", orignal);
-                printf("             dxdydz: %s \n", dxdydz);
-                printf("            nframes: %d \n", nframes);
-                printf("    hydro_fields_interval: %d \n", hydro_interval);
-                printf("       current step: %zu \n", step_for_viou);
-                printf("    Simulation time: %f \n", grid->t0);
-                printf("             tframe: %d \n", tframe);
-#endif
-
-                // TODO: why doesnt this just use the cstr?
-                char speciesname_new[128];
-                sprintf(speciesname_new, "hydro_%s", sp->name);
-                if (tframe >= 1)
-                {
-                    if (tframe == (nframes - 1))
-                    {
-                        invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
-                    }
-                    else
-                    {
-                        invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
-                    }
-                }
-                else
-                {
-                    create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, hydro_interval);
-                    if (tframe == (nframes - 1))
-                    {
-                        invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
-                    }
-                    else
-                    {
-                        invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
-                    }
-                }
-                tframe_map[sp->id]++;
+#ifdef HAS_HYDRO_COMP
+    hydro_t *hydro_buf = (hydro_t *)malloc(sizeof(hydro_t) * (grid->nx) * (grid->ny) * (grid->nz));
+    temp_buf_index = 0;
+    for (size_t i(1); i < grid->nx + 1; i++){
+        for (size_t j(1); j < grid->ny + 1; j++){
+            for (size_t k(1); k < grid->nz + 1; k++){
+                hydro_buf[temp_buf_index] = _hydro(i, j, k);
+                temp_buf_index = temp_buf_index + 1;
             }
         }
+    }
+    dset_id = H5Dcreate(group_id, "hydro", hydro_comp_type_it, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    dataspace_id = H5Dget_space(dset_id);
+    H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);
+    H5Dwrite(dset_id, hydro_comp_type_it, memspace, dataspace_id, plist_id, hydro_buf);
+    free(hydro_buf);
+    H5Sclose(dataspace_id);
+    H5Dclose(dset_id);
+    H5Tclose(hydro_comp_type_it);
+#else
+
+    if (hydro_dump_flag.jx)
+        DUMP_HYDRO_TO_HDF5("jx", jx, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.jy)
+        DUMP_HYDRO_TO_HDF5("jy", jy, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.jz)
+        DUMP_HYDRO_TO_HDF5("jz", jz, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.rho)
+        DUMP_HYDRO_TO_HDF5("rho", rho, H5T_NATIVE_FLOAT);
+
+    if (hydro_dump_flag.px)
+        DUMP_HYDRO_TO_HDF5("px", px, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.py)
+        DUMP_HYDRO_TO_HDF5("py", py, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.pz)
+        DUMP_HYDRO_TO_HDF5("pz", pz, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.ke)
+        DUMP_HYDRO_TO_HDF5("ke", ke, H5T_NATIVE_FLOAT);
+
+    if (hydro_dump_flag.txx)
+        DUMP_HYDRO_TO_HDF5("txx", txx, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.tyy)
+        DUMP_HYDRO_TO_HDF5("tyy", tyy, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.tzz)
+        DUMP_HYDRO_TO_HDF5("tzz", tzz, H5T_NATIVE_FLOAT);
+
+    if (hydro_dump_flag.tyz)
+        DUMP_HYDRO_TO_HDF5("tyz", tyz, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.tzx)
+        DUMP_HYDRO_TO_HDF5("tzx", tzx, H5T_NATIVE_FLOAT);
+    if (hydro_dump_flag.txy)
+        DUMP_HYDRO_TO_HDF5("txy", txy, H5T_NATIVE_FLOAT);
+
+    el2 = uptime() - el2;
+    //io_log("TimeHDF5Write: " << el2 << " s");
+
+#endif
+    double el3 = uptime();
+
+    //Write metadata (geo original and geo dx/dy/dz) for ArrayUDF
+    /*
+       float attr_data[2][3];
+       attr_data[0][0] = grid->x0;
+       attr_data[0][1] = grid->y0;
+       attr_data[0][2] = grid->z0;
+       attr_data[1][0] = grid->dx;
+       attr_data[1][1] = grid->dy;
+       attr_data[1][2] = grid->dz;
+       hsize_t dims[2];
+       dims[0] = 2;
+       dims[1] = 3;
+       hid_t va_geo_dataspace_id = H5Screate_simple(2, dims, NULL);
+       hid_t va_geo_attribute_id = H5Acreate2(file_id, "VPIC-ArrayUDF-GEO", H5T_IEEE_F32BE, va_geo_dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+       H5Awrite(va_geo_attribute_id, H5T_NATIVE_FLOAT, attr_data);
+       H5Sclose(va_geo_dataspace_id);
+       H5Aclose(va_geo_attribute_id);*/
+
+    free(temp_buf);
+    H5Sclose(filespace);
+    H5Sclose(memspace);
+    H5Pclose(plist_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+
+    el3 = uptime() - el3;
+    //io_log("TimeHDF5Close: " << el3 << " s");
+
+    if (mpi_rank == 0)
+    {
+        char output_xml_file[128];
+        sprintf(output_xml_file, "./%s/%s%s%s", "hydro_hdf5", "hydro-", sp->name, ".xdmf");
+        char dimensions_3d[128];
+        sprintf(dimensions_3d, "%lld %lld %lld", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
+        char dimensions_4d[128];
+        sprintf(dimensions_4d, "%lld %lld %lld %d", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2], 3);
+        char orignal[128];
+        sprintf(orignal, "%f %f %f", grid->x0, grid->y0, grid->z0);
+        char dxdydz[128];
+        sprintf(dxdydz, "%f %f %f", grid->dx, grid->dy, grid->dz);
+
+        // TODO: remove or let user set
+        int hydro_interval = 1;
+
+        // TODO: remove this dependence on number of steps
+        int nframes = num_step / hydro_interval + 1;
+
+        const int tframe = tframe_map[sp->id];
+
+#ifdef DUMP_INFO_DEBUG
+        printf("         meta file : %s \n", output_xml_file);
+        printf(" array dims per var: %s \n", dimensions_3d);
+        printf("array dims all vars: %s \n", dimensions_4d);
+        printf("            orignal: %s \n", orignal);
+        printf("             dxdydz: %s \n", dxdydz);
+        printf("            nframes: %d \n", nframes);
+        printf("    hydro_fields_interval: %d \n", hydro_interval);
+        printf("       current step: %zu \n", step_for_viou);
+        printf("    Simulation time: %f \n", grid->t0);
+        printf("             tframe: %d \n", tframe);
+#endif
+
+        // TODO: why doesnt this just use the cstr?
+        char speciesname_new[128];
+        sprintf(speciesname_new, "hydro_%s", sp->name);
+        if (tframe >= 1)
+        {
+            if (tframe == (nframes - 1))
+            {
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
+            }
+            else
+            {
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
+            }
+        }
+        else
+        {
+            create_file_with_header(output_xml_file, dimensions_3d, orignal, dxdydz, nframes, hydro_interval);
+            if (tframe == (nframes - 1))
+            {
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 1);
+            }
+            else
+            {
+                invert_hydro_xml_item(output_xml_file, speciesname_new, step_for_viou, dimensions_4d, dimensions_3d, 0);
+            }
+        }
+        tframe_map[sp->id]++;
+    }
+}
 };
 #endif
 
@@ -1141,24 +1469,24 @@ class OpenPMDDump : public Dump_Strategy {
         std::string file_type = ".bp";
 
         void dump_fields(
-            const char *fbase,
-            int step,
-            grid_t* grid,
-            field_array_t* field_array,
-            int ftag
-        )
+                const char *fbase,
+                int step,
+                grid_t* grid,
+                field_array_t* field_array,
+                int ftag
+                )
         {
             std::cout << "Writing openPMD data" << std::endl;
 
             std::string full_file_name = fbase + file_type;
 
             //if (series == nullptr) {
-                std::cout << "init series" << std::endl;
-                openPMD::Series series = openPMD::Series(
-                        full_file_name,
-                        openPMD::AccessType::CREATE,
-                        MPI_COMM_WORLD
-                );
+            std::cout << "init series" << std::endl;
+            openPMD::Series series = openPMD::Series(
+                    full_file_name,
+                    openPMD::AccessType::CREATE,
+                    MPI_COMM_WORLD
+                    );
             //}
 
             std::cout << "Writing iteration " << step << std::endl;
@@ -1422,24 +1750,24 @@ class OpenPMDDump : public Dump_Strategy {
         }
 
         void dump_particles(
-            const char *fbase,
-            species_t* sp,
-            grid_t* grid,
-            int step,
-            interpolator_array_t* interpolator_array,
-            int ftag
-        )
+                const char *fbase,
+                species_t* sp,
+                grid_t* grid,
+                int step,
+                interpolator_array_t* interpolator_array,
+                int ftag
+                )
         {
             std::string full_file_name = fbase + file_type;
 
             std::cout << "writing particles to " << full_file_name << std::endl;
 
             //if (series == nullptr) {
-                openPMD::Series series = openPMD::Series(
-                        full_file_name,
-                        openPMD::AccessType::CREATE,
-                        MPI_COMM_WORLD
-                );
+            openPMD::Series series = openPMD::Series(
+                    full_file_name,
+                    openPMD::AccessType::CREATE,
+                    MPI_COMM_WORLD
+                    );
             //}
 
             auto i = series.iterations[ step ];
@@ -1568,25 +1896,25 @@ class OpenPMDDump : public Dump_Strategy {
             }
         }
         void dump_hydro(
-            const char *fbase,
-            int step,
-            hydro_array_t* hydro_array,
-            species_t* sp,
-            interpolator_array_t* interpolator_array,
-            grid_t* grid,
-            int ftag
-        )
+                const char *fbase,
+                int step,
+                hydro_array_t* hydro_array,
+                species_t* sp,
+                interpolator_array_t* interpolator_array,
+                grid_t* grid,
+                int ftag
+                )
         {
             std::string full_file_name = fbase + file_type;
 
             std::cout << "OpenPMD dumping hydro to " << full_file_name << std::endl;
 
             //if (series == nullptr) {
-                openPMD::Series series = openPMD::Series(
-                        full_file_name,
-                        openPMD::AccessType::CREATE,
-                        MPI_COMM_WORLD
-                );
+            openPMD::Series series = openPMD::Series(
+                    full_file_name,
+                    openPMD::AccessType::CREATE,
+                    MPI_COMM_WORLD
+                    );
             //}
 
             auto i = series.iterations[ step ];

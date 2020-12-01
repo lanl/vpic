@@ -73,6 +73,7 @@ void vpic_simulation::enable_binary_dump() {
 void vpic_simulation::enable_hdf5_dump() {
     std::cout << "Enabling HDF5 IO backend" << std::endl;
     dump_strategy = std::unique_ptr<Dump_Strategy>(new HDF5Dump( rank(), nproc() ));
+    dump_strategy->num_step = num_step;
 }
 #endif
 

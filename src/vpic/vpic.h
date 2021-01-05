@@ -315,7 +315,7 @@ protected:
       dyout = grid->dy;
       dzout = grid->dz;
 
-      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, fileIO );
+      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, step(), fileIO );
 
       int count_true = predicate_count(sp, f);
       std::cout << "copying " << count_true << " of " << sp->np << std::endl;

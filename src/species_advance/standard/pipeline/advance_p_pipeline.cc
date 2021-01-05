@@ -326,6 +326,7 @@ advance_p_pipeline( species_t * RESTRICT sp,
                     rank,
                     sp->name,
                     args->seg[rank].n_ignored ) );
+#endif
 
     }
 

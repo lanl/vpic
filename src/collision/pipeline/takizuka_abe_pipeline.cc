@@ -101,6 +101,7 @@ takizuka_abe_pipeline_scalar( takizuka_abe_t * RESTRICT cm,
   const double cvar = cm->cvar0 * (spi->q*spi->q*spj->q*spj->q) / (mu*mu);
 
   particle_t ptemp;
+
   float std, density_k, density_l;
   int i, j, ii, rn, v, v1, k0, k1, nk, l0, nl;
 

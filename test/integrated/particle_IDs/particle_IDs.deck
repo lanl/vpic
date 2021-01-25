@@ -1,0 +1,364 @@
+// Test creation of tracer species with IDs
+
+#include <unordered_set>
+
+begin_globals {
+};
+
+begin_initialization {
+
+  // use natural PIC units
+  double ec   = 1;        // Charge normalization
+  double me   = 1;        // Mass normalization
+  double c    = 1;        // Speed of light
+  double de   = 1;        // Length normalization (electron inertial length)
+  double eps0 = 1;        // Permittivity of space
+
+  // simulation settings
+  double uthe   = 0.1*c;  // Electron thermal speed
+  double L      = 1*de;   // Box size
+  double weight = 1.e6;   // Statistical weight of a macro particle
+  int nstep     = 1;      // Number of timesteps
+  int Ne        = 123456; // Number of electrons
+
+  define_units(c, eps0);
+  define_timestep( 0.01 );
+  define_periodic_grid(  0,  0,  0,   // Grid low corner
+                         L,  L,  L,   // Grid high corner
+                        10, 10, 10,   // Grid resolution
+                         1,  1,  1 ); // Processor configuration
+  define_material("vacuum",1.0,1.0,0.0);
+  define_field_array();
+
+  species_t * electron = define_species( "electron", -ec, me, 1.5*Ne/nproc(), -1, 20, 1 );
+
+  repeat(Ne) inject_particle( electron,
+                              uniform( rng(0), 0, L ),   // Random location
+                              uniform( rng(0), 0, L ),
+                              uniform( rng(0), 0, L ),
+                              normal( rng(0), 0, uthe ), // Random thermal velocity
+                              normal( rng(0), 0, uthe ),
+                              normal( rng(0), 0, uthe ),
+                              weight,                    // Statistical weight
+                              0, 0 );
+
+  if(electron->np != Ne) {
+    sim_log("FAIL: wrong number of particles in the donor species"); abort(1);
+  } else {
+    sim_log("info: donor species has "<< electron->np << " particles");
+  }
+
+  int mincount,maxcount;
+  std::unordered_set<size_t> IDs;
+
+  //
+  // Copy out 1 percent of all particles.
+  //
+  species_t * elec_tracer  = make_tracers_by_percentage(electron, 1.0, Tracertype::Copy, "sillyname");
+  if(!elec_tracer) {
+    sim_log("Creation of tracer species containing 1%% of particles failed"); abort(2);
+  }
+
+  //That should be 1234.56 particles, but of course it will produce an int.
+  //Rounding up or down is both reasonable.
+  mincount = floor(Ne*0.01);
+  maxcount = ceil(Ne*0.01);
+  if((elec_tracer->np < mincount) || (elec_tracer->np > maxcount)) {
+    sim_log("FAIL: Did not select one percent of particles"); abort(3);
+  } else {
+    sim_log("info: " << elec_tracer->name << " has " << elec_tracer->np << " particles");
+  }
+
+  // Statistical weight of copies should be zero. Accessing particles also
+  // verifies that memory allocation happend ok.
+  for(int i = 0; i<elec_tracer->np; i++) {
+    if(elec_tracer->p[i].w != 0.) {
+      sim_log("FAIL: "<< elec_tracer->name <<" did not have zero weight"); abort(4);
+    }
+  }
+  sim_log("info: "<< elec_tracer->name <<" has zero weight");
+
+  // All particles should have unique IDs, at least if the code was compiled with GLOBAL_PARTICLE_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    sim_log("info: testing with VPIC_GLOBAL_PARTICLE_ID");
+    if(!elec_tracer->has_ids) {
+      sim_log("FAIL: "<< elec_tracer->name <<" has no IDs"); abort(5);
+    } else {
+      sim_log("info: "<< elec_tracer->name <<" should have unique IDs");
+    }
+    // Check for duplicates. Touch all IDs also verifies memory allocation
+    IDs.clear();
+    for(int i = 0; i<elec_tracer->np; i++) {
+      size_t id = elec_tracer->p_id[i];
+      if(IDs.count(id) != 0) {
+        sim_log("FAIL: particle "<< i <<" in "<< elec_tracer->name <<" has duplicate ID "<< id); abort(6);
+      }
+      IDs.insert(id);
+    }
+    if(IDs.size() != elec_tracer->np) {
+      sim_log("FAIL: "<< IDs.size() << " IDs but"<< elec_tracer->np <<" particles in "<<elec_tracer->name); abort(7);
+    } else {
+      sim_log("info: IDs of "<< elec_tracer->name << " look reasonable");
+    }
+  #else
+    sim_log("info: testing without VPIC_GLOBAL_PARTICLE_ID");
+  #endif
+  sim_log("info: "<< elec_tracer->name <<" done");
+
+  //
+  // Copy out 1 in 99.5 particle
+  //
+  species_t * elec_tracer2 = make_tracers_by_nth(electron, 99.5, Tracertype::Copy);
+  if(!elec_tracer2) {
+    sim_log("Creation of tracer2 species containing 1%% of particles failed"); abort(9);
+  }
+
+  //That should be 1240.76 particles, but of course it will produce an int.
+  //Rounding up or down is both reasonable.
+  mincount = floor(Ne/99.5);
+  maxcount = ceil(Ne/99.5);
+  if((elec_tracer2->np < mincount) || (elec_tracer2->np > maxcount)) {
+    sim_log("FAIL: Did not select one in 99.5 particles"); abort(10);
+  } else {
+    sim_log("info: " << elec_tracer2->name << " has " << elec_tracer2->np << " particles");
+  }
+
+  // Statistical weight of copies should be zero. Accessing particles also
+  // verifies that memory allocation happend ok.
+  for(int i = 0; i<elec_tracer2->np; i++) {
+    if(elec_tracer2->p[i].w != 0.) {
+      sim_log("FAIL: "<< elec_tracer2->name <<" did not have zero weight"); abort(11);
+    }
+  }
+  sim_log("info: "<< elec_tracer2->name <<" has zero weight");
+
+  // All particles should have unique IDs, at least if the code was compiled with GLOBAL_PARTICLE_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    sim_log("info: testing with VPIC_GLOBAL_PARTICLE_ID");
+    if(!elec_tracer2->has_ids) {
+      sim_log("FAIL: "<< elec_tracer2->name <<" has no IDs"); abort(12);
+    } else {
+      sim_log("info: "<< elec_tracer2->name <<" should have unique IDs");
+    }
+    IDs.clear();
+    // Check for duplicates. Touch all IDs also verifies memory allocation
+    for(int i = 0; i<elec_tracer2->np; i++) {
+      size_t id = elec_tracer2->p_id[i];
+      if(IDs.count(id) != 0) {
+        sim_log("FAIL: particle "<< i <<" in "<< elec_tracer2->name <<" has duplicate ID "<< id); abort(13);
+      }
+      IDs.insert(id);
+    }
+    if(IDs.size() != elec_tracer2->np) {
+      sim_log("FAIL: "<< IDs.size() << " IDs but"<< elec_tracer2->np <<" particles in "<<elec_tracer2->name); abort(14);
+    } else {
+      sim_log("info: IDs of "<< elec_tracer2->name << " look reasonable");
+    }
+  #else
+    sim_log("info: testing without VPIC_GLOBAL_PARTICLE_ID");
+  #endif
+  sim_log("info: "<< elec_tracer2->name <<" done");
+
+  //
+  // Copy out 1237 percent of all particles.
+  // This is a prime slightly larger than 1234.56 aka 1 percent
+  //
+  species_t * elec_tracer3 = make_n_tracers(electron, 1237, Tracertype::Copy);
+  if(!elec_tracer3) {
+    sim_log("Creation of tracer3 species containing 1237 of particles failed"); abort(16);
+  }
+
+  // This time we have limited on the acceptable number of tracers
+  if(elec_tracer3->np != 1237) {
+    sim_log("FAIL: Did not select 1237 particles"); abort(17);
+  } else {
+    sim_log("info: " << elec_tracer3->name << " has " << elec_tracer3->np << " particles");
+  }
+
+  // Statistical weight of copies should be zero. Accessing particles also
+  // verifies that memory allocation happend ok.
+  for(int i = 0; i<elec_tracer3->np; i++) {
+    if(elec_tracer3->p[i].w != 0.) {
+      sim_log("FAIL: "<< elec_tracer3->name <<" did not have zero weight"); abort(18);
+    }
+  }
+  sim_log("info: "<< elec_tracer3->name <<" has zero weight");
+
+  // All particles should have unique IDs, at least if the code was compiled with GLOBAL_PARTICLE_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    sim_log("info: testing with VPIC_GLOBAL_PARTICLE_ID");
+    if(!elec_tracer3->has_ids) {
+      sim_log("FAIL: "<< elec_tracer3->name <<" has no IDs"); abort(19);
+    } else {
+      sim_log("info: "<< elec_tracer3->name <<" should have unique IDs");
+    }
+    // Check for duplicates. Touch all IDs also verifies memory allocation
+    IDs.clear();
+    for(int i = 0; i<elec_tracer3->np; i++) {
+      size_t id = elec_tracer3->p_id[i];
+      if(IDs.count(id) != 0) {
+        sim_log("FAIL: particle "<< i <<" in "<< elec_tracer3->name <<" has duplicate ID "<< id); abort(20);
+      }
+      IDs.insert(id);
+    }
+    if(IDs.size() != elec_tracer3->np) {
+      sim_log("FAIL: "<< IDs.size() << " IDs but"<< elec_tracer3->np <<" particles in "<<elec_tracer3->name); abort(21);
+    } else {
+      sim_log("info: IDs of "<< elec_tracer3->name << " look reasonable");
+    }
+  #else
+    sim_log("info: testing without VPIC_GLOBAL_PARTICLE_ID");
+  #endif
+  sim_log("info: "<< elec_tracer3->name <<" done");
+
+  //
+  // Copy out particles based on a predicate
+  //
+  std::function<bool(particle_t)> my_predicate = [=](particle_t p) -> bool {
+    //if (p.i % 100 == 23) { return true; }
+    //else { return false; }
+    if (p.ux < 0.) { return false; }
+    if (p.uy < 0.) { return false; }
+    if (p.uz < 0.) { return false; }
+    return true;
+  };
+  species_t * elec_tracer4 = make_tracers_by_predicate(electron, my_predicate, Tracertype::Copy);
+  if(!elec_tracer4) {
+    sim_log("Creation of tracer4 species containing 1237 of particles failed"); abort(23);
+  }
+
+  // This time it is harder to figure out how many particles we should have.
+  // About 1/8 of particles should have three positive velocity components, but
+  // the actual values are randomly distributed. Instead of fixing the random
+  // seed and trusting that the random numnbers don't change, I will accept
+  // anything within 3 sigmas of the expected numnber, assuming a poisson
+  // distribution.
+  mincount = floor(Ne/8. - 3.*sqrt(Ne/8.));
+  maxcount = ceil(Ne/8. + 3.*sqrt(Ne/8.));
+  if((elec_tracer4->np < mincount) || (elec_tracer4->np > maxcount)) {
+    sim_log("FAIL: Did not even roughly select "<< Ne/8. << "particles ("<< elec_tracer4->np <<")."); abort(24);
+  } else {
+    sim_log("info: " << elec_tracer4->name << " has " << elec_tracer4->np << " particles");
+  }
+
+  // Statistical weight of copies should be zero. Accessing particles also
+  // verifies that memory allocation happend ok.
+  for(int i = 0; i<elec_tracer4->np; i++) {
+    if(elec_tracer4->p[i].w != 0.) {
+      sim_log("FAIL: "<< elec_tracer4->name <<" did not have zero weight"); abort(25);
+    }
+  }
+  sim_log("info: "<< elec_tracer4->name <<" has zero weight");
+
+  // All particles should have unique IDs, at least if the code was compiled with GLOBAL_PARTICLE_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    sim_log("info: testing with VPIC_GLOBAL_PARTICLE_ID");
+    if(!elec_tracer4->has_ids) {
+      sim_log("FAIL: "<< elec_tracer4->name <<" has no IDs"); abort(26);
+    } else {
+      sim_log("info: "<< elec_tracer4->name <<" should have unique IDs");
+    }
+    // Check for duplicates. Touch all IDs also verifies memory allocation
+    IDs.clear();
+    for(int i = 0; i<elec_tracer4->np; i++) {
+      size_t id = elec_tracer4->p_id[i];
+      if(IDs.count(id) != 0) {
+        sim_log("FAIL: particle "<< i <<" in "<< elec_tracer4->name <<" has duplicate ID "<< id); abort(27);
+      }
+      IDs.insert(id);
+    }
+    if(IDs.size() != elec_tracer4->np) {
+      sim_log("FAIL: "<< IDs.size() << " IDs but"<< elec_tracer4->np <<" particles in "<<elec_tracer4->name); abort(28);
+    } else {
+      sim_log("info: IDs of "<< elec_tracer4->name << " look reasonable");
+    }
+  #else
+    sim_log("info: testing without VPIC_GLOBAL_PARTICLE_ID");
+  #endif
+  sim_log("info: "<< elec_tracer4->name <<" done");
+
+  //
+  // Now we are going to move one percent of particles
+  //
+  const int oldcount = electron->np;
+  species_t * elec_tracer5  = make_tracers_by_percentage(electron, 1.0, Tracertype::Move);
+  if(!elec_tracer5) {
+    sim_log("Creation of tracer5 species containing 1%% of particles failed"); abort(30);
+  }
+
+  //That should be 1234.56 particles, but of course it will produce an int.
+  //Rounding up or down is both reasonable.
+  mincount = floor(Ne*0.01);
+  maxcount = ceil(Ne*0.01);
+  if((elec_tracer5->np < mincount) || (elec_tracer5->np > maxcount)) {
+    sim_log("FAIL: Did not select one percent of particles"); abort(31);
+  } else {
+    sim_log("info: " << elec_tracer5->name << " has " << elec_tracer5->np << " particles");
+  }
+  if(electron->np + elec_tracer5->np != oldcount) {
+    sim_log("FAIL: Particle number not conserved in move from "<< electron->name <<" to "<< elec_tracer5->name <<". Before we had "<< oldcount <<" particles, now we have "<< electron->np <<"+"<< elec_tracer5->np); abort(32);
+   } else {
+     sim_log(electron->name <<" now has "<< electron->np <<" particles");
+   }
+
+  // Moving should leave the statistical weight unchanged. Also touching all
+  // particles verifies that memory allocation happend ok.
+  for(int i = 0; i<elec_tracer5->np; i++) {
+    if(elec_tracer5->p[i].w != weight) {
+      sim_log("FAIL: particle "<< i << " in species " << elec_tracer5->name <<" has weight "<< elec_tracer5->p[i].w <<" instead of "<< weight); abort(33);
+    }
+  }
+  sim_log("info: "<< elec_tracer5->name <<" has correct weight");
+
+  // All particles should have unique IDs, at least if the code was compiled with GLOBAL_PARTICLE_ID
+  #ifdef VPIC_GLOBAL_PARTICLE_ID
+    sim_log("info: testing with VPIC_GLOBAL_PARTICLE_ID");
+    if(!elec_tracer5->has_ids) {
+      sim_log("FAIL: "<< elec_tracer5->name <<" has no IDs"); abort(34);
+    } else {
+      sim_log("info: "<< elec_tracer5->name <<" should have unique IDs");
+    }
+    // Check for duplicates. Touch all IDs also verifies memory allocation
+    IDs.clear();
+    for(int i = 0; i<elec_tracer5->np; i++) {
+      size_t id = elec_tracer5->p_id[i];
+      if(IDs.count(id) != 0) {
+        sim_log("FAIL: particle "<< i <<" in "<< elec_tracer5->name <<" has duplicate ID "<< id); abort(35);
+      }
+      IDs.insert(id);
+    }
+    if(IDs.size() != elec_tracer5->np) {
+      sim_log("FAIL: "<< IDs.size() << " IDs but"<< elec_tracer5->np <<" particles in "<<elec_tracer5->name); abort(36);
+    } else {
+      sim_log("info: IDs of "<< elec_tracer5->name << " look reasonable");
+    }
+  #else
+    sim_log("info: testing without VPIC_GLOBAL_PARTICLE_ID");
+  #endif
+  sim_log("info: "<< elec_tracer5->name <<" done");
+
+
+
+
+
+  sim_log( "pass" );
+  halt_mp();
+  exit(0);
+}
+
+begin_diagnostics {
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

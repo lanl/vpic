@@ -1,0 +1,151 @@
+begin_globals {
+};
+
+begin_initialization {
+  // Numerical settings
+  num_step = 2;
+  status_interval = 1000;                 // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  int gnx = nproc();
+  int gny = 2; // Would love to make this 1 as well, but then I get weird NaNs...
+  int gnz = 1;
+
+  int topox = nproc();
+  int topoy = 1;
+  int topoz = 1;
+
+  int nppc = 100;
+
+  // use natural PIC units
+  float ec   = 1;        // Charge normalization
+  float me   = 1;        // Mass normalization
+  float c    = 1;        // Speed of light
+  float de   = 1;        // Length normalization (electron inertial length)
+  float eps0 = 1;        // Permittivity of space
+
+  // physics settings
+  float dx     = 0.125; // d_e
+  float dt     = dx * 0.95/sqrt(3.0)/c;
+  float Lx     = dx * gnx;
+  float Ly     = dx * gny;
+  float Lz     = dx * gnz;
+
+  // Setup stuff in vpic
+  define_units(c, eps0);
+  define_timestep(dt);
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       Lx,Ly,Lz,           // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Create electron species
+  species_t* elec = define_species("electron",  // name
+                                          -ec,  // charge
+                                           me,  // mass
+                 1.5*nppc*gnx*gny*gnz/nproc(),  // maximum number of local particles
+                                          150,  // number of particle movers
+                                            0,  // don't sort
+                                            0); // sort mode in-of-place
+
+  // Set field values
+  set_region_field(everywhere, 0.,0.,0., 1.,0.,0.);
+
+  // Generate particles
+  seed_entropy(rank()); // different random numbers on different ranks
+
+  for(int n=0; n<nppc*gnx*gny*gnz/(float)nproc(); n++) {
+    // Pick a uniform random location in the local domain
+    const float x = uniform( rng(0), grid->x0, grid->x1 );
+    const float y = uniform( rng(0), grid->y0, grid->y1 );
+    const float z = uniform( rng(0), grid->z0, grid->z1 );
+
+    // Pick random velocity
+    float ux = normal( rng(0), 0., 0.1 );
+    float uy = normal( rng(0), 0., 0.1 );
+    float uz = normal( rng(0), 0., 0.1 );
+    inject_particle(elec, x,y,z, ux,uy,uz, 0., 0, 0); // zero weight, we don't actually care about fields
+  }
+
+  // This is a species with few particles and frequent output (to the buffer)
+  species_t* sp = make_n_tracers(elec, 2.0, Tracertype::Copy, "electron_tracer");
+
+  if(sp->np != 2) { sim_log("FAIL: wrong number of tracer particles"); exit(1); }
+
+  // Fudge location and speed of particles
+  for(int n = 0; n<sp->np; n++) {
+    sp->p[n].dx = 0.0;
+    sp->p[n].dy = (n+1.)/(sp->np+1.);
+    sp->p[n].dz = (rank()+1.)/(nproc()+1.);
+    sp->p[n].i  = VOXEL(1,1,1, gnx/topox,gny/topoy,gnz/topoz);
+    sp->p[n].ux = 0.5;
+    sp->p[n].uy = 0.0;
+    sp->p[n].uz = 0.0;
+  }
+
+}
+
+
+begin_diagnostics {
+
+  // Allocate Buffer
+  if(step() == 0) {
+    sim_log("Allocate buffer");
+    init_buffered_particle_dump("electron_tracer", num_step+1, 3.0);
+  }
+
+  // Clear Buffer
+  if(step() == 0) {
+    sim_log("Clear buffer");
+    clear_buffered_particle_dump("electron_tracer");
+  }
+
+  // Fill Buffer
+  sim_log("Buffer step "<<step());
+  accumulate_buffered_particle_dump("electron_tracer", step());
+
+  // Force a restart after step 1 to make sure that dump/restart works too
+  if(step() == 1) {
+      sim_log("Force restart");
+      dump_mkdir("restart0");
+      char fname[256];
+      sprintf(fname, "%s/restore.0.%i", "restart0", world_rank );
+      checkpt_objects(fname);
+      sim_log("Restart dump restart completed.");
+      mp_barrier();
+  }
+
+  // Dump buffer
+  if(step() == num_step) {
+    sim_log("Write buffer");
+    write_buffered_particle_dump("tracers", "electron_tracer");
+  }
+
+  // If we reach this in the last step without any fails we probably did well enough
+  if(step() == num_step) {
+    sim_log("passed");
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

@@ -71,9 +71,10 @@ int vpic_simulation::advance(void) {
   // local accumulation).
 
   TIC
-    for( int round=0; round<num_comm_round; round++ )
+    for( int round=0; round<num_comm_round; round++ ) {
       boundary_p( particle_bc_list, species_list,
                   field_array, accumulator_array );
+      }
   TOC( boundary_p, num_comm_round );
   LIST_FOR_EACH( sp, species_list ) {
     if( sp->nm && verbose )
@@ -89,12 +90,35 @@ int vpic_simulation::advance(void) {
     int nm = sp->nm;
     particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
     particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    const int sp_has_ids = sp->has_ids;
+    size_t * RESTRICT ALIGNED(128) p_id0 = sp->p_id;
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+    const int sp_has_annotation = sp->has_annotation;
+    annotation_t* RESTRICT ALIGNED(128) p_annotation0 = sp->p_annotation;
+    #endif
     for (; nm; nm--, pm--) {
       int i = pm->i; // particle index we are removing
       p0[i].i >>= 3; // shift particle voxel down
       // accumulate the particle's charge to the mesh
       accumulate_rhob( field_array->f, p0+i, sp->g, sp->q );
-      p0[i] = p0[sp->np-1]; // put the last particle into position i
+      p0[i] = p0[sp->np-1];        // put the last particle into position i
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      if(sp_has_ids) {
+        // shift id to position i as well
+        p_id0[i] = p_id0[sp->np-1];  // move the id up too
+      }
+      #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      if(sp_has_annotation) {
+        // shift all the annotation in position
+        for(int a=0; a < sp_has_annotation; a++) {
+          p_annotation0[i*sp_has_annotation+a] = p_annotation0[(sp->np-1)*sp_has_annotation + a];
+        }
+      }
+      #endif
       sp->np--; // decrement the number of particles
     }
     sp->nm = 0;

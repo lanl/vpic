@@ -48,6 +48,7 @@ begin_initialization {
   double Te      = 0.001;     // Electron temperature in m_ec^2
   double Ti_Te   = 1.0;      // Ion temperature / electron temperature
   double n0      = 1.0;      // Density
+
   //double Z       = 1.0;      // Ion charge
   double vdre_vthe =  1.0;   // 1 gives Fig. 8a in Takizuka & Abe (1977)
   //double taue    = 1.0*sqrt(2.0);      // simulation tau_e's to run
@@ -193,11 +194,10 @@ begin_initialization {
 
   // Define resistive layer surrounding boundary --> set thickness=0
   // to eliminate this feature
-  /*
-  double thickness = 2;
-  #define resistive_layer (x < hx*thickness || x > Lx-hx*thickness	\
-                       || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
-  */
+
+  //double thickness = 2;
+  //#define resistive_layer (x < hx*thickness || x > Lx-hx*thickness	\
+  //                     || z <-Lz/2+hz*thickness  || z > Lz/2-hz*thickness )
 
   //if (thickness > 0)
   // set_region_material(resistive_layer, resistive, resistive);
@@ -636,15 +636,19 @@ begin_diagnostics {
   if ( should_dump(eparticle) && step() !=0
        && step() > 56*(global->fields_interval)  ) {
     // if ( should_dump(eparticle) && step() !=0 ) {
+    
     sprintf(subdir,"particle/T.%lld",(long long)step());
     dump_mkdir(subdir);
     sprintf(subdir,"particle/T.%lld/eparticle",(long long)step());
+
     dump_particles("electron", subdir);
   }
 
   if ( should_dump(Hparticle) && step() !=0
        && step() > 56*(global->fields_interval)  ) {
+       
     sprintf(subdir,"particle/T.%lld/Hparticle",(long long)step());
+
     dump_particles("ion", subdir);
   }
 

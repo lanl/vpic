@@ -57,6 +57,25 @@ takizuka_abe( const char       * RESTRICT name,
   if( !spi || !spj || spi->g!=spj->g || !rp || rp->n_rng<N_PIPELINE ) ERROR(( "Bad args" ));
   if( len==0 ) ERROR(( "Cannot specify a nameless collision model" ));
 
+  // The intent behind this check is to prevent species of particles that have
+  // different weights. That is surprisingly tricky as we want to enforce the following:
+  // 1) All of species i have the same weight value
+  // 2) All of species j have the same weight value
+  // 3) Species i and j have the same weight value
+  //
+  // As is, the species does not have a way to know this. Nor are we guaranteed
+  // particles are initialized at the time the collision is set up.
+  //
+  // With this in mind we do a lazy best-effort check to try and save the user
+  // a headache, but it is not robust. We look at the first particle in each
+  // species memory to see if they have the same weight
+  //
+  // Note: The code does runs if the weights are not equal, but science answer
+  // is wrong..
+  if( spi->p->w != spj->p->w ) {
+      ERROR(( "Does not (currently) support species with different particle weights"));
+  }
+
   MALLOC( cm, 1 );
   MALLOC( cm->name, len+1 );
   strcpy( cm->name, name );

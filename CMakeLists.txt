@@ -100,7 +100,14 @@ option(GLOBAL_PARTICLE_ID "Give particles a global ID that allows reidentifiacti
 set(PARTICLE_ANNOTATION "OFF" CACHE STRING "Reserve buffer to store extra information per particle for user defined annotations")
 set_property(CACHE PARTICLE_ANNOTATION PROPERTY STRINGS OFF ON float double)
 
-option(GCC_NO_STRICT_ALIASING "Enalbe -fno-strict-aliasing" OFF)
+set(DEFAULT_GCC_ALIASING_FLAG OFF)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # If we are using GCC, let this flag default to on, as this resolves a bug and will help many users avoid a headache
+    set(DEFAULT_GCC_ALIASING_FLAG ON)
+endif()
+
+option(GCC_NO_STRICT_ALIASING "Enable -fno-strict-aliasing" ${DEFAULT_GCC_ALIASING_FLAG})
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -140,6 +147,7 @@ if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
 endif()
 
 if (GCC_NO_STRICT_ALIASING)
+    message("Enabling -fno-strict-aliasing")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 endif(GCC_NO_STRICT_ALIASING)
 

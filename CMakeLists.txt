@@ -292,20 +292,22 @@ endif(VPIC_PRINT_MORE_DIGITS)
 
 if(USE_HDF5)
     # Enable HDF5, and the relevant defines
-    find_package(HDF5 REQUIRED)
+    find_package(HDF5 REQUIRED COMPONENTS C)
     if (NOT HDF5_IS_PARALLEL)
         message(FATAL_ERROR "HDF5 Parallel support is required: ${HDF5_IS_PARALLEL}")
     endif()
     add_definitions(-DVPIC_ENABLE_HDF5)
 
-    get_cmake_property(_variableNames VARIABLES)
-    list (SORT _variableNames)
-    foreach (_variableName ${_variableNames})
-          message(STATUS "${_variableName}=${${_variableName}}")
-        endforeach()
 
+    # the hdf5 var we need changes based on version...
     string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARY}")
     set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+
+    if ("${HDF5_C_LIBRARY}" STREQUAL "")
+        string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARIES}")
+        set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+    endif()
+
     include_directories(${HDF5_INCLUDE_DIRS})
 endif(USE_HDF5)
 

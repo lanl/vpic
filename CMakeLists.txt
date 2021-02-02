@@ -298,7 +298,6 @@ if(USE_HDF5)
     endif()
     add_definitions(-DVPIC_ENABLE_HDF5)
 
-
     # the hdf5 var we need changes based on version...
     string(REPLACE ";" " " string_libraries "${HDF5_C_LIBRARY}")
     set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
@@ -309,6 +308,11 @@ if(USE_HDF5)
     endif()
 
     include_directories(${HDF5_INCLUDE_DIRS})
+
+    # Add includes to ./bin/vpic for users who need the headers in their decks
+    string(REPLACE ";" " -I" string_includes "${HDF5_INCLUDE_DIRS}")
+    set(VPIC_CXX_FLAGS "-I${string_includes} ${VPIC_CXX_FLAGS}")
+
 endif(USE_HDF5)
 
 #------------------------------------------------------------------------------#

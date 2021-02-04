@@ -283,22 +283,6 @@ vpic_simulation::dump_hydro( const char *sp_name,
 #ifdef VPIC_ENABLE_HDF5
 #define DUMP_DIR_FORMAT "./%s"
 
-// TODO: rename or remove this
-#define RANK_TO_INDEX2(rank, ix, iy, iz)                                      \
-    BEGIN_PRIMITIVE                                                           \
-    {                                                                         \
-        int _ix, _iy, _iz;                                                    \
-        _ix = (rank);                         /* ix = ix+gpx*( iy+gpy*iz ) */ \
-        _iy = _ix / grid->gpx;  /* iy = iy+gpy*iz */            \
-        _ix -= _iy * grid->gpx; /* ix = ix */                   \
-        _iz = _iy / grid->gpy;  /* iz = iz */                   \
-        _iy -= _iz * grid->gpy; /* iy = iy */                   \
-        (ix) = _ix;                                                           \
-        (iy) = _iy;                                                           \
-        (iz) = _iz;                                                           \
-    }                                                                         \
-    END_PRIMITIVE
-
 /* define to do C-style indexing */
 #define hydro(x, y, z) hydro_array->h[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
 
@@ -397,18 +381,7 @@ vpic_simulation::dump_fields_hdf5( const char *fbase, int ftag )
     hid_t group_id = H5Gcreate(file_id, fname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     el1 = uptime() - el1;
-    //sim_log("TimeHDF5Open): " << el1 << " s"); //Easy to handle results for scripts
     double el2 = uptime();
-
-    /*
-// Create a variable list of field values to output.
-size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
-size_t * varlist = new size_t[numvars];
-
-for(size_t i(0), c(0); i<total_field_variables; i++)
-  if(global->fdParams.output_vars.bitset(i)) varlist[c++] = i;
-
-printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
 
 #define fpp(x, y, z) f[VOXEL(x, y, z, grid->nx, grid->ny, grid->nz)]
     /*
@@ -420,6 +393,7 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
     material_id ematx, ematy, ematz, nmat; // Material at edge centers and nodes
     material_id fmatx, fmaty, fmatz, cmat; // Material at face and cell centers
     } field_t;*/
+
     // Local voxel mesh resolution.  Voxels are
     // indexed FORTRAN style 0:nx+1,0:ny+1,0:nz+1
     // with voxels 1:nx,1:ny,1:nz being non-ghost
@@ -428,57 +402,31 @@ printf("\nBEGIN_OUTPUT: numvars = %zd \n", numvars);*/
     float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
     hsize_t temp_buf_index;
     hid_t dset_id;
-    //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
     plist_id = H5Pcreate(H5P_DATASET_XFER);
-    //Comment out for test only
     H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-    //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
-
-    //global->topology_x
 
     hsize_t field_global_size[3], field_local_size[3], global_offset[3], global_count[3];
-    field_global_size[0] = (grid->nx * grid->gpx);
-    field_global_size[1] = (grid->ny * grid->gpy);
-    field_global_size[2] = (grid->nz * grid->gpz);
+    field_global_size[0] = grid->gnx;
+    field_global_size[1] = grid->gny;
+    field_global_size[2] = grid->gnz;
 
     field_local_size[0] = grid->nx;
     field_local_size[1] = grid->ny;
     field_local_size[2] = grid->nz;
 
-    int gpx = grid->gpx;
-    int gpy = grid->gpy;
-    int gpz = grid->gpz;
+    global_offset[0] = grid->nx0;
+    global_offset[1] = grid->ny0;
+    global_offset[2] = grid->nz0;
 
-    int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-    //RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
-
-    int _ix, _iy, _iz;
-    _ix = (mpi_rank);
-    _iy = _ix / grid->gpx;
-    _ix -= _iy * grid->gpx;
-    _iz = _iy / grid->gpy;
-    _iy -= _iz * grid->gpy;
-    int ix = _ix;
-    int iy = _iy;
-    int iz = _iz;
-
-    mpi_rank_x = ix;
-    mpi_rank_y = iy;
-    mpi_rank_z = iz;
-
-    global_offset[0] = (grid->nx) * mpi_rank_x;
-    global_offset[1] = (grid->ny) * mpi_rank_y;
-    global_offset[2] = (grid->nz) * mpi_rank_z;
-
-    global_count[0] = (grid->nx);
-    global_count[1] = (grid->ny);
-    global_count[2] = (grid->nz);
+    global_count[0] = grid->nx;
+    global_count[1] = grid->ny;
+    global_count[2] = grid->nz;
 
 #ifdef DUMP_INFO_DEBUG
     printf("global size   = %d  %d %d \n", field_global_size[0], field_global_size[1], field_global_size[2]);
     printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
     printf("global_count  = %d  %d %d \n", global_count[0], global_count[1], global_count[2]);
-    printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    printf("mpi-rank = %d\n", mpi_rank);
     fflush(stdout);
 #endif
 
@@ -706,17 +654,6 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
     //sim_log("TimeHDF5Open: " << el1 << " s"); //Easy to handle results for scripts
     //double el2 = uptime();
 
-    // Create a variable list of field values to output.
-    //size_t numvars = std::min(global->fdParams.output_vars.bitsum(), total_field_variables);
-    //size_t *varlist = new size_t[numvars];
-
-    //for (size_t i(0), c(0); i < total_field_variables; i++)
-    //    if (global->fdParams.output_vars.bitset(i))
-    //        varlist[c++] = i;
-
-    //printf("\nBEGIN_OUTPUT: numvars = %zu \n", numvars);
-
-
     //typedef struct hydro {
     //  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
     //  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
@@ -733,29 +670,21 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
     float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
     hsize_t temp_buf_index;
     hid_t dset_id;
-    //char  *field_var_name[] = {"ex","ey","ez","div_e_err","cbx","cby","cbz","div_b_err","tcax","tcay","tcaz","rhob","jfx","jfy","jfz","rhof"};
     plist_id = H5Pcreate(H5P_DATASET_XFER);
-    //Comment out for test only
     H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-    //H5Sselect_hyperslab(filespace, H5S_SELECT_SET, (hsize_t *) &offset, NULL, (hsize_t *) &numparticles, NULL);
-
-    //global->topology_x
 
     hsize_t hydro_global_size[3], hydro_local_size[3], global_offset[3], global_count[3];
-    hydro_global_size[0] = (grid->nx * grid->gpx);
-    hydro_global_size[1] = (grid->ny * grid->gpy);
-    hydro_global_size[2] = (grid->nz * grid->gpz);
+    hydro_global_size[0] = grid->gnx;
+    hydro_global_size[1] = grid->gny;
+    hydro_global_size[2] = grid->gnz;
 
     hydro_local_size[0] = grid->nx;
     hydro_local_size[1] = grid->ny;
     hydro_local_size[2] = grid->nz;
 
-    int mpi_rank_x, mpi_rank_y, mpi_rank_z;
-    RANK_TO_INDEX2(mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
-
-    global_offset[0] = (grid->nx) * mpi_rank_x;
-    global_offset[1] = (grid->ny) * mpi_rank_y;
-    global_offset[2] = (grid->nz) * mpi_rank_z;
+    global_offset[0] = grid->nx0;
+    global_offset[1] = grid->ny0;
+    global_offset[2] = grid->nz0;
 
     global_count[0] = (grid->nx);
     global_count[1] = (grid->ny);
@@ -765,7 +694,7 @@ void vpic_simulation::dump_hydro_hdf5( const char *speciesname,
     printf("global size   = %d %d %d \n", hydro_global_size[0], hydro_global_size[1], hydro_global_size[2]);
     printf("global_offset = %d %d %d \n", global_offset[0], global_offset[1], global_offset[2]);
     printf("global_count  = %d %d %d \n", global_count[0], global_count[1], global_count[2]);
-    printf("mpi-rank = %d, rank index = (%d, %d, %d) \n", mpi_rank, mpi_rank_x, mpi_rank_y, mpi_rank_z);
+    printf("mpi-rank = %d\n", mpi_rank);
     fflush(stdout);
 #endif
 
@@ -1016,11 +945,8 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
     {
         int local_i = sp->p[i].i;
 
-        int ix, iy, iz, rx, ry, rz;
-        // Convert rank to local x/y/z
-        UNVOXEL(mpi_rank, rx, ry, rz, grid->gpx, grid->gpy, grid->gpz);
-
         // Calculate local ix/iy/iz
+        int ix, iy, iz;
         UNVOXEL(local_i, ix, iy, iz, grid->nx+2, grid->ny+2, grid->nz+2);
 
         // Account for the "first" ghost cell
@@ -1029,14 +955,14 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
         iz = iz - 1;
 
         // Convert ix/iy/iz to global
-        int gix = ix + (grid->nx * rx);
-        int giy = iy + (grid->ny * ry);
-        int giz = iz + (grid->nz * rz);
+        int gix = ix + grid->nx0;
+        int giy = iy + grid->ny0;
+        int giz = iz + grid->nz0;
 
-        // calculate global grid sizes
-        int gnx = grid->nx * grid->gpx;
-        int gny = grid->ny * grid->gpy;
-        int gnz = grid->nz * grid->gpz;
+        // global grid sizes
+        int gnx = grid->gnx;
+        int gny = grid->gny;
+        int gnz = grid->gnz;
 
         // TODO: find a better way to account for the hard coded ghosts in VOXEL
         int global_i = VOXEL(gix, giy, giz, gnx-2, gny-2, gnz-2);
@@ -1440,7 +1366,7 @@ vpic_simulation::global_header( const char * base,
 
 void
 vpic_simulation::field_dump( DumpParameters & dumpParams,
-			     field_t *f,
+                             field_t *f,
                              int64_t userStep )
 {
   long dumpStep = ( userStep == -1 ) ? (long) step() : userStep;
@@ -1541,8 +1467,8 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
 
     // more efficient for standard case
     if ( istride == 1 &&
-	 jstride == 1 &&
-	 kstride == 1 )
+         jstride == 1 &&
+         kstride == 1 )
     {
       for(size_t v(0); v<numvars; v++) {
       for(size_t k(0); k<nzout+2; k++) {
@@ -1590,8 +1516,8 @@ vpic_simulation::field_dump( DumpParameters & dumpParams,
     WRITE_ARRAY_HEADER(f, 3, dim, fileIO);
 
     if ( istride == 1 &&
-	 jstride == 1 &&
-	 kstride == 1 )
+         jstride == 1 &&
+         kstride == 1 )
     {
       fileIO.write( f, dim[0] * dim[1] * dim[2] );
     }
@@ -1752,8 +1678,8 @@ vpic_simulation::hydro_dump( const char * speciesname,
     WRITE_ARRAY_HEADER(h, 3, dim, fileIO);
 
     if ( istride == 1 &&
-	 jstride == 1 &&
-	 kstride == 1 )
+         jstride == 1 &&
+         kstride == 1 )
     {
       fileIO.write( h, dim[0] * dim[1] * dim[2] );
     }

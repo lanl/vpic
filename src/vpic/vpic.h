@@ -534,6 +534,45 @@ protected:
                          (int)gpx, (int)gpy, (int)gpz );
   }
 
+  // The below functions automatically create partition grids with simple
+  // boundary conditions on the edges and roughly equal costs based on the
+  // provided spatial cost function.
+  inline void
+  define_nonuniform_periodic_grid( double xl,  double yl,  double zl,
+                                   double xh,  double yh,  double zh,
+                                   double gnx, double gny, double gnz,
+                                   double gpx, double gpy, double gpz,
+                                   Cost& c ) {
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+    partition_nonuniform_periodic_box( grid, xl, yl, zl, xh, yh, zh,
+                                       (int)gnx, (int)gny, (int)gnz,
+                                       (int)gpx, (int)gpy, (int)gpz, c );
+  }
+
+  inline void
+  define_nonuniform_absorbing_grid( double xl,  double yl,  double zl,
+                                    double xh,  double yh,  double zh,
+                                    double gnx, double gny, double gnz,
+                                    double gpx, double gpy, double gpz,
+                                    Cost& c ) {
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+    partition_nonuniform_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
+                                        (int)gnx, (int)gny, (int)gnz,
+                                        (int)gpx, (int)gpy, (int)gpz, c );
+  }
+
+  inline void
+  define_nonuniform_reflecting_grid( double xl,  double yl,  double zl,
+                                     double xh,  double yh,  double zh,
+                                     double gnx, double gny, double gnz,
+                                     double gpx, double gpy, double gpz,
+                                     Cost& c ) {
+        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
+    partition_nonuniform_metal_box( grid, xl, yl, zl, xh, yh, zh,
+                                    (int)gnx, (int)gny, (int)gnz,
+                                    (int)gpx, (int)gpy, (int)gpz, c );
+  }
+
   // The below macros allow custom domains to be created
 
   // Creates a particle reflecting metal box in the local domain

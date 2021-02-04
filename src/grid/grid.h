@@ -99,8 +99,8 @@ typedef struct grid {
                             // 0 ... nproc-1 ... comm boundary condition
                             // <0 ... locally applied boundary condition
 
-  int gpx, gpy, gpz = -1; // Store global processor decomposition to let us figure
-                     // out where we are in the global decomposition
+  int gnx, gny, gnz = -1; // Global size of domain
+  int nx0, ny0, nz0 = -1; // Min cell local domain
 
   // Phase 3 grid data structures
   // NOTE: VOXEL INDEXING LIMITS NUMBER OF VOXELS TO 2^31 (INCLUDING
@@ -243,6 +243,37 @@ partition_metal_box( grid_t *g,
                      int gnx, int gny, int gnz,
                      int gpx, int gpy, int gpz );
 
+END_C_DECLS
+class Cost {
+  public:
+    virtual float cost(const int ix, const int iy, const int iz) = 0;
+};
+
+void
+partition_nonuniform_periodic_box( grid_t *g,
+                                   double gx0, double gy0, double gz0,
+                                   double gx1, double gy1, double gz1,
+                                   int gnx, int gny, int gnz,
+                                   int gpx, int gpy, int gpz,
+                                   Cost& c );
+
+void
+partition_nonuniform_absorbing_box( grid_t *g,
+                                    double gx0, double gy0, double gz0,
+                                    double gx1, double gy1, double gz1,
+                                    int gnx, int gny, int gnz,
+                                    int gpx, int gpy, int gpz,
+                                    Cost& c );
+
+void
+partition_nonuniform_metal_box( grid_t *g,
+                                double gx0, double gy0, double gz0,
+                                double gx1, double gy1, double gz1,
+                                int gnx, int gny, int gnz,
+                                int gpx, int gpy, int gpz,
+                                Cost& c );
+
+BEGIN_C_DECLS
 // In grid_comm.c
 
 // FIXME: SHOULD TAKE A RAW PORT INDEX INSTEAD OF A PORT COORDS

@@ -13,7 +13,7 @@
 //
 // This module implements the following the difference equations on a
 // superhexahedral domain decomposed Yee-mesh:
-//
+//  
 // advance_b -> Finite Differenced Faraday
 //   cB_new = cB_old - frac c dt curl E
 //
@@ -32,7 +32,7 @@
 //     rapidly reduce RMS divergence error assuming divergences errors
 //     are due to accumulation of numerical roundoff when integrating
 //     Faraday. See clean_div.c for details.
-//
+//     
 // div_clean_e -> Modified Marder pass on electric fields
 //   E_new = E_old + drive D dt grad err_mul div ( epsr E_old - rho/eps0 )
 //     Since the total rho may not be known everywhere (for example in
@@ -65,7 +65,7 @@
 // fmatx,fmaty,fmatz are all on the "face
 // mesh". rhof,rhob,div_e_err,nmat are on the "nodes mesh".
 // div_b_err,cmat are on the "cell mesh".
-//
+// 
 // Above, for "edge mesh" quantities, interior means that the
 // component is not a tangential field directly on the surface of the
 // domain. For "face mesh" quantities, interior means that the
@@ -97,7 +97,7 @@
 //   ...
 //   material_coefficients = new_material_coefficients(grid,material_list);
 //   fields = new_fields(grid);
-//
+// 
 //   ... Set the initial field values and place materials ...
 //
 //   synchronize_fields(fields,grid);
@@ -107,7 +107,7 @@
 // initial fields or errors in the source terms or different floating
 // point properties on different nodes cause the shared faces to have
 // different fields).
-//
+//   
 // To advance the fields in a PIC simulation with TCA radation damping
 // and periodic divergence cleaning, the following sequence is
 // suggested:
@@ -118,7 +118,7 @@
 //   if( should_clean_div_e ) {
 //     ... adjust rho_f, rho_b and/or rho_c as necessary
 //     do {
-//       rms_err = clean_div_e( fields, material_coefficients, grid );
+//       rms_err = clean_div_e( fields, material_coefficients, grid ); 
 //     } while( rms_err_too_high );
 //   }
 //   if( should_clean_div_b ) {

@@ -99,8 +99,9 @@ typedef struct grid {
                             // 0 ... nproc-1 ... comm boundary condition
                             // <0 ... locally applied boundary condition
 
-  int gpx, gpy, gpz = -1; // Store global processor decomposition to let us figure
-                     // out where we are in the global decomposition
+
+  int gpx, gpy, gpz = -1;   // Store global processor decomposition to let us figure
+                            // out where we are in the global decomposition
 
   // Phase 3 grid data structures
   // NOTE: VOXEL INDEXING LIMITS NUMBER OF VOXELS TO 2^31 (INCLUDING

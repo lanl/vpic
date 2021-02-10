@@ -84,20 +84,23 @@ option(USE_LEGACY_SORT "Enable Legacy Sort Implementation" OFF)
 
 option(VPIC_PRINT_MORE_DIGITS "Print more digits in VPIC timer info" OFF)
 
+option(ENABLE_OPENSSL "Enable OpenSSL support for checksums" OFF)
+
 option(DISABLE_DYNAMIC_RESIZING "Prevent particle arrays from dynamically resizing during a run" OFF)
 
-option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install HDF5" OFF)
-
-option(USE_OPENPMD "Enable OpenPMD for use during IO. VPIC does not help you install OpenPM" OFF)
-
 option(EXIT_ON_LOST_MOVER "EXIT if we run out of mover space during the particle push (the default is WARN)" OFF)
+
+option(USE_HDF5 "Enable HDF5 for use during IO. VPIC does not help you install HDF5" OFF)
 
 # option to set minimum number of particles
 set(SET_MIN_NUM_PARTICLES AUTO CACHE STRING "Select minimum number of particles to use, if using dynamic particle array resizing")
 
-# TODO: better name for this?
-set(PMD_MAX_IO_CHUNK AUTO CACHE STRING "Select the maxiumum IO write size to use when writing -- applies to particles only, and is specified as number of particles. currently only honored by OpenPMD backend")
+option(GLOBAL_PARTICLE_ID "Give particles a global ID that allows reidentifiaction" OFF)
 
+set(PARTICLE_ANNOTATION "OFF" CACHE STRING "Reserve buffer to store extra information per particle for user defined annotations")
+set_property(CACHE PARTICLE_ANNOTATION PROPERTY STRINGS OFF ON float double)
+
+option(GCC_NO_STRICT_ALIASING "Enalbe -fno-strict-aliasing" OFF)
 
 #------------------------------------------------------------------------------#
 # Create include and link aggregates
@@ -136,22 +139,35 @@ if(NOT SET_MIN_NUM_PARTICLES STREQUAL "AUTO")
     add_definitions(-DMIN_NP=${SET_MIN_NUM_PARTICLES})
 endif()
 
-if(NOT PMD_MAX_IO_CHUNK STREQUAL "AUTO")
-    add_definitions(-DPMD_MAX_IO_CHUNK=${PMD_MAX_IO_CHUNK})
-endif()
+if (GCC_NO_STRICT_ALIASING)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+endif(GCC_NO_STRICT_ALIASING)
+
+#------------------------------------------------------------------------------#
+# OpenSSL
+#------------------------------------------------------------------------------#
+
+if(ENABLE_OPENSSL)
+  find_package(OpenSSL REQUIRED)
+
+  include_directories(${OPENSSL_INCLUDE_DIR})
+  string(REPLACE ";" " " string_libraries "${OPENSSL_LIBRARIES}")
+  set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
+endif(ENABLE_OPENSSL)
 
 find_package(Threads REQUIRED)
 
 #------------------------------------------------------------------------------#
 # Act on build options set in project.cmake
 #------------------------------------------------------------------------------#
+
 #------------------------------------------------------------------------------#
 # Add options for building with the legacy particle sort implementation.
 #------------------------------------------------------------------------------#
 
 if(USE_LEGACY_SORT)
   add_definitions(-DVPIC_USE_LEGACY_SORT)
-  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_LEGACY_SORT")
 endif(USE_LEGACY_SORT)
 
 #------------------------------------------------------------------------------#
@@ -166,7 +182,7 @@ endif()
 
 if(USE_PTHREADS)
   add_definitions(-DVPIC_USE_PTHREADS)
-  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_USE_PTHREADS")
 endif(USE_PTHREADS)
 
 if(USE_OPENMP)
@@ -300,6 +316,10 @@ endif()
 # Miscellaneous options.
 #------------------------------------------------------------------------------#
 
+if(ENABLE_OPENSSL)
+  add_definitions(-DENABLE_OPENSSL)
+endif(ENABLE_OPENSSL)
+
 if(VPIC_PRINT_MORE_DIGITS)
   add_definitions(-DVPIC_PRINT_MORE_DIGITS)
   set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PRINT_MORE_DIGITS")
@@ -318,6 +338,28 @@ if(USE_HDF5)
     include_directories(${HDF5_INCLUDE_DIRS})
 endif(USE_HDF5)
 
+if(GLOBAL_PARTICLE_ID)
+    add_definitions(-DVPIC_GLOBAL_PARTICLE_ID=ON)
+    set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_GLOBAL_PARTICLE_ID=ON")
+endif()
+
+if( PARTICLE_ANNOTATION STREQUAL "OFF" )
+  # this is the default, nothing to do
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "ON")
+  # if annotation are request without specific type we use float
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=float)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=float")
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "float")
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=float)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=float")
+elseif("${PARTICLE_ANNOTATION}" STREQUAL "double")
+  add_definitions(-DVPIC_PARTICLE_ANNOTATION=double)
+  set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} -DVPIC_PARTICLE_ANNOTATION=double")
+else()
+  message( FATAL_ERROR "PARTICLE_ANNOTATION can only be OFF, float or double" )
+endif()
+
+
 #------------------------------------------------------------------------------#
 # Handle vpic compile script last.
 #------------------------------------------------------------------------------#
@@ -333,11 +375,47 @@ if(ENABLE_COVERAGE_BUILD)
     set(VPIC_CXX_FLAGS "${VPIC_CXX_FLAGS} --coverage")
 endif(ENABLE_COVERAGE_BUILD)
 
+# process Makefile.run.in to get a simple Makefile.run for a run. Points to
+# local built exe wrapper, and has example deck/platform.
+configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
+  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
+
+# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
+get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
+#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
+foreach(d ${ALL_DEFINES})
+    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
+endforeach()
+
+# install script
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
+install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
+  DESTINATION bin
+  RENAME vpic
+  PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+    )
+
 install(FILES deck/main.cc deck/wrapper.cc DESTINATION share/vpic)
 install(FILES deck/wrapper.h DESTINATION include/vpic)
 install(DIRECTORY src/ DESTINATION include/vpic
          FILES_MATCHING PATTERN "*.h")
 
+
+# local script
+configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
+  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
+
+file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
+  DESTINATION ${CMAKE_BINARY_DIR}/bin
+  FILE_PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE
+)
 
 #------------------------------------------------------------------------------#
 # Add library target
@@ -362,44 +440,9 @@ else()
   set(VPIC_SRC)
   install(TARGETS vpic LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
-
 target_include_directories(vpic INTERFACE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
+target_link_libraries(vpic ${VPIC_EXPOSE} ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${CMAKE_DL_LIBS} ${HDF5_C_LIBRARIES})
 target_compile_options(vpic ${VPIC_EXPOSE} ${MPI_C_COMPILE_FLAGS})
-
-# get absolute paths to linked libraries, and their transitive dependencies
-function(openpmdreclibs tgtname outname)
-    get_target_property(PC_PRIVATE_LIBS_TGT ${tgtname} INTERFACE_LINK_LIBRARIES)
-    foreach(PC_LIB IN LISTS PC_PRIVATE_LIBS_TGT)
-       if(TARGET ${PC_LIB})
-           openpmdreclibs(${PC_LIB} ${outname})
-       else()
-           if(PC_LIB)
-               string(APPEND ${outname} " ${PC_LIB}")
-           endif()
-       endif()
-    endforeach()
-    set(${outname} ${${outname}} PARENT_SCOPE)
-endfunction()
-
-if(USE_OPENPMD)
-    # Enable openPMD, and the relevant defines
-    find_package(openPMD REQUIRED CONFIG COMPONENTS MPI)
-    target_link_libraries(vpic PRIVATE openPMD::openPMD)
-    target_compile_definitions(vpic PRIVATE "-DVPIC_ENABLE_OPENPMD")
-
-    add_definitions(-DVPIC_ENABLE_OPENPMD)
-
-    # legacy stuff for 2-phase compile
-    get_target_property(openPMD_LIBRARIES openPMD::openPMD LOCATION)
-    string(REPLACE ";" " " string_libraries "${openPMD_LIBRARIES}")
-    set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${string_libraries}")
-    get_target_property(openPMD_TYPE openPMD::openPMD TYPE)
-    if("${openPMD_TYPE}" STREQUAL "STATIC_LIBRARY")
-        openpmdreclibs(openPMD openPMD_TRANSITIVE_LIBS)
-        set(VPIC_CXX_LIBRARIES "${VPIC_CXX_LIBRARIES} ${openPMD_TRANSITIVE_LIBS}")
-    endif()
-endif(USE_OPENPMD)
 
 macro(build_a_vpic name deck)
   if(NOT EXISTS ${deck})
@@ -458,40 +501,6 @@ if(ENABLE_PERFORMANCE_TESTS)
   include_directories(${CATCH_DIR})
   add_subdirectory(test/performance)
 endif(ENABLE_PERFORMANCE_TESTS)
-
-# process Makefile.run.in to get a simple Makefile.run for a run. Points to
-# local built exe wrapper, and has example deck/platform.
-configure_file(${CMAKE_SOURCE_DIR}/sample/Makefile.run.in
-  ${CMAKE_BINARY_DIR}/bin/Makefile.run)
-
-# Append all defines to VPIC_DEFINES, so it can be seen during input deck building
-get_directory_property(ALL_DEFINES DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
-#string(REPLACE ";" " -D" EEK "${ALL_DEFINES}")
-foreach(d ${ALL_DEFINES})
-    set(VPIC_DEFINES "${VPIC_DEFINES} -D${d}")
-endforeach()
-
-# install script
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install)
-install(FILES ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic-install
-  DESTINATION bin
-  RENAME vpic
-  PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-)
-
-# Configure local script to generate bin/vpic
-configure_file(${CMAKE_SOURCE_DIR}/bin/vpic-local.in
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic)
-
-file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/vpic
-  DESTINATION ${CMAKE_BINARY_DIR}/bin
-  FILE_PERMISSIONS
-    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-)
-
+#~---------------------------------------------------------------------------~-#
+# vim: set tabstop=2 shiftwidth=2 expandtab :
+#~---------------------------------------------------------------------------~-#

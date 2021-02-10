@@ -1,5 +1,6 @@
 #define IN_boundary
 
+#include <iostream> // TODO: delete
 #include "boundary_private.h"
 
 // If this is defined particle and mover buffers will not resize dynamically.
@@ -72,9 +73,23 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
   static int max_ci = 0;
 
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // Same static buffer for the transport of annotations in the third run.
+  // We need 6 of them for the 6 faces of the local domain through which
+  // communication can happen. The sizing is for the maximum of all six.
+  // cab: Communcation of Annotations Buffer
+  typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+  static char * RESTRICT ALIGNED(16) cab[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+  static int max_cab = 0; // Size of the buffer (in bytes)
+  int max_cas = 0; //Maximum size that might be needed for a particle (in byte)
+
+  int sp_oldnp[MAX_SP]; // Number of particles we held per species before new particles came in.
+  #endif
+
+
   int n_send[6], n_recv[6], n_ci;
 
-  species_t * sp;
+  species_t* sp;
 
   int face;
 
@@ -132,6 +147,53 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
   /*const*/ int bc[6], shared[6];
   /*const*/ int64_t range[6];
+
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // How large might a particle be (with species ID, all annotation and possibily an ID)
+  max_cas = 0;
+  LIST_FOR_EACH( sp, sp_list ) {
+    int cas = 0;
+    // Space for the species ID
+    cas += sizeof(sp->id);
+    // Space for the annotations
+    if(sp->has_annotation) {
+       cas += sp->has_annotation*sizeof(annotation_t);
+    }
+    // Space for the particle ID
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+      cas += sizeof(sp->p_id[0]);
+    #endif
+    if(cas > max_cas) {
+      max_cas = cas;
+    }
+  }
+
+  // How many max_cas sized particles might we have to communicate
+  int n_cab = 0;
+  LIST_FOR_EACH( sp, sp_list ) {
+    n_cab += sp->nm;
+  }
+
+  // make sure the buffer we have is large enough
+  // FIXME: should we shrink that ever?
+  if ( max_cab < max_cas * n_cab ) {
+    for( face = 0; face < 6; face++ ) {
+      char * new_cab = cab[face];
+      FREE_ALIGNED( new_cab );
+
+      MALLOC_ALIGNED( new_cab, max_cas * n_cab, 16 );
+
+      cab[face] = new_cab;
+    }
+    max_cab = max_cas * n_cab;
+  } else {
+    // Technically we don't need the memset. But it makes debugging easier and
+    // is much cheaper than the communication that will happen shortly.
+    for( face = 0; face < 6; face++ ) {
+      memset(cab[face], 0, max_cas*n_cab);
+    }
+  }
+  #endif
 
   for( face = 0; face < 6; face++ )
   {
@@ -236,6 +298,15 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       const int32_t sp_id = sp->id;
 
       particle_t * RESTRICT ALIGNED(128) p0 = sp->p;
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      int sp_has_ids = sp->has_ids;
+      size_t* RESTRICT ALIGNED(128) p_id = sp->p_id; // May be NULL if sp_has_ids if false
+      #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      int sp_has_annotation = sp->has_annotation;
+      annotation_t* RESTRICT ALIGNED(128) sp_p_annotation = sp->p_annotation;
+      #endif
+
       int np = sp->np;
 
       particle_mover_t * RESTRICT ALIGNED(16)  pm = sp->pm + sp->nm - 1;
@@ -279,7 +350,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         if ( ( ( nn >= 0      ) & ( nn <  rangel ) ) |
              ( ( nn >  rangeh ) & ( nn <= rangem ) ) )
         {
-          pi = &pi_send[ face ] [ n_send[ face ]++ ];
+          pi = &pi_send[ face ] [ n_send[ face ] ];
 
           #ifdef V4_ACCELERATION
 
@@ -304,9 +375,54 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
           #endif
 
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
+          // Send global id too
+          if(sp_has_ids) {
+            pi->global_particle_id = p_id[i];
+          }
+          #endif
+
+          #ifdef VPIC_PARTICLE_ANNOTATION
+          annotation_t* RESTRICT ALIGNED(128) p_annotation = (annotation_t*) &(cab[face][n_send[face] * max_cas]);
+
+          // Store species ID
+          {
+            // Oh god scary...
+            int* p_annotation_int = (int*) p_annotation;
+            *p_annotation_int = sp_id;
+            p_annotation_int++;
+            p_annotation = (annotation_t*) p_annotation_int;
+          }
+
+          // Store particle ID if needed
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
+          // Also somewhat scary
+          size_t* p_annotation_sizet = (size_t*) p_annotation;
+          if(sp_has_ids) {
+            *p_annotation_sizet = p_id[i];
+          } else {
+            *p_annotation_sizet = 0;
+          }
+          // printf("<%d> %p set to %dl\n", rank(), p_annotation_sizet, *p_annotation_sizet);
+          p_annotation_sizet++;
+          p_annotation = (annotation_t*) p_annotation_sizet;
+          #endif
+
+          if(sp_has_annotation) {
+            // Store annotations
+            for(int a=0; a<sp_has_annotation; a++) {
+              *p_annotation = sp_p_annotation[i*sp_has_annotation+a];
+              // printf("<%d> %p set to %f\n", rank(), p_annotation, *p_annotation);
+              p_annotation++;
+            }
+          }
+          #endif
+
           ( &pi->dx )[ axis[ face ] ] = dir[ face ];
           pi->i                       = nn - range[ face ];
           pi->sp_id                   = sp_id;
+
+          n_send[ face ]++;
 
           goto backfill;
         }
@@ -369,6 +485,20 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         p0[i] = p0[np];
 
         #endif
+
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        if(sp_has_ids) {
+          p_id[i] = p_id[np];    /* keep p_id[] in sync with p[] */
+        }
+        #endif
+
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        if(sp_has_annotation) {
+          for(int a=0; a<sp_has_annotation; a++) {
+            sp_p_annotation[i*sp_has_annotation+a] = sp_p_annotation[np*sp_has_annotation+a];
+          }
+        }
+        #endif
       }
 
       sp->np = np;
@@ -376,6 +506,21 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     }
 
   } while(0);
+
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // Figure out how many particles we currently have (per species) now that we
+  // have moved all leaving particles to the buffer and before new particles
+  // come in
+  LIST_FOR_EACH( sp, sp_list ) {
+    const int sp_id = sp->id;
+    if((0 <= sp_id) && (sp_id < MAX_SP)) {
+      sp_oldnp[sp_id] = sp->np;
+    } else {
+      ERROR( ("Invalid sp->id") );
+    }
+  }
+
+  #endif
 
   // Finish exchanging particle counts and start exchanging actual
   // particles.
@@ -471,6 +616,14 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
     {
       particle_mover_t * new_pm;
       particle_t       * new_p;
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      int sp_has_ids   = sp->has_ids;
+      size_t           * new_p_id;
+      #endif
+      #ifdef VPIC_PARTICLE_ANNOTATION
+      int sp_has_annotation = sp->has_annotation;
+      annotation_t* new_p_annotation;
+      #endif
 
       n = sp->np + max_inj;
 
@@ -480,6 +633,7 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         /**/             // ratio") to minimize resizes (max
         /**/             // rate that avoids excessive heap
         /**/             // fragmentation)
+
 
         //WARNING( ( "Resizing local %s particle storage from %i to %i",
                    //sp->name,
@@ -491,6 +645,32 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         COPY( new_p, sp->p, sp->np );
 
         FREE_ALIGNED( sp->p );
+
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        /* changes made to p[] must be mirrored in p_id[] */
+        if(sp_has_ids) {
+          MALLOC_ALIGNED( new_p_id, n, 128 );
+
+          COPY( new_p_id, sp->p_id, sp->np );
+
+          FREE_ALIGNED( sp->p_id );
+
+          sp->p_id   = new_p_id;
+        }
+        #endif
+
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        /* changes made to p[] must also be mirrored in p_annotation[] */
+        if(sp_has_annotation) {
+          MALLOC_ALIGNED( new_p_annotation, n * sp_has_annotation, 128 );
+
+          COPY( new_p_annotation, sp->p_annotation, sp->np * sp_has_annotation);
+
+          FREE_ALIGNED( sp->p_annotation );
+
+          sp->p_annotation = new_p_annotation;
+        }
+        #endif
 
         sp->p      = new_p;
         sp->max_np = n;
@@ -517,6 +697,32 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         COPY( new_p, sp->p, sp->np );
 
         FREE_ALIGNED( sp->p );
+
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        /* changes made to p[] must be mirrored in p_id[] */
+        if(sp_has_ids) {
+          MALLOC_ALIGNED( new_p_id, n, 128 );
+
+          COPY( new_p_id, sp->p_id, sp->np );
+
+          FREE_ALIGNED( sp->p_id );
+
+          sp->p_id   = new_p_id;
+        }
+        #endif
+
+        #ifdef VPIC_PARTICLE_ANNOTATION
+        /* changes made to p[] must also be mirrored in p_annotation[] */
+        if(sp_has_annotation) {
+          MALLOC_ALIGNED( new_p_annotation, n * sp_has_annotation, 128 );
+
+          COPY( new_p_annotation, sp->p_annotation, sp->np * sp_has_annotation);
+
+          FREE_ALIGNED( sp->p_annotation );
+
+          sp->p_annotation = new_p_annotation;
+        }
+        #endif
 
         sp->p      = new_p;
         sp->max_np = n;
@@ -557,6 +763,14 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     particle_t       * RESTRICT ALIGNED(32) sp_p [ MAX_SP ];
     particle_mover_t * RESTRICT ALIGNED(32) sp_pm[ MAX_SP ];
+    #ifdef VPIC_GLOBAL_PARTICLE_ID
+    int sp_has_ids[ MAX_SP ];
+    size_t           * RESTRICT ALIGNED(32) sp_p_id[ MAX_SP ];
+    #endif
+    #ifdef VPIC_PARTICLE_ANNOTATION
+    int sp_has_annotation[ MAX_SP ];
+    size_t           * RESTRICT ALIGNED(32) sp_p_annotation[ MAX_SP ];
+    #endif
 
     float sp_q [ MAX_SP ];
     int   sp_np[ MAX_SP ];
@@ -574,11 +788,20 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     LIST_FOR_EACH( sp, sp_list )
     {
-      sp_p [ sp->id ] = sp->p;
+      sp_p[ sp->id ] = sp->p;
       sp_pm[ sp->id ] = sp->pm;
       sp_q [ sp->id ] = sp->q;
       sp_np[ sp->id ] = sp->np;
       sp_nm[ sp->id ] = sp->nm;
+
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      sp_has_ids[ sp->id ] = sp->has_ids;
+      if(sp_has_ids[sp->id]) {
+        sp_p_id[ sp->id ] = sp->p_id;
+      }
+      #endif
+
+      // The values for VPIC_PARTICLE_ANNOTATION are communicated later
 
       #ifdef DISABLE_DYNAMIC_RESIZING
       sp_max_np[ sp->id ] = sp->max_np;
@@ -596,9 +819,12 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
 
     do
     {
-      /**/  particle_t          * RESTRICT ALIGNED(32) p;
-      /**/  particle_mover_t    * RESTRICT ALIGNED(16) pm;
+      particle_t                * RESTRICT ALIGNED(32) p;
+      particle_mover_t          * RESTRICT ALIGNED(16) pm;
       const particle_injector_t * RESTRICT ALIGNED(16) pi;
+      #ifdef VPIC_GLOBAL_PARTICLE_ID
+      size_t                    * RESTRICT ALIGNED(32) p_id;
+      #endif
 
       int np, nm, n, id;
 
@@ -646,8 +872,13 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
       {
         id = pi->sp_id;
 
-        p  = sp_p [id];
+        p = sp_p[id];
         np = sp_np[id];
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        if(sp_has_ids[id]) {
+          p_id = sp_p_id[id];
+        }
+        #endif
 
         pm = sp_pm[id];
         nm = sp_nm[id];
@@ -678,6 +909,12 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
         p[np].uz = pi->uz;
         p[np].w  = pi->w;
 
+        #endif
+
+        #ifdef VPIC_GLOBAL_PARTICLE_ID
+        if(sp_has_ids[id]) {
+          p_id[np] = pi->global_particle_id;
+        }
         #endif
 
         sp_np[id] = np + 1;
@@ -747,4 +984,92 @@ boundary_p( particle_bc_t       * RESTRICT pbc_list,
                    f2b[ face ] );
     }
   }
+
+  #ifdef VPIC_PARTICLE_ANNOTATION
+  // Particle annotations are communicated in a separate third communication round
+
+  // Ensure sufficent buffer size and prepost recv
+  for( face = 0; face < 6; face++ ) {
+    if ( shared[ face ] ) {
+      if(n_recv[face] > 0) {
+        mp_size_recv_buffer( mp, f2b[ face ], max_cas * n_recv[face] );
+
+        mp_begin_recv( mp, f2b[ face ], max_cas * n_recv[face], bc[ face ], f2rb[ face ] );
+      }
+      if(n_send[face] > 0) {
+        mp_size_send_buffer( mp, f2b[ face ], max_cas * n_send[face] );
+      }
+    }
+  }
+
+  // Fill and send buffers
+  for( face = 0; face < 6; face++ ) {
+    if ( shared[ face ] ) {
+      if(n_send[face] > 0) {
+        annotation_t* send_buf = (annotation_t*) mp_send_buffer( mp, f2b[ face ] );
+
+        memcpy(send_buf, cab[face], max_cas*n_send[face]);
+
+        mp_begin_send( mp, f2b[ face ], max_cas*n_send[face], bc[ face ], f2b[ face ] );
+      }
+    }
+  }
+
+  // Wait for recv and handle buffer
+  for( face = 0; face < 6; face++ ) {
+    if ( shared[ face ] ) {
+      if(n_recv[face] > 0) {
+        mp_end_recv( mp, f2b[face] );
+
+        // Unpack buffer and store attributes
+        for(int i = n_recv[face]-1; i>=0; i--) {
+          char* recv_buffer = ((char*) mp_recv_buffer(mp,f2b[face])) + i*max_cas ;
+          // Get species ID
+          const int sp_id = *( (int*) recv_buffer );
+          recv_buffer += sizeof(int);
+          // Get particle ID if applicable
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
+          const size_t p_id = *( (size_t*) recv_buffer );
+          recv_buffer += sizeof(size_t);
+          #endif
+          // The rest of the buffer must be annotations
+          const annotation_t* p_annotation = (annotation_t*) recv_buffer;
+
+          species_t * sp = find_species_id(sp_id,sp_list); // We should probably do that once for all possible MAX_SP ids
+          if(!sp) {
+             printf("Can not find species for sp_id = %d", sp_id);
+             printf("Particle %d of %d on face %d\n", i, n_recv[face], face);
+             ERROR();
+          }
+          #ifdef VPIC_GLOBAL_PARTICLE_ID
+          if(sp->has_ids) {
+            if(sp->p_id[sp_oldnp[sp_id]] != p_id) {
+              printf("We are at particle %d of species %d which has ID %ld, not %ld as received\n", sp_oldnp[sp_id], sp_id, sp->p_id[sp_oldnp[sp_id]], p_id);
+              ERROR( ("ID missmatch") );
+            }
+          }
+          #endif
+
+          if(sp->has_annotation) {
+            for(int a=0; a<sp->has_annotation; a++) {
+              sp->p_annotation[sp_oldnp[sp_id]*sp->has_annotation + a] = p_annotation[a];
+            }
+          }
+
+          // The next particle that comes in will be at the next index
+          sp_oldnp[sp_id]++;
+        }
+      }
+    }
+  }
+
+  // Wait for send to end
+  for( face = 0; face < 6; face++ ) {
+    if ( shared[ face ] ) {
+      if(n_send[face] > 0) {
+        mp_end_send( mp, f2b[face] );
+      }
+    }
+  }
+  #endif
 }

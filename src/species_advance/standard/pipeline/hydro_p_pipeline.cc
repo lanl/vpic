@@ -22,6 +22,7 @@ accumulate_hydro_p_pipeline_scalar( accumulate_hydro_p_pipeline_args_t * args,
                                     int n_pipeline )
 {
   const species_t      *              sp = args->sp;
+
   /**/  hydro_t        * ALIGNED(128) h  = args->h + pipeline_rank * args->h_size;
   const particle_t     * ALIGNED(128) p  = sp->p;
   const interpolator_t * ALIGNED(128) f  = args->f;

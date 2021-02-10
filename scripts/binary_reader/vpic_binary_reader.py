@@ -90,7 +90,7 @@ def read_header(inputfile):
         sys.stderr.write("version="+str(version)+", not 0. Something is wrong\n")
         sys.exit(1)
     else:
-        header["version"] = version
+   der["version"] = version
 
     dump_type = struct.unpack('=1i', f.read(int_len))[0]
     if dump_type not in [0, 1, 2, 3, 4, 5]:
@@ -137,7 +137,8 @@ def read_array_header(inputfile, header):
 
     cur_byte = f.tell()
     unread_byte = header["end_byte"] - cur_byte
-    no_fields = unread_byte / (elements * header["sizeof(float)"])
+
+    no_fields = unread_byte / (elements * array_header["sizeof(p[0])"])
 
     array_header["no_fields"] = no_fields
 

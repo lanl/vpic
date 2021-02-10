@@ -4,7 +4,7 @@
 /* FIXME: WHEN THESE MACROS WERE HOISTED AND VARIOUS HACKS DONE TO THEM
    THEY BECAME _VERY_ _DANGEROUS. */
 
-#define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO,step,rank,nproc) do { \
+#define WRITE_HEADER_V0(dump_type,sp_id,q_m,fileIO,cstep,rank,nproc) do { \
     /* Binary compatibility information */               \
     WRITE( char,      CHAR_BIT,               fileIO );  \
     WRITE( char,      sizeof(short int),      fileIO );  \
@@ -19,7 +19,7 @@
     WRITE( int,       0 /* Version */,        fileIO );  \
     WRITE( int,       dump_type,              fileIO );  \
     /* High level information */                         \
-    WRITE( int,       step,                   fileIO );  \
+    WRITE( int,       cstep,                   fileIO );  \
     WRITE( int,       nxout,                  fileIO );  \
     WRITE( int,       nyout,                  fileIO );  \
     WRITE( int,       nzout,                  fileIO );  \

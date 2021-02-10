@@ -326,12 +326,12 @@ class HDF5Dump : public Dump_Strategy {
 //    return (stat(filename, &buffer) == 0);
 //}
 
-            struct stat buffer;
-            if((stat(fname, &buffer) == 0)){
-                file_exist_flag  = 1;
-                if(!mpi_rank)
-                    printf("Write original files /w HDF5! \n");
-            }
+//            struct stat buffer;
+//            if((stat(fname, &buffer) == 0)){
+//                file_exist_flag  = 1;
+//                if(!mpi_rank)
+//                    printf("Write original files /w HDF5! \n");
+//            }
             file_exist_flag = 0;
 
             hid_t plist_id;

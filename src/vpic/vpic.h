@@ -30,8 +30,6 @@
 #include "../util/system.h"
 #include "dump_strategy.h"
 
-#include "dumpmacros.h" //MSB
-
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
 #endif

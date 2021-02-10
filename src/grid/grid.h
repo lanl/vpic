@@ -1,4 +1,4 @@
-/*
+/* 
  * Written by:
  *   Kevin J. Bowers, Ph.D.
  *   Plasma Physics Group (X-1)
@@ -46,7 +46,7 @@ enum grid_enums {
   // B_tang  -> Symmetric           | B_tang  -> Anti-symmetric
   // E_norm  -> Symmetric           | E_norm  -> Anti-symmetric (see note)
   // div B   -> Symmetric           | div B   -> Anti-symmetric
-  //
+  // 
   // Note: B_norm is tricky. For a symmetry plane, B_norm on the
   // boundary must be zero as there are no magnetic charges (a
   // non-zero B_norm would imply an infinitesimal layer of magnetic
@@ -80,7 +80,7 @@ typedef struct grid {
   int64_t step;             // Current timestep
   double t0;                // Simulation time corresponding to step 0
 
-  // Phase 2 grid data structures
+  // Phase 2 grid data structures 
   float x0, y0, z0;         // Min corner local domain (must be coherent)
   float x1, y1, z1;         // Max corner local domain (must be coherent)
   int   nx, ny, nz;         // Local voxel mesh resolution.  Voxels are
@@ -100,7 +100,7 @@ typedef struct grid {
                             // <0 ... locally applied boundary condition
 
   int gpx, gpy, gpz = -1; // Store global processor decomposition to let us figure
-                     // out where we are in the global decomposition
+                     // out where we are in the global decompositio
 
   // Phase 3 grid data structures
   // NOTE: VOXEL INDEXING LIMITS NUMBER OF VOXELS TO 2^31 (INCLUDING
@@ -164,7 +164,7 @@ typedef struct grid {
 // inner loops.)
 //
 // This is written with seeming extraneously if tests in order to get
-// the compiler to generate branceless conditional move and add
+// the compiler to generate branceless conditional move and add 
 // instructions (none of the branches below are actual branches in
 // assembly).
 
@@ -328,7 +328,7 @@ end_send_port( int i, // x port coord ([-1,0,1])
 // ordering (e.g. inner loop increments x-index).
 //
 // jobs are indexed from 0 to n_job-1.  jobs are _always_ have the
-// number of voxels an integer multiple of the bundle size.  If job
+// number of voxels an integer multiple of the bundle size.  If job 
 // is set to n_job, this function will determine the parameters of
 // the final incomplete bundle.
 

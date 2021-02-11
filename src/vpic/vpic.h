@@ -29,6 +29,7 @@
 #include "../util/checksum.h"
 #include "../util/system.h"
 #include "dump_strategy.h"
+#include "dumpmacros.h"
 
 #ifndef USER_GLOBAL_SIZE
 #define USER_GLOBAL_SIZE 16384
@@ -126,7 +127,6 @@ class vpic_simulation {
 public:
   vpic_simulation();
   ~vpic_simulation();
-
   void initialize( int argc, char **argv );
   void modify( const char *fname );
   int advance( void );
@@ -320,16 +320,6 @@ protected:
       else       sprintf( fname, "%s.%i", fbase, rank() );
       FileIOStatus status = fileIO.open(fname, io_write);
       if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
-
-      /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-      nxout = grid->nx;
-      nyout = grid->ny;
-      nzout = grid->nz;
-      dxout = grid->dx;
-      dyout = grid->dy;
-      dzout = grid->dz;
-
-      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, step(), fileIO );
 
       int count_true = predicate_count(sp, f);
       std::cout << "copying " << count_true << " of " << sp->np << std::endl;

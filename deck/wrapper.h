@@ -393,9 +393,9 @@ vpic_simulation::user_particle_collisions( void )
     const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;      \
     const double _c  = grid->cvac;                                    \
     const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;      \
-    for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*_k, _zc = _z0 + _dz*(_k-0.5); \
-    for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*_j, _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k); \
-    for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*_i, _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*(_k-1.0), _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*(_j-1.0), _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k); \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*(_i-1.0), _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
           int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll;        \
           x = _xc; y = _yc; z = _zc; _rccc = (rgn);                   \
           x = _xl;                   _rlcc = (rgn);                   \

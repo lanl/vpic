@@ -1,7 +1,7 @@
 add_subdirectory(particle_push)
 add_subdirectory(particle_IDs)
 add_subdirectory(particle_annotation)
-#MSB add_subdirectory(buffered_particle_dump)
+add_subdirectory(buffered_particle_dump)
 add_subdirectory(legacy)
 add_subdirectory(to_completion)
 add_subdirectory(collision)

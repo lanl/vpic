@@ -131,7 +131,7 @@ begin_initialization {
   }
   #endif
 #else
-#warning "No annotation buffer. Compile with PARTICLE_ANNOTATE=ON"
+#warning "No annotation buffer. Compile with PARTICLE_ANNOTATION=ON"
 #endif
 
   sim_log("Done with setup");

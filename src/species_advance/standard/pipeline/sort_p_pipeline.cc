@@ -275,22 +275,22 @@ sort_p_pipeline( species_t * sp )
 
   sp->last_sorted = sp->g->step;
 
-  static char * ALIGNED(128)     scratch = NULL;
+  static char * ALIGNED(128)     scratch = nullptr;
   static size_t              max_scratch = 0;
 
   size_t sz_scratch;
 
   particle_t * RESTRICT ALIGNED(128) p = sp->p;
-  particle_t * RESTRICT ALIGNED(128) aux_p;
+  particle_t * RESTRICT ALIGNED(128) aux_p = nullptr;
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   const int has_ids = sp->has_ids;
   size_t * RESTRICT ALIGNED(128) p_id = sp->p_id;
-  size_t * RESTRICT ALIGNED(128) aux_p_id;
+  size_t * RESTRICT ALIGNED(128) aux_p_id = nullptr;
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   const int has_annotation = sp->has_annotation;
   annotation_t* RESTRICT ALIGNED(128) p_annotation = sp->p_annotation;
-  annotation_t* RESTRICT ALIGNED(128) aux_p_annotation;
+  annotation_t* RESTRICT ALIGNED(128) aux_p_annotation = nullptr;
   #endif
 
   int n_particle = sp->np;
@@ -359,17 +359,13 @@ sort_p_pipeline( species_t * sp )
   #ifdef VPIC_GLOBAL_PARTICLE_ID
   if(has_ids) {
     aux_p_id       = ALIGN_PTR( size_t,       start_of_free,      128);
-    start_of_free  = aux_p_id + sizeof(size_t) * n_particle;
-  } else {
-    aux_p_id       = nullptr;
+    start_of_free  = (char*)aux_p_id + sizeof(size_t) * n_particle;
   }
   #endif
   #ifdef VPIC_PARTICLE_ANNOTATION
   if(has_annotation) {
     aux_p_annotation = ALIGN_PTR(annotation_t, start_of_free,     128);
-    start_of_free    = aux_p_annotation + sizeof(annotation_t)*has_annotation * n_particle;
-  } else {
-    aux_p_annotation = nullptr;
+    start_of_free    = (char*)aux_p_annotation + sizeof(annotation_t)*has_annotation * n_particle;
   }
   #endif
 

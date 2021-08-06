@@ -1165,8 +1165,8 @@ _iy -= _iz*int(ny);   /* iy = iy */                         \
 #ifdef VPIC_GLOBAL_PARTICLE_ID
     // particle IDs
     if(sp->has_ids) {
-      dset_id = H5Dcreate(group_id, "particle_id", H5T_NATIVE_INT, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      ierr = H5Dwrite(dset_id, H5T_NATIVE_INT, linearspace, filespace, plist_id, sp->p_id);
+      dset_id = H5Dcreate(group_id, "particle_id", H5T_NATIVE_HSIZE, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ierr = H5Dwrite(dset_id, H5T_NATIVE_HSIZE, linearspace, filespace, plist_id, sp->p_id);
       H5Dclose(dset_id);
     }
 #endif

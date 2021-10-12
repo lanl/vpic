@@ -153,10 +153,6 @@ accumulate_hydro_p_pipeline_v4( accumulate_hydro_p_pipeline_args_t * args,
     uy   = fma( fms( v02, cbx, v00 * cbz ), v04, uy );
     uz   = fma( fms( v00, cby, v01 * cbx ), v04, uz );
 
-    ux  += hax;
-    uy  += hay;
-    uz  += haz;
-
     //--------------------------------------------------------------------------
     // Compute velocity.
     //--------------------------------------------------------------------------

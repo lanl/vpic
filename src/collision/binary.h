@@ -15,6 +15,7 @@ typedef struct binary_collision_model
   double sample;
   int interval;
   int n_large_pr[ MAX_PIPELINE ];
+  int strategy;
 } binary_collision_model_t;
 
 void

@@ -15,6 +15,12 @@
 struct collision_op;
 typedef struct collision_op collision_op_t;
 
+// Sampling strategies for binary collisions.
+enum sampling_strategies {
+  per_particle = 0,     // sample = 1 means each particle collides once
+  mass_action = 1       // sample = 1 means each possible pair collides once
+};
+
 BEGIN_C_DECLS
 
 /* In collision.c */
@@ -271,7 +277,97 @@ binary_collision_model( const char       * RESTRICT name,
                         /**/  species_t  * RESTRICT spj,
                         /**/  rng_pool_t * RESTRICT rp,
                         double                      sample,
-                        int                         interval );
+                        int                         interval,
+                        int                         sample_strategy  );
+
+/* In chemical.c */
+
+/* A chemical collision is a generalization of the above binary collision
+   algorithm to handle _any_ reaction which can be written as
+
+              R_0 + R_1 + ... R_N --> P_0 + P_1 + ... P_M
+
+    The N reactants (R_i) may be consumed during the reaction, in which
+    case their statistical weight should decrease post-collision, or they
+    may act as catalysts. All products are always generated and are positioned
+    at the cetner of mass of the reactants. Charge conservation is maintained
+    by the collision algorithm, and so the specific implementation only needs
+    to take care of:
+      1. Specifying the chemical reaction rate constant
+      2. Adjusting momentum and statistical weight for each reactant
+      3. Adjusting momentum for each product
+
+   A chemical_rate_constant_func_t returns the lab-frame rate constant
+   for the collisions between monochromatic beams of reactant species sp[i],
+   0<i<N, _physical_ particles (with mass sp[i]->m) and momentum p[i]->u{xyz}
+   (normalized to sp[i]->m sp[i]->g->cvac where cvac is the speed of light
+   in vacuum).bg
+
+   The returned value has units of VOLUME^{N-1} / TIME.
+
+   Parameters:
+     params    : Pointer to the parameters for this collision_op_t
+     reactants : Pointers to the N reactant species
+     particles : Pointers to the N reacting particles
+*/
+
+typedef float
+(*chemical_rate_constant_func_t)( void        * RESTRICT params,
+                                  species_t  ** RESTRICT reactants,
+                                  particle_t ** RESTRICT particles );
+
+/* A chemical_collision_func_t implements the microscopic physics of a
+   collision between reactants.
+
+   Since reacting particles may have different weights, not all particle
+   momenta may need to be updated during this collision. To determine if
+   a reacting particle should be updated, the control logic is :
+
+      if( update_flag & (1 << n) ) update particles[n]->u{x,y,z}
+
+    Product particles are generated with the appropriate statistical weight by
+    the calling function. A chemical_collision_func_t only needs to set the
+    momenta of the products. If any reactant particles are consumed during the
+    reaction, their statistical weight should be reduced by the statistical
+    weight of the product particles (which is equal to the minimum of the
+    reactant weights). Catalyzing reactants should not have their weight
+    adjusted. Any reactants with weight <= 0 are automatically garbage
+    collected.
+
+   Parameters:
+     params             : Pointer to the parameters for this collision_op_t
+     reactants          : Pointers to the N reactant species
+     reactant_particles : Pointers to the N reacting particles
+     products           : Pointers to the M product species
+     product_particles  : Pointers to the M product particles
+     rng                : Random number generator
+     update_flag        : Specifies which reacting particles should be adjusted
+*/
+
+typedef void
+(*chemical_collision_func_t)( void        * RESTRICT params,
+                              species_t  ** RESTRICT reactants,
+                              particle_t ** RESTRICT reactant_particles,
+                              species_t  ** RESTRICT products,
+                              particle_t ** RESTRICT product_particles,
+                              rng_t       * RESTRICT rng,
+                              int update_flag );
+
+collision_op_t *
+chemical_collision_model( const char               * RESTRICT name,
+                          /**/  void               * RESTRICT params,
+                          /**/  species_t         ** RESTRICT reactants,
+                          const int                * RESTRICT consumable,
+                          const int                           n_reactants,
+                          /**/  species_t         ** RESTRICT products,
+                          const int                           n_products,
+                          /**/  chemical_rate_constant_func_t rate_constant,
+                          /**/  chemical_collision_func_t     collision,
+                          /**/  rng_pool_t         * RESTRICT rp,
+                          /**/  field_array_t      * RESTRICT fa,
+                          const double                        sample,
+                          const int                           dynamic_sampling,
+                          const int                           interval );
 
 /* In hard_sphere.c */
 
@@ -301,7 +397,8 @@ hard_sphere( const char * RESTRICT name, /* Model name */
              const float rj,             /* Species-j p. radius (LENGTH) */
              rng_pool_t * RESTRICT rp,   /* Entropy pool */
              const double sample,        /* Sampling density */
-             const int interval );       /* How often to apply this */
+             const int interval,         /* How often to apply this */
+             const int strategy );       /* Sampling strategy */
 
 /* In large_angle_coulomb.c */
 
@@ -331,7 +428,8 @@ large_angle_coulomb( const char * RESTRICT name, /* Model name */
                      const float bmax,           /* Impact parameter cutoff */
                      rng_pool_t * RESTRICT rp,   /* Entropy pool */
                      const double sample,        /* Sampling density */
-                     const int interval );       /* How often to apply this */
+                     const int interval,         /* How often to apply this */
+                     const int strategy );       /* Sampling strategy */
 
 END_C_DECLS
 

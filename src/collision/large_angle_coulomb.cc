@@ -44,7 +44,7 @@ large_angle_coulomb_rate_constant(
 
    The only difference is that, in a large angle Coulomb collision,
    the relationship between the impact parameter and b is:
-     b = ( qi qj cot theta/2 ) / ( 4 pi eps0 mu vr0^2 ) 
+     b = ( qi qj cot theta/2 ) / ( 4 pi eps0 mu vr0^2 )
    or, given b:
      theta = 2 acot ( ( 4 pi eps0 mu vr0^2 b ) / ( qi qj ) )
            = 2 acot B
@@ -70,16 +70,16 @@ large_angle_coulomb_rate_constant(
                    = 2 cos acot B sin acot B
                    = 2 B / ( B^2+1 )
    such that:
-     dvr = -2 (1 / (B^2+1)) vr0 
+     dvr = -2 (1 / (B^2+1)) vr0
          +  2 (B / (B^2+1)) cos phi |vr0| T1
          +  2 (B / (B^2+1)) sin phi vr0 x T1
 
    Normalizing to -2 c:
 
-     dur = (1 / (B^2+1)) ur0 
+     dur = (1 / (B^2+1)) ur0
          - (B / (B^2+1)) cos phi |ur0| T1
          - (B / (B^2+1)) sin phi  ur0 x T1 */
-    
+
 #define CMOV(a,b) if(t0<t1) a=b
 
 #define COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng)                   \
@@ -149,7 +149,7 @@ large_angle_coulomb_fluid_collision(
     ury -= w*frandn(rng);
     urz -= w*frandn(rng);
   }
-  
+
   COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   w = lac->twomu_mi;
@@ -177,14 +177,14 @@ large_angle_coulomb_collision(
   COMPUTE_MOMENTUM_TRANSFER(urx,ury,urz,ax,ay,az,rng);
 
   if( type & 1 ) {
-    w = lac->twomu_mi; 
+    w = lac->twomu_mi;
     pi->ux -= w*ax;
     pi->uy -= w*ay;
     pi->uz -= w*az;
   }
 
   if( type & 2 ) {
-    w = lac->twomu_mj; 
+    w = lac->twomu_mj;
     pj->ux += w*ax;
     pj->uy += w*ay;
     pj->uz += w*az;
@@ -230,7 +230,7 @@ large_angle_coulomb_fluid(
     ERROR(( "Bad args" ));
 
   MALLOC( lac, 1 );
-  
+
   lac->cc       = (4.*M_PI*sp->g->eps0*sp->m*m0*sp->g->cvac*sp->g->cvac*bmax) /
                   ((sp->m + m0)*sp->q*q0);
   lac->twomu_mi = 2.*m0    / (sp->m + m0);
@@ -264,11 +264,12 @@ large_angle_coulomb( const char * RESTRICT name, /* Model name */
                      const float bmax,           /* Impact parameter cutoff */
                      rng_pool_t * RESTRICT rp,   /* Entropy pool */
                      const double sample,        /* Sampling density */
-                     const int interval )        /* How often to apply this */
+                     const int interval,         /* How often to apply this */
+                     const int strategy )        /* Sampling strategy */
 {
   large_angle_coulomb_t * lac;
 
-  if( !spi || !spi->q || spi->m<=0 || 
+  if( !spi || !spi->q || spi->m<=0 ||
       !spj || !spj->q || spj->m<=0 || spi->g!=spj->g ) ERROR(( "Bad args" ));
 
   MALLOC( lac, 1 );
@@ -285,5 +286,5 @@ large_angle_coulomb( const char * RESTRICT name, /* Model name */
   return binary_collision_model( name,
                 (binary_rate_constant_func_t)large_angle_coulomb_rate_constant,
                 (binary_collision_func_t)    large_angle_coulomb_collision,
-                                 lac, spi, spj, rp, sample, interval );
+                                 lac, spi, spj, rp, sample, interval, strategy );
 }

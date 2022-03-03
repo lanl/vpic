@@ -111,13 +111,13 @@ vpic_simulation::vpic_simulation()
   sync_entropy = new_rng_pool(n_rng, 0, 1);
   grid = new_grid();
 
+  REGISTER_OBJECT(this, checkpt_vpic_simulation,
+                  restore_vpic_simulation, reanimate_vpic_simulation);
+
   // Initialize the dump strategy to use the binary dumpin, assuming the user
   // may overwrite this later
   // dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
   enable_binary_dump();
-
-  REGISTER_OBJECT(this, checkpt_vpic_simulation,
-                  restore_vpic_simulation, reanimate_vpic_simulation);
 
   // TODO: this this still makes sense now we have a dump strategy
   //#ifdef VPIC_ENABLE_HDF5

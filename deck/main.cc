@@ -90,6 +90,34 @@ int main(int argc, char **argv)
         reanimate_objects();
         mp_barrier();
         // std::cout << "simulation->dump_strategy_id = " << simulation->dump_strategy_id << "\n";
+
+        // Do any post init/restore simulation modifications
+        switch (simulation->dump_strategy_id)
+        {
+        case DUMP_STRATEGY_BINARY:
+            //::cout << "DUMP_STRATEGY_BINARY \n";
+            simulation->dump_strategy = new BinaryDump(rank(), nproc());
+            break;
+        case DUMP_STRATEGY_HDF5:
+#ifdef VPIC_ENABLE_HDF5
+            // std::cout << "DUMP_STRATEGY_HDF5 \n";
+            simulation->dump_strategy = new HDF5Dump(rank(), nproc());
+#else
+            std::cout << "HDF5Dump is not enabled \n";
+
+#endif
+            break;
+        case DUMP_STRATEGY_OPENPMD:
+#ifdef VPIC_ENABLE_OPENPMD
+            // std::cout << "DUMP_STRATEGY_OPENPMD \n";
+            simulation->dump_strategy = new OpenPMDDump(rank(), nproc());
+#else
+            std::cout << "OpenPMDDump is not enabled \n";
+#endif
+            break;
+        default:
+            break;
+        }
     }
     else // We are initializing from scratch.
     {
@@ -107,34 +135,6 @@ int main(int argc, char **argv)
         simulation->dump_strategy->num_step = simulation->num_step;
         // std::cout << "simulation->dump_strategy_id = " << simulation->dump_strategy_id << "\n";
         REGISTER_OBJECT(&simulation, checkpt_main, restore_main, NULL);
-    }
-
-    // Do any post init/restore simulation modifications
-    switch (simulation->dump_strategy_id)
-    {
-    case DUMP_STRATEGY_BINARY:
-        //::cout << "DUMP_STRATEGY_BINARY \n";
-        simulation->dump_strategy = new BinaryDump(rank(), nproc());
-        break;
-    case DUMP_STRATEGY_HDF5:
-#ifdef VPIC_ENABLE_HDF5
-        // std::cout << "DUMP_STRATEGY_HDF5 \n";
-        simulation->dump_strategy = new HDF5Dump(rank(), nproc());
-#else
-        std::cout << "HDF5Dump is not enabled \n";
-
-#endif
-        break;
-    case DUMP_STRATEGY_OPENPMD:
-#ifdef VPIC_ENABLE_OPENPMD
-        // std::cout << "DUMP_STRATEGY_OPENPMD \n";
-        simulation->dump_strategy = new OpenPMDDump(rank(), nproc());
-#else
-        std::cout << "OpenPMDDump is not enabled \n";
-#endif
-        break;
-    default:
-        break;
     }
 
     // Detect if the "modify" option is passed, which allows users to change

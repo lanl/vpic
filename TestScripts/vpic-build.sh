@@ -1,19 +1,19 @@
 #!/bin/bash
 
 #SBATCH -N 1
-#SBATCH -t 2:00:00 
+#SBATCH -t 4:00:00 
 #SBATCH --output=vpic-build-log.txt
 
-src_dir=/your/vpic/master/location/VPIC/vpic-master # please edit accordingly
-builds=/your/vpic/build/location/VPIC/test-builds   # please edit accordingly
+src_dir=/users/matsekh/VPIC/vpic-master
+builds=/lustre/scratch5/.mdt0/matsekh/VPIC/test-builds
 mkdir -p $builds
 openmp=$builds/openmp
 pthreads=$builds/pthreads
 
-### Build weak and strong scaling lpi_2d_F6_test input decks (or use your own input deck) ###
+### Build weak and strong scaling lpi_2d_F6_test input decks ###
 function lpi_deck(){
-    $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test        # "lpi-deck" directory contains strong scaling deck "lpi_2d_F6_test" 
-    $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test-nx12   # "lpi-deck" directory contains weak scaling decks  "lpi_2d_F6_test-nx***" 
+    $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test        # strong scaling deck
+    $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test-nx12   # weak scaling decks 
     $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test-nx24
     $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test-nx48
     $1/bin/vpic $2/lpi-deck/lpi_2d_F6_test-nx96
@@ -229,4 +229,3 @@ vpic_cmake $src_dir $cmake_pthreads $cmake_openmp $cmake_sort
 make
 lpi_deck $build_dir $src_dir
 
-##############################################################################

@@ -22,7 +22,7 @@ fi
 module list
 cc --version
 CC --version 
-#lscpu
+lscpu
 #env 
 
 let np=32\*$nn       # number of processes / ranks

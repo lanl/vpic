@@ -1,11 +1,8 @@
 #!/bin/bash
 
-#SBATCH -N 1
-#SBATCH -t 8:00:00
-
-master=/your/vpic/master/location/VPIC/vpic-master   # please edit accordingly
-scripts=$master/NewTestScripts             
-scratch=/your/vpic/build/and/results/location/VPIC   # please edit accordingly
+master=$HOME/VPIC/vpic-master
+scripts=$master/NewTestScripts
+scratch=/lustre/scratch5/.mdt0/matsekh/VPIC
 builds=$scratch/test-builds
 results=$scratch/NewTestResults
 
@@ -18,20 +15,22 @@ function vpic_benchmark(){
     test_dir=$results/$dir_path
     mkdir -p $test_dir
     cd $test_dir
-    mkdir -p strong weak thread
+    mkdir -p strong
+    mkdir -p thread
+    mkdir -p weak
     build_dir=$builds/$dir_path
 
     # set up strong scaling test
     cd $test_dir/strong
     deck=$build_dir/lpi_2d_F6_test.Linux
     # launch strong scaling test
-    sbatch $scripts/vpic_strong_scaling.sh $prg_env $deck
+    sbatch -N 1 -t 10:00:00 $scripts/vpic_strong_scaling.sh $prg_env $deck
 
     # set up thread scaling test (const cpu)
     cd $test_dir/thread
     deck=$build_dir/lpi_2d_F6_test.Linux
     # launch thread scaling test (const cpu) 
-    sbatch $scripts/vpic_thread_scaling.sh $prg_env $deck
+    sbatch -N 1 -t 10:00:00 $scripts/vpic_thread_scaling.sh $prg_env $deck
 
     # set up weak scaling test
     cd $test_dir/weak
@@ -42,69 +41,69 @@ function vpic_benchmark(){
     deck5=$build_dir/lpi_2d_F6_test-nx24.Linux
     deck6=$build_dir/lpi_2d_F6_test-nx12.Linux
     # launch weak scaling test
-    sbatch $scripts/vpic_weak_scaling.sh $prg_env $deck1 $deck2 $deck3 $deck4 $deck5 $deck6
+    sbatch -N 1 -t 10:00:00 $scripts/vpic_weak_scaling.sh $prg_env $deck1 $deck2 $deck3 $deck4 $deck5 $deck6
 }
 
-prog_env="cray"
-bench_path=openmp/cray/tsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="cray"
+ bench_path=openmp/cray/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="cray"
+ bench_path=openmp/cray/lsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="aocc"
+ bench_path=openmp/aocc/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="aocc"
+ bench_path=openmp/aocc/lsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="cray"
-bench_path=openmp/cray/lsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="gnu"
+ bench_path=openmp/gnu/tsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="aocc"
-bench_path=openmp/aocc/tsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="gnu"
+ bench_path=openmp/gnu/lsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="aocc"
-bench_path=openmp/aocc/lsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="intel"
+ bench_path=openmp/intel/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="intel"
+ bench_path=openmp/intel/lsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="cray"
+ bench_path=pthreads/cray/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="cray"
+ bench_path=pthreads/cray/lsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="aocc"
+ bench_path=pthreads/aocc/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="aocc"
+ bench_path=pthreads/aocc/lsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="gnu"
-bench_path=openmp/gnu/tsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="gnu"
+ bench_path=pthreads/gnu/tsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="gnu"
-bench_path=openmp/gnu/lsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="gnu"
+ bench_path=pthreads/gnu/lsort
+ vpic_benchmark $prog_env $bench_path  
 
-prog_env="intel"
-bench_path=openmp/intel/tsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="intel"
-bench_path=openmp/intel/lsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="cray"
-bench_path=pthreads/cray/tsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="cray"
-bench_path=pthreads/cray/lsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="aocc"
-bench_path=pthreads/aocc/tsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="aocc"
-bench_path=pthreads/aocc/lsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="gnu"
-bench_path=pthreads/gnu/tsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="gnu"
-bench_path=pthreads/gnu/lsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="intel"
-bench_path=pthreads/intel/tsort
-vpic_benchmark $prog_env $bench_path  
-
-prog_env="intel"
-bench_path=pthreads/intel/lsort
-vpic_benchmark $prog_env $bench_path  
+ prog_env="intel"
+ bench_path=pthreads/intel/tsort
+ vpic_benchmark $prog_env $bench_path  
+ 
+ prog_env="intel"
+ bench_path=pthreads/intel/lsort
+ vpic_benchmark $prog_env $bench_path  

@@ -19,6 +19,8 @@
 /* -1 means no ranks talk */
 #define VERBOSE_rank -1
 
+#define OUTPUT_CONVERT_GLOBAL_ID 1
+
 #ifdef VPIC_PARTICLE_ANNOTATION
 typedef VPIC_PARTICLE_ANNOTATION annotation_t;
 #endif
@@ -74,7 +76,8 @@ int vpic_simulation::dump_cwd(char *dname, size_t size)
 void vpic_simulation::enable_binary_dump()
 {
   //    dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
-  dump_strategy = new BinaryDump(rank(), nproc());
+  // dump_strategy = new BinaryDump(rank(), nproc());
+  dump_strategy_id = DUMP_STRATEGY_BINARY;
 }
 
 #ifdef VPIC_ENABLE_HDF5
@@ -83,7 +86,8 @@ void vpic_simulation::enable_hdf5_dump()
   if (rank() == 0)
     std::cout << "Enabling HDF5 IO backend" << std::endl;
   // dump_strategy = std::unique_ptr<Dump_Strategy>(new HDF5Dump(rank(), nproc()));
-  dump_strategy = new HDF5Dump(rank(), nproc());
+  // dump_strategy = new HDF5Dump(rank(), nproc());
+  dump_strategy_id = DUMP_STRATEGY_HDF5;
 }
 #endif
 
@@ -93,7 +97,8 @@ void vpic_simulation::enable_openpmd_dump()
   if (rank() == 0)
     std::cout << "Enabling openPMD IO backend" << std::endl;
   // dump_strategy = std::unique_ptr<Dump_Strategy>(new OpenPMDDump(rank(), nproc()));
-  dump_strategy = new OpenPMDDump(rank(), nproc());
+  // dump_strategy = new OpenPMDDump(rank(), nproc());
+  dump_strategy_id = DUMP_STRATEGY_OPENPMD;
 }
 #endif
 
@@ -1045,6 +1050,7 @@ void vpic_simulation::accumulate_buffered_particle_dump(const char *sp_name, con
     sp->output_buffer_dz[index] = sp->p[n].dz;
 
 #ifdef OUTPUT_CONVERT_GLOBAL_ID
+    printf("\n\n DEBUG: OUTPUT_CONVERT_GLOBAL_ID is enabled ! \n\n");
     sp->output_buffer_i[index] = global_i;
 #else
     sp->output_buffer_i[index] = sp->p[n].i;

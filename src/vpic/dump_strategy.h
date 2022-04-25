@@ -107,6 +107,9 @@ public:
       int ftag) = 0;
 };
 
+Dump_Strategy *new_dump_strategy(DumpStrategyID dump_strategy_id);
+void delete_dump_strategy(Dump_Strategy *ds);
+
 class BinaryDump : public Dump_Strategy
 {
 public:

@@ -66,15 +66,15 @@ for ts in range(3):
         sys.exit(1)
 
     if np.any (Ux[cond]!=0.5):
-        printf("FAIL: Ux changed")
+        print("FAIL: Ux changed")
         sys.exit(1)
 
     if np.any (Uy[cond]!=0.0):
-        printf("FAIL: Uy changed")
+        print("FAIL: Uy changed")
         sys.exit(1)
 
     if np.any (Uz[cond]!=0.0):
-        printf("FAIL: Uz changed")
+        print("FAIL: Uz changed")
         sys.exit(1)
 
 #timestep 0
@@ -88,7 +88,7 @@ cond_dzl = 0.33<dZ
 cond_dzu =      dZ<0.34
 cond_p1 = np.logical_and(np.logical_and(np.logical_and(cond_t,cond_i),cond_dx), np.logical_and(np.logical_and(cond_dyl,cond_dyu),np.logical_and(cond_dzl,cond_dzu)))
 if np.sum(cond_p1) != 1:
-    printf("FAIL: can't find the particle in cell 0, offset 0.,0.33,0.33 in timestep 0")
+    print("FAIL: can't find the particle in cell 0, offset 0.,0.33,0.33 in timestep 0")
     sys.exit(1)
 
 #particle 2
@@ -101,7 +101,7 @@ cond_dzl = 0.33<dZ
 cond_dzu =      dZ<0.34
 cond_p2 = np.logical_and(np.logical_and(np.logical_and(cond_t,cond_i),cond_dx), np.logical_and(np.logical_and(cond_dyl,cond_dyu),np.logical_and(cond_dzl,cond_dzu)))
 if np.sum(cond_p2) != 1:
-    printf("FAIL: can't find the particle in cell 0, offset 0.,0.66,0.33 in timestep 0")
+    print("FAIL: can't find the particle in cell 0, offset 0.,0.66,0.33 in timestep 0")
     sys.exit(1)
 
 #particle 3
@@ -114,7 +114,7 @@ cond_dzl = 0.66<dZ
 cond_dzu =      dZ<0.67
 cond_p3 = np.logical_and(np.logical_and(np.logical_and(cond_t,cond_i),cond_dx), np.logical_and(np.logical_and(cond_dyl,cond_dyu),np.logical_and(cond_dzl,cond_dzu)))
 if np.sum(cond_p3) != 1:
-    printf("FAIL: can't find the particle in cell 1, offset 0.,0.33,0.66 in timestep 0")
+    print("FAIL: can't find the particle in cell 1, offset 0.,0.33,0.66 in timestep 0")
     sys.exit(1)
 
 #particle 3
@@ -127,7 +127,7 @@ cond_dzl = 0.66<dZ
 cond_dzu =      dZ<0.67
 cond_p4 = np.logical_and(np.logical_and(np.logical_and(cond_t,cond_i),cond_dx), np.logical_and(np.logical_and(cond_dyl,cond_dyu),np.logical_and(cond_dzl,cond_dzu)))
 if np.sum(cond_p4) != 1:
-    printf("FAIL: can't find the particle in cell 1, offset 0.,0.66,0.66 in timestep 0")
+    print("FAIL: can't find the particle in cell 1, offset 0.,0.66,0.66 in timestep 0")
     sys.exit(1)
 
 #timestep 1

@@ -25,6 +25,7 @@
 void checkpt_vpic_simulation(const vpic_simulation *vpic)
 {
   CHECKPT(vpic, 1);
+  // CHECKPT_PTR(vpic->dump_strategy);
   CHECKPT_PTR(vpic->entropy);
   CHECKPT_PTR(vpic->sync_entropy);
   CHECKPT_PTR(vpic->grid);
@@ -44,6 +45,7 @@ restore_vpic_simulation(void)
 {
   vpic_simulation *vpic;
   RESTORE(vpic);
+  // RESTORE_PTR(vpic->dump_strategy);
   RESTORE_PTR(vpic->entropy);
   RESTORE_PTR(vpic->sync_entropy);
   RESTORE_PTR(vpic->grid);
@@ -56,6 +58,39 @@ restore_vpic_simulation(void)
   RESTORE_FPTR(vpic->particle_bc_list);
   RESTORE_FPTR(vpic->emitter_list);
   RESTORE_FPTR(vpic->collision_op_list);
+
+  printf("\n\n\n vpic->dump_strategy_id is restored ! \n\n\n");
+  vpic->dump_strategy = new_dump_strategy(vpic->dump_strategy_id);
+  vpic->dump_strategy->num_step = vpic->num_step;
+
+  //   // Do any post init/restore simulation modifications
+  //   switch (vpic->dump_strategy_id)
+  //   {
+  //   case DUMP_STRATEGY_BINARY:
+  //     //::cout << "DUMP_STRATEGY_BINARY \n";
+  //     vpic->dump_strategy = new BinaryDump(rank(), nproc());
+  //     break;
+  //   case DUMP_STRATEGY_HDF5:
+  // #ifdef VPIC_ENABLE_HDF5
+  //     // std::cout << "DUMP_STRATEGY_HDF5 \n";
+  //     vpic->dump_strategy = new HDF5Dump(rank(), nproc());
+  // #else
+  //     std::cout << "HDF5Dump is not enabled \n";
+
+  // #endif
+  //     break;
+  //   case DUMP_STRATEGY_OPENPMD:
+  // #ifdef VPIC_ENABLE_OPENPMD
+  //     // std::cout << "DUMP_STRATEGY_OPENPMD \n";
+  //     vpic->dump_strategy = new OpenPMDDump(rank(), nproc());
+  // #else
+  //     std::cout << "OpenPMDDump is not enabled \n";
+  // #endif
+  //     break;
+  //   default:
+  //     break;
+  //   }
+
   return vpic;
 }
 
@@ -110,6 +145,7 @@ vpic_simulation::vpic_simulation()
   entropy = new_rng_pool(n_rng, 0, 0);
   sync_entropy = new_rng_pool(n_rng, 0, 1);
   grid = new_grid();
+  dump_strategy = new_dump_strategy(dump_strategy_id);
 
   REGISTER_OBJECT(this, checkpt_vpic_simulation,
                   restore_vpic_simulation, reanimate_vpic_simulation);
@@ -117,7 +153,7 @@ vpic_simulation::vpic_simulation()
   // Initialize the dump strategy to use the binary dumpin, assuming the user
   // may overwrite this later
   // dump_strategy = std::unique_ptr<Dump_Strategy>(new BinaryDump( rank(), nproc() ));
-  enable_binary_dump();
+  // enable_binary_dump();
 
   // TODO: this this still makes sense now we have a dump strategy
   //#ifdef VPIC_ENABLE_HDF5

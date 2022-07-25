@@ -624,12 +624,50 @@ public:
     H5Dclose(dset_id);                                                                                      \
   }
 
+#define DUMP_FIELD_TO_HDF5_PRINT(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)                                                     \
+  {                                                                                                                           \
+    if (!file_exist_flag)                                                                                                     \
+    {                                                                                                                         \
+      dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);                   \
+    }                                                                                                                         \
+    else                                                                                                                      \
+    {                                                                                                                         \
+      dset_id = H5Dopen(group_id, DSET_NAME, H5P_DEFAULT);                                                                    \
+      dataspace_id = H5Dget_space(dset_id);                                                                                   \
+    }                                                                                                                         \
+    temp_buf_index = 0;                                                                                                       \
+    for (size_t i(1); i < grid->nx + 1; i++)                                                                                  \
+    {                                                                                                                         \
+      for (size_t j(1); j < grid->ny + 1; j++)                                                                                \
+      {                                                                                                                       \
+        for (size_t k(1); k < grid->nz + 1; k++)                                                                              \
+        {                                                                                                                     \
+          printf("%s, ijk = (%d, %d, %d), value = %f \n", DSET_NAME, i, j, k, FIELD_ARRAY_NAME->fpp(i, j, k).ATTRIBUTE_NAME); \
+          temp_buf[temp_buf_index] = FIELD_ARRAY_NAME->fpp(i, j, k).ATTRIBUTE_NAME;                                           \
+          temp_buf_index = temp_buf_index + 1;                                                                                \
+        }                                                                                                                     \
+      }                                                                                                                       \
+    }                                                                                                                         \
+    dataspace_id = H5Dget_space(dset_id);                                                                                     \
+    H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, global_offset, NULL, global_count, NULL);                               \
+    H5Dwrite(dset_id, ELEMENT_TYPE, memspace, dataspace_id, plist_id, temp_buf);                                              \
+    H5Sclose(dataspace_id);                                                                                                   \
+    H5Dclose(dset_id);                                                                                                        \
+  }
+
     float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
 
+    // printf("Hellow 1 \n");
+    // if (field_dump_flag.ex)
+    //  DUMP_FIELD_TO_HDF5("ex", ex, H5T_NATIVE_FLOAT);
     if (field_dump_flag.ex)
-      DUMP_FIELD_TO_HDF5("ex", ex, H5T_NATIVE_FLOAT);
+      DUMP_FIELD_TO_HDF5_PRINT("ex", ex, H5T_NATIVE_FLOAT);
+
     if (field_dump_flag.ey)
       DUMP_FIELD_TO_HDF5("ey", ey, H5T_NATIVE_FLOAT);
+    // if (field_dump_flag.ey)
+    //   DUMP_FIELD_TO_HDF5_PRINT("ey", ey, H5T_NATIVE_FLOAT);
+
     if (field_dump_flag.ez)
       DUMP_FIELD_TO_HDF5("ez", ez, H5T_NATIVE_FLOAT);
     if (field_dump_flag.div_e_err)
@@ -684,110 +722,111 @@ public:
     free(temp_buf);
 #endif
 
-    H5D_mpio_actual_io_mode_t actual_io_mode;
-    H5Pget_mpio_actual_io_mode(plist_id, &actual_io_mode);
-    switch (actual_io_mode)
-    {
-    case H5D_MPIO_NO_COLLECTIVE:
-      io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_NO_COLLECTIVE: ");
-      break;
-    case H5D_MPIO_CHUNK_INDEPENDENT:
-      io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_INDEPENDENT: ");
-      break;
-    case H5D_MPIO_CHUNK_COLLECTIVE:
-      io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_COLLECTIVE: ");
-      break;
-    case H5D_MPIO_CHUNK_MIXED:
-      io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_MIXED: ");
-      break;
-    case H5D_MPIO_CONTIGUOUS_COLLECTIVE:
-      io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CONTIGUOUS_COLLECTIVE: ");
-      break;
-    default:
-      io_log("H5Pget_mpio_actual_io_mode: None returend: ");
-      break;
-    }
+    /*
+        H5D_mpio_actual_io_mode_t actual_io_mode;
+        H5Pget_mpio_actual_io_mode(plist_id, &actual_io_mode);
+        switch (actual_io_mode)
+        {
+        case H5D_MPIO_NO_COLLECTIVE:
+          io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_NO_COLLECTIVE: ");
+          break;
+        case H5D_MPIO_CHUNK_INDEPENDENT:
+          io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_INDEPENDENT: ");
+          break;
+        case H5D_MPIO_CHUNK_COLLECTIVE:
+          io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_COLLECTIVE: ");
+          break;
+        case H5D_MPIO_CHUNK_MIXED:
+          io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CHUNK_MIXED: ");
+          break;
+        case H5D_MPIO_CONTIGUOUS_COLLECTIVE:
+          io_log("H5Pget_mpio_actual_io_mode: H5D_MPIO_CONTIGUOUS_COLLECTIVE: ");
+          break;
+        default:
+          io_log("H5Pget_mpio_actual_io_mode: None returend: ");
+          break;
+        }
 
-    H5D_mpio_actual_chunk_opt_mode_t actual_chunk_opt_mode;
-    H5Pget_mpio_actual_chunk_opt_mode(plist_id, &actual_chunk_opt_mode);
-    switch (actual_chunk_opt_mode)
-    {
-    case H5D_MPIO_NO_CHUNK_OPTIMIZATION:
-      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_NO_CHUNK_OPTIMIZATION: ");
-      break;
-    case H5D_MPIO_MULTI_CHUNK:
-      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK: ");
-      break;
-      //  case H5D_MPIO_MULTI_CHUNK_NO_OPT:
-      //      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK_NO_OPT: ");
-      //     break;
-    case H5D_MPIO_LINK_CHUNK:
-      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_LINK_CHUNK: ");
-      break;
-    default:
-      io_log("H5Pget_mpio_actual_chunk_opt_mode: None returend: ");
-      break;
-    }
+        H5D_mpio_actual_chunk_opt_mode_t actual_chunk_opt_mode;
+        H5Pget_mpio_actual_chunk_opt_mode(plist_id, &actual_chunk_opt_mode);
+        switch (actual_chunk_opt_mode)
+        {
+        case H5D_MPIO_NO_CHUNK_OPTIMIZATION:
+          io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_NO_CHUNK_OPTIMIZATION: ");
+          break;
+        case H5D_MPIO_MULTI_CHUNK:
+          io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK: ");
+          break;
+          //  case H5D_MPIO_MULTI_CHUNK_NO_OPT:
+          //      io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_MULTI_CHUNK_NO_OPT: ");
+          //     break;
+        case H5D_MPIO_LINK_CHUNK:
+          io_log("H5Pget_mpio_actual_chunk_opt_mode: H5D_MPIO_LINK_CHUNK: ");
+          break;
+        default:
+          io_log("H5Pget_mpio_actual_chunk_opt_mode: None returend: ");
+          break;
+        }
 
-    uint32_t local_no_collective_cause, global_no_collective_cause;
-    H5Pget_mpio_no_collective_cause(plist_id, &local_no_collective_cause, &global_no_collective_cause);
+        uint32_t local_no_collective_cause, global_no_collective_cause;
+        H5Pget_mpio_no_collective_cause(plist_id, &local_no_collective_cause, &global_no_collective_cause);
 
-    switch (local_no_collective_cause)
-    {
-    case H5D_MPIO_COLLECTIVE:
-      io_log("local_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
-      break;
-    case H5D_MPIO_SET_INDEPENDENT:
-      io_log("local_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
-      break;
-    case H5D_MPIO_DATA_TRANSFORMS:
-      io_log("local_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
-      break;
-    // case H5D_MPIO_SET_MPIPOSIX:
-    //     io_log("local_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
-    //     break;
-    case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
-      io_log("local_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
-      break;
-    // case H5D_MPIO_POINT_SELECTIONS:
-    //     io_log("local_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
-    //     break;
-    //  case H5D_MPIO_FILTERS:
-    //     io_log("local_no_collective_cause: H5D_MPIO_FILTERS: ");
-    //     break;
-    default:
-      io_log("local_no_collective_cause: None returend: ");
-      break;
-    }
+        switch (local_no_collective_cause)
+        {
+        case H5D_MPIO_COLLECTIVE:
+          io_log("local_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
+          break;
+        case H5D_MPIO_SET_INDEPENDENT:
+          io_log("local_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
+          break;
+        case H5D_MPIO_DATA_TRANSFORMS:
+          io_log("local_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
+          break;
+        // case H5D_MPIO_SET_MPIPOSIX:
+        //     io_log("local_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
+        //     break;
+        case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
+          io_log("local_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
+          break;
+        // case H5D_MPIO_POINT_SELECTIONS:
+        //     io_log("local_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
+        //     break;
+        //  case H5D_MPIO_FILTERS:
+        //     io_log("local_no_collective_cause: H5D_MPIO_FILTERS: ");
+        //     break;
+        default:
+          io_log("local_no_collective_cause: None returend: ");
+          break;
+        }
 
-    switch (global_no_collective_cause)
-    {
-    case H5D_MPIO_COLLECTIVE:
-      io_log("global_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
-      break;
-    case H5D_MPIO_SET_INDEPENDENT:
-      io_log("global_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
-      break;
-    case H5D_MPIO_DATA_TRANSFORMS:
-      io_log("global_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
-      break;
-    // case H5D_MPIO_SET_MPIPOSIX:
-    //     io_log("global_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
-    //     break;
-    case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
-      io_log("global_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
-      break;
-    // case H5D_MPIO_POINT_SELECTIONS:
-    //     io_log("global_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
-    //     break;
-    //  case H5D_MPIO_FILTERS:
-    //    io_log("global_no_collective_cause: H5D_MPIO_FILTERS: ");
-    //    break;
-    default:
-      io_log("global_no_collective_cause: None returend: ");
-      break;
-    }
-
+        switch (global_no_collective_cause)
+        {
+        case H5D_MPIO_COLLECTIVE:
+          io_log("global_no_collective_cause: H5D_MPIO_COLLECTIVE: ");
+          break;
+        case H5D_MPIO_SET_INDEPENDENT:
+          io_log("global_no_collective_cause: H5D_MPIO_SET_INDEPENDENT: ");
+          break;
+        case H5D_MPIO_DATA_TRANSFORMS:
+          io_log("global_no_collective_cause: H5D_MPIO_DATA_TRANSFORMS: ");
+          break;
+        // case H5D_MPIO_SET_MPIPOSIX:
+        //     io_log("global_no_collective_cause: H5D_MPIO_SET_MPIPOSIX: ");
+        //     break;
+        case H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES:
+          io_log("global_no_collective_cause: H5D_MPIO_NOT_SIMPLE_OR_SCALAR_DATASPACES: ");
+          break;
+        // case H5D_MPIO_POINT_SELECTIONS:
+        //     io_log("global_no_collective_cause: H5D_MPIO_POINT_SELECTIONS: ");
+        //     break;
+        //  case H5D_MPIO_FILTERS:
+        //    io_log("global_no_collective_cause: H5D_MPIO_FILTERS: ");
+        //    break;
+        default:
+          io_log("global_no_collective_cause: None returend: ");
+          break;
+        }
+    */
     el2 = uptime() - el2;
     io_log("TimeHDF5Write: " << el2 << " s");
 

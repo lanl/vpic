@@ -49,7 +49,7 @@ begin_initialization {
   define_field_array(NULL, 0.00);
 
   // Just a homogeneous value in Bx
-  set_region_field(everywhere, 0.,0.,0., 17.,0.,0.);
+  set_region_field(everywhere, 5., 6., 7., 17., 18., 19.);
 
   // different random numbers on different ranks
   seed_entropy(rank());

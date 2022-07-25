@@ -25,9 +25,33 @@ if np.all(cbx == 17) == False:
     print('cbx does not contain all 17.')
     sys.exit(1)
 
+cby = np.array(datagroup["cby"])
+if np.all(cby == 18) == False:
+    print('cby does not contain all 17.')
+    sys.exit(1)
 
-other_fields_name = ["cby", "cbz", "cmat", "div_b_err", "div_e_err", "ematx", "ematy", "ematz",
-                     "ex", "ey", "ez", "fmatx", "fmaty", "fmatz", "jfx",  "jfy", "jfz", "nmat", "rhob", "rhof", "tcax", "tcay", "tcaz"]
+cbz = np.array(datagroup["cbz"])
+if np.all(cbz == 19) == False:
+    print('cbz does not contain all 17.')
+    sys.exit(1)
+
+ex = np.array(datagroup["ex"])
+if np.all(ex == 5) == False:
+    print('ex does not contain all 17.')
+    sys.exit(1)
+
+ey = np.array(datagroup["ey"])
+if np.all(ey == 6) == False:
+    print('ey does not contain all 17.')
+    sys.exit(1)
+
+ez = np.array(datagroup["ez"])
+if np.all(ez == 7) == False:
+    print('ez does not contain all 17.')
+    sys.exit(1)
+
+other_fields_name = ["cmat", "div_b_err", "div_e_err", "ematx", "ematy", "ematz",
+                     "fmatx", "fmaty", "fmatz", "jfx",  "jfy", "jfz", "nmat", "rhob", "rhof", "tcax", "tcay", "tcaz"]
 
 for field_name in other_fields_name:
     field_data = np.array(datagroup[field_name])

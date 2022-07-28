@@ -4,6 +4,19 @@ set(MPI_NUM_RANKS 2)
 set(TEST "buffered_particle_dump")
 find_package(Python3 COMPONENTS Interpreter)
 
+execute_process(
+        COMMAND pip show h5py
+        RESULT_VARIABLE EXIT_CODE
+        OUTPUT_QUIET
+)
+
+if (NOT ${EXIT_CODE} EQUAL 0)
+    message(
+            FATAL_ERROR
+            "The \"h5py\" Python3 package is not installed. Please install it using the following command: \"pip3 install h5py\"."
+    )
+endif()
+
 if(USE_HDF5)
     # Build
     # TODO: This method of doing the tests is really bad at rebuilding them properly

@@ -1385,7 +1385,14 @@ void vpic_simulation::write_buffered_particle_dump(const char *dname, const char
   if (rank() == 0)
   {
     sprintf(strbuf, "%s/T.%ld/tracers.h5p", dname, step());
-    file = H5Fopen(strbuf, H5F_ACC_RDWR, H5P_DEFAULT);
+
+    pl_file = H5Pcreate(H5P_FILE_ACCESS);
+#if H5_VERSION_GE(1, 10, 7)
+    H5Pset_file_locking(pl_file, (hbool_t)false, (hbool_t)false );
+#endif
+    file = H5Fopen(strbuf, H5F_ACC_RDWR, pl_file);
+    H5Pclose(pl_file);
+
     sprintf(strbuf, "Step#%ld", step());
     hid_t group = H5Gopen(file, strbuf, H5P_DEFAULT);
     subgroup = H5Gopen(group, "grid_meta_data", H5P_DEFAULT);

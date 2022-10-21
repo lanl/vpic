@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 import os.path
 import sys
-
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 if len(sys.argv) != 2:
     sys.stderr.write("Usage: "+str(sys.argv[0])+" rundir\n")
     sys.exit(1)

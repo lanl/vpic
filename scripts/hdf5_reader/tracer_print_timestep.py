@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 import os
 import sys
-
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 if len(sys.argv) < 3:
 	sys.stderr.write("Usage: "+str(sys.argv[0])+" timestep tracers.h5p [other.h5p...]\n")
 	sys.exit(1)

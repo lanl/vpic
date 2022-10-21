@@ -28,19 +28,19 @@
     defined(USE_V16_AVX512)
 
 #define PAD_SIZE_INTERPOLATOR 14
-#define PAD_SIZE_ACCUMULATOR   4
-#define PAD_SIZE_HYDRO         2
+#define PAD_SIZE_ACCUMULATOR 4
+#define PAD_SIZE_HYDRO 2
 
 //----------------------------------------------------------------------------//
 // 32-byte align
 
 #elif defined(USE_V8_PORTABLE) || \
-      defined(USE_V8_AVX)      || \
-      defined(USE_V8_AVX2)
+    defined(USE_V8_AVX) ||        \
+    defined(USE_V8_AVX2)
 
 #define PAD_SIZE_INTERPOLATOR 6
-#define PAD_SIZE_ACCUMULATOR  4
-#define PAD_SIZE_HYDRO        2
+#define PAD_SIZE_ACCUMULATOR 4
+#define PAD_SIZE_HYDRO 2
 
 //----------------------------------------------------------------------------//
 // 16-byte align
@@ -48,7 +48,7 @@
 #else
 
 #define PAD_SIZE_INTERPOLATOR 2
-#define PAD_SIZE_HYDRO        2
+#define PAD_SIZE_HYDRO 2
 
 #endif
 
@@ -75,8 +75,8 @@ typedef struct interpolator
 
 typedef struct interpolator_array
 {
-  interpolator_t * ALIGNED(128) i;
-  grid_t * g;
+  interpolator_t *ALIGNED(128) i;
+  grid_t *g;
 } interpolator_array_t;
 
 BEGIN_C_DECLS
@@ -84,10 +84,9 @@ BEGIN_C_DECLS
 // In interpolator_array.cc
 
 interpolator_array_t *
-new_interpolator_array( grid_t * g );
+new_interpolator_array(grid_t *g);
 
-void
-delete_interpolator_array( interpolator_array_t * ALIGNED(128) ia );
+void delete_interpolator_array(interpolator_array_t *ALIGNED(128) ia);
 
 // Going into load_interpolator, the field array f contains the
 // current information such that the fields can be interpolated to
@@ -96,9 +95,8 @@ delete_interpolator_array( interpolator_array_t * ALIGNED(128) ia );
 // inside the local domain suitable for use by the particle update
 // functions.
 
-void
-load_interpolator_array( /**/  interpolator_array_t * RESTRICT ia,
-                         const field_array_t        * RESTRICT fa );
+void load_interpolator_array(/**/ interpolator_array_t *RESTRICT ia,
+                             const field_array_t *RESTRICT fa);
 
 END_C_DECLS
 
@@ -114,20 +112,20 @@ END_C_DECLS
 
 typedef struct accumulator
 {
-  float jx[4];   // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
-  float jy[4];   // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
-  float jz[4];   // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
-  #if defined PAD_SIZE_ACCUMULATOR
+  float jx[4]; // jx0@(0,-1,-1),jx1@(0,1,-1),jx2@(0,-1,1),jx3@(0,1,1)
+  float jy[4]; // jy0@(-1,0,-1),jy1@(-1,0,1),jy2@(1,0,-1),jy3@(1,0,1)
+  float jz[4]; // jz0@(-1,-1,0),jz1@(1,-1,0),jz2@(-1,1,0),jz3@(1,1,0)
+#if defined PAD_SIZE_ACCUMULATOR
   float pad2[PAD_SIZE_ACCUMULATOR]; // Padding for 32 and 64-byte align
-  #endif
+#endif
 } accumulator_t;
 
 typedef struct accumulator_array
 {
-  accumulator_t * ALIGNED(128) a;
+  accumulator_t *ALIGNED(128) a;
   int n_pipeline; // Number of pipelines supported by this accumulator
   int stride;     // Stride be each pipeline's accumulator array
-  grid_t * g;
+  grid_t *g;
 } accumulator_array_t;
 
 BEGIN_C_DECLS
@@ -135,17 +133,15 @@ BEGIN_C_DECLS
 // In accumulator_array.cc
 
 accumulator_array_t *
-new_accumulator_array( grid_t * g );
+new_accumulator_array(grid_t *g);
 
-void
-delete_accumulator_array( accumulator_array_t * a );
+void delete_accumulator_array(accumulator_array_t *a);
 
 // In clear_array.cc
 
 // This zeros out all the accumulator arrays in a pipelined fashion.
 
-void
-clear_accumulator_array( accumulator_array_t * RESTRICT a );
+void clear_accumulator_array(accumulator_array_t *RESTRICT a);
 
 // In reduce_array.cc
 
@@ -155,8 +151,7 @@ clear_accumulator_array( accumulator_array_t * RESTRICT a );
 // accumulator with a pipelined horizontal reduction (a deterministic
 // reduction).
 
-void
-reduce_accumulator_array( accumulator_array_t * RESTRICT a );
+void reduce_accumulator_array(accumulator_array_t *RESTRICT a);
 
 // In unload_accumulator.cc
 
@@ -169,9 +164,8 @@ reduce_accumulator_array( accumulator_array_t * RESTRICT a );
 // local field array jf.  unload_accumulator assumes all the pipeline
 // accumulators have been reduced into the host accumulator.
 
-void
-unload_accumulator_array( /**/  field_array_t       * RESTRICT fa, 
-                          const accumulator_array_t * RESTRICT aa );
+void unload_accumulator_array(/**/ field_array_t *RESTRICT fa,
+                              const accumulator_array_t *RESTRICT aa);
 
 END_C_DECLS
 
@@ -184,19 +178,19 @@ END_C_DECLS
 
 typedef struct hydro
 {
-  float jx, jy, jz, rho; // Current and charge density => <q v_i f>, <q f>
-  float px, py, pz, ke;  // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
-  float txx, tyy, tzz;   // Stress diagonal            => <p_i v_j f>, i==j
-  float tyz, tzx, txy;   // Stress off-diagonal        => <p_i v_j f>, i!=j
+  float jx, jy, jz, rho;      // Current and charge density => <q v_i f>, <q f>
+  float px, py, pz, ke;       // Momentum and K.E. density  => <p_i f>, <m c^2 (gamma-1) f>
+  float txx, tyy, tzz;        // Stress diagonal            => <p_i v_j f>, i==j
+  float tyz, tzx, txy;        // Stress off-diagonal        => <p_i v_j f>, i!=j
   float _pad[PAD_SIZE_HYDRO]; // 16, 32 and 64-byte align
 } hydro_t;
 
 typedef struct hydro_array
 {
-  hydro_t * ALIGNED(128) h;
+  hydro_t *ALIGNED(128) h;
   int n_pipeline; // Number of pipelines supported by this hydro
   int stride;     // Stride be each pipeline's hydro array
-  grid_t * g;
+  grid_t *g;
 } hydro_array_t;
 
 BEGIN_C_DECLS
@@ -206,20 +200,18 @@ BEGIN_C_DECLS
 // Construct a hydro array suitable for the grid
 
 hydro_array_t *
-new_hydro_array( grid_t * g );
+new_hydro_array(grid_t *g);
 
 // Destruct a hydro array
 
-void
-delete_hydro_array( hydro_array_t * ha );
+void delete_hydro_array(hydro_array_t *ha);
 
 // In clear_array.cc
 
 // Zero out the hydro array.  Use before accumulating species to
 // a hydro array.
 
-void
-clear_hydro_array( hydro_array_t * ha );
+void clear_hydro_array(hydro_array_t *ha);
 
 // In reduce_array.cc
 
@@ -227,8 +219,7 @@ clear_hydro_array( hydro_array_t * ha );
 // synchronize_hydro_array and does not typically need to be otherwise
 // called.
 
-void
-reduce_hydro_array( hydro_array_t * ha );
+void reduce_hydro_array(hydro_array_t *ha);
 
 // In hydro_array.cc
 
@@ -236,8 +227,7 @@ reduce_hydro_array( hydro_array_t * ha );
 // the hydro array with local boundary conditions and neighboring
 // processes. Use after all species have been accumulated to the hydro array.
 
-void
-synchronize_hydro_array( hydro_array_t * ha );
+void synchronize_hydro_array(hydro_array_t *ha);
 
 END_C_DECLS
 

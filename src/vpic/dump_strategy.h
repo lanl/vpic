@@ -1205,6 +1205,7 @@ public:
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
+    printf("Calling HDF5 dump_hydro ... \n");
     if (!sp)
     {
       ERROR(("Invalid species"));

@@ -35,12 +35,12 @@ new_dump_strategy(DumpStrategyID dump_strategy_id)
     switch (dump_strategy_id)
     {
     case DUMP_STRATEGY_BINARY:
-        //::cout << "DUMP_STRATEGY_BINARY \n";
+        std::cout << "DUMP_STRATEGY_BINARY  enabled \n";
         ds = new BinaryDump(rank(), nproc());
         break;
     case DUMP_STRATEGY_HDF5:
 #ifdef VPIC_ENABLE_HDF5
-        // std::cout << "DUMP_STRATEGY_HDF5 \n";
+        std::cout << "DUMP_STRATEGY_HDF5 enabled \n";
         ds = new HDF5Dump(rank(), nproc());
 #else
         std::cout << "HDF5Dump is not enabled \n";
@@ -208,6 +208,7 @@ void BinaryDump::dump_hydro(
     char fname[256];
     FileIO fileIO;
     int dim[3];
+    printf("Calling Binay dump_hydro ... \n");
 
     if (!sp)
         ERROR(("Invalid species \"%s\"", sp->name));

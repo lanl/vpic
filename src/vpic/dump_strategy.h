@@ -5,21 +5,21 @@
 #include <vector>
 #include <iostream>
 
-//#define DUMP_INFO_DEBUG 1
-//#define H5_ASYNC 1
+// #define DUMP_INFO_DEBUG 1
+// #define H5_ASYNC 1
 #ifdef H5_ASYNC
 #include "h5_vol_external_async_native.h"
 #endif
-//#define CHUNK_FLAG 1
+// #define CHUNK_FLAG 1
 
-//#define METADATA_COLL_WRITE 1
-//#define TRUE 1
+// #define METADATA_COLL_WRITE 1
+// #define TRUE 1
 
-//#define HAS_FIELD_COMP 1
-//#define HAS_HYDRO_COMP 1
-//#define HAS_PARTICLE_COMP 1
+// #define HAS_FIELD_COMP 1
+// #define HAS_HYDRO_COMP 1
+// #define HAS_PARTICLE_COMP 1
 
-//#define HAS_INDEPENDENT_IO 1
+// #define HAS_INDEPENDENT_IO 1
 
 #include <mpi.h> // TODO: it would be good if this didn't have to know about MPI
 #include <cassert>
@@ -38,7 +38,7 @@
 #ifdef VPIC_ENABLE_HDF5
 #include "hdf5.h"             // from the lib
 #include "hdf5_header_info.h" // from vpic
-//#define daos "daos:"
+// #define daos "daos:"
 #define daos ""
 #endif
 
@@ -46,8 +46,8 @@
 #include <openPMD/openPMD.hpp>
 #endif
 
-//#define N_FILE_N_PROCESS 1
-//#define TEST_MPIIO 1
+// #define N_FILE_N_PROCESS 1
+// #define TEST_MPIIO 1
 
 // TODO: delete this
 #define _LOG_PREFIX \
@@ -1200,7 +1200,7 @@ public:
   {
     size_t step_for_viou = step;
 
-    //#define DUMP_INFO_DEBUG 1
+    // #define DUMP_INFO_DEBUG 1
     int mpi_size, mpi_rank;
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);

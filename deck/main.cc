@@ -108,6 +108,7 @@ int main(int argc, char **argv)
         simulation->dump_strategy->num_step = simulation->num_step;
         // simulation->dump_strategy->num_step = vpic->num_step;
         std::cout << "simulation->dump_strategy_id = " << simulation->dump_strategy_id << "\n";
+
         REGISTER_OBJECT(&simulation, checkpt_main, restore_main, NULL);
     }
 

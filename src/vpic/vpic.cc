@@ -59,7 +59,7 @@ restore_vpic_simulation(void)
   RESTORE_FPTR(vpic->emitter_list);
   RESTORE_FPTR(vpic->collision_op_list);
 
-  printf("\n\n\n vpic->dump_strategy_id is restored ! \n\n\n");
+  // printf("\n\n\n vpic->dump_strategy_id is restored ! \n\n\n");
   vpic->dump_strategy = new_dump_strategy(vpic->dump_strategy_id);
   vpic->dump_strategy->num_step = vpic->num_step;
 
@@ -156,13 +156,13 @@ vpic_simulation::vpic_simulation()
   // enable_binary_dump();
 
   // TODO: this this still makes sense now we have a dump strategy
-  //#ifdef VPIC_ENABLE_HDF5
+  // #ifdef VPIC_ENABLE_HDF5
   // Default init hdf5 dump flags
   // field_interval = 1;
   // hydro_interval = 1;
   // field_dump_flag = field_dump_flag_t();
   // hydro_dump_flag = hydro_dump_flag_t();
-  //#endif
+  // #endif
 
   field_interval = 1;
   hydro_interval = 1;

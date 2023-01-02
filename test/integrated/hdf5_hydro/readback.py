@@ -8,55 +8,40 @@ if len(sys.argv) != 2:
     sys.stderr.write("Usage: "+str(sys.argv[0])+" rundir\n")
     sys.exit(1)
 
+
+# print(dd)
+# print(dd.shape)
+# exit(0)
 rundir = sys.argv[1]
-print(rundir)
-filename = rundir+"/field_hdf5/T.2/fields_2.h5"
+# print(rundir)
+filename = rundir+"/hydro_hdf5/T.1/hydro_electron_1.h5"
 
 if not os.path.isfile(filename):
     print("FAIL: "+filename+" is missing")
     sys.exit(1)
 
 infile = h5py.File(filename, 'r')
-datagroup = infile["Timestep_2"]
+datagroup = infile["Timestep_1"]
 
 
-cbx = np.array(datagroup["cbx"])
-if np.array_equal(cbx, [3, 4, 3, 4]):
-    print('cbx does not contain [3, 4, 3, 4].')
-    sys.exit(1)
+hydro_names = ["jx",  "jy", "jz", "rho"]
 
-cby = np.array(datagroup["cby"])
-if np.array_equal(cby, [3, 4, 3, 4]):
-    print('cby does not contain all 17.')
-    sys.exit(1)
-
-cbz = np.array(datagroup["cbz"])
-if np.array_equal(cbz, [3, 4, 3, 4]):
-    print('cbz does not contain all 17.')
-    sys.exit(1)
-
-ex = np.array(datagroup["ex"])
-if np.array_equal(ex, [3, 4, 3, 4]):
-    print('ex does not contain all 17.')
-    sys.exit(1)
-
-ey = np.array(datagroup["ey"])
-if np.array_equal(ey, [3, 4, 3, 4]):
-    print('ey does not contain all 17.')
-    sys.exit(1)
-
-ez = np.array(datagroup["ez"])
-if np.array_equal(ez, [3, 4, 3, 4]):
-    print('ez does not contain all 17.')
-    sys.exit(1)
-
-other_fields_name = ["cmat", "div_b_err", "div_e_err", "ematx", "ematy", "ematz",
-                     "fmatx", "fmaty", "fmatz", "jfx",  "jfy", "jfz", "nmat", "rhob", "rhof", "tcax", "tcay", "tcaz"]
-
-for field_name in other_fields_name:
-    field_data = np.array(datagroup[field_name])
-    if np.all(field_data == 0) == False:
-        print(field_name, 'does not contain all 0.')
+for hydro_name in hydro_names:
+    bin_filename = "step1_rank0_"+hydro_name+".bin"
+    hydro_data_bi = np.fromfile(bin_filename, dtype=np.float32)
+    # print(hydro_data_bi.shape)
+    hydro_data_h5 = np.array(datagroup[hydro_name]).flatten()
+    # print(hydro_data_h5.shape)
+    if np.allclose(hydro_data_bi, hydro_data_h5, atol=0.0001) == False:
+        print(hydro_name, 'in ', 'hydro_data_h5', " does not contain same value as ", bin_filename)
+        print_max_element = 0
+        print("     Binary Output", ",  ", "HDF5 Output",  ",  ", "Difference")
+        for i in range(0, hydro_data_h5.shape[0]):
+            if hydro_data_bi[i] - hydro_data_h5[i] > 0.0001:
+                print(i, hydro_data_bi[i], ",  ", hydro_data_h5[i], ",  ", hydro_data_bi[i] - hydro_data_h5[i])
+                print_max_element = print_max_element + 1
+            if print_max_element == 10:
+                break
         sys.exit(1)
 
 infile.close()

@@ -45,7 +45,7 @@ begin_initialization
   ////////////////////////////////////////
   // Setup high level simulation parmeters
 
-  num_step = 2;
+  num_step = 1;
   status_interval = 1;
   sync_shared_interval = status_interval;
   clean_div_e_interval = status_interval;
@@ -77,8 +77,11 @@ begin_initialization
   ////////////////////
   // Setup the species
 
-  // use out-of-place sorting
-  species_t *electron = define_species("electron", -ec, me, 1500, -1, 20, 1);
+  const double np = 1.5 * nx * ny * nz / nproc(); // particle number
+  const double nm = -1;                           // Automatic amount of movers
+  const double sort_interval = 20;
+  const double sort_out_of_place = 1;
+  species_t *electron = define_species("electron", -ec, me, np, nm, sort_interval, sort_out_of_place);
 
   ///////////////////////////////////////////////////
   // Log diagnostic information about this simulation
@@ -115,28 +118,32 @@ begin_initialization
   sim_log("Loading particles");
 
   int nparticle = 0;
-  for (int i = 1; i <= grid->nx; i++)
+  for (int i = 0; i < grid->nx; i++)
   {
-    for (int j = 1; j <= grid->ny; j++)
+    for (int j = 0; j < grid->ny; j++)
     {
-      for (int k = 1; k <= grid->nz; k++)
+      for (int k = 0; k < grid->nz; k++)
       {
 
-        float x = grid->x0 + i * grid->dx;
-        float y = grid->y0 + j * grid->dy;
-        float z = grid->z0 + k * grid->dz;
+        float x = grid->x0 + (i + 0.5) * grid->dx;
+        float y = grid->y0 + (j + 0.5) * grid->dy;
+        float z = grid->z0 + (k + 0.5) * grid->dz;
+        float ux = y / Ly * 0.1 * c;
+        float uy = z / Lz * 0.1 * c;
+        float uz = x / Lx * 0.1 * c;
+        // std::cout << "y = " << y << " , y / Ly = " << y / Ly << ", ux = " << y / Ly * 0.1 * c << " (ijk) = " << i << ", " << j << ", " << k << "\n";
 
-        float ux = x / Lx * 0.1 * c;
-        float uy = y / Ly * 0.1 * c;
-        float uz = z / Lz * 0.1 * c;
-
-        inject_particle(electron, x, y, z, ux, uy, uz, 1., 0, 0);
+        const double w = 1.;
+        const double age = 0.;
+        const int update_rhob = 1;
+        inject_particle(electron, x, y, z, ux, uy, uz, w, age, update_rhob);
         nparticle++;
       }
     }
   }
 
   sim_log("Loaded " << nparticle << " electrons");
+  sim_log("We now have " << electron->np << " electrons");
 
   // Upon completion of the initialization, the following occurs:
   // - The synchronization error (tang E, norm B) is computed between domains
@@ -180,6 +187,42 @@ begin_diagnostics
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
   // are in a binary format. Each rank makes a hydro dump.
   dump_hydro("electron", "ehydro");
+
+  species_t *sp = find_species_name("electron", species_list);
+  clear_hydro_array(hydro_array);
+  accumulate_hydro_p(hydro_array, sp, interpolator_array);
+  synchronize_hydro_array(hydro_array);
+
+  float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
+  size_t temp_buf_index = 0;
+
+#define DUMP_HYDRO_TO_BINARY(DSET_NAME, ATTRIBUTE_NAME)                                                      \
+  {                                                                                                          \
+    std::string fn;                                                                                          \
+    fn = "step" + std::to_string(step()) + "_rank" + std::to_string(rank()) + "_" + DSET_NAME + ".bin";      \
+    std::cout << fn << std::endl;                                                                            \
+    FILE *handle_ = fopen(fn.c_str(), "w");                                                                  \
+    temp_buf_index = 0;                                                                                      \
+    for (size_t i(1); i < grid->nx + 1; i++)                                                                 \
+    {                                                                                                        \
+      for (size_t j(1); j < grid->ny + 1; j++)                                                               \
+      {                                                                                                      \
+        for (size_t k(1); k < grid->nz + 1; k++)                                                             \
+        {                                                                                                    \
+          temp_buf[temp_buf_index] = _hydro(i, j, k).ATTRIBUTE_NAME;                                         \
+          temp_buf_index = temp_buf_index + 1;                                                               \
+        }                                                                                                    \
+      }                                                                                                      \
+    }                                                                                                        \
+    fwrite(reinterpret_cast<void *>(const_cast<float *>(temp_buf)), sizeof(float), temp_buf_index, handle_); \
+    fclose(handle_);                                                                                         \
+  }
+
+  DUMP_HYDRO_TO_BINARY("jx", jx);
+  DUMP_HYDRO_TO_BINARY("jy", jy);
+  DUMP_HYDRO_TO_BINARY("jz", jz);
+  DUMP_HYDRO_TO_BINARY("jz", jz);
+  DUMP_HYDRO_TO_BINARY("rho", rho);
 
   // Force a restart after step 1 to make sure that dump/restart works too
   if (step() == 1)

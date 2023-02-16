@@ -1,5 +1,11 @@
 # Vector Particle-In-Cell (VPIC) Project
 
+Welcome to the legacy version of VPIC!  The new version of VPIC, based on the
+Kokkos performance portable framework, is available here:
+[https://github.com/lanl/vpic-kokkos](https://github.com/lanl/vpic-kokkos).
+This legacy version is no longer under active development, and new users are
+encouraged to use the Kokkos version.
+
 VPIC is a general purpose particle-in-cell simulation code for modeling
 kinetic plasmas in one, two, or three spatial dimensions. It employs a
 second-order, explicit, leapfrog algorithm to update charged particle

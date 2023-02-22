@@ -20,4 +20,5 @@ cmake \
   -DENABLE_UNIT_TESTS=ON \
   -DCMAKE_C_FLAGS="-rdynamic" \
   -DCMAKE_CXX_FLAGS="-rdynamic" \
+  -DUSE_HDF5=ON \
   $src_dir

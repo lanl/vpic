@@ -1,0 +1,140 @@
+begin_globals {
+};
+
+
+
+
+begin_initialization {
+  // Numerical settings
+  num_step = 2;
+  status_interval = 1000;                 // Basically don't print status
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  int gnx = nproc();
+  int gny = 2; // Would love to make this 1 as well, but then I get weird NaNs...
+  int gnz = 1;
+
+  int topox = nproc();
+  int topoy = 1;
+  int topoz = 1;
+
+  int nppc = 100;
+
+  // use natural PIC units
+  float ec   = 1;        // Charge normalization
+  float me   = 1;        // Mass normalization
+  float c    = 1;        // Speed of light
+  float de   = 1;        // Length normalization (electron inertial length)
+  float eps0 = 1;        // Permittivity of space
+
+  // physics settings
+  float dx     = 0.125; // d_e
+  float dt     = dx * 0.95/sqrt(3.0)/c;
+  float Lx     = dx * gnx;
+  float Ly     = dx * gny;
+  float Lz     = dx * gnz;
+
+  // Setup stuff in vpic
+  define_units(c, eps0);
+  define_timestep(dt);
+
+  define_periodic_grid(0,0,0,              // Low corner
+                       Lx,Ly,Lz,           // High corner
+                       gnx,gny,gnz,        // Resolution
+                       topox,topoy,topoz); // Topology
+
+  // Space is by default filled with first material defined
+  define_material("vacuum",1.0);
+
+  // Create the field array
+  define_field_array(NULL, 0.00);
+
+  // Just a homogeneous value in Bx
+  set_region_field(everywhere, 5., 6., 7., 17., 18., 19.);
+
+  // different random numbers on different ranks
+  seed_entropy(rank());
+
+  // Note: No particles. This is fine for field tests, but we need to come up
+  // with something better for tests of hydro output and particle dumps
+
+  // Deck only works if VPIC was build with HDF support. Check for that:
+  #ifndef VPIC_ENABLE_HDF5
+  #error "VPIC_ENABLE_HDF5" is required
+  #endif
+
+  // Explicitly enable HDF5 backend for IO dump
+  enable_hdf5_dump();
+}
+
+
+begin_diagnostics {
+// The equations are only evaluated inside the mesh-mapped region
+// (This is not strictly inside the region)
+#define set_region_field_loc( rgn,                                        \
+                          eqn_ex, eqn_ey, eqn_ez,                     \
+                          eqn_bx, eqn_by, eqn_bz ) do {               \
+    const double _x0 = grid->x0, _y0 = grid->y0, _z0 = grid->z0;      \
+    const double _dx = grid->dx, _dy = grid->dy, _dz = grid->dz;      \
+    const double _c  = grid->cvac;                                    \
+    const int    _nx = grid->nx, _ny = grid->ny, _nz = grid->nz;      \
+    for( int _k=0; _k<_nz+2; _k++ ) { const double _zl = _z0 + _dz*(_k-1.5), _ze = _z0 + _dz*(_k-1.0), _zc = _z0 + _dz*(_k-0.5); \
+    for( int _j=0; _j<_ny+2; _j++ ) { const double _yl = _y0 + _dy*(_j-1.5), _ye = _y0 + _dy*(_j-1.0), _yc = _y0 + _dy*(_j-0.5); field_t *_f = &field(0,_j,_k);  \
+    for( int _i=0; _i<_nx+2; _i++ ) { const double _xl = _x0 + _dx*(_i-1.5), _xe = _x0 + _dx*(_i-1.0), _xc = _x0 + _dx*(_i-0.5); double x, y, z; \
+          memset(_f, 0, sizeof(field_t)) ;  \
+          int _rccc, _rlcc, _rclc, _rllc, _rccl, _rlcl, _rcll;        \
+          x = _xc; y = _yc; z = _zc; _rccc = (rgn);                   \
+          x = _xl;                   _rlcc = (rgn);                   \
+          x = _xc; y = _yl;          _rclc = (rgn);                   \
+          x = _xl;                   _rllc = (rgn);                   \
+          x = _xc; y = _yc; z = _zl; _rccl = (rgn);                   \
+          x = _xl;                   _rlcl = (rgn);                   \
+          x = _xc; y = _yl;          _rcll = (rgn);                   \
+          x = _xc; y = _ye; z = _ze; if( _rccc || _rclc || _rccl || _rcll ) _f->ex  =  _i +  _j + _k ; \
+          x = _xe; y = _yc; z = _ze; if( _rccc || _rccl || _rlcc || _rlcl ) _f->ey  =  _i +  _j + _k ; \
+          x = _xe; y = _ye; z = _zc; if( _rccc || _rlcc || _rclc || _rllc ) _f->ez  =  _i +  _j + _k ; \
+          x = _xe; y = _yc; z = _zc; if( _rccc || _rlcc )                   _f->cbx =  _i +  _j + _k ; \
+          x = _xc; y = _ye; z = _zc; if( _rccc || _rclc )                   _f->cby =  _i +  _j + _k ; \
+          x = _xc; y = _yc; z = _ze; if( _rccc || _rccl )                   _f->cbz =  _i +  _j + _k ; \
+          printf("+++ ijk = (%d, %d, %d) ex = %f, ey = %f, ez = %f , tcaz = %f +++ \n", _i, _j, _k, _f->ex, _f->ey, _f->ez, _f->tcaz);  \
+         _f++;                                                       \
+    }}}                                                               \
+  } while(0)
+
+
+  // Write field output in every timestep
+  set_region_field_loc(everywhere, 5., 6., 7., 17., 18., 19.);
+  dump_fields("fields");
+
+  // Force a restart after step 1 to make sure that dump/restart works too
+  if(step() == 1) {
+      sim_log("Force restart");
+      dump_mkdir("restart0");
+      char fname[256];
+      sprintf(fname, "%s/restore.0.%i", "restart0", world_rank );
+      checkpt_objects(fname);
+      sim_log("Restart dump restart completed.");
+      mp_barrier();
+  }
+
+  // If we reach this in the last step without any fails we probably did well enough
+  if(step() == num_step) {
+    sim_log("passed");
+  }
+}
+
+begin_particle_injection {
+}
+
+begin_current_injection {
+}
+
+begin_field_injection {
+}
+
+begin_particle_collisions {
+}
+
+

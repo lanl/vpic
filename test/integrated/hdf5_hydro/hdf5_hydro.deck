@@ -1,0 +1,262 @@
+begin_globals{
+    // No globals required in this simulation
+};
+
+begin_initialization
+{
+
+// Deck only works if VPIC was build with HDF support. Check for that:
+#ifndef VPIC_ENABLE_HDF5
+#error "VPIC_ENABLE_HDF5" is required
+#endif
+
+  // Explicitly enable HDF5 backend for IO dump
+  enable_hdf5_dump();
+
+  // At this point, there is an empty grid and the random number generator is
+  // seeded with the rank. The grid, materials, species need to be defined.
+  // Then the initial non-zero fields need to be loaded at time level 0 and the
+  // particles (position and momentum both) need to be loaded at time level 0.
+
+  // Diagnostic messages can be passed written (usually to stderr)
+  sim_log("Computing simulation parameters");
+
+  // Define the system of units for this problem (natural units)
+  double L = 1;    // Length normalization
+  double ec = 1;   // Charge normalization
+  double me = 1;   // Mass normalization
+  double c = 1;    // Speed of light
+  double eps0 = 1; // Permittivity of space
+
+  // Numerical parameters
+  double Lx = 16 * L;    // How big should the box be in the x direction
+  double Ly = 16 * L;    // How big should the box be in the y direction
+  double Lz = 16 * L;    // How big should the box be in the z direction
+  double nx = 64;        // Global resolution in the x direction
+  double ny = 64;        // Global resolution in the y direction
+  double nz = 1;         // Global resolution in the z direction
+  double nppc = 64;      // Average number of macro particles per cell (both species combined!)
+  double cfl_req = 0.99; // How close to Courant should we try to run
+  double damp = 0.0;     // Level of radiation damping
+
+  // Determine the timestep
+  double dt = courant_length(Lx, Ly, Lz, nx, ny, nz); // Courant length
+
+  ////////////////////////////////////////
+  // Setup high level simulation parmeters
+
+  num_step = 1;
+  status_interval = 1;
+  sync_shared_interval = status_interval;
+  clean_div_e_interval = status_interval;
+  clean_div_b_interval = status_interval;
+
+  ///////////////////////////
+  // Setup the space and time
+
+  // Setup basic grid parameters
+  define_units(c, eps0);
+  define_timestep(dt);
+
+  // Parition a periodic box among the processors sliced uniformly along y
+  define_periodic_grid(0, 0, 0,        // Low corner
+                       Lx, Ly, Lz,     // High corner
+                       nx, ny, nz,     // Resolution
+                       1, nproc(), 1); // Topology
+
+  define_material("vacuum", 1);
+  // Note: define_material defaults to isotropic materials with mu=1,sigma=0
+  // Tensor electronic, magnetic and conductive materials are supported
+  // though. See "shapes" for how to define them and assign them to regions.
+  // Also, space is initially filled with the first material defined.
+
+  // If you pass NULL to define field array, the standard field array will
+  // be used (if damp is not provided, no radiation damping will be used).
+  define_field_array(NULL, damp);
+
+  ////////////////////
+  // Setup the species
+
+  const double np = 1.5 * nx * ny * nz / nproc(); // particle number
+  const double nm = -1;                           // Automatic amount of movers
+  const double sort_interval = 20;
+  const double sort_out_of_place = 1;
+  species_t *electron = define_species("electron", -ec, me, np, nm, sort_interval, sort_out_of_place);
+
+  ///////////////////////////////////////////////////
+  // Log diagnostic information about this simulation
+
+  sim_log("");
+  sim_log("System of units");
+  sim_log("L = " << L);
+  sim_log("ec = " << ec);
+  sim_log("me = " << me);
+  sim_log("c = " << c);
+  sim_log("eps0 = " << eps0);
+  sim_log("");
+  sim_log("Numerical parameters");
+  sim_log("num_step = " << num_step);
+  sim_log("dt = " << dt);
+  sim_log("Lx = " << Lx << ", Lx/L = " << Lx / L);
+  sim_log("Ly = " << Ly << ", Ly/L = " << Ly / L);
+  sim_log("Lz = " << Lz << ", Lz/L = " << Lz / L);
+  sim_log("nx = " << nx << ", dx = " << Lx / nx << ", L/dx = " << L * nx / Lx);
+  sim_log("ny = " << ny << ", dy = " << Ly / ny << ", L/dy = " << L * ny / Ly);
+  sim_log("nz = " << nz << ", dz = " << Lz / nz << ", L/dz = " << L * nz / Lz);
+  sim_log("nppc = " << nppc);
+  sim_log("damp = " << damp);
+  sim_log("");
+
+  ////////////////////////////
+  // Load fields and particles
+
+  sim_log("Loading fields");
+
+  set_region_field(everywhere, 0, 0, 0, // Electric field
+                   0, 0, 0);            // Magnetic field
+
+  sim_log("Loading particles");
+
+  int nparticle = 0;
+  for (int i = 0; i < grid->nx; i++)
+  {
+    for (int j = 0; j < grid->ny; j++)
+    {
+      for (int k = 0; k < grid->nz; k++)
+      {
+
+        float x = grid->x0 + (i + 0.5) * grid->dx;
+        float y = grid->y0 + (j + 0.5) * grid->dy;
+        float z = grid->z0 + (k + 0.5) * grid->dz;
+        float ux = y / Ly * 0.1 * c;
+        float uy = z / Lz * 0.1 * c;
+        float uz = x / Lx * 0.1 * c;
+        // std::cout << "y = " << y << " , y / Ly = " << y / Ly << ", ux = " << y / Ly * 0.1 * c << " (ijk) = " << i << ", " << j << ", " << k << "\n";
+
+        const double w = 1.;
+        const double age = 0.;
+        const int update_rhob = 1;
+        inject_particle(electron, x, y, z, ux, uy, uz, w, age, update_rhob);
+        nparticle++;
+      }
+    }
+  }
+
+  sim_log("Loaded " << nparticle << " electrons");
+  sim_log("We now have " << electron->np << " electrons");
+
+  // Upon completion of the initialization, the following occurs:
+  // - The synchronization error (tang E, norm B) is computed between domains
+  //   and tang E / norm B are synchronized by averaging where discrepancies
+  //   are encountered.
+  // - The initial divergence error of the magnetic field is computed and
+  //   one pass of cleaning is done (for good measure)
+  // - The bound charge density necessary to give the simulation an initially
+  //   clean divergence e is computed.
+  // - The particle momentum is uncentered from u_0 to u_{-1/2}
+  // - The user diagnostics are called on the initial state
+  // - The physics loop is started
+  //
+  // The physics loop consists of:
+  // - Advance particles from x_0,u_{-1/2} to x_1,u_{1/2}
+  // - User particle injection at x_{1-age}, u_{1/2} (use inject_particles)
+  // - User current injection (adjust field(x,y,z).jfx, jfy, jfz)
+  // - Advance B from B_0 to B_{1/2}
+  // - Advance E from E_0 to E_1
+  // - User field injection to E_1 (adjust field(x,y,z).ex,ey,ez,cbx,cby,cbz)
+  // - Advance B from B_{1/2} to B_1
+  // - (periodically) Divergence clean electric field
+  // - (periodically) Divergence clean magnetic field
+  // - (periodically) Synchronize shared tang e and norm b
+  // - Increment the time step
+  // - Call user diagnostics
+  // - (periodically) Print a status message
+}
+
+begin_diagnostics
+{
+  // sim_log(" \n\n\n here is new test \n\n\n");
+
+  // Hydro dumps store particle charge density, current density and
+  // stress-energy tensor. All these quantities are known at the time
+  // t = time().  All these quantities are accumulated trilinear
+  // node-centered. By default, species dump filenames are tagged with
+  // step(). However, if a "0" is added to the call, the filename will not
+  // be tagged. Note that the current density accumulated by this routine is
+  // purely diagnostic. It is not used by the simulation and it is not
+  // accumulated using a self-consistent charge-conserving method. Hydro dumps
+  // are in a binary format. Each rank makes a hydro dump.
+  dump_hydro("electron", "ehydro");
+
+  species_t *sp = find_species_name("electron", species_list);
+  clear_hydro_array(hydro_array);
+  accumulate_hydro_p(hydro_array, sp, interpolator_array);
+  synchronize_hydro_array(hydro_array);
+
+  float *temp_buf = (float *)malloc(sizeof(float) * (grid->nx) * (grid->ny) * (grid->nz));
+  size_t temp_buf_index = 0;
+
+#define DUMP_HYDRO_TO_BINARY(DSET_NAME, ATTRIBUTE_NAME)                                                      \
+  {                                                                                                          \
+    std::string fn;                                                                                          \
+    fn = "step" + std::to_string(step()) + "_rank" + std::to_string(rank()) + "_" + DSET_NAME + ".bin";      \
+    std::cout << fn << std::endl;                                                                            \
+    FILE *handle_ = fopen(fn.c_str(), "w");                                                                  \
+    temp_buf_index = 0;                                                                                      \
+    for (size_t i(1); i < grid->nx + 1; i++)                                                                 \
+    {                                                                                                        \
+      for (size_t j(1); j < grid->ny + 1; j++)                                                               \
+      {                                                                                                      \
+        for (size_t k(1); k < grid->nz + 1; k++)                                                             \
+        {                                                                                                    \
+          temp_buf[temp_buf_index] = _hydro(i, j, k).ATTRIBUTE_NAME;                                         \
+          temp_buf_index = temp_buf_index + 1;                                                               \
+        }                                                                                                    \
+      }                                                                                                      \
+    }                                                                                                        \
+    fwrite(reinterpret_cast<void *>(const_cast<float *>(temp_buf)), sizeof(float), temp_buf_index, handle_); \
+    fclose(handle_);                                                                                         \
+  }
+
+  DUMP_HYDRO_TO_BINARY("jx", jx);
+  DUMP_HYDRO_TO_BINARY("jy", jy);
+  DUMP_HYDRO_TO_BINARY("jz", jz);
+  DUMP_HYDRO_TO_BINARY("jz", jz);
+  DUMP_HYDRO_TO_BINARY("rho", rho);
+
+  // Force a restart after step 1 to make sure that dump/restart works too
+  if (step() == 1)
+  {
+    sim_log("Force restart");
+    dump_mkdir("restart0");
+    char fname[256];
+    sprintf(fname, "%s/restore.0.%i", "restart0", world_rank);
+    checkpt_objects(fname);
+    sim_log("Restart dump restart completed.");
+    mp_barrier();
+  }
+}
+
+begin_particle_injection
+{
+
+  // No particle injection for this simulation
+}
+
+begin_current_injection
+{
+
+  // No current injection for this simulation
+}
+
+begin_field_injection
+{
+
+  // No field injection for this simulation
+}
+
+begin_particle_collisions
+{
+
+  // No collisions for this simulation
+}

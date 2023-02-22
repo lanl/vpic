@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <cmath>
+#include <memory> // unique_ptr
 #include <functional>
 #include <cassert>
 #include <algorithm>
@@ -27,6 +28,7 @@
 #include "../util/bitfield.h"
 #include "../util/checksum.h"
 #include "../util/system.h"
+#include "dump_strategy.h"
 #include "dumpmacros.h"
 
 #ifndef USER_GLOBAL_SIZE
@@ -40,38 +42,39 @@
 
 typedef FileIO FILETYPE;
 
-const uint32_t all                      (0xffffffff);
-const uint32_t electric         (1<<0 | 1<<1 | 1<<2);
-const uint32_t div_e_err        (1<<3);
-const uint32_t magnetic         (1<<4 | 1<<5 | 1<<6);
-const uint32_t div_b_err        (1<<7);
-const uint32_t tca                      (1<<8 | 1<<9 | 1<<10);
-const uint32_t rhob                     (1<<11);
-const uint32_t current          (1<<12 | 1<<13 | 1<<14);
-const uint32_t rhof                     (1<<15);
-const uint32_t emat                     (1<<16 | 1<<17 | 1<<18);
-const uint32_t nmat                     (1<<19);
-const uint32_t fmat                     (1<<20 | 1<<21 | 1<<22);
-const uint32_t cmat                     (1<<23);
+const uint32_t all(0xffffffff);
+const uint32_t electric(1 << 0 | 1 << 1 | 1 << 2);
+const uint32_t div_e_err(1 << 3);
+const uint32_t magnetic(1 << 4 | 1 << 5 | 1 << 6);
+const uint32_t div_b_err(1 << 7);
+const uint32_t tca(1 << 8 | 1 << 9 | 1 << 10);
+const uint32_t rhob(1 << 11);
+const uint32_t current(1 << 12 | 1 << 13 | 1 << 14);
+const uint32_t rhof(1 << 15);
+const uint32_t emat(1 << 16 | 1 << 17 | 1 << 18);
+const uint32_t nmat(1 << 19);
+const uint32_t fmat(1 << 20 | 1 << 21 | 1 << 22);
+const uint32_t cmat(1 << 23);
 
 const size_t total_field_variables(24);
 const size_t total_field_groups(12); // this counts vectors, tensors etc...
 // These bits will be tested to determine which variables to output
-const size_t field_indeces[12] = { 0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23 };
+const size_t field_indeces[12] = {0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23};
 
-struct FieldInfo {
-        char name[128];
-        char degree[128];
-        char elements[128];
-        char type[128];
-        size_t size;
+struct FieldInfo
+{
+  char name[128];
+  char degree[128];
+  char elements[128];
+  char type[128];
+  size_t size;
 }; // struct FieldInfo
 
-const uint32_t current_density  (1<<0 | 1<<1 | 1<<2);
-const uint32_t charge_density   (1<<3);
-const uint32_t momentum_density (1<<4 | 1<<5 | 1<<6);
-const uint32_t ke_density               (1<<7);
-const uint32_t stress_tensor    (1<<8 | 1<<9 | 1<<10 | 1<<11 | 1<<12 | 1<<13);
+const uint32_t current_density(1 << 0 | 1 << 1 | 1 << 2);
+const uint32_t charge_density(1 << 3);
+const uint32_t momentum_density(1 << 4 | 1 << 5 | 1 << 6);
+const uint32_t ke_density(1 << 7);
+const uint32_t stress_tensor(1 << 8 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13);
 /* May want to use these instead
 const uint32_t stress_diagonal          (1<<8 | 1<<9 | 1<<10);
 const uint32_t stress_offdiagonal       (1<<11 | 1<<12 | 1<<13);
@@ -80,20 +83,22 @@ const uint32_t stress_offdiagonal       (1<<11 | 1<<12 | 1<<13);
 const size_t total_hydro_variables(14);
 const size_t total_hydro_groups(5); // this counts vectors, tensors etc...
 // These bits will be tested to determine which variables to output
-const size_t hydro_indeces[5] = { 0, 3, 4, 7, 8 };
+const size_t hydro_indeces[5] = {0, 3, 4, 7, 8};
 
-struct HydroInfo {
-        char name[128];
-        char degree[128];
-        char elements[128];
-        char type[128];
-        size_t size;
+struct HydroInfo
+{
+  char name[128];
+  char degree[128];
+  char elements[128];
+  char type[128];
+  size_t size;
 }; // struct FieldInfo
 
 /*----------------------------------------------------------------------------
  * DumpFormat Enumeration
 ----------------------------------------------------------------------------*/
-enum DumpFormat {
+enum DumpFormat
+{
   band = 0,
   band_interleave = 1
 }; // enum DumpFormat
@@ -101,9 +106,11 @@ enum DumpFormat {
 /*----------------------------------------------------------------------------
  * DumpParameters Struct
 ----------------------------------------------------------------------------*/
-struct DumpParameters {
+struct DumpParameters
+{
 
-  void output_variables(uint32_t mask) {
+  void output_variables(uint32_t mask)
+  {
     output_vars.set(mask);
   } // output_variables
 
@@ -121,81 +128,95 @@ struct DumpParameters {
 
 }; // struct DumpParameters
 
-// TODO: should this be an enum?
-namespace dump_type {
-  const int grid_dump = 0;
-  const int field_dump = 1;
-  const int hydro_dump = 2;
-  const int particle_dump = 3;
-  const int restart_dump = 4;
-  const int history_dump = 5;
-} // namespace
-
-
-class vpic_simulation {
+class vpic_simulation
+{
 public:
   vpic_simulation();
   ~vpic_simulation();
-  void initialize( int argc, char **argv );
-  void modify( const char *fname );
-  int advance( void );
-  void finalize( void );
+  void initialize(int argc, char **argv);
+  void modify(const char *fname);
+  int advance(void);
+  void finalize(void);
 
-  #ifdef VPIC_GLOBAL_PARTICLE_ID
+  // TODO: decide if I should collapse this to an enum
+  // An enum would stop these ifdefs being so leaky
+  void enable_binary_dump();
+#ifdef VPIC_ENABLE_HDF5
+  void enable_hdf5_dump();
+#endif
+#ifdef VPIC_ENABLE_OPENPMD
+  void enable_openpmd_dump();
+#endif
+
+  // TODO: remake these protected
+
+  // Very likely a user will forgot to delete this if they change the strategy,
+  // a smart ptr will save us from the small leak
+  // std::unique_ptr<Dump_Strategy> dump_strategy;
+  Dump_Strategy *dump_strategy;
+  int num_step = 1;                                       // Number of steps to take
+  DumpStrategyID dump_strategy_id = DUMP_STRATEGY_BINARY; // 0 : binary; 1: HDF5; 2: OpenPMD
+#ifdef VPIC_GLOBAL_PARTICLE_ID
   // TODO: move these somewhere more sensible
-  int predicate_count(species_t* sp, std::function <bool (int)> f);
-  int predicate_count(species_t* sp, std::function <bool (particle_t)> f);
+  int predicate_count(species_t *sp, std::function<bool(int)> f);
+  int predicate_count(species_t *sp, std::function<bool(particle_t)> f);
 
   // TOOD: those specialized in together should probably be wrapped in a class
-  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (int)> f);
-  void predicate_copy(species_t* sp_from, species_t* sp_to, std::function <bool (particle_t)> f);
-  #endif
+  void predicate_copy(species_t *sp_from, species_t *sp_to, std::function<bool(int)> f);
+  void predicate_copy(species_t *sp_from, species_t *sp_to, std::function<bool(particle_t)> f);
+#endif
 
 protected:
-
   // Directly initialized by user
 
-  int verbose;              // Should system be verbose
-  int num_step;             // Number of steps to take
-  int num_comm_round;       // Num comm round
-  int status_interval;      // How often to print status messages
-  int clean_div_e_interval; // How often to clean div e
-  int num_div_e_round;      // How many clean div e rounds per div e interval
-  int clean_div_b_interval; // How often to clean div b
-  int num_div_b_round;      // How many clean div b rounds per div b interval
-  int sync_shared_interval; // How often to synchronize shared faces
+  int verbose = 1;         // Should system be verbose
+  int num_comm_round = 3;  // Num comm round
+  int status_interval = 0; // How often to print status messages
+
+  int clean_div_e_interval = 0; // How often to clean div e
+  int num_div_e_round = 2;      // How many clean div e rounds per div e interval
+
+  int clean_div_b_interval = 0; // How often to clean div b
+  int num_div_b_round = 2;      // How many clean div b rounds per div b interval
+
+  int sync_shared_interval = 0; // How often to synchronize shared faces
 
   // FIXME: THESE INTERVALS SHOULDN'T BE PART OF vpic_simulation
   // THE BIG LIST FOLLOWING IT SHOULD BE CLEANED UP TOO
 
-  double quota;
-  int checkpt_interval;
-  int hydro_interval;
-  int field_interval;
-  int particle_interval;
+  double quota = 0;
+  int checkpt_interval = 0;
+  int hydro_interval = 0;
+  int field_interval = 0;
+  int particle_interval = 0;
 
-  size_t nxout, nyout, nzout;
-  size_t px, py, pz;
-  float dxout, dyout, dzout;
+  // TODO: these can probably now be removed, as they should only be used by dump?
+  // TODO: check if any decks used them
+  // size_t nxout, nyout, nzout;
+  // float dxout, dyout, dzout;
 
-  int ndfld;
-  int ndhyd;
-  int ndpar;
-  int ndhis;
-  int ndgrd;
-  int head_option;
-  int istride;
-  int jstride;
-  int kstride;
-  int stride_option;
-  int pstride;
-  int nprobe;
+  size_t px = 0;
+  size_t py = 0;
+  size_t pz = 0;
+
+  int ndfld = 0;
+  int ndhyd = 0;
+  int ndpar = 0;
+  int ndhis = 0;
+  int ndgrd = 0;
+  int head_option = 0;
+  int istride = 0;
+  int jstride = 0;
+  int kstride = 0;
+  int stride_option = 0;
+  int pstride = 0;
+  int nprobe = 0;
   int ijkprobe[NVARHISMX][4];
   float xyzprobe[NVARHISMX][3];
-  int block_dump;
-  int stepdigit;
-  int rankdigit;
-  int ifenergies;
+  int block_dump = 0;
+  int stepdigit = 0;
+  int rankdigit = 0;
+  int ifenergies = 0;
 
   // Helper initialized by user
 
@@ -205,21 +226,21 @@ protected:
      random numbers.  Keeping the synchronous generators in sync is
      the generator users responsibility. */
 
-  rng_pool_t           * entropy;            // Local entropy pool
-  rng_pool_t           * sync_entropy;       // Synchronous entropy pool
-  grid_t               * grid;               // define_*_grid et al
-  material_t           * material_list;      // define_material
-  field_array_t        * field_array;        // define_field_array
-  interpolator_array_t * interpolator_array; // define_interpolator_array
-  accumulator_array_t  * accumulator_array;  // define_accumulator_array
-  hydro_array_t        * hydro_array;        // define_hydro_array
-  species_t            * species_list;       // define_species /
-                                             // species helpers
-  particle_bc_t        * particle_bc_list;   // define_particle_bc /
-                                             // boundary helpers
-  emitter_t            * emitter_list;       // define_emitter /
-                                             // emitter helpers
-  collision_op_t       * collision_op_list;  // collision helpers
+  rng_pool_t *entropy;                      // Local entropy pool
+  rng_pool_t *sync_entropy;                 // Synchronous entropy pool
+  grid_t *grid;                             // define_*_grid et al
+  material_t *material_list = NULL;         // define_material
+  field_array_t *field_array;               // define_field_array
+  interpolator_array_t *interpolator_array; // define_interpolator_array
+  accumulator_array_t *accumulator_array;   // define_accumulator_array
+  hydro_array_t *hydro_array;               // define_hydro_array
+  species_t *species_list = NULL;           // define_species /
+                                            // species helpers
+  particle_bc_t *particle_bc_list = NULL;   // define_particle_bc /
+                                            // boundary helpers
+  emitter_t *emitter_list = NULL;           // define_emitter /
+                                            // emitter helpers
+  collision_op_t *collision_op_list = NULL; // collision helpers
 
   // User defined checkpt preserved variables
   // Note: user_global is aliased with user_global_t (see deck_wrapper.cxx)
@@ -236,208 +257,200 @@ protected:
    ---------------------------------------------------------------------------*/
 #if defined(ENABLE_OPENSSL)
   void output_checksum_fields();
-  void checksum_fields(CheckSum & cs);
-  void output_checksum_species(const char * species);
-  void checksum_species(const char * species, CheckSum & cs);
+  void checksum_fields(CheckSum &cs);
+  void output_checksum_species(const char *species);
+  void checksum_species(const char *species, CheckSum &cs);
 #endif // ENABLE_OPENSSL
 
-  void print_available_ram() {
+  void print_available_ram()
+  {
     SystemRAM::print_available();
   } // print_available_ram
 
   ///////////////
   // Dump helpers
 
-  int dump_mkdir(const char * dname);
-  int dump_cwd(char * dname, size_t size);
+  static int dump_mkdir(const char *dname);
+  int dump_cwd(char *dname, size_t size);
 
   // Text dumps
-  void dump_energies( const char *fname, int append = 1 );
-  void dump_materials( const char *fname );
-  void dump_species( const char *fname );
+  void dump_energies(const char *fname, int append = 1);
+  void dump_materials(const char *fname);
+  void dump_species(const char *fname);
 
   // Binary dumps
-  void dump_grid( const char *fbase );
-  void dump_fields( const char *fbase,
-		    int fname_tag = 1,
-		    field_t *f = NULL );
-  void dump_hydro( const char *sp_name,
-		   const char *fbase,
-                   int fname_tag = 1,
-		   hydro_t *h = NULL );
-  void dump_particles( const char *sp_name,
-		       const char *fbase,
-                       int fname_tag = 1 );
+  void dump_grid(const char *fbase);
 
+  void dump_fields(const char *fbase, int fname_tag = 1);
+
+  void dump_hydro(const char *sp_name, const char *fbase,
+                  int fname_tag = 1);
+
+  void dump_particles(const char *sp_name, const char *fbase,
+                      int fname_tag = 1);
 
 #ifdef VPIC_GLOBAL_PARTICLE_ID
-// TODO: merge back down to one function
-// TODO: template out the functor type
-// TODO: find a way to specify if we want to predicate on particle array, or
-// particle index
-  template<typename Predicate>
+  // TODO: merge back down to one function
+  // TODO: template out the functor type
+  // TODO: find a way to specify if we want to predicate on particle array, or
+  // particle index
+  template <typename Predicate>
   void dump_particles_predicate(
       const char *sp_name,
       const char *fbase,
       int ftag,
-      //const std::function <bool (int)>& f = nullptr
-      //const std::function <bool (particle_t)>& f = nullptr
-      const Predicate& f
-  )
+      // const std::function <bool (int)>& f = nullptr
+      // const std::function <bool (particle_t)>& f = nullptr
+      const Predicate &f)
   {
-      species_t *sp;
-      char fname[256];
-      FileIO fileIO;
-      int dim[2], buf_start;
-      static particle_t * ALIGNED(128) p_buf = NULL;
-# define PBUF_SIZE 32768 // 1MB of particles
+    species_t *sp;
+    char fname[256];
+    FileIO fileIO;
+    int dim[2], buf_start;
+    static particle_t *ALIGNED(128) p_buf = NULL;
+#define PBUF_SIZE 32768 // 1MB of particles
 
-      sp = find_species_name( sp_name, species_list );
-      if( !sp ) ERROR(( "Invalid species name \"%s\".", sp_name ));
+    sp = find_species_name(sp_name, species_list);
+    if (!sp)
+      ERROR(("Invalid species name \"%s\".", sp_name));
 
-      if( !fbase ) ERROR(( "Invalid filename" ));
+    if (!fbase)
+      ERROR(("Invalid filename"));
 
-      if( !p_buf ) MALLOC_ALIGNED( p_buf, PBUF_SIZE, 128 );
+    if (!p_buf)
+      MALLOC_ALIGNED(p_buf, PBUF_SIZE, 128);
 
-      if( rank()==0 )
-          MESSAGE(("Dumping \"%s\" particles to \"%s\"",sp->name,fbase));
+    if (rank() == 0)
+      MESSAGE(("Dumping \"%s\" particles to \"%s\"", sp->name, fbase));
 
-      if( ftag ) sprintf( fname, "%s.%li.%i", fbase, (long)step(), rank() );
-      else       sprintf( fname, "%s.%i", fbase, rank() );
-      FileIOStatus status = fileIO.open(fname, io_write);
-      if( status==fail ) ERROR(( "Could not open \"%s\"", fname ));
+    if (ftag)
+      sprintf(fname, "%s.%li.%i", fbase, (long)step(), rank());
+    else
+      sprintf(fname, "%s.%i", fbase, rank());
+    FileIOStatus status = fileIO.open(fname, io_write);
+    if (status == fail)
+      ERROR(("Could not open \"%s\"", fname));
 
-      /* IMPORTANT: these values are written in WRITE_HEADER_V0 */
-      nxout = grid->nx;
-      nyout = grid->ny;
-      nzout = grid->nz;
-      dxout = grid->dx;
-      dyout = grid->dy;
-      dzout = grid->dz;
+    int count_true = predicate_count(sp, f);
+    std::cout << "copying " << count_true << " of " << sp->np << std::endl;
 
-      WRITE_HEADER_V0( dump_type::particle_dump, sp->id, sp->q/sp->m, step(), fileIO );
+    dim[0] = count_true;
+    WRITE_ARRAY_HEADER(p_buf, 1, dim, fileIO);
 
-      int count_true = predicate_count(sp, f);
-      std::cout << "copying " << count_true << " of " << sp->np << std::endl;
+    // Copy a PBUF_SIZE hunk of the particle list into the particle
+    // buffer, timecenter it and write it out. This is done this way to
+    // guarantee the particle list unchanged while not requiring too
+    // much memory.
 
+    // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
+    // LARGE.
+
+    // Make a second species array, and space to hold the IDs too
+    particle_t *ALIGNED(128) _p;
+    size_t *ALIGNED(128) _p_id;
+    MALLOC_ALIGNED(_p, count_true, 128);
+    MALLOC_ALIGNED(_p_id, count_true, 128);
+#ifdef VPIC_PARTICLE_ANNOTATION
+    typedef VPIC_PARTICLE_ANNOTATION annotation_t;
+    annotation_t *ALIGNED(128) _p_annotation = nullptr;
+    if (sp->has_annotation)
+    {
+      MALLOC_ALIGNED(_p_annotation, count_true * sp->has_annotation, 128);
+    }
+#endif
+
+    species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
+    _sp.p = _p;
+    _sp.np = count_true;
+    _sp.p_id = _p_id;
+#ifdef VPIC_PARTICLE_ANNOTATION
+    _sp.has_annotation = sp->has_annotation;
+    _sp.p_annotation = _p_annotation;
+#endif
+
+    // TODO: why do we need to update max_np?
+    _sp.max_np = PBUF_SIZE;
+
+    // Copy the right particles over, that meet the predicate
+    predicate_copy(sp, &_sp, f);
+
+    // Use that instead below
+    for (buf_start = 0; buf_start < count_true; buf_start += PBUF_SIZE)
+    {
+      _sp.np = count_true - buf_start;
+
+      if (_sp.np > PBUF_SIZE)
+      {
+        _sp.np = PBUF_SIZE;
+      }
+
+      // COPY( _sp.p, &sp_p[buf_start], _sp.np );
+
+      center_p(&_sp, interpolator_array);
+
+      fileIO.write(_p, _sp.np);
+    }
+
+    // append ID array at the end of the file
+    if (sp->has_ids)
+    {
       dim[0] = count_true;
-      WRITE_ARRAY_HEADER( p_buf, 1, dim, fileIO );
+      WRITE_ARRAY_HEADER(sp->p_id, 1, dim, fileIO);
+      // Maybe do this write in batches of PBUF_SIZE as well
+      fileIO.write(_sp.p_id, count_true);
+    }
+#ifdef VPIC_PARTICLE_ANNOTATION
+    // append annotation buffer at the end of the file
+    if (sp->has_annotation)
+    {
+      dim[0] = count_true;
+      dim[1] = sp->has_annotation;
+      WRITE_ARRAY_HEADER(sp->p_annotation, 2, dim, fileIO);
+      // Maybe do this write in batches of PBUF_SIZE as well
+      fileIO.write(_sp.p_annotation, count_true * sp->has_annotation);
+    }
+#endif
 
-      // Copy a PBUF_SIZE hunk of the particle list into the particle
-      // buffer, timecenter it and write it out. This is done this way to
-      // guarantee the particle list unchanged while not requiring too
-      // much memory.
+    // Free the particle array and ID array (sp done by scope)
+    FREE_ALIGNED(_p);
+    FREE_ALIGNED(_p_id);
+#ifdef VPIC_PARTICLE_ANNOTATION
+    FREE_ALIGNED(_p_annotation);
+#endif
 
-      // FIXME: WITH A PIPELINED CENTER_P, PBUF NOMINALLY SHOULD BE QUITE
-      // LARGE.
-
-      // Make a second species array, and space to hold the IDs too
-      particle_t* ALIGNED(128) _p;
-      size_t*     ALIGNED(128) _p_id;
-      MALLOC_ALIGNED( _p,    count_true, 128 );
-      MALLOC_ALIGNED( _p_id, count_true, 128 );
-      #ifdef VPIC_PARTICLE_ANNOTATION
-        typedef VPIC_PARTICLE_ANNOTATION annotation_t;
-        annotation_t*    ALIGNED(128) _p_annotation = nullptr;
-        if(sp->has_annotation) {
-          MALLOC_ALIGNED( _p_annotation, count_true*sp->has_annotation, 128);
-        }
-      #endif
-
-      species_t _sp = *sp; // FIXME: Is this copy careful/safe enough?
-      _sp.p = _p;
-      _sp.np = count_true;
-      _sp.p_id = _p_id;
-      #ifdef VPIC_PARTICLE_ANNOTATION
-      _sp.has_annotation = sp->has_annotation;
-      _sp.p_annotation = _p_annotation;
-      #endif
-
-      // TODO: why do we need to update max_np?
-      _sp.max_np = PBUF_SIZE;
-
-      // Copy the right particles over, that meet the predicate
-      predicate_copy(sp, &_sp, f);
-
-      // Use that instead below
-      for( buf_start=0; buf_start<count_true; buf_start += PBUF_SIZE ) {
-          _sp.np = count_true-buf_start;
-
-          if( _sp.np > PBUF_SIZE ) {
-              _sp.np = PBUF_SIZE;
-          }
-
-          //COPY( _sp.p, &sp_p[buf_start], _sp.np );
-
-          center_p( &_sp, interpolator_array );
-
-          fileIO.write( _p, _sp.np );
-      }
-
-      // append ID array at the end of the file
-      if(sp->has_ids) {
-          dim[0] = count_true;
-          WRITE_ARRAY_HEADER( sp->p_id, 1, dim, fileIO );
-          // Maybe do this write in batches of PBUF_SIZE as well
-          fileIO.write(_sp.p_id, count_true);
-      }
-      #ifdef VPIC_PARTICLE_ANNOTATION
-      // append annotation buffer at the end of the file
-      if(sp->has_annotation) {
-          dim[0] = count_true;
-          dim[1] = sp->has_annotation;
-          WRITE_ARRAY_HEADER( sp->p_annotation, 2, dim, fileIO );
-          // Maybe do this write in batches of PBUF_SIZE as well
-          fileIO.write(_sp.p_annotation, count_true*sp->has_annotation);
-      }
-      #endif
-
-      // Free the particle array and ID array (sp done by scope)
-      FREE_ALIGNED( _p );
-      FREE_ALIGNED( _p_id );
-      #ifdef VPIC_PARTICLE_ANNOTATION
-      FREE_ALIGNED( _p_annotation );
-      #endif
-
-      if( fileIO.close() ) ERROR(("File close failed on dump particles!!!"));
+    if (fileIO.close())
+      ERROR(("File close failed on dump particles!!!"));
   }
 #endif
 
-
-
   // convenience functions for simlog output
-  void create_field_list(char * strlist, DumpParameters & dumpParams);
-  void create_hydro_list(char * strlist, DumpParameters & dumpParams);
+  void create_field_list(char *strlist, DumpParameters &dumpParams);
+  void create_hydro_list(char *strlist, DumpParameters &dumpParams);
 
-  void print_hashed_comment(FileIO & fileIO, const char * comment);
-  void global_header(const char * base,
-        std::vector<DumpParameters *> dumpParams);
+  void print_hashed_comment(FileIO &fileIO, const char *comment);
+  void global_header(const char *base,
+                     std::vector<DumpParameters *> dumpParams);
 
-  void field_header(const char * fbase, DumpParameters & dumpParams);
-  void hydro_header(const char * speciesname, const char * hbase,
-    DumpParameters & dumpParams);
+  void field_header(const char *fbase, DumpParameters &dumpParams);
+  void hydro_header(const char *speciesname, const char *hbase,
+                    DumpParameters &dumpParams);
 
-  void field_dump( DumpParameters & dumpParams,
-		   field_t *f = NULL,
-                   int64_t userStep = -1 );
-  void hydro_dump( const char *speciesname,
-		   DumpParameters & dumpParams,
-		   hydro_t *h = NULL,
-                   int64_t userStep = -1 );
+  void field_dump(DumpParameters &dumpParams);
+  void hydro_dump(const char *speciesname, DumpParameters &dumpParams);
 
-  void init_buffered_particle_dump(const char * speciesname, const int N_timesteps, const double safety_factor = 2.0);
-  void accumulate_buffered_particle_dump(const char * speciesname, const int frame);
-  void write_buffered_particle_dump(const char * dname, const char * speciesname);
-  void clear_buffered_particle_dump(const char * speciesname);
+  void init_buffered_particle_dump(const char *speciesname, const int N_timesteps, const double safety_factor = 2.0);
+  void accumulate_buffered_particle_dump(const char *speciesname, const int frame);
+  void write_buffered_particle_dump(const char *dname, const char *speciesname);
+  void clear_buffered_particle_dump(const char *speciesname);
 
-  #ifdef VPIC_PARTICLE_ANNOTATION
-  void interpolate_fields_annotation(const char * sp_name, const interpolator_array_t * ia, int where_ex, int where_ey, int where_ez, int where_bx, int where_by, int where_bz);
-  void interpolate_hydro_annotation(const char * sp_name, const hydro_array_t * ha,
-                                    int where_jx,  int where_jy,  int where_jz,  int where_rho,
-                                    int where_px,  int where_py,  int where_pz,  int where_ke,
+#ifdef VPIC_PARTICLE_ANNOTATION
+  void interpolate_fields_annotation(const char *sp_name, const interpolator_array_t *ia, int where_ex, int where_ey, int where_ez, int where_bx, int where_by, int where_bz);
+  void interpolate_hydro_annotation(const char *sp_name, const hydro_array_t *ha,
+                                    int where_jx, int where_jy, int where_jz, int where_rho,
+                                    int where_px, int where_py, int where_pz, int where_ke,
                                     int where_txx, int where_tyy, int where_tzz,
                                     int where_tyz, int where_tzx, int where_txy);
-  #endif
+#endif
 
   ///////////////////
   // Useful accessors
@@ -446,57 +459,68 @@ protected:
   barrier() { mp_barrier(); }
 
   inline double
-  time() {
-    return grid->t0 + (double)grid->dt*(double)grid->step;
+  time()
+  {
+    return grid->t0 + (double)grid->dt * (double)grid->step;
   }
 
   inline int64_t &
-  step() {
-   return grid->step;
+  step()
+  {
+    return grid->step;
   }
 
   inline field_t &
-  field( const int v ) {
-    return field_array->f[ v ];
+  field(const int v)
+  {
+    return field_array->f[v];
   }
 
   inline int
-  voxel( const int ix, const int iy, const int iz ) {
-    return ix + grid->sy*iy + grid->sz*iz;
+  voxel(const int ix, const int iy, const int iz)
+  {
+    return ix + grid->sy * iy + grid->sz * iz;
   }
 
   inline field_t &
-  field( const int ix, const int iy, const int iz ) {
-    return field_array->f[ voxel(ix,iy,iz) ];
+  field(const int ix, const int iy, const int iz)
+  {
+    return field_array->f[voxel(ix, iy, iz)];
   }
 
   inline interpolator_t &
-  interpolator( const int v ) {
-    return interpolator_array->i[ v ];
+  interpolator(const int v)
+  {
+    return interpolator_array->i[v];
   }
 
   inline interpolator_t &
-  interpolator( const int ix, const int iy, const int iz ) {
-    return interpolator_array->i[ voxel(ix,iy,iz) ];
+  interpolator(const int ix, const int iy, const int iz)
+  {
+    return interpolator_array->i[voxel(ix, iy, iz)];
   }
 
   inline hydro_t &
-  hydro( const int v ) {
-    return hydro_array->h[ v ];
+  hydro(const int v)
+  {
+    return hydro_array->h[v];
   }
 
   inline hydro_t &
-  hydro( const int ix, const int iy, const int iz ) {
-    return hydro_array->h[ voxel(ix,iy,iz) ];
+  hydro(const int ix, const int iy, const int iz)
+  {
+    return hydro_array->h[voxel(ix, iy, iz)];
   }
 
   inline rng_t *
-  rng( const int n ) {
+  rng(const int n)
+  {
     return entropy->rng[n];
   }
 
   inline rng_t *
-  sync_rng( const int n ) {
+  sync_rng(const int n)
+  {
     return sync_entropy->rng[n];
   }
 
@@ -504,16 +528,18 @@ protected:
   // Grid helpers
 
   inline void
-  define_units( float cvac,
-                float eps0 ) {
+  define_units(float cvac,
+               float eps0)
+  {
     grid->cvac = cvac;
     grid->eps0 = eps0;
   }
 
   inline void
-  define_timestep( float dt, double t0 = 0, int64_t step = 0 ) {
-    grid->t0   = t0;
-    grid->dt   = (float)dt;
+  define_timestep(float dt, double t0 = 0, int64_t step = 0)
+  {
+    grid->t0 = t0;
+    grid->dt = (float)dt;
     grid->step = step;
   }
 
@@ -521,99 +547,118 @@ protected:
   // simple boundary conditions on the edges.
 
   inline void
-  define_periodic_grid( double xl,  double yl,  double zl,
-                        double xh,  double yh,  double zh,
+  define_periodic_grid(double xl, double yl, double zl,
+                       double xh, double yh, double zh,
+                       double gnx, double gny, double gnz,
+                       double gpx, double gpy, double gpz)
+  {
+    px = size_t(gpx);
+    py = size_t(gpy);
+    pz = size_t(gpz);
+    partition_periodic_box(grid, xl, yl, zl, xh, yh, zh,
+                           (int)gnx, (int)gny, (int)gnz,
+                           (int)gpx, (int)gpy, (int)gpz);
+  }
+
+  inline void
+  define_absorbing_grid(double xl, double yl, double zl,
+                        double xh, double yh, double zh,
                         double gnx, double gny, double gnz,
-                        double gpx, double gpy, double gpz ) {
-        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
-    partition_periodic_box( grid, xl, yl, zl, xh, yh, zh,
+                        double gpx, double gpy, double gpz, int pbc)
+  {
+    px = size_t(gpx);
+    py = size_t(gpy);
+    pz = size_t(gpz);
+    partition_absorbing_box(grid, xl, yl, zl, xh, yh, zh,
                             (int)gnx, (int)gny, (int)gnz,
-                            (int)gpx, (int)gpy, (int)gpz );
+                            (int)gpx, (int)gpy, (int)gpz,
+                            pbc);
   }
 
   inline void
-  define_absorbing_grid( double xl,  double yl,  double zl,
-                         double xh,  double yh,  double zh,
+  define_reflecting_grid(double xl, double yl, double zl,
+                         double xh, double yh, double zh,
                          double gnx, double gny, double gnz,
-                         double gpx, double gpy, double gpz, int pbc ) {
-        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
-    partition_absorbing_box( grid, xl, yl, zl, xh, yh, zh,
-                             (int)gnx, (int)gny, (int)gnz,
-                             (int)gpx, (int)gpy, (int)gpz,
-                             pbc );
-  }
-
-  inline void
-  define_reflecting_grid( double xl,  double yl,  double zl,
-                          double xh,  double yh,  double zh,
-                          double gnx, double gny, double gnz,
-                          double gpx, double gpy, double gpz ) {
-        px = size_t(gpx); py = size_t(gpy); pz = size_t(gpz);
-    partition_metal_box( grid, xl, yl, zl, xh, yh, zh,
-                         (int)gnx, (int)gny, (int)gnz,
-                         (int)gpx, (int)gpy, (int)gpz );
+                         double gpx, double gpy, double gpz)
+  {
+    px = size_t(gpx);
+    py = size_t(gpy);
+    pz = size_t(gpz);
+    partition_metal_box(grid, xl, yl, zl, xh, yh, zh,
+                        (int)gnx, (int)gny, (int)gnz,
+                        (int)gpx, (int)gpy, (int)gpz);
   }
 
   // The below macros allow custom domains to be created
 
   // Creates a particle reflecting metal box in the local domain
   inline void
-  size_domain( double lnx, double lny, double lnz ) {
-    size_grid(grid,(int)lnx,(int)lny,(int)lnz);
+  size_domain(double lnx, double lny, double lnz)
+  {
+    size_grid(grid, (int)lnx, (int)lny, (int)lnz);
   }
 
   // Attaches a local domain boundary to another domain
-  inline void join_domain( int boundary, double rank ) {
-    join_grid( grid, boundary, (int)rank );
+  inline void join_domain(int boundary, double rank)
+  {
+    join_grid(grid, boundary, (int)rank);
   }
 
   // Sets the field boundary condition of a local domain boundary
-  inline void set_domain_field_bc( int boundary, int fbc ) {
-    set_fbc( grid, boundary, fbc );
+  inline void set_domain_field_bc(int boundary, int fbc)
+  {
+    set_fbc(grid, boundary, fbc);
   }
 
   // Sets the particle boundary condition of a local domain boundary
-  inline void set_domain_particle_bc( int boundary, int pbc ) {
-    set_pbc( grid, boundary, pbc );
+  inline void set_domain_particle_bc(int boundary, int pbc)
+  {
+    set_pbc(grid, boundary, pbc);
   }
 
   ///////////////////
   // Material helpers
 
   inline material_t *
-  define_material( const char * name,
-                   double eps,
-                   double mu = 1,
-                   double sigma = 0,
-                   double zeta = 0 ) {
-    return append_material( material( name,
-                                      eps,   eps,   eps,
-                                      mu,    mu,    mu,
-                                      sigma, sigma, sigma,
-                                      zeta,  zeta,  zeta ), &material_list );
+  define_material(const char *name,
+                  double eps,
+                  double mu = 1,
+                  double sigma = 0,
+                  double zeta = 0)
+  {
+    return append_material(material(name,
+                                    eps, eps, eps,
+                                    mu, mu, mu,
+                                    sigma, sigma, sigma,
+                                    zeta, zeta, zeta),
+                           &material_list);
   }
 
   inline material_t *
-  define_material( const char * name,
-                   double epsx,        double epsy,       double epsz,
-                   double mux,         double muy,        double muz,
-                   double sigmax,      double sigmay,     double sigmaz,
-                   double zetax = 0 ,  double zetay = 0,  double zetaz = 0 ) {
-    return append_material( material( name,
-                                      epsx,   epsy,   epsz,
-                                      mux,    muy,    muz,
-                                      sigmax, sigmay, sigmaz,
-                                      zetax,  zetay,  zetaz ), &material_list );
+  define_material(const char *name,
+                  double epsx, double epsy, double epsz,
+                  double mux, double muy, double muz,
+                  double sigmax, double sigmay, double sigmaz,
+                  double zetax = 0, double zetay = 0, double zetaz = 0)
+  {
+    return append_material(material(name,
+                                    epsx, epsy, epsz,
+                                    mux, muy, muz,
+                                    sigmax, sigmay, sigmaz,
+                                    zetax, zetay, zetaz),
+                           &material_list);
   }
 
   inline material_t *
-  lookup_material( const char * name ) {
-    return find_material_name( name, material_list );
+  lookup_material(const char *name)
+  {
+    return find_material_name(name, material_list);
   }
 
   inline material_t *
-  lookup_material( material_id id ) {
-    return find_material_id( id, material_list );
+  lookup_material(material_id id)
+  {
+    return find_material_id(id, material_list);
   }
 
   //////////////////////
@@ -624,36 +669,36 @@ protected:
   // optionally provided radition damping parameter.
 
   inline void
-  define_field_array( field_array_t * fa = NULL, double damp = 0 ) {
-    int nx1 = grid->nx + 1, ny1 = grid->ny+1, nz1 = grid->nz+1;
+  define_field_array(field_array_t *fa = NULL, double damp = 0)
+  {
+    int nx1 = grid->nx + 1, ny1 = grid->ny + 1, nz1 = grid->nz + 1;
 
-    if( grid->nx<1 || grid->ny<1 || grid->nz<1 )
-      ERROR(( "Define your grid before defining the field array" ));
-    if( !material_list )
-      ERROR(( "Define your materials before defining the field array" ));
+    if (grid->nx < 1 || grid->ny < 1 || grid->nz < 1)
+      ERROR(("Define your grid before defining the field array"));
+    if (!material_list)
+      ERROR(("Define your materials before defining the field array"));
 
-    field_array        = fa ? fa :
-                         new_standard_field_array( grid, material_list, damp );
-    interpolator_array = new_interpolator_array( grid );
-    accumulator_array  = new_accumulator_array( grid );
-    hydro_array        = new_hydro_array( grid );
+    field_array = fa ? fa : new_standard_field_array(grid, material_list, damp);
+    interpolator_array = new_interpolator_array(grid);
+    accumulator_array = new_accumulator_array(grid);
+    hydro_array = new_hydro_array(grid);
 
     // Pre-size communications buffers. This is done to get most memory
     // allocation over with before the simulation starts running
 
-    mp_size_recv_buffer(grid->mp,BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t));
-    mp_size_recv_buffer(grid->mp,BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t));
-    mp_size_recv_buffer(grid->mp,BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t));
-    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t));
-    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t));
-    mp_size_recv_buffer(grid->mp,BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(-1, 0, 0), ny1 * nz1 * sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(1, 0, 0), ny1 * nz1 * sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(0, -1, 0), nz1 * nx1 * sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(0, 1, 0), nz1 * nx1 * sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(0, 0, -1), nx1 * ny1 * sizeof(hydro_t));
+    mp_size_recv_buffer(grid->mp, BOUNDARY(0, 0, 1), nx1 * ny1 * sizeof(hydro_t));
 
-    mp_size_send_buffer(grid->mp,BOUNDARY(-1, 0, 0),ny1*nz1*sizeof(hydro_t));
-    mp_size_send_buffer(grid->mp,BOUNDARY( 1, 0, 0),ny1*nz1*sizeof(hydro_t));
-    mp_size_send_buffer(grid->mp,BOUNDARY( 0,-1, 0),nz1*nx1*sizeof(hydro_t));
-    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 1, 0),nz1*nx1*sizeof(hydro_t));
-    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 0,-1),nx1*ny1*sizeof(hydro_t));
-    mp_size_send_buffer(grid->mp,BOUNDARY( 0, 0, 1),nx1*ny1*sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(-1, 0, 0), ny1 * nz1 * sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(1, 0, 0), ny1 * nz1 * sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(0, -1, 0), nz1 * nx1 * sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(0, 1, 0), nz1 * nx1 * sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(0, 0, -1), nx1 * ny1 * sizeof(hydro_t));
+    mp_size_send_buffer(grid->mp, BOUNDARY(0, 0, 1), nx1 * ny1 * sizeof(hydro_t));
   }
 
   // Other field helpers are provided by macros in deck_wrapper.cxx
@@ -663,85 +708,106 @@ protected:
 
   // FIXME: SILLY PROMOTIONS
   inline species_t *
-  define_species( const char *name,
-                  double q,
-                  double m,
-                  double max_local_np,
-                  double max_local_nm,
-                  double sort_interval,
-                  double sort_out_of_place ) {
+  define_species(const char *name,
+                 double q,
+                 double m,
+                 double max_local_np,
+                 double max_local_nm,
+                 double sort_interval,
+                 double sort_out_of_place)
+  {
     // Compute a reasonble number of movers if user did not specify
     // Based on the twice the number of particles expected to hit the boundary
     // of a wpdt=0.2 / dx=lambda species in a 3x3x3 domain
-    if( max_local_nm<0 ) {
-      max_local_nm = 2*max_local_np/25;
-      if( max_local_nm<16*(MAX_PIPELINE+1) )
-        max_local_nm = 16*(MAX_PIPELINE+1);
+    if (max_local_nm < 0)
+    {
+      max_local_nm = 2 * max_local_np / 25;
+      if (max_local_nm < 16 * (MAX_PIPELINE + 1))
+        max_local_nm = 16 * (MAX_PIPELINE + 1);
     }
-    return append_species( species( name, (float)q, (float)m,
-                                    (size_t)max_local_np, (size_t)max_local_nm,
-                                    (int)sort_interval, (int)sort_out_of_place,
-                                    grid ), &species_list );
+    return append_species(species(name, (float)q, (float)m,
+                                  (size_t)max_local_np, (size_t)max_local_nm,
+                                  (int)sort_interval, (int)sort_out_of_place,
+                                  grid),
+                          &species_list);
   }
 
   inline species_t *
-  find_species( const char *name ) {
-     return find_species_name( name, species_list );
+  find_species(const char *name)
+  {
+    return find_species_name(name, species_list);
   }
 
   inline species_t *
-  find_species( int32_t id ) {
-     return find_species_id( id, species_list );
+  find_species(int32_t id)
+  {
+    return find_species_id(id, species_list);
   }
 
   // These might need renaming before handing this to users. But it works for now.
-  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove, std::string tracername) {
-    if((percentage <= 0.) || (percentage > 100.)) {
-      ERROR(( "%f is a bad percentage to select tracers", percentage ));
+  inline species_t *make_tracers_by_percentage(species_t *parentspecies, const float percentage, const Tracertype copyormove, std::string tracername)
+  {
+    if ((percentage <= 0.) || (percentage > 100.))
+    {
+      ERROR(("%f is a bad percentage to select tracers", percentage));
     }
     // Implemented in species_advance.cc
-    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, 100./percentage, copyormove, tracername, species_list, grid);
+    species_t *tracerspecies = tracerspecies_by_skip(parentspecies, 100. / percentage, copyormove, tracername, species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
-  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove, std::string tracername) {
-    if(nth < 1.) {
-      ERROR(( "%f is a bad stride to select every nth particle as tracers", nth ));
+  inline species_t *make_tracers_by_nth(species_t *parentspecies, const float nth, const Tracertype copyormove, std::string tracername)
+  {
+    if (nth < 1.)
+    {
+      ERROR(("%f is a bad stride to select every nth particle as tracers", nth));
     }
-    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, nth, copyormove, tracername, species_list, grid);
+    species_t *tracerspecies = tracerspecies_by_skip(parentspecies, nth, copyormove, tracername, species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
-  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove, std::string tracername) {
+  inline species_t *make_tracers_by_predicate(species_t *parentspecies, std::function<bool(particle_t)> f, const Tracertype copyormove, std::string tracername)
+  {
     // Implemented in species_advance.cc
-    species_t* tracerspecies =  tracerspecies_by_predicate(parentspecies, f, copyormove, tracername, species_list, grid);
+    species_t *tracerspecies = tracerspecies_by_predicate(parentspecies, f, copyormove, tracername, species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
-  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove, std::string tracername) {
-    if(!parentspecies) ERROR(( "Invalid parent species" ));
-    if((n < 1.) || (n > parentspecies->np)) {
-      ERROR(( "%f is a bad number of tracers", n ));
+  inline species_t *make_n_tracers(species_t *parentspecies, const float n, const Tracertype copyormove, std::string tracername)
+  {
+    if (!parentspecies)
+      ERROR(("Invalid parent species"));
+    if ((n < 1.) || (n > parentspecies->np))
+    {
+      ERROR(("%f is a bad number of tracers", n));
     }
-    species_t* tracerspecies =  tracerspecies_by_skip(parentspecies, parentspecies->np/n, copyormove, tracername, species_list, grid);
+    species_t *tracerspecies = tracerspecies_by_skip(parentspecies, parentspecies->np / n, copyormove, tracername, species_list, grid);
     return append_species(tracerspecies, &species_list);
   }
 
   // versions without user supplied name
-  inline species_t * make_tracers_by_percentage(species_t* parentspecies, const float percentage, const Tracertype copyormove) {
-    if(!parentspecies) ERROR(( "Invalid parent species" ));
+  inline species_t *make_tracers_by_percentage(species_t *parentspecies, const float percentage, const Tracertype copyormove)
+  {
+    if (!parentspecies)
+      ERROR(("Invalid parent species"));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_tracers_by_percentage(parentspecies, percentage, copyormove, name);
   }
-  inline species_t * make_tracers_by_nth(species_t* parentspecies, const float nth, const Tracertype copyormove) {
-    if(!parentspecies) ERROR(( "Invalid parent species" ));
+  inline species_t *make_tracers_by_nth(species_t *parentspecies, const float nth, const Tracertype copyormove)
+  {
+    if (!parentspecies)
+      ERROR(("Invalid parent species"));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_tracers_by_nth(parentspecies, nth, copyormove, name);
   }
-  inline species_t * make_tracers_by_predicate(species_t* parentspecies, std::function <bool (particle_t)> f, const Tracertype copyormove) {
-    if(!parentspecies) ERROR(( "Invalid parent species" ));
+  inline species_t *make_tracers_by_predicate(species_t *parentspecies, std::function<bool(particle_t)> f, const Tracertype copyormove)
+  {
+    if (!parentspecies)
+      ERROR(("Invalid parent species"));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_tracers_by_predicate(parentspecies, f, copyormove, name);
   }
-  inline species_t * make_n_tracers(species_t* parentspecies, const float n, const Tracertype copyormove) {
-    if(!parentspecies) ERROR(( "Invalid parent species" ));
+  inline species_t *make_n_tracers(species_t *parentspecies, const float n, const Tracertype copyormove)
+  {
+    if (!parentspecies)
+      ERROR(("Invalid parent species"));
     std::string name = make_tracer_name_unique(std::string(parentspecies->name) + std::string("_tracer"), species_list);
     return make_n_tracers(parentspecies, n, copyormove, name);
   }
@@ -750,10 +816,10 @@ protected:
   // Defaults in the declaration below enable backwards compatibility.
 
   void
-  inject_particle( species_t * sp,
-                   double x,  double y,  double z,
-                   double ux, double uy, double uz,
-                   double w,  double age = 0, int update_rhob = 1 );
+  inject_particle(species_t *sp,
+                  double x, double y, double z,
+                  double ux, double uy, double uz,
+                  double w, double age = 0, int update_rhob = 1);
 
   // Inject particle raw is for power users!
   // No nannyism _at_ _all_:
@@ -765,60 +831,82 @@ protected:
   // This injection is _ultra_ _fast_.
 
   inline void
-  inject_particle_raw( species_t * RESTRICT sp,
-                       float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w )
+  inject_particle_raw(species_t *RESTRICT sp,
+                      float dx, float dy, float dz, int32_t i,
+                      float ux, float uy, float uz, float w)
   {
-    particle_t * RESTRICT p = sp->p + sp->np;
-    #ifdef VPIC_GLOBAL_PARTICLE_ID
-    if(sp->has_ids) {
-      size_t * RESTRICT p_id = sp->p_id + sp->np;
-      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    particle_t *RESTRICT p = sp->p + sp->np;
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+    if (sp->has_ids)
+    {
+      size_t *RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id(sp->np, sp->max_np);
     }
-    #endif
-    #ifdef VPIC_PARTICLE_ANNOTATION
-    if(sp->has_annotation) {
-      for(int j = 0; j < sp->has_annotation; j++) {
+#endif
+#ifdef VPIC_PARTICLE_ANNOTATION
+    if (sp->has_annotation)
+    {
+      for (int j = 0; j < sp->has_annotation; j++)
+      {
         // Default for annotations is 0.0
         sp->set_annotation(sp->np, j, 0.);
       }
     }
-    #endif
-    p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
-    p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
+#endif
+    p->dx = dx;
+    p->dy = dy;
+    p->dz = dz;
+    p->i = i;
+    p->ux = ux;
+    p->uy = uy;
+    p->uz = uz;
+    p->w = w;
     sp->np++;
   }
 
   // This variant does a raw inject and moves the particles
 
   inline void
-  inject_particle_raw( species_t * RESTRICT sp,
-                       float dx, float dy, float dz, int32_t i,
-                       float ux, float uy, float uz, float w,
-                       float dispx, float dispy, float dispz,
-                       int update_rhob )
+  inject_particle_raw(species_t *RESTRICT sp,
+                      float dx, float dy, float dz, int32_t i,
+                      float ux, float uy, float uz, float w,
+                      float dispx, float dispy, float dispz,
+                      int update_rhob)
   {
-    particle_t       * RESTRICT p  = sp->p  + sp->np;
-    particle_mover_t * RESTRICT pm = sp->pm + sp->nm;
-    #ifdef VPIC_GLOBAL_PARTICLE_ID
-    if(sp->has_ids) {
-      size_t           * RESTRICT p_id = sp->p_id + sp->np;
-      *p_id = sp->generate_particle_id( sp->np, sp->max_np );
+    particle_t *RESTRICT p = sp->p + sp->np;
+    particle_mover_t *RESTRICT pm = sp->pm + sp->nm;
+#ifdef VPIC_GLOBAL_PARTICLE_ID
+    if (sp->has_ids)
+    {
+      size_t *RESTRICT p_id = sp->p_id + sp->np;
+      *p_id = sp->generate_particle_id(sp->np, sp->max_np);
     }
-    #endif
-    #ifdef VPIC_PARTICLE_ANNOTATION
-    if(sp->has_annotation) {
-      for(int j = 0; j < sp->has_annotation; j++) {
+#endif
+#ifdef VPIC_PARTICLE_ANNOTATION
+    if (sp->has_annotation)
+    {
+      for (int j = 0; j < sp->has_annotation; j++)
+      {
         // Default for annotations is 0.0
         sp->set_annotation(sp->np, j, 0.);
       }
     }
-    #endif
-    p->dx = dx; p->dy = dy; p->dz = dz; p->i = i;
-    p->ux = ux; p->uy = uy; p->uz = uz; p->w = w;
-    pm->dispx = dispx; pm->dispy = dispy; pm->dispz = dispz; pm->i = sp->np-1;
-    if( update_rhob ) accumulate_rhob( field_array->f, p, grid, -sp->q );
-    sp->nm += move_p( sp->p, pm, accumulator_array->a, grid, sp->q );
+#endif
+    p->dx = dx;
+    p->dy = dy;
+    p->dz = dz;
+    p->i = i;
+    p->ux = ux;
+    p->uy = uy;
+    p->uz = uz;
+    p->w = w;
+    pm->dispx = dispx;
+    pm->dispy = dispy;
+    pm->dispz = dispz;
+    pm->i = sp->np - 1;
+    if (update_rhob)
+      accumulate_rhob(field_array->f, p, grid, -sp->q);
+    sp->nm += move_p(sp->p, pm, accumulator_array->a, grid, sp->q);
     sp->np++;
   }
 
@@ -835,22 +923,25 @@ protected:
   // user seeds.
   // FIXME: MTRAND DESPERATELY NEEDS A LARGER SEED SPACE!
 
-  inline void seed_entropy( int base ) {
-    seed_rng_pool( entropy,      base, 0 );
-    seed_rng_pool( sync_entropy, base, 1 );
+  inline void seed_entropy(int base)
+  {
+    seed_rng_pool(entropy, base, 0);
+    seed_rng_pool(sync_entropy, base, 1);
   }
 
   // Uniform random number on (low,high) (open interval)
   // FIXME: IS THE INTERVAL STILL OPEN IN FINITE PRECISION
   //        AND IS THE OPEN INTERVAL REALLY WHAT USERS WANT??
-  inline double uniform( rng_t * rng, double low, double high ) {
-    double dx = drand( rng );
-    return low*(1-dx) + high*dx;
+  inline double uniform(rng_t *rng, double low, double high)
+  {
+    double dx = drand(rng);
+    return low * (1 - dx) + high * dx;
   }
 
   // Normal random number with mean mu and standard deviation sigma
-  inline double normal( rng_t * rng, double mu, double sigma ) {
-    return mu + sigma*drandn( rng );
+  inline double normal(rng_t *rng, double mu, double sigma)
+  {
+    return mu + sigma * drandn(rng);
   }
 
   /////////////////////////////////
@@ -873,61 +964,69 @@ protected:
   // strict C++ prevent this.)
 
   inline emitter_t *
-  define_emitter( emitter_t * e ) {
-    return append_emitter( e, &emitter_list );
+  define_emitter(emitter_t *e)
+  {
+    return append_emitter(e, &emitter_list);
   }
 
   inline particle_bc_t *
-  define_particle_bc( particle_bc_t * pbc ) {
-    return append_particle_bc( pbc, &particle_bc_list );
+  define_particle_bc(particle_bc_t *pbc)
+  {
+    return append_particle_bc(pbc, &particle_bc_list);
   }
 
   inline collision_op_t *
-  define_collision_op( collision_op_t * cop ) {
-    return append_collision_op( cop, &collision_op_list );
+  define_collision_op(collision_op_t *cop)
+  {
+    return append_collision_op(cop, &collision_op_list);
   }
 
   ////////////////////////
   // Miscellaneous helpers
 
-  inline void abort( double code ) {
-    nanodelay(2000000000); mp_abort((((int)code)<<17)+1);
+  inline void abort(double code)
+  {
+    nanodelay(2000000000);
+    mp_abort((((int)code) << 17) + 1);
   }
 
   // Truncate "a" to the nearest integer multiple of "b"
-  inline double trunc_granular( double a, double b ) { return b*int(a/b); }
+  inline double trunc_granular(double a, double b) { return b * int(a / b); }
 
   // Compute the remainder of a/b
-  inline double remainder( double a, double b ) { return std::remainder(a,b); }
+  inline double remainder(double a, double b) { return std::remainder(a, b); }
   // remainder(a,b);
 
   // Compute the Courant length on a regular mesh
-  inline double courant_length( double lx, double ly, double lz,
-                                double nx, double ny, double nz ) {
+  inline double courant_length(double lx, double ly, double lz,
+                               double nx, double ny, double nz)
+  {
     double w0, w1 = 0;
-    if( nx>1 ) w0 = nx/lx, w1 += w0*w0;
-    if( ny>1 ) w0 = ny/ly, w1 += w0*w0;
-    if( nz>1 ) w0 = nz/lz, w1 += w0*w0;
-    return sqrt(1/w1);
+    if (nx > 1)
+      w0 = nx / lx, w1 += w0 * w0;
+    if (ny > 1)
+      w0 = ny / ly, w1 += w0 * w0;
+    if (nz > 1)
+      w0 = nz / lz, w1 += w0 * w0;
+    return sqrt(1 / w1);
   }
 
   //////////////////////////////////////////////////////////
   // These friends are used by the checkpt / restore service
 
-  friend void checkpt_vpic_simulation( const vpic_simulation * vpic );
-  friend vpic_simulation * restore_vpic_simulation( void );
-  friend void reanimate_vpic_simulation( vpic_simulation * vpic );
+  friend void checkpt_vpic_simulation(const vpic_simulation *vpic);
+  friend vpic_simulation *restore_vpic_simulation(void);
+  friend void reanimate_vpic_simulation(vpic_simulation *vpic);
 
   ////////////////////////////////////////////////////////////
   // User input deck provided functions (see deck_wrapper.cxx)
 
-  void user_initialization( int argc, char **argv );
+  void user_initialization(int argc, char **argv);
   void user_particle_injection(void);
   void user_current_injection(void);
   void user_field_injection(void);
   void user_diagnostics(void);
   void user_particle_collisions(void);
 };
-
 
 #endif // vpic_h

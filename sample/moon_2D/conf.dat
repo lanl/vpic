@@ -1,0 +1,11 @@
+&datum
+
+ httx = 8,                       ! number of domains in x (converter)
+ htty = 2,			 ! the same in y
+ httz = 1,			 ! the same in z
+ tslice_start = 0,            ! time slice to start at
+ tslice_stop = 9999,         ! time slice to stop at. set to a large number to process all
+ output_format = 2,		 ! output format. 2=file per slice, 1=all slices in one file
+ append_to_files = 1 		 ! for cont. format set 1 to append to existing files, anything else to start at the beginning
+$
+
